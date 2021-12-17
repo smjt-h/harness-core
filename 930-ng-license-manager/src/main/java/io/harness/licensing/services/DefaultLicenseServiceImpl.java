@@ -204,7 +204,7 @@ public class DefaultLicenseServiceImpl implements LicenseService {
     }
 
     ModuleLicense existedLicense = existingEntityOptional.get();
-    ModuleLicense updateLicense = ModuleLicenseHelper.compareAndUpdate(existedLicense, license);
+    ModuleLicense updateLicense = ModuleLicenseHelper.compareAndUpdate(existedLicense, moduleLicense);
 
     updateLicense.setLastUpdatedBy(EmbeddedUser.builder().email(getEmailFromPrincipal()).build());
     ModuleLicense updatedLicense = saveLicense(updateLicense);
