@@ -38,6 +38,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -67,6 +68,7 @@ public class CEGcpConnectorValidator extends io.harness.ccm.connectors.AbstractC
     String gcpTableName = gcpCloudCostConnectorDTO.getBillingExportSpec().getTableId();
     String impersonatedServiceAccount = gcpCloudCostConnectorDTO.getServiceAccountEmail();
     final List<CEFeatures> featuresEnabled = gcpCloudCostConnectorDTO.getFeaturesEnabled();
+    final List<ErrorDetail> errorList = new ArrayList<>();
     try {
       ConnectorValidationResult connectorValidationResult =
           validateAccessToBillingReport(projectId, datasetId, gcpTableName, impersonatedServiceAccount);
@@ -79,8 +81,10 @@ public class CEGcpConnectorValidator extends io.harness.ccm.connectors.AbstractC
           if (featuresEnabled.contains(CEFeatures.BILLING)
               && !ceConnectorsHelper.isDataSyncCheck(accountIdentifier, connectorIdentifier,
                   ConnectorType.GCP_CLOUD_COST, ceConnectorsHelper.JOB_TYPE_CLOUDFUNCTION)) {
+            errorList.add(ErrorDetail.builder().reason("Internal error with data processing").message("Contact Harness Support or Harness Community Forum.").build());
             return ConnectorValidationResult.builder()
-                .errorSummary("Error with processing data. Please contact Harness support")
+                .errorSummary("Error with processing data")
+                .errors(errorList)
                 .status(ConnectivityStatus.FAILURE)
                 .build();
           }
@@ -89,8 +93,10 @@ public class CEGcpConnectorValidator extends io.harness.ccm.connectors.AbstractC
     } catch (Exception ex) {
       // 5. Generic Error
       log.error(GENERIC_LOGGING_ERROR, accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifier, ex);
+      errorList.add(ErrorDetail.builder().reason("Unknown error occurred").message("Contact Harness Support or Harness Community Forum.").build());
       return ConnectorValidationResult.builder()
           .errorSummary("Unknown error occurred")
+          .errors(errorList)
           .status(ConnectivityStatus.FAILURE)
           .build();
     }
@@ -104,6 +110,7 @@ public class CEGcpConnectorValidator extends io.harness.ccm.connectors.AbstractC
   public ConnectorValidationResult validateAccessToBillingReport(
       String projectId, String datasetId, String gcpTableName, String impersonatedServiceAccount) {
     boolean isTablePresent = false;
+    final List<ErrorDetail> errorList = new ArrayList<>();
     ServiceAccountCredentials sourceCredentials = getGcpCredentials(GCP_CREDENTIALS_PATH);
     Credentials credentials = getGcpImpersonatedCredentials(sourceCredentials, impersonatedServiceAccount);
     BigQuery bigQuery;
@@ -120,11 +127,13 @@ public class CEGcpConnectorValidator extends io.harness.ccm.connectors.AbstractC
       Dataset dataset = bigQuery.getDataset(datasetId);
       if (dataset == null) {
         log.error("Unable to find the dataset :" + datasetId);
+        errorList.add(ErrorDetail.builder().reason("Dataset doesnt exists or service account does not have permissions")
+                .message("Please check if dataset " + datasetId + " exists and service account " + impersonatedServiceAccount
+                + " has required permissions").build());
         return ConnectorValidationResult.builder()
             .status(ConnectivityStatus.FAILURE)
-            .errorSummary("Unable to find the dataset " + datasetId + " in project " + projectId
-                + ". Please check if dataset exists and service account " + impersonatedServiceAccount
-                + " has required permissions")
+            .errors(errorList)
+            .errorSummary("Unable to find the dataset " + datasetId + " in project " + projectId)
             .testedAt(Instant.now().toEpochMilli())
             .build();
       } else {
@@ -143,11 +152,16 @@ public class CEGcpConnectorValidator extends io.harness.ccm.connectors.AbstractC
           }
         }
         if (!isTablePresent) {
+          errorList.add(ErrorDetail.builder().reason("Pricing table at source not found")
+                  .message("If you are setting up pricing export to BigQuery for the first time,  "
+                          +"it might take up to 48 hours to start seeing your Google Cloud pricing data." +
+                          " For more information, refer to the documentation.").build());
           return ConnectorValidationResult.builder()
               .status(ConnectivityStatus.PARTIAL)
-              .errorSummary("Billing export table is not yet present in"
-                  + " the dataset " + datasetId + " in GCP project " + projectId
-                  + ". Wait for some time for table to show up or check the billing export configuration in your GCP project")
+              .errors(errorList)
+              .errorSummary("Billing export table " + gcpTableName +
+                      " is not found in the dataset " + datasetId +
+                      " in GCP project " + projectId)
               .testedAt(Instant.now().toEpochMilli())
               .build();
         } else {
@@ -162,8 +176,10 @@ public class CEGcpConnectorValidator extends io.harness.ccm.connectors.AbstractC
           if (lastModifiedTime < now) {
             return ConnectorValidationResult.builder()
                 .status(ConnectivityStatus.FAILURE)
-                .errorSummary("Billing table " + gcpTableName + " is not updated in the last 24 hrs."
-                    + ". Please check billing export settings in your gcp project")
+                .errors(ImmutableList.of(ErrorDetail.builder().reason("Billing export configuration might have changed")
+                        .message("Check the billing export configuration in your GCP Project" +
+                                " For more information, refer to the documentation.").build()))
+                .errorSummary("Billing table " + gcpTableName + " is not updated in the last 24 hrs.")
                 .testedAt(Instant.now().toEpochMilli())
                 .build();
           }
@@ -175,7 +191,9 @@ public class CEGcpConnectorValidator extends io.harness.ccm.connectors.AbstractC
       return ConnectorValidationResult.builder()
           .status(ConnectivityStatus.FAILURE)
           .errors(ImmutableList.of(
-              ErrorDetail.builder().code(be.getCode()).reason(be.getMessage()).message(be.getMessage()).build()))
+              ErrorDetail.builder().code(be.getCode()).reason(be.getMessage())
+                      .message("Please verify your billing export config in your GCP account and in the CCM connector." +
+                              " For more information, refer to the documentation.").build()))
           .errorSummary("Unable to access the dataset " + datasetId + " in project " + projectId)
           .testedAt(Instant.now().toEpochMilli())
           .build();
