@@ -85,6 +85,8 @@ BAZEL_MODULES="\
   //800-pipeline-service:module \
   //810-ng-triggers:module \
   //815-cg-triggers:module \
+  //360-cg-manager:module \
+  //360-cg-manager:module_deploy.jar \
   //820-platform-service:module \
   //820-platform-service:module_deploy.jar \
   //830-notification-service:module \
@@ -293,7 +295,6 @@ build_protocol_info(){
   rm module-deps.sh /tmp/ProtoDeps.text /tmp/KryoDeps.text
 }
 
-build_bazel_application 940-notification-client
 build_bazel_application 820-platform-service
 
 build_bazel_module 100-migrator
