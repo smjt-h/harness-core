@@ -12,7 +12,6 @@ function prepare_to_copy_jars(){
   cp -R ../scripts/jenkins/ .
   cd ..
 
-  curl https://storage.googleapis.com/harness-prod-public/public/shared/tools/alpn/release/8.1.13.v20181017/alpn-boot-8.1.13.v20181017.jar  --output alpn-boot-8.1.13.v20181017.jar
 }
 
 function copy_common_files(){
@@ -37,7 +36,6 @@ function copy_cg_manager_jars(){
 	cp ../../360-cg-manager/newrelic.yml .
 	cp ../../360-cg-manager/config.yml .
 	cp ../../400-rest/src/main/resources/redisson-jcache.yaml .
-	cp ../../alpn-boot-8.1.13.v20181017.jar .
 
 	cp ../../dockerization/manager/Dockerfile-manager-jenkins-k8-openjdk ./Dockerfile
 	cp ../../dockerization/manager/Dockerfile-manager-jenkins-k8-gcr-openjdk ./Dockerfile-gcr
@@ -46,7 +44,7 @@ function copy_cg_manager_jars(){
 
 	copy_common_files
 
-	java -jar rest-capsule.jar scan-classpath-metadata
+#	java -jar rest-capsule.jar scan-classpath-metadata
 
 	cd ../..
 }
@@ -87,7 +85,7 @@ function copy_ng_manager_jars(){
 
 	copy_common_files
 
-	java -jar ng-manager-capsule.jar scan-classpath-metadata
+#	java -jar ng-manager-capsule.jar scan-classpath-metadata
 
 	cd ../..
 }
