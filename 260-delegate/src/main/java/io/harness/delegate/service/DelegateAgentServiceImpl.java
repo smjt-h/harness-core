@@ -321,6 +321,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private final boolean delegateNg = isNotBlank(System.getenv().get("DELEGATE_SESSION_IDENTIFIER"))
       || (isNotBlank(System.getenv().get("NEXT_GEN")) && Boolean.parseBoolean(System.getenv().get("NEXT_GEN")));
   public static final String JAVA_VERSION = "java.version";
+  private final double RESOURCE_USAGE_THRESHOLD = 0.75;
 
   private static volatile String delegateId;
   private static volatile String delegateInstanceId = generateUuid();
@@ -413,6 +414,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private final boolean multiVersion = DeployMode.KUBERNETES.name().equals(System.getenv().get(DeployMode.DEPLOY_MODE))
       || TRUE.toString().equals(System.getenv().get("MULTI_VERSION"));
   private boolean isServer;
+
+  private long maxRSS;
+  private final AtomicBoolean rejectRequest = new AtomicBoolean(false);
 
   public static Optional<String> getDelegateId() {
     return Optional.ofNullable(delegateId);
@@ -575,6 +579,10 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       log.info("[New] Delegate registered in {} ms", clock.millis() - start);
       DelegateStackdriverLogAppender.setDelegateId(delegateId);
 
+      if (delegateConfiguration.isDynamicHandlingOfRequestEnabled()) {
+        startDynamicHandlingOfTasks();
+      }
+
       if (isPollingForTasksEnabled()) {
         log.info("Polling is enabled for Delegate");
         startHeartbeat(builder);
@@ -732,6 +740,27 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       log.error("Exception while starting/running delegate", e);
     } catch (RuntimeException | IOException e) {
       log.error("Exception while starting/running delegate", e);
+    }
+  }
+
+  private void maybeUpdateTaskRejectionStatus() {
+    MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+    double currentRSS = memoryMXBean.getHeapMemoryUsage().getUsed();
+
+    OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
+    double currentCPU = osBean.getSystemCpuLoad();
+
+    if (currentRSS >= RESOURCE_USAGE_THRESHOLD * maxRSS || currentCPU >= RESOURCE_USAGE_THRESHOLD) {
+      log.error(
+          "Reached resource threshold, temporarily reject incoming task request. CurrentCPU {} CurrentRSSMB {} ThresholdMB {}",
+          currentCPU, currentRSS, RESOURCE_USAGE_THRESHOLD * maxRSS);
+      rejectRequest.compareAndSet(false, true);
+      return;
+    }
+
+    if (rejectRequest.compareAndSet(true, false)) {
+      log.info("Accepting incoming task request. CurrentCPU {} CurrentRSSMB {} ThresholdMB {}", currentCPU, currentRSS,
+          RESOURCE_USAGE_THRESHOLD * maxRSS);
     }
   }
 
@@ -1465,6 +1494,19 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
   }
 
+  private void startDynamicHandlingOfTasks() {
+    log.info("Starting dynamic handling of tasks tp {} ms", 1000);
+    MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+    maxRSS = memoryMXBean.getHeapMemoryUsage().getMax();
+    healthMonitorExecutor.scheduleAtFixedRate(() -> {
+      try {
+        maybeUpdateTaskRejectionStatus();
+      } catch (Exception ex) {
+        log.error("Exception while sending heartbeat", ex);
+      }
+    }, 0, 1, TimeUnit.SECONDS);
+  }
+
   private void startHeartbeat(DelegateParamsBuilder builder, Socket socket) {
     log.info("Starting heartbeat at interval {} ms", delegateConfiguration.getHeartbeatIntervalMs());
     healthMonitorExecutor.scheduleAtFixedRate(() -> {
@@ -1863,6 +1905,11 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
     if (!shouldContactManager()) {
       log.info("Dropping task, self destruct in progress: " + delegateTaskId);
+      return;
+    }
+
+    if (rejectRequest.get()) {
+      log.info("Delegate running out of resources, dropping this request [{}] " + delegateTaskId);
       return;
     }
 
