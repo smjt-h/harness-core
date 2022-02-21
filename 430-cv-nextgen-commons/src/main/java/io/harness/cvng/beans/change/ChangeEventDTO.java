@@ -28,12 +28,13 @@ public class ChangeEventDTO {
   @NotNull String orgIdentifier;
   @NotNull String projectIdentifier;
 
-  @NotNull String serviceIdentifier;
+  @Deprecated @NotNull String serviceIdentifier;
   String serviceName;
-  @NotNull String envIdentifier;
+  @Deprecated @NotNull String envIdentifier;
   String environmentName;
 
   String name;
+  String monitoredServiceIdentifier;
   String changeSourceIdentifier;
   @JsonProperty("type") ChangeSourceType type;
   long eventTime;

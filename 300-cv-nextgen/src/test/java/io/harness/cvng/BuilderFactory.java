@@ -664,7 +664,8 @@ public class BuilderFactory {
         .serviceIdentifier(context.getServiceIdentifier())
         .envIdentifier(context.getEnvIdentifier())
         .eventTime(Instant.EPOCH.getEpochSecond())
-        .changeSourceIdentifier("changeSourceID");
+        .changeSourceIdentifier("changeSourceID")
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier());
   }
 
   public DeploymentEventDTO.Builder getDeploymentEventDTOBuilder() {
