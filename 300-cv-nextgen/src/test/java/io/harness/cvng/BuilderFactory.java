@@ -543,6 +543,7 @@ public class BuilderFactory {
         .environmentIdentifier(context.getEnvIdentifier())
         .eventTime(clock.instant())
         .changeSourceIdentifier("changeSourceID")
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
         .type(ChangeSourceType.HARNESS_CD.getActivityType())
         .stageStepId("stageStepId")
         .verificationStartTime(clock.millis())
