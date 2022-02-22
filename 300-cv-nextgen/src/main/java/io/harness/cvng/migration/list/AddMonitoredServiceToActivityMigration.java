@@ -17,7 +17,6 @@ import io.harness.persistence.HPersistence;
 
 import com.google.inject.Inject;
 import java.time.Clock;
-import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.UpdateResults;
@@ -40,9 +39,7 @@ public class AddMonitoredServiceToActivityMigration implements CVNGMigration {
                 .filter(ActivityKeys.projectIdentifier, monitoredService.getProjectIdentifier())
                 .filter(ActivityKeys.orgIdentifier, monitoredService.getOrgIdentifier())
                 .filter(ActivityKeys.serviceIdentifier, monitoredService.getServiceIdentifier())
-                .filter(ActivityKeys.environmentIdentifier, monitoredService.getEnvironmentIdentifier())
-                .field(ActivityKeys.activityStartTime)
-                .greaterThan(clock.instant().minus(Duration.ofDays(31)));
+                .filter(ActivityKeys.environmentIdentifier, monitoredService.getEnvironmentIdentifier());
 
         UpdateResults updateResults = hPersistence.update(heatMapQuery,
             hPersistence.createUpdateOperations(Activity.class)
