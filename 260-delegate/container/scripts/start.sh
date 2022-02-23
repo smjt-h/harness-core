@@ -211,8 +211,8 @@ fi
 # delegateToken is a replacement of accountSecret. There is a possibility where pod is running with older yaml,
 # where ACCOUNT_SECRET is present in env variable, prefer using ACCOUNT_SECRET in those scenarios.
 test "$(tail -c 1 config-watcher.yml)" && `echo "" >> config-watcher.yml`
-if ! `grep accountSecret config-watcher.yml > /dev/null`; then
-  echo "accountSecret: $ACCOUNT_SECRET" >> config-watcher.yml
+if ! `grep delegateToken config-watcher.yml > /dev/null`; then
+  echo "delegateToken: $DELEGATE_TOKEN" >> config-watcher.yml
 fi
 if ! `grep delegateToken config-watcher.yml > /dev/null`; then
   echo "delegateToken: $DELEGATE_TOKEN" >> config-watcher.yml
@@ -239,7 +239,7 @@ fi
 
 if [ ! -e config-delegate.yml ]; then
   echo "accountId: $ACCOUNT_ID" > config-delegate.yml
-  echo "accountSecret: $ACCOUNT_SECRET" >> config-delegate.yml
+  echo "delegateToken: $DELEGATE_TOKEN" >> config-delegate.yml
 fi
 test "$(tail -c 1 config-delegate.yml)" && `echo "" >> config-delegate.yml`
 if ! `grep managerUrl config-delegate.yml > /dev/null`; then
