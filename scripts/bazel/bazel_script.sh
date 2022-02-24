@@ -55,10 +55,10 @@ if [ "${RUN_PMDS}" == "true" ]; then
 fi
 
 BAZEL_MODULES="\
-  //800-pipeline-service:module \
   //820-platform-service:module \
   //820-platform-service:module_deploy.jar \
-  //878-pipeline-service-utilities:module \
+  //access-control/service:module \
+  //access-control/service:module_deploy.jar \
 "
 
 bazel ${bazelrc} build $BAZEL_MODULES ${BAZEL_ARGUMENTS} --remote_download_outputs=all
