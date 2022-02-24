@@ -202,6 +202,8 @@ BAZEL_MODULES="\
   //clients/access-control/sdk:module \
   //product/ci/engine/proto:all \
   //product/ci/scm/proto:all \
+  //access-control/service:module \
+  //access-control/service:module_deploy.jar \
 "
 
 bazel ${bazelrc} build $BAZEL_MODULES `bazel query "//...:*" | grep "module_deploy.jar"` ${BAZEL_ARGUMENTS} --remote_download_outputs=all
