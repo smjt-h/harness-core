@@ -17,9 +17,8 @@ import io.harness.pms.sdk.core.steps.executables.TaskChainResponse;
 import java.util.List;
 
 public interface ServerlessStepExecutor {
-  TaskChainResponse executeK8sTask(ManifestOutcome serverlessManifestOutcome, Ambiance ambiance,
-      StepElementParameters stepParameters, List<String> valuesFileContents,
+  TaskChainResponse executeServerlessTask(ManifestOutcome serverlessManifestOutcome, Ambiance ambiance,
+      StepElementParameters stepParameters, String manifestFileContent,
       ServerlessExecutionPassThroughData executionPassThroughData, boolean shouldOpenFetchFilesLogStream,
       UnitProgressData unitProgressData);
-  // todo: need to check with valuesFileContents input
 }

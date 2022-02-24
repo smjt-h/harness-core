@@ -26,19 +26,29 @@ import io.harness.cdng.manifest.ManifestType;
 import io.harness.cdng.manifest.steps.ManifestsOutcome;
 import io.harness.cdng.manifest.yaml.*;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
+import io.harness.cdng.serverless.beans.ServerlessExecutionPassThroughData;
+import io.harness.cdng.serverless.beans.ServerlessGitFetchResponsePassThroughData;
+import io.harness.cdng.serverless.beans.ServerlessStepExceptionPassThroughData;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.delegate.beans.TaskData;
+import io.harness.delegate.beans.logstreaming.UnitProgressData;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
+import io.harness.delegate.task.git.TaskStatus;
 import io.harness.delegate.task.serverless.ServerlessGitFetchFileConfig;
 import io.harness.delegate.task.serverless.request.ServerlessGitFetchRequest;
+import io.harness.delegate.task.serverless.response.ServerlessGitFetchResponse;
+import io.harness.exception.ExceptionUtils;
 import io.harness.exception.GeneralException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.expression.ExpressionEvaluatorUtils;
+import io.harness.git.model.FetchFilesResult;
+import io.harness.git.model.GitFile;
 import io.harness.ng.core.NGAccess;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
+import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.tasks.TaskRequest;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.utils.AmbianceUtils;
@@ -47,18 +57,18 @@ import io.harness.pms.sdk.core.data.OptionalOutcome;
 import io.harness.pms.sdk.core.resolver.RefObjectUtils;
 import io.harness.pms.sdk.core.resolver.outcome.OutcomeService;
 import io.harness.pms.sdk.core.steps.executables.TaskChainResponse;
+import io.harness.pms.sdk.core.steps.io.PassThroughData;
 import io.harness.serializer.KryoSerializer;
 import io.harness.steps.StepHelper;
+import io.harness.supplier.ThrowingSupplier;
+import io.harness.tasks.ResponseData;
 
 import software.wings.beans.TaskType;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.hibernate.validator.constraints.NotEmpty;
 
@@ -84,14 +94,43 @@ public class ServerlessStepHelper extends CDStepHelper {
         serverlessStepExecutor, serverlessManifestOutcome, ambiance, stepElementParameters, infrastructureOutcome);
   }
 
+  public TaskChainResponse executeNextLink(ServerlessStepExecutor serverlessStepExecutor, Ambiance ambiance,
+      StepElementParameters stepElementParameters, PassThroughData passThroughData,
+      ThrowingSupplier<ResponseData> responseDataSupplier) throws Exception {
+    ServerlessStepPassThroughData serverlessStepPassThroughData = (ServerlessStepPassThroughData) passThroughData;
+    ManifestOutcome serverlessManifest = serverlessStepPassThroughData.getServerlessManifestOutcome();
+    ResponseData responseData = responseDataSupplier.get();
+    UnitProgressData unitProgressData = null;
+
+    try {
+      if (responseData instanceof ServerlessGitFetchResponse) {
+        return handleServerlessGitFetchFilesResponse(responseData, serverlessStepExecutor, ambiance,
+            stepElementParameters, serverlessStepPassThroughData, serverlessManifest);
+      }
+    } catch (Exception e) {
+      return TaskChainResponse.builder()
+          .chainEnd(true)
+          .passThroughData(ServerlessStepExceptionPassThroughData.builder()
+                               .errorMessage(ExceptionUtils.getMessage(e))
+                               .unitProgressData(completeUnitProgressData(unitProgressData, ambiance, e))
+                               .build())
+          .build();
+    }
+    ServerlessExecutionPassThroughData serverlessExecutionPassThroughData =
+        ServerlessExecutionPassThroughData.builder()
+            .infrastructure(serverlessStepPassThroughData.getInfrastructureOutcome())
+            .build();
+    return serverlessStepExecutor.executeServerlessTask(serverlessManifest, ambiance, stepElementParameters, "",
+        serverlessExecutionPassThroughData, true, unitProgressData);
+  }
+
   public ManifestsOutcome resolveServerlessManifestsOutcome(Ambiance ambiance) {
     OptionalOutcome manifestsOutcome = outcomeService.resolveOptional(
         ambiance, RefObjectUtils.getOutcomeRefObject(OutcomeExpressionConstants.MANIFESTS));
 
     if (!manifestsOutcome.isFound()) {
-      String stageName = AmbianceUtils.getStageLevelFromAmbiance(ambiance)
-                             .map(level -> level.getIdentifier())
-                             .orElse("Deployment stage");
+      String stageName =
+          AmbianceUtils.getStageLevelFromAmbiance(ambiance).map(Level::getIdentifier).orElse("Deployment stage");
       String stepType =
           Optional.ofNullable(AmbianceUtils.getCurrentStepType(ambiance)).map(StepType::getType).orElse("Serverless");
       throw new GeneralException(format(
@@ -127,6 +166,45 @@ public class ServerlessStepHelper extends CDStepHelper {
             .build();
     return getGitFetchFileTaskResponse(
         ambiance, true, stepElementParameters, serverlessStepPassThroughData, serverlessGitFetchFileConfig);
+  }
+
+  private TaskChainResponse handleServerlessGitFetchFilesResponse(ResponseData responseData,
+      ServerlessStepExecutor serverlessStepExecutor, Ambiance ambiance, StepElementParameters stepElementParameters,
+      ServerlessStepPassThroughData serverlessStepPassThroughData, ManifestOutcome serverlessManifest) {
+    ServerlessGitFetchResponse serverlessGitFetchResponse = (ServerlessGitFetchResponse) responseData;
+    if (serverlessGitFetchResponse.getTaskStatus() != TaskStatus.SUCCESS) {
+      ServerlessGitFetchResponsePassThroughData serverlessGitFetchResponsePassThroughData =
+          ServerlessGitFetchResponsePassThroughData.builder()
+              .errorMsg(serverlessGitFetchResponse.getErrorMessage())
+              .unitProgressData(serverlessGitFetchResponse.getUnitProgressData())
+              .build();
+      return TaskChainResponse.builder()
+          .passThroughData(serverlessGitFetchResponsePassThroughData)
+          .chainEnd(true)
+          .build();
+    }
+    Map<String, FetchFilesResult> fetchFilesResultMap = serverlessGitFetchResponse.getFilesFromMultipleRepo();
+    String manifestFileContent = getManifestFileContent(fetchFilesResultMap, serverlessManifest);
+    ServerlessExecutionPassThroughData serverlessExecutionPassThroughData =
+        ServerlessExecutionPassThroughData.builder()
+            .infrastructure(serverlessStepPassThroughData.getInfrastructureOutcome())
+            .lastActiveUnitProgressData(serverlessGitFetchResponse.getUnitProgressData())
+            .build();
+    return serverlessStepExecutor.executeServerlessTask(serverlessManifest, ambiance, stepElementParameters,
+        manifestFileContent, serverlessExecutionPassThroughData, false,
+        serverlessGitFetchResponse.getUnitProgressData());
+  }
+
+  private String getManifestFileContent(
+      Map<String, FetchFilesResult> fetchFilesResultMap, ManifestOutcome manifestOutcome) {
+    String fileContent = null;
+    StoreConfig store = manifestOutcome.getStore();
+    if (ManifestStoreType.isInGitSubset(store.getKind())) {
+      FetchFilesResult fetchFilesResult = fetchFilesResultMap.get(manifestOutcome.getIdentifier());
+      fileContent =
+          fetchFilesResult.getFiles().stream().map(GitFile::getFileContent).collect(Collectors.toList()).get(0);
+    }
+    return fileContent;
   }
 
   private TaskChainResponse getGitFetchFileTaskResponse(Ambiance ambiance, boolean shouldOpenLogStream,
