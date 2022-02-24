@@ -11,6 +11,7 @@ import static io.harness.ccm.commons.entities.k8s.K8sWorkload.encodeDotsInKey;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.batch.processing.service.intfc.WorkloadRepository;
+import io.harness.batch.processing.tasklet.util.CacheUtils;
 import io.harness.ccm.commons.beans.recommendation.ResourceId;
 import io.harness.ccm.commons.entities.k8s.K8sWorkload;
 import io.harness.ccm.commons.entities.k8s.K8sWorkload.K8sWorkloadKeys;
@@ -34,7 +35,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class WorkloadRepositoryImpl implements WorkloadRepository {
+public class WorkloadRepositoryImpl extends CacheUtils implements WorkloadRepository {
   private final HPersistence hPersistence;
   private final Cache<CacheKey, Boolean> saved = Caffeine.newBuilder().expireAfterWrite(Duration.ofMinutes(20)).build();
 

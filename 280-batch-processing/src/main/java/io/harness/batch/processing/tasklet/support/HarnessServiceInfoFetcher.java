@@ -45,6 +45,7 @@ public class HarnessServiceInfoFetcher extends CacheUtils {
       CloudToHarnessMappingService cloudToHarnessMappingService) {
     this.k8sLabelServiceInfoFetcher = k8sLabelServiceInfoFetcher;
     this.cloudToHarnessMappingService = cloudToHarnessMappingService;
+    // TODO: This cache is very small
     this.getHarnessServiceInfoCache = Caffeine.newBuilder()
                                           .recordStats()
                                           .expireAfterAccess(24, TimeUnit.HOURS)

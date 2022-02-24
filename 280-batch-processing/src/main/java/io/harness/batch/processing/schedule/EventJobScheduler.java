@@ -32,9 +32,11 @@ import io.harness.batch.processing.service.impl.BatchJobRunningModeContext;
 import io.harness.batch.processing.service.impl.BatchJobTypeLogContext;
 import io.harness.batch.processing.service.impl.CronJobTypeLogContext;
 import io.harness.batch.processing.service.impl.InstanceDataServiceImpl;
+import io.harness.batch.processing.service.impl.WorkloadRepositoryImpl;
 import io.harness.batch.processing.service.intfc.BillingDataPipelineHealthStatusService;
 import io.harness.batch.processing.shard.AccountShardService;
 import io.harness.batch.processing.tasklet.support.HarnessServiceInfoFetcher;
+import io.harness.batch.processing.tasklet.support.HarnessServiceInfoFetcherNG;
 import io.harness.batch.processing.tasklet.support.K8SWorkloadService;
 import io.harness.batch.processing.tasklet.support.K8sLabelServiceInfoFetcher;
 import io.harness.batch.processing.view.CEMetaDataRecordUpdateService;
@@ -81,6 +83,8 @@ public class EventJobScheduler {
   @Autowired private BudgetCostUpdateService budgetCostUpdateService;
   @Autowired private AccountExpiryCleanupService accountExpiryCleanupService;
   @Autowired private HarnessServiceInfoFetcher harnessServiceInfoFetcher;
+  @Autowired private HarnessServiceInfoFetcherNG harnessServiceInfoFetcherNG;
+  @Autowired private WorkloadRepositoryImpl workloadRepository;
   @Autowired private InstanceDataServiceImpl instanceDataService;
   @Autowired private K8sLabelServiceInfoFetcher k8sLabelServiceInfoFetcher;
   @Autowired private ViewCostUpdateService viewCostUpdateService;
@@ -317,9 +321,11 @@ public class EventJobScheduler {
   }
 
   // log hit/miss rate and size of the LoadingCache periodically for tuning
-  @Scheduled(cron = "0 0 */7 ? * *")
+  @Scheduled(cron = "0 0 */1 ? * *")
   public void printCacheStats() throws IllegalAccessException {
     harnessServiceInfoFetcher.logCacheStats();
+    harnessServiceInfoFetcherNG.logCacheStats();
+    workloadRepository.logCacheStats();
     instanceDataService.logCacheStats();
     k8sLabelServiceInfoFetcher.logCacheStats();
     k8SWorkloadService.logCacheStats();
