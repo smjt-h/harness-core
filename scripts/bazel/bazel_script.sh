@@ -55,153 +55,13 @@ if [ "${RUN_PMDS}" == "true" ]; then
 fi
 
 BAZEL_MODULES="\
-  //100-migrator:module \
-  //270-verification:module \
-  //280-batch-processing:module \
-  //290-dashboard-service:module \
-  //295-cdng-contracts:module \
-  //300-cv-nextgen:module \
-  //310-ci-manager:module \
-  //320-ci-execution:module \
-  //330-ci-beans:module \
-  //340-ce-nextgen:module \
-  //350-event-server:module \
-  //360-cg-manager:module \
-  //380-cg-graphql:module \
-  //400-rest:module \
-  //400-rest:supporter-test \
-  //410-cg-rest:module \
-  //420-delegate-agent:module \
-  //420-delegate-service:module \
-  //425-verification-commons:module \
-  //430-cv-nextgen-commons:module \
-  //440-connector-nextgen:module \
-  //440-secret-management-service:module \
-  //441-cg-instance-sync:module \
-  //445-cg-connectors:module \
-  //450-ce-views:module \
-  //460-capability:module \
-  //490-ce-commons:module \
   //800-pipeline-service:module \
-  //810-ng-triggers:module \
-  //815-cg-triggers:module \
   //820-platform-service:module \
   //820-platform-service:module_deploy.jar \
-  //830-notification-service:module \
-  //830-resource-group:module \
-  //835-notification-senders:module \
-  //835-notification-senders:module \
-  //840-template-service:module \
-  //860-orchestration-steps:module \
-  //860-orchestration-visualization:module \
-  //865-cg-events:module \
-  //867-polling-contracts:module \
-  //870-cg-orchestration:module \
-  //870-orchestration:module \
-  //874-orchestration-delay:module \
-  //876-orchestration-beans:module \
-  //878-ng-common-utilities:module \
-  //879-pms-sdk:module \
-  //882-pms-sdk-core:module \
-  //884-pms-commons:module \
-  //889-yaml-commons:module \
-  //890-pms-contracts:module \
-  //890-sm-core:module \
-  //900-git-sync-sdk:module \
-  //910-delegate-service-driver:module \
-  //910-delegate-task-grpc-service/src/main/proto:all \
-  //910-delegate-task-grpc-service:module \
-  //920-delegate-agent-beans/src/main/proto:all \
-  //920-delegate-agent-beans:module \
-  //920-delegate-service-beans/src/main/proto:all \
-  //920-delegate-service-beans:module \
-  //920-ng-signup:module \
-  //925-enforcement-service:module \
-  //930-delegate-tasks:module \
-  //930-ng-core-clients:module \
-  //932-connector-task:module \
-  //935-analyser-service:module \
-  //937-persistence-tracer:module \
-  //940-feature-flag:module \
-  //940-ng-audit-service:module \
-  //940-notification-client:module \
-  //940-notification-client:module_deploy.jar \
-  //940-resource-group-beans:module \
-  //940-secret-manager-client:module \
-  //942-enforcement-sdk:module \
-  //943-enforcement-beans:module \
-  //945-account-mgmt:module \
-  //945-license-usage-sdk:module \
-  //945-ng-audit-client:module \
-  //947-scim-core:module \
-  //948-access-control-admin-client:module \
-  //948-access-control-sdk:module \
-  //950-command-library-common:module \
-  //959-common-entities:module \
-  //950-delegate-tasks-beans/src/main/proto:all \
-  //950-delegate-tasks-beans:module \
-  //950-events-framework:module \
-  //950-events-framework-monitor:module \
-  //950-log-client:module \
-  //951-cg-git-sync:module \
-  //951-ng-audit-commons:module \
-  //950-ng-authentication-service:module \
-  //950-ng-core:module \
-  //950-ng-project-n-orgs:module \
-  //950-ng-signup-beans:module \
-  //950-telemetry:module \
-  //950-wait-engine:module \
-  //950-walktree-visitor:module \
-  //952-remote-observers:module \
-  //952-scm-java-client:module \
-  //953-events-api/src/main/proto:all \
-  //953-events-api:module \
-  //953-git-sync-commons/src/main/proto:all \
-  //953-git-sync-commons:module \
-  //954-connector-beans:module \
-  //955-cg-yaml:module \
-  //955-delegate-beans/src/main/proto:all \
-  //955-delegate-beans:module \
-  //955-filters-sdk:module \
-  //955-outbox-sdk:module \
-  //955-setup-usage-sdk:module \
-  //956-feature-flag-beans:module \
-  //957-cg-beans:module \
-  //958-migration-sdk:module \
-  //959-file-service-commons:module \
-  //959-psql-database-models:module \
-  //959-timeout-engine:module \
-  //960-api-services:module \
-  //960-continuous-features:module \
-  //960-expression-service/src/main/proto/io/harness/expression/service:all \
-  //960-expression-service:module \
-  //960-ng-core-beans:module \
-  //960-ng-license-beans:module \
-  //960-ng-license-usage-beans:module \
-  //960-notification-beans/src/main/proto:all \
-  //960-notification-beans:module \
-  //960-persistence:module \
-  //960-persistence:supporter-test \
-  //960-yaml-sdk:module \
-  //970-api-services-beans:module \
-  //970-grpc:module \
-  //970-ng-commons:module \
-  //970-rbac-core:module \
-  //970-telemetry-beans:module \
-  //970-watcher-beans:module \
-  //980-commons:module \
-  //979-recaster:module \
-  //990-commons-test:module \
-  //999-annotations:module \
-  //access-control/service:module \
-  //access-control/libraries/80-aggregator:module \
-  //access-control/libraries/90-core:module \
-  //access-control/contracts:module \
-  //product/ci/engine/proto:all \
-  //product/ci/scm/proto:all \
+  //878-pipeline-service-utilities:module \
 "
 
-bazel ${bazelrc} build $BAZEL_MODULES `bazel query "//...:*" | grep "module_deploy.jar"` ${BAZEL_ARGUMENTS} --remote_download_outputs=all
+bazel ${bazelrc} build $BAZEL_MODULES ${BAZEL_ARGUMENTS} --remote_download_outputs=all
 
 build_bazel_module() {
   module=$1
@@ -288,7 +148,6 @@ build_protocol_info(){
   rm module-deps.sh /tmp/ProtoDeps.text /tmp/KryoDeps.text
 }
 
-build_bazel_application 940-notification-client
 build_bazel_application 820-platform-service
 
 build_bazel_module 100-migrator
@@ -401,3 +260,4 @@ if [ "${PLATFORM}" == "jenkins" ]; then
  build_protocol_info 800-pipeline-service pipeline-service
  build_protocol_info 310-ci-manager ci-manager
 fi
+build_bazel_module 878-pipeline-service-utilities
