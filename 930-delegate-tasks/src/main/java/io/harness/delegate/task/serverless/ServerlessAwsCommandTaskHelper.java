@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.delegate.beans.serverless.ServerlessAwsCloudFormationTemplateSchema;
 import io.harness.delegate.beans.serverless.ServerlessAwsDeployResult;
 import io.harness.delegate.beans.serverless.ServerlessAwsManifestSchema;
 import io.harness.logging.LogCallback;
@@ -22,7 +23,11 @@ import io.harness.serverless.model.ServerlessDelegateTaskParams;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.zeroturnaround.exec.ProcessResult;
 
@@ -32,6 +37,9 @@ import org.zeroturnaround.exec.ProcessResult;
 public class ServerlessAwsCommandTaskHelper {
   @Inject private ServerlessCommandTaskHelper serverlessCommandTaskHelper;
   @Inject private ServerlessTaskPluginHelper serverlessTaskPluginHelper;
+
+  private static String AWS_LAMBDA_FUNCTION_RESOURCE_TYPE = "AWS::Lambda::Function";
+  private static String AWS_LAMBDA_FUNCTION_NAME_PROPERTY_KEY = "FunctionName";
 
   public boolean setServerlessAwsConfigCredentials(ServerlessClient serverlessClient,
       ServerlessAwsConfig serverlessAwsConfig, ServerlessDelegateTaskParams serverlessDelegateTaskParams,
@@ -91,5 +99,27 @@ public class ServerlessAwsCommandTaskHelper {
       return true;
     }
     return false;
+  }
+
+  public List<String> fetchFunctionOutputFromCloudFormationTemplate(String cloudFormationTemplateContent)
+      throws Exception {
+    // todo: validate cloudformation content
+    YamlUtils yamlUtils = new YamlUtils();
+    if (EmptyPredicate.isNotEmpty(cloudFormationTemplateContent)) {
+      ServerlessAwsCloudFormationTemplateSchema serverlessAwsCloudFormationTemplate =
+          yamlUtils.read(cloudFormationTemplateContent, ServerlessAwsCloudFormationTemplateSchema.class);
+      Collection<ServerlessAwsCloudFormationTemplateSchema.Resource> resources =
+          serverlessAwsCloudFormationTemplate.getResources().values();
+      List<Map<String, Object>> functionProperties =
+          resources.stream()
+              .filter(resource -> resource.getType().equals(AWS_LAMBDA_FUNCTION_RESOURCE_TYPE))
+              .map(resource -> resource.getProperties())
+              .collect(Collectors.toList());
+      return functionProperties.stream()
+          .filter(properties -> properties.containsKey(AWS_LAMBDA_FUNCTION_NAME_PROPERTY_KEY))
+          .map(properties -> properties.get(AWS_LAMBDA_FUNCTION_NAME_PROPERTY_KEY).toString())
+          .collect(Collectors.toList());
+    }
+    return Collections.emptyList();
   }
 }
