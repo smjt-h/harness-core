@@ -87,4 +87,13 @@ public class ServiceEntity implements PersistentEntity {
   @Wither @Version Long version;
   @Builder.Default Boolean deleted = Boolean.FALSE;
   Long deletedAt;
+  String yaml;
+
+  // GitSync entities
+  @Wither @Setter @NonFinal String objectIdOfYaml;
+  @Setter @NonFinal Boolean isFromDefaultBranch;
+  @Setter @NonFinal String branch;
+  @Setter @NonFinal String yamlGitConfigRef;
+  @Setter @NonFinal String filePath;
+  @Setter @NonFinal String rootFolder;
 }
