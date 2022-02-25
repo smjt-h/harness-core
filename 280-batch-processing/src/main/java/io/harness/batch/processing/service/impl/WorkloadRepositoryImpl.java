@@ -37,7 +37,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class WorkloadRepositoryImpl extends CacheUtils implements WorkloadRepository {
   private final HPersistence hPersistence;
-  private final Cache<CacheKey, Boolean> saved = Caffeine.newBuilder().expireAfterWrite(Duration.ofMinutes(20)).build();
+  public final Cache<CacheKey, Boolean> saved = Caffeine.newBuilder().expireAfterWrite(Duration.ofMinutes(20)).build();
 
   @Value
   private static class CacheKey {

@@ -187,6 +187,7 @@ public class K8sPodInfoTasklet implements Tasklet {
       metaData.put(InstanceMetaDataConstants.WORKLOAD_ID, workloadId);
     }
 
+    // TODO: Cache use DONE
     PrunedInstanceData prunedInstanceData = instanceDataService.fetchPrunedInstanceDataWithName(
         accountId, clusterId, podInfo.getNodeName(), publishedMessage.getOccurredAt());
     InstanceType instanceType = InstanceType.K8S_POD;
@@ -231,6 +232,7 @@ public class K8sPodInfoTasklet implements Tasklet {
     if (featureFlagService.isNotEnabled(FeatureName.CE_HARNESS_ENTITY_MAPPING, accountId)) {
       Boolean currentGenCluster = clusterInfoCache.get(clusterId);
       if (null != currentGenCluster && currentGenCluster) {
+        // TODO: Cache use DONE, to fix probably
         harnessServiceInfo = harnessServiceInfoFetcher
                                  .fetchHarnessServiceInfo(accountId, podInfo.getCloudProviderId(),
                                      podInfo.getNamespace(), podInfo.getPodName(), labelsMap)
@@ -238,6 +240,7 @@ public class K8sPodInfoTasklet implements Tasklet {
       } else {
         // NG Cluster
         Optional<HarnessServiceInfoNG> harnessServiceInfoNG1;
+        // TODO: Cache use DONE
         harnessServiceInfoNG1 = harnessServiceInfoFetcherNG.fetchHarnessServiceInfoNG(
             accountId, podInfo.getNamespace(), podInfo.getPodName(), labelsMap);
         if (harnessServiceInfoNG1.isPresent()) {
@@ -247,6 +250,7 @@ public class K8sPodInfoTasklet implements Tasklet {
     }
 
     try {
+      // TODO: Cache use DONE
       workloadRepository.savePodWorkload(accountId, podInfo);
     } catch (Exception ex) {
       log.error("Error while saving pod workload {} {}", podInfo.getCloudProviderId(), podUid, ex);

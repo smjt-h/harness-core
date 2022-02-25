@@ -324,11 +324,11 @@ public class EventJobScheduler {
   @Scheduled(cron = "0 0 */1 ? * *")
   public void printCacheStats() throws IllegalAccessException {
     harnessServiceInfoFetcher.logCacheStats();
-    harnessServiceInfoFetcherNG.logCacheStats();
-    workloadRepository.logCacheStats();
     instanceDataService.logCacheStats();
     k8sLabelServiceInfoFetcher.logCacheStats();
     k8SWorkloadService.logCacheStats();
+    harnessServiceInfoFetcherNG.logCacheStats();
+    workloadRepository.logCacheStats();
   }
 
   @Scheduled(cron = "0 0 6 * * ?")
