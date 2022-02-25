@@ -288,7 +288,7 @@ public class ExecutionHelperTest extends CategoryTest {
     assertThat(planExecutionMetadata.getStagesExecutionMetadata().isStagesExecution()).isEqualTo(false);
     assertThat(planExecutionMetadata.getProcessedYaml()).isEqualTo(YamlUtils.injectUuid(mergedPipelineYaml));
 
-    verify(principalInfoHelper, times(1)).getPrincipalInfoFromSecurityContext();
+    verify(principalInfoHelper, times(1)).getPrincipalInfoFromSecurityContext(MANUAL);
     verify(pmsGitSyncHelper, times(1)).getGitSyncBranchContextBytesThreadLocal(entityWithTemplateReference);
     verify(pmsYamlSchemaService, times(0)).validateYamlSchema(accountId, orgId, projectId, pipelineYaml);
     verify(pmsYamlSchemaService, times(1)).validateYamlSchema(accountId, orgId, projectId, mergedPipelineYaml);
@@ -364,7 +364,7 @@ public class ExecutionHelperTest extends CategoryTest {
     assertThat(planExecutionMetadata.getStagesExecutionMetadata().getExpressionValues()).isEqualTo(expressionValues);
     assertThat(planExecutionMetadata.getProcessedYaml()).isEqualTo(YamlUtils.injectUuid(mergedPipelineYamlForS2));
 
-    verify(principalInfoHelper, times(1)).getPrincipalInfoFromSecurityContext();
+    verify(principalInfoHelper, times(1)).getPrincipalInfoFromSecurityContext(MANUAL);
     verify(pmsGitSyncHelper, times(1)).getGitSyncBranchContextBytesThreadLocal(pipelineEntityWithExpressions);
     verify(pmsYamlSchemaService, times(1)).validateYamlSchema(accountId, orgId, projectId, pipelineYamlWithExpressions);
     verify(pipelineRbacServiceImpl, times(1))
@@ -379,7 +379,7 @@ public class ExecutionHelperTest extends CategoryTest {
     PowerMockito.mockStatic(UUIDGenerator.class);
     when(UUIDGenerator.generateUuid()).thenReturn(generatedExecutionId);
 
-    doReturn(executionPrincipalInfo).when(principalInfoHelper).getPrincipalInfoFromSecurityContext();
+    doReturn(executionPrincipalInfo).when(principalInfoHelper).getPrincipalInfoFromSecurityContext(MANUAL);
     doReturn(394).when(pmsPipelineService).incrementRunSequence(any());
     doReturn(null).when(pmsGitSyncHelper).getGitSyncBranchContextBytesThreadLocal(pipelineEntity);
     doNothing().when(pmsYamlSchemaService).validateYamlSchema(accountId, orgId, projectId, mergedPipelineYaml);
@@ -399,7 +399,7 @@ public class ExecutionHelperTest extends CategoryTest {
   }
 
   private void buildExecutionMetadataVerifications() {
-    verify(principalInfoHelper, times(1)).getPrincipalInfoFromSecurityContext();
+    verify(principalInfoHelper, times(1)).getPrincipalInfoFromSecurityContext(MANUAL);
     verify(pmsGitSyncHelper, times(1)).getGitSyncBranchContextBytesThreadLocal(pipelineEntity);
     verify(pmsYamlSchemaService, times(0)).validateYamlSchema(accountId, orgId, projectId, pipelineYaml);
     verify(pmsYamlSchemaService, times(1)).validateYamlSchema(accountId, orgId, projectId, mergedPipelineYaml);

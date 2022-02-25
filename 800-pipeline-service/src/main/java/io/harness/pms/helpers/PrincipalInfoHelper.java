@@ -20,6 +20,7 @@ import io.harness.exception.AccessDeniedException;
 import io.harness.exception.WingsException;
 import io.harness.pms.contracts.plan.ExecutionPrincipalInfo;
 import io.harness.pms.contracts.plan.PrincipalType;
+import io.harness.pms.contracts.plan.TriggerType;
 import io.harness.security.SecurityContextBuilder;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -30,7 +31,7 @@ import java.util.Objects;
 public class PrincipalInfoHelper {
   @Inject PipelineServiceConfiguration configuration;
 
-  public ExecutionPrincipalInfo getPrincipalInfoFromSecurityContext() {
+  public ExecutionPrincipalInfo getPrincipalInfoFromSecurityContext(TriggerType triggerType) {
     io.harness.security.dto.Principal principalInContext = SecurityContextBuilder.getPrincipal();
     if (principalInContext == null || principalInContext.getName() == null || principalInContext.getType() == null) {
       throw new AccessDeniedException("Principal cannot be null", ErrorCode.NG_ACCESS_DENIED, WingsException.USER);
@@ -38,7 +39,7 @@ public class PrincipalInfoHelper {
     return ExecutionPrincipalInfo.newBuilder()
         .setPrincipal(principalInContext.getName())
         .setPrincipalType(Objects.requireNonNull(fromSecurityPrincipalType(principalInContext.getType())))
-        .setShouldValidateRbac(true)
+        .setShouldValidateRbac(triggerType.equals(TriggerType.MANUAL))
         .build();
   }
 
