@@ -160,7 +160,7 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   }
 
   public String getPlanId() {
-    return ambiance.getPlanExecutionId();
+    return ambiance.getPlanId();
   }
 
   @UtilityClass

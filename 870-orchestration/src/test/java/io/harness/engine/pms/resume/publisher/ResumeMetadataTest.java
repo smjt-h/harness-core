@@ -41,13 +41,9 @@ public class ResumeMetadataTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testIfStepParametersSentAreResolvedOne() {
     NodeExecution nodeExecution = PowerMockito.mock(NodeExecution.class);
-
     ResumeMetadata.fromNodeExecution(nodeExecution);
-
-    assertThat(ReflectionUtils.getAllDeclaredAndInheritedFields(ResumeMetadata.class).size())
-        .isEqualTo(NodeProjectionUtils.fieldsForResume.size());
-    Mockito.verify(nodeExecution).getMode();
     Mockito.verify(nodeExecution).getUuid();
+    Mockito.verify(nodeExecution).getMode();
     Mockito.verify(nodeExecution).getAmbiance();
     Mockito.verify(nodeExecution).getResolvedStepParametersBytes();
     Mockito.verify(nodeExecution).obtainLatestExecutableResponse();
