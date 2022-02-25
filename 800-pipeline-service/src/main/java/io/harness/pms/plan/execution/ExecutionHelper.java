@@ -195,15 +195,16 @@ public class ExecutionHelper {
   private ExecutionMetadata buildExecutionMetadata(@NotNull String pipelineIdentifier, String moduleType,
       ExecutionTriggerInfo triggerInfo, PipelineEntity pipelineEntity, String executionId,
       RetryExecutionInfo retryExecutionInfo, List<NotificationRules> notificationRules) {
-    ExecutionMetadata.Builder builder = ExecutionMetadata.newBuilder()
-                                            .setExecutionUuid(executionId)
-                                            .setTriggerInfo(triggerInfo)
-                                            .setModuleType(moduleType)
-                                            .setRunSequence(pmsPipelineService.incrementRunSequence(pipelineEntity))
-                                            .setPipelineIdentifier(pipelineIdentifier)
-                                            .setRetryInfo(retryExecutionInfo)
-                                            .setPrincipalInfo(principalInfoHelper.getPrincipalInfoFromSecurityContext())
-                                            .setIsNotificationConfigured(EmptyPredicate.isNotEmpty(notificationRules));
+    ExecutionMetadata.Builder builder =
+        ExecutionMetadata.newBuilder()
+            .setExecutionUuid(executionId)
+            .setTriggerInfo(triggerInfo)
+            .setModuleType(moduleType)
+            .setRunSequence(pmsPipelineService.incrementRunSequence(pipelineEntity))
+            .setPipelineIdentifier(pipelineIdentifier)
+            .setRetryInfo(retryExecutionInfo)
+            .setPrincipalInfo(principalInfoHelper.getPrincipalInfoFromSecurityContext(triggerInfo.getTriggerType()))
+            .setIsNotificationConfigured(EmptyPredicate.isNotEmpty(notificationRules));
     ByteString gitSyncBranchContext = pmsGitSyncHelper.getGitSyncBranchContextBytesThreadLocal(pipelineEntity);
     if (gitSyncBranchContext != null) {
       builder.setGitSyncBranchContext(gitSyncBranchContext);
