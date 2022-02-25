@@ -36,11 +36,15 @@ public class PrincipalInfoHelper {
     if (principalInContext == null || principalInContext.getName() == null || principalInContext.getType() == null) {
       throw new AccessDeniedException("Principal cannot be null", ErrorCode.NG_ACCESS_DENIED, WingsException.USER);
     }
-    return ExecutionPrincipalInfo.newBuilder()
-        .setPrincipal(principalInContext.getName())
-        .setPrincipalType(Objects.requireNonNull(fromSecurityPrincipalType(principalInContext.getType())))
-        .setShouldValidateRbac(triggerType.equals(TriggerType.MANUAL))
-        .build();
+    if (triggerType.equals(TriggerType.MANUAL)) {
+      return ExecutionPrincipalInfo.newBuilder()
+          .setPrincipal(principalInContext.getName())
+          .setPrincipalType(Objects.requireNonNull(fromSecurityPrincipalType(principalInContext.getType())))
+          .setShouldValidateRbac(true)
+          .build();
+    } else {
+      return ExecutionPrincipalInfo.newBuilder().setShouldValidateRbac(false).build();
+    }
   }
 
   @VisibleForTesting
