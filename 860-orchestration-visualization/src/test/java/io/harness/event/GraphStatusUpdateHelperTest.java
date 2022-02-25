@@ -245,7 +245,7 @@ public class GraphStatusUpdateHelperTest extends OrchestrationVisualizationTestB
     return GraphVertex.builder()
         .uuid(nodeExecution.getUuid())
         .planNodeId(level.getSetupId())
-        .name(nodeExecution.name())
+        .name(nodeExecution.getName())
         .startTs(nodeExecution.getStartTs())
         .endTs(nodeExecution.getEndTs())
         .initialWaitDuration(nodeExecution.getInitialWaitDuration())

@@ -51,7 +51,7 @@ public class ResumeMetadataTest extends CategoryTest {
     Mockito.verify(nodeExecution).getAmbiance();
     Mockito.verify(nodeExecution).getResolvedStepParametersBytes();
     Mockito.verify(nodeExecution).obtainLatestExecutableResponse();
-    Mockito.verify(nodeExecution).module();
+    Mockito.verify(nodeExecution).getModule();
     Mockito.verifyNoMoreInteractions(nodeExecution);
   }
 }
