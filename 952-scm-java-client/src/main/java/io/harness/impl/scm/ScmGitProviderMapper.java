@@ -93,7 +93,8 @@ public class ScmGitProviderMapper {
     if (additionalCertsPath == null) {
       additionalCertsPath = "";
     }
-    return additionalCertsPath;
+    return "";
+  //  return additionalCertsPath;
   }
 
   private BitbucketCloudProvider createBitbucketCloudProvider(BitbucketConnectorDTO bitbucketConnector) {

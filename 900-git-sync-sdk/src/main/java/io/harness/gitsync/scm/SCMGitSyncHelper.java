@@ -77,8 +77,8 @@ public class SCMGitSyncHelper {
         throw new InvalidRequestException(String.format(
             "A file with name %s already exists in the remote Git repository", gitBranchInfo.getFilePath()));
       }
-      throw e;
     }
+    throw e;
   }
 
   private FileInfo getFileInfo(
