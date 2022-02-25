@@ -3,22 +3,22 @@ package io.harness.ci.beans.entities;
 import com.google.inject.Singleton;
 import lombok.Builder;
 import lombok.Data;
-import org.hibernate.validator.constraints.NotEmpty;
+import org.hibernate.validator.constraints.NotBlank;
 
 @Data
 @Builder
 @Singleton
 public class CIExecutionImages {
-  @NotEmpty String addonTag;
-  @NotEmpty String liteEngineTag;
-  @NotEmpty String gitCloneTag;
-  @NotEmpty String buildAndPushDockerRegistryTag;
-  @NotEmpty String buildAndPushECRTag;
-  @NotEmpty String buildAndPushGCRTag;
-  @NotEmpty String gcsUploadTag;
-  @NotEmpty String s3UploadTag;
-  @NotEmpty String artifactoryUploadTag;
-  @NotEmpty String cacheGCSTag;
-  @NotEmpty String cacheS3Tag;
-  @NotEmpty String securityTag;
+  @NotBlank String addonTag;
+  @NotBlank String liteEngineTag;
+  @NotBlank String gitCloneTag;
+  @NotBlank String buildAndPushDockerRegistryTag;
+  @NotBlank String buildAndPushECRTag;
+  @NotBlank String buildAndPushGCRTag;
+  @NotBlank String gcsUploadTag;
+  @NotBlank String s3UploadTag;
+  @NotBlank String artifactoryUploadTag;
+  @NotBlank String cacheGCSTag;
+  @NotBlank String cacheS3Tag;
+  @NotBlank String securityTag;
 }

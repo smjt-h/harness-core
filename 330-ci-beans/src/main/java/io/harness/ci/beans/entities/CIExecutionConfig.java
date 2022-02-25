@@ -11,8 +11,7 @@ import com.github.reinert.jjschema.SchemaIgnore;
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldNameConstants;
-import org.hibernate.validator.constraints.NotEmpty;
-import org.mongodb.morphia.annotations.Entity;
+import org.hibernate.validator.constraints.NotBlank;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -26,18 +25,18 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @HarnessEntity(exportable = true)
 public class CIExecutionConfig implements PersistentEntity, UuidAware, CreatedAtAware {
   @Id @org.mongodb.morphia.annotations.Id String uuid;
-  @NotEmpty String accountIdentifier;
-  @NotEmpty String addOnTag;
-  @NotEmpty String liteEngineTag;
-  @NotEmpty String gitCloneTag;
-  @NotEmpty String securityTag;
-  @NotEmpty String buildAndPushDockerRegistryTag;
-  @NotEmpty String buildAndPushECRTag;
-  @NotEmpty String buildAndPushGCRTag;
-  @NotEmpty String gcsUploadTag;
-  @NotEmpty String s3UploadTag;
-  @NotEmpty String artifactoryUploadTag;
-  @NotEmpty String cacheGCSTag;
-  @NotEmpty String cacheS3Tag;
+  @NotBlank String accountIdentifier;
+  @NotBlank String addOnImage;
+  @NotBlank String liteEngineImage;
+  @NotBlank String gitCloneImage;
+  @NotBlank String securityImage;
+  @NotBlank String buildAndPushDockerRegistryImage;
+  @NotBlank String buildAndPushECRImage;
+  @NotBlank String buildAndPushGCRImage;
+  @NotBlank String gcsUploadImage;
+  @NotBlank String s3UploadImage;
+  @NotBlank String artifactoryUploadTag;
+  @NotBlank String cacheGCSTag;
+  @NotBlank String cacheS3Tag;
   @SchemaIgnore private long createdAt;
 }

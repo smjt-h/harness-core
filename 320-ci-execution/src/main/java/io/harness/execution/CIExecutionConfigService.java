@@ -29,42 +29,42 @@ public class CIExecutionConfigService {
     } else {
       executionConfig = CIExecutionConfig.builder().accountIdentifier(accountId).build();
     }
-    executionConfig.setGitCloneTag(ciExecutionImages.getGitCloneTag());
-    executionConfig.setAddOnTag(ciExecutionImages.getAddonTag());
-    executionConfig.setLiteEngineTag(ciExecutionImages.getLiteEngineTag());
+    executionConfig.setGitCloneImage(ciExecutionImages.getGitCloneTag());
+    executionConfig.setAddOnImage(ciExecutionImages.getAddonTag());
+    executionConfig.setLiteEngineImage(ciExecutionImages.getLiteEngineTag());
     executionConfig.setArtifactoryUploadTag(ciExecutionImages.getArtifactoryUploadTag());
-    executionConfig.setBuildAndPushDockerRegistryTag(ciExecutionImages.getBuildAndPushDockerRegistryTag());
+    executionConfig.setBuildAndPushDockerRegistryImage(ciExecutionImages.getBuildAndPushDockerRegistryTag());
     executionConfig.setCacheGCSTag(ciExecutionImages.getCacheGCSTag());
     executionConfig.setCacheS3Tag(ciExecutionImages.getCacheS3Tag());
-    executionConfig.setBuildAndPushECRTag(ciExecutionImages.getBuildAndPushGCRTag());
-    executionConfig.setBuildAndPushGCRTag(ciExecutionImages.getBuildAndPushGCRTag());
-    executionConfig.setGcsUploadTag(ciExecutionImages.getGcsUploadTag());
-    executionConfig.setS3UploadTag(ciExecutionImages.getS3UploadTag());
-    executionConfig.setSecurityTag(ciExecutionImages.getSecurityTag());
+    executionConfig.setBuildAndPushECRImage(ciExecutionImages.getBuildAndPushECRTag());
+    executionConfig.setBuildAndPushGCRImage(ciExecutionImages.getBuildAndPushGCRTag());
+    executionConfig.setGcsUploadImage(ciExecutionImages.getGcsUploadTag());
+    executionConfig.setS3UploadImage(ciExecutionImages.getS3UploadTag());
+    executionConfig.setSecurityImage(ciExecutionImages.getSecurityTag());
     configRepository.save(executionConfig);
     return true;
   }
 
-  public String getLiteEngineImage(String accountId) {
+  public String getAddonImage(String accountId) {
     Optional<CIExecutionConfig> configOptional = configRepository.findFirstByAccountIdentifier(accountId);
     String image;
     if (configOptional.isPresent()) {
-      image = configOptional.get().getAddOnTag();
+      image = configOptional.get().getAddOnImage();
     } else {
       image = ciExecutionServiceConfig.getAddonImage();
     }
     return image;
   }
 
-  public String getAddonImage(String accountId) {
+  public String getLiteEngineImage(String accountId) {
     Optional<CIExecutionConfig> configOptional = configRepository.findFirstByAccountIdentifier(accountId);
-    String tag;
+    String image;
     if (configOptional.isPresent()) {
-      tag = configOptional.get().getAddOnTag();
+      image = configOptional.get().getLiteEngineImage();
     } else {
-      tag = ciExecutionServiceConfig.getLiteEngineImage();
+      image = ciExecutionServiceConfig.getLiteEngineImage();
     }
-    return tag;
+    return image;
   }
 
   public List<DeprecatedImageInfo> getDeprecatedTags(String accountId) {
@@ -72,68 +72,71 @@ public class CIExecutionConfigService {
     List<DeprecatedImageInfo> deprecatedTags = new ArrayList();
     if (configOptional.isPresent()) {
       CIExecutionConfig ciExecutionConfig = configOptional.get();
-      if (!checkForCIImage(ciExecutionServiceConfig.getAddonImage(), ciExecutionConfig.getAddOnTag())) {
+      if (!checkForCIImage(ciExecutionServiceConfig.getAddonImage(), ciExecutionConfig.getAddOnImage())) {
         deprecatedTags.add(
-            DeprecatedImageInfo.builder().tag("AddonImage").version(ciExecutionConfig.getAddOnTag()).build());
+            DeprecatedImageInfo.builder().tag("AddonImage").version(ciExecutionConfig.getAddOnImage()).build());
       }
-      if (!checkForCIImage(ciExecutionServiceConfig.getLiteEngineImage(), ciExecutionConfig.getLiteEngineTag())) {
-        deprecatedTags.add(
-                DeprecatedImageInfo.builder().tag("LiteEngineTag").version(ciExecutionConfig.getLiteEngineTag()).build());
+      if (!checkForCIImage(ciExecutionServiceConfig.getLiteEngineImage(), ciExecutionConfig.getLiteEngineImage())) {
+        deprecatedTags.add(DeprecatedImageInfo.builder()
+                               .tag("LiteEngineImage")
+                               .version(ciExecutionConfig.getLiteEngineImage())
+                               .build());
       }
       if (!ciExecutionServiceConfig.getStepConfig().getCacheS3Config().equals(ciExecutionConfig.getCacheS3Tag())) {
         deprecatedTags.add(
-            DeprecatedImageInfo.builder().tag("CacheS3Tag").version(ciExecutionConfig.getCacheS3Tag()).build());
+            DeprecatedImageInfo.builder().tag("CacheS3Image").version(ciExecutionConfig.getCacheS3Tag()).build());
       }
       if (!ciExecutionServiceConfig.getStepConfig().getArtifactoryUploadConfig().equals(
               ciExecutionConfig.getArtifactoryUploadTag())) {
         deprecatedTags.add(DeprecatedImageInfo.builder()
-                               .tag("ArtifactoryUploadTag")
+                               .tag("ArtifactoryUploadImage")
                                .version(ciExecutionConfig.getArtifactoryUploadTag())
                                .build());
       }
       if (!ciExecutionServiceConfig.getStepConfig().getCacheGCSConfig().equals(ciExecutionConfig.getCacheGCSTag())) {
         deprecatedTags.add(
-            DeprecatedImageInfo.builder().tag("CacheGCSTag").version(ciExecutionConfig.getCacheGCSTag()).build());
+            DeprecatedImageInfo.builder().tag("CacheGCSImage").version(ciExecutionConfig.getCacheGCSTag()).build());
       }
-      if (!ciExecutionServiceConfig.getStepConfig().getS3UploadConfig().equals(ciExecutionConfig.getS3UploadTag())) {
+      if (!ciExecutionServiceConfig.getStepConfig().getS3UploadConfig().equals(ciExecutionConfig.getS3UploadImage())) {
         deprecatedTags.add(
-            DeprecatedImageInfo.builder().tag("S3UploadTag").version(ciExecutionConfig.getS3UploadTag()).build());
+            DeprecatedImageInfo.builder().tag("S3UploadImage").version(ciExecutionConfig.getS3UploadImage()).build());
       }
       if (!ciExecutionServiceConfig.getStepConfig().getCacheS3Config().equals(ciExecutionConfig.getCacheS3Tag())) {
         deprecatedTags.add(
-            DeprecatedImageInfo.builder().tag("CacheS3Tag").version(ciExecutionConfig.getCacheS3Tag()).build());
+            DeprecatedImageInfo.builder().tag("CacheS3Image").version(ciExecutionConfig.getCacheS3Tag()).build());
       }
-      if (!ciExecutionServiceConfig.getStepConfig().getGcsUploadConfig().equals(ciExecutionConfig.getGcsUploadTag())) {
+      if (!ciExecutionServiceConfig.getStepConfig().getGcsUploadConfig().equals(
+              ciExecutionConfig.getGcsUploadImage())) {
         deprecatedTags.add(
-            DeprecatedImageInfo.builder().tag("GCSUploadTag").version(ciExecutionConfig.getGcsUploadTag()).build());
+            DeprecatedImageInfo.builder().tag("GCSUploadImage").version(ciExecutionConfig.getGcsUploadImage()).build());
       }
-      if (!ciExecutionServiceConfig.getStepConfig().getSecurityConfig().equals(ciExecutionConfig.getSecurityTag())) {
+      if (!ciExecutionServiceConfig.getStepConfig().getSecurityConfig().equals(ciExecutionConfig.getSecurityImage())) {
         deprecatedTags.add(
-                DeprecatedImageInfo.builder().tag("SecurityTag").version(ciExecutionConfig.getGcsUploadTag()).build());
+            DeprecatedImageInfo.builder().tag("SecurityImage").version(ciExecutionConfig.getGcsUploadImage()).build());
       }
       if (!ciExecutionServiceConfig.getStepConfig().getBuildAndPushDockerRegistryConfig().equals(
-              ciExecutionConfig.getBuildAndPushDockerRegistryTag())) {
+              ciExecutionConfig.getBuildAndPushDockerRegistryImage())) {
         deprecatedTags.add(DeprecatedImageInfo.builder()
-                               .tag("BuildAndPushDockerTag")
-                               .version(ciExecutionConfig.getBuildAndPushDockerRegistryTag())
+                               .tag("BuildAndPushDockerImage")
+                               .version(ciExecutionConfig.getBuildAndPushDockerRegistryImage())
                                .build());
       }
-      if (!ciExecutionServiceConfig.getStepConfig().getGitCloneConfig().equals(ciExecutionConfig.getGitCloneTag())) {
+      if (!ciExecutionServiceConfig.getStepConfig().getGitCloneConfig().equals(ciExecutionConfig.getGitCloneImage())) {
         deprecatedTags.add(
-            DeprecatedImageInfo.builder().tag("GitCloneTag").version(ciExecutionConfig.getGitCloneTag()).build());
+            DeprecatedImageInfo.builder().tag("GitCloneImage").version(ciExecutionConfig.getGitCloneImage()).build());
       }
       if (!ciExecutionServiceConfig.getStepConfig().getBuildAndPushECRConfig().equals(
-              ciExecutionConfig.getBuildAndPushECRTag())) {
+              ciExecutionConfig.getBuildAndPushECRImage())) {
         deprecatedTags.add(DeprecatedImageInfo.builder()
-                               .tag("BuildAndPushECRConfig")
-                               .version(ciExecutionConfig.getBuildAndPushECRTag())
+                               .tag("BuildAndPushECRConfigImage")
+                               .version(ciExecutionConfig.getBuildAndPushECRImage())
                                .build());
       }
       if (!ciExecutionServiceConfig.getStepConfig().getBuildAndPushGCRConfig().equals(
-              ciExecutionConfig.getBuildAndPushGCRTag())) {
+              ciExecutionConfig.getBuildAndPushGCRImage())) {
         deprecatedTags.add(DeprecatedImageInfo.builder()
-                               .tag("BuildAndPushGCRConfig")
-                               .version(ciExecutionConfig.getBuildAndPushGCRTag())
+                               .tag("BuildAndPushGCRConfigImage")
+                               .version(ciExecutionConfig.getBuildAndPushGCRImage())
                                .build());
       }
     }
@@ -157,7 +160,7 @@ public class CIExecutionConfigService {
       case DOCKER:
         entrypoint = ciExecutionServiceConfig.getStepConfig().getBuildAndPushDockerRegistryConfig().getEntrypoint();
         if (existingConfig.isPresent()) {
-          image = existingConfig.get().getBuildAndPushDockerRegistryTag();
+          image = existingConfig.get().getBuildAndPushDockerRegistryImage();
         } else {
           image = ciExecutionServiceConfig.getStepConfig().getBuildAndPushDockerRegistryConfig().getImage();
         }
@@ -165,7 +168,7 @@ public class CIExecutionConfigService {
       case GCR:
         entrypoint = ciExecutionServiceConfig.getStepConfig().getBuildAndPushGCRConfig().getEntrypoint();
         if (existingConfig.isPresent()) {
-          image = existingConfig.get().getBuildAndPushGCRTag();
+          image = existingConfig.get().getBuildAndPushGCRImage();
         } else {
           image = ciExecutionServiceConfig.getStepConfig().getBuildAndPushGCRConfig().getImage();
         }
@@ -173,7 +176,7 @@ public class CIExecutionConfigService {
       case ECR:
         entrypoint = ciExecutionServiceConfig.getStepConfig().getBuildAndPushECRConfig().getEntrypoint();
         if (existingConfig.isPresent()) {
-          image = existingConfig.get().getBuildAndPushECRTag();
+          image = existingConfig.get().getBuildAndPushECRImage();
         } else {
           image = ciExecutionServiceConfig.getStepConfig().getBuildAndPushECRConfig().getImage();
         }
@@ -190,7 +193,7 @@ public class CIExecutionConfigService {
       case UPLOAD_S3:
         entrypoint = ciExecutionServiceConfig.getStepConfig().getS3UploadConfig().getEntrypoint();
         if (existingConfig.isPresent()) {
-          image = existingConfig.get().getS3UploadTag();
+          image = existingConfig.get().getS3UploadImage();
         } else {
           image = ciExecutionServiceConfig.getStepConfig().getS3UploadConfig().getImage();
         }
@@ -198,9 +201,9 @@ public class CIExecutionConfigService {
       case UPLOAD_GCS:
         entrypoint = ciExecutionServiceConfig.getStepConfig().getCacheGCSConfig().getEntrypoint();
         if (existingConfig.isPresent()) {
-          image = existingConfig.get().getGcsUploadTag();
+          image = existingConfig.get().getGcsUploadImage();
         } else {
-          image = ciExecutionServiceConfig.getStepConfig().getGcsUploadConfig().getImage();
+          image = ciExecutionServiceConfig.getStepConfig().getCacheGCSConfig().getImage();
         }
         break;
       case SAVE_CACHE_GCS:
@@ -215,7 +218,7 @@ public class CIExecutionConfigService {
       case SECURITY:
         entrypoint = ciExecutionServiceConfig.getStepConfig().getSecurityConfig().getEntrypoint();
         if (existingConfig.isPresent()) {
-          image = existingConfig.get().getSecurityTag();
+          image = existingConfig.get().getSecurityImage();
         } else {
           image = ciExecutionServiceConfig.getStepConfig().getSecurityConfig().getImage();
         }
