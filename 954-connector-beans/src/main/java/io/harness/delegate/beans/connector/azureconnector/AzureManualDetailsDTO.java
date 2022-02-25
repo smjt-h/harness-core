@@ -24,14 +24,14 @@ import lombok.Value;
 @ApiModel("AzureManualDetails")
 @Schema(name = "AzureManualDetails", description = "This contains Azure manual credentials connector details")
 public class AzureManualDetailsDTO implements AzureCredentialSpecDTO {
-  @Schema(description = "Application ID of the Azure App.") @NotNull private String clientId;
+  @Schema(description = "Application ID of the Azure App.") @NotNull String clientId;
   @SecretReference
   @ApiModelProperty(dataType = "string")
   @Schema(description = "This is the Harness text secret with the Azure authentication key as its value.")
   @NotNull
-  private SecretRefData secretKeyRef;
+  SecretRefData secretKeyRef;
   @NotNull
   @Schema(description = "The Azure Active Directory (AAD) directory ID where you created your application.")
-  private String tenantId;
-  @Schema(description = "Azure Subscription ID.") @NotNull private String subscription;
+  String tenantId;
+  @Schema(description = "Azure Subscription ID.") @NotNull String subscription;
 }

@@ -12,7 +12,12 @@ import static software.wings.beans.TaskType.NG_AZURE_TASK;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.ConnectorValidationResult;
 import io.harness.delegate.beans.connector.ConnectorConfigDTO;
-import io.harness.delegate.beans.connector.azureconnector.*;
+import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
+import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureTaskParams;
+import io.harness.delegate.beans.connector.azureconnector.AzureTaskType;
+import io.harness.delegate.beans.connector.azureconnector.AzureValidateTaskResponse;
 import io.harness.delegate.task.TaskParameters;
 
 public class AzureConnectorValidator extends AbstractConnectorValidator {

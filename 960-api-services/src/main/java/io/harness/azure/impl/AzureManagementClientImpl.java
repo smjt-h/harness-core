@@ -44,11 +44,7 @@ import com.microsoft.azure.CloudException;
 import com.microsoft.azure.Page;
 import com.microsoft.azure.PagedList;
 import com.microsoft.azure.management.Azure;
-import com.microsoft.azure.management.resources.Deployment;
-import com.microsoft.azure.management.resources.DeploymentMode;
-import com.microsoft.azure.management.resources.DeploymentProperties;
-import com.microsoft.azure.management.resources.Location;
-import com.microsoft.azure.management.resources.ResourceGroupExportTemplateOptions;
+import com.microsoft.azure.management.resources.*;
 import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 import com.microsoft.azure.management.resources.implementation.DeploymentExtendedInner;
 import com.microsoft.azure.management.resources.implementation.DeploymentInner;
@@ -614,14 +610,10 @@ public class AzureManagementClientImpl extends AzureClient implements AzureManag
   }
 
   @Override
-  public void validateConnection(AzureConfig azureConfig, String subscriptionId) {
-    if (isBlank(subscriptionId)) {
-      throw new IllegalArgumentException(SUBSCRIPTION_ID_NULL_VALIDATION_MSG);
-    }
+  public void validateAzureConnection(AzureConfig azureConfig) {
+    getAzureClientWithDefaultSubscription(azureConfig).subscriptions();
 
-    getAzureClient(azureConfig, subscriptionId).getCurrentSubscription();
-
-    log.debug("Azure connection validated for clientId {} tenantId {} subscriptionId {}", azureConfig.getClientId(),
-        azureConfig.getTenantId(), subscriptionId);
+    log.debug(
+        "Azure connection validated for clientId {} tenantId {}", azureConfig.getClientId(), azureConfig.getTenantId());
   }
 }

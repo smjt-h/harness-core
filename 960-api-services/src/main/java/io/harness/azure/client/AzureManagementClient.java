@@ -183,7 +183,6 @@ public interface AzureManagementClient {
    * Validate azure connection with a provided config. Will throw exception if connection can't be made
    *
    * @param azureConfig - tenantId, clientId, secretKey and environmentType data
-   * @param subscriptionId
    */
-  void validateConnection(AzureConfig azureConfig, String subscriptionId);
+  void validateAzureConnection(AzureConfig azureConfig);
 }

@@ -12,7 +12,10 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.entities.embedded.azureconnector.AzureConfig;
 import io.harness.connector.entities.embedded.azureconnector.AzureManualCredential;
 import io.harness.connector.mappers.ConnectorDTOToEntityMapper;
-import io.harness.delegate.beans.connector.azureconnector.*;
+import io.harness.delegate.beans.connector.azureconnector.AzureConnectorCredentialDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
+import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
 import io.harness.encryption.SecretRefHelper;
 import io.harness.exception.InvalidRequestException;
 
@@ -27,7 +30,7 @@ public class AzureDTOToEntity implements ConnectorDTOToEntityMapper<AzureConnect
     final AzureCredentialType credentialType = credential.getAzureCredentialType();
     switch (credentialType) {
       case INHERIT_FROM_DELEGATE:
-        return buildInheritFromDelegate(credential);
+        return buildInheritFromDelegate();
       case MANUAL_CREDENTIALS:
         return buildManualCredential(credential);
       default:
@@ -35,7 +38,7 @@ public class AzureDTOToEntity implements ConnectorDTOToEntityMapper<AzureConnect
     }
   }
 
-  private AzureConfig buildInheritFromDelegate(AzureConnectorCredentialDTO connector) {
+  private AzureConfig buildInheritFromDelegate() {
     return AzureConfig.builder().credentialType(AzureCredentialType.INHERIT_FROM_DELEGATE).credential(null).build();
   }
 

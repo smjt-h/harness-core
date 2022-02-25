@@ -7,9 +7,6 @@
 
 package io.harness.delegate.beans.connector.azureconnector;
 
-import io.harness.beans.DecryptableEntity;
-import io.harness.delegate.beans.connector.gcpconnector.GcpCredentialDTODeserializer;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
