@@ -249,7 +249,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
@@ -592,7 +594,7 @@ public class DelegateServiceImpl implements DelegateService {
 
     long target = delegateConnectionDao.numberOfActiveDelegateConnectionsPerVersion(targetVersion);
 
-    return (double) target / (double) primary;
+    return BigDecimal.valueOf((double) target / (double) primary).setScale(3, RoundingMode.HALF_UP).doubleValue();
   }
 
   @Override
@@ -2807,7 +2809,7 @@ public class DelegateServiceImpl implements DelegateService {
           taskSelectionDetails.getTaskSetupAbstractions().get(Cd1SetupFields.INFRASTRUCTURE_MAPPING_ID_FIELD);
     }
 
-    return assignDelegateService.canAssign(null, delegateId, accountId, appId, envId, infraMappingId,
+    return assignDelegateService.canAssign(delegateId, accountId, appId, envId, infraMappingId,
         taskSelectionDetails.getTaskGroup(), selectorCapabilities, taskSelectionDetails.getTaskSetupAbstractions());
   }
 
