@@ -9,13 +9,9 @@ package io.harness.engine.pms.resume.publisher;
 
 import static io.harness.rule.OwnerRule.SAHIL;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
 import io.harness.execution.NodeExecution;
-import io.harness.pms.execution.utils.NodeProjectionUtils;
-import io.harness.reflection.ReflectionUtils;
 import io.harness.rule.Owner;
 
 import org.junit.Before;
