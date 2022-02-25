@@ -83,7 +83,6 @@ public class ServiceEntity implements PersistentEntity {
   @Size(max = 1024) String description;
 
   // TODO(archit): Add tags
-
   @Wither @CreatedDate Long createdAt;
   @Wither @LastModifiedDate Long lastModifiedAt;
   @Wither @Version Long version;
