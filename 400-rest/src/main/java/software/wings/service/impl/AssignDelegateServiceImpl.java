@@ -98,6 +98,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import io.fabric8.utils.Strings;
 import org.mongodb.morphia.FindAndModifyOptions;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.UpdateOperations;
@@ -950,6 +951,16 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
   public List<Delegate> getAccountDelegates(String accountId) {
     try {
       List<Delegate> accountDelegates = accountDelegatesCache.get(accountId);
+      log.info("Acocunt Delegates from cache: ");
+      for (Delegate delegate : accountDelegates) {
+        if (delegate.getOwner() == null) {
+          log.info("Delegate owner is null for delegate id ", delegate.getUuid());
+        } else {
+          log.info("Delegate info ",
+              Strings.join(",", delegate.getUuid(), delegate.getDelegateName(), delegate.getOwner().getIdentifier()));
+        }
+      }
+
       if (accountDelegates.isEmpty()) {
         /* Cache invalidation was added here in order to cover the edge case, when there are no delegates in db for
          * the given account, so that the cache has an opportunity to refresh on a next invocation, instead of waiting
