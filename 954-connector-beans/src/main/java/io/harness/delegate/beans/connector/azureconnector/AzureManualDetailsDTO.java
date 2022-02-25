@@ -33,5 +33,4 @@ public class AzureManualDetailsDTO implements AzureCredentialSpecDTO {
   @NotNull
   @Schema(description = "The Azure Active Directory (AAD) directory ID where you created your application.")
   String tenantId;
-  @Schema(description = "Azure Subscription ID.") @NotNull String subscription;
 }

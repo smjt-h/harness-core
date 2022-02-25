@@ -21,5 +21,4 @@ public class AzureManualCredential implements AzureCredential {
   String clientId;
   String tenantId;
   String secretKeyRef;
-  String subscription;
 }

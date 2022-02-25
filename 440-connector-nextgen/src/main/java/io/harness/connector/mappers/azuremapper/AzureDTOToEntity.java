@@ -46,7 +46,6 @@ public class AzureDTOToEntity implements ConnectorDTOToEntityMapper<AzureConnect
     final AzureManualDetailsDTO config = (AzureManualDetailsDTO) connector.getConfig();
     final String secretKeyRef = SecretRefHelper.getSecretConfigString(config.getSecretKeyRef());
     AzureManualCredential azureManualCredential = AzureManualCredential.builder()
-                                                      .subscription(config.getSubscription())
                                                       .tenantId(config.getTenantId())
                                                       .clientId(config.getClientId())
                                                       .secretKeyRef(secretKeyRef)

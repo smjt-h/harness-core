@@ -42,7 +42,6 @@ public class AzureEntityToDTO implements ConnectorEntityToDTOMapper<AzureConnect
                                                             .clientId(auth.getClientId())
                                                             .secretKeyRef(secretRef)
                                                             .tenantId(auth.getTenantId())
-                                                            .subscription(auth.getSubscription())
                                                             .build();
     return AzureConnectorDTO.builder()
         .delegateSelectors(connector.getDelegateSelectors())
