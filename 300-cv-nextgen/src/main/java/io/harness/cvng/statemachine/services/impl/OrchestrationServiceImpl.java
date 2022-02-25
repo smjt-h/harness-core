@@ -11,6 +11,7 @@ import static io.harness.cvng.CVConstants.STATE_MACHINE_IGNORE_LIMIT;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 
+import io.harness.cvng.core.jobs.StateMachineEventPublisherService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.statemachine.beans.AnalysisInput;
 import io.harness.cvng.statemachine.beans.AnalysisStatus;
@@ -42,6 +43,7 @@ public class OrchestrationServiceImpl implements OrchestrationService {
   @Inject private AnalysisStateMachineService stateMachineService;
 
   @Inject private VerificationTaskService verificationTaskService;
+  @Inject private StateMachineEventPublisherService stateMachineEventPublisherService;
 
   @Override
   public void queueAnalysis(String verificationTaskId, Instant startTime, Instant endTime) {
@@ -72,6 +74,8 @@ public class OrchestrationServiceImpl implements OrchestrationService {
             .addToSet(AnalysisOrchestratorKeys.analysisStateMachineQueue, Arrays.asList(stateMachine));
 
     hPersistence.upsert(orchestratorQuery, updateOperations);
+
+    stateMachineEventPublisherService.registerTaskComplete(accountId, verificationTaskId);
   }
 
   private void validateAnalysisInputs(AnalysisInput inputs) {
@@ -162,7 +166,8 @@ public class OrchestrationServiceImpl implements OrchestrationService {
     stateMachineService.retryStateMachineAfterFailure(currentStateMachine);
   }
 
-  private AnalysisStateMachine getFrontOfStateMachineQueue(String verificationTaskId) {
+  @Override
+  public AnalysisStateMachine getFrontOfStateMachineQueue(String verificationTaskId) {
     Query<AnalysisOrchestrator> orchestratorQuery =
         hPersistence.createQuery(AnalysisOrchestrator.class)
             .filter(AnalysisOrchestratorKeys.verificationTaskId, verificationTaskId);
