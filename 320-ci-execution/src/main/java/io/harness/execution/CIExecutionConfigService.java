@@ -205,11 +205,11 @@ public class CIExecutionConfigService {
         }
         break;
       case UPLOAD_GCS:
-        entrypoint = ciExecutionServiceConfig.getStepConfig().getCacheGCSConfig().getEntrypoint();
+        entrypoint = ciExecutionServiceConfig.getStepConfig().getGcsUploadConfig().getEntrypoint();
         if (existingConfig.isPresent()) {
           image = existingConfig.get().getGcsUploadImage();
         } else {
-          image = ciExecutionServiceConfig.getStepConfig().getCacheGCSConfig().getImage();
+          image = ciExecutionServiceConfig.getStepConfig().getGcsUploadConfig().getImage();
         }
         break;
       case SAVE_CACHE_GCS:
