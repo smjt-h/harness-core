@@ -82,57 +82,63 @@ public class CIExecutionConfigService {
                                .version(ciExecutionConfig.getLiteEngineImage())
                                .build());
       }
-      if (!ciExecutionServiceConfig.getStepConfig().getCacheS3Config().equals(ciExecutionConfig.getCacheS3Tag())) {
+      if (!ciExecutionServiceConfig.getStepConfig().getCacheS3Config().getImage().equals(
+              ciExecutionConfig.getCacheS3Tag())) {
         deprecatedTags.add(
             DeprecatedImageInfo.builder().tag("CacheS3Image").version(ciExecutionConfig.getCacheS3Tag()).build());
       }
-      if (!ciExecutionServiceConfig.getStepConfig().getArtifactoryUploadConfig().equals(
+      if (!ciExecutionServiceConfig.getStepConfig().getArtifactoryUploadConfig().getImage().equals(
               ciExecutionConfig.getArtifactoryUploadTag())) {
         deprecatedTags.add(DeprecatedImageInfo.builder()
                                .tag("ArtifactoryUploadImage")
                                .version(ciExecutionConfig.getArtifactoryUploadTag())
                                .build());
       }
-      if (!ciExecutionServiceConfig.getStepConfig().getCacheGCSConfig().equals(ciExecutionConfig.getCacheGCSTag())) {
+      if (!ciExecutionServiceConfig.getStepConfig().getCacheGCSConfig().getImage().equals(
+              ciExecutionConfig.getCacheGCSTag())) {
         deprecatedTags.add(
             DeprecatedImageInfo.builder().tag("CacheGCSImage").version(ciExecutionConfig.getCacheGCSTag()).build());
       }
-      if (!ciExecutionServiceConfig.getStepConfig().getS3UploadConfig().equals(ciExecutionConfig.getS3UploadImage())) {
+      if (!ciExecutionServiceConfig.getStepConfig().getS3UploadConfig().getImage().equals(
+              ciExecutionConfig.getS3UploadImage())) {
         deprecatedTags.add(
             DeprecatedImageInfo.builder().tag("S3UploadImage").version(ciExecutionConfig.getS3UploadImage()).build());
       }
-      if (!ciExecutionServiceConfig.getStepConfig().getCacheS3Config().equals(ciExecutionConfig.getCacheS3Tag())) {
+      if (!ciExecutionServiceConfig.getStepConfig().getCacheS3Config().getImage().equals(
+              ciExecutionConfig.getCacheS3Tag())) {
         deprecatedTags.add(
             DeprecatedImageInfo.builder().tag("CacheS3Image").version(ciExecutionConfig.getCacheS3Tag()).build());
       }
-      if (!ciExecutionServiceConfig.getStepConfig().getGcsUploadConfig().equals(
+      if (!ciExecutionServiceConfig.getStepConfig().getGcsUploadConfig().getImage().equals(
               ciExecutionConfig.getGcsUploadImage())) {
         deprecatedTags.add(
             DeprecatedImageInfo.builder().tag("GCSUploadImage").version(ciExecutionConfig.getGcsUploadImage()).build());
       }
-      if (!ciExecutionServiceConfig.getStepConfig().getSecurityConfig().equals(ciExecutionConfig.getSecurityImage())) {
+      if (!ciExecutionServiceConfig.getStepConfig().getSecurityConfig().getImage().equals(
+              ciExecutionConfig.getSecurityImage())) {
         deprecatedTags.add(
             DeprecatedImageInfo.builder().tag("SecurityImage").version(ciExecutionConfig.getGcsUploadImage()).build());
       }
-      if (!ciExecutionServiceConfig.getStepConfig().getBuildAndPushDockerRegistryConfig().equals(
+      if (!ciExecutionServiceConfig.getStepConfig().getBuildAndPushDockerRegistryConfig().getImage().equals(
               ciExecutionConfig.getBuildAndPushDockerRegistryImage())) {
         deprecatedTags.add(DeprecatedImageInfo.builder()
                                .tag("BuildAndPushDockerImage")
                                .version(ciExecutionConfig.getBuildAndPushDockerRegistryImage())
                                .build());
       }
-      if (!ciExecutionServiceConfig.getStepConfig().getGitCloneConfig().equals(ciExecutionConfig.getGitCloneImage())) {
+      if (!ciExecutionServiceConfig.getStepConfig().getGitCloneConfig().getImage().equals(
+              ciExecutionConfig.getGitCloneImage())) {
         deprecatedTags.add(
             DeprecatedImageInfo.builder().tag("GitCloneImage").version(ciExecutionConfig.getGitCloneImage()).build());
       }
-      if (!ciExecutionServiceConfig.getStepConfig().getBuildAndPushECRConfig().equals(
+      if (!ciExecutionServiceConfig.getStepConfig().getBuildAndPushECRConfig().getImage().equals(
               ciExecutionConfig.getBuildAndPushECRImage())) {
         deprecatedTags.add(DeprecatedImageInfo.builder()
                                .tag("BuildAndPushECRConfigImage")
                                .version(ciExecutionConfig.getBuildAndPushECRImage())
                                .build());
       }
-      if (!ciExecutionServiceConfig.getStepConfig().getBuildAndPushGCRConfig().equals(
+      if (!ciExecutionServiceConfig.getStepConfig().getBuildAndPushGCRConfig().getImage().equals(
               ciExecutionConfig.getBuildAndPushGCRImage())) {
         deprecatedTags.add(DeprecatedImageInfo.builder()
                                .tag("BuildAndPushGCRConfigImage")
@@ -143,7 +149,7 @@ public class CIExecutionConfigService {
     return deprecatedTags;
   }
 
-  private boolean checkForCIImage(String customImage, String defaultImage) {
+  private boolean checkForCIImage(String defaultImage, String customImage) {
     String defaultImageTag = defaultImage.split(":")[1];
     String customImageTag = customImage.split(":")[1];
     Version defaultVersion = Version.parseVersion(defaultImageTag);
