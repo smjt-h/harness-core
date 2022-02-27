@@ -79,8 +79,8 @@ public class CIExecutionConfigServiceTest extends CIExecutionTestBase {
     CIExecutionConfig executionConfig = CIExecutionConfig.builder()
                                             .accountIdentifier("acct")
                                             .buildAndPushDockerRegistryImage("bpdr:1.2.3")
-                                            .addOnImage("harness/ci-addon:1.0.0")
-                                            .liteEngineImage("harness/ci-lite-engine:1.0.0")
+                                            .addOnImage("harness/ci-addon:1.2.0")
+                                            .liteEngineImage("harness/ci-lite-engine:1.2.0")
                                             .gitCloneImage("gc:1.2.3")
                                             .buildAndPushDockerRegistryImage("bpdr:1.2.3")
                                             .buildAndPushECRImage("bpecr:1.2.3")
@@ -132,7 +132,9 @@ public class CIExecutionConfigServiceTest extends CIExecutionTestBase {
                                             .build();
     when(cIExecutionConfigRepository.findFirstByAccountIdentifier("acct")).thenReturn(Optional.of(executionConfig));
     List<DeprecatedImageInfo> deprecatedImageInfos =
-        Arrays.asList(DeprecatedImageInfo.builder().tag("CacheS3Image").version("caches3:1.2.2").build(),
+        Arrays.asList(DeprecatedImageInfo.builder().tag("AddonImage").version("harness/ci-addon:1.0.0").build(),
+            DeprecatedImageInfo.builder().tag("LiteEngineImage").version("harness/ci-lite-engine:1.0.0").build(),
+            DeprecatedImageInfo.builder().tag("CacheS3Image").version("caches3:1.2.2").build(),
             DeprecatedImageInfo.builder().tag("ArtifactoryUploadImage").version("art:1.2.2").build(),
             DeprecatedImageInfo.builder().tag("CacheGCSImage").version("cachegcs:1.2.2").build(),
             DeprecatedImageInfo.builder().tag("S3UploadImage").version("s3upload:1.2.2").build(),
