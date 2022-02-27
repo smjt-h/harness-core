@@ -49,8 +49,6 @@ import io.harness.beans.quantity.unit.MemoryQuantityUnit;
 import io.harness.beans.serializer.RunTimeInputHandler;
 import io.harness.beans.stages.IntegrationStageConfig;
 import io.harness.beans.steps.CIStepInfo;
-import io.harness.execution.CIExecutionConfigService;
-import io.harness.steps.CIStepInfoUtils;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
 import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
@@ -62,6 +60,7 @@ import io.harness.delegate.beans.ci.pod.EnvVariableEnum;
 import io.harness.delegate.beans.ci.pod.PVCParams;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.ngexception.CIStageExecutionException;
+import io.harness.execution.CIExecutionConfigService;
 import io.harness.ff.CIFeatureFlagService;
 import io.harness.plancreator.execution.ExecutionWrapperConfig;
 import io.harness.plancreator.stages.stage.StageElementConfig;
@@ -70,6 +69,7 @@ import io.harness.plancreator.steps.StepElementConfig;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.stateutils.buildstate.PluginSettingUtils;
 import io.harness.stateutils.buildstate.providers.StepContainerUtils;
+import io.harness.steps.CIStepInfoUtils;
 import io.harness.util.ExceptionUtility;
 import io.harness.util.PortFinder;
 import io.harness.utils.TimeoutUtils;
@@ -154,8 +154,8 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
     Set<Integer> usedPorts = new HashSet<>();
     PortFinder portFinder = PortFinder.builder().startingPort(PORT_STARTING_RANGE).usedPorts(usedPorts).build();
     String workDirPath = STEP_WORK_DIR;
-    List<ContainerDefinitionInfo> serviceContainerDefinitionInfos =
-        CIServiceBuilder.createServicesContainerDefinition(stageElementConfig, portFinder, ciExecutionConfigService.getCiExecutionServiceConfig());
+    List<ContainerDefinitionInfo> serviceContainerDefinitionInfos = CIServiceBuilder.createServicesContainerDefinition(
+        stageElementConfig, portFinder, ciExecutionConfigService.getCiExecutionServiceConfig());
     List<ContainerDefinitionInfo> stepContainerDefinitionInfos =
         createStepsContainerDefinition(steps, stageElementConfig, ciExecutionArgs, portFinder, accountId);
 
