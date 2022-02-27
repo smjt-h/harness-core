@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class CIStepInfoUtils {
-  public static String  getPluginCustomStepImage(
+  public static String getPluginCustomStepImage(
       PluginCompatibleStep step, CIExecutionConfigService ciExecutionConfigService, Type infraType, String accountId) {
     if (infraType == Type.K8) {
       return getK8PluginCustomStepImageConfig(step, ciExecutionConfigService, accountId).getImage();
