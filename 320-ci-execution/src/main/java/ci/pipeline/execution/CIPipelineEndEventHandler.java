@@ -56,7 +56,7 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
     if (moduleInfo instanceof CIPipelineModuleInfo) {
       CIPipelineModuleInfo ciModuleInfo = (CIPipelineModuleInfo) moduleInfo;
       updateExecutionCount(ciModuleInfo, event);
-      sendCITelemetryEvents(ciModuleInfo, event);
+//      sendCITelemetryEvents(ciModuleInfo, event);
     }
   }
 
