@@ -4,7 +4,6 @@ import static io.harness.account.accesscontrol.AccountAccessControlPermissions.E
 import static io.harness.account.accesscontrol.AccountAccessControlPermissions.VIEW_ACCOUNT_PERMISSION;
 import static io.harness.annotations.dev.HarnessTeam.CI;
 
-import com.google.inject.Inject;
 import io.harness.NGCommonEntityConstants;
 import io.harness.accesscontrol.NGAccessControlCheck;
 import io.harness.account.accesscontrol.ResourceTypes;
@@ -16,6 +15,7 @@ import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
 
+import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -37,7 +37,7 @@ import retrofit2.http.Body;
 @Path("/execution-config")
 @Produces({"application/json"})
 @Consumes({"application/json"})
-@AllArgsConstructor(onConstructor = @__({ @Inject}))
+@AllArgsConstructor(onConstructor = @__({ @Inject }))
 @ApiResponses(value =
     {
       @ApiResponse(code = 400, response = FailureDTO.class, message = "Bad Request")
