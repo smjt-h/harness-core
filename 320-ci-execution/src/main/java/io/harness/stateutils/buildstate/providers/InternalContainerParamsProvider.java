@@ -43,7 +43,6 @@ import io.harness.delegate.beans.ci.pod.ImageDetailsWithConnector;
 import io.harness.delegate.beans.ci.pod.SecretParams;
 import io.harness.execution.CIExecutionConfigService;
 import io.harness.ff.CIFeatureFlagService;
-import io.harness.ng.core.NGAccess;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
 

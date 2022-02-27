@@ -55,7 +55,6 @@ import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
 import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
 import io.harness.beans.sweepingoutputs.StageInfraDetails.Type;
-import io.harness.ci.config.CIExecutionServiceConfig;
 import io.harness.ci.utils.QuantityUtils;
 import io.harness.delegate.beans.ci.pod.CIContainerType;
 import io.harness.delegate.beans.ci.pod.ContainerResourceParams;

@@ -13,7 +13,6 @@ import io.harness.beans.plugin.compatible.PluginCompatibleStep;
 import io.harness.execution.CIExecutionConfigService;
 import io.harness.steps.CIStepInfoUtils;
 import io.harness.beans.sweepingoutputs.StageInfraDetails.Type;
-import io.harness.ci.config.CIExecutionServiceConfig;
 import io.harness.ci.integrationstage.IntegrationStageUtils;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.ci.pod.EnvVariableEnum;

@@ -32,11 +32,11 @@ import static software.wings.utils.WingsTestConstants.DELEGATE_ID;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -94,7 +94,6 @@ import io.harness.persistence.HPersistence;
 import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptionConfig;
-import io.harness.selection.log.BatchDelegateSelectionLog;
 import io.harness.serializer.KryoSerializer;
 import io.harness.service.dto.RetryDelegate;
 import io.harness.service.impl.DelegateSyncServiceImpl;
@@ -328,17 +327,13 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   public void shouldExecuteTask() {
     Delegate delegate = createDelegateBuilder().build();
     persistence.save(delegate);
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
-        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
-        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     DelegateTask delegateTask = getDelegateTask();
-    BatchDelegateSelectionLog batch = BatchDelegateSelectionLog.builder().build();
-    when(delegateSelectionLogsService.createBatch(delegateTask)).thenReturn(batch);
-    when(assignDelegateService.canAssign(eq(batch), anyString(), any())).thenReturn(true);
-    when(assignDelegateService.retrieveActiveDelegates(
-             eq(delegateTask.getAccountId()), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any()))
+        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
+    when(assignDelegateService.getConnectedDelegateList(any(), any()))
+        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
+    when(assignDelegateService.canAssign(eq(delegateTask.getDelegateId()), any())).thenReturn(true);
+    when(assignDelegateService.retrieveActiveDelegates(eq(delegateTask.getAccountId()), any()))
         .thenReturn(Collections.singletonList(delegate.getUuid()));
 
     RetryDelegate retryDelegate = RetryDelegate.builder().retryPossible(true).delegateTask(delegateTask).build();
@@ -358,8 +353,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
       new Thread(delegateSyncService).start();
     });
     thread.start();
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
 
     DelegateResponseData responseData = delegateTaskServiceClassic.executeTask(delegateTask);
@@ -386,7 +380,6 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   public void shouldSaveDelegateTaskWithPreAssignedDelegateId_Async() {
     DelegateTask delegateTask = getDelegateTask();
     delegateTask.getData().setAsync(true);
-    thrown.expect(NoEligibleDelegatesInAccountException.class);
     delegateTaskServiceClassic.processDelegateTask(delegateTask, DelegateTask.Status.QUEUED);
     assertThat(delegateTask.getBroadcastCount()).isZero();
     verify(broadcastHelper, times(0)).rebroadcastDelegateTask(any());
@@ -398,17 +391,15 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   public void shouldSaveDelegateTaskWithoutPreAssignedDelegateIdSetToMustExecuteOn() {
     String delegateId = generateUuid();
     String taskId = generateUuid();
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
+    when(assignDelegateService.getConnectedDelegateList(any(), any()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
 
     DelegateTask delegateTask = getDelegateTask();
     delegateTask.getData().setAsync(false);
     delegateTask.setUuid(taskId);
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
 
     delegateTaskServiceClassic.processDelegateTask(delegateTask, DelegateTask.Status.QUEUED);
@@ -453,10 +444,9 @@ public class DelegateServiceImplTest extends WingsBaseTest {
     Delegate delegate = createDelegateBuilder().build();
     doReturn(delegate).when(delegateCache).get(ACCOUNT_ID, delegate.getUuid(), false);
 
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
+    when(assignDelegateService.getConnectedDelegateList(any(), any()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
 
     DelegateTask delegateTask = getDelegateTask();
@@ -468,7 +458,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
         .when(spydelegateTaskServiceClassic)
         .assignTask(anyString(), anyString(), any(DelegateTask.class), anyString());
 
-    when(assignDelegateService.canAssign(any(), anyString(), any())).thenReturn(true);
+    when(assignDelegateService.canAssign(anyString(), any())).thenReturn(true);
     when(assignDelegateService.isWhitelisted(any(), anyString())).thenReturn(true);
     when(assignDelegateService.shouldValidate(any(), anyString())).thenReturn(false);
 
@@ -1286,26 +1276,26 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   @Test
   @Owner(developers = BOJAN)
   @Category(UnitTests.class)
-  public void testShouldUpsertDelegateGroupWithOwner() {
-    String identifier = "";
-
+  public void testShouldNotUpsertDelegateGroupWithDifferentOwnerButSameName() {
     DelegateSetupDetails delegateSetupDetails1 = createDelegateSetupDetails()
-                                                     .identifier(identifier)
+                                                     .identifier(DELEGATE_GROUP_IDENTIFIER)
+                                                     .name(TEST_DELEGATE_GROUP_NAME)
                                                      .orgIdentifier("orgId1")
                                                      .projectIdentifier("projId1")
                                                      .build();
     DelegateSetupDetails delegateSetupDetails2 = createDelegateSetupDetails()
-                                                     .identifier(identifier)
+                                                     .identifier(DELEGATE_GROUP_IDENTIFIER)
+                                                     .name(TEST_DELEGATE_GROUP_NAME)
                                                      .orgIdentifier("orgId2")
                                                      .projectIdentifier("projId2")
                                                      .build();
 
-    DelegateGroup delegateGroup1 =
-        delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails1);
-    DelegateGroup delegateGroup2 =
-        delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails2);
-
-    assertThat(delegateGroup1.getUuid()).isNotEqualTo(delegateGroup2.getUuid());
+    delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails1);
+    assertThatThrownBy(
+        () -> delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails2))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage(
+            "Unable to create delegate group. Delegate with same name exists. Delegate name must be unique across account.");
   }
 
   @Test
@@ -1314,11 +1304,13 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   public void testShouldUpsertDelegateGroupWithTheSameOwner() {
     DelegateSetupDetails delegateSetupDetails1 = createDelegateSetupDetails()
                                                      .identifier(DELEGATE_GROUP_IDENTIFIER)
+                                                     .name(TEST_DELEGATE_GROUP_NAME)
                                                      .orgIdentifier("orgId1")
                                                      .projectIdentifier("projId1")
                                                      .build();
     DelegateSetupDetails delegateSetupDetails2 = createDelegateSetupDetails()
                                                      .identifier(DELEGATE_GROUP_IDENTIFIER)
+                                                     .name(TEST_DELEGATE_GROUP_NAME)
                                                      .orgIdentifier("orgId1")
                                                      .projectIdentifier("projId1")
                                                      .build();
@@ -1329,46 +1321,6 @@ public class DelegateServiceImplTest extends WingsBaseTest {
         delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails2);
 
     assertThat(delegateGroup1).isEqualTo(delegateGroup2);
-  }
-
-  @Test
-  @Owner(developers = BOJAN)
-  @Category(UnitTests.class)
-  public void testShouldUpsertDelegateGroupWithoutOwnersProjectId() {
-    DelegateSetupDetails delegateSetupDetails1 =
-        createDelegateSetupDetails().identifier(DELEGATE_GROUP_IDENTIFIER).orgIdentifier("orgId1").build();
-    DelegateSetupDetails delegateSetupDetails2 = createDelegateSetupDetails()
-                                                     .identifier(DELEGATE_GROUP_IDENTIFIER)
-                                                     .orgIdentifier("orgId1")
-                                                     .projectIdentifier("projId1")
-                                                     .build();
-
-    DelegateGroup delegateGroup1 =
-        delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails1);
-    DelegateGroup delegateGroup2 =
-        delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails2);
-
-    assertThat(delegateGroup1.getUuid()).isNotEqualTo(delegateGroup2.getUuid());
-  }
-
-  @Test
-  @Owner(developers = BOJAN)
-  @Category(UnitTests.class)
-  public void testShouldUpsertDelegateGroupWithoutOwnersOrgId() {
-    DelegateSetupDetails delegateSetupDetails1 =
-        createDelegateSetupDetails().identifier(DELEGATE_GROUP_IDENTIFIER).projectIdentifier("projId1").build();
-    DelegateSetupDetails delegateSetupDetails2 = createDelegateSetupDetails()
-                                                     .identifier(DELEGATE_GROUP_IDENTIFIER)
-                                                     .orgIdentifier("orgId1")
-                                                     .projectIdentifier("projId1")
-                                                     .build();
-
-    DelegateGroup delegateGroup1 =
-        delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails1);
-    DelegateGroup delegateGroup2 =
-        delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails2);
-
-    assertThat(delegateGroup1.getUuid()).isNotEqualTo(delegateGroup2.getUuid());
   }
 
   @Test
@@ -1393,13 +1345,18 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldUpsertDelegateGroupWithoutOwnerAndWithOwner() {
     String identifier = "_123";
+    String delegateGroupName = "groupName";
 
-    DelegateSetupDetails delegateSetupDetails1 = createDelegateSetupDetails().identifier(identifier).build();
+    DelegateSetupDetails delegateSetupDetails1 = DelegateSetupDetails.builder()
+                                                     .identifier(identifier)
+                                                     .name(delegateGroupName)
+                                                     .delegateType(DelegateType.KUBERNETES)
+                                                     .build();
     DelegateSetupDetails delegateSetupDetails2 =
         createDelegateSetupDetails().orgIdentifier(ORG_IDENTIFIER).projectIdentifier(PROJECT_IDENTIFIER).build();
 
     DelegateGroup delegateGroup1 =
-        delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails1);
+        delegateService.upsertDelegateGroup(delegateGroupName, ACCOUNT_ID, delegateSetupDetails1);
     DelegateGroup delegateGroup2 =
         delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails2);
 

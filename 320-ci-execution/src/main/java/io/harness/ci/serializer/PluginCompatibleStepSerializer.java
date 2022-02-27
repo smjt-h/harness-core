@@ -16,7 +16,6 @@ import io.harness.execution.CIExecutionConfigService;
 import io.harness.steps.CIStepInfoUtils;
 import io.harness.beans.sweepingoutputs.StageInfraDetails.Type;
 import io.harness.callback.DelegateCallbackToken;
-import io.harness.ci.config.CIExecutionServiceConfig;
 import io.harness.exception.ngexception.CIStageExecutionException;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.product.ci.engine.proto.PluginStep;
