@@ -80,8 +80,8 @@ public class DelegateServiceDriverGrpcClientModule extends ProviderModule {
       log.info("Authority in config {} is invalid. Using default value {}", authority, defaultAuthority);
       authorityToUse = defaultAuthority;
     } else if (!("ONPREM".equals(deployMode) || "KUBERNETES_ONPREM".equals(deployMode))) {
-      String versionPrefix = "v-" + versionInfo.getVersion().replace('.', '-') + "-";
-      String versionedAuthority = versionPrefix + authority;
+//      String versionPrefix = "v-" + versionInfo.getVersion().replace('.', '-') + "-";
+      String versionedAuthority = authority;
       if (isValidAuthority(versionedAuthority)) {
         log.info("Using versioned authority: {}", versionedAuthority);
         authorityToUse = versionedAuthority;
