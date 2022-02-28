@@ -60,7 +60,7 @@ public class AliasRegistry {
 
   public boolean hasNoAlias(Class<?> clazz) {
     RecasterAlias alias = clazz.getAnnotation(RecasterAlias.class);
-    if (alias != null){
+    if (alias != null) {
       return false;
     }
 
