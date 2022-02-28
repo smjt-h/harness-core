@@ -19,6 +19,8 @@ import lombok.Setter;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 
+import java.util.List;
+
 @Value
 @Builder
 @OwnedBy(HarnessTeam.CDP)
@@ -26,6 +28,6 @@ public class HelmValuesFetchResponse implements DelegateTaskNotifyResponseData {
   private CommandExecutionStatus commandExecutionStatus;
   private String errorMessage;
   private UnitProgressData unitProgressData;
-  private String valuesFileContent;
+  private List<String> valuesFileContent;
   @NonFinal @Setter private DelegateMetaInfo delegateMetaInfo;
 }

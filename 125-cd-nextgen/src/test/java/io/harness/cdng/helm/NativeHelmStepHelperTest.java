@@ -125,12 +125,9 @@ import io.harness.supplier.ThrowingSupplier;
 import io.harness.tasks.ResponseData;
 
 import com.google.common.collect.ImmutableMap;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+
+import java.util.*;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -679,7 +676,7 @@ public class NativeHelmStepHelperTest extends CategoryTest {
 
     UnitProgressData unitProgressData = UnitProgressData.builder().build();
     HelmValuesFetchResponse helmValuesFetchResponse = HelmValuesFetchResponse.builder()
-                                                          .valuesFileContent("values yaml payload")
+                                                          .valuesFileContent(Arrays.asList("values yaml payload"))
                                                           .commandExecutionStatus(SUCCESS)
                                                           .unitProgressData(unitProgressData)
                                                           .build();
@@ -950,7 +947,7 @@ public class NativeHelmStepHelperTest extends CategoryTest {
 
     List<ValuesManifestOutcome> aggregatedValuesManifests = new ArrayList<>();
 
-    String helmValuesYamlContent = "";
+    List<String> helmValuesYamlContent = new ArrayList<>();
 
     assertThatCode(()
                        -> nativeHelmStepHelper.executeValuesFetchTask(ambiance, stepElementParameters,

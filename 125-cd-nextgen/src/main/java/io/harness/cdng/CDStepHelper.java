@@ -402,6 +402,23 @@ public class CDStepHelper {
     return aggregateValuesManifests;
   }
 
+  // Aggregated Manifest methods of type chartValueStore. Here using get(0) as we are assuming only the case to override yaml file from same chart only.
+  public static ValuesManifestOutcome getAggregatedValuesManifestsTypeChartValueStore(
+          List<ValuesManifestOutcome> aggregatedValuesManifests) {
+    if (aggregatedValuesManifests.isEmpty()){
+      return null;
+    }
+    List<ValuesManifestOutcome> aggregateChartValuesManifest =
+            aggregatedValuesManifests.stream()
+                    .filter(valuesManifestOutcome -> ManifestStoreType.HELMCHARTVALUES.equals(valuesManifestOutcome.getStore().getKind()))
+                    .collect(Collectors.toList());
+
+    if (isNotEmpty(aggregateChartValuesManifest)) {
+      return aggregateChartValuesManifest.get(0);
+    }
+    return null;
+  }
+
   // miscellaneous common methods
   public ConnectorInfoDTO getConnector(String connectorId, Ambiance ambiance) {
     NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);

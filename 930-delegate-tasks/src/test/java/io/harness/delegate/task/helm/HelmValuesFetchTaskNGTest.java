@@ -109,7 +109,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
     doReturn(valuesYaml)
         .when(helmTaskHelperBase)
-        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any());
+        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
 
     HelmValuesFetchRequest request = HelmValuesFetchRequest.builder()
                                          .timeout(DEFAULT_ASYNC_CALL_TIMEOUT)
@@ -150,7 +150,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
     doReturn(valuesYaml)
         .when(helmTaskHelperBase)
-        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any());
+        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
 
     HelmValuesFetchRequest request = HelmValuesFetchRequest.builder()
                                          .timeout(DEFAULT_ASYNC_CALL_TIMEOUT)
@@ -192,7 +192,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
     doReturn(valuesYaml)
         .when(helmTaskHelperBase)
-        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any());
+        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
 
     HelmValuesFetchRequest request = HelmValuesFetchRequest.builder()
                                          .timeout(DEFAULT_ASYNC_CALL_TIMEOUT)
@@ -234,7 +234,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
     doThrow(new RuntimeException("Something went wrong"))
         .when(helmTaskHelperBase)
-        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any());
+        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
     doReturn(logCallback).when(spyHelmValuesFetchTaskNG).getLogCallback(any());
     doNothing().when(logCallback).saveExecutionLog(anyString(), any(), any());
 

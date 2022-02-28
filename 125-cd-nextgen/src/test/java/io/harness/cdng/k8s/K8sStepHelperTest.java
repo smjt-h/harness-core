@@ -156,14 +156,9 @@ import io.harness.tasks.ResponseData;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+
+import java.util.*;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -1027,7 +1022,7 @@ public class K8sStepHelperTest extends CategoryTest {
 
     UnitProgressData unitProgressData = UnitProgressData.builder().build();
     HelmValuesFetchResponse helmValuesFetchResponse = HelmValuesFetchResponse.builder()
-                                                          .valuesFileContent("values yaml payload")
+                                                          .valuesFileContent(Arrays.asList("values yaml payload"))
                                                           .commandExecutionStatus(SUCCESS)
                                                           .unitProgressData(unitProgressData)
                                                           .build();
@@ -1408,7 +1403,7 @@ public class K8sStepHelperTest extends CategoryTest {
 
     List<ValuesManifestOutcome> aggregatedValuesManifests = new ArrayList<>();
 
-    String helmValuesYamlContent = "";
+    List<String> helmValuesYamlContent = new ArrayList<>();
 
     assertThatCode(()
                        -> k8sStepHelper.executeValuesFetchTask(ambiance, stepElementParameters, outcomeBuilder.build(),

@@ -57,18 +57,7 @@ import io.harness.cdng.k8s.beans.StepExceptionPassThroughData;
 import io.harness.cdng.manifest.ManifestConfigType;
 import io.harness.cdng.manifest.steps.ManifestStepParameters;
 import io.harness.cdng.manifest.yaml.ArtifactoryStoreConfig;
-import io.harness.cdng.manifest.yaml.BitbucketStore;
-import io.harness.cdng.manifest.yaml.GcsStoreConfig;
-import io.harness.cdng.manifest.yaml.GitLabStore;
-import io.harness.cdng.manifest.yaml.GitStore;
-import io.harness.cdng.manifest.yaml.GithubStore;
-import io.harness.cdng.manifest.yaml.HttpStoreConfig;
-import io.harness.cdng.manifest.yaml.ManifestConfig;
-import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
-import io.harness.cdng.manifest.yaml.ManifestOverrideSetWrapper;
-import io.harness.cdng.manifest.yaml.ManifestOverrideSets;
-import io.harness.cdng.manifest.yaml.ManifestsOutcome;
-import io.harness.cdng.manifest.yaml.S3StoreConfig;
+import io.harness.cdng.manifest.yaml.*;
 import io.harness.cdng.manifest.yaml.kinds.HelmChartManifest;
 import io.harness.cdng.manifest.yaml.kinds.K8sManifest;
 import io.harness.cdng.manifest.yaml.kinds.KustomizeManifest;
@@ -186,6 +175,7 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(TerraformPlanStepInfo.class, 12543);
     kryo.register(HelmValuesFetchResponsePassThroughData.class, 12544);
     kryo.register(StepExceptionPassThroughData.class, 12545);
+    kryo.register(HelmChartValuesStoreConfig.class, 12564);
 
     kryo.register(HelmDeployStepInfo.class, 13001);
     kryo.register(HelmDeployStepParams.class, 13002);

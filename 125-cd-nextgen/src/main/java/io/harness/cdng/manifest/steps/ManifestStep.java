@@ -114,6 +114,9 @@ public class ManifestStep implements SyncExecutable<ManifestStepParameters> {
   private void getConnector(ManifestAttributes manifestAttributes, Ambiance ambiance) {
     // In some cases (eg. in k8s manifests) we're skipping auto evaluation, in this case we can skip connector
     // validation for now. It will be done when all expression will be resolved
+    if (manifestAttributes.getStoreConfig().getKind() == "HelmChartValues") {
+      return;
+    }
     if (manifestAttributes.getStoreConfig().getConnectorReference().isExpression()) {
       return;
     }

@@ -24,13 +24,14 @@ public interface ManifestStoreType {
   String S3 = "S3";
   String GCS = "Gcs";
   String ARTIFACTORY = "Artifactory";
+  String HELMCHARTVALUES = "HelmChartValues";
 
   static boolean isInGitSubset(String manifestType) {
     switch (manifestType) {
       case GIT:
+      case GITHUB:
       case BITBUCKET:
       case GITLAB:
-      case GITHUB:
         return true;
 
       default:

@@ -35,11 +35,7 @@ import io.harness.cdng.k8s.beans.StepExceptionPassThroughData;
 import io.harness.cdng.manifest.ManifestStoreType;
 import io.harness.cdng.manifest.ManifestType;
 import io.harness.cdng.manifest.steps.ManifestsOutcome;
-import io.harness.cdng.manifest.yaml.GitStoreConfig;
-import io.harness.cdng.manifest.yaml.HelmChartManifestOutcome;
-import io.harness.cdng.manifest.yaml.HelmManifestCommandFlag;
-import io.harness.cdng.manifest.yaml.ManifestOutcome;
-import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
+import io.harness.cdng.manifest.yaml.*;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.connector.ConnectorInfoDTO;
@@ -189,7 +185,7 @@ public class NativeHelmStepHelper extends CDStepHelper {
 
   public TaskChainResponse executeValuesFetchTask(Ambiance ambiance, StepElementParameters stepElementParameters,
       InfrastructureOutcome infrastructure, ManifestOutcome helmChartManifestOutcome,
-      List<ValuesManifestOutcome> aggregatedValuesManifests, String helmValuesYamlContent) {
+      List<ValuesManifestOutcome> aggregatedValuesManifests, List<String> helmValuesYamlContent) {
     List<GitFetchFilesConfig> gitFetchFilesConfigs =
         mapValuesManifestToGitFetchFileConfig(aggregatedValuesManifests, ambiance);
     NativeHelmStepPassThroughData nativeHelmStepPassThroughData =
@@ -267,12 +263,34 @@ public class NativeHelmStepHelper extends CDStepHelper {
     String accountId = AmbianceUtils.getAccountId(ambiance);
     HelmChartManifestDelegateConfig helmManifest =
         (HelmChartManifestDelegateConfig) getManifestDelegateConfig(helmChartManifestOutcome, ambiance);
-    HelmValuesFetchRequest helmValuesFetchRequest = HelmValuesFetchRequest.builder()
-                                                        .accountId(accountId)
-                                                        .helmChartManifestDelegateConfig(helmManifest)
-                                                        .timeout(CDStepHelper.getTimeoutInMillis(stepElementParameters))
-                                                        .closeLogStream(!isAnyRemoteStore(aggregatedValuesManifests))
-                                                        .build();
+    /*
+    Check if it ValueManifest is of Store type ValueChart
+    if yes:
+      fetch all the path as List<String> and pass it in HelmValuesFetchRequest
+    else:
+      The below one
+     */
+    ValuesManifestOutcome chartValuesStoreManifest =  CDStepHelper.getAggregatedValuesManifestsTypeChartValueStore(aggregatedValuesManifests);
+    HelmValuesFetchRequest helmValuesFetchRequest;
+    if (chartValuesStoreManifest != null) {
+      HelmChartValuesStoreConfig helmChartValuesStoreConfig = (HelmChartValuesStoreConfig) chartValuesStoreManifest.getStore();
+      helmValuesFetchRequest = HelmValuesFetchRequest.builder()
+              .accountId(accountId)
+              .helmChartManifestDelegateConfig(helmManifest)
+              .timeout(CDStepHelper.getTimeoutInMillis(stepElementParameters))
+              .closeLogStream(!isAnyRemoteStore(aggregatedValuesManifests))
+              .paths(getParameterFieldValue(helmChartValuesStoreConfig.getPaths()))
+              .build();
+    }
+    else{
+      // extract those paths from aggrValueMan and then pass it to HelmValuesFetchReq List<String>
+      helmValuesFetchRequest = HelmValuesFetchRequest.builder()
+              .accountId(accountId)
+              .helmChartManifestDelegateConfig(helmManifest)
+              .timeout(CDStepHelper.getTimeoutInMillis(stepElementParameters))
+              .closeLogStream(!isAnyRemoteStore(aggregatedValuesManifests))
+              .build();
+    }
 
     final TaskData taskData = TaskData.builder()
                                   .async(true)
@@ -438,7 +456,7 @@ public class NativeHelmStepHelper extends CDStepHelper {
 
   private boolean isAnyRemoteStore(@NotEmpty List<ValuesManifestOutcome> aggregatedValuesManifests) {
     return aggregatedValuesManifests.stream().anyMatch(
-        valuesManifest -> ManifestStoreType.isInGitSubset(valuesManifest.getStore().getKind()));
+        valuesManifest -> ManifestStoreType.isInGitSubset(valuesManifest.getStore().getKind()) || valuesManifest.getStore().getKind().equals(ManifestStoreType.HELMCHARTVALUES));
   }
 
   public TaskChainResponse executeNextLink(NativeHelmStepExecutor nativeHelmStepExecutor, Ambiance ambiance,
@@ -493,9 +511,9 @@ public class NativeHelmStepHelper extends CDStepHelper {
     }
     Map<String, FetchFilesResult> gitFetchFilesResultMap = gitFetchResponse.getFilesFromMultipleRepo();
     List<String> valuesFileContents = new ArrayList<>();
-    String helmValuesYamlContent = nativeHelmStepPassThroughData.getHelmValuesFileContent();
+    List<String> helmValuesYamlContent = nativeHelmStepPassThroughData.getHelmValuesFileContent();
     if (isNotEmpty(helmValuesYamlContent)) {
-      valuesFileContents.add(helmValuesYamlContent);
+      valuesFileContents.addAll(helmValuesYamlContent);
     }
 
     if (!gitFetchFilesResultMap.isEmpty()) {
@@ -524,14 +542,14 @@ public class NativeHelmStepHelper extends CDStepHelper {
       return TaskChainResponse.builder().chainEnd(true).passThroughData(helmValuesFetchPassTroughData).build();
     }
 
-    String valuesFileContent = helmValuesFetchResponse.getValuesFileContent();
+    List<String> valuesFileContent = helmValuesFetchResponse.getValuesFileContent();
     List<ValuesManifestOutcome> aggregatedValuesManifest = nativeHelmStepPassThroughData.getValuesManifestOutcomes();
     if (isNotEmpty(aggregatedValuesManifest)) {
       return executeValuesFetchTask(ambiance, stepElementParameters, nativeHelmStepPassThroughData.getInfrastructure(),
           nativeHelmStepPassThroughData.getHelmChartManifestOutcome(), aggregatedValuesManifest, valuesFileContent);
     } else {
       List<String> valuesFileContents =
-          (isNotEmpty(valuesFileContent)) ? ImmutableList.of(valuesFileContent) : emptyList();
+          (isNotEmpty(valuesFileContent)) ? ImmutableList.copyOf(valuesFileContent) : emptyList();
 
       return nativeHelmStepExecutor.executeHelmTask(helmChartManifest, ambiance, stepElementParameters,
           valuesFileContents,
