@@ -27,6 +27,7 @@ import io.harness.rule.Owner;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.serializer.HObjectMapper;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,8 +35,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -57,8 +56,7 @@ public class ResourceGroupsManagementJobTest extends ResourceGroupTestBase {
   public void testSave() {
     ResourceGroupsConfig resourceGroupsConfig =
         (ResourceGroupsConfig) ReflectionUtils.getFieldValue(resourceGroupsManagementJob, RESOURCE_GROUPS_CONFIG_FIELD);
-    ResourceGroupsConfig resourceGroupsConfigClone =
-        (ResourceGroupsConfig) HObjectMapper.clone(resourceGroupsConfig);
+    ResourceGroupsConfig resourceGroupsConfigClone = (ResourceGroupsConfig) HObjectMapper.clone(resourceGroupsConfig);
 
     resourceGroupsManagementJob.run();
     validate(resourceGroupsConfigClone);
@@ -73,8 +71,7 @@ public class ResourceGroupsManagementJobTest extends ResourceGroupTestBase {
         (ResourceGroupsConfig) ReflectionUtils.getFieldValue(resourceGroupsManagementJob, RESOURCE_GROUPS_CONFIG_FIELD);
     ReflectionUtils.setObjectField(
         resourceGroupsConfig.getClass().getDeclaredField(VERSION_FIELD), resourceGroupsConfig, 2);
-    ResourceGroupsConfig latestResourceGroupsConfig =
-        (ResourceGroupsConfig) HObjectMapper.clone(resourceGroupsConfig);
+    ResourceGroupsConfig latestResourceGroupsConfig = (ResourceGroupsConfig) HObjectMapper.clone(resourceGroupsConfig);
     ResourceGroupsConfig currentResourceGroupsConfig = ResourceGroupsConfig.builder()
                                                            .version(1)
                                                            .name(latestResourceGroupsConfig.getName())
@@ -108,8 +105,7 @@ public class ResourceGroupsManagementJobTest extends ResourceGroupTestBase {
     ReflectionUtils.setObjectField(
         resourceGroupsConfig.getClass().getDeclaredField(VERSION_FIELD), resourceGroupsConfig, currentVersion + 1);
 
-    ResourceGroupsConfig resourceGroupsConfigClone =
-        (ResourceGroupsConfig) HObjectMapper.clone(resourceGroupsConfig);
+    ResourceGroupsConfig resourceGroupsConfigClone = (ResourceGroupsConfig) HObjectMapper.clone(resourceGroupsConfig);
 
     resourceGroupsManagementJob.run();
     validate(resourceGroupsConfigClone);

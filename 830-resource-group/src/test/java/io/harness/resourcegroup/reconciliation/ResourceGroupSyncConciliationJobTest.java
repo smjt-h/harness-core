@@ -52,13 +52,12 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.StringValue;
+import io.serializer.HObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import io.serializer.HObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

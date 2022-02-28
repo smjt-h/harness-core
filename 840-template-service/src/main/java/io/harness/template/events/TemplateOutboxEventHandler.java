@@ -42,9 +42,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.google.protobuf.StringValue;
-import java.io.IOException;
-
 import io.serializer.HObjectMapper;
+import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

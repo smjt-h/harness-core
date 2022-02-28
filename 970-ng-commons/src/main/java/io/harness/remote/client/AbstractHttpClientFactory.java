@@ -27,12 +27,12 @@ import io.harness.security.ServiceTokenGenerator;
 import io.harness.security.SourcePrincipalContextBuilder;
 import io.harness.security.dto.Principal;
 import io.harness.security.dto.ServicePrincipal;
-import io.serializer.HObjectMapper;
 import io.harness.serializer.kryo.KryoConverterFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.retrofit.CircuitBreakerCallAdapter;
+import io.serializer.HObjectMapper;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.function.Supplier;

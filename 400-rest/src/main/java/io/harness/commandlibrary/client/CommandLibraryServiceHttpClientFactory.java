@@ -17,7 +17,6 @@ import io.harness.exception.GeneralException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.network.Http;
 import io.harness.security.ServiceTokenGenerator;
-import io.serializer.HObjectMapper;
 import io.harness.serializer.JsonSubtypeResolver;
 
 import software.wings.app.MainConfiguration;
@@ -30,6 +29,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import io.serializer.HObjectMapper;
 import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.ConnectionPool;

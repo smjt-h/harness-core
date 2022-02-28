@@ -27,9 +27,8 @@ import io.harness.outbox.api.OutboxEventHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
-import java.io.IOException;
-
 import io.serializer.HObjectMapper;
+import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

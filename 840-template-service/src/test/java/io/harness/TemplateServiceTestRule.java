@@ -66,6 +66,7 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
 import io.dropwizard.jackson.Jackson;
 import io.grpc.inprocess.InProcessChannelBuilder;
+import io.serializer.HObjectMapper;
 import java.io.Closeable;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -74,8 +75,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
-
-import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
@@ -148,8 +147,7 @@ public class TemplateServiceTestRule implements InjectorRuleMixin, MethodRule, M
       @Provides
       @Singleton
       OutboxService getOutboxService(OutboxEventRepository outboxEventRepository) {
-        return new OutboxServiceImpl(
-            new OutboxDaoImpl(outboxEventRepository), HObjectMapper.NG_DEFAULT_OBJECT_MAPPER);
+        return new OutboxServiceImpl(new OutboxDaoImpl(outboxEventRepository), HObjectMapper.NG_DEFAULT_OBJECT_MAPPER);
       }
 
       @Provides

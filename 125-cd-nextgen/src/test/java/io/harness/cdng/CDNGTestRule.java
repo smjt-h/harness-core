@@ -13,8 +13,8 @@ import static io.harness.cache.CacheBackend.NOOP;
 import static io.harness.connector.ConnectorModule.DEFAULT_CONNECTOR_SERVICE;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.outbox.TransactionOutboxModule.OUTBOX_TRANSACTION_TEMPLATE;
-import static io.serializer.HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
 
+import static io.serializer.HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
 import static org.mockito.Mockito.mock;
 
 import io.harness.ModuleType;
@@ -95,6 +95,7 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import io.dropwizard.jackson.Jackson;
 import io.grpc.inprocess.InProcessChannelBuilder;
+import io.serializer.HObjectMapper;
 import java.io.Closeable;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -103,8 +104,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-
-import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
 import org.junit.rules.MethodRule;

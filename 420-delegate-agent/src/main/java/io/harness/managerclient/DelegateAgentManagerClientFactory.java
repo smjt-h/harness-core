@@ -13,7 +13,6 @@ import io.harness.network.FibonacciBackOff;
 import io.harness.network.Http;
 import io.harness.network.NoopHostnameVerifier;
 import io.harness.security.TokenGenerator;
-import io.serializer.HObjectMapper;
 import io.harness.serializer.kryo.KryoConverterFactory;
 import io.harness.version.VersionInfoManager;
 
@@ -24,6 +23,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import io.serializer.HObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;

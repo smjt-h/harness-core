@@ -20,9 +20,8 @@ import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-
 import io.serializer.HObjectMapper;
+import java.io.IOException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

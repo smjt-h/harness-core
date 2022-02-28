@@ -35,9 +35,8 @@ import io.harness.security.dto.ServicePrincipal;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import java.io.IOException;
-
 import io.serializer.HObjectMapper;
+import java.io.IOException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 

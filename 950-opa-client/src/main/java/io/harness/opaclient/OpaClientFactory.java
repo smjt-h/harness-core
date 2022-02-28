@@ -12,7 +12,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.network.Http;
 import io.harness.security.PmsAuthInterceptor;
-import io.serializer.HObjectMapper;
 import io.harness.serializer.kryo.KryoConverterFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,6 +21,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import io.serializer.HObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
