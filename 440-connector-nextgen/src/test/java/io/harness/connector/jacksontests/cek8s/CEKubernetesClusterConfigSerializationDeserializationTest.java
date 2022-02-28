@@ -18,7 +18,7 @@ import io.harness.connector.utils.CommonTestHelper;
 import io.harness.delegate.beans.connector.CEFeatures;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.cek8s.CEKubernetesClusterConfigDTO;
-import io.harness.utils.NGObjectMapperHelper;
+import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 

@@ -20,7 +20,7 @@ import io.harness.delegate.beans.connector.docker.DockerAuthType;
 import io.harness.delegate.beans.connector.docker.DockerAuthenticationDTO;
 import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
 import io.harness.delegate.beans.connector.docker.DockerRegistryProviderType;
-import io.harness.utils.NGObjectMapperHelper;
+import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 

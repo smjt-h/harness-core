@@ -16,7 +16,7 @@ import io.harness.metrics.MetricRegistryModule;
 import io.harness.metrics.jobs.RecordMetricsJob;
 import io.harness.metrics.service.api.MetricService;
 import io.harness.queue.QueueListenerController;
-import io.harness.utils.NGObjectMapperHelper;
+import io.harness.remote.NGObjectMapperHelper;
 
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;

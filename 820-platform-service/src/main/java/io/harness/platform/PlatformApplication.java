@@ -38,7 +38,7 @@ import io.harness.platform.notification.NotificationServiceSetup;
 import io.harness.platform.remote.HealthResource;
 import io.harness.platform.resourcegroup.ResourceGroupServiceModule;
 import io.harness.platform.resourcegroup.ResourceGroupServiceSetup;
-import io.harness.utils.NGObjectMapperHelper;
+import io.harness.remote.NGObjectMapperHelper;
 import io.harness.request.RequestContextFilter;
 import io.harness.secret.ConfigSecretUtils;
 import io.harness.security.InternalApiAuthFilter;

@@ -37,7 +37,7 @@ import io.harness.aggregator.AggregatorTestBase;
 import io.harness.aggregator.controllers.AggregatorBaseSyncController.AggregatorJobType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.utils.NGObjectMapperHelper;
+import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.utils.PageTestUtils;
 

@@ -23,7 +23,7 @@ import io.harness.notification.notificationclient.NotificationClientImpl;
 import io.harness.notification.templates.PredefinedTemplate;
 import io.harness.queue.QueueListenerController;
 import io.harness.remote.CharsetResponseFilter;
-import io.harness.utils.NGObjectMapperHelper;
+import io.harness.remote.NGObjectMapperHelper;
 
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;

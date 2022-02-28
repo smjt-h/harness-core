@@ -23,7 +23,7 @@ import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConne
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryUsernamePasswordAuthDTO;
 import io.harness.encryption.Scope;
 import io.harness.encryption.SecretRefData;
-import io.harness.utils.NGObjectMapperHelper;
+import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 

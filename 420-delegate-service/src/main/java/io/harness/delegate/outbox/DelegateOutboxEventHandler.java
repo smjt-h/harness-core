@@ -24,7 +24,7 @@ import io.harness.delegate.events.DelegateNgTokenCreateEvent;
 import io.harness.delegate.events.DelegateNgTokenRevokeEvent;
 import io.harness.outbox.OutboxEvent;
 import io.harness.outbox.api.OutboxEventHandler;
-import io.harness.utils.NGObjectMapperHelper;
+import io.harness.remote.NGObjectMapperHelper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;

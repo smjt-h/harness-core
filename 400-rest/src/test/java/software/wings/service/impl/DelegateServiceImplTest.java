@@ -91,7 +91,7 @@ import io.harness.outbox.OutboxEvent;
 import io.harness.outbox.api.OutboxService;
 import io.harness.outbox.filter.OutboxEventFilter;
 import io.harness.persistence.HPersistence;
-import io.harness.utils.NGObjectMapperHelper;
+import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptionConfig;
 import io.harness.serializer.KryoSerializer;
