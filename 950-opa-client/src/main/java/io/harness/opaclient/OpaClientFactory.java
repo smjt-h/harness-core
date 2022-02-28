@@ -7,7 +7,6 @@
 
 package io.harness.opaclient;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
@@ -15,6 +14,7 @@ import io.harness.network.Http;
 import io.harness.security.PmsAuthInterceptor;
 import io.harness.serializer.kryo.KryoConverterFactory;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
