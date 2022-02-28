@@ -11,8 +11,6 @@ import static io.harness.AuthorizationServiceHeader.DEFAULT;
 import static io.harness.annotations.dev.HarnessTeam.CE;
 import static io.harness.logging.LoggingInitializer.initializeLogging;
 
-import static io.serializer.HObjectMapper.configureObjectMapperForNG;
-
 import io.harness.AuthorizationServiceHeader;
 import io.harness.Microservice;
 import io.harness.annotations.dev.OwnedBy;
@@ -73,6 +71,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import io.serializer.HObjectMapper;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -136,7 +135,7 @@ public class CENextGenApplication extends Application<CENextGenConfiguration> {
   }
 
   public static void configureObjectMapper(final ObjectMapper mapper) {
-    configureNGObjectMapper(mapper);
+    HObjectMapper.configureObjectMapperForNG(mapper);
   }
 
   @Override
