@@ -37,6 +37,8 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+
+import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
@@ -64,7 +66,7 @@ public class DelegateAgentManagerClientFactory
 
   @Override
   public io.harness.managerclient.DelegateAgentManagerClient get() {
-    ObjectMapper objectMapper = new ObjectMapper();
+    ObjectMapper objectMapper = HObjectMapper.get();
     objectMapper.registerModule(new Jdk8Module());
     objectMapper.registerModule(new GuavaModule());
     objectMapper.registerModule(new JavaTimeModule());

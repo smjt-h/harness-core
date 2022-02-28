@@ -26,6 +26,7 @@ import static com.google.inject.matcher.Matchers.not;
 import static java.time.Duration.ofMinutes;
 import static java.time.Duration.ofSeconds;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import io.harness.beans.ExecutionStatus;
 import io.harness.cf.AbstractCfModule;
 import io.harness.cf.CfClientConfig;
@@ -199,6 +200,7 @@ public class VerificationServiceApplication extends Application<VerificationServ
         new JsonSubtypeResolver(bootstrap.getObjectMapper().getSubtypeResolver()));
     bootstrap.getObjectMapper().setConfig(
         bootstrap.getObjectMapper().getSerializationConfig().withView(JsonViews.Public.class));
+    bootstrap.getObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     bootstrap.setMetricRegistry(metricRegistry);
 
     log.info("bootstrapping done.");

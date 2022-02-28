@@ -12,6 +12,7 @@ import static io.harness.logging.LoggingInitializer.initializeLogging;
 
 import static com.google.inject.matcher.Matchers.not;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import io.harness.cf.AbstractCfModule;
 import io.harness.cf.CfClientConfig;
 import io.harness.cf.CfMigrationConfig;
@@ -131,6 +132,7 @@ public class CommandLibraryServerApplication extends Application<CommandLibraryS
         new JsonSubtypeResolver(bootstrap.getObjectMapper().getSubtypeResolver()));
     bootstrap.getObjectMapper().setConfig(
         bootstrap.getObjectMapper().getSerializationConfig().withView(JsonViews.Public.class));
+    bootstrap.getObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     bootstrap.setMetricRegistry(metricRegistry);
 
     log.info("Bootstrapping done.");

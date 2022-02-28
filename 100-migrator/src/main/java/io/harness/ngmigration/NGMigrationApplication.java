@@ -25,6 +25,7 @@ import static com.google.common.collect.ImmutableMap.of;
 import static com.google.inject.matcher.Matchers.not;
 import static com.google.inject.name.Names.named;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.app.GraphQLModule;
 import io.harness.artifact.ArtifactCollectionPTaskServiceClient;
@@ -333,6 +334,7 @@ public class NGMigrationApplication extends Application<MigratorConfig> {
   }
 
   public static void configureObjectMapper(final ObjectMapper mapper) {
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     mapper.addMixIn(AssetsConfiguration.class, AssetsConfigurationMixin.class);
     final AnnotationAwareJsonSubtypeResolver subtypeResolver =
         AnnotationAwareJsonSubtypeResolver.newInstance(mapper.getSubtypeResolver());
