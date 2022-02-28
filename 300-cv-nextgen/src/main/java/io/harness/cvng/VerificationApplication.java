@@ -148,7 +148,6 @@ import io.harness.security.NextGenAuthenticationFilter;
 import io.harness.security.annotations.NextGenManagerAuth;
 import io.harness.serializer.CVNGStepRegistrar;
 import io.harness.serializer.CvNextGenRegistrars;
-import io.harness.serializer.JsonSubtypeResolver;
 import io.harness.serializer.KryoRegistrar;
 import io.harness.serializer.PipelineServiceUtilAdviserRegistrar;
 import io.harness.serializer.PrimaryVersionManagerRegistrars;

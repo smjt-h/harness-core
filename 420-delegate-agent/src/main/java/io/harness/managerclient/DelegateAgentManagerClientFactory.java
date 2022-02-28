@@ -23,7 +23,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import io.serializer.HObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
