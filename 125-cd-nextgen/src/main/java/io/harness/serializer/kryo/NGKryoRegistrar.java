@@ -15,9 +15,11 @@ import io.harness.cdng.artifact.bean.artifactsource.DockerArtifactSource;
 import io.harness.cdng.artifact.bean.yaml.ArtifactListConfig;
 import io.harness.cdng.artifact.bean.yaml.ArtifactOverrideSetWrapper;
 import io.harness.cdng.artifact.bean.yaml.ArtifactOverrideSets;
+import io.harness.cdng.artifact.bean.yaml.ArtifactoryRegistryArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.DockerHubArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.EcrArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.GcrArtifactConfig;
+import io.harness.cdng.artifact.bean.yaml.NexusRegistryArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.PrimaryArtifact;
 import io.harness.cdng.artifact.bean.yaml.SidecarArtifact;
 import io.harness.cdng.artifact.bean.yaml.SidecarArtifactWrapper;
@@ -83,6 +85,7 @@ import io.harness.cdng.service.beans.ServiceDefinitionType;
 import io.harness.cdng.service.beans.ServiceUseFromStage;
 import io.harness.cdng.service.beans.ServiceUseFromStage.Overrides;
 import io.harness.cdng.service.beans.ServiceYaml;
+import io.harness.cdng.service.beans.SshServiceSpec;
 import io.harness.cdng.service.beans.StageOverridesConfig;
 import io.harness.cdng.service.steps.ServiceStepParameters;
 import io.harness.cdng.tasks.manifestFetch.step.ManifestFetchOutcome;
@@ -122,6 +125,7 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(InfraStepParameters.class, 8042);
     kryo.register(ManifestOverrideSets.class, 8043);
     kryo.register(ArtifactOverrideSets.class, 8044);
+    kryo.register(NexusRegistryArtifactConfig.class, 8046);
 
     kryo.register(DeploymentStageStepParameters.class, 8047);
     kryo.register(K8sRollingRollbackStepInfo.class, 8049);
@@ -130,6 +134,7 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(K8sRollingStepParameters.class, 8052);
     kryo.register(ManifestFetchParameters.class, 8053);
     kryo.register(K8sStepPassThroughData.class, 8056);
+    kryo.register(ArtifactoryRegistryArtifactConfig.class, 8057);
 
     // Starting using 8100 series
     kryo.register(PipelineInfrastructure.class, 8101);
@@ -199,5 +204,6 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(ArtifactoryStoreConfig.class, 12558);
     kryo.register(ManifestStepParameters.class, 12559);
     kryo.register(NGVariableOverrideSets.class, 12560);
+    kryo.register(SshServiceSpec.class, 12561);
   }
 }

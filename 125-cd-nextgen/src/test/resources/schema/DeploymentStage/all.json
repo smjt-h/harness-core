@@ -351,6 +351,66 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "ArtifactoryRegistryArtifactConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ArtifactConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "artifactPath",
+            "connectorRef",
+            "repository",
+            "repositoryFormat"
+          ],
+          "properties": {
+            "artifactPath": {
+              "type": "string"
+            },
+            "connectorRef": {
+              "type": "string"
+            },
+            "metadata": {
+              "type": "string"
+            },
+            "repository": {
+              "type": "string"
+            },
+            "repositoryFormat": {
+              "type": "string",
+              "enum": [
+                "docker"
+              ]
+            },
+            "repositoryUrl": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            },
+            "tagRegex": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "oneOf": [
+            {
+              "required": [
+                "tagRegex"
+              ]
+            },
+            {
+              "required": [
+                "tag"
+              ]
+            }
+          ]
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "ArtifactoryStoreConfig": {
       "allOf": [
         {
@@ -3150,6 +3210,90 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "NexusRegistryArtifactConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ArtifactConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "artifactPath",
+            "connectorRef",
+            "repository",
+            "repositoryFormat"
+          ],
+          "properties": {
+            "artifactPath": {
+              "type": "string"
+            },
+            "connectorRef": {
+              "type": "string"
+            },
+            "metadata": {
+              "type": "string"
+            },
+            "repository": {
+              "type": "string"
+            },
+            "repositoryFormat": {
+              "type": "string",
+              "enum": [
+                "docker"
+              ]
+            },
+            "repositoryPort": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "repositoryUrl": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            },
+            "tagRegex": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "oneOf": [
+            {
+              "required": [
+                "tagRegex"
+              ]
+            },
+            {
+              "required": [
+                "tag"
+              ]
+            }
+          ]
+        },
+        {
+          "oneOf": [
+            {
+              "required": [
+                "repositoryPort"
+              ]
+            },
+            {
+              "required": [
+                "repositoryUrl"
+              ]
+            }
+          ]
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "NumberNGVariable": {
       "allOf": [
         {
@@ -3623,12 +3767,30 @@
           "enum": [
             "DockerRegistry",
             "Gcr",
-            "Ecr"
+            "Ecr",
+            "Nexus3Registry",
+            "ArtifactoryRegistry"
           ]
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#",
       "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "ArtifactoryRegistry"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/ArtifactoryRegistryArtifactConfig"
+              }
+            }
+          }
+        },
         {
           "if": {
             "properties": {
@@ -3673,6 +3835,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/GcrArtifactConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Nexus3Registry"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/NexusRegistryArtifactConfig"
               }
             }
           }
@@ -4028,7 +4206,8 @@
           "type": "string",
           "enum": [
             "Kubernetes",
-            "NativeHelm"
+            "NativeHelm",
+            "Ssh"
           ]
         }
       },
@@ -4062,6 +4241,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/NativeHelmServiceSpec"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Ssh"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/SshServiceSpec"
               }
             }
           }
@@ -4548,12 +4743,30 @@
           "enum": [
             "DockerRegistry",
             "Gcr",
-            "Ecr"
+            "Ecr",
+            "Nexus3Registry",
+            "ArtifactoryRegistry"
           ]
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#",
       "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "ArtifactoryRegistry"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/ArtifactoryRegistryArtifactConfig"
+              }
+            }
+          }
+        },
         {
           "if": {
             "properties": {
@@ -4601,6 +4814,22 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Nexus3Registry"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/NexusRegistryArtifactConfig"
+              }
+            }
+          }
         }
       ]
     },
@@ -4611,6 +4840,22 @@
           "$ref": "#/definitions/SidecarArtifact"
         }
       },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "SshServiceSpec": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ServiceSpec"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "metadata": {
+              "type": "string"
+            }
+          }
+        }
+      ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
     "StageOverridesConfig": {
@@ -5247,7 +5492,7 @@
             "Git",
             "Github",
             "Bitbucket",
-            "GitLab",
+            "Gitlab",
             "Http",
             "S3",
             "Gcs",
@@ -5342,22 +5587,6 @@
           "if": {
             "properties": {
               "type": {
-                "const": "GitLab"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "spec": {
-                "$ref": "#/definitions/GitLabStore"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "type": {
                 "const": "Github"
               }
             }
@@ -5366,6 +5595,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/GithubStore"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Gitlab"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/GitLabStore"
               }
             }
           }

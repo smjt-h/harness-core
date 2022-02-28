@@ -14,12 +14,10 @@ import static io.harness.beans.DelegateTask.Status.STARTED;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.delegate.beans.DelegateTaskAbortEvent.Builder.aDelegateTaskAbortEvent;
 import static io.harness.delegate.beans.TaskData.DEFAULT_ASYNC_CALL_TIMEOUT;
-import static io.harness.rule.OwnerRule.BOJAN;
 import static io.harness.rule.OwnerRule.BRETT;
 import static io.harness.rule.OwnerRule.GEORGE;
 import static io.harness.rule.OwnerRule.JENNY;
 import static io.harness.rule.OwnerRule.MARKO;
-import static io.harness.rule.OwnerRule.MARKOM;
 import static io.harness.rule.OwnerRule.PUNEET;
 import static io.harness.rule.OwnerRule.RAGHU;
 import static io.harness.rule.OwnerRule.SANJA;
@@ -50,7 +48,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.anyObject;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -77,7 +74,6 @@ import io.harness.delegate.beans.Delegate;
 import io.harness.delegate.beans.Delegate.DelegateBuilder;
 import io.harness.delegate.beans.DelegateConfiguration;
 import io.harness.delegate.beans.DelegateInstanceStatus;
-import io.harness.delegate.beans.DelegateSyncTaskResponse;
 import io.harness.delegate.beans.DelegateTaskEvent;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskRank;
@@ -85,7 +81,6 @@ import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.DelegateTaskResponse.ResponseCode;
 import io.harness.delegate.beans.FileUploadLimit;
 import io.harness.delegate.beans.NoAvailableDelegatesException;
-import io.harness.delegate.beans.RemoteMethodReturnValueData;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.TaskGroup;
 import io.harness.delegate.beans.TaskSelectorMap;
@@ -100,7 +95,6 @@ import io.harness.observer.Subject;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Cache;
 import io.harness.rule.Owner;
-import io.harness.selection.log.BatchDelegateSelectionLog;
 import io.harness.serializer.KryoSerializer;
 import io.harness.service.intfc.DelegateCache;
 import io.harness.service.intfc.DelegateProfileObserver;
@@ -278,10 +272,9 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldGetDelegateTaskEvents() {
     DelegateTask delegateTask = getDelegateTask();
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
+    when(assignDelegateService.getConnectedDelegateList(any(), any()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     delegateTaskServiceClassic.scheduleSyncTask(delegateTask);
     List<DelegateTaskEvent> delegateTaskEvents =
@@ -294,8 +287,7 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Owner(developers = GEORGE)
   @Category(UnitTests.class)
   public void shouldSaveDelegateTask() {
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     DelegateTask delegateTask =
         DelegateTask.builder()
@@ -356,8 +348,7 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
     PortalConfig portalConfig = new PortalConfig();
     portalConfig.setOptionalDelegateTaskRejectAtLimit(10000);
     when(mainConfiguration.getPortal()).thenReturn(portalConfig);
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     delegateTaskServiceClassic.queueTask(delegateTask);
     delegateTask.setTaskActivityLogs(null);
@@ -403,8 +394,7 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Owner(developers = GEORGE)
   @Category(UnitTests.class)
   public void shouldProcessDelegateTaskResponse() {
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     DelegateTask delegateTask = saveDelegateTask(true, emptySet(), QUEUED);
     delegateTaskService.processDelegateResponse(ACCOUNT_ID, DELEGATE_ID, delegateTask.getUuid(),
@@ -458,11 +448,8 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldAcquireTaskWhenQueued() {
     when(assignDelegateService.isWhitelisted(any(DelegateTask.class), any(String.class))).thenReturn(true);
-    when(assignDelegateService.canAssign(
-             any(BatchDelegateSelectionLog.class), any(String.class), any(DelegateTask.class)))
-        .thenReturn(true);
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.canAssign(any(String.class), any(DelegateTask.class))).thenReturn(true);
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     Delegate delegate = createDelegateBuilder().build();
     delegate.setUuid(DELEGATE_ID);
@@ -485,9 +472,7 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void onlyOneInstanceShouldAcquireTask() {
     when(assignDelegateService.isWhitelisted(any(DelegateTask.class), any(String.class))).thenReturn(true);
-    when(assignDelegateService.canAssign(
-             any(BatchDelegateSelectionLog.class), any(String.class), any(DelegateTask.class)))
-        .thenReturn(true);
+    when(assignDelegateService.canAssign(any(String.class), any(DelegateTask.class))).thenReturn(true);
     Delegate delegate = createDelegateBuilder().build();
     delegate.setUuid(DELEGATE_ID);
     persistence.save(delegate);
@@ -516,11 +501,8 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   public void shouldAcquireTaskWhenQueued_notWhitelisted() {
     when(assignDelegateService.isWhitelisted(any(DelegateTask.class), any(String.class))).thenReturn(false);
     when(assignDelegateService.shouldValidate(any(DelegateTask.class), any(String.class))).thenReturn(true);
-    when(assignDelegateService.canAssign(
-             any(BatchDelegateSelectionLog.class), any(String.class), any(DelegateTask.class)))
-        .thenReturn(true);
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.canAssign(any(String.class), any(DelegateTask.class))).thenReturn(true);
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     Delegate delegate = createDelegateBuilder().build();
     delegate.setUuid(DELEGATE_ID);
@@ -536,27 +518,7 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Owner(developers = BRETT)
   @Category(UnitTests.class)
   public void shouldAcquireTaskWhenQueued_cannotAssign() {
-    when(assignDelegateService.canAssign(
-             any(BatchDelegateSelectionLog.class), any(String.class), any(DelegateTask.class)))
-        .thenReturn(false);
-    Delegate delegate = createDelegateBuilder().build();
-    delegate.setUuid(DELEGATE_ID);
-    persistence.save(delegate);
-    DelegateTask delegateTask = saveDelegateTask(true, emptySet(), QUEUED);
-    assertThat(delegateTaskServiceClassic.acquireDelegateTask(ACCOUNT_ID, DELEGATE_ID, delegateTask.getUuid(), null))
-        .isNull();
-  }
-
-  @Cache
-  @Test
-  @Owner(developers = BOJAN)
-  @Category(UnitTests.class)
-  public void shouldNotAcquireTaskWhenNoEligibleDelegates_cannotAssign() {
-    when(assignDelegateService.canAssign(
-             any(BatchDelegateSelectionLog.class), any(String.class), any(DelegateTask.class)))
-        .thenReturn(false);
-    when(assignDelegateService.retrieveActiveDelegates(eq(ACCOUNT_ID), any(BatchDelegateSelectionLog.class)))
-        .thenReturn(singletonList(DELEGATE_ID));
+    when(assignDelegateService.canAssign(any(String.class), any(DelegateTask.class))).thenReturn(false);
     Delegate delegate = createDelegateBuilder().build();
     delegate.setUuid(DELEGATE_ID);
     persistence.save(delegate);
@@ -572,9 +534,7 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   public void shouldAcquireTaskWhenQueued_blacklisted() {
     when(assignDelegateService.isWhitelisted(any(DelegateTask.class), any(String.class))).thenReturn(false);
     when(assignDelegateService.shouldValidate(any(DelegateTask.class), any(String.class))).thenReturn(false);
-    when(assignDelegateService.canAssign(
-             any(BatchDelegateSelectionLog.class), any(String.class), any(DelegateTask.class)))
-        .thenReturn(true);
+    when(assignDelegateService.canAssign(any(String.class), any(DelegateTask.class))).thenReturn(true);
     Delegate delegate = createDelegateBuilder().build();
     delegate.setUuid(DELEGATE_ID);
     persistence.save(delegate);
@@ -653,10 +613,9 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldReportConnectionResults_success() {
     createAccountDelegate();
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
+    when(assignDelegateService.getConnectedDelegateList(any(), any()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     DelegateTask delegateTask = saveDelegateTask(false, emptySet(), QUEUED);
     DelegateTaskPackage delegateTaskPackage =
@@ -711,126 +670,9 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Test
   @Owner(developers = BRETT)
   @Category(UnitTests.class)
-  public void shouldFailIfAllDelegatesFailed_all() {
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
-        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    DelegateTask delegateTask = saveDelegateTask(true, ImmutableSet.of(DELEGATE_ID), QUEUED);
-    delegateTask.setTaskActivityLogs(null);
-    delegateTask.setBroadcastToDelegateIds(null);
-    when(assignDelegateService.connectedWhitelistedDelegates(delegateTask)).thenReturn(emptyList());
-
-    delegateTaskServiceClassic.failIfAllDelegatesFailed(ACCOUNT_ID, DELEGATE_ID, delegateTask.getUuid(), true);
-    verify(assignDelegateService).connectedWhitelistedDelegates(delegateTask);
-    assertThat(persistence.createQuery(DelegateTask.class).get()).isNull();
-  }
-
-  @Test
-  @Owner(developers = BRETT)
-  @Category(UnitTests.class)
-  public void shouldFailIfAllDelegatesFailed_sync() {
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
-        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
-        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    DelegateTask delegateTask = saveDelegateTask(false, ImmutableSet.of(DELEGATE_ID), QUEUED);
-    delegateTask.setTaskActivityLogs(null);
-    delegateTask.setBroadcastToDelegateIds(null);
-    when(assignDelegateService.connectedWhitelistedDelegates(delegateTask)).thenReturn(emptyList());
-    delegateTaskServiceClassic.failIfAllDelegatesFailed(ACCOUNT_ID, "", delegateTask.getUuid(), true);
-    verify(assignDelegateService).connectedWhitelistedDelegates(delegateTask);
-    String expectedMessage =
-        "No connected whitelisted delegates found for task and no eligible delegates could perform the required capabilities for this task: [ https://www.google.com ]\n"
-        + "  -  The capabilities were tested by the following delegates: [ DELEGATE_ID ]\n"
-        + "  -  Following delegates were validating but never returned: [  ]\n"
-        + "  -  Other delegates (if any) may have been offline or were not eligible due to tag or scope restrictions.";
-    RemoteMethodReturnValueData notifyResponse = (RemoteMethodReturnValueData) kryoSerializer.asInflatedObject(
-        persistence.createQuery(DelegateSyncTaskResponse.class).get().getResponseData());
-
-    assertThat(notifyResponse.getException().getMessage()).isEqualTo(expectedMessage);
-  }
-
-  @Test
-  @Owner(developers = MARKOM)
-  @Category(UnitTests.class)
-  public void shouldFailIfAllDelegatesFailedNoClientTools_sync() {
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
-        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
-        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    DelegateTask delegateTask = saveDelegateTask(false, ImmutableSet.of(DELEGATE_ID), QUEUED);
-    when(assignDelegateService.connectedWhitelistedDelegates(delegateTask)).thenReturn(emptyList());
-    delegateTaskServiceClassic.failIfAllDelegatesFailed(ACCOUNT_ID, DELEGATE_ID, delegateTask.getUuid(), false);
-    // verify(assignDelegateService).connectedWhitelistedDelegates(delegateTask);
-    String expectedMessage =
-        "No connected whitelisted delegates found for task and no eligible delegates could perform the required capabilities for this task: [ https://www.google.com ]\n"
-        + "  -  The capabilities were tested by the following delegates: [ DELEGATE_ID ]\n"
-        + "  -  Following delegates were validating but never returned: [  ]\n"
-        + "  -  Other delegates (if any) may have been offline or were not eligible due to tag or scope restrictions."
-        + "  -  This could be due to some client tools still being installed on the delegates. If this is the reason please retry in a few minutes.";
-    RemoteMethodReturnValueData notifyResponse = (RemoteMethodReturnValueData) kryoSerializer.asInflatedObject(
-        persistence.createQuery(DelegateSyncTaskResponse.class).get().getResponseData());
-
-    assertThat(notifyResponse.getException().getMessage()).isEqualTo(expectedMessage);
-  }
-
-  @Test
-  @Owner(developers = BRETT)
-  @Category(UnitTests.class)
-  public void shouldFailIfAllDelegatesFailed_notAll() {
-    DelegateTask delegateTask =
-        DelegateTask.builder()
-            .accountId(ACCOUNT_ID)
-            .waitId(generateUuid())
-            .setupAbstraction(Cd1SetupFields.APP_ID_FIELD, APP_ID)
-            .version(VERSION)
-            .data(TaskData.builder()
-                      .async(true)
-                      .taskType(TaskType.HTTP.name())
-                      .parameters(new Object[] {HttpTaskParameters.builder().url("https://www.google.com").build()})
-                      .timeout(DEFAULT_ASYNC_CALL_TIMEOUT)
-                      .build())
-            .validatingDelegateIds(ImmutableSet.of("delegate2"))
-            .validationCompleteDelegateIds(ImmutableSet.of("delegate3"))
-            .build();
-
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(delegateTask, null))
-        .thenReturn(new LinkedList<>(Arrays.asList(DELEGATE_ID)));
-    delegateTaskServiceClassic.processDelegateTask(delegateTask, QUEUED);
-
-    delegateTaskServiceClassic.failIfAllDelegatesFailed(ACCOUNT_ID, DELEGATE_ID, delegateTask.getUuid(), true);
-    delegateTask.setTaskActivityLogs(null);
-    delegateTask.setBroadcastToDelegateIds(null);
-    assertThat(persistence.createQuery(DelegateTask.class).get()).isEqualTo(delegateTask);
-  }
-
-  @Test
-  @Owner(developers = BRETT)
-  @Category(UnitTests.class)
-  public void shouldFailIfAllDelegatesFailed_whitelist() {
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
-        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    DelegateTask delegateTask = saveDelegateTask(true, ImmutableSet.of(DELEGATE_ID), QUEUED);
-    delegateTask.setTaskActivityLogs(null);
-    delegateTask.setBroadcastToDelegateIds(null);
-    when(assignDelegateService.connectedWhitelistedDelegates(delegateTask)).thenReturn(singletonList("delegate2"));
-    delegateTaskServiceClassic.failIfAllDelegatesFailed(ACCOUNT_ID, DELEGATE_ID, delegateTask.getUuid(), true);
-    verify(assignDelegateService).connectedWhitelistedDelegates(delegateTask);
-    delegateTask.setTaskActivityLogs(null);
-    delegateTask.setBroadcastToDelegateIds(null);
-    assertThat(persistence.createQuery(DelegateTask.class).get()).isEqualTo(delegateTask);
-  }
-
-  @Test
-  @Owner(developers = BRETT)
-  @Category(UnitTests.class)
   public void shouldExpireTask() {
     createAccountDelegate();
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     DelegateTask delegateTask = saveDelegateTask(true, ImmutableSet.of(DELEGATE_ID), QUEUED);
 
@@ -842,8 +684,7 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Owner(developers = BRETT)
   @Category(UnitTests.class)
   public void shouldAbortTask() {
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     DelegateTask delegateTask = saveDelegateTask(true, ImmutableSet.of(DELEGATE_ID), QUEUED);
 
@@ -872,8 +713,7 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldScheduleSyncTaskThrowNoAvailableDelegatesException() {
     when(assignDelegateService.retrieveActiveDelegates(anyString(), any())).thenReturn(emptyList());
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     thrown.expect(NoAvailableDelegatesException.class);
     TaskData taskData = TaskData.builder().taskType(TaskType.HELM_COMMAND_TASK.name()).build();
@@ -995,10 +835,9 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldSaveDelegateTask_Sync() {
     DelegateTask delegateTask = getDelegateTask();
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
+    when(assignDelegateService.getConnectedDelegateList(any(), any()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     delegateTaskServiceClassic.scheduleSyncTask(delegateTask);
     DelegateTask task = persistence.get(DelegateTask.class, delegateTask.getUuid());
@@ -1024,8 +863,7 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   public void shouldNotSaveDelegateTaskWhenNoActiveEligibleDelegate_sync() {
     DelegateTask delegateTask = getDelegateTask();
     thrown.expect(NoAvailableDelegatesException.class);
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
 
     delegateTaskServiceClassic.scheduleSyncTask(delegateTask);
@@ -1037,10 +875,9 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldSaveDelegateTask_async() {
     DelegateTask delegateTask = getDelegateTask();
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
+    when(assignDelegateService.getConnectedDelegateList(any(), any()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     delegateTaskServiceClassic.queueTask(delegateTask);
     DelegateTask task = persistence.get(DelegateTask.class, delegateTask.getUuid());
@@ -1055,7 +892,6 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldNotSaveDelegateTaskWhenNoEligibleDelegate_async() {
     DelegateTask delegateTask = getDelegateTask();
-    thrown.expect(NoEligibleDelegatesInAccountException.class);
     delegateTaskServiceClassic.queueTask(delegateTask);
     assertThat(persistence.get(DelegateTask.class, delegateTask.getUuid())).isNull();
   }
@@ -1065,10 +901,9 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldSaveDelegateTaskWhenNoActiveEligibleDelegate_async() {
     DelegateTask delegateTask = getDelegateTask();
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
+    when(assignDelegateService.getConnectedDelegateList(any(), any()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     delegateTaskServiceClassic.queueTask(delegateTask);
     assertThat(persistence.get(DelegateTask.class, delegateTask.getUuid())).isNotNull();
@@ -1080,10 +915,9 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testDelegateQueuedEventForTaskPoll_async() {
     DelegateTask delegateTask = getDelegateTask();
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
+    when(assignDelegateService.getConnectedDelegateList(any(), any()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     delegateTaskServiceClassic.queueTask(delegateTask);
     List<DelegateTaskEvent> delegateTaskEvents =
@@ -1096,7 +930,6 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testDelegateQueuedEventForTaskPollWhenNoEligibleDelegates_async() {
     DelegateTask delegateTask = getDelegateTask();
-    thrown.expect(NoEligibleDelegatesInAccountException.class);
     delegateTaskServiceClassic.queueTask(delegateTask);
     List<DelegateTaskEvent> delegateTaskEvents =
         delegateTaskServiceClassic.getDelegateTaskEvents(ACCOUNT_ID, DELEGATE_ID, false);
@@ -1108,10 +941,9 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testDelegateQueuedEventForTaskPollWhenNonEligibleDelegateAcquire_async() {
     DelegateTask delegateTask = getDelegateTask();
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
+    when(assignDelegateService.getConnectedDelegateList(any(), any()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     delegateTaskServiceClassic.queueTask(delegateTask);
     List<DelegateTaskEvent> delegateTaskEvents =
@@ -1124,10 +956,9 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testDelegateQueuedEventForTaskPoll_sync() {
     DelegateTask delegateTask = getDelegateTask();
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
+    when(assignDelegateService.getConnectedDelegateList(any(), any()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     delegateTaskServiceClassic.executeTask(delegateTask);
     List<DelegateTaskEvent> delegateTaskEvents =
@@ -1140,7 +971,6 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testDelegateQueuedEventForTaskPollWhenNoEligibleDelegates_sync() {
     DelegateTask delegateTask = getDelegateTask();
-    thrown.expect(NoEligibleDelegatesInAccountException.class);
     delegateTaskServiceClassic.queueTask(delegateTask);
     List<DelegateTaskEvent> delegateTaskEvents =
         delegateTaskServiceClassic.getDelegateTaskEvents(ACCOUNT_ID, DELEGATE_ID, true);
@@ -1152,10 +982,9 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testDelegateQueuedEventForTaskPollWhenNonEligibleDelegateAcquire_sync() {
     DelegateTask delegateTask = getDelegateTask();
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
+    when(assignDelegateService.getConnectedDelegateList(any(), any()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     delegateTaskServiceClassic.queueTask(delegateTask);
     List<DelegateTaskEvent> delegateTaskEvents =
@@ -1216,7 +1045,7 @@ public class DelegateTaskServiceClassicTest extends WingsBaseTest {
             .validationCompleteDelegateIds(ImmutableSet.of(DELEGATE_ID))
             .build();
 
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(delegateTask, null))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(delegateTask))
         .thenReturn(new LinkedList<>(Arrays.asList(DELEGATE_ID)));
     delegateTaskServiceClassic.processDelegateTask(delegateTask, status);
     return delegateTask;
