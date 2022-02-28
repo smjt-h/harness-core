@@ -12,7 +12,6 @@ import static io.harness.ng.core.CorrelationContext.getCorrelationIdInterceptor;
 import static io.harness.request.RequestContextFilter.getRequestContextInterceptor;
 import static io.harness.security.JWTAuthenticationFilter.X_SOURCE_PRINCIPAL;
 
-import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 
 import io.harness.annotations.dev.OwnedBy;
@@ -28,17 +27,10 @@ import io.harness.security.ServiceTokenGenerator;
 import io.harness.security.SourcePrincipalContextBuilder;
 import io.harness.security.dto.Principal;
 import io.harness.security.dto.ServicePrincipal;
-import io.harness.serializer.HObjectMapper;
-import io.harness.serializer.JsonSubtypeResolver;
+import io.serializer.HObjectMapper;
 import io.harness.serializer.kryo.KryoConverterFactory;
 
-import software.wings.jersey.JsonViews;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.guava.GuavaModule;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.retrofit.CircuitBreakerCallAdapter;
 import java.time.Duration;

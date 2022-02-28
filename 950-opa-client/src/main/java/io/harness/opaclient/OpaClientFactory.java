@@ -12,7 +12,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.network.Http;
 import io.harness.security.PmsAuthInterceptor;
-import io.harness.serializer.HObjectMapper;
+import io.serializer.HObjectMapper;
 import io.harness.serializer.kryo.KryoConverterFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;

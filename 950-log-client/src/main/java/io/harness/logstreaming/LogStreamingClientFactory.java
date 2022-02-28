@@ -8,7 +8,7 @@
 package io.harness.logstreaming;
 
 import io.harness.network.Http;
-import io.harness.serializer.HObjectMapper;
+import io.serializer.HObjectMapper;
 import io.harness.serializer.kryo.KryoConverterFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;

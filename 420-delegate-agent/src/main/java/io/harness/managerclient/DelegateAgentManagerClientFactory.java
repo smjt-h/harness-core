@@ -13,7 +13,7 @@ import io.harness.network.FibonacciBackOff;
 import io.harness.network.Http;
 import io.harness.network.NoopHostnameVerifier;
 import io.harness.security.TokenGenerator;
-import io.harness.serializer.HObjectMapper;
+import io.serializer.HObjectMapper;
 import io.harness.serializer.kryo.KryoConverterFactory;
 import io.harness.version.VersionInfoManager;
 

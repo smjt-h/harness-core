@@ -17,7 +17,7 @@ import io.harness.exception.GeneralException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.network.Http;
 import io.harness.security.ServiceTokenGenerator;
-import io.harness.serializer.HObjectMapper;
+import io.serializer.HObjectMapper;
 import io.harness.serializer.JsonSubtypeResolver;
 
 import software.wings.app.MainConfiguration;

@@ -13,7 +13,7 @@ import io.harness.network.Http;
 import io.harness.network.NoopHostnameVerifier;
 import io.harness.security.ServiceTokenGenerator;
 import io.harness.security.VerificationAuthInterceptor;
-import io.harness.serializer.HObjectMapper;
+import io.serializer.HObjectMapper;
 import io.harness.serializer.JsonSubtypeResolver;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
