@@ -30,7 +30,10 @@ public class HObjectMapper {
   }
 
   public static ObjectMapper getNGObjectMapper() {
-    ObjectMapper mapper = new ObjectMapper();
+    return configureObjectMapperForNG(new ObjectMapper());
+  }
+
+  public static ObjectMapper configureObjectMapperForNG(ObjectMapper mapper) {
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     AnnotationAwareJsonSubtypeResolver subtypeResolver =
         AnnotationAwareJsonSubtypeResolver.newInstance(mapper.getSubtypeResolver());
