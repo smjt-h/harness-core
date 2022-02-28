@@ -65,7 +65,7 @@ public class DelegateAgentManagerClientFactory
 
   @Override
   public io.harness.managerclient.DelegateAgentManagerClient get() {
-    ObjectMapper objectMapper = HObjectMapper.get();
+    ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new Jdk8Module());
     objectMapper.registerModule(new GuavaModule());
     objectMapper.registerModule(new JavaTimeModule());
