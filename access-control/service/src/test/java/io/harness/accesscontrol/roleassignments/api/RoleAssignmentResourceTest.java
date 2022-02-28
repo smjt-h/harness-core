@@ -80,14 +80,13 @@ import io.harness.rule.Owner;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import io.serializer.HObjectMapper;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-
-import io.serializer.HObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -612,8 +611,8 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
     List<RoleAssignmentDTO> roleAssignmentDTOs =
         Lists.newArrayList(getRoleAssignmentDTO(), getRoleAssignmentDTO(), getRoleAssignmentDTO());
     List<RoleAssignmentDTO> roleAssignmentDTOsClone = new ArrayList<>();
-    roleAssignmentDTOs.forEach(roleAssignmentDTO
-        -> roleAssignmentDTOsClone.add((RoleAssignmentDTO) HObjectMapper.clone(roleAssignmentDTO)));
+    roleAssignmentDTOs.forEach(
+        roleAssignmentDTO -> roleAssignmentDTOsClone.add((RoleAssignmentDTO) HObjectMapper.clone(roleAssignmentDTO)));
     preSyncDependencies(roleAssignmentDTOs, true, true, true);
     preCheckUpdatePermission(roleAssignmentDTOs);
     when(transactionTemplate.execute(any())).thenReturn(ResponseDTO.newResponse());
@@ -633,8 +632,8 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
     List<RoleAssignmentDTO> roleAssignmentDTOs =
         Lists.newArrayList(getRoleAssignmentDTO(), getRoleAssignmentDTO(), getRoleAssignmentDTO());
     List<RoleAssignmentDTO> roleAssignmentDTOsClone = new ArrayList<>();
-    roleAssignmentDTOs.forEach(roleAssignmentDTO
-        -> roleAssignmentDTOsClone.add((RoleAssignmentDTO) HObjectMapper.clone(roleAssignmentDTO)));
+    roleAssignmentDTOs.forEach(
+        roleAssignmentDTO -> roleAssignmentDTOsClone.add((RoleAssignmentDTO) HObjectMapper.clone(roleAssignmentDTO)));
     preSyncDependencies(roleAssignmentDTOs, false, false, false);
     preCheckUpdatePermission(roleAssignmentDTOs);
     when(transactionTemplate.execute(any())).thenReturn(ResponseDTO.newResponse());
@@ -654,8 +653,8 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
     List<RoleAssignmentDTO> roleAssignmentDTOs = Lists.newArrayList(getRoleAssignmentDTO(PrincipalType.SERVICE),
         getRoleAssignmentDTO(PrincipalType.SERVICE), getRoleAssignmentDTO(PrincipalType.SERVICE));
     List<RoleAssignmentDTO> roleAssignmentDTOsClone = new ArrayList<>();
-    roleAssignmentDTOs.forEach(roleAssignmentDTO
-        -> roleAssignmentDTOsClone.add((RoleAssignmentDTO) HObjectMapper.clone(roleAssignmentDTO)));
+    roleAssignmentDTOs.forEach(
+        roleAssignmentDTO -> roleAssignmentDTOsClone.add((RoleAssignmentDTO) HObjectMapper.clone(roleAssignmentDTO)));
     preSyncDependencies(roleAssignmentDTOs, true, true, true);
     preCheckUpdatePermission(roleAssignmentDTOs);
     roleAssignmentResource.create(

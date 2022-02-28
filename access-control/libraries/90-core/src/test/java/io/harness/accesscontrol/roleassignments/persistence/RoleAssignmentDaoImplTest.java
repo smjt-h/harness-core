@@ -43,12 +43,11 @@ import io.harness.utils.PageTestUtils;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import io.serializer.HObjectMapper;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
-
-import io.serializer.HObjectMapper;
 import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
@@ -134,8 +133,7 @@ public class RoleAssignmentDaoImplTest extends AccessControlCoreTestBase {
   public void testListCriteria() {
     PageRequest pageRequest = PageRequest.builder().pageIndex(0).pageSize(50).build();
     RoleAssignmentFilter roleAssignmentFilter = getRoleAssignmentFilter(false);
-    RoleAssignmentFilter roleAssignmentFilterClone =
-        (RoleAssignmentFilter) HObjectMapper.clone(roleAssignmentFilter);
+    RoleAssignmentFilter roleAssignmentFilterClone = (RoleAssignmentFilter) HObjectMapper.clone(roleAssignmentFilter);
     ArgumentCaptor<Criteria> criteriaArgumentCaptor = ArgumentCaptor.forClass(Criteria.class);
     when(roleAssignmentRepository.findAll(any(), any())).thenReturn(PageTestUtils.getPage(emptyList(), 0));
     roleAssignmentDao.list(pageRequest, roleAssignmentFilter);
@@ -277,8 +275,7 @@ public class RoleAssignmentDaoImplTest extends AccessControlCoreTestBase {
   @Category(UnitTests.class)
   public void testDeleteMultiCriteria() {
     RoleAssignmentFilter roleAssignmentFilter = getRoleAssignmentFilter(false);
-    RoleAssignmentFilter roleAssignmentFilterClone =
-        (RoleAssignmentFilter) HObjectMapper.clone(roleAssignmentFilter);
+    RoleAssignmentFilter roleAssignmentFilterClone = (RoleAssignmentFilter) HObjectMapper.clone(roleAssignmentFilter);
     ArgumentCaptor<Criteria> criteriaArgumentCaptor = ArgumentCaptor.forClass(Criteria.class);
     when(roleAssignmentRepository.deleteMulti(any())).thenReturn(0L);
     roleAssignmentDao.deleteMulti(roleAssignmentFilter);

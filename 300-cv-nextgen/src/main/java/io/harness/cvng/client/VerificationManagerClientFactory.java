@@ -13,7 +13,6 @@ import io.harness.network.Http;
 import io.harness.network.NoopHostnameVerifier;
 import io.harness.security.ServiceTokenGenerator;
 import io.harness.security.VerificationAuthInterceptor;
-import io.serializer.HObjectMapper;
 import io.harness.serializer.JsonSubtypeResolver;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,6 +22,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import io.serializer.HObjectMapper;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
