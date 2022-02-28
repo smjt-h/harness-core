@@ -11,7 +11,6 @@ RUN adduser -g harness -s /bin/sh -D -u 1000 harness
 USER harness:harness
 
 From scratch
-COPY --from=builder /usr/bin/git /usr/local/bin/
 COPY ci-addon_/ci-addon /usr/local/bin/ci-addon-linux-amd64
 COPY java-agent.jar /usr/local/bin/
 COPY --from=0 /etc/passwd /etc/passwd
