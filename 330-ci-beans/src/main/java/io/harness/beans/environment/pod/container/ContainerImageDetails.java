@@ -7,6 +7,7 @@
 
 package io.harness.beans.environment.pod.container;
 
+import io.harness.annotation.RecasterAlias;
 import io.harness.k8s.model.ImageDetails;
 
 import lombok.Builder;
@@ -18,6 +19,7 @@ import lombok.Data;
 
 @Data
 @Builder
+@RecasterAlias("io.harness.beans.environment.pod.container.ContainerImageDetails")
 public class ContainerImageDetails {
   private ImageDetails imageDetails;
   private String connectorIdentifier;

@@ -7,6 +7,7 @@
 
 package io.harness.core;
 
+import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exceptions.DuplicateAliasException;
@@ -57,7 +58,12 @@ public class AliasRegistry {
     Collections.addAll(packages, packageNames);
   }
 
-  public boolean shouldContainAlias(Class<?> clazz) {
+  public boolean hasNoAlias(Class<?> clazz) {
+    RecasterAlias alias = clazz.getAnnotation(RecasterAlias.class);
+    if (alias != null){
+      return false;
+    }
+
     final String clazzPkg = clazz.getCanonicalName();
     if (clazzPkg == null) {
       return false;
@@ -68,7 +74,6 @@ public class AliasRegistry {
         return true;
       }
     }
-
     return false;
   }
 }

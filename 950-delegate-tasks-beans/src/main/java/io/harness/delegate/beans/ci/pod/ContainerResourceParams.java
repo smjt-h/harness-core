@@ -7,11 +7,13 @@
 
 package io.harness.delegate.beans.ci.pod;
 
+import io.harness.annotation.RecasterAlias;
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Builder
+@RecasterAlias("io.harness.delegate.beans.ci.pod.ContainerResourceParams")
 public class ContainerResourceParams {
   private Integer resourceRequestMemoryMiB;
   private Integer resourceLimitMemoryMiB;

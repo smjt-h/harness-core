@@ -7,6 +7,7 @@
 
 package io.harness.delegate.beans.ci.pod;
 
+import io.harness.annotation.RecasterAlias;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,6 +16,7 @@ import lombok.NonNull;
 @Data
 @Builder
 @AllArgsConstructor
+@RecasterAlias("io.harness.delegate.beans.ci.pod.PVCParams")
 public class PVCParams {
   @NonNull private String volumeName;
   @NonNull private String claimName;

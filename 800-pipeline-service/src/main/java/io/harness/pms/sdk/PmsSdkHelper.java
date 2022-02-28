@@ -79,6 +79,7 @@ public class PmsSdkHelper {
   }
 
   public boolean containsSupportedDependencyByYamlPath(PlanCreatorServiceInfo serviceInfo, Dependencies dependencies) {
+    long start = System.currentTimeMillis();
     if (dependencies == null || EmptyPredicate.isEmpty(dependencies.getDependenciesMap())) {
       return false;
     }
@@ -93,20 +94,22 @@ public class PmsSdkHelper {
       throw new InvalidRequestException(message);
     }
 
-    return dependencies.getDependenciesMap()
-        .entrySet()
-        .stream()
-        .filter(entry -> {
-          try {
-            YamlField field = fullYamlField.fromYamlPath(entry.getValue());
-            return PlanCreatorUtils.supportsField(supportedTypes, field);
-          } catch (Exception e) {
-            log.error("Invalid yaml field", e);
-            return false;
-          }
-        })
-        .map(Map.Entry::getKey)
-        .findFirst()
-        .isPresent();
+    boolean supported = dependencies.getDependenciesMap()
+                            .entrySet()
+                            .stream()
+                            .filter(entry -> {
+                              try {
+                                YamlField field = fullYamlField.fromYamlPath(entry.getValue());
+                                return PlanCreatorUtils.supportsField(supportedTypes, field);
+                              } catch (Exception e) {
+                                log.error("Invalid yaml field", e);
+                                return false;
+                              }
+                            })
+                            .map(Map.Entry::getKey)
+                            .findFirst()
+                            .isPresent();
+    log.info("ContainsSupportedDependencyByYamlPath took {}ms", System.currentTimeMillis() - start);
+    return supported;
   }
 }

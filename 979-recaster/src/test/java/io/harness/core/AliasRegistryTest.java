@@ -54,8 +54,8 @@ public class AliasRegistryTest extends RecasterTestBase {
   public void shouldTestShouldContainAlias() {
     aliasRegistry.addPackages("io.harness");
 
-    assertThat(aliasRegistry.shouldContainAlias(DummyWithoutAlias.class)).isTrue();
-    assertThat(aliasRegistry.shouldContainAlias(LinkedHashMap.class)).isFalse();
+    assertThat(aliasRegistry.hasNoAlias(DummyWithoutAlias.class)).isTrue();
+    assertThat(aliasRegistry.hasNoAlias(LinkedHashMap.class)).isFalse();
   }
 
   @Builder

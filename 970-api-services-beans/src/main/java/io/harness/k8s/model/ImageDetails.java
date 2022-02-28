@@ -9,6 +9,7 @@ package io.harness.k8s.model;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
+import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -23,6 +24,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@RecasterAlias("io.harness.k8s.model.ImageDetails")
 public class ImageDetails {
   private String name;
   private String tag;

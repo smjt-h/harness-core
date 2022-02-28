@@ -125,6 +125,7 @@ public class PlanCreatorMergeService {
             .setYaml(planExecutionMetadata.getProcessedYaml())
             .putDependencies(pipelineField.getNode().getUuid(), pipelineField.getNode().getYamlPath())
             .build();
+    log.info("Starting recursive plan creation");
     PlanCreationBlobResponse finalResponse = createPlanForDependenciesRecursive(accountId, orgIdentifier,
         projectIdentifier, services, dependencies, metadata, planExecutionMetadata.getTriggerPayload());
     planCreationValidator.validate(accountId, finalResponse);

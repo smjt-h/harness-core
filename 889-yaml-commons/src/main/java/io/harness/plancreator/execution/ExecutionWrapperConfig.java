@@ -7,6 +7,7 @@
 
 package io.harness.plancreator.execution;
 
+import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.pms.yaml.YamlNode;
@@ -25,6 +26,7 @@ import org.springframework.data.annotation.TypeAlias;
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 @TypeAlias("executionWrapperConfig")
+@RecasterAlias("io.harness.plancreator.execution.ExecutionWrapperConfig")
 public class ExecutionWrapperConfig {
   @JsonProperty(YamlNode.UUID_FIELD_NAME)
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })

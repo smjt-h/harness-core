@@ -10,6 +10,7 @@ package io.harness.yaml.extended.ci.container;
 import static io.harness.annotations.dev.HarnessTeam.CI;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.number;
 
+import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
 import io.harness.pms.yaml.ParameterField;
@@ -30,6 +31,7 @@ import org.springframework.data.annotation.TypeAlias;
 @Data
 @TypeAlias("resource")
 @OwnedBy(CI)
+@RecasterAlias("io.harness.yaml.extended.ci.container.ContainerResource")
 public class ContainerResource {
   @NotNull Limits limits;
 
@@ -41,6 +43,7 @@ public class ContainerResource {
 
   @Data
   @TypeAlias("resource_limits")
+  @RecasterAlias("io.harness.yaml.extended.ci.container.ContainerResource.Limits")
   public static class Limits {
     @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
     @Pattern(regexp = ResourceValidatorConstants.MEMORY_PATTERN)

@@ -86,8 +86,10 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
       StreamObserver<io.harness.pms.contracts.plan.PlanCreationResponse> responseObserver) {
     io.harness.pms.contracts.plan.PlanCreationResponse planCreationResponse;
     try {
+      long start = System.currentTimeMillis();
       MergePlanCreationResponse finalResponse =
           createPlanForDependenciesRecursive(request.getDeps(), request.getContextMap());
+      log.info("Total time take to create MergePlanCreationResponse : {}ms", System.currentTimeMillis() - start);
       planCreationResponse = getPlanCreationResponseFromFinalResponse(finalResponse);
     } catch (Exception ex) {
       log.error(ExceptionUtils.getMessage(ex), ex);
@@ -98,7 +100,7 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
                   ErrorResponse.newBuilder().addMessages(ExceptionUtils.getMessage(processedException)).build())
               .build();
     }
-
+    log.info("Starting to send plan creation Response");
     responseObserver.onNext(planCreationResponse);
     responseObserver.onCompleted();
   }
@@ -212,14 +214,19 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
           .setErrorResponse(ErrorResponse.newBuilder().addAllMessages(finalResponse.getErrorMessages()).build())
           .build();
     }
-    return io.harness.pms.contracts.plan.PlanCreationResponse.newBuilder()
-        .setBlobResponse(planCreationResponseBlobHelper.toBlobResponse(finalResponse))
-        .build();
+    long start = System.currentTimeMillis();
+    io.harness.pms.contracts.plan.PlanCreationResponse response =
+        io.harness.pms.contracts.plan.PlanCreationResponse.newBuilder()
+            .setBlobResponse(planCreationResponseBlobHelper.toBlobResponse(finalResponse))
+            .build();
+    log.info("Time Taken to convert to blob response {}ms", System.currentTimeMillis() - start);
+    return response;
   }
 
   private PlanCreationResponse createPlanForDependencyInternal(
       String currentYaml, YamlField field, PlanCreationContext ctx, Dependency dependency) {
     try {
+      long start = System.currentTimeMillis();
       Optional<PartialPlanCreator<?>> planCreatorOptional =
           PlanCreatorServiceHelper.findPlanCreator(planCreators, field);
       if (!planCreatorOptional.isPresent()) {
@@ -234,6 +241,7 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
         PlanCreationResponse planForField = planCreator.createPlanForField(
             PlanCreationContext.cloneWithCurrentField(ctx, field, currentYaml, dependency), obj);
         PlanCreatorServiceHelper.decorateNodesWithStageFqn(field, planForField);
+        log.info("Creating Plan for dependency {}  took {}ms", field.getName(), System.currentTimeMillis() - start);
         return planForField;
       } catch (Exception ex) {
         log.error(format("Error creating plan for node: %s", YamlUtils.getFullyQualifiedName(field.getNode())), ex);

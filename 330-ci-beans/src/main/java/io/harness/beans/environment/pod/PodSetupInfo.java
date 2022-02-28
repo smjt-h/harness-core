@@ -7,6 +7,7 @@
 
 package io.harness.beans.environment.pod;
 
+import io.harness.annotation.RecasterAlias;
 import io.harness.beans.environment.pod.container.ContainerDefinitionInfo;
 import io.harness.delegate.beans.ci.pod.PVCParams;
 
@@ -25,6 +26,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 @Data
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
+@RecasterAlias("io.harness.beans.environment.pod.PodSetupInfo")
 public class PodSetupInfo {
   private PodSetupParams podSetupParams;
   private List<PVCParams> pvcParamsList;
@@ -38,6 +40,7 @@ public class PodSetupInfo {
 
   @Data
   @Builder
+  @RecasterAlias("io.harness.beans.environment.pod.PodSetupInfo.PodSetupParams")
   public static final class PodSetupParams {
     private List<ContainerDefinitionInfo> containerDefinitionInfos;
   }
