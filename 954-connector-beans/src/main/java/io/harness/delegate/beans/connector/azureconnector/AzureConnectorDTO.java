@@ -39,7 +39,7 @@ public class AzureConnectorDTO extends ConnectorConfigDTO implements DelegateSel
   Set<String> delegateSelectors;
   @Builder.Default
   @Schema(description = "This specifies the Azure Environment type, which is AZURE by default.")
-  private AzureEnvironmentType azureEnvironmentType = AZURE;
+  private AzureEnvironmentType azureEnvironmentType;
 
   @Override
   public List<DecryptableEntity> getDecryptableEntities() {

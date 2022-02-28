@@ -45,6 +45,7 @@ public class AzureEntityToDTO implements ConnectorEntityToDTOMapper<AzureConnect
                                                             .build();
     return AzureConnectorDTO.builder()
         .delegateSelectors(connector.getDelegateSelectors())
+        .azureEnvironmentType(connector.getAzureEnvironmentType())
         .credential(AzureConnectorCredentialDTO.builder()
                         .azureCredentialType(AzureCredentialType.MANUAL_CREDENTIALS)
                         .config(azureManualDetailsDTO)
@@ -55,6 +56,7 @@ public class AzureEntityToDTO implements ConnectorEntityToDTOMapper<AzureConnect
   private AzureConnectorDTO buildInheritFromDelegate(AzureConfig connector) {
     return AzureConnectorDTO.builder()
         .delegateSelectors(connector.getDelegateSelectors())
+        .azureEnvironmentType(connector.getAzureEnvironmentType())
         .credential(AzureConnectorCredentialDTO.builder()
                         .azureCredentialType(AzureCredentialType.INHERIT_FROM_DELEGATE)
                         .config(null)

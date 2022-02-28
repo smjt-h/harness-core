@@ -28,21 +28,25 @@ public class AzureDTOToEntity implements ConnectorDTOToEntityMapper<AzureConnect
   public AzureConfig toConnectorEntity(AzureConnectorDTO connectorDTO) {
     final AzureConnectorCredentialDTO credential = connectorDTO.getCredential();
     final AzureCredentialType credentialType = credential.getAzureCredentialType();
+    final AzureConfig.AzureConfigBuilder azureConfigBuilder;
     switch (credentialType) {
       case INHERIT_FROM_DELEGATE:
-        return buildInheritFromDelegate();
+        azureConfigBuilder = buildInheritFromDelegate();
+        break;
       case MANUAL_CREDENTIALS:
-        return buildManualCredential(credential);
+        azureConfigBuilder = buildManualCredential(credential);
+        break;
       default:
         throw new InvalidRequestException("Invalid Credential type.");
     }
+    return azureConfigBuilder.azureEnvironmentType(connectorDTO.getAzureEnvironmentType()).build();
   }
 
-  private AzureConfig buildInheritFromDelegate() {
-    return AzureConfig.builder().credentialType(AzureCredentialType.INHERIT_FROM_DELEGATE).credential(null).build();
+  private AzureConfig.AzureConfigBuilder buildInheritFromDelegate() {
+    return AzureConfig.builder().credentialType(AzureCredentialType.INHERIT_FROM_DELEGATE).credential(null);
   }
 
-  private AzureConfig buildManualCredential(AzureConnectorCredentialDTO connector) {
+  private AzureConfig.AzureConfigBuilder buildManualCredential(AzureConnectorCredentialDTO connector) {
     final AzureManualDetailsDTO config = (AzureManualDetailsDTO) connector.getConfig();
     final String secretKeyRef = SecretRefHelper.getSecretConfigString(config.getSecretKeyRef());
     AzureManualCredential azureManualCredential = AzureManualCredential.builder()
@@ -52,7 +56,6 @@ public class AzureDTOToEntity implements ConnectorDTOToEntityMapper<AzureConnect
                                                       .build();
     return AzureConfig.builder()
         .credentialType(AzureCredentialType.MANUAL_CREDENTIALS)
-        .credential(azureManualCredential)
-        .build();
+        .credential(azureManualCredential);
   }
 }

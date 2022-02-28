@@ -44,7 +44,11 @@ import com.microsoft.azure.CloudException;
 import com.microsoft.azure.Page;
 import com.microsoft.azure.PagedList;
 import com.microsoft.azure.management.Azure;
-import com.microsoft.azure.management.resources.*;
+import com.microsoft.azure.management.resources.Deployment;
+import com.microsoft.azure.management.resources.DeploymentMode;
+import com.microsoft.azure.management.resources.DeploymentProperties;
+import com.microsoft.azure.management.resources.Location;
+import com.microsoft.azure.management.resources.ResourceGroupExportTemplateOptions;
 import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 import com.microsoft.azure.management.resources.implementation.DeploymentExtendedInner;
 import com.microsoft.azure.management.resources.implementation.DeploymentInner;
@@ -55,7 +59,6 @@ import com.microsoft.azure.management.resources.implementation.DeploymentsInner;
 import com.microsoft.azure.management.resources.implementation.PageImpl;
 import com.microsoft.rest.ServiceResponse;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -611,6 +614,7 @@ public class AzureManagementClientImpl extends AzureClient implements AzureManag
 
   @Override
   public void validateAzureConnection(AzureConfig azureConfig) {
+    // if subscriptions can be read, connection is valid otherwise an exception will be thrown
     getAzureClientWithDefaultSubscription(azureConfig).subscriptions();
 
     log.debug(
