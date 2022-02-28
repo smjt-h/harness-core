@@ -25,7 +25,6 @@ import io.harness.delegate.beans.connector.k8Connector.KubernetesCredentialDTO;
 import io.harness.delegate.beans.connector.k8Connector.KubernetesUserNamePasswordDTO;
 import io.harness.encryption.Scope;
 import io.harness.encryption.SecretRefData;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 
@@ -33,6 +32,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.Map;
+
+import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Before;
@@ -53,7 +54,7 @@ public class KubernetesClusterConfigSerializationDeserializationTest extends Cat
   @Before
   public void setup() {
     objectMapper = new ObjectMapper();
-    NGObjectMapperHelper.configureNGObjectMapper(objectMapper);
+    HObjectMapper.configureObjectMapperForNG(objectMapper);
   }
 
   private KubernetesClusterConfigDTO createKubernetesConnectorRequestDTO() {

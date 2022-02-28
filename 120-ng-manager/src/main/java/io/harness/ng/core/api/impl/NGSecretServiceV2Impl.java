@@ -41,7 +41,6 @@ import io.harness.ng.core.remote.SSHKeyValidationMetadata;
 import io.harness.ng.core.remote.SecretValidationMetaData;
 import io.harness.ng.core.remote.SecretValidationResultDTO;
 import io.harness.outbox.api.OutboxService;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.repositories.ng.core.spring.SecretRepository;
 import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.services.SshKeySpecDTOHelper;
@@ -61,6 +60,8 @@ import java.util.Map;
 import java.util.Optional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+
+import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -168,7 +169,7 @@ public class NGSecretServiceV2Impl implements NGSecretServiceV2 {
         accountIdentifier, secretDTO.getOrgIdentifier(), secretDTO.getProjectIdentifier(), secretDTO.getIdentifier());
     if (secretOptional.isPresent()) {
       Secret oldSecret = secretOptional.get();
-      SecretDTOV2 oldSecretClone = (SecretDTOV2) NGObjectMapperHelper.clone(oldSecret.toDTO());
+      SecretDTOV2 oldSecretClone = (SecretDTOV2) HObjectMapper.clone(oldSecret.toDTO());
 
       Secret newSecret = secretDTO.toEntity();
       oldSecret.setDescription(newSecret.getDescription());

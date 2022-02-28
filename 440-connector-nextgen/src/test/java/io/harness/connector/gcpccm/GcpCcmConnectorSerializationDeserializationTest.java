@@ -18,11 +18,12 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.connector.ConnectorDTO;
 import io.harness.connector.utils.GcpConnectorTestHelper;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+
+import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,7 +37,7 @@ public class GcpCcmConnectorSerializationDeserializationTest extends CategoryTes
   @Before
   public void setup() {
     objectMapper = new ObjectMapper();
-    NGObjectMapperHelper.configureNGObjectMapper(objectMapper);
+    HObjectMapper.configureObjectMapperForNG(objectMapper);
   }
 
   @Test

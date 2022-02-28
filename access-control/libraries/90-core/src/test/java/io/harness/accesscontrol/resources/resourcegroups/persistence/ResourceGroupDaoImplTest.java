@@ -40,7 +40,6 @@ import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.utils.PageTestUtils;
 import io.harness.utils.PageUtils;
@@ -53,6 +52,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import io.serializer.HObjectMapper;
 import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
@@ -104,7 +105,7 @@ public class ResourceGroupDaoImplTest {
                                             .allowedScopeLevels(currentResourceGroup.getAllowedScopeLevels())
                                             .resourceSelectors(newResourceSelectors)
                                             .build();
-    ResourceGroup resourceGroupUpdateClone = (ResourceGroup) NGObjectMapperHelper.clone(resourceGroupUpdate);
+    ResourceGroup resourceGroupUpdateClone = (ResourceGroup) HObjectMapper.clone(resourceGroupUpdate);
     ResourceGroupDBO resourceGroupUpdateCloneDBO = toDBO(resourceGroupUpdateClone);
     resourceGroupUpdateCloneDBO.setId(currentResourceGroupDBO.getId());
     resourceGroupUpdateCloneDBO.setVersion(currentResourceGroupDBO.getVersion());
@@ -123,7 +124,7 @@ public class ResourceGroupDaoImplTest {
   @Category(UnitTests.class)
   public void testUpsertNotFound() {
     ResourceGroup resourceGroupUpdate = getResourceGroup(5);
-    ResourceGroup resourceGroupUpdateClone = (ResourceGroup) NGObjectMapperHelper.clone(resourceGroupUpdate);
+    ResourceGroup resourceGroupUpdateClone = (ResourceGroup) HObjectMapper.clone(resourceGroupUpdate);
     ResourceGroupDBO resourceGroupUpdateCloneDBO = toDBO(resourceGroupUpdateClone);
     when(resourceGroupRepository.findByIdentifierAndScopeIdentifier(
              resourceGroupUpdate.getIdentifier(), resourceGroupUpdate.getScopeIdentifier()))

@@ -172,7 +172,6 @@ import io.harness.threading.ExecutorModule;
 import io.harness.threading.ThreadPool;
 import io.harness.token.remote.TokenClient;
 import io.harness.tracing.MongoRedisTracer;
-import io.harness.utils.NGObjectMapperHelper;
 import io.harness.waiter.NotifierScheduledExecutorService;
 import io.harness.waiter.NotifyEvent;
 import io.harness.waiter.NotifyQueuePublisherRegister;
@@ -181,6 +180,7 @@ import io.harness.waiter.ProgressUpdateService;
 import io.harness.yaml.YamlSdkConfiguration;
 import io.harness.yaml.YamlSdkInitHelper;
 
+import io.serializer.HObjectMapper;
 import software.wings.app.CharsetResponseFilter;
 import software.wings.jersey.KryoFeature;
 
@@ -286,7 +286,7 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
   }
 
   public static void configureObjectMapper(final ObjectMapper mapper) {
-    NGObjectMapperHelper.configureNGObjectMapper(mapper);
+    HObjectMapper.configureObjectMapperForNG(mapper);
     mapper.registerModule(new PmsBeansJacksonModule());
   }
 

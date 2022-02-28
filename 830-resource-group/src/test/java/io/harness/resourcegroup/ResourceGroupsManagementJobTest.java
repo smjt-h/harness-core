@@ -18,7 +18,6 @@ import io.harness.category.element.UnitTests;
 import io.harness.lock.PersistentLocker;
 import io.harness.ng.beans.PageRequest;
 import io.harness.reflection.ReflectionUtils;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.resourcegroup.commons.bootstrap.ConfigurationState;
 import io.harness.resourcegroup.commons.bootstrap.ConfigurationStateRepository;
 import io.harness.resourcegroup.framework.service.ResourceGroupService;
@@ -35,6 +34,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -57,7 +58,7 @@ public class ResourceGroupsManagementJobTest extends ResourceGroupTestBase {
     ResourceGroupsConfig resourceGroupsConfig =
         (ResourceGroupsConfig) ReflectionUtils.getFieldValue(resourceGroupsManagementJob, RESOURCE_GROUPS_CONFIG_FIELD);
     ResourceGroupsConfig resourceGroupsConfigClone =
-        (ResourceGroupsConfig) NGObjectMapperHelper.clone(resourceGroupsConfig);
+        (ResourceGroupsConfig) HObjectMapper.clone(resourceGroupsConfig);
 
     resourceGroupsManagementJob.run();
     validate(resourceGroupsConfigClone);
@@ -73,20 +74,20 @@ public class ResourceGroupsManagementJobTest extends ResourceGroupTestBase {
     ReflectionUtils.setObjectField(
         resourceGroupsConfig.getClass().getDeclaredField(VERSION_FIELD), resourceGroupsConfig, 2);
     ResourceGroupsConfig latestResourceGroupsConfig =
-        (ResourceGroupsConfig) NGObjectMapperHelper.clone(resourceGroupsConfig);
+        (ResourceGroupsConfig) HObjectMapper.clone(resourceGroupsConfig);
     ResourceGroupsConfig currentResourceGroupsConfig = ResourceGroupsConfig.builder()
                                                            .version(1)
                                                            .name(latestResourceGroupsConfig.getName())
                                                            .resourceGroups(new HashSet<>())
                                                            .build();
     ResourceGroupsConfig currentResourceGroupsConfigClone =
-        (ResourceGroupsConfig) NGObjectMapperHelper.clone(currentResourceGroupsConfig);
+        (ResourceGroupsConfig) HObjectMapper.clone(currentResourceGroupsConfig);
     ReflectionUtils.setObjectField(f, resourceGroupsManagementJob, currentResourceGroupsConfig);
     resourceGroupsManagementJob.run();
     validate(currentResourceGroupsConfigClone);
 
     ResourceGroupsConfig latestResourceGroupsConfigClone =
-        (ResourceGroupsConfig) NGObjectMapperHelper.clone(latestResourceGroupsConfig);
+        (ResourceGroupsConfig) HObjectMapper.clone(latestResourceGroupsConfig);
     ReflectionUtils.setObjectField(f, resourceGroupsManagementJob, latestResourceGroupsConfig);
     resourceGroupsManagementJob.run();
     validate(latestResourceGroupsConfigClone);
@@ -108,7 +109,7 @@ public class ResourceGroupsManagementJobTest extends ResourceGroupTestBase {
         resourceGroupsConfig.getClass().getDeclaredField(VERSION_FIELD), resourceGroupsConfig, currentVersion + 1);
 
     ResourceGroupsConfig resourceGroupsConfigClone =
-        (ResourceGroupsConfig) NGObjectMapperHelper.clone(resourceGroupsConfig);
+        (ResourceGroupsConfig) HObjectMapper.clone(resourceGroupsConfig);
 
     resourceGroupsManagementJob.run();
     validate(resourceGroupsConfigClone);

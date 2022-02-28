@@ -13,7 +13,7 @@ import static io.harness.cache.CacheBackend.NOOP;
 import static io.harness.connector.ConnectorModule.DEFAULT_CONNECTOR_SERVICE;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.outbox.TransactionOutboxModule.OUTBOX_TRANSACTION_TEMPLATE;
-import static io.harness.remote.NGObjectMapperHelper.NG_DEFAULT_OBJECT_MAPPER;
+import static io.serializer.HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
 
 import static org.mockito.Mockito.mock;
 
@@ -76,7 +76,6 @@ import io.harness.threading.CurrentThreadExecutor;
 import io.harness.threading.ExecutorModule;
 import io.harness.time.TimeModule;
 import io.harness.user.remote.UserClient;
-import io.harness.utils.NGObjectMapperHelper;
 import io.harness.yaml.YamlSdkModule;
 import io.harness.yaml.schema.beans.YamlSchemaRootClass;
 import io.harness.yaml.schema.client.YamlSchemaClientModule;
@@ -104,6 +103,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+
+import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
 import org.junit.rules.MethodRule;
@@ -180,7 +181,7 @@ public class CDNGTestRule implements InjectorRuleMixin, MethodRule, MongoRuleMix
       @Singleton
       public ObjectMapper getYamlSchemaObjectMapper() {
         ObjectMapper objectMapper = Jackson.newObjectMapper();
-        NGObjectMapperHelper.configureNGObjectMapper(objectMapper);
+        HObjectMapper.configureObjectMapperForNG(objectMapper);
         objectMapper.registerModule(new PmsBeansJacksonModule());
         return objectMapper;
       }

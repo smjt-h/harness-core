@@ -13,7 +13,7 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.audit.beans.AuthenticationInfoDTO.fromSecurityPrincipal;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.ORGANIZATION_ENTITY;
 import static io.harness.ng.core.utils.NGYamlUtils.getYamlString;
-import static io.harness.remote.NGObjectMapperHelper.NG_DEFAULT_OBJECT_MAPPER;
+import static io.serializer.HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
 import static io.harness.security.PrincipalContextData.PRINCIPAL_CONTEXT;
 
 import io.harness.ModuleType;

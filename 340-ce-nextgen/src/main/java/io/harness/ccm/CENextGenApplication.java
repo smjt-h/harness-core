@@ -10,7 +10,7 @@ package io.harness.ccm;
 import static io.harness.AuthorizationServiceHeader.DEFAULT;
 import static io.harness.annotations.dev.HarnessTeam.CE;
 import static io.harness.logging.LoggingInitializer.initializeLogging;
-import static io.harness.remote.NGObjectMapperHelper.configureNGObjectMapper;
+import static io.serializer.HObjectMapper.configureObjectMapperForNG;
 
 import io.harness.AuthorizationServiceHeader;
 import io.harness.Microservice;

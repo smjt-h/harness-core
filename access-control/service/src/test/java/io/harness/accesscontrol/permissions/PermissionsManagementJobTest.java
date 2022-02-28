@@ -22,7 +22,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidRequestException;
 import io.harness.reflection.ReflectionUtils;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 
 import com.google.inject.Inject;
@@ -30,6 +29,8 @@ import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+
+import io.serializer.HObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -57,7 +58,7 @@ public class PermissionsManagementJobTest extends AccessControlTestBase {
   public void testSave() {
     PermissionsConfig permissionsConfig =
         (PermissionsConfig) ReflectionUtils.getFieldValue(permissionsManagementJob, PERMISSIONS_CONFIG_FIELD);
-    PermissionsConfig permissionsConfigClone = (PermissionsConfig) NGObjectMapperHelper.clone(permissionsConfig);
+    PermissionsConfig permissionsConfigClone = (PermissionsConfig) HObjectMapper.clone(permissionsConfig);
 
     permissionsManagementJob.run();
     validate(permissionsConfigClone);
@@ -71,20 +72,20 @@ public class PermissionsManagementJobTest extends AccessControlTestBase {
     PermissionsConfig permissionsConfig =
         (PermissionsConfig) ReflectionUtils.getFieldValue(permissionsManagementJob, PERMISSIONS_CONFIG_FIELD);
     ReflectionUtils.setObjectField(permissionsConfig.getClass().getDeclaredField(VERSION_FIELD), permissionsConfig, 2);
-    PermissionsConfig latestPermissionsConfig = (PermissionsConfig) NGObjectMapperHelper.clone(permissionsConfig);
+    PermissionsConfig latestPermissionsConfig = (PermissionsConfig) HObjectMapper.clone(permissionsConfig);
     PermissionsConfig currentPermissionsConfig = PermissionsConfig.builder()
                                                      .version(1)
                                                      .name(latestPermissionsConfig.getName())
                                                      .permissions(new HashSet<>())
                                                      .build();
     PermissionsConfig currentPermissionsConfigClone =
-        (PermissionsConfig) NGObjectMapperHelper.clone(currentPermissionsConfig);
+        (PermissionsConfig) HObjectMapper.clone(currentPermissionsConfig);
     ReflectionUtils.setObjectField(f, permissionsManagementJob, currentPermissionsConfig);
     permissionsManagementJob.run();
     validate(currentPermissionsConfigClone);
 
     PermissionsConfig latestPermissionsConfigClone =
-        (PermissionsConfig) NGObjectMapperHelper.clone(latestPermissionsConfig);
+        (PermissionsConfig) HObjectMapper.clone(latestPermissionsConfig);
     ReflectionUtils.setObjectField(f, permissionsManagementJob, latestPermissionsConfig);
     permissionsManagementJob.run();
     validate(latestPermissionsConfigClone);
@@ -113,7 +114,7 @@ public class PermissionsManagementJobTest extends AccessControlTestBase {
     ReflectionUtils.setObjectField(
         permissionsConfig.getClass().getDeclaredField(VERSION_FIELD), permissionsConfig, currentVersion + 1);
 
-    PermissionsConfig permissionsConfigClone = (PermissionsConfig) NGObjectMapperHelper.clone(permissionsConfig);
+    PermissionsConfig permissionsConfigClone = (PermissionsConfig) HObjectMapper.clone(permissionsConfig);
 
     permissionsManagementJob.run();
     validate(permissionsConfigClone);
@@ -127,7 +128,7 @@ public class PermissionsManagementJobTest extends AccessControlTestBase {
     PermissionsConfig currentPermissionsConfig =
         (PermissionsConfig) ReflectionUtils.getFieldValue(permissionsManagementJob, PERMISSIONS_CONFIG_FIELD);
     PermissionsConfig latestPermissionsConfig =
-        (PermissionsConfig) NGObjectMapperHelper.clone(currentPermissionsConfig);
+        (PermissionsConfig) HObjectMapper.clone(currentPermissionsConfig);
     ReflectionUtils.setObjectField(latestPermissionsConfig.getClass().getDeclaredField(VERSION_FIELD),
         latestPermissionsConfig, currentPermissionsConfig.getVersion() + 1);
     Set<String> allowedScopeLevels = new HashSet<>();
@@ -141,13 +142,13 @@ public class PermissionsManagementJobTest extends AccessControlTestBase {
                                                       .build());
 
     PermissionsConfig currentPermissionsConfigClone =
-        (PermissionsConfig) NGObjectMapperHelper.clone(currentPermissionsConfig);
+        (PermissionsConfig) HObjectMapper.clone(currentPermissionsConfig);
     permissionsManagementJob.run();
     validate(currentPermissionsConfigClone);
 
     ReflectionUtils.setObjectField(f, permissionsManagementJob, latestPermissionsConfig);
     PermissionsConfig latestPermissionsConfigClone =
-        (PermissionsConfig) NGObjectMapperHelper.clone(latestPermissionsConfig);
+        (PermissionsConfig) HObjectMapper.clone(latestPermissionsConfig);
     permissionsManagementJob.run();
     validate(latestPermissionsConfigClone);
   }
@@ -159,7 +160,7 @@ public class PermissionsManagementJobTest extends AccessControlTestBase {
     PermissionsConfig currentPermissionsConfig =
         (PermissionsConfig) ReflectionUtils.getFieldValue(permissionsManagementJob, PERMISSIONS_CONFIG_FIELD);
     PermissionsConfig latestPermissionsConfig =
-        (PermissionsConfig) NGObjectMapperHelper.clone(currentPermissionsConfig);
+        (PermissionsConfig) HObjectMapper.clone(currentPermissionsConfig);
     Set<String> allowedScopeLevels = new HashSet<>();
     allowedScopeLevels.add(ACCOUNT_SCOPE_LEVEL);
     currentPermissionsConfig.getPermissions().add(Permission.builder()

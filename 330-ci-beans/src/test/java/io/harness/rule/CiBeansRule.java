@@ -26,7 +26,6 @@ import io.harness.testing.ComponentTestsModule;
 import io.harness.testlib.module.MongoRuleMixin;
 import io.harness.threading.CurrentThreadExecutor;
 import io.harness.threading.ExecutorModule;
-import io.harness.utils.NGObjectMapperHelper;
 import io.harness.yaml.YamlSdkModule;
 import io.harness.yaml.schema.beans.YamlSchemaRootClass;
 
@@ -50,6 +49,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+
+import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
@@ -134,7 +135,7 @@ public class CiBeansRule implements MethodRule, InjectorRuleMixin, MongoRuleMixi
       @Singleton
       public ObjectMapper getYamlSchemaObjectMapper() {
         ObjectMapper objectMapper = Jackson.newObjectMapper();
-        NGObjectMapperHelper.configureNGObjectMapper(objectMapper);
+        HObjectMapper.configureObjectMapperForNG(objectMapper);
         return objectMapper;
       }
 

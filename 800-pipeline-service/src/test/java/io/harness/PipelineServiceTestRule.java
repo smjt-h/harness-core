@@ -60,7 +60,6 @@ import io.harness.threading.CurrentThreadExecutor;
 import io.harness.threading.ExecutorModule;
 import io.harness.time.TimeModule;
 import io.harness.user.remote.UserClient;
-import io.harness.utils.NGObjectMapperHelper;
 
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
@@ -82,6 +81,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
+
+import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
@@ -140,7 +141,7 @@ public class PipelineServiceTestRule implements InjectorRuleMixin, MethodRule, M
       @Singleton
       OutboxService getOutboxService(OutboxEventRepository outboxEventRepository) {
         return new OutboxServiceImpl(
-            new OutboxDaoImpl(outboxEventRepository), NGObjectMapperHelper.NG_PIPELINE_OBJECT_MAPPER);
+            new OutboxDaoImpl(outboxEventRepository), HObjectMapper.NG_DEFAULT_OBJECT_MAPPER);
       }
 
       @Provides

@@ -36,7 +36,6 @@ import io.harness.security.PrincipalContextData;
 import io.harness.security.dto.Principal;
 import io.harness.security.dto.ServicePrincipal;
 import io.harness.template.entity.TemplateEntity;
-import io.harness.utils.NGObjectMapperHelper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
@@ -44,6 +43,8 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.google.protobuf.StringValue;
 import java.io.IOException;
+
+import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -56,7 +57,7 @@ public class TemplateOutboxEventHandler implements OutboxEventHandler {
   @Inject
   public TemplateOutboxEventHandler(
       AuditClientService auditClientService, @Named(EventsFrameworkConstants.ENTITY_CRUD) Producer eventProducer) {
-    this.objectMapper = NGObjectMapperHelper.NG_PIPELINE_OBJECT_MAPPER;
+    this.objectMapper = HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
     this.auditClientService = auditClientService;
     this.eventProducer = eventProducer;
   }

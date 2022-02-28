@@ -26,7 +26,6 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.core.common.beans.NGTag.NGTagKeys;
 import io.harness.outbox.api.OutboxService;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.resourcegroup.framework.events.ResourceGroupCreateEvent;
 import io.harness.resourcegroup.framework.events.ResourceGroupDeleteEvent;
 import io.harness.resourcegroup.framework.events.ResourceGroupUpdateEvent;
@@ -48,6 +47,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.validation.executable.ValidateOnExecution;
+
+import io.serializer.HObjectMapper;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -318,7 +319,7 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
     }
 
     ResourceGroupDTO oldResourceGroup =
-        (ResourceGroupDTO) NGObjectMapperHelper.clone(ResourceGroupMapper.toDTO(savedResourceGroup));
+        (ResourceGroupDTO) HObjectMapper.clone(ResourceGroupMapper.toDTO(savedResourceGroup));
 
     savedResourceGroup.setName(updatedResourceGroup.getName());
     savedResourceGroup.setColor(updatedResourceGroup.getColor());

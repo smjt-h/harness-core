@@ -45,7 +45,6 @@ import io.harness.testlib.module.MongoRuleMixin;
 import io.harness.testlib.module.TestMongoModule;
 import io.harness.threading.CurrentThreadExecutor;
 import io.harness.threading.ExecutorModule;
-import io.harness.utils.NGObjectMapperHelper;
 import io.harness.waiter.AbstractWaiterModule;
 import io.harness.waiter.WaiterConfiguration;
 import io.harness.waiter.WaiterConfiguration.PersistenceLayer;
@@ -64,6 +63,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+
+import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
@@ -209,6 +210,6 @@ public class DelegateServiceRule implements MethodRule, InjectorRuleMixin, Mongo
   @Singleton
   OutboxService getOutboxService(OutboxEventRepository outboxEventRepository) {
     return new OutboxServiceImpl(
-        new OutboxDaoImpl(outboxEventRepository), NGObjectMapperHelper.NG_PIPELINE_OBJECT_MAPPER);
+        new OutboxDaoImpl(outboxEventRepository), HObjectMapper.NG_DEFAULT_OBJECT_MAPPER);
   }
 }

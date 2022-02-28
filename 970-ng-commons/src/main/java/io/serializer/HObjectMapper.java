@@ -12,6 +12,8 @@ import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
+import io.dropwizard.jackson.Jackson;
+import io.harness.exception.UnexpectedException;
 import io.harness.serializer.AnnotationAwareJsonSubtypeResolver;
 import io.harness.serializer.jackson.HarnessJacksonModule;
 import io.serializer.jackson.NGHarnessJacksonModule;
@@ -22,6 +24,7 @@ import java.util.List;
 
 @UtilityClass
 public class HObjectMapper {
+  public static final ObjectMapper NG_DEFAULT_OBJECT_MAPPER = configureObjectMapperForNG(Jackson.newObjectMapper());
 
   @Deprecated
   public static ObjectMapper get() {
@@ -59,5 +62,13 @@ public class HObjectMapper {
     mapper.registerModule(new NGHarnessJacksonModule());
 
     return mapper;
+  }
+
+  public static Object clone(Object object) {
+    try {
+      return NG_DEFAULT_OBJECT_MAPPER.readValue(NG_DEFAULT_OBJECT_MAPPER.writeValueAsString(object), object.getClass());
+    } catch (Exception exception) {
+      throw new UnexpectedException("Exception occurred while copying object.", exception);
+    }
   }
 }

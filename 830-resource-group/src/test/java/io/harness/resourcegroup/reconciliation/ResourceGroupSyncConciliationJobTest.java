@@ -33,7 +33,6 @@ import io.harness.eventsframework.entity_crud.EntityChangeDTO;
 import io.harness.eventsframework.entity_crud.organization.OrganizationEntityChangeDTO;
 import io.harness.eventsframework.entity_crud.resourcegroup.ResourceGroupEntityChangeDTO;
 import io.harness.ng.beans.PageRequest;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.resourcegroup.ResourceGroupTestBase;
 import io.harness.resourcegroup.framework.remote.mapper.ResourceGroupMapper;
 import io.harness.resourcegroup.framework.service.Resource;
@@ -58,6 +57,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import io.serializer.HObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -284,7 +285,7 @@ public class ResourceGroupSyncConciliationJobTest extends ResourceGroupTestBase 
         .thenReturn(PageTestUtils.getPage(emptyList(), 0));
     resourceGroups.forEach(resourceGroupResponse -> {
       ResourceGroupDTO resourceGroupDTO =
-          (ResourceGroupDTO) NGObjectMapperHelper.clone(resourceGroupResponse.getResourceGroup());
+          (ResourceGroupDTO) HObjectMapper.clone(resourceGroupResponse.getResourceGroup());
       resourceGroupDTO.setResourceSelectors(singletonList(
           StaticResourceSelector.builder().resourceType(secretResourceType).identifiers(emptyList()).build()));
       resourceGroupDTO.setAllowedScopeLevels(emptySet());
@@ -298,7 +299,7 @@ public class ResourceGroupSyncConciliationJobTest extends ResourceGroupTestBase 
     verify(resourceGroupServiceMock, times(2)).list(any(), any());
     resourceGroups.forEach(resourceGroupResponse -> {
       ResourceGroupDTO resourceGroupDTO =
-          (ResourceGroupDTO) NGObjectMapperHelper.clone(resourceGroupResponse.getResourceGroup());
+          (ResourceGroupDTO) HObjectMapper.clone(resourceGroupResponse.getResourceGroup());
       resourceGroupDTO.setResourceSelectors(singletonList(
           StaticResourceSelector.builder().resourceType(secretResourceType).identifiers(emptyList()).build()));
       resourceGroupDTO.setAllowedScopeLevels(emptySet());

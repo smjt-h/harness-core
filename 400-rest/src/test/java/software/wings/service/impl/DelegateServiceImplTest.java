@@ -91,7 +91,6 @@ import io.harness.outbox.OutboxEvent;
 import io.harness.outbox.api.OutboxService;
 import io.harness.outbox.filter.OutboxEventFilter;
 import io.harness.persistence.HPersistence;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptionConfig;
 import io.harness.serializer.KryoSerializer;
@@ -104,6 +103,7 @@ import io.harness.service.intfc.DelegateCallbackService;
 import io.harness.service.intfc.DelegateTaskRetryObserver;
 import io.harness.version.VersionInfoManager;
 
+import io.serializer.HObjectMapper;
 import software.wings.WingsBaseTest;
 import software.wings.app.MainConfiguration;
 import software.wings.app.PortalConfig;
@@ -1080,7 +1080,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
                        .identifier(returnedDelegateGroup.getUuid())
                        .build());
     assertThat(outboxEvent.getEventType()).isEqualTo(DelegateGroupUpsertEvent.builder().build().getEventType());
-    DelegateGroupUpsertEvent delegateGroupUpsertEvent = NGObjectMapperHelper.NG_DEFAULT_OBJECT_MAPPER.readValue(
+    DelegateGroupUpsertEvent delegateGroupUpsertEvent = HObjectMapper.NG_DEFAULT_OBJECT_MAPPER.readValue(
         outboxEvent.getEventData(), DelegateGroupUpsertEvent.class);
     assertThat(delegateGroupUpsertEvent.getAccountIdentifier()).isEqualTo(ACCOUNT_ID);
     assertThat(delegateGroupUpsertEvent.getOrgIdentifier()).isEqualTo(ORG_ID);
@@ -1110,7 +1110,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
                        .identifier(returnedDelegateGroup.getUuid())
                        .build());
     assertThat(outboxEvent.getEventType()).isEqualTo(DelegateGroupDeleteEvent.builder().build().getEventType());
-    DelegateGroupDeleteEvent delegateGroupDeleteEvent = NGObjectMapperHelper.NG_DEFAULT_OBJECT_MAPPER.readValue(
+    DelegateGroupDeleteEvent delegateGroupDeleteEvent = HObjectMapper.NG_DEFAULT_OBJECT_MAPPER.readValue(
         outboxEvent.getEventData(), DelegateGroupDeleteEvent.class);
     assertThat(delegateGroupDeleteEvent.getAccountIdentifier()).isEqualTo(ACCOUNT_ID);
     assertThat(delegateGroupDeleteEvent.getOrgIdentifier()).isEqualTo(ORG_ID);

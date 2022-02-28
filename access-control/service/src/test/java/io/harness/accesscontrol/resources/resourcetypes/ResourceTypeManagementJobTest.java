@@ -19,7 +19,6 @@ import io.harness.accesscontrol.commons.bootstrap.ConfigurationStateRepository;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.reflection.ReflectionUtils;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 
 import com.google.inject.Inject;
@@ -27,6 +26,8 @@ import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+
+import io.serializer.HObjectMapper;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -45,7 +46,7 @@ public class ResourceTypeManagementJobTest extends AccessControlTestBase {
     ResourceTypesConfig resourceTypesConfig =
         (ResourceTypesConfig) ReflectionUtils.getFieldValue(resourceTypeManagementJob, RESOURCE_TYPES_CONFIG_FIELD);
     ResourceTypesConfig resourceTypesConfigClone =
-        (ResourceTypesConfig) NGObjectMapperHelper.clone(resourceTypesConfig);
+        (ResourceTypesConfig) HObjectMapper.clone(resourceTypesConfig);
 
     resourceTypeManagementJob.run();
     validate(resourceTypesConfigClone);
@@ -61,20 +62,20 @@ public class ResourceTypeManagementJobTest extends AccessControlTestBase {
     ReflectionUtils.setObjectField(
         resourceTypesConfig.getClass().getDeclaredField(VERSION_FIELD), resourceTypesConfig, 2);
     ResourceTypesConfig latestResourceTypesConfig =
-        (ResourceTypesConfig) NGObjectMapperHelper.clone(resourceTypesConfig);
+        (ResourceTypesConfig) HObjectMapper.clone(resourceTypesConfig);
     ResourceTypesConfig currentResourceTypesConfig = ResourceTypesConfig.builder()
                                                          .version(1)
                                                          .name(latestResourceTypesConfig.getName())
                                                          .resourceTypes(new HashSet<>())
                                                          .build();
     ResourceTypesConfig currentResourceTypesConfigClone =
-        (ResourceTypesConfig) NGObjectMapperHelper.clone(currentResourceTypesConfig);
+        (ResourceTypesConfig) HObjectMapper.clone(currentResourceTypesConfig);
     ReflectionUtils.setObjectField(f, resourceTypeManagementJob, currentResourceTypesConfig);
     resourceTypeManagementJob.run();
     validate(currentResourceTypesConfigClone);
 
     ResourceTypesConfig latestResourceTypesConfigClone =
-        (ResourceTypesConfig) NGObjectMapperHelper.clone(latestResourceTypesConfig);
+        (ResourceTypesConfig) HObjectMapper.clone(latestResourceTypesConfig);
     ReflectionUtils.setObjectField(f, resourceTypeManagementJob, latestResourceTypesConfig);
     resourceTypeManagementJob.run();
     validate(latestResourceTypesConfigClone);
@@ -96,7 +97,7 @@ public class ResourceTypeManagementJobTest extends AccessControlTestBase {
         resourceTypesConfig.getClass().getDeclaredField(VERSION_FIELD), resourceTypesConfig, currentVersion + 1);
 
     ResourceTypesConfig resourceTypesConfigClone =
-        (ResourceTypesConfig) NGObjectMapperHelper.clone(resourceTypesConfig);
+        (ResourceTypesConfig) HObjectMapper.clone(resourceTypesConfig);
 
     resourceTypeManagementJob.run();
     validate(resourceTypesConfigClone);

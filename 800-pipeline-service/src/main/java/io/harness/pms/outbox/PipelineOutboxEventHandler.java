@@ -31,12 +31,13 @@ import io.harness.pms.pipeline.observer.PipelineActionObserver;
 import io.harness.security.PrincipalContextData;
 import io.harness.security.dto.Principal;
 import io.harness.security.dto.ServicePrincipal;
-import io.harness.utils.NGObjectMapperHelper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.IOException;
+
+import io.serializer.HObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,7 +53,7 @@ public class PipelineOutboxEventHandler implements OutboxEventHandler {
 
   @Inject
   PipelineOutboxEventHandler(AuditClientService auditClientService, InputSetEventHandler inputSetEventHandler) {
-    this.objectMapper = NGObjectMapperHelper.NG_PIPELINE_OBJECT_MAPPER;
+    this.objectMapper = HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
     this.auditClientService = auditClientService;
     this.inputSetEventHandler = inputSetEventHandler;
   }
