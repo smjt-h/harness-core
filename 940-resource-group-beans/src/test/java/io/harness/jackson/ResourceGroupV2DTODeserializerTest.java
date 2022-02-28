@@ -13,7 +13,7 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.remote.NGObjectMapperHelper;
+import io.harness.utils.NGObjectMapperHelper;
 import io.harness.resourcegroup.remote.dto.ResourceGroupV2DTO;
 import io.harness.rule.Owner;
 

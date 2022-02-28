@@ -26,7 +26,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.core.common.beans.NGTag.NGTagKeys;
 import io.harness.outbox.api.OutboxService;
-import io.harness.remote.NGObjectMapperHelper;
+import io.harness.utils.NGObjectMapperHelper;
 import io.harness.resourcegroup.framework.events.ResourceGroupCreateEvent;
 import io.harness.resourcegroup.framework.events.ResourceGroupDeleteEvent;
 import io.harness.resourcegroup.framework.events.ResourceGroupUpdateEvent;

@@ -55,7 +55,7 @@ import io.harness.ng.core.user.service.LastAdminCheckService;
 import io.harness.ng.core.user.service.NgUserService;
 import io.harness.notification.NotificationChannelType;
 import io.harness.outbox.api.OutboxService;
-import io.harness.remote.NGObjectMapperHelper;
+import io.harness.utils.NGObjectMapperHelper;
 import io.harness.repositories.ng.core.spring.UserGroupRepository;
 import io.harness.user.remote.UserClient;
 import io.harness.utils.ScopeUtils;

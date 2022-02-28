@@ -33,7 +33,7 @@ import io.harness.eventsframework.entity_crud.EntityChangeDTO;
 import io.harness.eventsframework.entity_crud.organization.OrganizationEntityChangeDTO;
 import io.harness.eventsframework.entity_crud.resourcegroup.ResourceGroupEntityChangeDTO;
 import io.harness.ng.beans.PageRequest;
-import io.harness.remote.NGObjectMapperHelper;
+import io.harness.utils.NGObjectMapperHelper;
 import io.harness.resourcegroup.ResourceGroupTestBase;
 import io.harness.resourcegroup.framework.remote.mapper.ResourceGroupMapper;
 import io.harness.resourcegroup.framework.service.Resource;

@@ -10,6 +10,8 @@ package io.harness.utils;
 import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
 import io.harness.serializer.AnnotationAwareJsonSubtypeResolver;
 import io.harness.serializer.jackson.HarnessJacksonModule;
 
@@ -30,7 +32,9 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class NGObjectMapperHelper {
   public final ObjectMapper NG_PIPELINE_OBJECT_MAPPER = configureNGObjectMapper(Jackson.newObjectMapper());
+
   public ObjectMapper configureNGObjectMapper(final ObjectMapper mapper) {
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     final AnnotationAwareJsonSubtypeResolver subtypeResolver =
         AnnotationAwareJsonSubtypeResolver.newInstance(mapper.getSubtypeResolver());
     mapper.setSubtypeResolver(subtypeResolver);
@@ -45,6 +49,7 @@ public class NGObjectMapperHelper {
         return emptyIfNull(subtypeResolver.findSubtypes(a));
       }
     });
+    mapper.registerModule(new ProtobufModule());
     mapper.registerModule(new Jdk8Module());
     mapper.registerModule(new GuavaModule());
     mapper.registerModule(new JavaTimeModule());
