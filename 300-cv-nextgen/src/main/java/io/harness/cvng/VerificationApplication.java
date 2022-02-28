@@ -185,6 +185,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import io.serializer.HObjectMapper;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
@@ -203,8 +204,6 @@ import javax.validation.ValidatorFactory;
 import javax.ws.rs.Path;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ResourceInfo;
-
-import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.glassfish.jersey.server.model.Resource;
