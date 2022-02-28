@@ -302,7 +302,6 @@ public class RoleAssignmentResourceImpl implements RoleAssignmentResource {
         roleAssignmentDTOs.add(RoleAssignmentDTO.builder()
                                    .disabled(roleAssignmentDTO.isDisabled())
                                    .identifier(roleAssignmentDTO.getIdentifier())
-                                   .managed(roleAssignmentDTO.isManaged())
                                    .principal(roleAssignmentDTO.getPrincipal())
                                    .roleIdentifier(roleAssignmentDTO.getRoleIdentifier())
                                    .resourceGroupIdentifier(getDefaultResourceGroupIdentifier(harnessScopeParams))

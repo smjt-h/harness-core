@@ -267,7 +267,6 @@ public class ServiceAccountServiceImpl implements ServiceAccountService {
                        .roleName(roleMap.get(roleAssignment.getRoleIdentifier()).getRole().getName())
                        .resourceGroupName(resourceGroupMap.get(roleAssignment.getResourceGroupIdentifier()).getName())
                        .managedRole(roleMap.get(roleAssignment.getRoleIdentifier()).isHarnessManaged())
-                       .managedRoleAssignment(roleAssignment.isManaged())
                        .build(),
                 toList())));
   }

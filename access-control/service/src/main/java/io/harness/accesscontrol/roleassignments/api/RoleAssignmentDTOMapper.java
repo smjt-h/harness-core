@@ -45,16 +45,7 @@ public class RoleAssignmentDTOMapper {
   public RoleAssignmentResponseDTO toResponseDTO(RoleAssignment object) {
     Scope scope = scopeService.buildScopeFromScopeIdentifier(object.getScopeIdentifier());
     return RoleAssignmentResponseDTO.builder()
-        .roleAssignment(RoleAssignmentDTO.builder()
-                            .identifier(object.getIdentifier())
-                            .principal(PrincipalDTO.builder()
-                                           .identifier(object.getPrincipalIdentifier())
-                                           .type(object.getPrincipalType())
-                                           .build())
-                            .resourceGroupIdentifier(object.getResourceGroupIdentifier())
-                            .roleIdentifier(object.getRoleIdentifier())
-                            .disabled(object.isDisabled())
-                            .build())
+        .roleAssignment(toDTO(object))
         .scope(ScopeMapper.toDTO(scope))
         .harnessManaged(object.isManaged())
         .createdAt(object.getCreatedAt())
@@ -70,7 +61,6 @@ public class RoleAssignmentDTOMapper {
         .resourceGroupIdentifier(object.getResourceGroupIdentifier())
         .roleIdentifier(object.getRoleIdentifier())
         .disabled(object.isDisabled())
-        .managed(object.isManaged())
         .build();
   }
 

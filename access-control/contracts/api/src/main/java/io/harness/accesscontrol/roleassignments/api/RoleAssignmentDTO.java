@@ -46,9 +46,4 @@ public class RoleAssignmentDTO {
   @ApiModelProperty(required = true) final String roleIdentifier;
   @ApiModelProperty(required = true) final PrincipalDTO principal;
   @Setter boolean disabled;
-  @Getter(AccessLevel.NONE) final Boolean managed;
-
-  public Boolean isManaged() {
-    return TRUE.equals(managed);
-  }
 }
