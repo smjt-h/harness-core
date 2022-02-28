@@ -59,7 +59,6 @@ import io.harness.repositories.ng.core.spring.UserGroupRepository;
 import io.harness.user.remote.UserClient;
 import io.harness.utils.ScopeUtils;
 
-import io.serializer.HObjectMapper;
 import software.wings.beans.sso.SSOSettings;
 import software.wings.beans.sso.SSOType;
 import software.wings.security.authentication.SSOConfig;
@@ -68,6 +67,7 @@ import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import io.serializer.HObjectMapper;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

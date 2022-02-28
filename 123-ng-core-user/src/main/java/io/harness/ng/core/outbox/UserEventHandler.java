@@ -13,6 +13,7 @@ import static io.harness.audit.beans.AuthenticationInfoDTO.fromSecurityPrincipal
 import static io.harness.ng.core.invites.mapper.RoleBindingMapper.toAuditRoleBindings;
 import static io.harness.ng.core.user.UserMembershipUpdateMechanism.ACCEPTED_INVITE;
 import static io.harness.ng.core.user.UserMembershipUpdateMechanism.SYSTEM;
+
 import static io.serializer.HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
 
 import io.harness.ModuleType;
