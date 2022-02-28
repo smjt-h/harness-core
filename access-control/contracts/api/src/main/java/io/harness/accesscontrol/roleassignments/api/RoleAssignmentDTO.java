@@ -10,8 +10,6 @@ package io.harness.accesscontrol.roleassignments.api;
 import static io.harness.accesscontrol.roleassignments.api.RoleAssignmentDTO.MODEL_NAME;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
-import static java.lang.Boolean.TRUE;
-
 import io.harness.accesscontrol.principals.PrincipalDTO;
 import io.harness.annotations.dev.OwnedBy;
 
