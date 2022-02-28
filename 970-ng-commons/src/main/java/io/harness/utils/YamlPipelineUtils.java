@@ -7,6 +7,7 @@
 
 package io.harness.utils;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import io.harness.serializer.AnnotationAwareJsonSubtypeResolver;
 import io.harness.serializer.JsonSubtypeResolver;
 
@@ -38,6 +39,7 @@ public class YamlPipelineUtils {
 
   static {
     mapper = new ObjectMapper(new YAMLFactory());
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
     mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     mapper.setSubtypeResolver(AnnotationAwareJsonSubtypeResolver.newInstance(mapper.getSubtypeResolver()));
