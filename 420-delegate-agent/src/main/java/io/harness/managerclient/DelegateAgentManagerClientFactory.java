@@ -13,6 +13,7 @@ import io.harness.network.FibonacciBackOff;
 import io.harness.network.Http;
 import io.harness.network.NoopHostnameVerifier;
 import io.harness.security.TokenGenerator;
+import io.harness.serializer.HObjectMapper;
 import io.harness.serializer.kryo.KryoConverterFactory;
 import io.harness.version.VersionInfoManager;
 
@@ -64,7 +65,7 @@ public class DelegateAgentManagerClientFactory
 
   @Override
   public io.harness.managerclient.DelegateAgentManagerClient get() {
-    ObjectMapper objectMapper = new ObjectMapper();
+    ObjectMapper objectMapper = HObjectMapper.get();
     objectMapper.registerModule(new Jdk8Module());
     objectMapper.registerModule(new GuavaModule());
     objectMapper.registerModule(new JavaTimeModule());

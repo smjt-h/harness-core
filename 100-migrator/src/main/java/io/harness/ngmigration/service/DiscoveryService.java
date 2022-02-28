@@ -23,6 +23,7 @@ import io.harness.ngmigration.client.PmsClient;
 import io.harness.remote.NGObjectMapperHelper;
 import io.harness.remote.client.ServiceHttpClientConfig;
 
+import io.harness.serializer.HObjectMapper;
 import software.wings.ngmigration.CgEntityId;
 import software.wings.ngmigration.CgEntityNode;
 import software.wings.ngmigration.DiscoveryNode;
@@ -130,8 +131,7 @@ public class DiscoveryService {
   }
 
   private static <T> T getRestClient(ServiceHttpClientConfig ngClientConfig, Class<T> clazz) {
-    ObjectMapper objectMapper = new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
-    NGObjectMapperHelper.configureNGObjectMapper(objectMapper);
+    ObjectMapper objectMapper = HObjectMapper.getNGObjectMapper();
     OkHttpClient okHttpClient = Http.getOkHttpClient(ngClientConfig.getBaseUrl(), false);
     Retrofit retrofit = new Retrofit.Builder()
                             .client(okHttpClient)

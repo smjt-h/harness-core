@@ -28,6 +28,7 @@ import io.harness.security.ServiceTokenGenerator;
 import io.harness.security.SourcePrincipalContextBuilder;
 import io.harness.security.dto.Principal;
 import io.harness.security.dto.ServicePrincipal;
+import io.harness.serializer.HObjectMapper;
 import io.harness.serializer.JsonSubtypeResolver;
 import io.harness.serializer.kryo.KryoConverterFactory;
 
@@ -121,15 +122,7 @@ public abstract class AbstractHttpClientFactory {
   }
 
   protected ObjectMapper getObjectMapper() {
-    ObjectMapper objMapper = new ObjectMapper();
-    objMapper.setSubtypeResolver(new JsonSubtypeResolver(objMapper.getSubtypeResolver()));
-    objMapper.setConfig(objMapper.getSerializationConfig().withView(JsonViews.Public.class));
-    objMapper.disable(FAIL_ON_UNKNOWN_PROPERTIES);
-    objMapper.registerModule(new ProtobufModule());
-    objMapper.registerModule(new Jdk8Module());
-    objMapper.registerModule(new GuavaModule());
-    objMapper.registerModule(new JavaTimeModule());
-    return objMapper;
+    return HObjectMapper.getNGObjectMapper();
   }
 
   protected OkHttpClient getUnsafeOkHttpClient(String baseUrl, ClientMode clientMode, boolean addHttpLogging) {

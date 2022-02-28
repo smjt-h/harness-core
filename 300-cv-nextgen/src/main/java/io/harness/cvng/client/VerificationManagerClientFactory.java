@@ -13,6 +13,7 @@ import io.harness.network.Http;
 import io.harness.network.NoopHostnameVerifier;
 import io.harness.security.ServiceTokenGenerator;
 import io.harness.security.VerificationAuthInterceptor;
+import io.harness.serializer.HObjectMapper;
 import io.harness.serializer.JsonSubtypeResolver;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,7 +46,7 @@ public class VerificationManagerClientFactory implements Provider<VerificationMa
   public VerificationManagerClientFactory(String baseUrl, ServiceTokenGenerator tokenGenerator) {
     this.baseUrl = baseUrl;
     this.tokenGenerator = tokenGenerator;
-    this.objectMapper = new ObjectMapper();
+    this.objectMapper = HObjectMapper.get();
     this.objectMapper.registerModule(new Jdk8Module());
     this.objectMapper.registerModule(new GuavaModule());
     this.objectMapper.registerModule(new JavaTimeModule());

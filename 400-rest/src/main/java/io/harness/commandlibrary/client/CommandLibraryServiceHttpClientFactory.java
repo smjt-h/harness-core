@@ -17,6 +17,7 @@ import io.harness.exception.GeneralException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.network.Http;
 import io.harness.security.ServiceTokenGenerator;
+import io.harness.serializer.HObjectMapper;
 import io.harness.serializer.JsonSubtypeResolver;
 
 import software.wings.app.MainConfiguration;
@@ -71,7 +72,7 @@ public class CommandLibraryServiceHttpClientFactory implements Provider<CommandL
   @NotNull
   @VisibleForTesting
   ObjectMapper getObjectMapper() {
-    ObjectMapper objectMapper = new ObjectMapper();
+    ObjectMapper objectMapper = HObjectMapper.get();
     objectMapper.registerModule(new Jdk8Module());
     objectMapper.registerModule(new GuavaModule());
     objectMapper.registerModule(new JavaTimeModule());

@@ -8,6 +8,7 @@
 package io.harness.logstreaming;
 
 import io.harness.network.Http;
+import io.harness.serializer.HObjectMapper;
 import io.harness.serializer.kryo.KryoConverterFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -51,7 +52,7 @@ public class LogStreamingClientFactory implements Provider<LogStreamingClient> {
       return null;
     }
 
-    ObjectMapper objectMapper = new ObjectMapper();
+    ObjectMapper objectMapper = HObjectMapper.get();
     objectMapper.registerModule(new Jdk8Module());
     objectMapper.registerModule(new GuavaModule());
     objectMapper.registerModule(new JavaTimeModule());

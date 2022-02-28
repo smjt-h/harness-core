@@ -24,6 +24,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+
+import io.harness.serializer.HObjectMapper;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
@@ -44,7 +46,7 @@ public class VerificationManagerClientFactory implements Provider<VerificationMa
 
   @Override
   public VerificationManagerClient get() {
-    ObjectMapper objectMapper = new ObjectMapper();
+    ObjectMapper objectMapper = HObjectMapper.get();
     objectMapper.registerModule(new Jdk8Module());
     objectMapper.registerModule(new GuavaModule());
     objectMapper.registerModule(new JavaTimeModule());

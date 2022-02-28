@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import io.github.resilience4j.retrofit.CircuitBreakerCallAdapter;
+import io.harness.serializer.HObjectMapper;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import okhttp3.ConnectionPool;
@@ -44,8 +45,7 @@ public class NextGenClientFactory extends AbstractHttpClientFactory implements P
         ngManagerServiceConfig.getManagerServiceSecret(), tokenGenerator, null,
         AuthorizationServiceHeader.CV_NEXT_GEN.getServiceId(), true, ClientMode.PRIVILEGED);
     this.ngManagerServiceConfig = ngManagerServiceConfig;
-    this.objectMapper = new ObjectMapper();
-    NGObjectMapperHelper.configureNGObjectMapper(objectMapper);
+    this.objectMapper = HObjectMapper.getNGObjectMapper();
     // TODO: this change is for the hotfix. We need to have 2 clients (Previleged and nonprevileged (For client
     // requests))
     this.clientMode = ClientMode.PRIVILEGED;
