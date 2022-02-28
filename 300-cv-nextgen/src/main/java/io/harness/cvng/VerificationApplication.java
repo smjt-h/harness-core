@@ -204,6 +204,8 @@ import javax.validation.ValidatorFactory;
 import javax.ws.rs.Path;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ResourceInfo;
+
+import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.glassfish.jersey.server.model.Resource;
@@ -257,8 +259,9 @@ public class VerificationApplication extends Application<VerificationConfigurati
   }
 
   public static void configureObjectMapper(final ObjectMapper mapper) {
-    mapper.setSubtypeResolver(new JsonSubtypeResolver(mapper.getSubtypeResolver()));
+    HObjectMapper.configureObjectMapperForNG(mapper);
   }
+
   private void createConsumerThreadsToListenToEvents(Injector injector) {
     new Thread(injector.getInstance(EntityCRUDStreamConsumer.class)).start();
     new Thread(injector.getInstance(DeploymentChangeEventConsumer.class)).start();
