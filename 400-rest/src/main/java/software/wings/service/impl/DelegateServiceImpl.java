@@ -1143,7 +1143,6 @@ public class DelegateServiceImpl implements DelegateService {
     if (delegateTokenGlobalContextData != null) {
       return delegateTokenGlobalContextData.getTokenName();
     }
-    log.warn("DelegateTokenGlobalContextData was found null in GlobalContextManager");
     return null;
   }
 
