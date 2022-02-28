@@ -7,6 +7,7 @@
 
 package io.harness.opaclient;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
@@ -58,7 +59,8 @@ public class OpaClientFactory implements Provider<OpaServiceClient> {
       return null;
     }
 
-    ObjectMapper objectMapper = HObjectMapper.get();
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     objectMapper.registerModule(new Jdk8Module());
     objectMapper.registerModule(new GuavaModule());
     objectMapper.registerModule(new JavaTimeModule());
