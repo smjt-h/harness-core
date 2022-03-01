@@ -347,6 +347,7 @@ public enum TaskType {
   NG_AZURE_TASK(TaskGroup.AZURE_RESOURCE),
   CLOUDFORMATION_TASK_NG(TaskGroup.CLOUDFORMATION_NG, "Cloudformation Task"),
   ACR_ARTIFACT_TASK_NG(TaskGroup.ARTIFACT_COLLECT_NG, "ACR Task"),
+  FETCH_S3_FILE_TASK_NG(TaskGroup.AWS, "Fetch S3 files Task"),
   SERVERLESS_GIT_FETCH_TASK_NG(TaskGroup.SERVERLESS_NG, "Git Fetch Files Task"),
   SERVERLESS_COMMAND_TASK(TaskGroup.SERVERLESS_NG, "Serverless Deploy Task");
 
