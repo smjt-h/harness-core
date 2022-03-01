@@ -20,22 +20,23 @@ import static java.time.Duration.ofSeconds;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.aws.AWSCloudformationClient;
+import io.harness.aws.beans.AwsInternalConfig;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.ExceptionUtils;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogLevel;
 import io.harness.security.encryption.EncryptedDataDetail;
 
-import software.wings.beans.AwsConfig;
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.delegatetasks.DelegateFileManager;
 import software.wings.delegatetasks.DelegateLogService;
 import software.wings.helpers.ext.cloudformation.request.CloudFormationCommandRequest;
 import software.wings.helpers.ext.cloudformation.response.CloudFormationCommandExecutionResponse;
 import software.wings.helpers.ext.cloudformation.response.CloudFormationCommandExecutionResponse.CloudFormationCommandExecutionResponseBuilder;
-import software.wings.service.impl.AwsHelperService;
 import software.wings.service.intfc.aws.delegate.AwsCFHelperServiceDelegate;
 import software.wings.service.intfc.security.EncryptionService;
+import software.wings.service.mappers.artifact.AwsConfigToInternalMapper;
 
 import com.amazonaws.services.cloudformation.model.DeleteStackRequest;
 import com.amazonaws.services.cloudformation.model.DescribeStackEventsRequest;
@@ -55,13 +56,14 @@ import org.apache.commons.lang3.StringUtils;
 public abstract class CloudFormationCommandTaskHandler {
   @Inject protected DelegateFileManager delegateFileManager;
   @Inject protected EncryptionService encryptionService;
-  @Inject protected AwsHelperService awsHelperService;
+  @Inject protected AWSCloudformationClient awsHelperService;
   @Inject protected AwsCFHelperServiceDelegate awsCFHelperServiceDelegate;
   @Inject private DelegateLogService delegateLogService;
 
   protected static final String stackNamePrefix = "HarnessStack-";
 
-  public Optional<Stack> getIfStackExists(String customStackName, String suffix, AwsConfig awsConfig, String region) {
+  public Optional<Stack> getIfStackExists(
+      String customStackName, String suffix, AwsInternalConfig awsConfig, String region) {
     List<Stack> stacks = awsHelperService.getAllStacks(region, new DescribeStacksRequest(), awsConfig);
     if (isEmpty(stacks)) {
       return Optional.empty();
@@ -120,7 +122,9 @@ public abstract class CloudFormationCommandTaskHandler {
         executionLogCallback.saveExecutionLog(
             "No specific cloudformation role provided will use the default permissions on delegate.");
       }
-      awsHelperService.deleteStack(request.getRegion(), deleteStackRequest, request.getAwsConfig());
+
+      awsHelperService.deleteStack(request.getRegion(), deleteStackRequest,
+          AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()));
       if (!request.isSkipWaitForResources()) {
         sleep(ofSeconds(30));
       }
@@ -133,8 +137,8 @@ public abstract class CloudFormationCommandTaskHandler {
 
       while (System.currentTimeMillis() < endTime && !done) {
         DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest().withStackName(stackId);
-        List<Stack> stacks =
-            awsHelperService.getAllStacks(request.getRegion(), describeStacksRequest, request.getAwsConfig());
+        List<Stack> stacks = awsHelperService.getAllStacks(request.getRegion(), describeStacksRequest,
+            AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()));
         if (stacks.size() < 1) {
           String message = String.format(
               "# Did not get any stacks with id: %s while querying stacks list. Deletion may have completed",
@@ -145,8 +149,8 @@ public abstract class CloudFormationCommandTaskHandler {
           break;
         }
         stack = stacks.get(0);
-        stackEventsTs =
-            printStackEvents(request.getRegion(), stackId, request.getAwsConfig(), executionLogCallback, stackEventsTs);
+        stackEventsTs = printStackEvents(request.getRegion(), stackId,
+            AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()), executionLogCallback, stackEventsTs);
 
         switch (stack.getStackStatus()) {
           case "DELETE_COMPLETE": {
@@ -191,7 +195,8 @@ public abstract class CloudFormationCommandTaskHandler {
       builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
     }
 
-    printStackResources(request.getRegion(), stackId, request.getAwsConfig(), executionLogCallback);
+    printStackResources(request.getRegion(), stackId,
+        AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()), executionLogCallback);
     return builder.build();
   }
 
@@ -224,7 +229,7 @@ public abstract class CloudFormationCommandTaskHandler {
   }
 
   @VisibleForTesting
-  protected long printStackEvents(String region, String stackId, AwsConfig awsConfig,
+  protected long printStackEvents(String region, String stackId, AwsInternalConfig awsConfig,
       ExecutionLogCallback executionLogCallback, long stackEventsTs) {
     List<StackEvent> stackEvents = getStackEvents(region, stackId, awsConfig);
     boolean printed = false;
@@ -268,7 +273,7 @@ public abstract class CloudFormationCommandTaskHandler {
 
   @VisibleForTesting
   protected void printStackResources(
-      String region, String stackId, AwsConfig awsConfig, ExecutionLogCallback executionLogCallback) {
+      String region, String stackId, AwsInternalConfig awsConfig, ExecutionLogCallback executionLogCallback) {
     if (isEmpty(stackId)) {
       return;
     }
@@ -283,20 +288,22 @@ public abstract class CloudFormationCommandTaskHandler {
 
   private List<StackResource> getStackResources(CloudFormationCommandRequest request, Stack stack) {
     return awsHelperService.getAllStackResources(request.getRegion(),
-        new DescribeStackResourcesRequest().withStackName(stack.getStackName()), request.getAwsConfig());
+        new DescribeStackResourcesRequest().withStackName(stack.getStackName()),
+        AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()));
   }
 
-  private List<StackResource> getStackResources(String region, String stackId, AwsConfig awsConfig) {
+  private List<StackResource> getStackResources(String region, String stackId, AwsInternalConfig awsConfig) {
     return awsHelperService.getAllStackResources(
         region, new DescribeStackResourcesRequest().withStackName(stackId), awsConfig);
   }
 
   private List<StackEvent> getStackEvents(CloudFormationCommandRequest request, Stack stack) {
     return awsHelperService.getAllStackEvents(request.getRegion(),
-        new DescribeStackEventsRequest().withStackName(stack.getStackName()), request.getAwsConfig());
+        new DescribeStackEventsRequest().withStackName(stack.getStackName()),
+        AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()));
   }
 
-  private List<StackEvent> getStackEvents(String region, String stackName, AwsConfig awsConfig) {
+  private List<StackEvent> getStackEvents(String region, String stackName, AwsInternalConfig awsConfig) {
     return awsHelperService.getAllStackEvents(
         region, new DescribeStackEventsRequest().withStackName(stackName), awsConfig);
   }

@@ -35,6 +35,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.aws.AWSCloudformationClient;
+import io.harness.aws.beans.AwsInternalConfig;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.ExceptionUtils;
 import io.harness.logging.CommandExecutionStatus;
@@ -55,13 +57,10 @@ import software.wings.helpers.ext.cloudformation.response.CloudFormationCreateSt
 import software.wings.helpers.ext.cloudformation.response.CloudFormationListStacksResponse;
 import software.wings.helpers.ext.cloudformation.response.ExistingStackInfo;
 import software.wings.helpers.ext.cloudformation.response.StackSummaryInfo;
-import software.wings.service.impl.AwsHelperService;
 import software.wings.service.intfc.aws.delegate.AwsCFHelperServiceDelegate;
 import software.wings.service.intfc.security.EncryptionService;
 
-import com.amazonaws.services.cloudformation.model.CreateStackRequest;
 import com.amazonaws.services.cloudformation.model.CreateStackResult;
-import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
 import com.amazonaws.services.cloudformation.model.Output;
 import com.amazonaws.services.cloudformation.model.Stack;
 import com.amazonaws.services.cloudformation.model.StackEvent;
@@ -83,7 +82,7 @@ import org.mockito.Mock;
 @OwnedBy(CDP)
 public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
   @Mock private EncryptionService mockEncryptionService;
-  @Mock private AwsHelperService mockAwsHelperService;
+  @Mock private AWSCloudformationClient mockAwsHelperService;
   @Mock private AwsCFHelperServiceDelegate mockAwsCFHelperServiceDelegate;
   @InjectMocks @Inject private CloudFormationCreateStackHandler createStackHandler;
   @InjectMocks @Inject private CloudFormationDeleteStackHandler deleteStackHandler;
@@ -108,7 +107,7 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
         .when(mockAwsHelperService)
         .getAllStacks(anyString(), any(), any());
     Optional<Stack> stack =
-        createStackHandler.getIfStackExists(customStackName, "foo", AwsConfig.builder().build(), "us-east-1");
+        createStackHandler.getIfStackExists(customStackName, "foo", AwsInternalConfig.builder().build(), "us-east-1");
     assertThat(stack.isPresent()).isTrue();
     assertThat(stackId).isEqualTo(stack.get().getStackId());
   }
@@ -136,10 +135,6 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .data(templateBody)
             .stackNameSuffix(stackNameSuffix)
             .build();
-    CreateStackRequest createStackRequest = new CreateStackRequest()
-                                                .withStackName("HarnessStack-" + stackNameSuffix)
-                                                .withTemplateBody(templateBody)
-                                                .withRoleARN(roleArn);
     String stackId = "Stack Id 00";
     CreateStackResult createStackResult = new CreateStackResult().withStackId(stackId);
     doReturn(createStackResult).when(mockAwsHelperService).createStack(anyString(), any(), any());
@@ -694,7 +689,6 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .stackNameSuffix(stackNameSuffix)
             .build();
     Stack testStack = new Stack().withStackStatus("CREATE_COMPLETE").withStackName(stackName + stackNameSuffix);
-    List<Stack> exitingList = singletonList(testStack);
     ExecutionLogCallback logCallback = mock(ExecutionLogCallback.class);
     StackEvent stackEvent = new StackEvent()
                                 .withStackName(stackName)
@@ -726,7 +720,6 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .awsConfig(AwsConfig.builder().accessKey(accessKey).accountId(ACCOUNT_ID).secretKey(secretKey).build())
             .timeoutInMs(10 * 60 * 1000)
             .build();
-    DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest();
     List<Stack> stacks = Arrays.asList(new Stack()
                                            .withStackId("sId1")
                                            .withStackName("sName1")
@@ -801,10 +794,6 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .data(templateBody)
             .stackNameSuffix(stackNameSuffix)
             .build();
-    CreateStackRequest createStackRequest = new CreateStackRequest()
-                                                .withStackName("HarnessStack-" + stackNameSuffix)
-                                                .withTemplateBody(templateBody)
-                                                .withRoleARN(roleArn);
     String stackId = "Stack Id 00";
     CreateStackResult createStackResult = new CreateStackResult().withStackId(stackId);
     doReturn(createStackResult).when(mockAwsHelperService).createStack(anyString(), any(), any());
@@ -862,10 +851,6 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .data(templateBody)
             .stackNameSuffix(stackNameSuffix)
             .build();
-    CreateStackRequest createStackRequest = new CreateStackRequest()
-                                                .withStackName("HarnessStack-" + stackNameSuffix)
-                                                .withTemplateBody(templateBody)
-                                                .withRoleARN(roleArn);
     String stackId = "Stack Id 00";
     CreateStackResult createStackResult = new CreateStackResult().withStackId(stackId);
     doReturn(createStackResult).when(mockAwsHelperService).createStack(anyString(), any(), any());
@@ -1094,10 +1079,6 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .data(templateBody)
             .stackNameSuffix(stackNameSuffix)
             .build();
-    CreateStackRequest createStackRequest = new CreateStackRequest()
-                                                .withStackName("HarnessStack-" + stackNameSuffix)
-                                                .withTemplateBody(templateBody)
-                                                .withRoleARN(roleArn);
     String stackId = "Stack Id 00";
     CreateStackResult createStackResult = new CreateStackResult().withStackId(stackId);
     doReturn(createStackResult).when(mockAwsHelperService).createStack(anyString(), any(), any());

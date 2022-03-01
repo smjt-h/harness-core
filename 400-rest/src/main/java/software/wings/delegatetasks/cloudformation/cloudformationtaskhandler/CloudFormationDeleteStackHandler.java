@@ -12,15 +12,16 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.aws.beans.AwsInternalConfig;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.security.encryption.EncryptedDataDetail;
 
-import software.wings.beans.AwsConfig;
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.helpers.ext.cloudformation.request.CloudFormationCommandRequest;
 import software.wings.helpers.ext.cloudformation.request.CloudFormationDeleteStackRequest;
 import software.wings.helpers.ext.cloudformation.response.CloudFormationCommandExecutionResponse;
 import software.wings.helpers.ext.cloudformation.response.CloudFormationCommandExecutionResponse.CloudFormationCommandExecutionResponseBuilder;
+import software.wings.service.mappers.artifact.AwsConfigToInternalMapper;
 
 import com.amazonaws.services.cloudformation.model.Stack;
 import com.google.inject.Singleton;
@@ -38,10 +39,11 @@ public class CloudFormationDeleteStackHandler extends CloudFormationCommandTaskH
       List<EncryptedDataDetail> details, ExecutionLogCallback executionLogCallback) {
     CloudFormationDeleteStackRequest cloudFormationDeleteStackRequest = (CloudFormationDeleteStackRequest) request;
     CloudFormationCommandExecutionResponseBuilder builder = CloudFormationCommandExecutionResponse.builder();
-    AwsConfig awsConfig = cloudFormationDeleteStackRequest.getAwsConfig();
-    encryptionService.decrypt(awsConfig, details, false);
+    AwsInternalConfig awsInternalConfig =
+        AwsConfigToInternalMapper.toAwsInternalConfig(cloudFormationDeleteStackRequest.getAwsConfig());
+    encryptionService.decrypt(awsInternalConfig, details, false);
     Optional<Stack> existingStack = getIfStackExists(cloudFormationDeleteStackRequest.getCustomStackName(),
-        cloudFormationDeleteStackRequest.getStackNameSuffix(), awsConfig, request.getRegion());
+        cloudFormationDeleteStackRequest.getStackNameSuffix(), awsInternalConfig, request.getRegion());
     String stackId;
     String stackName;
     if (existingStack.isPresent()) {

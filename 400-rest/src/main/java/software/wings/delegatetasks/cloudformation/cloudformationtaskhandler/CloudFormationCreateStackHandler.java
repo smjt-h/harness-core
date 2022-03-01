@@ -23,6 +23,7 @@ import static java.util.stream.Collectors.toMap;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.aws.beans.AwsInternalConfig;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.ExceptionUtils;
 import io.harness.logging.CommandExecutionStatus;
@@ -43,6 +44,7 @@ import software.wings.helpers.ext.cloudformation.response.CloudFormationRollback
 import software.wings.helpers.ext.cloudformation.response.CloudFormationRollbackInfo.CloudFormationRollbackInfoBuilder;
 import software.wings.helpers.ext.cloudformation.response.ExistingStackInfo;
 import software.wings.helpers.ext.cloudformation.response.ExistingStackInfo.ExistingStackInfoBuilder;
+import software.wings.service.mappers.artifact.AwsConfigToInternalMapper;
 import software.wings.utils.GitUtilsDelegate;
 
 import com.amazonaws.services.cloudformation.model.CreateStackRequest;
@@ -82,8 +84,8 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
   @Override
   protected CloudFormationCommandExecutionResponse executeInternal(CloudFormationCommandRequest request,
       List<EncryptedDataDetail> details, ExecutionLogCallback executionLogCallback) {
-    AwsConfig awsConfig = request.getAwsConfig();
-    encryptionService.decrypt(awsConfig, details, false);
+    AwsInternalConfig awsInternalConfig = AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig());
+    encryptionService.decrypt(awsInternalConfig, details, false);
 
     CloudFormationCreateStackRequest upsertRequest = (CloudFormationCreateStackRequest) request;
 
@@ -91,7 +93,7 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
 
     executionLogCallback.saveExecutionLog("# Checking if stack already exists...");
     Optional<Stack> stackOptional = getIfStackExists(
-        upsertRequest.getCustomStackName(), upsertRequest.getStackNameSuffix(), awsConfig, request.getRegion());
+        upsertRequest.getCustomStackName(), upsertRequest.getStackNameSuffix(), awsInternalConfig, request.getRegion());
 
     if (!stackOptional.isPresent()) {
       executionLogCallback.saveExecutionLog("# Stack does not exist, creating new stack");
@@ -266,8 +268,8 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
     executionLogCallback.saveExecutionLog(
         format("# Calling Aws API to Create stack: %s", createStackRequest.getStackName()));
     long stackEventsTs = System.currentTimeMillis();
-    CreateStackResult result =
-        awsHelperService.createStack(createRequest.getRegion(), createStackRequest, createRequest.getAwsConfig());
+    CreateStackResult result = awsHelperService.createStack(createRequest.getRegion(), createStackRequest,
+        AwsConfigToInternalMapper.toAwsInternalConfig(createRequest.getAwsConfig()));
     executionLogCallback.saveExecutionLog(format(
         "# Create Stack request submitted for stack: %s. Now polling for status.", createStackRequest.getStackName()));
     int timeOutMs = remainingTimeoutMs;
@@ -276,8 +278,8 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
     Stack stack = null;
     while (System.currentTimeMillis() < endTime) {
       DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest().withStackName(result.getStackId());
-      List<Stack> stacks =
-          awsHelperService.getAllStacks(createRequest.getRegion(), describeStacksRequest, createRequest.getAwsConfig());
+      List<Stack> stacks = awsHelperService.getAllStacks(createRequest.getRegion(), describeStacksRequest,
+          AwsConfigToInternalMapper.toAwsInternalConfig(createRequest.getAwsConfig()));
       if (stacks.size() < 1) {
         String errorMessage = "# Error: received empty stack list from AWS";
         executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
@@ -374,8 +376,8 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
         format("# Calling Aws API to Update stack: %s", originalStack.getStackName()));
     long stackEventsTs = System.currentTimeMillis();
 
-    UpdateStackResult updateStackResult =
-        awsHelperService.updateStack(request.getRegion(), updateStackRequest, request.getAwsConfig());
+    UpdateStackResult updateStackResult = awsHelperService.updateStack(
+        request.getRegion(), updateStackRequest, AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()));
     executionLogCallback.saveExecutionLog(
         format("# Update Stack Request submitted for stack: %s. Now polling for status", originalStack.getStackName()));
 
@@ -393,8 +395,8 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
     while (System.currentTimeMillis() < endTime) {
       DescribeStacksRequest describeStacksRequest =
           new DescribeStacksRequest().withStackName(originalStack.getStackId());
-      List<Stack> stacks =
-          awsHelperService.getAllStacks(request.getRegion(), describeStacksRequest, request.getAwsConfig());
+      List<Stack> stacks = awsHelperService.getAllStacks(request.getRegion(), describeStacksRequest,
+          AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()));
       if (stacks.size() < 1) {
         String errorMessage = "# Error: received empty stack list from AWS";
         executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);

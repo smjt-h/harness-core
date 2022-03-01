@@ -18,6 +18,8 @@ import io.harness.artifacts.docker.service.DockerRegistryService;
 import io.harness.artifacts.docker.service.DockerRegistryServiceImpl;
 import io.harness.artifacts.gcr.service.GcrApiService;
 import io.harness.artifacts.gcr.service.GcrApiServiceImpl;
+import io.harness.aws.AWSCloudformationClient;
+import io.harness.aws.AWSCloudformationClientImpl;
 import io.harness.azure.client.AzureAutoScaleSettingsClient;
 import io.harness.azure.client.AzureComputeClient;
 import io.harness.azure.client.AzureMonitorClient;
@@ -239,6 +241,7 @@ public class WingsTestModule extends AbstractModule {
     bind(CustomManifestService.class).to(CustomManifestServiceImpl.class);
     bind(EncryptDecryptHelper.class).to(EncryptDecryptHelperImpl.class);
     bind(DelegateFileManagerBase.class).toInstance(mock(DelegateFileManagerBase.class));
+    bind(AWSCloudformationClient.class).to(AWSCloudformationClientImpl.class);
 
     bind(ExecutorService.class)
         .annotatedWith(Names.named("systemExecutor"))
