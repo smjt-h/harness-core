@@ -1417,8 +1417,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   private void startTaskPolling() {
     taskPollExecutor.scheduleAtFixedRate(
-        new Schedulable("Failed to poll for task", () -> pollForTask()), 0,
-        POLL_INTERVAL_SECONDS, TimeUnit.SECONDS);
+        new Schedulable("Failed to poll for task", () -> pollForTask()), 0, POLL_INTERVAL_SECONDS, TimeUnit.SECONDS);
   }
 
   private void startChroniqleQueueMonitor() {
@@ -2268,13 +2267,13 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
           response = delegateAgentManagerClient.sendTaskStatus(delegateId, taskId, accountId, taskResponse).execute();
           if (response != null && response.code() >= 200 && response.code() <= 299) {
             log.info("Task {} response sent to manager", taskId);
-          } else {
-            log.warn("Failed to send response for task {}: {}. {}", taskId, response == null ? "null" : response.code(),
-                attempt < (retries - 1) ? "Retrying." : "Giving up.");
-            if (attempt < retries - 1) {
-              // Do not sleep for last loop round, as we are going to fail.
-              sleep(ofSeconds(FibonacciBackOff.getFibonacciElement(attempt)));
-            }
+            break;
+          }
+          log.warn("Failed to send response for task {}: {}. {}", taskId, response == null ? "null" : response.code(),
+              attempt < (retries - 1) ? "Retrying." : "Giving up.");
+          if (attempt < retries - 1) {
+            // Do not sleep for last loop round, as we are going to fail.
+            sleep(ofSeconds(FibonacciBackOff.getFibonacciElement(attempt)));
           }
         }
       } catch (Exception e) {
