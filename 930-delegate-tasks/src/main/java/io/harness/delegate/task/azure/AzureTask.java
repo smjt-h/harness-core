@@ -7,17 +7,10 @@
 
 package io.harness.delegate.task.azure;
 
-import io.harness.azure.client.AzureManagementClient;
-import io.harness.connector.ConnectivityStatus;
-import io.harness.connector.ConnectorValidationResult;
 import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskResponse;
-import io.harness.delegate.beans.connector.azureconnector.AzureConnectorCredentialDTO;
-import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
-import io.harness.delegate.beans.connector.azureconnector.AzureTaskParams;
-import io.harness.delegate.beans.connector.azureconnector.AzureTaskType;
-import io.harness.delegate.beans.connector.azureconnector.AzureValidateTaskResponse;
+import io.harness.delegate.beans.connector.azureconnector.*;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
@@ -28,8 +21,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 public class AzureTask extends AbstractDelegateRunnableTask {
-  @Inject private AzureNgConfigMapper azureNgConfigMapper;
-  @Inject private AzureManagementClient azureManagementClient;
+  @Inject private AzureNgHelper azureNgHelper;
 
   public AzureTask(DelegateTaskPackage delegateTaskPackage, ILogStreamingTaskClient logStreamingTaskClient,
       Consumer<DelegateTaskResponse> consumer, BooleanSupplier preExecute) {
@@ -48,22 +40,12 @@ public class AzureTask extends AbstractDelegateRunnableTask {
     }
     AzureTaskParams azureTaskParams = (AzureTaskParams) parameters;
     if (azureTaskParams.getAzureTaskType() == AzureTaskType.VALIDATE) {
-      return handleValidateTask(azureTaskParams);
+      return AzureValidateTaskResponse.builder()
+          .connectorValidationResult(azureNgHelper.getConnectorValidationResult(
+              azureTaskParams.getEncryptionDetails(), azureTaskParams.getAzureConnector()))
+          .build();
     } else {
       throw new InvalidRequestException("Task type not identified");
     }
-  }
-
-  public DelegateResponseData handleValidateTask(AzureTaskParams azureTaskParams) {
-    final AzureConnectorDTO azureConnector = azureTaskParams.getAzureConnector();
-    final AzureConnectorCredentialDTO credential = azureConnector.getCredential();
-    azureManagementClient.validateAzureConnection(
-        azureNgConfigMapper.mapAzureConfigWithDecryption(credential, azureTaskParams.getEncryptionDetails()));
-    ConnectorValidationResult connectorValidationResult = ConnectorValidationResult.builder()
-                                                              .status(ConnectivityStatus.SUCCESS)
-                                                              .delegateId(getDelegateId())
-                                                              .testedAt(System.currentTimeMillis())
-                                                              .build();
-    return AzureValidateTaskResponse.builder().connectorValidationResult(connectorValidationResult).build();
   }
 }

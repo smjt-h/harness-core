@@ -7,6 +7,8 @@
 
 package io.harness.connector.entities.embedded.azureconnector;
 
+import io.harness.delegate.beans.connector.azureconnector.AzureSecretType;
+
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Value;
@@ -21,4 +23,5 @@ public class AzureManualCredential implements AzureCredential {
   String clientId;
   String tenantId;
   String secretKeyRef;
+  AzureSecretType azureSecretType;
 }

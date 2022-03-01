@@ -7,53 +7,21 @@
 
 package io.harness.delegate.task.azure;
 
-import io.harness.azure.client.AzureManagementClient;
-import io.harness.azure.model.AzureConfig;
-import io.harness.connector.ConnectivityStatus;
 import io.harness.connector.ConnectorValidationResult;
 import io.harness.connector.task.ConnectorValidationHandler;
 import io.harness.delegate.beans.connector.ConnectorValidationParams;
-import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
-import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureValidationParams;
-import io.harness.errorhandling.NGErrorHelper;
 
 import com.google.inject.Inject;
-import java.util.Collections;
 
 public class AzureValidationHandler implements ConnectorValidationHandler {
-  @Inject private NGErrorHelper ngErrorHelper;
-  @Inject private AzureManagementClient azureManagementClient;
-  @Inject private AzureNgConfigMapper azureNgConfigMapper;
+  @Inject private AzureNgHelper azureNgHelper;
 
   @Override
   public ConnectorValidationResult validate(
       ConnectorValidationParams connectorValidationParams, String accountIdentifier) {
     final AzureValidationParams azureValidationParams = (AzureValidationParams) connectorValidationParams;
-    final AzureConnectorDTO connectorDTO = azureValidationParams.getAzureConnectorDTO();
-
-    return handleValidateTask(azureNgConfigMapper.mapAzureConfigWithDecryption(
-        connectorDTO.getCredential(), azureValidationParams.getEncryptedDataDetails()));
-  }
-
-  private ConnectorValidationResult handleValidateTask(AzureConfig azureConfig) {
-    ConnectorValidationResult connectorValidationResult;
-    try {
-      azureManagementClient.validateAzureConnection(azureConfig);
-      connectorValidationResult = ConnectorValidationResult.builder()
-                                      .status(ConnectivityStatus.SUCCESS)
-                                      .testedAt(System.currentTimeMillis())
-                                      .build();
-
-    } catch (Exception e) {
-      String errorMessage = e.getMessage();
-      connectorValidationResult = ConnectorValidationResult.builder()
-                                      .status(ConnectivityStatus.FAILURE)
-                                      .errors(Collections.singletonList(ngErrorHelper.createErrorDetail(errorMessage)))
-                                      .errorSummary(ngErrorHelper.getErrorSummary(errorMessage))
-                                      .testedAt(System.currentTimeMillis())
-                                      .build();
-    }
-    return connectorValidationResult;
+    return azureNgHelper.getConnectorValidationResult(
+        azureValidationParams.getEncryptedDataDetails(), azureValidationParams.getAzureConnectorDTO());
   }
 }

@@ -10,6 +10,7 @@ package io.harness.delegate.beans.connector.azureconnector;
 import io.harness.encryption.SecretRefData;
 import io.harness.encryption.SecretReference;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -27,10 +28,14 @@ public class AzureManualDetailsDTO implements AzureCredentialSpecDTO {
   @Schema(description = "Application ID of the Azure App.") @NotNull String clientId;
   @SecretReference
   @ApiModelProperty(dataType = "string")
-  @Schema(description = "This is the Harness text secret with the Azure authentication key as its value.")
+  @Schema(description = "This is the Harness secret reference for connection to the Azure")
   @NotNull
-  SecretRefData secretKeyRef;
+  SecretRefData secretRef;
   @NotNull
   @Schema(description = "The Azure Active Directory (AAD) directory ID where you created your application.")
   String tenantId;
+  @NotNull
+  @JsonProperty("type")
+  @Schema(description = "The type of secret used for Azure authentication ")
+  AzureSecretType secretType;
 }

@@ -10,4 +10,6 @@ package io.harness.delegate.beans.connector.azureconnector;
 public class AzureConstants {
   public static final String INHERIT_FROM_DELEGATE = "InheritFromDelegate";
   public static final String MANUAL_CONFIG = "ManualConfig";
+  public static final String SECRET_KEY = "SecretKey";
+  public static final String KEY_CERT = "KeyCert";
 }

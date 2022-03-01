@@ -184,4 +184,30 @@ public class AzureClient {
   private String buildRepositoryHostUrl(String repositoryHost) {
     return format("https://%s%s", repositoryHost, repositoryHost.endsWith("/") ? "" : "/");
   }
+
+  protected Azure getAzureClientWithDefaultSubscription(
+      String clientId, String tenantId, String key, AzureEnvironmentType azureEnvironmentType) {
+    try {
+      ApplicationTokenCredentials credentials =
+          new ApplicationTokenCredentials(clientId, tenantId, key, getAzureEnvironment(azureEnvironmentType));
+
+      return Azure.configure().withLogLevel(LogLevel.NONE).authenticate(credentials).withDefaultSubscription();
+    } catch (Exception e) {
+      handleAzureAuthenticationException(e);
+    }
+    return null;
+  }
+
+  protected Azure getAzureClientWithDefaultSubscription(String clientId, String tenantId, byte[] certificate,
+      String password, AzureEnvironmentType azureEnvironmentType) {
+    try {
+      ApplicationTokenCredentials credentials = new ApplicationTokenCredentials(
+          clientId, tenantId, certificate, password, getAzureEnvironment(azureEnvironmentType));
+
+      return Azure.configure().withLogLevel(LogLevel.NONE).authenticate(credentials).withDefaultSubscription();
+    } catch (Exception e) {
+      handleAzureAuthenticationException(e);
+    }
+    return null;
+  }
 }

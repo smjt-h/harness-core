@@ -51,6 +51,7 @@ import io.harness.delegate.beans.connector.azureconnector.AzureConstants;
 import io.harness.delegate.beans.connector.azureconnector.AzureCredentialSpecDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
 import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureSecretType;
 import io.harness.delegate.beans.connector.azurekeyvaultconnector.AzureKeyVaultConnectorDTO;
 import io.harness.delegate.beans.connector.ceawsconnector.AwsCurAttributesDTO;
 import io.harness.delegate.beans.connector.ceawsconnector.CEAwsConnectorDTO;
@@ -327,5 +328,6 @@ public class ConnectorBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(AzureManualDetailsDTO.class, 19683);
     kryo.register(AzureCredentialType.class, 19684);
     kryo.register(AzureConnectorCredentialDTO.class, 19685);
+    kryo.register(AzureSecretType.class, 19686);
   }
 }

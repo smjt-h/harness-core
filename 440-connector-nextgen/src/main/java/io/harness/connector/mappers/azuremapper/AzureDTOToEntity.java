@@ -48,11 +48,12 @@ public class AzureDTOToEntity implements ConnectorDTOToEntityMapper<AzureConnect
 
   private AzureConfig.AzureConfigBuilder buildManualCredential(AzureConnectorCredentialDTO connector) {
     final AzureManualDetailsDTO config = (AzureManualDetailsDTO) connector.getConfig();
-    final String secretKeyRef = SecretRefHelper.getSecretConfigString(config.getSecretKeyRef());
+    final String secretKeyRef = SecretRefHelper.getSecretConfigString(config.getSecretRef());
     AzureManualCredential azureManualCredential = AzureManualCredential.builder()
                                                       .tenantId(config.getTenantId())
                                                       .clientId(config.getClientId())
                                                       .secretKeyRef(secretKeyRef)
+                                                      .azureSecretType(config.getSecretType())
                                                       .build();
     return AzureConfig.builder()
         .credentialType(AzureCredentialType.MANUAL_CREDENTIALS)

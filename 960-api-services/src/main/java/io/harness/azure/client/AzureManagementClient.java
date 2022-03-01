@@ -7,6 +7,7 @@
 
 package io.harness.azure.client;
 
+import io.harness.azure.AzureEnvironmentType;
 import io.harness.azure.context.ARMDeploymentSteadyStateContext;
 import io.harness.azure.context.AzureClientContext;
 import io.harness.azure.model.AzureARMRGTemplateExportOptions;
@@ -180,9 +181,13 @@ public interface AzureManagementClient {
   String getARMDeploymentOutputs(ARMDeploymentSteadyStateContext context);
 
   /**
-   * Validate azure connection with a provided config. Will throw exception if connection can't be made
-   *
-   * @param azureConfig - tenantId, clientId, secretKey and environmentType data
+   * Validate azure connection with a provided clientId, tenantId, secret and environment type. Will throw exception if
+   * connection can't be made
+   * @param clientId
+   * @param tenantId
+   * @param secret
+   * @param azureEnvironmentType
    */
-  void validateAzureConnection(AzureConfig azureConfig);
+  void validateAzureConnection(
+      String clientId, String tenantId, char[] secret, AzureEnvironmentType azureEnvironmentType);
 }
