@@ -161,6 +161,13 @@ import io.harness.delegate.task.citasks.CICleanupTask;
 import io.harness.delegate.task.citasks.CIExecuteStepTask;
 import io.harness.delegate.task.citasks.CIInitializeTask;
 import io.harness.delegate.task.citasks.ExecuteCommandTask;
+import io.harness.delegate.task.cloudformation.CloudformationBaseHelper;
+import io.harness.delegate.task.cloudformation.CloudformationBaseHelperImpl;
+import io.harness.delegate.task.cloudformation.CloudformationTaskNG;
+import io.harness.delegate.task.cloudformation.CloudformationTaskType;
+import io.harness.delegate.task.cloudformation.handlers.CloudformationAbstractTaskHandler;
+import io.harness.delegate.task.cloudformation.handlers.CloudformationCreateStackTaskHandler;
+import io.harness.delegate.task.cloudformation.handlers.CloudformationDeleteStackTaskHandler;
 import io.harness.delegate.task.cvng.CVConnectorValidationHandler;
 import io.harness.delegate.task.docker.DockerTestConnectionDelegateTask;
 import io.harness.delegate.task.docker.DockerValidationHandler;
@@ -979,7 +986,7 @@ public class DelegateModule extends AbstractModule {
     bind(TerraformBaseHelper.class).to(TerraformBaseHelperImpl.class);
     bind(DelegateFileManagerBase.class).to(DelegateFileManagerImpl.class);
     bind(TerraformClient.class).to(TerraformClientImpl.class);
-
+    bind(CloudformationBaseHelper.class).to(CloudformationBaseHelperImpl.class);
     bind(HelmDeployServiceNG.class).to(HelmDeployServiceImplNG.class);
 
     MapBinder<String, CommandUnitExecutorService> serviceCommandExecutorServiceMapBinder =
@@ -1116,6 +1123,14 @@ public class DelegateModule extends AbstractModule {
     tfTaskTypeToHandlerMap.addBinding(TFTaskType.APPLY).to(TerraformApplyTaskHandler.class);
     tfTaskTypeToHandlerMap.addBinding(TFTaskType.PLAN).to(TerraformPlanTaskHandler.class);
     tfTaskTypeToHandlerMap.addBinding(TFTaskType.DESTROY).to(TerraformDestroyTaskHandler.class);
+
+    // Cloudformation Task Handlers
+    MapBinder<CloudformationTaskType, CloudformationAbstractTaskHandler> cfnTaskTypeToHandlerMap =
+        MapBinder.newMapBinder(binder(), CloudformationTaskType.class, CloudformationAbstractTaskHandler.class);
+    cfnTaskTypeToHandlerMap.addBinding(CloudformationTaskType.CREATE_STACK)
+        .to(CloudformationCreateStackTaskHandler.class);
+    cfnTaskTypeToHandlerMap.addBinding(CloudformationTaskType.DELETE_STACK)
+        .to(CloudformationDeleteStackTaskHandler.class);
 
     // HelmNG Task Handlers
 
@@ -1536,6 +1551,7 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.SCM_GIT_WEBHOOK_TASK).toInstance(ScmGitWebhookTask.class);
     mapBinder.addBinding(TaskType.SERVICENOW_CONNECTIVITY_TASK_NG).toInstance(ServiceNowTestConnectionTaskNG.class);
     mapBinder.addBinding(TaskType.SERVICENOW_TASK_NG).toInstance(ServiceNowTaskNG.class);
+    mapBinder.addBinding(TaskType.CLOUDFORMATION_TASK_NG).toInstance(CloudformationTaskNG.class);
   }
 
   private void registerSecretManagementBindings() {
