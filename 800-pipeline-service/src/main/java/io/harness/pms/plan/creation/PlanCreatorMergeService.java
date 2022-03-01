@@ -113,7 +113,8 @@ public class PlanCreatorMergeService {
 
   public PlanCreationBlobResponse createPlan(String accountId, String orgIdentifier, String projectIdentifier,
       ExecutionMetadata metadata, PlanExecutionMetadata planExecutionMetadata) throws IOException {
-    log.info("Starting plan creation");
+    log.info("Starting plan creation for projectId {}, orgIdentifier {}, accountId {}", projectIdentifier,
+        orgIdentifier, accountId);
     Map<String, PlanCreatorServiceInfo> services = pmsSdkHelper.getServices();
 
     YamlField pipelineField = YamlUtils.extractPipelineField(planExecutionMetadata.getProcessedYaml());
@@ -128,7 +129,8 @@ public class PlanCreatorMergeService {
     PlanCreationBlobResponse finalResponse = createPlanForDependenciesRecursive(accountId, orgIdentifier,
         projectIdentifier, services, dependencies, metadata, planExecutionMetadata.getTriggerPayload());
     planCreationValidator.validate(accountId, finalResponse);
-    log.info("Done with plan creation");
+    log.info("Done with plan creation for projectId {}, orgIdentifier {}, accountId {}", projectIdentifier,
+        orgIdentifier, accountId);
     return finalResponse;
   }
 
@@ -184,7 +186,7 @@ public class PlanCreatorMergeService {
       Map<String, PlanCreatorServiceInfo> services, PlanCreationBlobResponse.Builder responseBuilder) {
     PlanCreationBlobResponse.Builder currIterationResponseBuilder = PlanCreationBlobResponse.newBuilder();
     CompletableFutures<PlanCreationResponse> completableFutures = new CompletableFutures<>(executor);
-
+    long start = System.currentTimeMillis();
     for (Map.Entry<String, PlanCreatorServiceInfo> serviceEntry : services.entrySet()) {
       if (!pmsSdkHelper.containsSupportedDependencyByYamlPath(serviceEntry.getValue(), responseBuilder.getDeps())) {
         continue;
@@ -224,8 +226,10 @@ public class PlanCreatorMergeService {
       }
     } catch (Exception ex) {
       throw new UnexpectedException("Error fetching plan creation response from service", ex);
+    } finally {
+      log.info("PlanCreatorMergeService sdk took {}ms for dependencies size {}", System.currentTimeMillis() - start,
+          responseBuilder.getDeps().getDependenciesMap().size());
     }
-
     PmsExceptionUtils.checkAndThrowPlanCreatorException(errorResponses);
     return currIterationResponseBuilder.build();
   }

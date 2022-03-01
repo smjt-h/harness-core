@@ -300,7 +300,8 @@ public class ExecutionHelper {
                                                     .put(SetupAbstractionKeys.projectIdentifier, projectIdentifier)
                                                     .build();
     long endTs = System.currentTimeMillis();
-    log.info("Time taken to complete plan: {}", endTs - startTs);
+    log.info("Time taken to complete plan: {} for projectId - {}, orgIdentifier - {}, accountId - {}", endTs - startTs,
+        projectIdentifier, orgIdentifier, accountId);
 
     if (isRetry) {
       Plan newPlan = retryExecutionHelper.transformPlan(plan, identifierOfSkipStages, previousExecutionId);

@@ -112,7 +112,7 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
     }
 
     PlanCreationContext ctx = PlanCreationContext.builder().globalContext(context).build();
-
+    long start = System.currentTimeMillis();
     try (PmsGitSyncBranchContextGuard ignore =
              pmsGitSyncHelper.createGitSyncBranchContextGuardFromBytes(ctx.getGitSyncBranchContext(), true)) {
       Dependencies dependencies = initialDependencies.toBuilder().build();
@@ -121,6 +121,8 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
         PlanCreatorServiceHelper.removeInitialDependencies(dependencies, initialDependencies);
       }
     }
+    log.info("PlanCreatorService total time took {}ms for dependencies size {}", System.currentTimeMillis() - start,
+        initialDependencies.getDependenciesMap().size());
 
     if (finalResponse.getDependencies() != null
         && EmptyPredicate.isNotEmpty(finalResponse.getDependencies().getDependenciesMap())) {
@@ -139,6 +141,7 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
     List<Map.Entry<String, String>> dependenciesList = new ArrayList<>(dependencies.getDependenciesMap().entrySet());
     String currentYaml = dependencies.getYaml();
 
+    long start = System.currentTimeMillis();
     YamlField fullField;
     try {
       fullField = YamlUtils.readTree(currentYaml);
@@ -163,6 +166,9 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
     } catch (Exception ex) {
       log.error(format("Unexpected plan creation error: %s", ex.getMessage()), ex);
       throw new UnexpectedException(format("Unexpected plan creation error: %s", ex.getMessage()), ex);
+    } finally {
+      log.info("PlanCreatorService dependencies time took {}ms for dependencies size {}",
+          System.currentTimeMillis() - start, dependenciesList.size());
     }
   }
 
@@ -219,6 +225,7 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
 
   private PlanCreationResponse createPlanForDependencyInternal(
       String currentYaml, YamlField field, PlanCreationContext ctx, Dependency dependency) {
+    long start = System.currentTimeMillis();
     try {
       Optional<PartialPlanCreator<?>> planCreatorOptional =
           PlanCreatorServiceHelper.findPlanCreator(planCreators, field);
@@ -246,6 +253,9 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
       String message = format("Invalid yaml path [%s] during execution plan creation", field.getYamlPath());
       log.error(message, ex);
       return PlanCreationResponse.builder().errorMessage(message).build();
+    } finally {
+      log.info("PlanCreatorService yaml fqn {} time took {}ms", YamlUtils.getFullyQualifiedName(field.getNode()),
+          System.currentTimeMillis() - start);
     }
   }
 }
