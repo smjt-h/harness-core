@@ -31,13 +31,9 @@
         </encoder>
     </appender>
 
-    <if condition='isNull("STACK_DRIVER_LOGGING_ENABLED") || property("STACK_DRIVER_LOGGING_ENABLED").equalsIgnoreCase("true")'>
-        <then>
-            <appender name="REST2" class="io.harness.delegate.logging.WatcherStackdriverLogAppender">
-                <threshold>TRACE</threshold>
-            </appender>
-        </then>
-    </if>
+    <appender name="REST2" class="io.harness.watcher.logging.WatcherStackdriverLogAppender">
+        <threshold>TRACE</threshold>
+    </appender>
 
     <logger name="software.wings" level="INFO"/>
     <logger name="org.zeroturnaround" level="WARN"/>
