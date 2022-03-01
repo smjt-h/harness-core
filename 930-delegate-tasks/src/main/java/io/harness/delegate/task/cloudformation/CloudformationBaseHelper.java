@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.aws.beans.AwsInternalConfig;
+import io.harness.logging.LogCallback;
 
 import com.amazonaws.services.cloudformation.model.Stack;
 import java.util.Optional;
@@ -18,4 +19,6 @@ import java.util.Optional;
 @OwnedBy(CDP)
 public interface CloudformationBaseHelper {
   Optional<Stack> getIfStackExists(String customStackName, String suffix, AwsInternalConfig awsConfig, String region);
+  void performCleanUpTasks(
+      CloudformationTaskNGParameters taskNGParameters, String delegateId, String taskId, LogCallback logCallback);
 }

@@ -7,19 +7,20 @@
 
 package io.harness.delegate.task.cloudformation;
 
-import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-
-import io.harness.annotations.dev.OwnedBy;
-import io.harness.aws.AWSCloudformationClient;
-import io.harness.aws.beans.AwsInternalConfig;
-
 import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
 import com.amazonaws.services.cloudformation.model.Stack;
 import com.google.inject.Inject;
+import io.harness.annotations.dev.OwnedBy;
+import io.harness.aws.AWSCloudformationClient;
+import io.harness.aws.beans.AwsInternalConfig;
+import io.harness.logging.LogCallback;
+
 import java.util.List;
 import java.util.Optional;
+
+import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 @OwnedBy(CDP)
 public class CloudformationBaseHelperImpl implements CloudformationBaseHelper {
@@ -42,4 +43,7 @@ public class CloudformationBaseHelperImpl implements CloudformationBaseHelper {
       return stacks.stream().filter(stack -> stack.getStackName().endsWith(suffix)).findFirst();
     }
   }
+  @Override
+  public void performCleanUpTasks(
+      CloudformationTaskNGParameters taskNGParameters, String delegateId, String taskId, LogCallback logCallback) {}
 }

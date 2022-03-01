@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.jose4j.lang.JoseException;
 
 @OwnedBy(CDP)
@@ -45,7 +44,7 @@ public class CloudformationTaskNG extends AbstractDelegateRunnableTask {
 
   @Override
   public DelegateResponseData run(Object[] parameters) {
-    throw new NotImplementedException("Not implemented");
+    return null;
   }
 
   @Override

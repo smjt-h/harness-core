@@ -38,6 +38,8 @@ public class CloudformationTaskNGParameters
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
-    return new ArrayList<>();
+    List<ExecutionCapability> capabilities = new ArrayList<>();
+    log.info("Adding Required Execution Capabilities");
+    return capabilities;
   }
 }

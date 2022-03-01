@@ -279,3 +279,14 @@ io.harness.plancreator.stages.StageElementWrapperConfig
 io.harness.plancreator.execution.StepsExecutionConfig
 io.harness.yaml.core.parallelStepElementConfig
 io.harness.cdng.envGroup.beans.EnvironmentGroupConfig
+io.harness.cdng.provision.cloudformation.CreateStackStepInfo
+io.harness.cdng.provision.cloudformation.CloudformationCreateStackStepNode
+io.harness.cdng.provision.cloudformation.CloudformationCreateStackStepParameters
+io.harness.cdng.provision.cloudformation.AwsRoleARN
+io.harness.cdng.provision.cloudformation.TemplateFilesWrapper
+io.harness.cdng.provision.cloudformation.CreateStackStepConfiguration
+io.harness.cdng.provision.cloudformation.ParametersFilesWrapper
+io.harness.cdng.provision.cloudformation.DeleteStackStepConfiguration
+io.harness.cdng.provision.cloudformation.DeleteStackBaseStepInfo
+io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepNode
+io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepParameters
