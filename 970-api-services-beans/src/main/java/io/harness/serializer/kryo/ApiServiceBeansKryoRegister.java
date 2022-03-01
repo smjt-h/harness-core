@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.DEL;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifactory.ArtifactoryConfigRequest;
 import io.harness.aws.AwsAccessKeyCredential;
+import io.harness.aws.AwsCFTemplatesType;
 import io.harness.aws.AwsConfig;
 import io.harness.aws.CrossAccountAccess;
 import io.harness.azure.AzureEnvironmentType;
@@ -407,6 +408,7 @@ public class ApiServiceBeansKryoRegister implements KryoRegistrar {
     kryo.register(BuildDetails.class, 97110);
     kryo.register(BuildDetails.BuildStatus.class, 97111);
     kryo.register(ArtifactFileMetadata.class, 97112);
+    kryo.register(AwsCFTemplatesType.class, 97113);
     kryo.register(GcpKubernetesCluster.class, 5537);
     kryo.register(KustomizeConfig.class, 7323);
   }
