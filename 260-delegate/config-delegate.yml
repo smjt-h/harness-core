@@ -16,3 +16,5 @@ grpcServiceConnectorPort: 8080
 logStreamingServiceBaseUrl: http://localhost:8079
 clientToolsDownloadDisabled: false
 installClientToolsInBackground: true
+clientCertificateFilePath: /Users/johannesbatzill/Workspaces/Sandbox/Certs/CA/public.ca/certs/client1.wf.com/cert.crt
+clientCertificateKeyFilePath: /Users/johannesbatzill/Workspaces/Sandbox/Certs/CA/public.ca/certs/client1.wf.com/cert.key

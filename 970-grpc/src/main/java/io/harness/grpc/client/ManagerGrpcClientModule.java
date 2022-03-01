@@ -21,12 +21,16 @@ import io.grpc.Channel;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.netty.handler.ssl.ClientAuth;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import java.io.File;
 import javax.net.ssl.SSLException;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Defines plumbing to connect to manager via grpc.
@@ -67,10 +71,18 @@ public class ManagerGrpcClientModule extends ProviderModule {
       return NettyChannelBuilder.forTarget(config.target).overrideAuthority(authorityToUse).usePlaintext().build();
     }
 
-    SslContext sslContext = GrpcSslContexts.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+    SslContextBuilder sslContextBuilder =
+        GrpcSslContexts.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE);
+
+    if (StringUtils.isNotEmpty(config.clientCertificateFilePath)
+        && StringUtils.isNotEmpty(config.clientCertificateKeyFilePath)) {
+      sslContextBuilder.keyManager(
+          new File(config.clientCertificateFilePath), new File(config.clientCertificateKeyFilePath));
+    }
+
     return NettyChannelBuilder.forTarget(config.target)
         .overrideAuthority(authorityToUse)
-        .sslContext(sslContext)
+        .sslContext(sslContextBuilder.build())
         .build();
   }
 
@@ -116,5 +128,7 @@ public class ManagerGrpcClientModule extends ProviderModule {
     String accountId;
     String accountSecret;
     String scheme;
+    String clientCertificateFilePath;
+    String clientCertificateKeyFilePath;
   }
 }

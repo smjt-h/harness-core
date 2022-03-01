@@ -66,6 +66,11 @@ public class DelegateStreamHandler extends AtmosphereHandlerAdapter {
 
     if (req.getMethod().equals("GET")) {
       try {
+        String delegateMtlsAuthority = req.getHeader("delegate-mtls-authority");
+        if (delegateMtlsAuthority != null) {
+          log.info("Received delegate-mtls-authority header via WEBSOCKET: '{}'", delegateMtlsAuthority);
+        }
+
         List<String> pathSegments = SPLITTER.splitToList(req.getPathInfo());
         String accountId = pathSegments.get(1);
         authService.validateDelegateToken(accountId, req.getParameter("token"));

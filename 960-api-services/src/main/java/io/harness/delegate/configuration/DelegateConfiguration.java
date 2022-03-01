@@ -59,6 +59,9 @@ public class DelegateConfiguration {
   private boolean installClientToolsInBackground;
   private boolean dynamicHandlingOfRequestEnabled;
 
+  private String clientCertificateFilePath;
+  private String clientCertificateKeyFilePath;
+
   // TODO: This method will get removed once we rolled out new delegate.
   public String getDelegateToken() {
     if (StringUtils.isEmpty(delegateToken)) {

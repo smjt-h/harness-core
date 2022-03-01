@@ -37,6 +37,8 @@ import lombok.extern.slf4j.Slf4j;
 @InterceptorPriority(10)
 public class DelegateAuthServerInterceptor implements ServerInterceptor {
   public static final Context.Key<String> ACCOUNT_ID_CTX_KEY = Context.key("accountId");
+  public static final Metadata.Key<String> DELEGATE_MTLS_AUTHORITY_METADATA_KEY =
+      Metadata.Key.of("delegate-mtls-authority", Metadata.ASCII_STRING_MARSHALLER);
   private static final ServerCall.Listener NOOP_LISTENER = new ServerCall.Listener() {};
   private static final Set<String> INCLUDED_SERVICES =
       ImmutableSet.of("io.harness.perpetualtask.PerpetualTaskService", "io.harness.event.PingPongService",
@@ -66,6 +68,11 @@ public class DelegateAuthServerInterceptor implements ServerInterceptor {
     String serviceId = GrpcAuthUtils.getServiceIdFromRequest(metadata).orElse(null);
     if (accountId == null && serviceId != null) {
       return Contexts.interceptCall(Context.current(), call, metadata, next);
+    }
+
+    String delegateMtlsAuthority = metadata.get(DELEGATE_MTLS_AUTHORITY_METADATA_KEY);
+    if (delegateMtlsAuthority != null) {
+      log.info("Received delegate-mtls-authority header via GRPC: '{}'", delegateMtlsAuthority);
     }
 
     @SuppressWarnings("unchecked") Listener<ReqT> noopListener = NOOP_LISTENER;

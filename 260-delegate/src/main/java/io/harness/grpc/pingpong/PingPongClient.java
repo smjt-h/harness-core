@@ -54,6 +54,6 @@ public class PingPongClient extends AbstractScheduledService {
 
   @Override
   protected Scheduler scheduler() {
-    return Scheduler.newFixedDelaySchedule(5, 5, TimeUnit.MINUTES);
+    return Scheduler.newFixedDelaySchedule(5, 30, TimeUnit.SECONDS);
   }
 }

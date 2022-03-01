@@ -25,22 +25,30 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Base64;
 import java.util.concurrent.TimeUnit;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.*;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.Request.Builder;
+import org.apache.commons.lang.StringUtils;
+import org.eclipse.jetty.util.StringUtil;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 
@@ -56,10 +64,15 @@ public class DelegateAgentManagerClientFactory
 
   private String baseUrl;
   private TokenGenerator tokenGenerator;
+  private String clientCertificateFilePath;
+  private String clientCertificateKeyFilePath;
 
-  DelegateAgentManagerClientFactory(String baseUrl, TokenGenerator tokenGenerator) {
+  DelegateAgentManagerClientFactory(String baseUrl, TokenGenerator tokenGenerator, String clientCertificateFilePath,
+      String clientCertificateKeyFilePath) {
     this.baseUrl = baseUrl;
     this.tokenGenerator = tokenGenerator;
+    this.clientCertificateFilePath = clientCertificateFilePath;
+    this.clientCertificateKeyFilePath = clientCertificateKeyFilePath;
   }
 
   @Override
@@ -79,15 +92,25 @@ public class DelegateAgentManagerClientFactory
 
   private OkHttpClient getSafeOkHttpClient() {
     try {
-      KeyStore keyStore = getKeyStore();
-
+      // Create Trust Manager (CA Certs used to verify server cert)
+      KeyStore trustKeyStore = this.getTrustKeyStore();
       TrustManagerFactory trustManagerFactory =
           TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-      trustManagerFactory.init(keyStore);
+      trustManagerFactory.init(trustKeyStore);
       TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
 
+      // Create Key Manager (Client Cert used for mtls) - only if client certificate provided
+      KeyManager[] keyManagers = null;
+      if (StringUtils.isNotEmpty(this.clientCertificateFilePath)
+          && StringUtils.isNotEmpty(this.clientCertificateKeyFilePath)) {
+        KeyStore clientKeyStore = this.getClientKeyStore();
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        keyManagerFactory.init(clientKeyStore, "somePassword42".toCharArray());
+        keyManagers = keyManagerFactory.getKeyManagers();
+      }
+
       SSLContext sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(null, trustManagers, null);
+      sslContext.init(keyManagers, trustManagers, null);
 
       return Http.getOkHttpClientWithProxyAuthSetup()
           .hostnameVerifier(new NoopHostnameVerifier())
@@ -101,7 +124,7 @@ public class DelegateAgentManagerClientFactory
             return chain.proceed(request.build());
           })
           .addInterceptor(chain -> FibonacciBackOff.executeForEver(() -> chain.proceed(chain.request())))
-          // During this call we not just query the task but we also obtain the secret on the manager side
+          // During this call we not just query the task, but we also obtain the secret on the manager side
           // we need to give enough time for the call to finish.
           .readTimeout(2, TimeUnit.MINUTES)
           .build();
@@ -110,7 +133,8 @@ public class DelegateAgentManagerClientFactory
     }
   }
 
-  private KeyStore getKeyStore() throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
+  private KeyStore getTrustKeyStore()
+      throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
     KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
     keyStore.load(null, null);
 
@@ -131,6 +155,33 @@ public class DelegateAgentManagerClientFactory
         }
       }
     }
+
+    return keyStore;
+  }
+
+  private KeyStore getClientKeyStore()
+      throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException, InvalidKeySpecException {
+    // Load Private Key
+    String privateKeyContent =
+        new String(Files.readAllBytes(Paths.get(this.clientCertificateKeyFilePath)), Charset.defaultCharset())
+            .replace("-----BEGIN PRIVATE KEY-----", "")
+            .replaceAll(System.lineSeparator(), "")
+            .replace("-----END PRIVATE KEY-----", "");
+
+    byte[] privateKeyAsBytes = Base64.getDecoder().decode(privateKeyContent);
+    KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+    PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyAsBytes);
+
+    // Load Certificate (For PROD readiness should be able to read chain ...)
+    CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+    InputStream certificateChainAsInputStream =
+        Files.newInputStream(Paths.get(this.clientCertificateFilePath), StandardOpenOption.READ);
+    Certificate certificate = certificateFactory.generateCertificate(certificateChainAsInputStream);
+
+    KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+    keyStore.load(null, null);
+    keyStore.setKeyEntry(
+        "client", keyFactory.generatePrivate(keySpec), "somePassword42".toCharArray(), new Certificate[] {certificate});
 
     return keyStore;
   }

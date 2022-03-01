@@ -55,7 +55,8 @@ public class DelegateAgentModule extends AbstractModule {
     install(new MetricRegistryModule(new MetricRegistry()));
 
     install(new DelegateManagerClientModule(configuration.getManagerUrl(), configuration.getVerificationServiceUrl(),
-        configuration.getCvNextGenUrl(), configuration.getAccountId(), configuration.getDelegateToken()));
+        configuration.getCvNextGenUrl(), configuration.getAccountId(), configuration.getDelegateToken(),
+        configuration.getClientCertificateFilePath(), configuration.getClientCertificateKeyFilePath()));
 
     install(new LogStreamingModule(configuration.getLogStreamingServiceBaseUrl()));
     install(new DelegateGrpcClientModule(configuration));

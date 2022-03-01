@@ -390,6 +390,11 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     try (AccountLogContext ignore = new AccountLogContext(accountId, OVERRIDE_ERROR)) {
       String header = containerRequestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
       if (header != null && header.contains("Delegate")) {
+        String delegateMtlsAuthority = containerRequestContext.getHeaderString("delegate-mtls-authority");
+        if (delegateMtlsAuthority != null) {
+          log.info("Received delegate-mtls-authority header via REST: '{}'", delegateMtlsAuthority);
+        }
+
         authService.validateDelegateToken(
             accountId, substringAfter(containerRequestContext.getHeaderString(HttpHeaders.AUTHORIZATION), "Delegate "));
       } else {

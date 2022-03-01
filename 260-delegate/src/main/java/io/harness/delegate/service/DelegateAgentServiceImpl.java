@@ -247,15 +247,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.math3.util.Precision;
 import org.apache.http.client.utils.URIBuilder;
-import org.atmosphere.wasync.Client;
-import org.atmosphere.wasync.Encoder;
-import org.atmosphere.wasync.Event;
-import org.atmosphere.wasync.Function;
-import org.atmosphere.wasync.Options;
+import org.atmosphere.wasync.*;
 import org.atmosphere.wasync.Request.METHOD;
 import org.atmosphere.wasync.Request.TRANSPORT;
-import org.atmosphere.wasync.RequestBuilder;
-import org.atmosphere.wasync.Socket;
 import org.atmosphere.wasync.Socket.STATUS;
 import org.atmosphere.wasync.transport.TransportNotSupported;
 import org.slf4j.Logger;
@@ -797,6 +791,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
       // Stream the request body
       RequestBuilder requestBuilder = client.newRequestBuilder().method(METHOD.GET).uri(uri.toString());
+
+      //      requestBuilder = requestBuilder.header("delegate-mtls-authority", "WEBSOCKET DelegateAgentServiceImpl");
 
       requestBuilder
           .encoder(new Encoder<Delegate, Reader>() { // Do not change this, wasync doesn't like lambdas
