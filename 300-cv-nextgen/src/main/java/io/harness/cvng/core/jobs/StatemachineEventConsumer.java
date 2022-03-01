@@ -9,6 +9,7 @@ package io.harness.cvng.core.jobs;
 
 import static io.harness.eventsframework.EventsFrameworkConstants.SRM_STATEMACHINE_EVENT;
 
+import io.harness.cvng.statemachine.beans.AnalysisStatus;
 import io.harness.cvng.statemachine.entities.AnalysisStateMachine;
 import io.harness.cvng.statemachine.services.api.AnalysisStateMachineService;
 import io.harness.cvng.statemachine.services.api.OrchestrationService;
@@ -41,16 +42,54 @@ public class StatemachineEventConsumer extends AbstractStreamConsumer {
 
   @Override
   protected void processMessage(Message message) {
+    StateMachineTrigger trigger = StateMachineTrigger.parseFrom(message.getMessage().getData());
     try {
-      StateMachineTrigger trigger = StateMachineTrigger.parseFrom(message.getMessage().getData());
       stateMachineService.executeStateMachine(trigger.getVerificationTaskId());
+      processAnalysisStateMachine(trigger.getVerificationTaskId());
+    } catch (Exception ex) {
+      processFailureMessage(trigger);
+    }
+  }
+
+  private void processAnalysisStateMachine(String verificationTaskId) {
+    AnalysisStateMachine currentlyExecutingStateMachine =
+        stateMachineService.getExecutingStateMachine(verificationTaskId);
+    if (currentlyExecutingStateMachine == null) {
+      return;
+    }
+    AnalysisStatus stateMachineStatus = null;
+
+    switch (currentlyExecutingStateMachine.getStatus()) {
+      case CREATED:
+      case SUCCESS:
+      case IGNORED:
+        orchestrationService.orchestrateNewAnalysisStateMachine(verificationTaskId);
+        break;
+      case RUNNING:
+        stateMachineStatus = stateMachineService.executeStateMachine(currentlyExecutingStateMachine);
+        break;
+      case FAILED:
+      case TIMEOUT:
+        stateMachineService.retryStateMachineAfterFailure(currentlyExecutingStateMachine);
+        break;
+      case COMPLETED:
+        log.info("Analysis for the entire duration is done. Time to close down");
+        orchestrationService.updateStatusOfOrchestrator(verificationTaskId, AnalysisStatus.COMPLETED);
+        break;
+      default:
+        log.info("Unknown analysis status of the state machine under execution");
+    }
+
+    if (AnalysisStatus.SUCCESS == stateMachineStatus || AnalysisStatus.COMPLETED == stateMachineStatus) {
       // Queue the next job in topic
-      AnalysisStateMachine analysisStateMachine =
-          orchestrationService.getFrontOfStateMachineQueue(trigger.getVerificationTaskId());
+      AnalysisStateMachine analysisStateMachine = orchestrationService.getFrontOfStateMachineQueue(verificationTaskId);
       stateMachineEventPublisherService.registerTaskComplete(
           analysisStateMachine.getAccountId(), analysisStateMachine.getVerificationTaskId());
-    } catch (Exception ex) {
-      log.error("Exception when consuming event: ", ex);
     }
+  }
+
+  private void processFailureMessage(StateMachineTrigger trigger) {
+    // Add the same message again for retry
+    stateMachineEventPublisherService.registerTaskComplete(trigger.getAccountId(), trigger.getVerificationTaskId());
   }
 }

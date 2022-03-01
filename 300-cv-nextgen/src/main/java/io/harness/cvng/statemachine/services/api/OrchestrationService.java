@@ -7,6 +7,7 @@
 
 package io.harness.cvng.statemachine.services.api;
 
+import io.harness.cvng.statemachine.beans.AnalysisStatus;
 import io.harness.cvng.statemachine.entities.AnalysisOrchestrator;
 import io.harness.cvng.statemachine.entities.AnalysisStateMachine;
 
@@ -19,4 +20,6 @@ public interface OrchestrationService {
   void markCompleted(String verificationTaskId);
   void markCompleted(Set<String> verificationTaskIds);
   AnalysisStateMachine getFrontOfStateMachineQueue(String verificationTaskId);
+  void orchestrateNewAnalysisStateMachine(String verificationTaskId);
+  void updateStatusOfOrchestrator(String verificationTaskId, AnalysisStatus status);
 }

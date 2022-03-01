@@ -182,7 +182,8 @@ public class OrchestrationServiceImpl implements OrchestrationService {
         : null;
   }
 
-  private void orchestrateNewAnalysisStateMachine(String verificationTaskId) {
+  @Override
+  public void orchestrateNewAnalysisStateMachine(String verificationTaskId) {
     int ignoredCount = 0;
     List<AnalysisStateMachine> ignoredStatemachines = new ArrayList<>();
     AnalysisStateMachine analysisStateMachine = null;
@@ -216,7 +217,8 @@ public class OrchestrationServiceImpl implements OrchestrationService {
     updateStatusOfOrchestrator(verificationTaskId, AnalysisStatus.RUNNING);
   }
 
-  private void updateStatusOfOrchestrator(String verificationTaskId, AnalysisStatus status) {
+  @Override
+  public void updateStatusOfOrchestrator(String verificationTaskId, AnalysisStatus status) {
     Query<AnalysisOrchestrator> orchestratorQuery =
         hPersistence.createQuery(AnalysisOrchestrator.class)
             .filter(AnalysisOrchestratorKeys.verificationTaskId, verificationTaskId);
