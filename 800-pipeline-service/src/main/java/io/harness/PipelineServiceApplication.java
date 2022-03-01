@@ -25,6 +25,7 @@ import io.harness.cache.CacheModule;
 import io.harness.configuration.DeployVariant;
 import io.harness.consumers.GraphUpdateRedisConsumer;
 import io.harness.controller.PrimaryVersionChangeScheduler;
+import io.harness.debezium.DebeziumEngineStarter;
 import io.harness.delay.DelayEventListener;
 import io.harness.engine.events.NodeExecutionStatusUpdateEventHandler;
 import io.harness.engine.executions.node.NodeExecutionService;
@@ -40,6 +41,7 @@ import io.harness.event.OrchestrationEndGraphHandler;
 import io.harness.event.OrchestrationLogPublisher;
 import io.harness.event.OrchestrationStartEventHandler;
 import io.harness.exception.GeneralException;
+import io.harness.execution.consumers.InitiateNodeEventRedisConsumer;
 import io.harness.execution.consumers.SdkResponseEventRedisConsumer;
 import io.harness.gitsync.AbstractGitSyncSdkModule;
 import io.harness.gitsync.GitSdkConfiguration;
@@ -54,6 +56,7 @@ import io.harness.govern.ProviderModule;
 import io.harness.governance.DefaultConnectorRefExpansionHandler;
 import io.harness.graph.stepDetail.PmsGraphStepDetailsServiceImpl;
 import io.harness.graph.stepDetail.service.PmsGraphStepDetailsService;
+import io.harness.handlers.PipelineExecutionSummaryHandler;
 import io.harness.health.HealthMonitor;
 import io.harness.health.HealthService;
 import io.harness.maintenance.MaintenanceController;
@@ -313,6 +316,10 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
           return null;
         }
       });
+    }
+    if (appConfig.getDebeziumConfig() != null && appConfig.getDebeziumConfig().isEnabled()) {
+      new DebeziumEngineStarter().startDebeziumEngine(
+          appConfig.getDebeziumConfig(), new PipelineExecutionSummaryHandler());
     }
 
     // Pipeline Service Modules
@@ -653,6 +660,8 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
         pipelineServiceConsumersConfig.getPlanNotify().getThreads());
     pipelineEventConsumerController.register(injector.getInstance(PmsNotifyEventConsumerRedis.class),
         pipelineServiceConsumersConfig.getPmsNotify().getThreads());
+    pipelineEventConsumerController.register(injector.getInstance(InitiateNodeEventRedisConsumer.class),
+        pipelineServiceConsumersConfig.getInitiateNode().getThreads());
   }
 
   /**-----------------------------Git sync --------------------------------------*/
