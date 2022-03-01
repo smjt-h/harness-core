@@ -232,9 +232,15 @@ public class DelegateSetupResourceV2 {
   public RestResponse<DelegateGroup>
   updateTagsForDelegateGroup(@Parameter(description = "Delegate Group Name") @PathParam("identifier")
                              @NotEmpty String identifier, @QueryParam("accountId") @NotEmpty String accountId,
+      @Parameter(
+          description = "Organization Id. If left empty Delegate group with no organization specified will be updated")
+      @QueryParam("orgId") String orgId,
+      @Parameter(description = "Project Id. If left empty Delegate group with no project specified will be updated")
+      @QueryParam("projectId") String projectId,
       @RequestBody(required = true, description = "List of tags") DelegateGroupTags tags) {
     try (AutoLogContext ignore1 = new AccountLogContext(accountId, OVERRIDE_ERROR)) {
-      return new RestResponse<>(delegateSetupService.updateDelegateGroupTags(accountId, identifier, tags.getTags()));
+      return new RestResponse<>(
+          delegateSetupService.updateDelegateGroupTags(accountId, orgId, projectId, identifier, tags.getTags()));
     }
   }
 }

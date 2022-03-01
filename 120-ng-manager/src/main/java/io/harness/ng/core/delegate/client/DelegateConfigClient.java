@@ -18,5 +18,7 @@ public interface DelegateConfigClient {
   @PUT(DELEGATE_SETUP_API + "/{" + NGCommonEntityConstants.IDENTIFIER_KEY + "}/tags")
   Call<RestResponse<DelegateGroup>> updateDelegateGroupTags(
       @Query(NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
-      @Path(NGCommonEntityConstants.IDENTIFIER_KEY) String groupIdentifier, @Body @NotNull DelegateGroupTags tags);
+      @Path(NGCommonEntityConstants.IDENTIFIER_KEY) @NotNull String groupIdentifier,
+      @Query(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @Query(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier, @Body @NotNull DelegateGroupTags tags);
 }

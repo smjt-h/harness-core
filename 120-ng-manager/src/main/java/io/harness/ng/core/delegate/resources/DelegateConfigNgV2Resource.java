@@ -35,6 +35,7 @@ import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.remote.client.RestClientUtils;
 import io.harness.rest.RestResponse;
 
+import software.wings.security.annotations.ApiKeyAuthorized;
 import software.wings.security.annotations.AuthRule;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
@@ -345,6 +346,7 @@ public class DelegateConfigNgV2Resource {
   @ApiOperation(value = "Update tags for the Delegate group", nickname = "updateTagsForDelegateGroup")
   @Timed
   @Path("{identifier}/tags")
+  @ApiKeyAuthorized
   @ExceptionMetered
   @Operation(operationId = "updateTagsForDelegateGroup", summary = "Update tags for the Delegate group",
       responses =
@@ -356,8 +358,10 @@ public class DelegateConfigNgV2Resource {
   updateTagsForDelegateGroup(
       @Parameter(description = "Delegate Group Name") @PathParam("identifier") @NotEmpty String identifier,
       @Parameter(description = "Account Id") @QueryParam("accountId") @NotEmpty String accountId,
+      @Parameter(description = "Organization Id") @QueryParam("orgId") String orgId,
+      @Parameter(description = "Project Id") @QueryParam("projectId") String projectId,
       @RequestBody(required = true, description = "List of tags") DelegateGroupTags tags) {
     return new RestResponse<>(
-        RestClientUtils.getResponse(delegateConfigClient.updateDelegateGroupTags(identifier, accountId, tags)));
+        RestClientUtils.getResponse(delegateConfigClient.updateDelegateGroupTags(accountId, orgId, projectId, identifier, tags)));
   }
 }
