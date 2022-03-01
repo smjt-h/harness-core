@@ -20,10 +20,10 @@ public interface GraphGenerationService {
 
   @Deprecated OrchestrationGraphDTO generateOrchestrationGraph(String planExecutionId);
 
-  OrchestrationGraphDTO generateOrchestrationGraphV2(String planExecutionId);
+  OrchestrationGraphDTO generateOrchestrationGraphV2(String planExecutionId, boolean forced);
 
   OrchestrationGraphDTO generatePartialOrchestrationGraphFromSetupNodeId(
-      String startingSetupNodeId, String planExecutionId);
+      String startingSetupNodeId, String planExecutionId, boolean forced);
 
   OrchestrationGraphDTO generatePartialOrchestrationGraphFromIdentifier(String identifier, String planExecutionId);
 

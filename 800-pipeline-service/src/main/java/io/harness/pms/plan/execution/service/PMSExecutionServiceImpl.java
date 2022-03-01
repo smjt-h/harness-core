@@ -8,6 +8,7 @@
 package io.harness.pms.plan.execution.service;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_NESTS;
 import static io.harness.pms.contracts.plan.TriggerType.MANUAL;
 
 import static java.lang.String.format;
@@ -27,6 +28,7 @@ import io.harness.filter.dto.FilterDTO;
 import io.harness.filter.service.FilterService;
 import io.harness.gitsync.sdk.EntityGitDetails;
 import io.harness.interrupts.Interrupt;
+import io.harness.logging.AutoLogContext;
 import io.harness.ng.core.common.beans.NGTag.NGTagKeys;
 import io.harness.pms.contracts.interrupts.InterruptConfig;
 import io.harness.pms.contracts.interrupts.IssuedBy;
@@ -51,6 +53,7 @@ import io.harness.serializer.JsonUtils;
 import io.harness.serializer.ProtoUtils;
 import io.harness.service.GraphGenerationService;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.ByteString;
@@ -278,10 +281,27 @@ public class PMSExecutionServiceImpl implements PMSExecutionService {
 
   @Override
   public OrchestrationGraphDTO getOrchestrationGraph(String stageNodeId, String planExecutionId) {
-    if (EmptyPredicate.isEmpty(stageNodeId)) {
-      return graphGenerationService.generateOrchestrationGraphV2(planExecutionId);
+    return getOrchestrationGraph(stageNodeId, planExecutionId, false);
+  }
+
+  private OrchestrationGraphDTO getOrchestrationGraph(String stageNodeId, String planExecutionId, boolean forced) {
+    try (AutoLogContext ignore =
+             new AutoLogContext(ImmutableMap.of("planExecutionId", planExecutionId), OVERRIDE_NESTS)) {
+      if (EmptyPredicate.isEmpty(stageNodeId)) {
+        return graphGenerationService.generateOrchestrationGraphV2(planExecutionId, forced);
+      }
+      log.info("Generating orchestration graph for stageNodeId : {}", stageNodeId);
+      return graphGenerationService.generatePartialOrchestrationGraphFromSetupNodeId(
+          stageNodeId, planExecutionId, forced);
+    } catch (Exception ex) {
+      log.error("Exception Occurred while Getting graph for planExecutionId: {}, stageNodeId: {}", planExecutionId,
+          stageNodeId);
+      if (!forced) {
+        // TODO: This probably happened due to some issue while graph generation. Regenerating the graph
+        return getOrchestrationGraph(stageNodeId, planExecutionId, true);
+      }
+      throw ex;
     }
-    return graphGenerationService.generatePartialOrchestrationGraphFromSetupNodeId(stageNodeId, planExecutionId);
   }
 
   @Override

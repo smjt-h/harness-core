@@ -245,9 +245,9 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
   }
 
   @Override
-  public OrchestrationGraphDTO generateOrchestrationGraphV2(String planExecutionId) {
+  public OrchestrationGraphDTO generateOrchestrationGraphV2(String planExecutionId, boolean forced) {
     OrchestrationGraph cachedOrchestrationGraph = getCachedOrchestrationGraph(planExecutionId);
-    if (cachedOrchestrationGraph == null) {
+    if (cachedOrchestrationGraph == null || forced) {
       cachedOrchestrationGraph = buildOrchestrationGraph(planExecutionId);
     }
     EphemeralOrchestrationGraph ephemeralOrchestrationGraph =
@@ -258,12 +258,11 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
 
   @Override
   public OrchestrationGraphDTO generatePartialOrchestrationGraphFromSetupNodeId(
-      String startingSetupNodeId, String planExecutionId) {
+      String startingSetupNodeId, String planExecutionId, boolean forced) {
     OrchestrationGraph orchestrationGraph = getCachedOrchestrationGraph(planExecutionId);
-    if (orchestrationGraph == null) {
+    if (orchestrationGraph == null || forced) {
       orchestrationGraph = buildOrchestrationGraph(planExecutionId);
     }
-
     String startingNodeId =
         obtainStartingIdFromSetupNodeId(orchestrationGraph.getAdjacencyList().getGraphVertexMap(), startingSetupNodeId);
     return generatePartialGraph(startingNodeId, orchestrationGraph);

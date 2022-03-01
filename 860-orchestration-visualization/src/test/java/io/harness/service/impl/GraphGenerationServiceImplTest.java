@@ -186,7 +186,8 @@ public class GraphGenerationServiceImplTest extends OrchestrationVisualizationTe
             .build();
     nodeExecutionService.save(dummyStart);
 
-    OrchestrationGraphDTO graphResponse = graphGenerationService.generateOrchestrationGraphV2(planExecution.getUuid());
+    OrchestrationGraphDTO graphResponse =
+        graphGenerationService.generateOrchestrationGraphV2(planExecution.getUuid(), false);
     assertThat(graphResponse).isNotNull();
     assertThat(graphResponse.getAdjacencyList()).isNotNull();
     assertThat(graphResponse.getAdjacencyList().getGraphVertexMap()).isNotEmpty();
@@ -315,7 +316,7 @@ public class GraphGenerationServiceImplTest extends OrchestrationVisualizationTe
     graphGenerationService.cacheOrchestrationGraph(orchestrationGraph);
 
     OrchestrationGraphDTO graphResponse = graphGenerationService.generatePartialOrchestrationGraphFromSetupNodeId(
-        dummyFinish.getPlanNodeId(), orchestrationGraph.getPlanExecutionId());
+        dummyFinish.getPlanNodeId(), orchestrationGraph.getPlanExecutionId(), false);
     assertThat(graphResponse).isNotNull();
     assertThat(graphResponse.getRootNodeIds().get(0)).isEqualTo(dummyFinish.getUuid());
     assertThat(graphResponse.getAdjacencyList()).isNotNull();
