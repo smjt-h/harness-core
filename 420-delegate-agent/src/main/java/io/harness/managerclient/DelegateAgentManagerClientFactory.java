@@ -23,7 +23,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import io.serializer.HObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -65,7 +64,7 @@ public class DelegateAgentManagerClientFactory
 
   @Override
   public io.harness.managerclient.DelegateAgentManagerClient get() {
-    ObjectMapper objectMapper = HObjectMapper.get();
+    ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new Jdk8Module());
     objectMapper.registerModule(new GuavaModule());
     objectMapper.registerModule(new JavaTimeModule());

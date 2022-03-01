@@ -28,7 +28,6 @@ import software.wings.ngmigration.NGMigrationEntity;
 import software.wings.ngmigration.NGMigrationEntityType;
 import software.wings.ngmigration.NGYamlFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -128,12 +127,11 @@ public class DiscoveryService {
   }
 
   private static <T> T getRestClient(ServiceHttpClientConfig ngClientConfig, Class<T> clazz) {
-    ObjectMapper objectMapper = HObjectMapper.getNGObjectMapper();
     OkHttpClient okHttpClient = Http.getOkHttpClient(ngClientConfig.getBaseUrl(), false);
     Retrofit retrofit = new Retrofit.Builder()
                             .client(okHttpClient)
                             .baseUrl(ngClientConfig.getBaseUrl())
-                            .addConverterFactory(JacksonConverterFactory.create(objectMapper))
+                            .addConverterFactory(JacksonConverterFactory.create(HObjectMapper.NG_DEFAULT_OBJECT_MAPPER))
                             .build();
     return retrofit.create(clazz);
   }

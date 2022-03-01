@@ -27,15 +27,10 @@ import lombok.experimental.UtilityClass;
 public class HObjectMapper {
   public static final ObjectMapper NG_DEFAULT_OBJECT_MAPPER = configureObjectMapperForNG(Jackson.newObjectMapper());
 
-  @Deprecated
   public static ObjectMapper get() {
     ObjectMapper mapper = new ObjectMapper();
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     return mapper;
-  }
-
-  public static ObjectMapper getNGObjectMapper() {
-    return configureObjectMapperForNG(new ObjectMapper());
   }
 
   public static ObjectMapper configureObjectMapperForNG(ObjectMapper mapper) {

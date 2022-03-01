@@ -29,7 +29,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import io.serializer.HObjectMapper;
 import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.ConnectionPool;
@@ -72,7 +71,7 @@ public class CommandLibraryServiceHttpClientFactory implements Provider<CommandL
   @NotNull
   @VisibleForTesting
   ObjectMapper getObjectMapper() {
-    ObjectMapper objectMapper = HObjectMapper.get();
+    ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new Jdk8Module());
     objectMapper.registerModule(new GuavaModule());
     objectMapper.registerModule(new JavaTimeModule());

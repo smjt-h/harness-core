@@ -19,7 +19,6 @@ import io.harness.remote.client.ClientMode;
 import io.harness.remote.client.ServiceHttpClientConfig;
 import io.harness.security.ServiceTokenGenerator;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import io.github.resilience4j.retrofit.CircuitBreakerCallAdapter;
@@ -37,14 +36,12 @@ import retrofit2.converter.jackson.JacksonConverterFactory;
 public class NextGenClientFactory extends AbstractHttpClientFactory implements Provider<NextGenClient> {
   private NGManagerServiceConfig ngManagerServiceConfig;
   private ClientMode clientMode;
-  private final ObjectMapper objectMapper;
 
   public NextGenClientFactory(NGManagerServiceConfig ngManagerServiceConfig, ServiceTokenGenerator tokenGenerator) {
     super(ServiceHttpClientConfig.builder().baseUrl(ngManagerServiceConfig.getNgManagerUrl()).build(),
         ngManagerServiceConfig.getManagerServiceSecret(), tokenGenerator, null,
         AuthorizationServiceHeader.CV_NEXT_GEN.getServiceId(), true, ClientMode.PRIVILEGED);
     this.ngManagerServiceConfig = ngManagerServiceConfig;
-    this.objectMapper = HObjectMapper.getNGObjectMapper();
     // TODO: this change is for the hotfix. We need to have 2 clients (Previleged and nonprevileged (For client
     // requests))
     this.clientMode = ClientMode.PRIVILEGED;
@@ -59,7 +56,7 @@ public class NextGenClientFactory extends AbstractHttpClientFactory implements P
             .baseUrl(baseUrl)
             .client(getUnsafeOkHttpClient(baseUrl))
             .addCallAdapterFactory(CircuitBreakerCallAdapter.of(getCircuitBreaker(), response -> response.code() < 500))
-            .addConverterFactory(JacksonConverterFactory.create(objectMapper))
+            .addConverterFactory(JacksonConverterFactory.create(HObjectMapper.NG_DEFAULT_OBJECT_MAPPER))
             .build();
     return retrofit.create(NextGenClient.class);
   }

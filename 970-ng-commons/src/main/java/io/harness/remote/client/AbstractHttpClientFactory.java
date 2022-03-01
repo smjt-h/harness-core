@@ -29,7 +29,6 @@ import io.harness.security.dto.Principal;
 import io.harness.security.dto.ServicePrincipal;
 import io.harness.serializer.kryo.KryoConverterFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.retrofit.CircuitBreakerCallAdapter;
 import io.serializer.HObjectMapper;
@@ -54,7 +53,6 @@ public abstract class AbstractHttpClientFactory {
   private final ServiceTokenGenerator tokenGenerator;
   private final KryoConverterFactory kryoConverterFactory;
   private final String clientId;
-  private final ObjectMapper objectMapper;
   private final boolean enableCircuitBreaker;
   private final ClientMode clientMode;
 
@@ -65,7 +63,6 @@ public abstract class AbstractHttpClientFactory {
     this.tokenGenerator = tokenGenerator;
     this.kryoConverterFactory = kryoConverterFactory;
     this.clientId = clientId;
-    this.objectMapper = getObjectMapper();
     this.enableCircuitBreaker = false;
     this.clientMode = ClientMode.NON_PRIVILEGED;
   }
@@ -78,7 +75,6 @@ public abstract class AbstractHttpClientFactory {
     this.tokenGenerator = tokenGenerator;
     this.kryoConverterFactory = kryoConverterFactory;
     this.clientId = clientId;
-    this.objectMapper = getObjectMapper();
     this.enableCircuitBreaker = enableCircuitBreaker;
     this.clientMode = clientMode;
   }
@@ -104,17 +100,13 @@ public abstract class AbstractHttpClientFactory {
     if (this.enableCircuitBreaker) {
       retrofitBuilder.addCallAdapterFactory(CircuitBreakerCallAdapter.of(getCircuitBreaker()));
     }
-    retrofitBuilder.addConverterFactory(JacksonConverterFactory.create(objectMapper));
+    retrofitBuilder.addConverterFactory(JacksonConverterFactory.create(HObjectMapper.NG_DEFAULT_OBJECT_MAPPER));
 
     return retrofitBuilder.build();
   }
 
   protected CircuitBreaker getCircuitBreaker() {
     return CircuitBreaker.ofDefaults(this.clientId);
-  }
-
-  protected ObjectMapper getObjectMapper() {
-    return HObjectMapper.getNGObjectMapper();
   }
 
   protected OkHttpClient getUnsafeOkHttpClient(String baseUrl, ClientMode clientMode, boolean addHttpLogging) {

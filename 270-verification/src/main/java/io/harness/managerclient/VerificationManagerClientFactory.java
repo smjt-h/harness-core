@@ -20,7 +20,6 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Provider;
-import io.serializer.HObjectMapper;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -45,7 +44,7 @@ public class VerificationManagerClientFactory implements Provider<VerificationMa
 
   @Override
   public VerificationManagerClient get() {
-    ObjectMapper objectMapper = HObjectMapper.get();
+    ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new Jdk8Module());
     objectMapper.registerModule(new GuavaModule());
     objectMapper.registerModule(new JavaTimeModule());
