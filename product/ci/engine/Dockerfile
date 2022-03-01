@@ -19,5 +19,5 @@ COPY engine_/engine /usr/local/bin/ci-lite-engine
 COPY --from=0 /etc/passwd /etc/passwd
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-
+USER harness
 CMD ["/usr/local/bin/ci-lite-engine"]
