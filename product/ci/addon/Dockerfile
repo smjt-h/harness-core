@@ -15,6 +15,6 @@ RUN chmod +x /usr/local/bin/ci-addon-linux-amd64
 COPY java-agent.jar /usr/local/bin/
 
 RUN adduser -g harness -s /bin/sh -u 1000 harness
-USER harness:harness
+USER harness
 
 CMD ["/usr/local/bin/ci-addon-linux-amd64"]
