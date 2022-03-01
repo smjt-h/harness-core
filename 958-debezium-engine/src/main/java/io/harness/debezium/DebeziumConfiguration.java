@@ -7,8 +7,6 @@
 
 package io.harness.debezium;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Optional;
 import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
@@ -39,18 +37,11 @@ public class DebeziumConfiguration {
       "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState";
 
   public Properties getDebeziumProperties(DebeziumConfig debeziumConfig) {
-    File offsetStorageTempFile = null;
-    try {
-      offsetStorageTempFile = File.createTempFile("offsets_", ".dat");
-    } catch (IOException e) {
-      log.error("Error creating file");
-    }
     Properties props = new Properties();
-    String offsetCollection = "offset_collection";
+    String offsetCollection = "debeziumOffset";
     props.setProperty(CONNECTOR_NAME, debeziumConfig.getConnectorName());
-    // TODO: replacing local offset storage with Mongo or Redis
-    props.setProperty(OFFSET_STORAGE, "org.apache.kafka.connect.storage.FileOffsetBackingStore");
-    props.setProperty(OFFSET_STORAGE_FILE_FILENAME, offsetStorageTempFile.getAbsolutePath());
+    props.setProperty(OFFSET_STORAGE, MongoOffsetBackingStore.class.getName());
+    props.setProperty(OFFSET_STORAGE_FILE_FILENAME, debeziumConfig.getOffsetStorageFileName());
     props.setProperty(OFFSET_STORAGE_COLLECTION, offsetCollection);
     props.setProperty(KEY_CONVERTER_SCHEMAS_ENABLE, debeziumConfig.getKeyConverterSchemasEnable());
     props.setProperty(VALUE_CONVERTER_SCHEMAS_ENABLE, debeziumConfig.getValueConverterSchemasEnable());
