@@ -7,28 +7,44 @@
 
 package io.harness.delegate.task.cloudformation;
 
-import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
+import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.aws.AWSCloudformationClient;
 import io.harness.aws.beans.AwsInternalConfig;
+import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
+import io.harness.delegate.beans.connector.awsconnector.AwsManualConfigSpecDTO;
+import io.harness.delegate.task.aws.AwsNgConfigMapper;
+import io.harness.logging.LogCallback;
+import io.harness.security.encryption.EncryptedDataDetail;
+import io.harness.security.encryption.SecretDecryptionService;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
+import com.amazonaws.services.cloudformation.model.DeleteStackRequest;
 import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
 import com.amazonaws.services.cloudformation.model.Stack;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 
-@OwnedBy(CDP)
+@Slf4j
+@Singleton
+@OwnedBy(HarnessTeam.CDP)
 public class CloudformationBaseHelperImpl implements CloudformationBaseHelper {
   public static final String CLOUDFORMATION_STACK_CREATE_URL = "Create URL";
   public static final String CLOUDFORMATION_STACK_CREATE_BODY = "Create Body";
   public static final String CLOUDFORMATION_STACK_CREATE_GIT = "Create GIT";
 
   @Inject protected AWSCloudformationClient awsHelperService;
+  @Inject protected AwsNgConfigMapper awsNgConfigMapper;
+  @Inject protected SecretDecryptionService secretDecryptionService;
 
+  @Override
   public Optional<Stack> getIfStackExists(
       String customStackName, String suffix, AwsInternalConfig awsConfig, String region) {
     List<Stack> stacks = awsHelperService.getAllStacks(region, new DescribeStacksRequest(), awsConfig);
@@ -41,5 +57,40 @@ public class CloudformationBaseHelperImpl implements CloudformationBaseHelper {
     } else {
       return stacks.stream().filter(stack -> stack.getStackName().endsWith(suffix)).findFirst();
     }
+  }
+  @Override
+  public void performCleanUpTasks(
+      CloudformationTaskNGParameters taskNGParameters, String delegateId, String taskId, LogCallback logCallback) {}
+  @Override
+  public AwsInternalConfig getAwsInternalConfig(
+      AwsConnectorDTO awsConnectorDTO, String region, List<EncryptedDataDetail> encryptedDataDetails) {
+    if (awsConnectorDTO.getCredential() != null && awsConnectorDTO.getCredential().getConfig() != null) {
+      secretDecryptionService.decrypt(
+          (AwsManualConfigSpecDTO) awsConnectorDTO.getCredential().getConfig(), encryptedDataDetails);
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+          (AwsManualConfigSpecDTO) awsConnectorDTO.getCredential().getConfig(), encryptedDataDetails);
+    }
+    AwsInternalConfig awsInternalConfig = awsNgConfigMapper.createAwsInternalConfig(awsConnectorDTO);
+    awsInternalConfig.setDefaultRegion(region);
+    return awsInternalConfig;
+  }
+
+  @Override
+  public void deleteStack(String region, AwsInternalConfig awsConfig, String stackName, String roleARN, int timeout) {
+    DeleteStackRequest deleteStackRequest = new DeleteStackRequest();
+    deleteStackRequest.withStackName(stackName);
+    if (isNotEmpty(roleARN)) {
+      deleteStackRequest.withRoleARN(roleARN);
+    }
+    deleteStackRequest.withSdkRequestTimeout(timeout);
+    awsHelperService.deleteStack(region, deleteStackRequest, awsConfig);
+  }
+
+  @Override
+  public void waitForStackToBeDeleted(
+      String region, AwsInternalConfig awsInternalConfig, String stackId, LogCallback logCallback) {
+    DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest();
+    describeStacksRequest.withStackName(stackId);
+    awsHelperService.stackDeletionCompleted(describeStacksRequest, awsInternalConfig, region, logCallback);
   }
 }

@@ -40,6 +40,9 @@ public abstract class CloudformationAbstractTaskHandler {
           .commandExecutionStatus(CommandExecutionStatus.FAILURE)
           .errorMessage(e.getMessage())
           .build();
+    } finally {
+      // Finally tasks here if we need them
+      cloudformationBaseHelper.performCleanUpTasks(taskNGParameters, delegateId, taskId, logCallback);
     }
   }
 }

@@ -327,6 +327,10 @@ import io.harness.delegate.task.ci.CIBuildPushParameters;
 import io.harness.delegate.task.ci.CIBuildPushParameters.CIBuildPushTaskType;
 import io.harness.delegate.task.ci.CIBuildStatusPushParameters;
 import io.harness.delegate.task.ci.GitSCMType;
+import io.harness.delegate.task.cloudformation.CloudformationCommandUnit;
+import io.harness.delegate.task.cloudformation.CloudformationTaskNGParameters;
+import io.harness.delegate.task.cloudformation.CloudformationTaskNGResponse;
+import io.harness.delegate.task.cloudformation.CloudformationTaskType;
 import io.harness.delegate.task.gcp.GcpTaskType;
 import io.harness.delegate.task.gcp.request.GcpListBucketsRequest;
 import io.harness.delegate.task.gcp.request.GcpListClustersRequest;
@@ -1132,5 +1136,9 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(HostPathVolume.class, 543487);
     kryo.register(PVCVolume.class, 543488);
     kryo.register(AwsCFTemplateParamsData.class, 5478);
+    kryo.register(CloudformationTaskNGParameters.class, 543489);
+    kryo.register(CloudformationTaskNGResponse.class, 543490);
+    kryo.register(CloudformationCommandUnit.class, 543491);
+    kryo.register(CloudformationTaskType.class, 543492);
   }
 }
