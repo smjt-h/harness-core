@@ -345,7 +345,8 @@ public enum TaskType {
   RANCHER_RESOLVE_CLUSTERS(TaskGroup.K8S, "Rancher Resolve Clusters"),
   NG_AZURE_TASK(TaskGroup.AZURE_RESOURCE),
   CLOUDFORMATION_TASK_NG(TaskGroup.CLOUDFORMATION_NG, "Cloudformation Task"),
-  ACR_ARTIFACT_TASK_NG(TaskGroup.ARTIFACT_COLLECT_NG, "ACR Task");
+  ACR_ARTIFACT_TASK_NG(TaskGroup.ARTIFACT_COLLECT_NG, "ACR Task"),
+  FETCH_S3_FILE_TASK_NG(TaskGroup.AWS, "Fetch S3 files Task");
 
   private final TaskGroup taskGroup;
   private final String displayName;

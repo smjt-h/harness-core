@@ -86,4 +86,6 @@ public interface EntityTypeConstants {
   String SERVICENOW_UPDATE = "ServiceNowUpdate";
   String ENVIRONMENT_GROUP = "EnvironmentGroup";
   String NG_FILE = "NgFile";
+  String CLOUDFORMATION_CREATE_STACK_STEP = "CreateStack";
+  String CLOUDFORMATION_DELETE_STACK_STEP = "DeleteStack";
 }
