@@ -556,37 +556,6 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
-    "HelmChartValuesStoreConfig": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/StoreConfig"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "metadata": {
-              "type": "string"
-            },
-            "paths": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            }
-          }
-        }
-      ],
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
     "Clause": {
       "type": "object",
       "required": [
@@ -1726,6 +1695,34 @@
             },
             "store": {
               "$ref": "#/definitions/StoreConfigWrapper"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "HelmChartValuesStoreConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/StoreConfig"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "paths": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
             }
           }
         }
@@ -5539,22 +5536,6 @@
           "if": {
             "properties": {
               "type": {
-                "const": "HelmChartValues"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "spec": {
-                "$ref": "#/definitions/HelmChartValuesStoreConfig"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "type": {
                 "const": "Gcs"
               }
             }
@@ -5611,6 +5592,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/GitLabStore"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "HelmChartValues"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/HelmChartValuesStoreConfig"
               }
             }
           }

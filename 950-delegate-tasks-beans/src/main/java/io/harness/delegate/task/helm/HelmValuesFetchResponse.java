@@ -14,12 +14,11 @@ import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
 import io.harness.logging.CommandExecutionStatus;
 
+import java.util.List;
 import lombok.Builder;
 import lombok.Setter;
 import lombok.Value;
 import lombok.experimental.NonFinal;
-
-import java.util.List;
 
 @Value
 @Builder

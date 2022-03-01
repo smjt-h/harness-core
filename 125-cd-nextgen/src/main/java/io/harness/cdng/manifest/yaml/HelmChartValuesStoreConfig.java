@@ -16,13 +16,11 @@ import io.harness.beans.SwaggerConstants;
 import io.harness.cdng.manifest.ManifestStoreType;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.yaml.YamlSchemaTypes;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import io.harness.yaml.YamlSchemaTypes;
 import io.swagger.annotations.ApiModelProperty;
-
 import java.util.List;
-
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -37,38 +35,39 @@ import org.springframework.data.annotation.TypeAlias;
 //@SimpleVisitorHelper(helperClass = ConnectorRefExtractorHelper.class)
 @TypeAlias("HelmChartValuesStoreConfig")
 @RecasterAlias("io.harness.cdng.manifest.yaml.HelmChartValuesStoreConfig")
-public class HelmChartValuesStoreConfig implements StoreConfig{
-    @YamlSchemaTypes(value = {runtime})
-    @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
-    @Wither
-    private ParameterField<List<String>> paths;
+public class HelmChartValuesStoreConfig implements StoreConfig {
+  @YamlSchemaTypes(value = {runtime})
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
+  @Wither
+  private ParameterField<List<String>> paths;
 
-    @Override
-    public String getKind() {
-        return ManifestStoreType.HELMCHARTVALUES;
+  @Override
+  public String getKind() {
+    return ManifestStoreType.HELMCHARTVALUES;
+  }
+
+  @Override
+  public StoreConfig cloneInternal() {
+    return HelmChartValuesStoreConfig.builder().paths(paths).build();
+  }
+
+  @Override
+  public ParameterField<String> getConnectorReference() {
+    return null;
+  }
+
+  public ParameterField<List<String>> getPaths() {
+    return paths;
+  }
+
+  public StoreConfig applyOverrides(StoreConfig overrideConfig) {
+    HelmChartValuesStoreConfig helmChartValuesStoreConfig = (HelmChartValuesStoreConfig) overrideConfig;
+    HelmChartValuesStoreConfig resultantHelmChartValuesStoreConfig = this;
+    if (!ParameterField.isNull(resultantHelmChartValuesStoreConfig.getPaths())) {
+      resultantHelmChartValuesStoreConfig =
+          resultantHelmChartValuesStoreConfig.withPaths(helmChartValuesStoreConfig.getPaths());
     }
 
-    @Override
-    public StoreConfig cloneInternal() {
-        return HelmChartValuesStoreConfig.builder().paths(paths).build();
-    }
-
-    @Override
-    public ParameterField<String> getConnectorReference() {
-        return null;
-    }
-
-    public ParameterField<List<String>> getPaths() {
-        return paths;
-    }
-
-    public StoreConfig applyOverrides(StoreConfig overrideConfig) {
-        HelmChartValuesStoreConfig helmChartValuesStoreConfig = (HelmChartValuesStoreConfig) overrideConfig;
-        HelmChartValuesStoreConfig resultantHelmChartValuesStoreConfig = this;
-        if (!ParameterField.isNull(resultantHelmChartValuesStoreConfig.getPaths())) {
-            resultantHelmChartValuesStoreConfig = resultantHelmChartValuesStoreConfig.withPaths(helmChartValuesStoreConfig.getPaths());
-        }
-
-        return resultantHelmChartValuesStoreConfig;
-    }
+    return resultantHelmChartValuesStoreConfig;
+  }
 }

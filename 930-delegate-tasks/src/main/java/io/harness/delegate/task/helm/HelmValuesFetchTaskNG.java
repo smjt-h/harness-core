@@ -32,7 +32,6 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 
 import com.google.inject.Inject;
-
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -70,8 +69,8 @@ public class HelmValuesFetchTaskNG extends AbstractDelegateRunnableTask {
     try {
       helmTaskHelperBase.decryptEncryptedDetails(helmChartManifestDelegateConfig);
 
-      List<String> valuesFileContent = helmTaskHelperBase.fetchValuesYamlFromChart(
-          helmChartManifestDelegateConfig, helmValuesFetchRequest.getTimeout(), logCallback, helmValuesFetchRequest.getPaths());
+      List<String> valuesFileContent = helmTaskHelperBase.fetchValuesYamlFromChart(helmChartManifestDelegateConfig,
+          helmValuesFetchRequest.getTimeout(), logCallback, helmValuesFetchRequest.getPaths());
 
       if (helmValuesFetchRequest.isCloseLogStream()) {
         logCallback.saveExecutionLog("Done.", INFO, CommandExecutionStatus.SUCCESS);

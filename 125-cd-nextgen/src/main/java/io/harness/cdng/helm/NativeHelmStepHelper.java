@@ -35,7 +35,12 @@ import io.harness.cdng.k8s.beans.StepExceptionPassThroughData;
 import io.harness.cdng.manifest.ManifestStoreType;
 import io.harness.cdng.manifest.ManifestType;
 import io.harness.cdng.manifest.steps.ManifestsOutcome;
-import io.harness.cdng.manifest.yaml.*;
+import io.harness.cdng.manifest.yaml.GitStoreConfig;
+import io.harness.cdng.manifest.yaml.HelmChartManifestOutcome;
+import io.harness.cdng.manifest.yaml.HelmChartValuesStoreConfig;
+import io.harness.cdng.manifest.yaml.HelmManifestCommandFlag;
+import io.harness.cdng.manifest.yaml.ManifestOutcome;
+import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.connector.ConnectorInfoDTO;
@@ -270,26 +275,27 @@ public class NativeHelmStepHelper extends CDStepHelper {
     else:
       The below one
      */
-    ValuesManifestOutcome chartValuesStoreManifest =  CDStepHelper.getAggregatedValuesManifestsTypeChartValueStore(aggregatedValuesManifests);
+    ValuesManifestOutcome chartValuesStoreManifest =
+        CDStepHelper.getAggregatedValuesManifestsTypeChartValueStore(aggregatedValuesManifests);
     HelmValuesFetchRequest helmValuesFetchRequest;
     if (chartValuesStoreManifest != null) {
-      HelmChartValuesStoreConfig helmChartValuesStoreConfig = (HelmChartValuesStoreConfig) chartValuesStoreManifest.getStore();
+      HelmChartValuesStoreConfig helmChartValuesStoreConfig =
+          (HelmChartValuesStoreConfig) chartValuesStoreManifest.getStore();
       helmValuesFetchRequest = HelmValuesFetchRequest.builder()
-              .accountId(accountId)
-              .helmChartManifestDelegateConfig(helmManifest)
-              .timeout(CDStepHelper.getTimeoutInMillis(stepElementParameters))
-              .closeLogStream(!isAnyRemoteStore(aggregatedValuesManifests))
-              .paths(getParameterFieldValue(helmChartValuesStoreConfig.getPaths()))
-              .build();
-    }
-    else{
+                                   .accountId(accountId)
+                                   .helmChartManifestDelegateConfig(helmManifest)
+                                   .timeout(CDStepHelper.getTimeoutInMillis(stepElementParameters))
+                                   .closeLogStream(!isAnyRemoteStore(aggregatedValuesManifests))
+                                   .paths(getParameterFieldValue(helmChartValuesStoreConfig.getPaths()))
+                                   .build();
+    } else {
       // extract those paths from aggrValueMan and then pass it to HelmValuesFetchReq List<String>
       helmValuesFetchRequest = HelmValuesFetchRequest.builder()
-              .accountId(accountId)
-              .helmChartManifestDelegateConfig(helmManifest)
-              .timeout(CDStepHelper.getTimeoutInMillis(stepElementParameters))
-              .closeLogStream(!isAnyRemoteStore(aggregatedValuesManifests))
-              .build();
+                                   .accountId(accountId)
+                                   .helmChartManifestDelegateConfig(helmManifest)
+                                   .timeout(CDStepHelper.getTimeoutInMillis(stepElementParameters))
+                                   .closeLogStream(!isAnyRemoteStore(aggregatedValuesManifests))
+                                   .build();
     }
 
     final TaskData taskData = TaskData.builder()
@@ -455,8 +461,9 @@ public class NativeHelmStepHelper extends CDStepHelper {
   }
 
   private boolean isAnyRemoteStore(@NotEmpty List<ValuesManifestOutcome> aggregatedValuesManifests) {
-    return aggregatedValuesManifests.stream().anyMatch(
-        valuesManifest -> ManifestStoreType.isInGitSubset(valuesManifest.getStore().getKind()) || valuesManifest.getStore().getKind().equals(ManifestStoreType.HELMCHARTVALUES));
+    return aggregatedValuesManifests.stream().anyMatch(valuesManifest
+        -> ManifestStoreType.isInGitSubset(valuesManifest.getStore().getKind())
+            || valuesManifest.getStore().getKind().equals(ManifestStoreType.HELMCHARTVALUES));
   }
 
   public TaskChainResponse executeNextLink(NativeHelmStepExecutor nativeHelmStepExecutor, Ambiance ambiance,

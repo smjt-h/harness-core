@@ -52,7 +52,10 @@ import io.harness.logging.LogCallback;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.SecretDecryptionService;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -85,7 +88,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
   @Owner(developers = ACASIAN)
   @Category(UnitTests.class)
   public void shouldExecuteHelmValueFetchFromS3() throws Exception {
-    String valuesYaml = "values-file-content";
+    List<String> valuesYaml = new ArrayList<>(Arrays.asList("values-file-content"));
     AwsConnectorDTO connectorDTO =
         AwsConnectorDTO.builder()
             .credential(
@@ -128,7 +131,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
   @Owner(developers = ACASIAN)
   @Category(UnitTests.class)
   public void shouldExecuteHelmValueFetchFromGcs() throws Exception {
-    String valuesYaml = "values-file-content";
+    List<String> valuesYaml = new ArrayList<>(Arrays.asList("values-file-content"));
     GcpConnectorDTO connectorDTO =
         GcpConnectorDTO.builder()
             .credential(
@@ -169,7 +172,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
   @Owner(developers = ACASIAN)
   @Category(UnitTests.class)
   public void shouldExecuteHelmValueFetchFromHttp() throws Exception {
-    String valuesYaml = "values-file-content";
+    List<String> valuesYaml = new ArrayList<>(Arrays.asList("values-file-content"));
     HttpHelmConnectorDTO connectorDTO =
         HttpHelmConnectorDTO.builder()
             .auth(HttpHelmAuthenticationDTO.builder()

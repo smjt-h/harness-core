@@ -36,11 +36,21 @@ import io.harness.cdng.k8s.beans.StepExceptionPassThroughData;
 import io.harness.cdng.manifest.ManifestStoreType;
 import io.harness.cdng.manifest.ManifestType;
 import io.harness.cdng.manifest.steps.ManifestsOutcome;
-import io.harness.cdng.manifest.yaml.*;
+import io.harness.cdng.manifest.yaml.GitStoreConfig;
+import io.harness.cdng.manifest.yaml.HelmChartManifestOutcome;
 import io.harness.cdng.manifest.yaml.HelmChartManifestOutcome.HelmChartManifestOutcomeKeys;
+import io.harness.cdng.manifest.yaml.HelmChartValuesStoreConfig;
+import io.harness.cdng.manifest.yaml.HelmManifestCommandFlag;
+import io.harness.cdng.manifest.yaml.K8sManifestOutcome;
 import io.harness.cdng.manifest.yaml.K8sManifestOutcome.K8sManifestOutcomeKeys;
+import io.harness.cdng.manifest.yaml.KustomizeManifestOutcome;
 import io.harness.cdng.manifest.yaml.KustomizeManifestOutcome.KustomizeManifestOutcomeKeys;
+import io.harness.cdng.manifest.yaml.KustomizePatchesManifestOutcome;
+import io.harness.cdng.manifest.yaml.ManifestOutcome;
+import io.harness.cdng.manifest.yaml.OpenshiftManifestOutcome;
 import io.harness.cdng.manifest.yaml.OpenshiftManifestOutcome.OpenshiftManifestOutcomeKeys;
+import io.harness.cdng.manifest.yaml.OpenshiftParamManifestOutcome;
+import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.connector.ConnectorInfoDTO;
@@ -259,8 +269,8 @@ public class K8sStepHelper extends CDStepHelper {
   }
 
   public TaskChainResponse executeValuesFetchTask(Ambiance ambiance, StepElementParameters stepElementParameters,
-                                                  InfrastructureOutcome infrastructure, ManifestOutcome k8sManifestOutcome,
-                                                  List<ValuesManifestOutcome> aggregatedValuesManifests, List<String> helmValuesYamlContent) {
+      InfrastructureOutcome infrastructure, ManifestOutcome k8sManifestOutcome,
+      List<ValuesManifestOutcome> aggregatedValuesManifests, List<String> helmValuesYamlContent) {
     List<GitFetchFilesConfig> gitFetchFilesConfigs =
         mapValuesManifestToGitFetchFileConfig(aggregatedValuesManifests, ambiance);
     K8sStepPassThroughData k8sStepPassThroughData = K8sStepPassThroughData.builder()
@@ -415,24 +425,25 @@ public class K8sStepHelper extends CDStepHelper {
     String accountId = AmbianceUtils.getAccountId(ambiance);
     HelmChartManifestDelegateConfig helmManifest =
         (HelmChartManifestDelegateConfig) getManifestDelegateConfig(k8sManifestOutcome, ambiance);
-    ValuesManifestOutcome chartValuesStoreManifest =  CDStepHelper.getAggregatedValuesManifestsTypeChartValueStore(aggregatedValuesManifests);
+    ValuesManifestOutcome chartValuesStoreManifest =
+        CDStepHelper.getAggregatedValuesManifestsTypeChartValueStore(aggregatedValuesManifests);
     HelmValuesFetchRequest helmValuesFetchRequest;
     if (chartValuesStoreManifest != null) {
-      HelmChartValuesStoreConfig helmChartValuesStoreConfig = (HelmChartValuesStoreConfig) chartValuesStoreManifest.getStore();
+      HelmChartValuesStoreConfig helmChartValuesStoreConfig =
+          (HelmChartValuesStoreConfig) chartValuesStoreManifest.getStore();
       helmValuesFetchRequest = HelmValuesFetchRequest.builder()
-              .accountId(accountId)
-              .helmChartManifestDelegateConfig(helmManifest)
-              .timeout(CDStepHelper.getTimeoutInMillis(stepElementParameters))
-              .closeLogStream(!isAnyRemoteStore(aggregatedValuesManifests))
-              .paths(getParameterFieldValue(helmChartValuesStoreConfig.getPaths()))
-              .build();
-    }
-    else {
+                                   .accountId(accountId)
+                                   .helmChartManifestDelegateConfig(helmManifest)
+                                   .timeout(CDStepHelper.getTimeoutInMillis(stepElementParameters))
+                                   .closeLogStream(!isAnyRemoteStore(aggregatedValuesManifests))
+                                   .paths(getParameterFieldValue(helmChartValuesStoreConfig.getPaths()))
+                                   .build();
+    } else {
       helmValuesFetchRequest = HelmValuesFetchRequest.builder()
-              .accountId(accountId)
-              .helmChartManifestDelegateConfig(helmManifest)
-              .timeout(CDStepHelper.getTimeoutInMillis(stepElementParameters))
-              .build();
+                                   .accountId(accountId)
+                                   .helmChartManifestDelegateConfig(helmManifest)
+                                   .timeout(CDStepHelper.getTimeoutInMillis(stepElementParameters))
+                                   .build();
     }
     final TaskData taskData = TaskData.builder()
                                   .async(true)
@@ -707,8 +718,9 @@ public class K8sStepHelper extends CDStepHelper {
   }
 
   private boolean isAnyRemoteStore(@NotEmpty List<? extends ManifestOutcome> aggregatedValuesManifests) {
-    return aggregatedValuesManifests.stream().anyMatch(
-        valuesManifest -> ManifestStoreType.isInGitSubset(valuesManifest.getStore().getKind()) || valuesManifest.getStore().getKind().equals(ManifestStoreType.HELMCHARTVALUES));
+    return aggregatedValuesManifests.stream().anyMatch(valuesManifest
+        -> ManifestStoreType.isInGitSubset(valuesManifest.getStore().getKind())
+            || valuesManifest.getStore().getKind().equals(ManifestStoreType.HELMCHARTVALUES));
   }
 
   public TaskChainResponse executeNextLink(K8sStepExecutor k8sStepExecutor, Ambiance ambiance,
