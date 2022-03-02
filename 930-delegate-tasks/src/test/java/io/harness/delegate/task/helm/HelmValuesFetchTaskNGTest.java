@@ -52,6 +52,7 @@ import io.harness.logging.LogCallback;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.SecretDecryptionService;
 
+import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
@@ -107,7 +108,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
             .build();
 
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
-    doReturn(valuesYaml)
+    doReturn(Arrays.asList(valuesYaml, any()))
         .when(helmTaskHelperBase)
         .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
 
@@ -148,7 +149,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
             .build();
 
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
-    doReturn(valuesYaml)
+    doReturn(Arrays.asList(valuesYaml, any()))
         .when(helmTaskHelperBase)
         .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
 
@@ -190,7 +191,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
             .build();
 
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
-    doReturn(valuesYaml)
+    doReturn(Arrays.asList(valuesYaml, any()))
         .when(helmTaskHelperBase)
         .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
 
