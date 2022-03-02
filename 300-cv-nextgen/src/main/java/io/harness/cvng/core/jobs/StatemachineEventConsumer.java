@@ -19,19 +19,16 @@ import io.harness.eventsframework.schemas.cv.StateMachineTrigger;
 import io.harness.exception.InvalidRequestException;
 import io.harness.queue.QueueController;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import java.util.Objects;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class StatemachineEventConsumer extends AbstractStreamConsumer {
   private static final int MAX_WAIT_TIME_SEC = 10;
   AnalysisStateMachineService stateMachineService;
-  private static ScheduledThreadPoolExecutor maintenanceActivitiesExecutor = new ScheduledThreadPoolExecutor(
-      1, new ThreadFactoryBuilder().setNameFormat(SRM_STATEMACHINE_EVENT + "_thread_pool").build());
+
   @Inject private OrchestrationService orchestrationService;
   @Inject private StateMachineEventPublisherService stateMachineEventPublisherService;
 
