@@ -88,7 +88,7 @@ public class K8sApplyRequestHandler extends K8sRequestHandler {
 
     LogCallback executionLogCallback = k8sTaskHelperBase.getLogCallback(
         logStreamingTaskClient, FetchFiles, k8sApplyRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress);
-    executionLogCallback.saveExecutionLog(color("%nStarting Kubernetes Apply Task", LogColor.White, LogWeight.Bold));
+    executionLogCallback.saveExecutionLog(color("\nStarting Kubernetes Apply Task", LogColor.White, LogWeight.Bold));
 
     k8sTaskHelperBase.fetchManifestFilesAndWriteToDirectory(k8sApplyRequest.getManifestDelegateConfig(),
         k8sApplyHandlerConfig.getManifestFilesDirectory(), executionLogCallback, timeoutInMillis,

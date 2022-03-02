@@ -87,7 +87,7 @@ public class K8sCanaryRequestHandler extends K8sRequestHandler {
     LogCallback executionLogCallback = k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, FetchFiles,
         k8sCanaryDeployRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress);
     executionLogCallback.saveExecutionLog(
-        color("%nStarting Kubernetes Canary Deployment Task", LogColor.White, LogWeight.Bold));
+        color("\nStarting Kubernetes Canary Deployment Task", LogColor.White, LogWeight.Bold));
     k8sTaskHelperBase.fetchManifestFilesAndWriteToDirectory(k8sCanaryDeployRequest.getManifestDelegateConfig(),
         k8sCanaryHandlerConfig.getManifestFilesDirectory(), executionLogCallback, timeoutInMillis,
         k8sCanaryDeployRequest.getAccountId());

@@ -77,7 +77,7 @@ public class HelmValuesFetchTask extends AbstractDelegateRunnableTask {
 
     printHelmBinaryPathAndVersion(taskParams.getHelmChartConfigTaskParams().getHelmVersion(), executionLogCallback);
 
-    executionLogCallback.saveExecutionLog(color("%nStarting Helm values fetch task", LogColor.White, LogWeight.Bold));
+    executionLogCallback.saveExecutionLog(color("\nStarting Helm values fetch task", LogColor.White, LogWeight.Bold));
 
     try {
       executionLogCallback.saveExecutionLog(color("\nFetching values.yaml from helm chart for Service", White, Bold));
@@ -98,7 +98,7 @@ public class HelmValuesFetchTask extends AbstractDelegateRunnableTask {
       }
 
       executionLogCallback.saveExecutionLog(
-          color("%nHelm values fetch task completed successfully", LogColor.White, LogWeight.Bold));
+          color("\nHelm values fetch task completed successfully", LogColor.White, LogWeight.Bold));
 
       return HelmValuesFetchTaskResponse.builder()
           .commandExecutionStatus(SUCCESS)

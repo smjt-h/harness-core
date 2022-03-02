@@ -124,7 +124,7 @@ public class K8sDeleteRequestHandler extends K8sRequestHandler {
       ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) throws Exception {
     long steadyStateTimeoutInMillis = getTimeoutMillisFromMinutes(k8sDeleteRequest.getTimeoutIntervalInMin());
 
-    executionLogCallback.saveExecutionLog(color("%nStarting Kubernetes Delete Task", LogColor.White, LogWeight.Bold));
+    executionLogCallback.saveExecutionLog(color("\nStarting Kubernetes Delete Task", LogColor.White, LogWeight.Bold));
 
     k8sTaskHelperBase.fetchManifestFilesAndWriteToDirectory(k8sDeleteRequest.getManifestDelegateConfig(),
         manifestFilesDirectory,

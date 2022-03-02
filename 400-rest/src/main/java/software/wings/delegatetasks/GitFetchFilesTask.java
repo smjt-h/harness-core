@@ -158,8 +158,7 @@ public class GitFetchFilesTask extends AbstractDelegateRunnableTask {
 
     if (taskParams.isFinalState()) {
       executionLogCallback.saveExecutionLog(
-          color(format("%nStarting Git %s fetch taskGit values fetch task completed successfully.",
-                    getFileTypeMessage(appManifestKind)),
+          color(format("%nGit %s fetch task completed successfully.", getFileTypeMessage(appManifestKind)),
               LogColor.White, LogWeight.Bold),
           INFO, CommandExecutionStatus.SUCCESS);
     }
