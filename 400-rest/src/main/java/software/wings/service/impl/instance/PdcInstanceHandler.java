@@ -55,6 +55,7 @@ import software.wings.service.intfc.DelegateService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,9 +73,9 @@ public class PdcInstanceHandler extends InstanceHandler implements InstanceSyncB
   @Inject DelegateService delegateService;
   @Inject private PdcInstanceSyncPerpetualTaskCreator perpetualTaskCreator;
 
-  // done
   @Override
   public void syncInstances(String appId, String infraMappingId, InstanceSyncFlow instanceSyncFlow) {
+    log.info("[PDC Instance sync]: flow: {}", instanceSyncFlow);
     InfrastructureMapping infrastructureMapping = infraMappingService.get(appId, infraMappingId);
     if (!(infrastructureMapping instanceof PhysicalInfrastructureMappingBase)) {
       String msg = "Incompatible infra mapping type. Expecting PhysicalInfrastructureMappingBase, found:"
@@ -121,20 +122,17 @@ public class PdcInstanceHandler extends InstanceHandler implements InstanceSyncB
     updateInstances(hosts, settingAttribute, encryptedDataDetails, instances, instanceSyncFlow);
   }
 
-  // done
   @Override
   public void handleNewDeployment(
       List<DeploymentSummary> deploymentSummaries, boolean rollback, OnDemandRollbackInfo onDemandRollbackInfo) {
     throw WingsException.builder().message("Deployments should be handled at InstanceHelper for PDC ssh type.").build();
   }
 
-  // done
   @Override
   public FeatureName getFeatureFlagToStopIteratorBasedInstanceSync() {
     return STOP_INSTANCE_SYNC_VIA_ITERATOR_FOR_PDC_DEPLOYMENTS;
   }
 
-  // done
   @Override
   public Optional<List<DeploymentInfo>> getDeploymentInfo(PhaseExecutionData phaseExecutionData,
       PhaseStepExecutionData phaseStepExecutionData, WorkflowExecution workflowExecution,
@@ -144,31 +142,26 @@ public class PdcInstanceHandler extends InstanceHandler implements InstanceSyncB
         .build();
   }
 
-  // done
   @Override
   public DeploymentKey generateDeploymentKey(DeploymentInfo deploymentInfo) {
     return null;
   }
 
-  // done
   @Override
   protected void setDeploymentKey(DeploymentSummary deploymentSummary, DeploymentKey deploymentKey) {
     // do nothing
   }
 
-  // done
   @Override
   public FeatureName getFeatureFlagToEnablePerpetualTaskForInstanceSync() {
     return PDC_PERPETUAL_TASK;
   }
 
-  // done
   @Override
   public InstanceSyncPerpetualTaskCreator getInstanceSyncPerpetualTaskCreator() {
     return perpetualTaskCreator;
   }
 
-  // done
   @Override
   public void processInstanceSyncResponseFromPerpetualTask(
       InfrastructureMapping infrastructureMapping, DelegateResponseData response) {
@@ -179,10 +172,8 @@ public class PdcInstanceHandler extends InstanceHandler implements InstanceSyncB
   public Status getStatus(InfrastructureMapping infrastructureMapping, DelegateResponseData response) {
     HostReachabilityResponse reachabilityResponse = (HostReachabilityResponse) response;
     // If all instances are not reachable via same Delegate?
-    boolean allNotReachable =
+    boolean canDeleteTask =
         reachabilityResponse.getHostReachabilityInfoList().stream().noneMatch(HostReachabilityInfo::getReachable);
-
-    boolean canDeleteTask = allNotReachable;
     boolean success = reachabilityResponse.getExecutionStatus() == ExecutionStatus.SUCCESS;
     String errorMessage = success ? null : reachabilityResponse.getErrorMessage();
 
@@ -191,7 +182,8 @@ public class PdcInstanceHandler extends InstanceHandler implements InstanceSyncB
                                .stream()
                                .map(HostReachabilityInfo::getHostName)
                                .collect(Collectors.toList());
-      log.info("Hosts {} unreachable. Infrastructure Mapping : [{}]", hosts, infrastructureMapping.getUuid());
+      log.info("[PDC Instance sync]: Hosts {} unreachable. Infrastructure Mapping : [{}]", hosts,
+          infrastructureMapping.getUuid());
     }
 
     return Status.builder().success(success).errorMessage(errorMessage).retryable(!canDeleteTask).build();
@@ -208,7 +200,12 @@ public class PdcInstanceHandler extends InstanceHandler implements InstanceSyncB
                                         })
                                         .map(Base::getUuid)
                                         .collect(Collectors.toSet());
-    log.info("[PDC Instance sync]: instances removed: {}, flow: {}", instancesToRemove, instanceSyncFlow);
+
+    Set<String> hostsToRemove = instances.stream()
+                                    .filter(i -> instancesToRemove.contains(i.getUuid()))
+                                    .map(i -> i.getHostInstanceKey().getHostName())
+                                    .collect(Collectors.toSet());
+    log.info("[PDC Instance sync]: hosts removed: {}, flow: {}", hostsToRemove, instanceSyncFlow);
     instanceService.delete(instancesToRemove);
   }
 
@@ -260,8 +257,12 @@ public class PdcInstanceHandler extends InstanceHandler implements InstanceSyncB
 
     try {
       DelegateResponseData notifyResponseData = delegateService.executeTask(delegateTask);
-      HostReachabilityResponse value = (HostReachabilityResponse) notifyResponseData;
-      return value.getHostReachabilityInfoList();
+      if (notifyResponseData instanceof HostReachabilityResponse) {
+        HostReachabilityResponse value = (HostReachabilityResponse) notifyResponseData;
+        return value.getHostReachabilityInfoList();
+      } else {
+        return Collections.emptyList();
+      }
     } catch (InterruptedException ex) {
       Thread.currentThread().interrupt();
       throw new InvalidRequestException(ex.getMessage(), USER);
