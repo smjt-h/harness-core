@@ -88,7 +88,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
   @Owner(developers = ACASIAN)
   @Category(UnitTests.class)
   public void shouldExecuteHelmValueFetchFromS3() throws Exception {
-    List<String> valuesYaml = new ArrayList<>(Arrays.asList("values-file-content"));
+    String valuesYaml = "values-file-content";
     AwsConnectorDTO connectorDTO =
         AwsConnectorDTO.builder()
             .credential(
@@ -131,7 +131,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
   @Owner(developers = ACASIAN)
   @Category(UnitTests.class)
   public void shouldExecuteHelmValueFetchFromGcs() throws Exception {
-    List<String> valuesYaml = new ArrayList<>(Arrays.asList("values-file-content"));
+    String valuesYaml = "values-file-content";
     GcpConnectorDTO connectorDTO =
         GcpConnectorDTO.builder()
             .credential(
@@ -172,7 +172,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
   @Owner(developers = ACASIAN)
   @Category(UnitTests.class)
   public void shouldExecuteHelmValueFetchFromHttp() throws Exception {
-    List<String> valuesYaml = new ArrayList<>(Arrays.asList("values-file-content"));
+    String valuesYaml = "values-file-content";
     HttpHelmConnectorDTO connectorDTO =
         HttpHelmConnectorDTO.builder()
             .auth(HttpHelmAuthenticationDTO.builder()
