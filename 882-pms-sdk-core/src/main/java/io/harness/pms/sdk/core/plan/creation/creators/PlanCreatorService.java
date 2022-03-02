@@ -125,15 +125,15 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
         dependencies = createPlanForDependencies(ctx, finalResponse, dependencies);
         PlanCreatorServiceHelper.removeInitialDependencies(dependencies, initialDependencies);
       }
+      log.info("[PlanCreatorService_Time] RecursiveDependencies total time took {}ms for dependencies size {}",
+          System.currentTimeMillis() - start, initialDependencies.getDependenciesMap().size());
+      if (finalResponse.getDependencies() != null
+          && EmptyPredicate.isNotEmpty(finalResponse.getDependencies().getDependenciesMap())) {
+        finalResponse.setDependencies(
+            PlanCreatorServiceHelper.removeInitialDependencies(finalResponse.getDependencies(), initialDependencies));
+      }
     }
-    log.info("[PlanCreatorService_Time] RecursiveDependencies total time took {}ms for dependencies size {}",
-        System.currentTimeMillis() - start, initialDependencies.getDependenciesMap().size());
 
-    if (finalResponse.getDependencies() != null
-        && EmptyPredicate.isNotEmpty(finalResponse.getDependencies().getDependenciesMap())) {
-      finalResponse.setDependencies(
-          PlanCreatorServiceHelper.removeInitialDependencies(finalResponse.getDependencies(), initialDependencies));
-    }
     return finalResponse;
   }
 

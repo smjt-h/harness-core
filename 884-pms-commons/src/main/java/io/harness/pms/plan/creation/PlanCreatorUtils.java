@@ -11,6 +11,8 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.YamlException;
+import io.harness.logging.AutoLogContext;
+import io.harness.pms.contracts.plan.ExecutionMetadata;
 import io.harness.pms.contracts.plan.YamlUpdates;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.pms.yaml.YamlField;
@@ -18,8 +20,10 @@ import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -156,5 +160,13 @@ public class PlanCreatorUtils {
       throw new YamlException(
           "Yaml created for yamlField at " + yamlField.getYamlPath() + " could not be converted into a yaml string");
     }
+  }
+
+  public AutoLogContext autoLogContext(
+      ExecutionMetadata executionMetadata, String accountId, String orgIdentifier, String projectIdentifier) {
+    Map<String, String> logContextMap = new HashMap<>(ImmutableMap.of("planExecutionId",
+        executionMetadata.getExecutionUuid(), "pipelineIdentifier", executionMetadata.getPipelineIdentifier(),
+        "accountIdentifier", accountId, "orgIdentifier", orgIdentifier, "projectIdentifier", projectIdentifier));
+    return new AutoLogContext(logContextMap, AutoLogContext.OverrideBehavior.OVERRIDE_NESTS);
   }
 }

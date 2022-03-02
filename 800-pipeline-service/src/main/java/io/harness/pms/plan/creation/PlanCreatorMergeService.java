@@ -40,7 +40,6 @@ import io.harness.pms.yaml.YamlUtils;
 import io.harness.waiter.WaitNotifyEngine;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -115,7 +114,8 @@ public class PlanCreatorMergeService {
 
   public PlanCreationBlobResponse createPlan(String accountId, String orgIdentifier, String projectIdentifier,
       ExecutionMetadata metadata, PlanExecutionMetadata planExecutionMetadata) throws IOException {
-    try (AutoLogContext ignore = autoLogContext(metadata, accountId, orgIdentifier, projectIdentifier)) {
+    try (AutoLogContext ignore =
+             PlanCreatorUtils.autoLogContext(metadata, accountId, orgIdentifier, projectIdentifier)) {
       log.info("Starting plan creation");
       Map<String, PlanCreatorServiceInfo> services = pmsSdkHelper.getServices();
 
@@ -188,60 +188,56 @@ public class PlanCreatorMergeService {
       Map<String, PlanCreatorServiceInfo> services, PlanCreationBlobResponse.Builder responseBuilder) {
     PlanCreationBlobResponse.Builder currIterationResponseBuilder = PlanCreationBlobResponse.newBuilder();
     CompletableFutures<PlanCreationResponse> completableFutures = new CompletableFutures<>(executor);
-    long start = System.currentTimeMillis();
-    for (Map.Entry<String, PlanCreatorServiceInfo> serviceEntry : services.entrySet()) {
-      if (!pmsSdkHelper.containsSupportedDependencyByYamlPath(
-              serviceEntry.getValue(), responseBuilder.getDeps(), serviceEntry.getKey())) {
-        continue;
-      }
-
-      completableFutures.supplyAsync(() -> {
-        try {
-          return serviceEntry.getValue().getPlanCreationClient().createPlan(
-              PlanCreationBlobRequest.newBuilder()
-                  .setDeps(responseBuilder.getDeps())
-                  .putAllContext(responseBuilder.getContextMap())
-                  .build());
-        } catch (StatusRuntimeException ex) {
-          log.error(
-              String.format("Error connecting with service: [%s]. Is this service Running?", serviceEntry.getKey()),
-              ex);
-          return PlanCreationResponse.newBuilder()
-              .setErrorResponse(
-                  ErrorResponse.newBuilder()
-                      .addMessages(String.format("Error connecting with service: [%s]", serviceEntry.getKey()))
-                      .build())
-              .build();
+    PlanCreationContextValue metadata = responseBuilder.getContextMap().get("metadata");
+    try (AutoLogContext ignore = PlanCreatorUtils.autoLogContext(metadata.getMetadata(),
+             metadata.getAccountIdentifier(), metadata.getOrgIdentifier(), metadata.getProjectIdentifier())) {
+      long start = System.currentTimeMillis();
+      for (Map.Entry<String, PlanCreatorServiceInfo> serviceEntry : services.entrySet()) {
+        if (!pmsSdkHelper.containsSupportedDependencyByYamlPath(
+                serviceEntry.getValue(), responseBuilder.getDeps(), serviceEntry.getKey())) {
+          continue;
         }
-      });
-    }
 
-    List<ErrorResponse> errorResponses;
-    try {
-      List<PlanCreationResponse> planCreationResponses = completableFutures.allOf().get(5, TimeUnit.MINUTES);
-      errorResponses = planCreationResponses.stream()
-                           .filter(resp -> resp.getResponseCase() == PlanCreationResponse.ResponseCase.ERRORRESPONSE)
-                           .map(PlanCreationResponse::getErrorResponse)
-                           .collect(Collectors.toList());
-      if (EmptyPredicate.isEmpty(errorResponses)) {
-        planCreationResponses.forEach(
-            resp -> PlanCreationBlobResponseUtils.merge(currIterationResponseBuilder, resp.getBlobResponse()));
+        completableFutures.supplyAsync(() -> {
+          try {
+            return serviceEntry.getValue().getPlanCreationClient().createPlan(
+                PlanCreationBlobRequest.newBuilder()
+                    .setDeps(responseBuilder.getDeps())
+                    .putAllContext(responseBuilder.getContextMap())
+                    .build());
+          } catch (StatusRuntimeException ex) {
+            log.error(
+                String.format("Error connecting with service: [%s]. Is this service Running?", serviceEntry.getKey()),
+                ex);
+            return PlanCreationResponse.newBuilder()
+                .setErrorResponse(
+                    ErrorResponse.newBuilder()
+                        .addMessages(String.format("Error connecting with service: [%s]", serviceEntry.getKey()))
+                        .build())
+                .build();
+          }
+        });
       }
-    } catch (Exception ex) {
-      throw new UnexpectedException("Error fetching plan creation response from service", ex);
-    } finally {
-      log.info("[PlanCreatorMergeService_Time] Sdk plan creators took {}ms for initial dependencies size {}",
-          System.currentTimeMillis() - start, responseBuilder.getDeps().getDependenciesMap().size());
-    }
-    PmsExceptionUtils.checkAndThrowPlanCreatorException(errorResponses);
-    return currIterationResponseBuilder.build();
-  }
 
-  protected AutoLogContext autoLogContext(
-      ExecutionMetadata executionMetadata, String accountId, String orgIdentifier, String projectIdentifier) {
-    Map<String, String> logContextMap = new HashMap<>(ImmutableMap.of("planExecutionId",
-        executionMetadata.getExecutionUuid(), "pipelineIdentifier", executionMetadata.getPipelineIdentifier(),
-        "accountIdentifier", accountId, "orgIdentifier", orgIdentifier, "projectIdentifier", projectIdentifier));
-    return new AutoLogContext(logContextMap, AutoLogContext.OverrideBehavior.OVERRIDE_NESTS);
+      List<ErrorResponse> errorResponses;
+      try {
+        List<PlanCreationResponse> planCreationResponses = completableFutures.allOf().get(5, TimeUnit.MINUTES);
+        errorResponses = planCreationResponses.stream()
+                             .filter(resp -> resp.getResponseCase() == PlanCreationResponse.ResponseCase.ERRORRESPONSE)
+                             .map(PlanCreationResponse::getErrorResponse)
+                             .collect(Collectors.toList());
+        if (EmptyPredicate.isEmpty(errorResponses)) {
+          planCreationResponses.forEach(
+              resp -> PlanCreationBlobResponseUtils.merge(currIterationResponseBuilder, resp.getBlobResponse()));
+        }
+      } catch (Exception ex) {
+        throw new UnexpectedException("Error fetching plan creation response from service", ex);
+      } finally {
+        log.info("[PlanCreatorMergeService_Time] Sdk plan creators took {}ms for initial dependencies size {}",
+            System.currentTimeMillis() - start, responseBuilder.getDeps().getDependenciesMap().size());
+      }
+      PmsExceptionUtils.checkAndThrowPlanCreatorException(errorResponses);
+    }
+    return currIterationResponseBuilder.build();
   }
 }
