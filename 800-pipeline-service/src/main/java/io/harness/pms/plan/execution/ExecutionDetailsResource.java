@@ -204,14 +204,14 @@ public class ExecutionDetailsResource {
     accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgId, projectId),
         Resource.of("PIPELINE", executionSummaryEntity.getPipelineIdentifier()), PipelineRbacPermissions.PIPELINE_VIEW);
 
-    PipelineExecutionDetailDTO pipelineExecutionDetailDTO =
-        PipelineExecutionDetailDTO.builder()
-            .pipelineExecutionSummary(PipelineExecutionSummaryDtoMapper.toDto(executionSummaryEntity, entityGitDetails))
-            .executionGraph(ExecutionGraphMapper.toExecutionGraph(
-                pmsExecutionService.getOrchestrationGraph(stageNodeId, planExecutionId)))
-            .build();
-
-    return ResponseDTO.newResponse(pipelineExecutionDetailDTO);
+    PipelineExecutionDetailDTO.PipelineExecutionDetailDTOBuilder pipelineExecutionDetailDTO =
+        PipelineExecutionDetailDTO.builder().pipelineExecutionSummary(
+            PipelineExecutionSummaryDtoMapper.toDto(executionSummaryEntity, entityGitDetails));
+    if (EmptyPredicate.isNotEmpty(stageNodeId)) {
+      pipelineExecutionDetailDTO.executionGraph(ExecutionGraphMapper.toExecutionGraph(
+          pmsExecutionService.getOrchestrationGraph(stageNodeId, planExecutionId)));
+    }
+    return ResponseDTO.newResponse(pipelineExecutionDetailDTO.build());
   }
 
   @GET
