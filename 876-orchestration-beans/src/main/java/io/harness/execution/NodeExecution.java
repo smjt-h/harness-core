@@ -279,4 +279,11 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   public <T extends Node> T getNode() {
     return (T) planNode;
   }
+
+  public SkipType getSkipGraphType() {
+    if (skipGraphType != null) {
+      return skipGraphType;
+    }
+    return planNode.getSkipGraphType();
+  }
 }
