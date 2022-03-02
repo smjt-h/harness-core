@@ -141,12 +141,12 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
       PlanNode planNode = planService.fetchNode(ambiance.getPlanId(), nodeId);
       resolveParameters(ambiance, planNode.getStepParameters(), planNode.isSkipUnresolvedExpressionsCheck());
 
-      ExecutionCheck check = performPreFacilitationChecks(ambiance, planNode);
-      if (!check.isProceed()) {
-        log.info("Not Proceeding with  Execution. Reason : {}", check.getReason());
-        return;
-      }
-      log.info("Proceeding with  Execution. Reason : {}", check.getReason());
+      //      ExecutionCheck check = performPreFacilitationChecks(ambiance, planNode);
+      //      if (!check.isProceed()) {
+      //        log.info("Not Proceeding with  Execution. Reason : {}", check.getReason());
+      //        return;
+      //      }
+      //      log.info("Proceeding with  Execution. Reason : {}", check.getReason());
 
       if (facilitationHelper.customFacilitatorPresent(planNode)) {
         facilitateEventPublisher.publishEvent(ambiance, planNode);
