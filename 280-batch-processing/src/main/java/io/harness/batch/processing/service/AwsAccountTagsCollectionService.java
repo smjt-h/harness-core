@@ -75,7 +75,6 @@ public class AwsAccountTagsCollectionService {
     List<Account> accounts = accountShardService.getCeEnabledAccounts();
     log.info("accounts size: {}", accounts.size());
     for (Account account : accounts) {
-      AutoLogContext ignore = new AccountLogContext(account.getUuid(), OVERRIDE_ERROR);
       log.info("Fetching connectors for accountName {}, accountId {}", account.getAccountName(), account.getUuid());
       List<ConnectorResponseDTO> nextGenAwsConnectorResponses = getNextGenAwsConnectorResponses(account.getUuid());
       for (ConnectorResponseDTO connector : nextGenAwsConnectorResponses) {
@@ -88,7 +87,6 @@ public class AwsAccountTagsCollectionService {
               connectorInfo.getIdentifier(), account.getUuid(), e);
         }
       }
-      ignore.close();
     }
   }
 
