@@ -1027,11 +1027,13 @@ public class K8sStepHelperTest extends CategoryTest {
                                                  .build();
 
     UnitProgressData unitProgressData = UnitProgressData.builder().build();
-    HelmValuesFetchResponse helmValuesFetchResponse = HelmValuesFetchResponse.builder()
-                                                          .valuesFileContent(Arrays.asList("values yaml payload"))
-                                                          .commandExecutionStatus(SUCCESS)
-                                                          .unitProgressData(unitProgressData)
-                                                          .build();
+    HelmValuesFetchResponse helmValuesFetchResponse =
+        HelmValuesFetchResponse.builder()
+            .valuesFileContent("values yaml payload")
+            .helmChartValuesFileContent(Arrays.asList("values yaml payload"))
+            .commandExecutionStatus(SUCCESS)
+            .unitProgressData(unitProgressData)
+            .build();
     Map<String, ResponseData> responseDataMap = ImmutableMap.of("helm-value-fetch-response", helmValuesFetchResponse);
     ThrowingSupplier responseDataSuplier = StrategyHelper.buildResponseDataSupplier(responseDataMap);
 
@@ -1409,11 +1411,14 @@ public class K8sStepHelperTest extends CategoryTest {
 
     List<ValuesManifestOutcome> aggregatedValuesManifests = new ArrayList<>();
 
-    List<String> helmValuesYamlContent = new ArrayList<>();
+    String helmValuesYamlContent = "";
 
-    assertThatCode(()
-                       -> k8sStepHelper.executeValuesFetchTask(ambiance, stepElementParameters, outcomeBuilder.build(),
-                           manifestOutcome, aggregatedValuesManifests, helmValuesYamlContent));
+    List<String> overrideHelmValueYamlContent = new ArrayList<>();
+
+    assertThatCode(
+        ()
+            -> k8sStepHelper.executeValuesFetchTask(ambiance, stepElementParameters, outcomeBuilder.build(),
+                manifestOutcome, aggregatedValuesManifests, helmValuesYamlContent, overrideHelmValueYamlContent));
   }
 
   @Test

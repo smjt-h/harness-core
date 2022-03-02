@@ -30,5 +30,6 @@ public class NativeHelmStepPassThroughData implements PassThroughData {
   ManifestOutcome helmChartManifestOutcome;
   List<ValuesManifestOutcome> valuesManifestOutcomes;
   InfrastructureOutcome infrastructure;
-  List<String> helmValuesFileContent;
+  String helmValuesFileContent;
+  List<String> overrideHelmValuesFileContent;
 }

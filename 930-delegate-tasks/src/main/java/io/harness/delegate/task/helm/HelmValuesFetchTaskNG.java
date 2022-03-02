@@ -8,11 +8,13 @@
 package io.harness.delegate.task.helm;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.logging.CommandExecutionStatus.FAILURE;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 import static io.harness.logging.LogLevel.INFO;
 
 import static java.lang.String.format;
+import static java.util.Collections.emptyList;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.DelegateResponseData;
@@ -68,17 +70,19 @@ public class HelmValuesFetchTaskNG extends AbstractDelegateRunnableTask {
         helmValuesFetchRequest.getHelmChartManifestDelegateConfig();
     try {
       helmTaskHelperBase.decryptEncryptedDetails(helmChartManifestDelegateConfig);
-
-      List<String> valuesFileContent = helmTaskHelperBase.fetchValuesYamlFromChart(helmChartManifestDelegateConfig,
-          helmValuesFetchRequest.getTimeout(), logCallback, helmValuesFetchRequest.getPaths());
-
+      List<HelmChartValuesFetchFileConfig> helmChartValuesFetchFileConfigList =
+          helmValuesFetchRequest.getHelmChartValuesFetchFileConfigList();
+      List<Object> fileContentList = helmTaskHelperBase.fetchValuesYamlFromChart(helmChartManifestDelegateConfig,
+          helmValuesFetchRequest.getTimeout(), logCallback, helmChartValuesFetchFileConfigList);
       if (helmValuesFetchRequest.isCloseLogStream()) {
         logCallback.saveExecutionLog("Done.", INFO, CommandExecutionStatus.SUCCESS);
       }
       return HelmValuesFetchResponse.builder()
           .commandExecutionStatus(SUCCESS)
           .unitProgressData(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))
-          .valuesFileContent(valuesFileContent)
+          .valuesFileContent((String) fileContentList.get(0))
+          .helmChartValuesFileContent(
+              isEmpty((List<String>) fileContentList.get(1)) ? emptyList() : (List<String>) fileContentList.get(1))
           .build();
     } catch (Exception e) {
       String exceptionMsg = e.getMessage() == null ? ExceptionUtils.getMessage(e) : e.getMessage();

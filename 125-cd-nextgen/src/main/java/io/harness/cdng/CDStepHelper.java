@@ -23,6 +23,7 @@ import static io.harness.logging.UnitStatus.RUNNING;
 import static io.harness.validation.Validator.notEmptyCheck;
 
 import static java.lang.String.format;
+import static java.util.Collections.emptyList;
 import static org.apache.commons.lang3.StringUtils.trim;
 import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
@@ -42,6 +43,7 @@ import io.harness.cdng.manifest.mappers.ManifestOutcomeValidator;
 import io.harness.cdng.manifest.steps.ManifestsOutcome;
 import io.harness.cdng.manifest.yaml.GcsStoreConfig;
 import io.harness.cdng.manifest.yaml.GitStoreConfig;
+import io.harness.cdng.manifest.yaml.HelmChartValuesStoreConfig;
 import io.harness.cdng.manifest.yaml.HttpStoreConfig;
 import io.harness.cdng.manifest.yaml.ManifestOutcome;
 import io.harness.cdng.manifest.yaml.S3StoreConfig;
@@ -82,6 +84,7 @@ import io.harness.delegate.beans.storeconfig.HttpHelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.S3HelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.StoreDelegateConfig;
 import io.harness.delegate.task.git.GitFetchFilesConfig;
+import io.harness.delegate.task.helm.HelmChartValuesFetchFileConfig;
 import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
 import io.harness.encryption.SecretRefData;
 import io.harness.eraro.Level;
@@ -303,6 +306,17 @@ public class CDStepHelper {
         .build();
   }
 
+  public static HelmChartValuesFetchFileConfig getHelmChartValuesFetchFileConfig(ManifestOutcome manifestOutcome) {
+    HelmChartValuesStoreConfig helmChartValuesStoreConfig = (HelmChartValuesStoreConfig) manifestOutcome.getStore();
+    List<String> filePaths = new ArrayList<>(getParameterFieldValue(helmChartValuesStoreConfig.getPaths()));
+
+    return HelmChartValuesFetchFileConfig.builder()
+        .identifier(manifestOutcome.getIdentifier())
+        .manifestType(manifestOutcome.getType())
+        .filePaths(filePaths)
+        .build();
+  }
+
   public List<EncryptedDataDetail> getEncryptedDataDetails(
       @Nonnull GitConfigDTO gitConfigDTO, @Nonnull Ambiance ambiance) {
     return secretManagerClientService.getEncryptionDetails(
@@ -402,23 +416,16 @@ public class CDStepHelper {
     return aggregateValuesManifests;
   }
 
-  // Aggregated Manifest methods of type chartValueStore. Here using get(0) as we are assuming only the case to override
-  // yaml file from same chart only.
-  public static ValuesManifestOutcome getAggregatedValuesManifestsTypeChartValueStore(
+  public static List<HelmChartValuesFetchFileConfig> mapValuesManifestsToHelmChartValuesFetchFileConfig(
       List<ValuesManifestOutcome> aggregatedValuesManifests) {
-    if (aggregatedValuesManifests.isEmpty()) {
-      return null;
+    if (isEmpty(aggregatedValuesManifests)) {
+      return emptyList();
     }
-    List<ValuesManifestOutcome> aggregateChartValuesManifest =
-        aggregatedValuesManifests.stream()
-            .filter(valuesManifestOutcome
-                -> ManifestStoreType.HELMCHARTVALUES.equals(valuesManifestOutcome.getStore().getKind()))
-            .collect(Collectors.toList());
-
-    if (isNotEmpty(aggregateChartValuesManifest)) {
-      return aggregateChartValuesManifest.get(0);
-    }
-    return null;
+    return aggregatedValuesManifests.stream()
+        .filter(valuesManifestOutcome
+            -> ManifestStoreType.HELMCHARTVALUES.equals(valuesManifestOutcome.getStore().getKind()))
+        .map(valuesManifestOutcome -> getHelmChartValuesFetchFileConfig(valuesManifestOutcome))
+        .collect(Collectors.toList());
   }
 
   // miscellaneous common methods

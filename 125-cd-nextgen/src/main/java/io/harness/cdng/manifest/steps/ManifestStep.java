@@ -14,6 +14,7 @@ import static java.lang.String.format;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
+import io.harness.cdng.manifest.ManifestStoreType;
 import io.harness.cdng.manifest.mappers.ManifestOutcomeMapper;
 import io.harness.cdng.manifest.yaml.ManifestAttributes;
 import io.harness.cdng.service.steps.ServiceStepsHelper;
@@ -114,7 +115,7 @@ public class ManifestStep implements SyncExecutable<ManifestStepParameters> {
   private void getConnector(ManifestAttributes manifestAttributes, Ambiance ambiance) {
     // In some cases (eg. in k8s manifests) we're skipping auto evaluation, in this case we can skip connector
     // validation for now. It will be done when all expression will be resolved
-    if (manifestAttributes.getStoreConfig().getKind().equals("HelmChartValues")) {
+    if (ManifestStoreType.HELMCHARTVALUES.equals("HelmChartValues")) {
       return;
     }
     if (manifestAttributes.getStoreConfig().getConnectorReference().isExpression()) {

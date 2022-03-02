@@ -27,6 +27,7 @@ public class HelmValuesFetchResponse implements DelegateTaskNotifyResponseData {
   private CommandExecutionStatus commandExecutionStatus;
   private String errorMessage;
   private UnitProgressData unitProgressData;
-  private List<String> valuesFileContent;
+  private String valuesFileContent;
+  private List<String> helmChartValuesFileContent;
   @NonFinal @Setter private DelegateMetaInfo delegateMetaInfo;
 }

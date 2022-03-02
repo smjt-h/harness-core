@@ -192,7 +192,6 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(TerraformPlanStepInfo.class, 12543);
     kryo.register(HelmValuesFetchResponsePassThroughData.class, 12544);
     kryo.register(StepExceptionPassThroughData.class, 12545);
-    kryo.register(HelmChartValuesStoreConfig.class, 12564);
 
     kryo.register(HelmDeployStepInfo.class, 13001);
     kryo.register(HelmDeployStepParams.class, 13002);
@@ -217,5 +216,6 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(ManifestStepParameters.class, 12559);
     kryo.register(NGVariableOverrideSets.class, 12560);
     kryo.register(SshServiceSpec.class, 12561);
+    kryo.register(HelmChartValuesStoreConfig.class, 12563);
   }
 }

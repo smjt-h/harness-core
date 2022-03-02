@@ -665,8 +665,9 @@ public class HelmTaskHelperBase {
     return Paths.get(parentDir, chartName).toString();
   }
 
-  public List<String> fetchValuesYamlFromChart(HelmChartManifestDelegateConfig helmChartManifestDelegateConfig,
-      long timeoutInMillis, LogCallback logCallback, List<String> helmChartValuesPaths) throws Exception {
+  public List<Object> fetchValuesYamlFromChart(HelmChartManifestDelegateConfig helmChartManifestDelegateConfig,
+      long timeoutInMillis, LogCallback logCallback,
+      List<HelmChartValuesFetchFileConfig> helmChartValuesFetchFileConfigList) throws Exception {
     String workingDirectory = createNewDirectoryAtPath(Paths.get(WORKING_DIR_BASE).toString());
     logCallback.saveExecutionLog(color("\nFetching values.yaml from helm chart repo", White, Bold));
 
@@ -674,15 +675,30 @@ public class HelmTaskHelperBase {
       downloadHelmChartFiles(helmChartManifestDelegateConfig, workingDirectory, timeoutInMillis);
       printHelmChartInfoWithVersionInExecutionLogs(workingDirectory, helmChartManifestDelegateConfig, logCallback);
 
-      List<String> valuesFileContent = readValuesYamlFromChartFiles(
-          workingDirectory, helmChartManifestDelegateConfig.getChartName(), helmChartValuesPaths);
+      String valuesFileContent = readValuesYamlFromChartFiles(workingDirectory,
+          helmChartManifestDelegateConfig.getChartName(), Collections.singletonList(VALUES_YAML), logCallback)
+                                     .get(0);
+      List<String> helmChartValuesFileContent = new ArrayList<>();
       if (null == valuesFileContent) {
         logCallback.saveExecutionLog("No values.yaml found", WARN);
       } else {
         logCallback.saveExecutionLog("\nSuccessfully fetched values.yaml", INFO);
       }
-
-      return valuesFileContent;
+      if (isNotEmpty(helmChartValuesFetchFileConfigList)) {
+        for (HelmChartValuesFetchFileConfig helmChartValuesFetchFileConfig : helmChartValuesFetchFileConfigList) {
+          try {
+            helmChartValuesFileContent.addAll(
+                readValuesYamlFromChartFiles(workingDirectory, helmChartManifestDelegateConfig.getChartName(),
+                    helmChartValuesFetchFileConfig.getFilePaths(), logCallback));
+          } catch (Exception ex) {
+            String errorMsg =
+                format("Failed to fetch yaml file from %s manifest", helmChartValuesFetchFileConfig.getIdentifier());
+            logCallback.saveExecutionLog(errorMsg + ExceptionUtils.getMessage(ex), WARN);
+            throw ex;
+          }
+        }
+      }
+      return Arrays.asList(valuesFileContent, helmChartValuesFileContent);
     } catch (HelmClientException ex) {
       String errorMsg = format("Failed to fetch values yaml from %s repo. ",
           helmChartManifestDelegateConfig.getStoreDelegateConfig().getType());
@@ -698,14 +714,19 @@ public class HelmTaskHelperBase {
     }
   }
 
-  private List<String> readValuesYamlFromChartFiles(
-      String workingDirectory, String chartName, List<String> helmChartValuePaths) throws Exception {
+  private List<String> readValuesYamlFromChartFiles(String workingDirectory, String chartName,
+      List<String> helmChartValuePaths, LogCallback logCallback) throws Exception {
     List<String> valueFileContent = new ArrayList<>();
-    valueFileContent.add(
-        new String(Files.readAllBytes(Paths.get(getChartDirectory(workingDirectory, chartName), VALUES_YAML))));
     for (String path : helmChartValuePaths) {
-      valueFileContent.add(
-          new String(Files.readAllBytes(Paths.get(getChartDirectory(workingDirectory, chartName), path))));
+      try {
+        valueFileContent.add(
+            new String(Files.readAllBytes(Paths.get(getChartDirectory(workingDirectory, chartName), path)),
+                StandardCharsets.UTF_8));
+      } catch (Exception ex) {
+        String errorMsg = format("Failed to fetch %s file ", path);
+        logCallback.saveExecutionLog(errorMsg + ExceptionUtils.getMessage(ex), WARN);
+        throw ex;
+      }
     }
     return valueFileContent;
   }
