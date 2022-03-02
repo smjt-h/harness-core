@@ -202,6 +202,11 @@ if ! `grep upgradeCheckLocation config-watcher.yml > /dev/null`; then
 elif [[ "$(grep upgradeCheckLocation config-watcher.yml | cut -d ' ' -f 2)" != "${watcherStorageUrl}/${watcherCheckLocation}" ]]; then
   sed -i.bak "s|^upgradeCheckLocation:.*$|upgradeCheckLocation: ${watcherStorageUrl}/${watcherCheckLocation}|" config-watcher.yml
 fi
+if ! `grep watcherCheckLocation config-delegate.yml > /dev/null`; then
+  echo "watcherCheckLocation: $WATCHER_STORAGE_URL/$WATCHER_CHECK_LOCATION" >> config-delegate.yml
+elif [[ "$(grep watcherCheckLocation config-delegate.yml | cut -d ' ' -f 2)" != "$WATCHER_STORAGE_URL/$WATCHER_CHECK_LOCATION" ]]; then
+  sed -i.bak "s|^watcherCheckLocation:.*$|watcherCheckLocation: $WATCHER_STORAGE_URL/$WATCHER_CHECK_LOCATION|" config-delegate.yml
+fi
 if ! `grep upgradeCheckIntervalSeconds config-watcher.yml > /dev/null`; then
   echo "upgradeCheckIntervalSeconds: 1200" >> config-watcher.yml
 fi
