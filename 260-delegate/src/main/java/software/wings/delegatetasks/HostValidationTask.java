@@ -55,7 +55,7 @@ public class HostValidationTask extends AbstractDelegateRunnableTask {
                                          .executionCredential((ExecutionCredential) parameters[5])
                                          .build();
     } else {
-      hostValidationTaskParameters = (HostValidationTaskParameters) getParameters()[0];
+      hostValidationTaskParameters = (HostValidationTaskParameters) parameters[0];
     }
     return getTaskExecutionResponseData(hostValidationTaskParameters);
   }

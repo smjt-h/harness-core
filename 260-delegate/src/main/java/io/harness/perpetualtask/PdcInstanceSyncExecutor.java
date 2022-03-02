@@ -22,7 +22,6 @@ import io.harness.serializer.KryoSerializer;
 import software.wings.beans.HostReachabilityInfo;
 import software.wings.beans.SettingAttribute;
 import software.wings.service.impl.aws.model.response.HostReachabilityResponse;
-import software.wings.service.intfc.aws.delegate.AwsEc2HelperServiceDelegate;
 import software.wings.utils.HostValidationService;
 
 import com.google.inject.Inject;
@@ -35,7 +34,6 @@ import org.eclipse.jetty.server.Response;
 @TargetModule(HarnessModule._930_DELEGATE_TASKS)
 @OwnedBy(CDP)
 public class PdcInstanceSyncExecutor implements PerpetualTaskExecutor {
-  @Inject private AwsEc2HelperServiceDelegate ec2ServiceDelegate;
   @Inject private DelegateAgentManagerClient delegateAgentManagerClient;
   @Inject private KryoSerializer kryoSerializer;
   @Inject private HostValidationService hostValidationService;

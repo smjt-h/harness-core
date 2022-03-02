@@ -10,6 +10,7 @@ package software.wings.service.impl.instance;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.beans.FeatureName.PDC_PERPETUAL_TASK;
 import static io.harness.beans.FeatureName.STOP_INSTANCE_SYNC_VIA_ITERATOR_FOR_PDC_DEPLOYMENTS;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.exception.WingsException.USER;
 
 import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
@@ -172,20 +173,24 @@ public class PdcInstanceHandler extends InstanceHandler implements InstanceSyncB
   public Status getStatus(InfrastructureMapping infrastructureMapping, DelegateResponseData response) {
     HostReachabilityResponse reachabilityResponse = (HostReachabilityResponse) response;
     // If all instances are not reachable via same Delegate?
-    boolean canDeleteTask =
-        reachabilityResponse.getHostReachabilityInfoList().stream().noneMatch(HostReachabilityInfo::getReachable);
-    boolean success = reachabilityResponse.getExecutionStatus() == ExecutionStatus.SUCCESS;
-    String errorMessage = success ? null : reachabilityResponse.getErrorMessage();
+    boolean canDeleteTask = true;
 
-    if (canDeleteTask) {
-      List<String> hosts = reachabilityResponse.getHostReachabilityInfoList()
-                               .stream()
-                               .map(HostReachabilityInfo::getHostName)
-                               .collect(Collectors.toList());
-      log.info("[PDC Instance sync]: Hosts {} unreachable. Infrastructure Mapping : [{}]", hosts,
-          infrastructureMapping.getUuid());
+    if (isNotEmpty(reachabilityResponse.getHostReachabilityInfoList())) {
+      canDeleteTask =
+          reachabilityResponse.getHostReachabilityInfoList().stream().noneMatch(HostReachabilityInfo::getReachable);
+
+      if (canDeleteTask) {
+        List<String> hosts = reachabilityResponse.getHostReachabilityInfoList()
+                                 .stream()
+                                 .map(HostReachabilityInfo::getHostName)
+                                 .collect(Collectors.toList());
+        log.info("[PDC Instance sync]: Hosts {} unreachable. Infrastructure Mapping : [{}]", hosts,
+            infrastructureMapping.getUuid());
+      }
     }
 
+    boolean success = reachabilityResponse.getExecutionStatus() == ExecutionStatus.SUCCESS;
+    String errorMessage = success ? null : reachabilityResponse.getErrorMessage();
     return Status.builder().success(success).errorMessage(errorMessage).retryable(!canDeleteTask).build();
   }
 

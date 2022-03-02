@@ -21,7 +21,6 @@ import io.harness.delegate.beans.TaskData;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.perpetualtask.PerpetualTaskClientContext;
-import io.harness.perpetualtask.PerpetualTaskService;
 import io.harness.perpetualtask.PerpetualTaskServiceClient;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.serializer.KryoSerializer;
@@ -36,9 +35,7 @@ import software.wings.beans.SettingAttribute;
 import software.wings.beans.TaskType;
 import software.wings.beans.WinRmConnectionAttributes;
 import software.wings.service.InstanceSyncConstants;
-import software.wings.service.impl.AwsUtils;
 import software.wings.service.intfc.InfrastructureMappingService;
-import software.wings.service.intfc.ServiceResourceService;
 import software.wings.service.intfc.SettingsService;
 import software.wings.service.intfc.security.SecretManager;
 
@@ -55,11 +52,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @OwnedBy(CDP)
 public class PdcPerpetualTaskServiceClient implements PerpetualTaskServiceClient {
-  @Inject private PerpetualTaskService perpetualTaskService;
   @Inject private SecretManager secretManager;
   @Inject private InfrastructureMappingService infrastructureMappingService;
-  @Inject private ServiceResourceService serviceResourceService;
-  @Inject private AwsUtils awsUtils;
   @Inject private SettingsService settingsService;
   @Inject private KryoSerializer kryoSerializer;
 
