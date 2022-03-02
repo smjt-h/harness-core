@@ -13,6 +13,7 @@ import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
 
 import io.harness.annotation.StoreIn;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.engine.pms.steps.identity.IdentityStepParameters;
 import io.harness.interrupts.InterruptEffect;
 import io.harness.logging.UnitProgress;
@@ -278,6 +279,55 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
 
   public <T extends Node> T getNode() {
     return (T) planNode;
+  }
+
+  public String getModule() {
+    if (EmptyPredicate.isNotEmpty(module)) {
+      return module;
+    }
+    return planNode.getServiceName();
+  }
+
+  public String getName() {
+    if (EmptyPredicate.isNotEmpty(name)) {
+      return name;
+    }
+    return planNode.getName();
+  }
+
+  public StepType getStepType() {
+    if (stepType != null) {
+      return stepType;
+    }
+    return planNode.getStepType();
+  }
+
+  public String getNodeId() {
+    if (EmptyPredicate.isNotEmpty(nodeId)) {
+      return nodeId;
+    }
+    return planNode.getUuid();
+  }
+
+  public String getIdentifier() {
+    if (EmptyPredicate.isNotEmpty(identifier)) {
+      return identifier;
+    }
+    return planNode.getIdentifier();
+  }
+
+  public String getStageFqn() {
+    if (EmptyPredicate.isNotEmpty(stageFqn)) {
+      return stageFqn;
+    }
+    return planNode.getStageFqn();
+  }
+
+  public String getGroup() {
+    if (EmptyPredicate.isNotEmpty(group)) {
+      return group;
+    }
+    return planNode.getGroup();
   }
 
   public SkipType getSkipGraphType() {
