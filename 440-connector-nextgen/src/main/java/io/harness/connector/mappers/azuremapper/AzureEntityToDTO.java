@@ -10,8 +10,8 @@ package io.harness.connector.mappers.azuremapper;
 import io.harness.connector.entities.embedded.azureconnector.AzureConfig;
 import io.harness.connector.entities.embedded.azureconnector.AzureManualCredential;
 import io.harness.connector.mappers.ConnectorEntityToDTOMapper;
-import io.harness.delegate.beans.connector.azureconnector.AzureConnectorCredentialDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureCredentialDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
 import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
 import io.harness.encryption.SecretRefData;
@@ -47,7 +47,7 @@ public class AzureEntityToDTO implements ConnectorEntityToDTOMapper<AzureConnect
     return AzureConnectorDTO.builder()
         .delegateSelectors(connector.getDelegateSelectors())
         .azureEnvironmentType(connector.getAzureEnvironmentType())
-        .credential(AzureConnectorCredentialDTO.builder()
+        .credential(AzureCredentialDTO.builder()
                         .azureCredentialType(AzureCredentialType.MANUAL_CREDENTIALS)
                         .config(azureManualDetailsDTO)
                         .build())
@@ -58,7 +58,7 @@ public class AzureEntityToDTO implements ConnectorEntityToDTOMapper<AzureConnect
     return AzureConnectorDTO.builder()
         .delegateSelectors(connector.getDelegateSelectors())
         .azureEnvironmentType(connector.getAzureEnvironmentType())
-        .credential(AzureConnectorCredentialDTO.builder()
+        .credential(AzureCredentialDTO.builder()
                         .azureCredentialType(AzureCredentialType.INHERIT_FROM_DELEGATE)
                         .config(null)
                         .build())

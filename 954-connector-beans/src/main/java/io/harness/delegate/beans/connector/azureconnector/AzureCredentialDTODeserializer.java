@@ -16,16 +16,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import java.io.IOException;
 
-public class AzureCredentialDTODeserializer extends StdDeserializer<AzureConnectorCredentialDTO> {
+public class AzureCredentialDTODeserializer extends StdDeserializer<AzureCredentialDTO> {
   public AzureCredentialDTODeserializer() {
-    super(io.harness.delegate.beans.connector.azureconnector.AzureConnectorCredentialDTO.class);
+    super(AzureCredentialDTO.class);
   }
   protected AzureCredentialDTODeserializer(Class<?> vc) {
     super(vc);
   }
 
   @Override
-  public AzureConnectorCredentialDTO deserialize(JsonParser jp, DeserializationContext deserializationContext)
+  public AzureCredentialDTO deserialize(JsonParser jp, DeserializationContext deserializationContext)
       throws IOException {
     JsonNode parentJsonNode = jp.getCodec().readTree(jp);
     JsonNode typeNode = parentJsonNode.get("type");
@@ -43,7 +43,7 @@ public class AzureCredentialDTODeserializer extends StdDeserializer<AzureConnect
       }
     }
 
-    return AzureConnectorCredentialDTO.builder().azureCredentialType(type).config(azureCredentialSpecDTO).build();
+    return AzureCredentialDTO.builder().azureCredentialType(type).config(azureCredentialSpecDTO).build();
   }
 
   AzureCredentialType getType(JsonNode typeNode) {

@@ -8,7 +8,6 @@
 package io.harness.delegate.beans.connector.azureconnector;
 
 import static io.harness.ConnectorConstants.INHERIT_FROM_DELEGATE_TYPE_ERROR_MSG;
-import static io.harness.azure.AzureEnvironmentType.AZURE;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.azure.AzureEnvironmentType;
@@ -35,7 +34,7 @@ import lombok.EqualsAndHashCode;
 @ApiModel("AzureConnector")
 @Schema(name = "AzureConnector", description = "This contains details of the Azure connector")
 public class AzureConnectorDTO extends ConnectorConfigDTO implements DelegateSelectable {
-  @Valid AzureConnectorCredentialDTO credential;
+  @Valid AzureCredentialDTO credential;
   Set<String> delegateSelectors;
   @Builder.Default
   @Schema(description = "This specifies the Azure Environment type, which is AZURE by default.")

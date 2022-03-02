@@ -614,11 +614,15 @@ public class AzureManagementClientImpl extends AzureClient implements AzureManag
 
   @Override
   public void validateAzureConnection(
-      String clientId, String tenantId, char[] key, AzureEnvironmentType azureEnvironmentType) {
-    // if subscriptions can be read, connection is valid otherwise an exception will be thrown
-    getAzureClientWithDefaultSubscription(clientId, tenantId, String.valueOf(key), azureEnvironmentType)
-        .subscriptions();
-
+      String clientId, String tenantId, String secret, AzureEnvironmentType azureEnvironmentType) {
+    getAzureClientWithDefaultSubscriptionUsingSecret(clientId, tenantId, secret, azureEnvironmentType).subscriptions();
     log.debug("Azure connection validated for clientId {} tenantId {}", clientId, tenantId);
+  }
+
+  @Override
+  public void validateAzureConnectionWithCert(
+      String clientId, String tenantId, byte[] cert, AzureEnvironmentType azureEnvironmentType) {
+    getAzureClientWithDefaultSubscriptionUsingCert(clientId, tenantId, cert, azureEnvironmentType).subscriptions();
+    log.debug("Azure connection validated for clientId {} tenantId {} with certificate usage", clientId, tenantId);
   }
 }

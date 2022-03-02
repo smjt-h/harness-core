@@ -38,6 +38,7 @@ import com.microsoft.rest.LogLevel;
 import com.microsoft.rest.ServiceResponseBuilder;
 import com.microsoft.rest.serializer.JacksonAdapter;
 import java.io.IOException;
+import java.security.InvalidKeyException;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
@@ -120,6 +121,18 @@ public class AzureClient {
     }
   }
 
+  protected void handleInvalidCertException(Exception e) {
+    log.error("HandleInvalidCertException: Exception:" + e);
+
+    Throwable e1 = e;
+    while (e1.getCause() != null) {
+      e1 = e1.getCause();
+      if (e1 instanceof InvalidKeyException) {
+        throw new InvalidCredentialsException("Invalid Azure credentials." + e1.getMessage(), USER);
+      }
+    }
+  }
+
   protected void handleAzureErrorResponse(ResponseBody response, okhttp3.Response rawResponse) {
     String errorJSONMsg;
     try {
@@ -185,11 +198,11 @@ public class AzureClient {
     return format("https://%s%s", repositoryHost, repositoryHost.endsWith("/") ? "" : "/");
   }
 
-  protected Azure getAzureClientWithDefaultSubscription(
-      String clientId, String tenantId, String key, AzureEnvironmentType azureEnvironmentType) {
+  protected Azure getAzureClientWithDefaultSubscriptionUsingSecret(
+      String clientId, String tenantId, String secret, AzureEnvironmentType azureEnvironmentType) {
     try {
       ApplicationTokenCredentials credentials =
-          new ApplicationTokenCredentials(clientId, tenantId, key, getAzureEnvironment(azureEnvironmentType));
+          new ApplicationTokenCredentials(clientId, tenantId, secret, getAzureEnvironment(azureEnvironmentType));
 
       return Azure.configure().withLogLevel(LogLevel.NONE).authenticate(credentials).withDefaultSubscription();
     } catch (Exception e) {
@@ -198,15 +211,16 @@ public class AzureClient {
     return null;
   }
 
-  protected Azure getAzureClientWithDefaultSubscription(String clientId, String tenantId, byte[] certificate,
-      String password, AzureEnvironmentType azureEnvironmentType) {
+  protected Azure getAzureClientWithDefaultSubscriptionUsingCert(
+      String clientId, String tenantId, byte[] certificate, AzureEnvironmentType azureEnvironmentType) {
     try {
       ApplicationTokenCredentials credentials = new ApplicationTokenCredentials(
-          clientId, tenantId, certificate, password, getAzureEnvironment(azureEnvironmentType));
+          clientId, tenantId, certificate, null, getAzureEnvironment(azureEnvironmentType));
 
       return Azure.configure().withLogLevel(LogLevel.NONE).authenticate(credentials).withDefaultSubscription();
     } catch (Exception e) {
       handleAzureAuthenticationException(e);
+      handleInvalidCertException(e);
     }
     return null;
   }

@@ -13,8 +13,8 @@ import io.harness.azure.AzureEnvironmentType;
 import io.harness.azure.client.AzureManagementClient;
 import io.harness.connector.ConnectivityStatus;
 import io.harness.connector.ConnectorValidationResult;
-import io.harness.delegate.beans.connector.azureconnector.AzureConnectorCredentialDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureCredentialDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
 import io.harness.errorhandling.NGErrorHelper;
 import io.harness.security.encryption.EncryptedDataDetail;
@@ -61,17 +61,20 @@ public class AzureNgHelper {
     return connectorValidationResult;
   }
 
-  private void handleValidateManualCredentialsTask(AzureConnectorCredentialDTO credential,
+  private void handleValidateManualCredentialsTask(AzureCredentialDTO credential,
       List<EncryptedDataDetail> encryptedDataDetails, AzureEnvironmentType azureEnvironmentType) {
     AzureManualDetailsDTO azureConfig = (AzureManualDetailsDTO) credential.getConfig();
     secretDecryptionService.decrypt(azureConfig, encryptedDataDetails);
+    String secret = String.valueOf(azureConfig.getSecretRef().getDecryptedValue());
     switch (azureConfig.getSecretType()) {
       case SECRET_KEY:
-        azureManagementClient.validateAzureConnection(azureConfig.getClientId(), azureConfig.getTenantId(),
-            azureConfig.getSecretRef().getDecryptedValue(), azureEnvironmentType);
+        azureManagementClient.validateAzureConnection(
+            azureConfig.getClientId(), azureConfig.getTenantId(), secret, azureEnvironmentType);
         break;
       case KEY_CERT:
-        throw new IllegalStateException("Unexpected secret type: " + azureConfig.getSecretType());
+        azureManagementClient.validateAzureConnectionWithCert(
+            azureConfig.getClientId(), azureConfig.getTenantId(), secret.getBytes(), azureEnvironmentType);
+        break;
     }
   }
 }

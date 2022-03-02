@@ -25,10 +25,10 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@ApiModel("AzureConnectorCredential")
+@ApiModel("AzureCredential")
 @JsonDeserialize(using = AzureCredentialDTODeserializer.class)
-@Schema(name = "AzureConnectorCredential", description = "This contains Azure connector credentials")
-public class AzureConnectorCredentialDTO {
+@Schema(name = "AzureCredential", description = "This contains Azure connector credentials")
+public class AzureCredentialDTO {
   @NotNull @JsonProperty("type") AzureCredentialType azureCredentialType;
   @JsonProperty("spec")
   @JsonTypeInfo(
@@ -37,7 +37,7 @@ public class AzureConnectorCredentialDTO {
   AzureCredentialSpecDTO config;
 
   @Builder
-  public AzureConnectorCredentialDTO(AzureCredentialType azureCredentialType, AzureCredentialSpecDTO config) {
+  public AzureCredentialDTO(AzureCredentialType azureCredentialType, AzureCredentialSpecDTO config) {
     this.azureCredentialType = azureCredentialType;
     this.config = config;
   }

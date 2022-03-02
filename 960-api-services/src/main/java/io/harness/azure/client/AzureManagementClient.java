@@ -189,5 +189,16 @@ public interface AzureManagementClient {
    * @param azureEnvironmentType
    */
   void validateAzureConnection(
-      String clientId, String tenantId, char[] secret, AzureEnvironmentType azureEnvironmentType);
+      String clientId, String tenantId, String secret, AzureEnvironmentType azureEnvironmentType);
+
+  /**
+   * Validate azure connection with a provided clientId, tenantId, certificate and environment type. Will throw
+   * exception if connection can't be made
+   * @param clientId
+   * @param tenantId
+   * @param cert
+   * @param azureEnvironmentType
+   */
+  void validateAzureConnectionWithCert(
+      String clientId, String tenantId, byte[] cert, AzureEnvironmentType azureEnvironmentType);
 }
