@@ -52,6 +52,9 @@ import io.harness.k8s.model.KubernetesResource;
 import io.harness.k8s.model.KubernetesResourceId;
 import io.harness.logging.LogCallback;
 
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import java.io.IOException;
@@ -120,6 +123,8 @@ public class K8sDeleteRequestHandler extends K8sRequestHandler {
       K8sDelegateTaskParams k8sDelegateTaskParams, LogCallback executionLogCallback,
       ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) throws Exception {
     long steadyStateTimeoutInMillis = getTimeoutMillisFromMinutes(k8sDeleteRequest.getTimeoutIntervalInMin());
+
+    executionLogCallback.saveExecutionLog(color("%nStarting Kubernetes Delete Task", LogColor.White, LogWeight.Bold));
 
     k8sTaskHelperBase.fetchManifestFilesAndWriteToDirectory(k8sDeleteRequest.getManifestDelegateConfig(),
         manifestFilesDirectory,

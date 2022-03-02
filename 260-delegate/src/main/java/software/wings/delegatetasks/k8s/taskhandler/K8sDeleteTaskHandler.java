@@ -44,6 +44,8 @@ import io.harness.k8s.model.KubernetesResource;
 import io.harness.k8s.model.KubernetesResourceId;
 import io.harness.logging.CommandExecutionStatus;
 
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.delegatetasks.k8s.K8sTaskHelper;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
@@ -107,6 +109,8 @@ public class K8sDeleteTaskHandler extends K8sTaskHandler {
   private K8sTaskExecutionResponse executeDeleteUsingFiles(K8sDeleteTaskParameters k8sDeleteTaskParameters,
       K8sDelegateTaskParams k8sDelegateTaskParams, ExecutionLogCallback executionLogCallback) throws Exception {
     long steadyStateTimeoutInMillis = getTimeoutMillisFromMinutes(k8sDeleteTaskParameters.getTimeoutIntervalInMin());
+
+    executionLogCallback.saveExecutionLog(color("%nStarting Kubernetes Delete Task", LogColor.White, LogWeight.Bold));
 
     boolean success = k8sTaskHelper.fetchManifestFilesAndWriteToDirectory(
         k8sDeleteTaskParameters.getK8sDelegateManifestConfig(), manifestFilesDirectory,
