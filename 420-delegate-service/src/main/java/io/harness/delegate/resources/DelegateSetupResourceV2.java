@@ -222,7 +222,6 @@ public class DelegateSetupResourceV2 {
   @Timed
   @ExceptionMetered
   @InternalApi
-  @AuthRule(permissionType = LOGGED_IN)
   @Operation(operationId = "updateTagsForDelegateGroup", summary = "Updates tags for the Delegate Group.",
       responses =
       {

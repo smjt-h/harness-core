@@ -35,6 +35,7 @@ import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.remote.client.RestClientUtils;
 import io.harness.rest.RestResponse;
 
+import retrofit2.Call;
 import software.wings.security.annotations.ApiKeyAuthorized;
 import software.wings.security.annotations.AuthRule;
 
@@ -361,7 +362,8 @@ public class DelegateConfigNgV2Resource {
       @Parameter(description = "Organization Id") @QueryParam("orgId") String orgId,
       @Parameter(description = "Project Id") @QueryParam("projectId") String projectId,
       @RequestBody(required = true, description = "List of tags") DelegateGroupTags tags) {
+    Call<RestResponse<DelegateGroup>> abc = delegateConfigClient.updateDelegateGroupTags(identifier, accountId, tags);
     return new RestResponse<>(
-        RestClientUtils.getResponse(delegateConfigClient.updateDelegateGroupTags(accountId, orgId, projectId, identifier, tags)));
+        RestClientUtils.getResponse(abc));
   }
 }
