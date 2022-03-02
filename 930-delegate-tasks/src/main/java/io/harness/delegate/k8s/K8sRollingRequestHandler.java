@@ -56,6 +56,9 @@ import io.harness.k8s.model.ReleaseHistory;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import java.io.IOException;
@@ -102,6 +105,11 @@ public class K8sRollingRequestHandler extends K8sRequestHandler {
     manifestFilesDirectory = Paths.get(k8sDelegateTaskParams.getWorkingDirectory(), MANIFEST_FILES_DIR).toString();
     long steadyStateTimeoutInMillis = getTimeoutMillisFromMinutes(k8sDeployRequest.getTimeoutIntervalInMin());
 
+    LogCallback executionLogCallback = k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, FetchFiles,
+        k8sRollingDeployRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress);
+
+    executionLogCallback.saveExecutionLog(
+        color("%nStarting Kubernetes Rolling Deployment Task", LogColor.White, LogWeight.Bold));
     k8sTaskHelperBase.fetchManifestFilesAndWriteToDirectory(k8sRollingDeployRequest.getManifestDelegateConfig(),
         manifestFilesDirectory,
         k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, FetchFiles,
@@ -155,8 +163,7 @@ public class K8sRollingRequestHandler extends K8sRequestHandler {
       }
     }
 
-    LogCallback executionLogCallback =
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WrapUp, true, commandUnitsProgress);
+    executionLogCallback = k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WrapUp, true, commandUnitsProgress);
     k8sRollingBaseHandler.wrapUp(k8sDelegateTaskParams, executionLogCallback, client);
 
     String loadBalancer = k8sTaskHelperBase.getLoadBalancerEndpoint(kubernetesConfig, resources);

@@ -42,6 +42,8 @@ import io.harness.logging.LogCallback;
 import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.shell.SshSessionConfig;
 
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
 import com.google.inject.Inject;
@@ -84,6 +86,10 @@ public class GitFetchTaskNG extends AbstractDelegateRunnableTask {
       Map<String, FetchFilesResult> filesFromMultipleRepo = new HashMap<>();
       List<GitFetchFilesConfig> gitFetchFilesConfigs = gitFetchRequest.getGitFetchFilesConfigs();
 
+      executionLogCallback.saveExecutionLog(
+          color(format("%nStarting Git %s fetch task", gitFetchFilesConfigs.get(0).getIdentifier()), LogColor.White,
+              LogWeight.Bold));
+
       for (GitFetchFilesConfig gitFetchFilesConfig : gitFetchFilesConfigs) {
         FetchFilesResult gitFetchFilesResult;
         if (gitFetchFilesConfig.isSucceedIfFileNotFound()) {
@@ -121,7 +127,10 @@ public class GitFetchTaskNG extends AbstractDelegateRunnableTask {
       }
 
       if (gitFetchRequest.isCloseLogStream()) {
-        executionLogCallback.saveExecutionLog("Done.", INFO, CommandExecutionStatus.SUCCESS);
+        executionLogCallback.saveExecutionLog(
+            color(format("%Git %s fetch task completed successfully.", gitFetchFilesConfigs.get(0).getIdentifier()),
+                LogColor.White, LogWeight.Bold),
+            INFO, CommandExecutionStatus.SUCCESS);
       }
       return GitFetchResponse.builder()
           .taskStatus(TaskStatus.SUCCESS)
