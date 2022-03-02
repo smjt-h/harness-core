@@ -128,7 +128,7 @@ public class GitFetchTaskNG extends AbstractDelegateRunnableTask {
 
       if (gitFetchRequest.isCloseLogStream()) {
         executionLogCallback.saveExecutionLog(
-            color(format("%Git %s fetch task completed successfully.", gitFetchFilesConfigs.get(0).getIdentifier()),
+            color(format("%nGit %s fetch task completed successfully.", gitFetchFilesConfigs.get(0).getIdentifier()),
                 LogColor.White, LogWeight.Bold),
             INFO, CommandExecutionStatus.SUCCESS);
       }

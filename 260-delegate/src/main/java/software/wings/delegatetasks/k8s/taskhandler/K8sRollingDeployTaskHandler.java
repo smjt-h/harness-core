@@ -127,7 +127,7 @@ public class K8sRollingDeployTaskHandler extends K8sTaskHandler {
       ExecutionLogCallback executionLogCallback =
           k8sTaskHelper.getExecutionLogCallback(k8sRollingDeployTaskParameters, FetchFiles);
       executionLogCallback.saveExecutionLog(
-          color("%nStarting Kubernetes Rolling Deployment Task", LogColor.White, LogWeight.Bold));
+          color("\nStarting Kubernetes Rolling Deployment Task", LogColor.White, LogWeight.Bold));
 
       success = k8sTaskHelper.fetchManifestFilesAndWriteToDirectory(
           k8sRollingDeployTaskParameters.getK8sDelegateManifestConfig(),

@@ -73,14 +73,14 @@ public class HelmValuesFetchTaskNG extends AbstractDelegateRunnableTask {
     try {
       helmTaskHelperBase.decryptEncryptedDetails(helmChartManifestDelegateConfig);
 
-      logCallback.saveExecutionLog(color("%nStarting Helm values fetch task", LogColor.White, LogWeight.Bold));
+      logCallback.saveExecutionLog(color("\nStarting Helm values fetch task", LogColor.White, LogWeight.Bold));
 
       String valuesFileContent = helmTaskHelperBase.fetchValuesYamlFromChart(
           helmChartManifestDelegateConfig, helmValuesFetchRequest.getTimeout(), logCallback);
 
       if (helmValuesFetchRequest.isCloseLogStream()) {
         logCallback.saveExecutionLog(
-            "Helm values fetch task completed successfully.", INFO, CommandExecutionStatus.SUCCESS);
+            "\nHelm values fetch task completed successfully.", INFO, CommandExecutionStatus.SUCCESS);
       }
       return HelmValuesFetchResponse.builder()
           .commandExecutionStatus(SUCCESS)

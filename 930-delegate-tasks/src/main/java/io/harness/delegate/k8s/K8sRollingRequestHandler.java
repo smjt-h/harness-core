@@ -109,7 +109,7 @@ public class K8sRollingRequestHandler extends K8sRequestHandler {
         k8sRollingDeployRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress);
 
     executionLogCallback.saveExecutionLog(
-        color("%nStarting Kubernetes Rolling Deployment Task", LogColor.White, LogWeight.Bold));
+        color("\nStarting Kubernetes Rolling Deployment Task", LogColor.White, LogWeight.Bold));
     k8sTaskHelperBase.fetchManifestFilesAndWriteToDirectory(k8sRollingDeployRequest.getManifestDelegateConfig(),
         manifestFilesDirectory,
         k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, FetchFiles,

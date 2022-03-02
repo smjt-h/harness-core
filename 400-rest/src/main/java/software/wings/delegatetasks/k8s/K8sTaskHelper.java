@@ -302,7 +302,6 @@ public class K8sTaskHelper {
     try {
       GitFileConfig gitFileConfig = delegateManifestConfig.getGitFileConfig();
       GitConfig gitConfig = delegateManifestConfig.getGitConfig();
-
       printGitConfigInExecutionLogs(gitConfig, gitFileConfig, executionLogCallback);
       encryptionService.decrypt(gitConfig, delegateManifestConfig.getEncryptedDataDetails(), false);
       ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
