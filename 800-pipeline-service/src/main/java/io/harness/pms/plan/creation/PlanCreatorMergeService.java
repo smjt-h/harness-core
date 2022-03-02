@@ -116,7 +116,7 @@ public class PlanCreatorMergeService {
       ExecutionMetadata metadata, PlanExecutionMetadata planExecutionMetadata) throws IOException {
     try (AutoLogContext ignore =
              PlanCreatorUtils.autoLogContext(metadata, accountId, orgIdentifier, projectIdentifier)) {
-      log.info("Starting plan creation");
+      log.info("[PlanCreatorMergeService] Starting plan creation");
       Map<String, PlanCreatorServiceInfo> services = pmsSdkHelper.getServices();
 
       YamlField pipelineField = YamlUtils.extractPipelineField(planExecutionMetadata.getProcessedYaml());
