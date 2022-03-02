@@ -285,55 +285,55 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
     if (EmptyPredicate.isNotEmpty(module)) {
       return module;
     }
-    return planNode.getServiceName();
+    return planNode == null ? null : planNode.getServiceName();
   }
 
   public String getName() {
     if (EmptyPredicate.isNotEmpty(name)) {
       return name;
     }
-    return planNode.getName();
+    return planNode == null ? null : planNode.getName();
   }
 
   public StepType getStepType() {
     if (stepType != null) {
       return stepType;
     }
-    return planNode.getStepType();
+    return planNode == null ? null : planNode.getStepType();
   }
 
   public String getNodeId() {
     if (EmptyPredicate.isNotEmpty(nodeId)) {
       return nodeId;
     }
-    return planNode.getUuid();
+    return planNode == null ? null : planNode.getUuid();
   }
 
   public String getIdentifier() {
     if (EmptyPredicate.isNotEmpty(identifier)) {
       return identifier;
     }
-    return planNode.getIdentifier();
+    return planNode == null ? null : planNode.getIdentifier();
   }
 
   public String getStageFqn() {
     if (EmptyPredicate.isNotEmpty(stageFqn)) {
       return stageFqn;
     }
-    return planNode.getStageFqn();
+    return planNode == null ? null : planNode.getStageFqn();
   }
 
   public String getGroup() {
     if (EmptyPredicate.isNotEmpty(group)) {
       return group;
     }
-    return planNode.getGroup();
+    return planNode == null ? null : planNode.getGroup();
   }
 
   public SkipType getSkipGraphType() {
     if (skipGraphType != null) {
       return skipGraphType;
     }
-    return planNode.getSkipGraphType();
+    return planNode == null ? null : planNode.getSkipGraphType();
   }
 }
