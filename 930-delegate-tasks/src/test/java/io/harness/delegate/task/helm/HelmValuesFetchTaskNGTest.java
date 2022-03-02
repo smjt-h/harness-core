@@ -108,9 +108,10 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
             .build();
 
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
-    doReturn(Arrays.asList(valuesYaml, any()))
+    doReturn(valuesYaml)
         .when(helmTaskHelperBase)
-        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
+        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any())
+        .get(0);
 
     HelmValuesFetchRequest request = HelmValuesFetchRequest.builder()
                                          .timeout(DEFAULT_ASYNC_CALL_TIMEOUT)
@@ -149,9 +150,10 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
             .build();
 
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
-    doReturn(Arrays.asList(valuesYaml, any()))
+    doReturn(valuesYaml)
         .when(helmTaskHelperBase)
-        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
+        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any())
+        .get(0);
 
     HelmValuesFetchRequest request = HelmValuesFetchRequest.builder()
                                          .timeout(DEFAULT_ASYNC_CALL_TIMEOUT)
@@ -191,9 +193,10 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
             .build();
 
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
-    doReturn(Arrays.asList(valuesYaml, any()))
+    doReturn(valuesYaml)
         .when(helmTaskHelperBase)
-        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
+        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any())
+        .get(0);
 
     HelmValuesFetchRequest request = HelmValuesFetchRequest.builder()
                                          .timeout(DEFAULT_ASYNC_CALL_TIMEOUT)
