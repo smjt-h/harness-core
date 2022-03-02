@@ -9,6 +9,7 @@ package io.harness.serializer;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.debezium.DebeziumMorphiaRegistrar;
 import io.harness.filter.serializer.morphia.FiltersMorphiaRegistrar;
 import io.harness.gitsync.serializer.GitSyncSdkRegistrar;
 import io.harness.morphia.MorphiaRegistrar;
@@ -50,6 +51,7 @@ public class PipelineServiceModuleRegistrars {
           .addAll(OrchestrationStepsModuleRegistrars.morphiaRegistrars)
           .addAll(OrchestrationVisualizationModuleRegistrars.morphiaRegistrars)
           .add(PMSPipelineMorphiaRegistrar.class)
+          .add(DebeziumMorphiaRegistrar.class)
           .addAll(NGTriggerRegistrars.morphiaRegistrars)
           .add(FiltersMorphiaRegistrar.class)
           .addAll(NotificationClientRegistrars.morphiaRegistrars)
