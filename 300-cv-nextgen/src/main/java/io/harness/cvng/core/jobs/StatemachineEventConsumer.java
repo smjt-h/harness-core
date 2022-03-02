@@ -16,11 +16,13 @@ import io.harness.cvng.statemachine.services.api.OrchestrationService;
 import io.harness.eventsframework.api.Consumer;
 import io.harness.eventsframework.consumer.Message;
 import io.harness.eventsframework.schemas.cv.StateMachineTrigger;
+import io.harness.exception.InvalidRequestException;
 import io.harness.queue.QueueController;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import java.util.Objects;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,12 +44,17 @@ public class StatemachineEventConsumer extends AbstractStreamConsumer {
 
   @Override
   protected void processMessage(Message message) {
-    StateMachineTrigger trigger = StateMachineTrigger.parseFrom(message.getMessage().getData());
+    StateMachineTrigger trigger = null;
     try {
+      trigger = StateMachineTrigger.parseFrom(message.getMessage().getData());
       stateMachineService.executeStateMachine(trigger.getVerificationTaskId());
       processAnalysisStateMachine(trigger.getVerificationTaskId());
     } catch (Exception ex) {
-      processFailureMessage(trigger);
+      if (Objects.nonNull(trigger)) {
+        processFailureMessage(trigger);
+      } else {
+        throw new InvalidRequestException("Invalid message for srm_statemachine_event topic  " + message);
+      }
     }
   }
 
