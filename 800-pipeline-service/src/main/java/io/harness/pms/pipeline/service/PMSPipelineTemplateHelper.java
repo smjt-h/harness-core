@@ -87,7 +87,7 @@ public class PMSPipelineTemplateHelper {
         log.error("Unknown un-exception in resolving templates", e);
         throw new NGTemplateException(TEMPLATE_RESOLVE_EXCEPTION_MSG, e);
       } finally {
-        log.info("Pipeline template resolution took {}ms for projectId {}, orgId {}, accountId {}",
+        log.info("[Pipeline_Template] template resolution took {}ms for projectId {}, orgId {}, accountId {}",
             System.currentTimeMillis() - start, projectId, orgId, accountId);
       }
     }

@@ -170,7 +170,8 @@ public class FilterCreatorMergeService {
       FilterCreationBlobResponse.Builder responseBuilder, Map<String, String> filters, SetupMetadata setupMetadata) {
     CompletableFutures<FilterCreationResponseWrapper> completableFutures = new CompletableFutures<>(executor);
     for (Map.Entry<String, PlanCreatorServiceInfo> serviceEntry : services.entrySet()) {
-      if (!pmsSdkHelper.containsSupportedDependencyByYamlPath(serviceEntry.getValue(), responseBuilder.getDeps())) {
+      if (!pmsSdkHelper.containsSupportedDependencyByYamlPath(
+              serviceEntry.getValue(), responseBuilder.getDeps(), serviceEntry.getKey())) {
         continue;
       }
 

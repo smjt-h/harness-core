@@ -116,7 +116,8 @@ public class VariableCreatorMergeService {
       VariablesCreationBlobResponse.Builder responseBuilder, VariablesCreationMetadata metadata) {
     CompletableFutures<VariablesCreationResponse> completableFutures = new CompletableFutures<>(executor);
     for (Map.Entry<String, PlanCreatorServiceInfo> entry : services.entrySet()) {
-      if (!pmsSdkHelper.containsSupportedDependencyByYamlPath(entry.getValue(), responseBuilder.getDeps())) {
+      if (!pmsSdkHelper.containsSupportedDependencyByYamlPath(
+              entry.getValue(), responseBuilder.getDeps(), entry.getKey())) {
         continue;
       }
 

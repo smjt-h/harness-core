@@ -78,7 +78,8 @@ public class PmsSdkHelper {
     return !EmptyPredicate.isEmpty(filteredDependencies);
   }
 
-  public boolean containsSupportedDependencyByYamlPath(PlanCreatorServiceInfo serviceInfo, Dependencies dependencies) {
+  public boolean containsSupportedDependencyByYamlPath(
+      PlanCreatorServiceInfo serviceInfo, Dependencies dependencies, String serviceName) {
     long start = System.currentTimeMillis();
     if (dependencies == null || EmptyPredicate.isEmpty(dependencies.getDependenciesMap())) {
       return false;
@@ -109,8 +110,8 @@ public class PmsSdkHelper {
                                       .map(Map.Entry::getKey)
                                       .findFirst()
                                       .isPresent();
-    log.info("ContainsSupportedDependencyByYamlPath took {}ms for dependencies size {}",
-        System.currentTimeMillis() - start, dependencies.getDependenciesMap().size());
+    log.info("ContainsSupportedDependencyByYamlPath took {}ms for dependencies size {} for serviceName {}",
+        System.currentTimeMillis() - start, dependencies.getDependenciesMap().size(), serviceName);
     return supportedDependency;
   }
 }

@@ -18,6 +18,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.exception.YamlException;
 import io.harness.execution.PlanExecutionMetadata;
+import io.harness.logging.AutoLogContext;
 import io.harness.pms.async.plan.PartialPlanResponseCallback;
 import io.harness.pms.contracts.plan.CreatePartialPlanEvent;
 import io.harness.pms.contracts.plan.Dependencies;
@@ -39,6 +40,7 @@ import io.harness.pms.yaml.YamlUtils;
 import io.harness.waiter.WaitNotifyEngine;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -113,25 +115,25 @@ public class PlanCreatorMergeService {
 
   public PlanCreationBlobResponse createPlan(String accountId, String orgIdentifier, String projectIdentifier,
       ExecutionMetadata metadata, PlanExecutionMetadata planExecutionMetadata) throws IOException {
-    log.info("Starting plan creation for projectId {}, orgIdentifier {}, accountId {}", projectIdentifier,
-        orgIdentifier, accountId);
-    Map<String, PlanCreatorServiceInfo> services = pmsSdkHelper.getServices();
+    try (AutoLogContext ignore = autoLogContext(metadata, accountId, orgIdentifier, projectIdentifier)) {
+      log.info("Starting plan creation");
+      Map<String, PlanCreatorServiceInfo> services = pmsSdkHelper.getServices();
 
-    YamlField pipelineField = YamlUtils.extractPipelineField(planExecutionMetadata.getProcessedYaml());
-    if (pipelineField.getNode().getUuid() == null) {
-      throw new YamlException("Processed pipeline yaml does not have uuid for the pipeline field");
+      YamlField pipelineField = YamlUtils.extractPipelineField(planExecutionMetadata.getProcessedYaml());
+      if (pipelineField.getNode().getUuid() == null) {
+        throw new YamlException("Processed pipeline yaml does not have uuid for the pipeline field");
+      }
+      Dependencies dependencies =
+          Dependencies.newBuilder()
+              .setYaml(planExecutionMetadata.getProcessedYaml())
+              .putDependencies(pipelineField.getNode().getUuid(), pipelineField.getNode().getYamlPath())
+              .build();
+      PlanCreationBlobResponse finalResponse = createPlanForDependenciesRecursive(accountId, orgIdentifier,
+          projectIdentifier, services, dependencies, metadata, planExecutionMetadata.getTriggerPayload());
+      planCreationValidator.validate(accountId, finalResponse);
+      log.info("[PlanCreatorMergeService_Time] Done with plan creation");
+      return finalResponse;
     }
-    Dependencies dependencies =
-        Dependencies.newBuilder()
-            .setYaml(planExecutionMetadata.getProcessedYaml())
-            .putDependencies(pipelineField.getNode().getUuid(), pipelineField.getNode().getYamlPath())
-            .build();
-    PlanCreationBlobResponse finalResponse = createPlanForDependenciesRecursive(accountId, orgIdentifier,
-        projectIdentifier, services, dependencies, metadata, planExecutionMetadata.getTriggerPayload());
-    planCreationValidator.validate(accountId, finalResponse);
-    log.info("Done with plan creation for projectId {}, orgIdentifier {}, accountId {}", projectIdentifier,
-        orgIdentifier, accountId);
-    return finalResponse;
   }
 
   @VisibleForTesting
@@ -188,7 +190,8 @@ public class PlanCreatorMergeService {
     CompletableFutures<PlanCreationResponse> completableFutures = new CompletableFutures<>(executor);
     long start = System.currentTimeMillis();
     for (Map.Entry<String, PlanCreatorServiceInfo> serviceEntry : services.entrySet()) {
-      if (!pmsSdkHelper.containsSupportedDependencyByYamlPath(serviceEntry.getValue(), responseBuilder.getDeps())) {
+      if (!pmsSdkHelper.containsSupportedDependencyByYamlPath(
+              serviceEntry.getValue(), responseBuilder.getDeps(), serviceEntry.getKey())) {
         continue;
       }
 
@@ -227,10 +230,18 @@ public class PlanCreatorMergeService {
     } catch (Exception ex) {
       throw new UnexpectedException("Error fetching plan creation response from service", ex);
     } finally {
-      log.info("PlanCreatorMergeService sdk took {}ms for dependencies size {}", System.currentTimeMillis() - start,
-          responseBuilder.getDeps().getDependenciesMap().size());
+      log.info("[PlanCreatorMergeService_Time] Sdk plan creators took {}ms for initial dependencies size {}",
+          System.currentTimeMillis() - start, responseBuilder.getDeps().getDependenciesMap().size());
     }
     PmsExceptionUtils.checkAndThrowPlanCreatorException(errorResponses);
     return currIterationResponseBuilder.build();
+  }
+
+  protected AutoLogContext autoLogContext(
+      ExecutionMetadata executionMetadata, String accountId, String orgIdentifier, String projectIdentifier) {
+    Map<String, String> logContextMap = new HashMap<>(ImmutableMap.of("planExecutionId",
+        executionMetadata.getExecutionUuid(), "pipelineIdentifier", executionMetadata.getPipelineIdentifier(),
+        "accountIdentifier", accountId, "orgIdentifier", orgIdentifier, "projectIdentifier", projectIdentifier));
+    return new AutoLogContext(logContextMap, AutoLogContext.OverrideBehavior.OVERRIDE_NESTS);
   }
 }

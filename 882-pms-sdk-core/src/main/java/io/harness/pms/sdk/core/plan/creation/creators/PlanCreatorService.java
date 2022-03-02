@@ -19,9 +19,11 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.exception.WingsException;
 import io.harness.exception.exceptionmanager.ExceptionManager;
+import io.harness.logging.AutoLogContext;
 import io.harness.pms.contracts.plan.Dependencies;
 import io.harness.pms.contracts.plan.Dependency;
 import io.harness.pms.contracts.plan.ErrorResponse;
+import io.harness.pms.contracts.plan.ExecutionMetadata;
 import io.harness.pms.contracts.plan.FilterCreationBlobRequest;
 import io.harness.pms.contracts.plan.FilterCreationBlobResponse;
 import io.harness.pms.contracts.plan.FilterCreationResponse;
@@ -43,12 +45,14 @@ import io.harness.pms.utils.CompletableFutures;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlUtils;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -114,15 +118,16 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
     PlanCreationContext ctx = PlanCreationContext.builder().globalContext(context).build();
     long start = System.currentTimeMillis();
     try (PmsGitSyncBranchContextGuard ignore =
-             pmsGitSyncHelper.createGitSyncBranchContextGuardFromBytes(ctx.getGitSyncBranchContext(), true)) {
+             pmsGitSyncHelper.createGitSyncBranchContextGuardFromBytes(ctx.getGitSyncBranchContext(), true);
+         AutoLogContext ignore2 = autoLogContext(ctx.getMetadata().getMetadata())) {
       Dependencies dependencies = initialDependencies.toBuilder().build();
       while (!dependencies.getDependenciesMap().isEmpty()) {
         dependencies = createPlanForDependencies(ctx, finalResponse, dependencies);
         PlanCreatorServiceHelper.removeInitialDependencies(dependencies, initialDependencies);
       }
     }
-    log.info("PlanCreatorService total time took {}ms for dependencies size {}", System.currentTimeMillis() - start,
-        initialDependencies.getDependenciesMap().size());
+    log.info("[PlanCreatorService_Time] RecursiveDependencies total time took {}ms for dependencies size {}",
+        System.currentTimeMillis() - start, initialDependencies.getDependenciesMap().size());
 
     if (finalResponse.getDependencies() != null
         && EmptyPredicate.isNotEmpty(finalResponse.getDependencies().getDependenciesMap())) {
@@ -140,35 +145,36 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
     CompletableFutures<PlanCreationResponse> completableFutures = new CompletableFutures<>(executor);
     List<Map.Entry<String, String>> dependenciesList = new ArrayList<>(dependencies.getDependenciesMap().entrySet());
     String currentYaml = dependencies.getYaml();
-
-    long start = System.currentTimeMillis();
-    YamlField fullField;
-    try {
-      fullField = YamlUtils.readTree(currentYaml);
-    } catch (IOException ex) {
-      String message = "Invalid yaml during plan creation";
-      log.error(message, ex);
-      throw new InvalidRequestException(message);
-    }
-    dependenciesList.forEach(key -> completableFutures.supplyAsync(() -> {
+    try (AutoLogContext ignore = autoLogContext(ctx.getMetadata().getMetadata())) {
+      long start = System.currentTimeMillis();
+      YamlField fullField;
       try {
-        return createPlanForDependencyInternal(currentYaml, fullField.fromYamlPath(key.getValue()), ctx,
-            dependencies.getDependencyMetadataMap().get(key.getKey()));
-      } catch (IOException e) {
-        throw new InvalidRequestException("Unable to parse the field in the path:" + key.getValue());
+        fullField = YamlUtils.readTree(currentYaml);
+      } catch (IOException ex) {
+        String message = "Invalid yaml during plan creation";
+        log.error(message, ex);
+        throw new InvalidRequestException(message);
       }
-    }));
+      dependenciesList.forEach(key -> completableFutures.supplyAsync(() -> {
+        try {
+          return createPlanForDependencyInternal(currentYaml, fullField.fromYamlPath(key.getValue()), ctx,
+              dependencies.getDependencyMetadataMap().get(key.getKey()));
+        } catch (IOException e) {
+          throw new InvalidRequestException("Unable to parse the field in the path:" + key.getValue());
+        }
+      }));
 
-    try {
-      List<PlanCreationResponse> planCreationResponses = completableFutures.allOf().get(2, TimeUnit.MINUTES);
-      return PlanCreatorServiceHelper.handlePlanCreationResponses(
-          planCreationResponses, finalResponse, currentYaml, dependencies, dependenciesList);
-    } catch (Exception ex) {
-      log.error(format("Unexpected plan creation error: %s", ex.getMessage()), ex);
-      throw new UnexpectedException(format("Unexpected plan creation error: %s", ex.getMessage()), ex);
-    } finally {
-      log.info("PlanCreatorService dependencies time took {}ms for dependencies size {}",
-          System.currentTimeMillis() - start, dependenciesList.size());
+      try {
+        List<PlanCreationResponse> planCreationResponses = completableFutures.allOf().get(2, TimeUnit.MINUTES);
+        return PlanCreatorServiceHelper.handlePlanCreationResponses(
+            planCreationResponses, finalResponse, currentYaml, dependencies, dependenciesList);
+      } catch (Exception ex) {
+        log.error(format("Unexpected plan creation error: %s", ex.getMessage()), ex);
+        throw new UnexpectedException(format("Unexpected plan creation error: %s", ex.getMessage()), ex);
+      } finally {
+        log.info("[PlanCreatorService_Time] Dependencies list time took {}ms for dependencies size {}",
+            System.currentTimeMillis() - start, dependenciesList.size());
+      }
     }
   }
 
@@ -226,36 +232,45 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
   private PlanCreationResponse createPlanForDependencyInternal(
       String currentYaml, YamlField field, PlanCreationContext ctx, Dependency dependency) {
     long start = System.currentTimeMillis();
-    try {
-      Optional<PartialPlanCreator<?>> planCreatorOptional =
-          PlanCreatorServiceHelper.findPlanCreator(planCreators, field);
-      if (!planCreatorOptional.isPresent()) {
-        return null;
-      }
-
-      PartialPlanCreator planCreator = planCreatorOptional.get();
-      Class<?> cls = planCreator.getFieldClass();
-      Object obj = YamlField.class.isAssignableFrom(cls) ? field : YamlUtils.read(field.getNode().toString(), cls);
-
+    String fullyQualifiedName = YamlUtils.getFullyQualifiedName(field.getNode());
+    try (AutoLogContext ignore = autoLogContext(ctx.getMetadata().getMetadata())) {
       try {
-        PlanCreationResponse planForField = planCreator.createPlanForField(
-            PlanCreationContext.cloneWithCurrentField(ctx, field, currentYaml, dependency), obj);
-        PlanCreatorServiceHelper.decorateNodesWithStageFqn(field, planForField);
-        return planForField;
-      } catch (Exception ex) {
-        log.error(format("Error creating plan for node: %s", YamlUtils.getFullyQualifiedName(field.getNode())), ex);
-        return PlanCreationResponse.builder()
-            .errorMessage(format("Could not create plan for node [%s]: %s",
-                YamlUtils.getFullyQualifiedName(field.getNode()), ExceptionUtils.getMessage(ex)))
-            .build();
+        Optional<PartialPlanCreator<?>> planCreatorOptional =
+            PlanCreatorServiceHelper.findPlanCreator(planCreators, field);
+        if (!planCreatorOptional.isPresent()) {
+          return null;
+        }
+
+        PartialPlanCreator planCreator = planCreatorOptional.get();
+        Class<?> cls = planCreator.getFieldClass();
+        Object obj = YamlField.class.isAssignableFrom(cls) ? field : YamlUtils.read(field.getNode().toString(), cls);
+
+        try {
+          PlanCreationResponse planForField = planCreator.createPlanForField(
+              PlanCreationContext.cloneWithCurrentField(ctx, field, currentYaml, dependency), obj);
+          PlanCreatorServiceHelper.decorateNodesWithStageFqn(field, planForField);
+          return planForField;
+        } catch (Exception ex) {
+          log.error(format("Error creating plan for node: %s", fullyQualifiedName), ex);
+          return PlanCreationResponse.builder()
+              .errorMessage(
+                  format("Could not create plan for node [%s]: %s", fullyQualifiedName, ExceptionUtils.getMessage(ex)))
+              .build();
+        }
+      } catch (IOException ex) {
+        String message = format("Invalid yaml path [%s] during execution plan creation", field.getYamlPath());
+        log.error(message, ex);
+        return PlanCreationResponse.builder().errorMessage(message).build();
+      } finally {
+        log.info("[PlanCreatorService_Time] Single dependency -> yaml fqn - {}, time took {}ms", fullyQualifiedName,
+            System.currentTimeMillis() - start);
       }
-    } catch (IOException ex) {
-      String message = format("Invalid yaml path [%s] during execution plan creation", field.getYamlPath());
-      log.error(message, ex);
-      return PlanCreationResponse.builder().errorMessage(message).build();
-    } finally {
-      log.info("PlanCreatorService yaml fqn {} time took {}ms", YamlUtils.getFullyQualifiedName(field.getNode()),
-          System.currentTimeMillis() - start);
     }
+  }
+
+  protected AutoLogContext autoLogContext(ExecutionMetadata executionMetadata) {
+    Map<String, String> logContextMap = new HashMap<>(ImmutableMap.of("planExecutionId",
+        executionMetadata.getExecutionUuid(), "pipelineIdentifier", executionMetadata.getPipelineIdentifier()));
+    return new AutoLogContext(logContextMap, AutoLogContext.OverrideBehavior.OVERRIDE_NESTS);
   }
 }

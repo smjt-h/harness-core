@@ -104,7 +104,7 @@ public class PartialPlanResponseCallback extends AsyncResponseCallback<PartialPl
     Map<String, PlanCreatorServiceInfo> services = pmsSdkHelper.getServices();
     for (Map.Entry<String, PlanCreatorServiceInfo> serviceEntry : services.entrySet()) {
       if (!pmsSdkHelper.containsSupportedDependencyByYamlPath(
-              serviceEntry.getValue(), planCreationBlobResponse.getDeps())) {
+              serviceEntry.getValue(), planCreationBlobResponse.getDeps(), serviceEntry.getKey())) {
         continue;
       }
       String waitId = generateUuid();
