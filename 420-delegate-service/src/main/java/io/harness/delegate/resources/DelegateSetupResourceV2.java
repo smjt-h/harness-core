@@ -221,7 +221,6 @@ public class DelegateSetupResourceV2 {
   @Path("{identifier}/tags")
   @Timed
   @ExceptionMetered
-  @InternalApi
   @Operation(operationId = "updateTagsForDelegateGroup", summary = "Updates tags for the Delegate Group.",
       responses =
       {
