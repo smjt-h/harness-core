@@ -228,7 +228,7 @@ if ! `grep upgradeCheckIntervalSeconds config-watcher.yml > /dev/null`; then
 fi
 if ! `grep delegateCheckLocation config-watcher.yml > /dev/null`; then
   echo "delegateCheckLocation: $DELEGATE_STORAGE_URL/$DELEGATE_CHECK_LOCATION" >> config-watcher.yml
-else
+elif [[ "$(grep delegateCheckLocation config-watcher.yml | cut -d ' ' -f 2)" != "$DELEGATE_STORAGE_URL/$DELEGATE_CHECK_LOCATION" ]]; then
   sed -i.bak "s|^delegateCheckLocation:.*$|delegateCheckLocation: $DELEGATE_STORAGE_URL/$DELEGATE_CHECK_LOCATION|" config-watcher.yml
 fi
 
@@ -248,7 +248,7 @@ if ! `grep cvNextGenUrl config-delegate.yml > /dev/null`; then
 fi
 if ! `grep watcherCheckLocation config-delegate.yml > /dev/null`; then
   echo "watcherCheckLocation: $WATCHER_STORAGE_URL/$WATCHER_CHECK_LOCATION" >> config-delegate.yml
-else
+elif [[ "$(grep watcherCheckLocation config-delegate.yml | cut -d ' ' -f 2)" != "$WATCHER_STORAGE_URL/$WATCHER_CHECK_LOCATION" ]]; then
   sed -i.bak "s|^watcherCheckLocation:.*$|watcherCheckLocation: $WATCHER_STORAGE_URL/$WATCHER_CHECK_LOCATION|" config-delegate.yml
 fi
 if ! `grep heartbeatIntervalMs config-delegate.yml > /dev/null`; then
@@ -273,7 +273,7 @@ fi
 
 if ! `grep cdnUrl config-delegate.yml > /dev/null`; then
   echo "cdnUrl: $CDN_URL" >> config-delegate.yml
-else
+elif [[ "$(grep cdnUrl config-delegate.yml | cut -d ' ' -f 1)" != "$CDN_URL" ]]; then
   sed -i.bak "s|^cdnUrl:.*$|cdnUrl: $CDN_URL|" config-delegate.yml
 fi
 
