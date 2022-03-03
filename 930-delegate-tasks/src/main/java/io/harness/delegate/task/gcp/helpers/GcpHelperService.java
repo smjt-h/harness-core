@@ -29,28 +29,20 @@ import software.wings.beans.TaskType;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.google.api.client.auth.oauth2.TokenResponseException;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.compute.Compute;
-import com.google.api.services.compute.ComputeScopes;
 import com.google.api.services.container.Container;
 import com.google.api.services.container.ContainerScopes;
 import com.google.api.services.logging.v2.Logging;
 import com.google.api.services.monitoring.v3.Monitoring;
 import com.google.api.services.storage.Storage;
-import com.google.auth.http.HttpCredentialsAdapter;
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Credentials;
@@ -93,21 +85,7 @@ public class GcpHelperService {
       JacksonFactory jsonFactory = JacksonFactory.getDefaultInstance();
       HttpTransport transport = gcpHttpTransportHelperService.checkIfUseProxyAndGetHttpTransport();
       GoogleCredential credential = getGoogleCredential(serviceAccountKeyFileContent, isUseDelegate);
-
-      if (isUseDelegate) {
-        // Authenticate using Google Application Default Credentials.
-        GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
-        if (credential.createScopedRequired()) {
-          List<String> scopes = new ArrayList<>();
-          scopes.add(ComputeScopes.CLOUD_PLATFORM);
-          scopes.add(ComputeScopes.COMPUTE);
-          credentials = credentials.createScoped(scopes);
-        }
-        HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(credentials);
-        return new Container.Builder(transport, jsonFactory, requestInitializer).setApplicationName("Harness").build();
-
-      } else
-        return new Container.Builder(transport, jsonFactory, credential).setApplicationName("Harness").build();
+      return new Container.Builder(transport, jsonFactory, credential).setApplicationName("Harness").build();
     } catch (GeneralSecurityException e) {
       log.error("Security exception getting Google container service", e);
       throw new WingsException(INVALID_CLOUD_PROVIDER, USER)
