@@ -50,7 +50,6 @@ import io.harness.logging.LogCallback;
 
 import software.wings.beans.LogColor;
 import software.wings.beans.LogWeight;
-import software.wings.beans.command.ExecutionLogCallback;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
