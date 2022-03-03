@@ -32,6 +32,8 @@ import io.harness.cache.HarnessCacheManager;
 import io.harness.delegate.DelegateConfigurationServiceProvider;
 import io.harness.delegate.DelegatePropertiesServiceProvider;
 import io.harness.delegate.beans.DelegateFileManagerBase;
+import io.harness.delegate.task.cloudformation.CloudformationBaseHelper;
+import io.harness.delegate.task.cloudformation.CloudformationBaseHelperImpl;
 import io.harness.exception.WingsException;
 import io.harness.git.GitClientV2;
 import io.harness.git.GitClientV2Impl;
@@ -242,6 +244,7 @@ public class WingsTestModule extends AbstractModule {
     bind(EncryptDecryptHelper.class).to(EncryptDecryptHelperImpl.class);
     bind(DelegateFileManagerBase.class).toInstance(mock(DelegateFileManagerBase.class));
     bind(AWSCloudformationClient.class).to(AWSCloudformationClientImpl.class);
+    bind(CloudformationBaseHelper.class).to(CloudformationBaseHelperImpl.class);
 
     bind(ExecutorService.class)
         .annotatedWith(Names.named("systemExecutor"))

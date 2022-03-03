@@ -25,13 +25,19 @@ import java.util.List;
 
 public interface AWSCloudformationClient {
   List<Stack> getAllStacks(String region, DescribeStacksRequest describeStacksRequest, AwsInternalConfig awsConfig);
+
   void deleteStack(String region, DeleteStackRequest deleteStackRequest, AwsInternalConfig awsConfig);
+
   List<StackResource> getAllStackResources(
       String region, DescribeStackResourcesRequest describeStackResourcesRequest, AwsInternalConfig awsConfig);
+
   List<StackEvent> getAllStackEvents(
       String region, DescribeStackEventsRequest describeStackEventsRequest, AwsInternalConfig awsConfig);
+
   CreateStackResult createStack(String region, CreateStackRequest createStackRequest, AwsInternalConfig awsConfig);
+
   UpdateStackResult updateStack(String region, UpdateStackRequest updateStackRequest, AwsInternalConfig awsConfig);
+
   DescribeStacksResult describeStacks(
       String region, DescribeStacksRequest describeStacksRequest, AwsInternalConfig awsConfig);
 }

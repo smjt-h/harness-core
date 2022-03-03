@@ -12,11 +12,9 @@ import static software.wings.service.impl.aws.model.AwsConstants.AWS_DEFAULT_REG
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.aws.AwsCallTracker;
+import io.harness.aws.beans.AwsInternalConfig;
 
-import software.wings.beans.AwsConfig;
 import software.wings.service.impl.delegate.AwsEcrApiHelperServiceDelegateBase;
-import software.wings.service.intfc.security.EncryptionService;
-import software.wings.service.mappers.artifact.AwsConfigToInternalMapper;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
@@ -29,13 +27,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AwsHelperServiceDelegateBaseNG {
   @VisibleForTesting static final String HARNESS_AUTOSCALING_GROUP_TAG = "HARNESS_REVISION";
-  @Inject protected EncryptionService encryptionService;
   @Inject protected AwsCallTracker tracker;
   @Inject protected AwsEcrApiHelperServiceDelegateBase awsEcrApiHelperServiceDelegateBase;
 
-  protected void attachCredentialsAndBackoffPolicy(AwsClientBuilder builder, AwsConfig awsConfig) {
-    awsEcrApiHelperServiceDelegateBase.attachCredentialsAndBackoffPolicy(
-        builder, AwsConfigToInternalMapper.toAwsInternalConfig(awsConfig));
+  protected void attachCredentialsAndBackoffPolicy(AwsClientBuilder builder, AwsInternalConfig awsConfig) {
+    awsEcrApiHelperServiceDelegateBase.attachCredentialsAndBackoffPolicy(builder, awsConfig);
   }
 
   @VisibleForTesting
@@ -47,11 +43,13 @@ public class AwsHelperServiceDelegateBaseNG {
   void handleAmazonServiceException(AmazonServiceException amazonServiceException) {
     awsEcrApiHelperServiceDelegateBase.handleAmazonServiceException(amazonServiceException);
   }
+
   protected boolean isHarnessManagedTag(String infraMappingId, TagDescription tagDescription) {
     return tagDescription.getKey().equals(HARNESS_AUTOSCALING_GROUP_TAG)
         && tagDescription.getValue().startsWith(infraMappingId);
   }
-  protected String getRegion(AwsConfig awsConfig) {
+
+  protected String getRegion(AwsInternalConfig awsConfig) {
     if (isNotBlank(awsConfig.getDefaultRegion())) {
       return awsConfig.getDefaultRegion();
     } else {

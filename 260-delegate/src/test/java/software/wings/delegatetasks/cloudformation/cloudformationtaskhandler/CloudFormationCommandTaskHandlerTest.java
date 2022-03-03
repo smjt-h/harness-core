@@ -8,6 +8,9 @@
 package software.wings.delegatetasks.cloudformation.cloudformationtaskhandler;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.delegate.task.cloudformation.CloudformationBaseHelperImpl.CLOUDFORMATION_STACK_CREATE_BODY;
+import static io.harness.delegate.task.cloudformation.CloudformationBaseHelperImpl.CLOUDFORMATION_STACK_CREATE_GIT;
+import static io.harness.delegate.task.cloudformation.CloudformationBaseHelperImpl.CLOUDFORMATION_STACK_CREATE_URL;
 import static io.harness.rule.OwnerRule.RAGHVENDRA;
 import static io.harness.rule.OwnerRule.SATYAM;
 
@@ -27,7 +30,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -38,6 +40,7 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.aws.AWSCloudformationClient;
 import io.harness.aws.beans.AwsInternalConfig;
 import io.harness.category.element.UnitTests;
+import io.harness.delegate.task.cloudformation.CloudformationBaseHelperImpl;
 import io.harness.exception.ExceptionUtils;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.rule.Owner;
@@ -46,7 +49,6 @@ import software.wings.WingsBaseTest;
 import software.wings.beans.AwsConfig;
 import software.wings.beans.GitConfig;
 import software.wings.beans.GitFileConfig;
-import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.helpers.ext.cloudformation.request.CloudFormationCommandRequest.CloudFormationCommandType;
 import software.wings.helpers.ext.cloudformation.request.CloudFormationCreateStackRequest;
 import software.wings.helpers.ext.cloudformation.request.CloudFormationDeleteStackRequest;
@@ -63,12 +65,10 @@ import software.wings.service.intfc.security.EncryptionService;
 import com.amazonaws.services.cloudformation.model.CreateStackResult;
 import com.amazonaws.services.cloudformation.model.Output;
 import com.amazonaws.services.cloudformation.model.Stack;
-import com.amazonaws.services.cloudformation.model.StackEvent;
 import com.amazonaws.services.cloudformation.model.UpdateStackResult;
 import com.google.inject.Inject;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -87,13 +87,21 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
   @InjectMocks @Inject private CloudFormationCreateStackHandler createStackHandler;
   @InjectMocks @Inject private CloudFormationDeleteStackHandler deleteStackHandler;
   @InjectMocks @Inject private CloudFormationListStacksHandler listStacksHandler;
+  private CloudformationBaseHelperImpl cloudformationBaseHelper;
 
   @Before
   public void setUp() throws Exception {
     initMocks(this);
+    cloudformationBaseHelper = new CloudformationBaseHelperImpl();
     on(createStackHandler).set("awsCFHelperServiceDelegate", mockAwsCFHelperServiceDelegate);
     on(listStacksHandler).set("awsCFHelperServiceDelegate", mockAwsCFHelperServiceDelegate);
     on(deleteStackHandler).set("awsCFHelperServiceDelegate", mockAwsCFHelperServiceDelegate);
+    on(deleteStackHandler).set("cloudformationBaseHelper", cloudformationBaseHelper);
+    on(listStacksHandler).set("cloudformationBaseHelper", cloudformationBaseHelper);
+    on(createStackHandler).set("cloudformationBaseHelper", cloudformationBaseHelper);
+    on(cloudformationBaseHelper).set("encryptionService", mockEncryptionService);
+    on(cloudformationBaseHelper).set("awsHelperService", mockAwsHelperService);
+    on(cloudformationBaseHelper).set("awsCFHelperServiceDelegate", mockAwsCFHelperServiceDelegate);
     when(mockEncryptionService.decrypt(any(), any(), eq(false))).thenReturn(null);
   }
 
@@ -131,7 +139,7 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .commandName("Create Stack")
             .awsConfig(AwsConfig.builder().accessKey(accessKey).accountId(ACCOUNT_ID).secretKey(secretKey).build())
             .timeoutInMs(10 * 60 * 1000)
-            .createType(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_BODY)
+            .createType(CLOUDFORMATION_STACK_CREATE_BODY)
             .data(templateBody)
             .stackNameSuffix(stackNameSuffix)
             .build();
@@ -188,7 +196,7 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .commandName("Create Stack")
             .awsConfig(AwsConfig.builder().accessKey(accessKey).accountId(ACCOUNT_ID).secretKey(secretKey).build())
             .timeoutInMs(10 * 60 * 1000)
-            .createType(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_BODY)
+            .createType(CLOUDFORMATION_STACK_CREATE_BODY)
             .data(templateBody)
             .stackNameSuffix(stackNameSuffix)
             .build();
@@ -226,7 +234,7 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .awsConfig(AwsConfig.builder().accessKey(accessKey).accountId(ACCOUNT_ID).secretKey(secretKey).build())
             .timeoutInMs(10 * 60 * 1000)
             .data(data)
-            .createType(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_GIT)
+            .createType(CLOUDFORMATION_STACK_CREATE_GIT)
             .stackNameSuffix(stackNameSuffix)
             .build();
     String stackId = "Stack Id 00";
@@ -287,7 +295,7 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .commandName("Create Stack")
             .awsConfig(AwsConfig.builder().accessKey(accessKey).accountId(ACCOUNT_ID).secretKey(secretKey).build())
             .timeoutInMs(10 * 60 * 1000)
-            .createType(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_BODY)
+            .createType(CLOUDFORMATION_STACK_CREATE_BODY)
             .data(templateBody)
             .stackNameSuffix(stackNameSuffix)
             .build();
@@ -336,7 +344,7 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .commandName("Create Stack")
             .awsConfig(AwsConfig.builder().accessKey(accessKey).accountId(ACCOUNT_ID).secretKey(secretKey).build())
             .timeoutInMs(10 * 60 * 1000)
-            .createType(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_BODY)
+            .createType(CLOUDFORMATION_STACK_CREATE_BODY)
             .data(templateBody)
             .stackNameSuffix(stackNameSuffix)
             .build();
@@ -384,7 +392,7 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .commandName("Create Stack")
             .awsConfig(AwsConfig.builder().accessKey(accessKey).accountId(ACCOUNT_ID).secretKey(secretKey).build())
             .timeoutInMs(10 * 60 * 1000)
-            .createType(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_BODY)
+            .createType(CLOUDFORMATION_STACK_CREATE_BODY)
             .data(templateBody)
             .stackNameSuffix(stackNameSuffix)
             .build();
@@ -437,7 +445,7 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .awsConfig(AwsConfig.builder().accessKey(accessKey).accountId(ACCOUNT_ID).secretKey(secretKey).build())
             .timeoutInMs(10 * 60 * 1000)
             .stackStatusesToMarkAsSuccess(singletonList(UPDATE_ROLLBACK_COMPLETE))
-            .createType(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_BODY)
+            .createType(CLOUDFORMATION_STACK_CREATE_BODY)
             .data(templateBody)
             .stackNameSuffix(stackNameSuffix)
             .build();
@@ -488,7 +496,7 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .timeoutInMs(10 * 60 * 1000)
             .gitConfig(GitConfig.builder().repoUrl("").branch("").build())
             .gitFileConfig(GitFileConfig.builder().filePath("").commitId("").build())
-            .createType(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_GIT)
+            .createType(CLOUDFORMATION_STACK_CREATE_GIT)
             .data(templateBody)
             .stackNameSuffix(stackNameSuffix)
             .build();
@@ -663,48 +671,6 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = RAGHVENDRA)
-  @Category(UnitTests.class)
-  public void testPrintStackEvents() {
-    String stackName = "HarnessStack-test";
-    long stackEventTs = 1000;
-    String roleArn = "roleArn";
-    String templateBody = "Template Body";
-    char[] accessKey = "abcd".toCharArray();
-    char[] secretKey = "pqrs".toCharArray();
-    String stackNameSuffix = "Stack Name 00";
-    Date timeStamp = new Date();
-    CloudFormationCreateStackRequest request =
-        CloudFormationCreateStackRequest.builder()
-            .commandType(CloudFormationCommandType.CREATE_STACK)
-            .accountId(ACCOUNT_ID)
-            .appId(APP_ID)
-            .activityId(ACTIVITY_ID)
-            .cloudFormationRoleArn(roleArn)
-            .commandName("Create Stack")
-            .awsConfig(AwsConfig.builder().accessKey(accessKey).accountId(ACCOUNT_ID).secretKey(secretKey).build())
-            .timeoutInMs(10 * 60 * 1000)
-            .createType(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_BODY)
-            .data(templateBody)
-            .stackNameSuffix(stackNameSuffix)
-            .build();
-    Stack testStack = new Stack().withStackStatus("CREATE_COMPLETE").withStackName(stackName + stackNameSuffix);
-    ExecutionLogCallback logCallback = mock(ExecutionLogCallback.class);
-    StackEvent stackEvent = new StackEvent()
-                                .withStackName(stackName)
-                                .withEventId("id")
-                                .withResourceStatusReason("statusReason")
-                                .withTimestamp(timeStamp);
-    when(mockAwsHelperService.getAllStackEvents(any(), any(), any())).thenReturn(singletonList(stackEvent));
-
-    long resStackEventTs = createStackHandler.printStackEvents(request, stackEventTs, testStack, logCallback);
-    String message = format("[%s] [%s] [%s] [%s] [%s]", stackEvent.getResourceStatus(), stackEvent.getResourceType(),
-        stackEvent.getLogicalResourceId(), "statusReason", stackEvent.getPhysicalResourceId());
-    verify(logCallback).saveExecutionLog(message);
-    assertThat(resStackEventTs).isEqualTo(timeStamp.getTime());
-  }
-
-  @Test
   @Owner(developers = SATYAM)
   @Category(UnitTests.class)
   public void testListStacks() {
@@ -790,7 +756,7 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .commandName("Create Stack")
             .awsConfig(AwsConfig.builder().accessKey(accessKey).accountId(ACCOUNT_ID).secretKey(secretKey).build())
             .timeoutInMs(10 * 60 * 1000)
-            .createType(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_URL)
+            .createType(CLOUDFORMATION_STACK_CREATE_URL)
             .data(templateBody)
             .stackNameSuffix(stackNameSuffix)
             .build();
@@ -931,7 +897,7 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .commandName("Create Stack")
             .awsConfig(AwsConfig.builder().accessKey(accessKey).accountId(ACCOUNT_ID).secretKey(secretKey).build())
             .timeoutInMs(10 * 60 * 1000)
-            .createType(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_URL)
+            .createType(CLOUDFORMATION_STACK_CREATE_URL)
             .data(templateBody)
             .stackNameSuffix(stackNameSuffix)
             .build();
@@ -983,7 +949,7 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .commandName("Create Stack")
             .awsConfig(AwsConfig.builder().accessKey(accessKey).accountId(ACCOUNT_ID).secretKey(secretKey).build())
             .timeoutInMs(10 * 60 * 1000)
-            .createType(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_BODY)
+            .createType(CLOUDFORMATION_STACK_CREATE_BODY)
             .data(templateBody)
             .stackNameSuffix(stackNameSuffix)
             .build();
@@ -1075,7 +1041,7 @@ public class CloudFormationCommandTaskHandlerTest extends WingsBaseTest {
             .commandName("Create Stack")
             .awsConfig(AwsConfig.builder().accessKey(accessKey).accountId(ACCOUNT_ID).secretKey(secretKey).build())
             .timeoutInMs(10 * 60 * 1000)
-            .createType(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_BODY)
+            .createType(CLOUDFORMATION_STACK_CREATE_BODY)
             .data(templateBody)
             .stackNameSuffix(stackNameSuffix)
             .build();

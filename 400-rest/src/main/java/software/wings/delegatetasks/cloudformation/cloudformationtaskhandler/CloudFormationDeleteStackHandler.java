@@ -12,10 +12,10 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
-import io.harness.aws.beans.AwsInternalConfig;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.security.encryption.EncryptedDataDetail;
 
+import software.wings.beans.AwsConfig;
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.helpers.ext.cloudformation.request.CloudFormationCommandRequest;
 import software.wings.helpers.ext.cloudformation.request.CloudFormationDeleteStackRequest;
@@ -39,11 +39,12 @@ public class CloudFormationDeleteStackHandler extends CloudFormationCommandTaskH
       List<EncryptedDataDetail> details, ExecutionLogCallback executionLogCallback) {
     CloudFormationDeleteStackRequest cloudFormationDeleteStackRequest = (CloudFormationDeleteStackRequest) request;
     CloudFormationCommandExecutionResponseBuilder builder = CloudFormationCommandExecutionResponse.builder();
-    AwsInternalConfig awsInternalConfig =
-        AwsConfigToInternalMapper.toAwsInternalConfig(cloudFormationDeleteStackRequest.getAwsConfig());
-    encryptionService.decrypt(awsInternalConfig, details, false);
+    AwsConfig awsConfig = cloudFormationDeleteStackRequest.getAwsConfig();
+    encryptionService.decrypt(awsConfig, details, false);
     Optional<Stack> existingStack = getIfStackExists(cloudFormationDeleteStackRequest.getCustomStackName(),
-        cloudFormationDeleteStackRequest.getStackNameSuffix(), awsInternalConfig, request.getRegion());
+        cloudFormationDeleteStackRequest.getStackNameSuffix(),
+        AwsConfigToInternalMapper.toAwsInternalConfig(cloudFormationDeleteStackRequest.getAwsConfig()),
+        request.getRegion());
     String stackId;
     String stackName;
     if (existingStack.isPresent()) {

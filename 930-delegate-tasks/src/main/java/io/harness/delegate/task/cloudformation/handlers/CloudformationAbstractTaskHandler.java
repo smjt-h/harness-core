@@ -13,6 +13,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.task.cloudformation.CloudformationBaseHelper;
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGParameters;
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGResponse;
+import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 
 import com.google.inject.Inject;
@@ -33,9 +34,12 @@ public abstract class CloudformationAbstractTaskHandler {
       String taskId, LogCallback logCallback) throws Exception {
     try {
       return executeTaskInternal(taskNGParameters, delegateId, taskId, logCallback);
-    } finally {
-      // Finally tasks here if we need them
-      cloudformationBaseHelper.performCleanUpTasks(taskNGParameters, delegateId, taskId, logCallback);
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      return CloudformationTaskNGResponse.builder()
+          .commandExecutionStatus(CommandExecutionStatus.FAILURE)
+          .errorMessage(e.getMessage())
+          .build();
     }
   }
 }
