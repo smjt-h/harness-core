@@ -1,8 +1,10 @@
 package io.harness.debezium;
 
-import static io.harness.rule.OwnerRule.PRASHANT;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.rule.OwnerRule.SHALINI;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNotNull;
 
 import io.harness.category.element.UnitTests;
 import io.harness.rule.Owner;
@@ -10,6 +12,7 @@ import io.harness.rule.Owner;
 import com.google.inject.Inject;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -22,45 +25,40 @@ public class MongoOffsetBackingStoreTest extends DebeziumTestBase {
   @InjectMocks MongoOffsetBackingStore mongoOffsetBackingStore;
   @Inject MongoTemplate mongoTemplate;
   private final String collectionName = "debeziumOffset";
+  private byte[] keyBytes = {24, 78};
+  private byte[] valueBytes = {102, 98};
 
-  @Test
-  @Owner(developers = PRASHANT)
-  @Category(UnitTests.class)
-  public void testLoad() {
+  public void initialize() {
     MockitoAnnotations.initMocks(this);
-    mongoOffsetBackingStore.setCollectionName(collectionName);
-    mongoOffsetBackingStore.setData(data);
     mongoOffsetBackingStore.setMongoTemplate(mongoTemplate);
-    mongoOffsetBackingStore.load();
-    assertThat(mongoOffsetBackingStore.isFoundOffsets()).isEqualTo(false);
-    byte[] keyBytes = {23, 24, 56};
-    byte[] valueBytes = {12, 20, 60};
-    ByteBuffer key = ByteBuffer.wrap(keyBytes);
-    ByteBuffer value = ByteBuffer.wrap(valueBytes);
-    data.put(key, value);
-    mongoOffsetBackingStore.setData(data);
-    mongoOffsetBackingStore.save();
-    mongoOffsetBackingStore.load();
-    assertThat(mongoOffsetBackingStore.isFoundOffsets()).isEqualTo(true);
+    mongoOffsetBackingStore.setCollectionName(collectionName);
   }
 
   @Test
-  @Owner(developers = PRASHANT)
+  @Owner(developers = SHALINI)
+  @Category(UnitTests.class)
+  public void testLoad() {
+    initialize();
+    mongoOffsetBackingStore.load();
+    assertEquals(isEmpty(mongoOffsetBackingStore.getData()), true);
+    mongoTemplate.save(
+        DebeziumOffset.builder().key(keyBytes).value(valueBytes).createdAt(System.currentTimeMillis()).build(),
+        collectionName);
+    mongoOffsetBackingStore.load();
+    assertEquals(!isEmpty(mongoOffsetBackingStore.getData()), true);
+  }
+
+  @Test
+  @Owner(developers = SHALINI)
   @Category(UnitTests.class)
   public void testSave() {
-    MockitoAnnotations.initMocks(this);
-    mongoOffsetBackingStore.setCollectionName(collectionName);
-    mongoOffsetBackingStore.setData(data);
-    mongoOffsetBackingStore.setMongoTemplate(mongoTemplate);
-    mongoOffsetBackingStore.save();
-    assertThat(mongoOffsetBackingStore.isSavedOffset()).isEqualTo(false);
-    byte[] keyBytes = {23, 24, 56};
-    byte[] valueBytes = {12, 20, 60};
+    initialize();
     ByteBuffer key = ByteBuffer.wrap(keyBytes);
     ByteBuffer value = ByteBuffer.wrap(valueBytes);
     data.put(key, value);
     mongoOffsetBackingStore.setData(data);
     mongoOffsetBackingStore.save();
-    assertThat(mongoOffsetBackingStore.isSavedOffset()).isEqualTo(true);
+    List<DebeziumOffset> debeziumOffset = mongoTemplate.findAll(DebeziumOffset.class, collectionName);
+    assertNotNull(debeziumOffset);
   }
 }
