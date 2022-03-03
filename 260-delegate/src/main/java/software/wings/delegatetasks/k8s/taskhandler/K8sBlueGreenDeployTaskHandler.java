@@ -130,8 +130,7 @@ public class K8sBlueGreenDeployTaskHandler extends K8sTaskHandler {
 
       success = k8sTaskHelper.fetchManifestFilesAndWriteToDirectory(
           k8sBlueGreenDeployTaskParameters.getK8sDelegateManifestConfig(),
-          k8sBlueGreenHandlerConfig.getManifestFilesDirectory(),
-          k8sTaskHelper.getExecutionLogCallback(k8sBlueGreenDeployTaskParameters, FetchFiles), timeoutInMillis);
+          k8sBlueGreenHandlerConfig.getManifestFilesDirectory(), executionLogCallback, timeoutInMillis);
       if (!success) {
         return getFailureResponse(null);
       }
