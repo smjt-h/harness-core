@@ -105,10 +105,10 @@ ciExecutionServiceConfig:
   defaultCPULimit: 400
   defaultInternalImageConnector: ''
   pvcDefaultStorageSize: 25600
-  delegateServiceEndpointVariableValue: "2.tcp.ngrok.io:14555 "
-  addonImage: harness/ci-addon:1.5.0
-  liteEngineImage: harness/ci-lite-engine:1.5.0
-  isLocal: true
+  delegateServiceEndpointVariableValue: "delegate-service:8080"
+  addonImage: harness/ci-addon:1.7.0
+  liteEngineImage: harness/ci-lite-engine:1.7.0
+  isLocal: false
   stepConfig:
     # The below config is for K8 steps
     gitCloneConfig:
@@ -197,7 +197,7 @@ pmsGrpcClientConfig:
 
 apiUrl: https://localhost:8181/#/
 
-shouldConfigureWithPMS: true
+shouldConfigureWithPMS: false
 
 enableDashboardTimescale: false
 
