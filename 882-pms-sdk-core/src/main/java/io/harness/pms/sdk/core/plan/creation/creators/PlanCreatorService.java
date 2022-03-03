@@ -259,8 +259,8 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
         Class<?> cls = planCreator.getFieldClass();
         Object obj = YamlField.class.isAssignableFrom(cls) ? field : YamlUtils.read(field.getNode().toString(), cls);
 
-        log.info("[PlanCreatorService_Yaml] Yaml deserialize total time for fqn - {}, is {}ms", fullyQualifiedName,
-            System.currentTimeMillis() - yamlDeserializeStartTime);
+        log.info("[PlanCreatorService_Yaml] Yaml deserialize total time is {}ms for fqn - {}",
+            System.currentTimeMillis() - yamlDeserializeStartTime, fullyQualifiedName);
 
         try {
           PlanCreationResponse planForField = planCreator.createPlanForField(
@@ -279,8 +279,8 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
         log.error(message, ex);
         return PlanCreationResponse.builder().errorMessage(message).build();
       } finally {
-        log.info("[PlanCreatorService_Time] Single dependency -> yaml fqn - {}, time took {}ms", fullyQualifiedName,
-            System.currentTimeMillis() - start);
+        log.info("[PlanCreatorService_Time] Single dependency time took {}ms -> yaml fqn - {}",
+            System.currentTimeMillis() - start, fullyQualifiedName);
       }
     }
   }
