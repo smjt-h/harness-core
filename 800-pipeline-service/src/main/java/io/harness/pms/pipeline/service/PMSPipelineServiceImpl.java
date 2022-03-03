@@ -574,7 +574,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     Set<ExpansionResponseBatch> expansionResponseBatches =
         jsonExpander.fetchExpansionResponses(expansionRequests, expansionRequestMetadata);
     String mergeExpansions = ExpansionsMerger.mergeExpansions(pipelineYaml, expansionResponseBatches);
-    log.info("Pipeline Json Expansion took {}ms for projectId {}, orgId {}, accountId {}",
+    log.info("[PMS_GOVERNANCE] Pipeline Json Expansion took {}ms for projectId {}, orgId {}, accountId {}",
         System.currentTimeMillis() - start, projectIdentifier, orgIdentifier, accountId);
     return mergeExpansions;
   }
