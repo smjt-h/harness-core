@@ -114,8 +114,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
     doReturn(valuesYamlObjectList)
         .when(helmTaskHelperBase)
-        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any())
-        .get(0);
+        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
 
     HelmValuesFetchRequest request = HelmValuesFetchRequest.builder()
                                          .timeout(DEFAULT_ASYNC_CALL_TIMEOUT)
@@ -158,8 +157,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
     doReturn(valuesYamlObjectList)
         .when(helmTaskHelperBase)
-        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any())
-        .get(0);
+        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
 
     HelmValuesFetchRequest request = HelmValuesFetchRequest.builder()
                                          .timeout(DEFAULT_ASYNC_CALL_TIMEOUT)
@@ -203,8 +201,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
     doReturn(valuesYamlObjectList)
         .when(helmTaskHelperBase)
-        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any())
-        .get(0);
+        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
 
     HelmValuesFetchRequest request = HelmValuesFetchRequest.builder()
                                          .timeout(DEFAULT_ASYNC_CALL_TIMEOUT)
