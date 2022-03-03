@@ -30,8 +30,8 @@ public class MongoOffsetBackingStore extends MemoryOffsetBackingStore {
   private MongoTemplate mongoTemplate;
   private MongoClient mongoClient;
   private String collectionName;
-  private boolean foundOffsets = false;
-  private boolean savedOffset = false;
+  private boolean foundOffsets;
+  private boolean savedOffset;
 
   public void setCollectionName(String collectionName) {
     this.collectionName = collectionName;
