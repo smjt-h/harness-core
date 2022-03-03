@@ -7,6 +7,7 @@
 
 package io.harness.debezium;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientURI;
@@ -29,6 +30,28 @@ public class MongoOffsetBackingStore extends MemoryOffsetBackingStore {
   private MongoTemplate mongoTemplate;
   private MongoClient mongoClient;
   private String collectionName;
+  private boolean foundOffsets = false;
+  private boolean savedOffset = false;
+
+  public void setCollectionName(String collectionName) {
+    this.collectionName = collectionName;
+  }
+
+  public boolean isSavedOffset() {
+    return savedOffset;
+  }
+
+  public void setMongoTemplate(MongoTemplate mongoTemplate) {
+    this.mongoTemplate = mongoTemplate;
+  }
+
+  public boolean isFoundOffsets() {
+    return foundOffsets;
+  }
+
+  public void setData(Map<ByteBuffer, ByteBuffer> data) {
+    this.data = data;
+  }
 
   @Override
   public void configure(WorkerConfig workerConfig) {
@@ -46,6 +69,7 @@ public class MongoOffsetBackingStore extends MemoryOffsetBackingStore {
     MongoClientURI uri = new MongoClientURI(connectionUri, MongoClientOptions.builder(primaryMongoClientOptions));
     mongoClient = new MongoClient(uri);
     mongoTemplate = new MongoTemplate(mongoClient, Objects.requireNonNull(uri.getDatabase()));
+    this.data = new HashMap<>();
   }
 
   @Override
@@ -55,13 +79,14 @@ public class MongoOffsetBackingStore extends MemoryOffsetBackingStore {
     load();
   }
 
-  private void load() {
-    this.data = new HashMap<>();
+  @VisibleForTesting
+  public void load() {
     DebeziumOffset debeziumOffset =
         mongoTemplate.findOne(new Query().with(Sort.by(Sort.Order.desc(DebeziumOffset.keys.createdAt))),
             DebeziumOffset.class, collectionName);
     if (debeziumOffset != null) {
       this.data.put(ByteBuffer.wrap(debeziumOffset.getKey()), ByteBuffer.wrap(debeziumOffset.getValue()));
+      foundOffsets = true;
     } else {
       log.info("No offset found in the database, will start a full sync.");
     }
@@ -84,12 +109,16 @@ public class MongoOffsetBackingStore extends MemoryOffsetBackingStore {
   }
 
   @Override
-  protected void save() {
+  @VisibleForTesting
+  public void save() {
     for (Map.Entry<ByteBuffer, ByteBuffer> mapEntry : data.entrySet()) {
       byte[] key = (mapEntry.getKey() != null) ? mapEntry.getKey().array() : null;
       byte[] value = (mapEntry.getValue() != null) ? mapEntry.getValue().array() : null;
       DebeziumOffset debeziumOffset = mongoTemplate.save(
           DebeziumOffset.builder().key(key).value(value).createdAt(System.currentTimeMillis()).build(), collectionName);
+      if (debeziumOffset != null) {
+        savedOffset = true;
+      }
       log.info("Saved offset in db is: {}", debeziumOffset);
     }
   }
