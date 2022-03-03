@@ -48,6 +48,8 @@ public class RestClientUtils {
       Call<RestResponse<T>> request, String defaultErrorMessage, String connectionErrorMessage) {
     try {
       Response<RestResponse<T>> response = request.execute();
+
+      log.info("sending request to cg manager {} {}", request, response);
       if (response.isSuccessful()) {
         return response.body().getResource();
       } else {
@@ -64,13 +66,13 @@ public class RestClientUtils {
             }
           }
         } catch (Exception e) {
-          log.debug("Error while converting error received from upstream systems", e);
+          log.info("Error while converting error received from upstream systems", e);
         }
         throw new InvalidRequestException(StringUtils.isEmpty(errorMessage) ? defaultErrorMessage : errorMessage);
       }
     } catch (IOException ex) {
       String url = Optional.ofNullable(request.request()).map(x -> x.url().encodedPath()).orElse(null);
-      log.error("IO error while connecting to the service: {}", url, ex);
+      log.info("IO error while connecting to the service: {}", url, ex);
       throw new UnexpectedException(connectionErrorMessage);
     }
   }
