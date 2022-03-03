@@ -50,6 +50,7 @@ import software.wings.beans.deployment.WorkflowVariablesMetadata;
 import software.wings.beans.execution.WorkflowExecutionInfo;
 import software.wings.beans.trigger.Trigger;
 import software.wings.infra.InfrastructureDefinition;
+import software.wings.resources.PreviousApprovalDetails;
 import software.wings.service.impl.WorkflowExecutionUpdate;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionInterrupt;
@@ -331,4 +332,10 @@ public interface WorkflowExecutionService extends StateStatusUpdate {
 
   List<WorkflowExecution> getLatestSuccessWorkflowExecutions(String appId, String workflowId, List<String> serviceIds,
       int executionsToSkip, int executionsToIncludeInResponse);
+
+  PreviousApprovalDetails getPreviousApprovalDetails(String appId, String workflowExecutionId, String pipelineId);
+  Boolean approveAndRejectPreviousExecutions(String accountId, String appId, String workflowExecutionId,
+      String stateExecutionId, ApprovalDetails approvalDetails, PreviousApprovalDetails previousApprovalIds);
+
+  void rejectPreviousDeployments(String appId, String workflowExecutionId, ApprovalDetails approvalDetails);
 }

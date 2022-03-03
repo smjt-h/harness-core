@@ -426,6 +426,11 @@ public class ExecutionResource {
         workflowExecutionService.fetchApprovalStateExecutionDataFromWorkflowExecution(
             appId, workflowExecutionId, stateExecutionId, approvalDetails);
 
+    if (approvalStateExecutionData.isAutoRejectPreviousDeployments()
+        && approvalDetails.getAction() == ApprovalDetails.Action.APPROVE) {
+      workflowExecutionService.rejectPreviousDeployments(appId, workflowExecutionId, approvalDetails);
+    }
+
     if (isEmpty(approvalStateExecutionData.getUserGroups())) {
       deploymentAuthHandler.authorize(appId, workflowExecutionId);
     }
@@ -719,5 +724,30 @@ public class ExecutionResource {
       throw new InvalidRequestException("workflowExecutionId is required", USER);
     }
     return new RestResponse<>(workflowExecutionService.getWorkflowExecutionInfo(workflowExecutionId));
+  }
+
+  @GET
+  @Path("{workflowExecutionId}/previousApprovalDetails")
+  @Timed
+  @ExceptionMetered
+  @AuthRule(permissionType = DEPLOYMENT, action = EXECUTE_PIPELINE, skipAuth = true)
+  public RestResponse<PreviousApprovalDetails> getPreviousApprovalDetails(@QueryParam("appId") String appId,
+      @PathParam("workflowExecutionId") String workflowExecutionId, @QueryParam("pipelineId") String pipelineId) {
+    return new RestResponse<>(
+        workflowExecutionService.getPreviousApprovalDetails(appId, workflowExecutionId, pipelineId));
+  }
+
+  @POST
+  @Path("{workflowExecutionId}/approveAndRejectPreviousDeployments")
+  @Timed
+  @ExceptionMetered
+  @AuthRule(permissionType = DEPLOYMENT, action = EXECUTE_PIPELINE, skipAuth = true)
+  public RestResponse<Boolean> approveAndRejectPreviousDeployments(@QueryParam("accountId") String accountId,
+      @QueryParam("appId") String appId, @QueryParam("stateExecutionId") String stateExecutionId,
+      @PathParam("workflowExecutionId") String workflowExecutionId,
+      ApproveAndRejectPreviousDeploymentsBody approveAndRejectPreviousDeploymentsBody) {
+    return new RestResponse<>(workflowExecutionService.approveAndRejectPreviousExecutions(accountId, appId,
+        workflowExecutionId, stateExecutionId, approveAndRejectPreviousDeploymentsBody.getApprovalDetails(),
+        approveAndRejectPreviousDeploymentsBody.getPreviousApprovalDetails()));
   }
 }

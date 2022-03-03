@@ -173,6 +173,7 @@ public class ApprovalState extends State implements SweepingOutputStateMixin {
   @Getter @Setter private List<String> userGroups = new ArrayList<>();
   @Getter @Setter private boolean disable;
   @Getter @Setter private String disableAssertion;
+  @Getter @Setter private boolean autoRejectPreviousDeployments;
   @Setter @SchemaIgnore private String stageName;
 
   @Override
@@ -864,6 +865,7 @@ public class ApprovalState extends State implements SweepingOutputStateMixin {
       Map<String, String> placeholderValues, String approvalId, ApprovalStateExecutionData executionData, String appId,
       ExecutionContext context) {
     executionData.setUserGroups(userGroups);
+    executionData.setAutoRejectPreviousDeployments(autoRejectPreviousDeployments);
     updatePlaceholderValuesForSlackApproval(approvalId, accountId, placeholderValues, context);
     sendNotificationForUserGroupApproval(userGroups, appId, accountId, APPROVAL_NEEDED_NOTIFICATION, placeholderValues);
 

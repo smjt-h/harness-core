@@ -32,6 +32,8 @@ import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.FieldNameConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.mongodb.morphia.annotations.Transient;
@@ -64,6 +66,7 @@ public class ApprovalStateExecutionData extends StateExecutionData implements De
 
   /** User group Approval */
   private List<String> userGroups;
+  private boolean autoRejectPreviousDeployments;
 
   /** Jira Approval */
   private String issueUrl;

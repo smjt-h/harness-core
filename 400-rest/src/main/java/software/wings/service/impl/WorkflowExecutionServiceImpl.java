@@ -68,6 +68,7 @@ import static software.wings.beans.deployment.DeploymentMetadata.Include.ARTIFAC
 import static software.wings.beans.deployment.DeploymentMetadata.Include.DEPLOYMENT_TYPE;
 import static software.wings.beans.deployment.DeploymentMetadata.Include.ENVIRONMENT;
 import static software.wings.service.impl.ApplicationManifestServiceImpl.CHART_NAME;
+import static software.wings.service.impl.pipeline.PipelineServiceHelper.generatePipelineExecutionUrl;
 import static software.wings.sm.InstanceStatusSummary.InstanceStatusSummaryBuilder.anInstanceStatusSummary;
 import static software.wings.sm.StateType.APPROVAL;
 import static software.wings.sm.StateType.APPROVAL_RESUME;
@@ -254,8 +255,11 @@ import software.wings.beans.trigger.TriggerConditionType;
 import software.wings.dl.WingsPersistence;
 import software.wings.exception.InvalidBaselineConfigurationException;
 import software.wings.helpers.ext.jenkins.BuildDetails;
+import software.wings.helpers.ext.url.SubdomainUrlHelper;
 import software.wings.infra.AwsAmiInfrastructure;
 import software.wings.infra.InfrastructureDefinition;
+import software.wings.resources.ApprovalInfo;
+import software.wings.resources.PreviousApprovalDetails;
 import software.wings.security.UserThreadLocal;
 import software.wings.service.ArtifactStreamHelper;
 import software.wings.service.impl.WorkflowTree.WorkflowTreeBuilder;
@@ -446,6 +450,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   @Inject private StateInspectionService stateInspectionService;
   @Inject private ApplicationManifestService applicationManifestService;
   @Inject private Injector injector;
+  @Inject private SubdomainUrlHelper subdomainUrlHelper;
 
   @Inject @RateLimitCheck private PreDeploymentChecker deployLimitChecker;
   @Inject @ServiceInstanceUsage private PreDeploymentChecker siUsageChecker;
@@ -5990,5 +5995,111 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
         .in(serviceIds)
         .order(Sort.descending(WorkflowExecutionKeys.createdAt))
         .asList(new FindOptions().skip(executionsToSkip).limit(executionsToIncludeInResponse));
+  }
+
+  @Override
+  public PreviousApprovalDetails getPreviousApprovalDetails(
+      String appId, String workflowExecutionId, String pipelineId) {
+    WorkflowExecution currentPipelineExecution = getWorkflowExecution(appId, workflowExecutionId);
+
+    List<WorkflowExecution> pausedExecutions = wingsPersistence.createQuery(WorkflowExecution.class)
+                                                   .filter("appId", appId)
+                                                   .filter(WorkflowExecutionKeys.workflowId, pipelineId)
+                                                   .filter(WorkflowExecutionKeys.status, PAUSED)
+                                                   .field(WorkflowExecutionKeys.createdAt)
+                                                   .lessThan(currentPipelineExecution.getCreatedAt())
+                                                   .order(Sort.descending(WorkflowExecutionKeys.createdAt))
+                                                   .asList();
+    PipelineStageExecution pausedStage = currentPipelineExecution.getPipelineExecution()
+                                             .getPipelineStageExecutions()
+                                             .stream()
+                                             .filter(pse -> PAUSED.equals(pse.getStatus()))
+                                             .findFirst()
+                                             .orElse(null);
+    if (pausedStage != null) {
+      String pipelineStageElementId = pausedStage.getPipelineStageElementId();
+      List<String> serviceIds = currentPipelineExecution.getServiceIds();
+      List<String> infraIds = currentPipelineExecution.getInfraDefinitionIds();
+      List<String> approvalIds = getPreviousApprovalIdsWithSameServicesAndInfra(
+          pausedExecutions, pipelineStageElementId, serviceIds, infraIds);
+      return PreviousApprovalDetails.builder()
+          .previousApprovals(approvalIds.stream().map(ApprovalInfo::new).collect(toList()))
+          .size(approvalIds.size())
+          .build();
+    }
+    return PreviousApprovalDetails.builder().previousApprovals(Collections.emptyList()).size(0).build();
+  }
+
+  @Override
+  public Boolean approveAndRejectPreviousExecutions(String accountId, String appId, String workflowExecutionId,
+      String stateExecutionId, ApprovalDetails approvalDetails, PreviousApprovalDetails previousApprovalDetails) {
+    ApprovalStateExecutionData stateExecutionData = fetchApprovalStateExecutionDataFromWorkflowExecution(
+        appId, workflowExecutionId, stateExecutionId, approvalDetails);
+    boolean success = approveOrRejectExecution(appId, stateExecutionData.getUserGroups(), approvalDetails);
+    List<String> previousApprovalIds = new ArrayList<>();
+    if (previousApprovalDetails.getPreviousApprovals() != null) {
+      previousApprovalIds =
+          previousApprovalDetails.getPreviousApprovals().stream().map(ApprovalInfo::getApprovalId).collect(toList());
+    }
+    rejectPreviousDeployments(accountId, appId, workflowExecutionId, approvalDetails, previousApprovalIds);
+    return success;
+  }
+
+  private void rejectPreviousDeployments(String accountId, String appId, String workflowExecutionId,
+      ApprovalDetails approvalDetails, List<String> previousApprovalIds) {
+    String baseUrl = subdomainUrlHelper.getPortalBaseUrl(accountId);
+    String executionUrl = generatePipelineExecutionUrl(accountId, appId, workflowExecutionId, baseUrl);
+    if (isNotEmpty(previousApprovalIds)) {
+      previousApprovalIds.forEach(approvalId -> {
+        ApprovalDetails rejectionDetails = new ApprovalDetails();
+        rejectionDetails.setApprovalId(approvalId);
+        rejectionDetails.setComments(isEmpty(approvalDetails.getComments())
+                ? "Pipeline rejected when the following execution was approved: " + executionUrl
+                : approvalDetails.getComments());
+        rejectionDetails.setAction(REJECT);
+        approveOrRejectExecution(appId, rejectionDetails);
+      });
+    }
+  }
+
+  @Override
+  public void rejectPreviousDeployments(String appId, String workflowExecutionId, ApprovalDetails approvalDetails) {
+    WorkflowExecution pipelineExecution = getWorkflowExecution(appId, workflowExecutionId);
+    PreviousApprovalDetails previousApprovalDetails =
+        getPreviousApprovalDetails(appId, workflowExecutionId, pipelineExecution.getWorkflowId());
+    List<String> previousApprovalIds = new ArrayList<>();
+    if (previousApprovalDetails.getPreviousApprovals() != null) {
+      previousApprovalIds =
+          previousApprovalDetails.getPreviousApprovals().stream().map(ApprovalInfo::getApprovalId).collect(toList());
+    }
+    rejectPreviousDeployments(
+        pipelineExecution.getAccountId(), appId, workflowExecutionId, approvalDetails, previousApprovalIds);
+  }
+
+  private List<String> getPreviousApprovalIdsWithSameServicesAndInfra(List<WorkflowExecution> pausedExecutions,
+      String pipelineStageElementId, List<String> serviceIds, List<String> infraIds) {
+    List<WorkflowExecution> executionsWithSameServiceAndInfra =
+        pausedExecutions.stream()
+            .filter(e
+                -> (new HashSet<>(e.getServiceIds()).equals(new HashSet<>(serviceIds)))
+                    && (new HashSet<>(e.getInfraDefinitionIds()).equals(new HashSet<>(infraIds))))
+            .collect(toList());
+
+    List<String> approvalIds = new ArrayList<>();
+    executionsWithSameServiceAndInfra.forEach(e -> {
+      Optional<PipelineStageExecution> pausedStage =
+          e.getPipelineExecution()
+              .getPipelineStageExecutions()
+              .stream()
+              .filter(pse
+                  -> PAUSED.equals(pse.getStatus()) && pipelineStageElementId.equals(pse.getPipelineStageElementId()))
+              .findFirst();
+      if (pausedStage.isPresent() && pausedStage.get().getStateType().equals(APPROVAL.name())) {
+        ApprovalStateExecutionData stateExecutionData =
+            (ApprovalStateExecutionData) pausedStage.get().getStateExecutionData();
+        approvalIds.add(stateExecutionData.getApprovalId());
+      }
+    });
+    return approvalIds;
   }
 }
