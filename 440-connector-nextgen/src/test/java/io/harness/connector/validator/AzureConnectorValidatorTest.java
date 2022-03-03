@@ -8,14 +8,21 @@
 package io.harness.connector.validator;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
 import io.harness.connector.ConnectivityStatus;
 import io.harness.connector.ConnectorValidationResult;
 import io.harness.connector.helper.EncryptionHelper;
-import io.harness.delegate.beans.connector.azureconnector.*;
+import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureCredentialDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
+import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureSecretType;
+import io.harness.delegate.beans.connector.azureconnector.AzureValidateTaskResponse;
 import io.harness.encryption.Scope;
 import io.harness.encryption.SecretRefData;
 import io.harness.rule.Owner;

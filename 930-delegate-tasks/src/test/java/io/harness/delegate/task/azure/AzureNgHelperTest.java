@@ -10,9 +10,11 @@ package io.harness.delegate.task.azure;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.rule.OwnerRule.BUHA;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 
 import io.harness.CategoryTest;
 import io.harness.azure.AzureEnvironmentType;
@@ -20,7 +22,11 @@ import io.harness.azure.client.AzureManagementClient;
 import io.harness.category.element.UnitTests;
 import io.harness.connector.ConnectivityStatus;
 import io.harness.connector.ConnectorValidationResult;
-import io.harness.delegate.beans.connector.azureconnector.*;
+import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureCredentialDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
+import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureSecretType;
 import io.harness.encryption.Scope;
 import io.harness.encryption.SecretRefData;
 import io.harness.errorhandling.NGErrorHelper;
@@ -100,20 +106,18 @@ public class AzureNgHelperTest extends CategoryTest {
                                   .scope(Scope.ACCOUNT)
                                   .decryptedValue(pass.toCharArray())
                                   .build();
-    AzureConnectorDTO azureConnectorDTO =
-        AzureConnectorDTO.builder()
-            .azureEnvironmentType(AzureEnvironmentType.AZURE)
-            .credential(AzureCredentialDTO.builder()
-                            .azureCredentialType(AzureCredentialType.MANUAL_CREDENTIALS)
-                            .config(AzureManualDetailsDTO.builder()
-                                        .clientId(clientId)
-                                        .tenantId(tenantId)
-                                        .secretType(type)
-                                        .secretRef(secretRef)
-                                        .build())
+    return AzureConnectorDTO.builder()
+        .azureEnvironmentType(AzureEnvironmentType.AZURE)
+        .credential(AzureCredentialDTO.builder()
+                        .azureCredentialType(AzureCredentialType.MANUAL_CREDENTIALS)
+                        .config(AzureManualDetailsDTO.builder()
+                                    .clientId(clientId)
+                                    .tenantId(tenantId)
+                                    .secretType(type)
+                                    .secretRef(secretRef)
+                                    .build())
 
-                            .build())
-            .build();
-    return azureConnectorDTO;
+                        .build())
+        .build();
   }
 }

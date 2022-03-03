@@ -18,15 +18,19 @@ import io.harness.azure.AzureEnvironmentType;
 import io.harness.category.element.UnitTests;
 import io.harness.connector.ConnectorDTO;
 import io.harness.connector.ConnectorInfoDTO;
-import io.harness.delegate.beans.connector.azureconnector.*;
+import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureCredentialDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureCredentialSpecDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureSecretType;
 import io.harness.encryption.Scope;
 import io.harness.encryption.SecretRefData;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.serializer.HObjectMapper;
 import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -48,7 +52,7 @@ public class AzureConfigSerializationDeserializationTest extends CategoryTest {
   @Before
   public void setup() {
     objectMapper = new ObjectMapper();
-    NGObjectMapperHelper.configureNGObjectMapper(objectMapper);
+    HObjectMapper.configureObjectMapperForNG(objectMapper);
   }
 
   private AzureConnectorDTO createAzureConnectorRequestDTO() {

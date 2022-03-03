@@ -39,11 +39,14 @@ public class AzureNgHelper {
       switch (connectorDTO.getCredential().getAzureCredentialType()) {
         case INHERIT_FROM_DELEGATE:
           throw new IllegalStateException(
-              "Unexpected credential type: " + connectorDTO.getCredential().getAzureCredentialType());
+              "Credential type not supported yet: " + connectorDTO.getCredential().getAzureCredentialType());
         case MANUAL_CREDENTIALS:
           handleValidateManualCredentialsTask(
               connectorDTO.getCredential(), encryptedDataDetails, connectorDTO.getAzureEnvironmentType());
           break;
+        default:
+          throw new IllegalStateException(
+              "Unexpected credential type : " + connectorDTO.getCredential().getAzureCredentialType());
       }
       connectorValidationResult = ConnectorValidationResult.builder()
                                       .status(ConnectivityStatus.SUCCESS)
@@ -75,6 +78,8 @@ public class AzureNgHelper {
         azureManagementClient.validateAzureConnectionWithCert(
             azureConfig.getClientId(), azureConfig.getTenantId(), secret.getBytes(), azureEnvironmentType);
         break;
+      default:
+        throw new IllegalStateException("Unexpected secret type : " + azureConfig.getSecretType());
     }
   }
 }
