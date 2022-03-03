@@ -28,6 +28,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.CreatedByType;
 import io.harness.beans.ExecutionInterruptType;
+import io.harness.beans.FeatureName;
 import io.harness.beans.PageRequest;
 import io.harness.beans.PageResponse;
 import io.harness.beans.SearchFilter.Operator;
@@ -426,8 +427,10 @@ public class ExecutionResource {
         workflowExecutionService.fetchApprovalStateExecutionDataFromWorkflowExecution(
             appId, workflowExecutionId, stateExecutionId, approvalDetails);
 
+    String accountId = appService.getAccountIdByAppId(appId);
     if (approvalStateExecutionData.isAutoRejectPreviousDeployments()
-        && approvalDetails.getAction() == ApprovalDetails.Action.APPROVE) {
+        && approvalDetails.getAction() == ApprovalDetails.Action.APPROVE
+        && featureFlagService.isEnabled(FeatureName.AUTO_REJECT_PREVIOUS_APPROVALS, accountId)) {
       workflowExecutionService.rejectPreviousDeployments(appId, workflowExecutionId, approvalDetails);
     }
 

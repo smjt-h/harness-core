@@ -27,6 +27,7 @@ import static io.harness.beans.ExecutionStatus.SUCCESS;
 import static io.harness.beans.ExecutionStatus.WAITING;
 import static io.harness.beans.ExecutionStatus.activeStatuses;
 import static io.harness.beans.ExecutionStatus.isActiveStatus;
+import static io.harness.beans.FeatureName.AUTO_REJECT_PREVIOUS_APPROVALS;
 import static io.harness.beans.FeatureName.HELM_CHART_AS_ARTIFACT;
 import static io.harness.beans.FeatureName.NEW_DEPLOYMENT_FREEZE;
 import static io.harness.beans.FeatureName.RESOLVE_DEPLOYMENT_TAGS_BEFORE_EXECUTION;
@@ -6041,7 +6042,9 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
       previousApprovalIds =
           previousApprovalDetails.getPreviousApprovals().stream().map(ApprovalInfo::getApprovalId).collect(toList());
     }
-    rejectPreviousDeployments(accountId, appId, workflowExecutionId, approvalDetails, previousApprovalIds);
+    if (featureFlagService.isEnabled(AUTO_REJECT_PREVIOUS_APPROVALS, accountId)) {
+      rejectPreviousDeployments(accountId, appId, workflowExecutionId, approvalDetails, previousApprovalIds);
+    }
     return success;
   }
 
