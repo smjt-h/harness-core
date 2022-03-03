@@ -203,15 +203,19 @@ public class ExecutionDetailsResource {
 
     accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgId, projectId),
         Resource.of("PIPELINE", executionSummaryEntity.getPipelineIdentifier()), PipelineRbacPermissions.PIPELINE_VIEW);
+    if (EmptyPredicate.isEmpty(stageNodeId)) {
+      return ResponseDTO.newResponse(PipelineExecutionDetailDTO.builder()
+                                         .pipelineExecutionSummary(PipelineExecutionSummaryDtoMapper.toDto(
+                                             executionSummaryEntity, entityGitDetails))
+                                         .build());
+    }
 
-    PipelineExecutionDetailDTO pipelineExecutionDetailDTO =
+    return ResponseDTO.newResponse(
         PipelineExecutionDetailDTO.builder()
             .pipelineExecutionSummary(PipelineExecutionSummaryDtoMapper.toDto(executionSummaryEntity, entityGitDetails))
             .executionGraph(ExecutionGraphMapper.toExecutionGraph(
                 pmsExecutionService.getOrchestrationGraph(stageNodeId, planExecutionId)))
-            .build();
-
-    return ResponseDTO.newResponse(pipelineExecutionDetailDTO);
+            .build());
   }
 
   @GET
@@ -219,7 +223,8 @@ public class ExecutionDetailsResource {
   @Path("/{planExecutionId}/inputset")
   @ApiOperation(value = "Gets  inputsetYaml", nickname = "getInputsetYaml")
   @NGAccessControlCheck(resourceType = "PIPELINE", permission = PipelineRbacPermissions.PIPELINE_VIEW)
-  @Operation(operationId = "getInputsetYaml", summary = "Get the Input Set YAML used for given Plan Execution",
+  @Operation(deprecated = true, operationId = "getInputsetYaml",
+      summary = "Get the Input Set YAML used for given Plan Execution",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
