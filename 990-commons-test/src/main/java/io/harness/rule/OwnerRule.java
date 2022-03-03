@@ -243,6 +243,7 @@ public class OwnerRule implements TestRule {
   public static final String TRUNAPUSHPA = "trunapushpa.surkar";
   public static final String NAMANG = "naman.goenka";
   public static final String BUHA = "aleksa.buha";
+  public static final String SATYAM_GOEL = "satyam.goel";
   @Deprecated public static final String UNKNOWN = "unknown";
 
   private static UserInfoBuilder defaultUserInfo(String user) {
@@ -416,6 +417,7 @@ public class OwnerRule implements TestRule {
           .put(SHUBHAM_MAHESHWARI, defaultUserInfo(SHUBHAM_MAHESHWARI).slack("U02H12GCMGQ").team(CDP).build())
           .put(TRUNAPUSHPA, defaultUserInfo(TRUNAPUSHPA).slack("U02P4P735FZ").team(CE).build())
           .put(NAMANG, defaultUserInfo(NAMANG).slack("U02TUBKLT4P").team(PL).build())
+          .put(SATYAM_GOEL, defaultUserInfo(SATYAM_GOEL).slack("U030MT1GRFG").team(PL).build())
           .put(VAIBHAV_KUMAR, defaultUserInfo(VAIBHAV_KUMAR).slack("U02UYG4J2SU").team(CDP).build())
           .put(BUHA, defaultUserInfo(BUHA).slack("U02V35N54R0").team(CDP).build())
           .build();
