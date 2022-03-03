@@ -169,4 +169,12 @@ public class PlanCreatorUtils {
         "accountIdentifier", accountId, "orgIdentifier", orgIdentifier, "projectIdentifier", projectIdentifier));
     return new AutoLogContext(logContextMap, AutoLogContext.OverrideBehavior.OVERRIDE_NESTS);
   }
+
+  public AutoLogContext autoLogContext(String accountId, String orgIdentifier, String projectIdentifier,
+      String pipelineIdentifier, String planExecutionId) {
+    Map<String, String> logContextMap =
+        new HashMap<>(ImmutableMap.of("planExecutionId", planExecutionId, "pipelineIdentifier", pipelineIdentifier,
+            "accountIdentifier", accountId, "orgIdentifier", orgIdentifier, "projectIdentifier", projectIdentifier));
+    return new AutoLogContext(logContextMap, AutoLogContext.OverrideBehavior.OVERRIDE_NESTS);
+  }
 }

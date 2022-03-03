@@ -142,9 +142,10 @@ public class ExecutionHelper {
       List<String> stagesToRun, Map<String, String> expressionValues, ExecutionTriggerInfo triggerInfo,
       String originalExecutionId, RetryExecutionParameters retryExecutionParameters) {
     long start = System.currentTimeMillis();
-    try {
-      final String executionId = generateUuid();
-
+    final String executionId = generateUuid();
+    try (AutoLogContext ignore =
+             PlanCreatorUtils.autoLogContext(pipelineEntity.getAccountId(), pipelineEntity.getOrgIdentifier(),
+                 pipelineEntity.getProjectIdentifier(), pipelineEntity.getIdentifier(), executionId)) {
       boolean isRetry = retryExecutionParameters.isRetry();
       // RetryExecutionInfo
       RetryExecutionInfo retryExecutionInfo = buildRetryInfo(isRetry, originalExecutionId);
