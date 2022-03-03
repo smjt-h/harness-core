@@ -20,12 +20,12 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.aws.AwsCallTracker;
 import io.harness.category.element.UnitTests;
 import io.harness.rule.Owner;
 
-import software.wings.WingsBaseTest;
 import software.wings.beans.AwsConfig;
 import software.wings.service.impl.aws.model.AwsCFTemplateParamsData;
 import software.wings.service.intfc.security.EncryptionService;
@@ -35,17 +35,24 @@ import com.amazonaws.services.cloudformation.model.GetTemplateResult;
 import com.amazonaws.services.cloudformation.model.GetTemplateSummaryResult;
 import com.amazonaws.services.cloudformation.model.ParameterDeclaration;
 import java.util.List;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
 @OwnedBy(CDP)
-public class AwsCFHelperServiceDelegateImplTest extends WingsBaseTest {
+public class AwsCFHelperServiceDelegateImplTest extends CategoryTest {
   @Mock private EncryptionService mockEncryptionService;
   @Mock private AwsCallTracker mockTracker;
   @Spy @InjectMocks private AwsCFHelperServiceDelegateImpl awsCFHelperServiceDelegate;
+
+  @Before
+  public void setUp() throws Exception {
+    MockitoAnnotations.initMocks(this);
+  }
 
   @Test
   @Owner(developers = SATYAM)

@@ -13,9 +13,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
-import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.annotations.dev.TargetModule;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.security.encryption.EncryptedDataDetail;
@@ -48,10 +46,10 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 @Singleton
-@TargetModule(HarnessModule._930_DELEGATE_TASKS)
 @Slf4j
 @OwnedBy(CDP)
-public class AwsCFHelperServiceDelegateImpl extends AwsHelperServiceDelegateBase implements AwsCFHelperServiceDelegate {
+public class AwsCFHelperServiceDelegateImpl
+    extends AwsHelperServiceDelegateBaseNG implements AwsCFHelperServiceDelegate {
   @Inject private GitUtilsDelegate gitUtilsDelegate;
 
   @VisibleForTesting
