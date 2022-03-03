@@ -37,12 +37,20 @@ public class InfraStructureDefinitionEntity implements PersistentEntity {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
-                 .name("unique_accountId_organizationIdentifier_projectIdentifier_infraIdentifier")
+                 .name("unique_accountId_organizationIdentifier_projectIdentifier_envId_infraId")
                  .unique(true)
                  .field(InfraStructureDefinitionEntity.InfraStructureKeys.accountId)
                  .field(InfraStructureDefinitionEntity.InfraStructureKeys.orgIdentifier)
                  .field(InfraStructureDefinitionEntity.InfraStructureKeys.projectIdentifier)
+                 .field(InfraStructureKeys.envId)
                  .field(InfraStructureDefinitionEntity.InfraStructureKeys.identifier)
+                 .build())
+        .add(CompoundMongoIndex.builder()
+                 .name("unique_accountId_organizationIdentifier_projectIdentifier_envId")
+                 .field(InfraStructureDefinitionEntity.InfraStructureKeys.accountId)
+                 .field(InfraStructureDefinitionEntity.InfraStructureKeys.orgIdentifier)
+                 .field(InfraStructureDefinitionEntity.InfraStructureKeys.projectIdentifier)
+                 .field(InfraStructureKeys.envId)
                  .build())
         .build();
   }
@@ -57,7 +65,7 @@ public class InfraStructureDefinitionEntity implements PersistentEntity {
   @EntityName private String name;
 
   @NotNull String yaml;
-  @Trimmed @NotNull String environmentIdentifier;
+  @Trimmed @NotNull String envId;
 
   @Wither @CreatedDate Long createdAt;
   @Wither @LastModifiedDate Long lastModifiedAt;
