@@ -122,6 +122,7 @@ public class PipelineServiceConfiguration extends Configuration {
   @JsonProperty("orchestrationRedisEventsConfig") private OrchestrationRedisEventsConfig orchestrationRedisEventsConfig;
   @JsonProperty("allowedParallelStages") private int allowedParallelStages;
   @JsonProperty("debeziumConfig") private DebeziumConfig debeziumConfig;
+  @JsonProperty("shouldSkipWhenCondition") private Boolean shouldSkipWhenCondition;
 
   private String managerServiceSecret;
   private String managerTarget;

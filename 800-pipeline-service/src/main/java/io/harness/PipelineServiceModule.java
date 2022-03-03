@@ -650,4 +650,11 @@ public class PipelineServiceModule extends AbstractModule {
   public Integer getAllowedParallelStages() {
     return configuration.getAllowedParallelStages();
   }
+
+  @Provides
+  @Singleton
+  @Named("shouldSkipWhenCondition")
+  public Boolean getShouldSkipWhenCondition() {
+    return configuration.getShouldSkipWhenCondition();
+  }
 }

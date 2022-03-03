@@ -61,6 +61,7 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -92,6 +93,7 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
   @Inject private OrchestrationEngine orchestrationEngine;
   @Inject private PmsOutcomeService outcomeService;
   @Inject private KryoSerializer kryoSerializer;
+  @Inject @Named("shouldSkipWhenCondition") Boolean shouldSkipWhenCondition;
 
   @Override
   public NodeExecution createNodeExecution(@NotNull Ambiance ambiance, @NotNull PlanNode node,
@@ -141,12 +143,14 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
       PlanNode planNode = planService.fetchNode(ambiance.getPlanId(), nodeId);
       resolveParameters(ambiance, planNode.getStepParameters(), planNode.isSkipUnresolvedExpressionsCheck());
 
-      //      ExecutionCheck check = performPreFacilitationChecks(ambiance, planNode);
-      //      if (!check.isProceed()) {
-      //        log.info("Not Proceeding with  Execution. Reason : {}", check.getReason());
-      //        return;
-      //      }
-      //      log.info("Proceeding with  Execution. Reason : {}", check.getReason());
+      if (!shouldSkipWhenCondition) {
+        ExecutionCheck check = performPreFacilitationChecks(ambiance, planNode);
+        if (!check.isProceed()) {
+          log.info("Not Proceeding with  Execution. Reason : {}", check.getReason());
+          return;
+        }
+        log.info("Proceeding with  Execution. Reason : {}", check.getReason());
+      }
 
       if (facilitationHelper.customFacilitatorPresent(planNode)) {
         facilitateEventPublisher.publishEvent(ambiance, planNode);
