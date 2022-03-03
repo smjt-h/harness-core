@@ -18,8 +18,6 @@ public interface GraphGenerationService {
 
   void cacheOrchestrationGraph(OrchestrationGraph adjacencyListInternal);
 
-  @Deprecated OrchestrationGraphDTO generateOrchestrationGraph(String planExecutionId);
-
   OrchestrationGraphDTO generateOrchestrationGraphV2(String planExecutionId);
 
   OrchestrationGraphDTO generatePartialOrchestrationGraphFromSetupNodeId(

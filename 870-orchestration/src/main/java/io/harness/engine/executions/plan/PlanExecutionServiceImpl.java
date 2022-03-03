@@ -164,6 +164,7 @@ public class PlanExecutionServiceImpl implements PlanExecutionService {
   }
 
   public Status calculateStatus(String planExecutionId) {
+    // Todo(sahil): Use Projections in this as only status is required.
     List<NodeExecution> nodeExecutions = nodeExecutionService.fetchNodeExecutionsWithoutOldRetries(planExecutionId);
     return OrchestrationUtils.calculateStatusForPlanExecution(nodeExecutions, planExecutionId);
   }
