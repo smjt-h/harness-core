@@ -23,9 +23,13 @@ public class CDCreatorUtils {
     return Collections.emptySet();
   }
   public Set<String> getSupportedStepsV2() {
-    return Sets.newHashSet("K8sCanaryDeploy", "K8sApply", "K8sBlueGreenDeploy", "K8sRollingDeploy",
-        "K8sRollingRollback", "K8sScale", "K8sDelete", "K8sBGSwapServices", "K8sCanaryDelete", "TerraformApply",
-        "TerraformPlan", "TerraformDestroy", StepSpecTypeConstants.TERRAFORM_ROLLBACK,
-        StepSpecTypeConstants.HELM_DEPLOY, StepSpecTypeConstants.HELM_ROLLBACK);
+    return Sets.newHashSet(StepSpecTypeConstants.K8S_CANARY_DEPLOY, StepSpecTypeConstants.K8S_APPLY,
+        StepSpecTypeConstants.K8S_BLUE_GREEN_DEPLOY, StepSpecTypeConstants.K8S_ROLLING_DEPLOY,
+        StepSpecTypeConstants.K8S_ROLLING_ROLLBACK, StepSpecTypeConstants.K8S_SCALE, StepSpecTypeConstants.K8S_DELETE,
+        StepSpecTypeConstants.K8S_BG_SWAP_SERVICES, StepSpecTypeConstants.K8S_CANARY_DELETE,
+        StepSpecTypeConstants.TERRAFORM_APPLY, StepSpecTypeConstants.TERRAFORM_PLAN,
+        StepSpecTypeConstants.TERRAFORM_DESTROY, StepSpecTypeConstants.TERRAFORM_ROLLBACK,
+        StepSpecTypeConstants.HELM_DEPLOY, StepSpecTypeConstants.HELM_ROLLBACK,
+        StepSpecTypeConstants.CLOUDFORMATION_CREATE_STACK);
   }
 }
