@@ -36,6 +36,7 @@ import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.remote.client.RestClientUtils;
 import io.harness.rest.RestResponse;
 
+import lombok.extern.slf4j.Slf4j;
 import retrofit2.Call;
 import software.wings.security.annotations.ApiKeyAuthorized;
 import software.wings.security.annotations.AuthRule;
@@ -72,6 +73,7 @@ import retrofit2.http.Body;
 @AuthRule(permissionType = LOGGED_IN)
 @OwnedBy(HarnessTeam.DEL)
 @Hidden
+@Slf4j
 @Tag(name = "Delegate Configuration Resource",
     description = "Contains APIs related to Delegate Configuration management")
 @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request",
@@ -362,6 +364,7 @@ public class DelegateConfigNgV2Resource {
       @Parameter(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgId,
       @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectId,
       @RequestBody(required = true, description = "List of tags") DelegateGroupTags tags) {
+    log.info("request received for tags");
     return new RestResponse<>(
         RestClientUtils.getResponse(delegateConfigClient.updateDelegateGroupTags(groupName, accountId, orgId, projectId, tags)));
   }
