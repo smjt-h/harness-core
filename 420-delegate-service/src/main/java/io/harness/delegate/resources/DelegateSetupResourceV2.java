@@ -14,6 +14,7 @@ import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 
 import static software.wings.security.PermissionAttribute.PermissionType.LOGGED_IN;
 
+import io.harness.NGCommonEntityConstants;
 import io.harness.NGResourceFilterConstants;
 import io.harness.accesscontrol.acl.api.Resource;
 import io.harness.accesscontrol.acl.api.ResourceScope;
@@ -218,8 +219,9 @@ public class DelegateSetupResourceV2 {
   }
 
   @PUT
-  @Path("{identifier}/tags")
+  @Path("/tags")
   @Timed
+  @InternalApi
   @ExceptionMetered
   @Operation(operationId = "updateTagsForDelegateGroup", summary = "Updates tags for the Delegate Group.",
       responses =
@@ -228,17 +230,15 @@ public class DelegateSetupResourceV2 {
         ApiResponse(responseCode = "default", description = "Delegate Group details for updated group.")
       })
   public RestResponse<DelegateGroup>
-  updateTagsForDelegateGroup(@Parameter(description = "Delegate Group Name") @PathParam("identifier")
-                             @NotEmpty String identifier, @QueryParam("accountId") @NotEmpty String accountId,
-      @Parameter(
-          description = "Organization Id. If left empty Delegate group with no organization specified will be updated")
-      @QueryParam("orgId") String orgId,
-      @Parameter(description = "Project Id. If left empty Delegate group with no project specified will be updated")
-      @QueryParam("projectId") String projectId,
+  updateTagsForDelegateGroup(
+      @Parameter(description = "Delegate Group Name") @QueryParam(NGCommonEntityConstants.IDENTIFIER_KEY) @NotEmpty String groupName,
+      @Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @NotEmpty String accountId,
+      @Parameter(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgId,
+      @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectId,
       @RequestBody(required = true, description = "List of tags") DelegateGroupTags tags) {
     try (AutoLogContext ignore1 = new AccountLogContext(accountId, OVERRIDE_ERROR)) {
       return new RestResponse<>(
-          delegateSetupService.updateDelegateGroupTags(accountId, orgId, projectId, identifier, tags.getTags()));
+          delegateSetupService.updateDelegateGroupTags(accountId, orgId, projectId, groupName, tags.getTags()));
     }
   }
 }

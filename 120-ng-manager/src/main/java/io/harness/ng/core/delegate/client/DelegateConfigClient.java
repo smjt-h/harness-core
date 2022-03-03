@@ -14,13 +14,13 @@ import retrofit2.http.Query;
 
 public interface DelegateConfigClient {
 
-  String DELEGATE_SETUP_API = "/setup/delegates/ng/v2";
+  String DELEGATE_SETUP_API = "/api/setup/delegates/ng/v2/tags";
 
-  @PUT(DELEGATE_SETUP_API + "/{" + NGCommonEntityConstants.IDENTIFIER_KEY + "}/tags")
+  @PUT(DELEGATE_SETUP_API)
   Call<RestResponse<DelegateGroup>> updateDelegateGroupTags(
-      @Path(NGCommonEntityConstants.IDENTIFIER_KEY) @NotNull String groupIdentifier,
-      @Query("accountId") @NotNull String accountIdentifier,
-//      @Query("orgId") String orgIdentifier,
-//      @Query("projectId") String projectIdentifier,
+      @Query(NGCommonEntityConstants.IDENTIFIER_KEY) @NotNull String groupIdentifier,
+      @Query(NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
+      @Query(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @Query(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
       @Body @NotNull DelegateGroupTags tags);
 }

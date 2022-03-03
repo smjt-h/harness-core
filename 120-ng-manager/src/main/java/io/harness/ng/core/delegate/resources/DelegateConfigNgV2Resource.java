@@ -14,6 +14,7 @@ import static io.harness.delegate.utils.RbacConstants.DELEGATE_CONFIG_VIEW_PERMI
 
 import static software.wings.security.PermissionAttribute.PermissionType.LOGGED_IN;
 
+import io.harness.NGCommonEntityConstants;
 import io.harness.NGResourceFilterConstants;
 import io.harness.accesscontrol.acl.api.Resource;
 import io.harness.accesscontrol.acl.api.ResourceScope;
@@ -347,7 +348,6 @@ public class DelegateConfigNgV2Resource {
   @ApiOperation(value = "Update tags for the Delegate group", nickname = "updateTagsForDelegateGroup")
   @Timed
   @Path("{identifier}/tags")
-  @ApiKeyAuthorized
   @ExceptionMetered
   @Operation(operationId = "updateTagsForDelegateGroup", summary = "Update tags for the Delegate group",
       responses =
@@ -357,13 +357,12 @@ public class DelegateConfigNgV2Resource {
       })
   public RestResponse<DelegateGroup>
   updateTagsForDelegateGroup(
-      @Parameter(description = "Delegate Group Name") @PathParam("identifier") @NotEmpty String identifier,
-      @Parameter(description = "Account Id") @QueryParam("accountId") @NotEmpty String accountId,
-      @Parameter(description = "Organization Id") @QueryParam("orgId") String orgId,
-      @Parameter(description = "Project Id") @QueryParam("projectId") String projectId,
+      @Parameter(description = "Delegate Group Name") @PathParam(NGCommonEntityConstants.IDENTIFIER_KEY) @NotEmpty String groupName,
+      @Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @NotEmpty String accountId,
+      @Parameter(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgId,
+      @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectId,
       @RequestBody(required = true, description = "List of tags") DelegateGroupTags tags) {
-    Call<RestResponse<DelegateGroup>> abc = delegateConfigClient.updateDelegateGroupTags(identifier, accountId, tags);
     return new RestResponse<>(
-        RestClientUtils.getResponse(abc));
+        RestClientUtils.getResponse(delegateConfigClient.updateDelegateGroupTags(groupName, accountId, orgId, projectId, tags)));
   }
 }
