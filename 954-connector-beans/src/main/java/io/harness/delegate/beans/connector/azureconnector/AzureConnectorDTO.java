@@ -29,7 +29,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @Builder
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @ApiModel("AzureConnector")
 @Schema(name = "AzureConnector", description = "This contains details of the Azure connector")

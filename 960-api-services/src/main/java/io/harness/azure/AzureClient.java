@@ -94,7 +94,7 @@ public class AzureClient {
     }
   }
 
-  private AzureEnvironment getAzureEnvironment(AzureEnvironmentType azureEnvironmentType) {
+  protected AzureEnvironment getAzureEnvironment(AzureEnvironmentType azureEnvironmentType) {
     if (azureEnvironmentType == null) {
       return AzureEnvironment.AZURE;
     }
@@ -196,32 +196,5 @@ public class AzureClient {
 
   private String buildRepositoryHostUrl(String repositoryHost) {
     return format("https://%s%s", repositoryHost, repositoryHost.endsWith("/") ? "" : "/");
-  }
-
-  protected Azure getAzureClientWithDefaultSubscriptionUsingSecret(
-      String clientId, String tenantId, String secret, AzureEnvironmentType azureEnvironmentType) {
-    try {
-      ApplicationTokenCredentials credentials =
-          new ApplicationTokenCredentials(clientId, tenantId, secret, getAzureEnvironment(azureEnvironmentType));
-
-      return Azure.configure().withLogLevel(LogLevel.NONE).authenticate(credentials).withDefaultSubscription();
-    } catch (Exception e) {
-      handleAzureAuthenticationException(e);
-    }
-    return null;
-  }
-
-  protected Azure getAzureClientWithDefaultSubscriptionUsingCert(
-      String clientId, String tenantId, byte[] certificate, AzureEnvironmentType azureEnvironmentType) {
-    try {
-      ApplicationTokenCredentials credentials = new ApplicationTokenCredentials(
-          clientId, tenantId, certificate, null, getAzureEnvironment(azureEnvironmentType));
-
-      return Azure.configure().withLogLevel(LogLevel.NONE).authenticate(credentials).withDefaultSubscription();
-    } catch (Exception e) {
-      handleAzureAuthenticationException(e);
-      handleInvalidCertException(e);
-    }
-    return null;
   }
 }

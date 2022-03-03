@@ -15,13 +15,11 @@ import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.azure.AzureEnvironmentType;
 import io.harness.category.element.UnitTests;
 import io.harness.connector.ConnectorDTO;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.ConnectorsTestBase;
-import io.harness.connector.entities.Connector;
 import io.harness.connector.entities.embedded.azureconnector.AzureConfig;
 import io.harness.connector.entities.embedded.azureconnector.AzureManualCredential;
 import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
@@ -36,6 +34,7 @@ import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 
 import com.google.inject.Inject;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Rule;
@@ -63,12 +62,27 @@ public class AzureConnectorTest extends ConnectorsTestBase {
   String tenantId = "22222222-cccc-dddd-3333-234567891234";
   String secretKeyRef = "azureKey";
   SecretRefData secretKey;
+  AzureConfig azureConfig;
   @Rule public ExpectedException expectedEx = ExpectedException.none();
 
   @Before
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
     secretKey = SecretRefData.builder().identifier("secretRef").scope(Scope.ACCOUNT).build();
+
+    azureConfig = AzureConfig.builder()
+                      .credentialType(AzureCredentialType.MANUAL_CREDENTIALS)
+                      .credential(AzureManualCredential.builder()
+                                      .clientId(clientId)
+                                      .tenantId(tenantId)
+                                      .secretKeyRef(secretKeyRef)
+                                      .azureSecretType(AzureSecretType.SECRET_KEY)
+                                      .build())
+                      .build();
+    azureConfig.setType(AZURE);
+    azureConfig.setIdentifier(identifier);
+    azureConfig.setName(name);
+
     doNothing().when(secretRefInputValidationHelper).validateTheSecretInput(any(), any());
   }
 
@@ -77,7 +91,9 @@ public class AzureConnectorTest extends ConnectorsTestBase {
   @Category(UnitTests.class)
   public void testCreateAzureConnectorManualConfig() {
     ConnectorDTO connectorDTO = createConnectorDTO();
-    ConnectorResponseDTO connectorDTOOutput = createConnector(connectorDTO);
+
+    ConnectorResponseDTO connectorDTOOutput = connectorService.create(connectorDTO, accountIdentifier);
+
     ensureAzureConnectorFieldsAreCorrect(connectorDTOOutput);
     AzureConnectorDTO azureConnectorDTO = (AzureConnectorDTO) connectorDTOOutput.getConnector().getConnectorConfig();
     assertThat(azureConnectorDTO).isNotNull();
@@ -91,10 +107,23 @@ public class AzureConnectorTest extends ConnectorsTestBase {
         .isEqualTo(tenantId);
     assertThat(((AzureManualDetailsDTO) azureConnectorDTO.getCredential().getConfig()).getSecretRef())
         .isEqualTo(secretKey);
+    assertThat(((AzureManualDetailsDTO) azureConnectorDTO.getCredential().getConfig()).getSecretType())
+        .isEqualTo(AzureSecretType.SECRET_KEY);
   }
 
-  private ConnectorResponseDTO createConnector(ConnectorDTO connectorRequest) {
-    return connectorService.create(connectorRequest, accountIdentifier);
+  @Test
+  @Owner(developers = OwnerRule.BUHA)
+  @Category(UnitTests.class)
+  public void testGetAzureConnector() {
+    ConnectorDTO connectorDTO = createConnectorDTO();
+
+    connectorService.create(connectorDTO, accountIdentifier);
+
+    when(connectorRepository.findByFullyQualifiedIdentifierAndDeletedNot(
+             anyString(), anyString(), anyString(), anyString(), anyBoolean()))
+        .thenReturn(Optional.of(azureConfig));
+    ConnectorResponseDTO connectorDTOResponse = connectorService.get(accountIdentifier, null, null, identifier).get();
+    ensureAzureConnectorFieldsAreCorrect(connectorDTOResponse);
   }
 
   private ConnectorDTO createConnectorDTO() {
@@ -119,19 +148,6 @@ public class AzureConnectorTest extends ConnectorsTestBase {
                            .connectorType(AZURE)
                            .connectorConfig(azureConnectorDTO)
                            .build())
-        .build();
-  }
-
-  private Connector createConnector() {
-    return AzureConfig.builder()
-        .azureEnvironmentType(AzureEnvironmentType.AZURE)
-        .credentialType(AzureCredentialType.MANUAL_CREDENTIALS)
-        .credential(AzureManualCredential.builder()
-                        .clientId(clientId)
-                        .tenantId(tenantId)
-                        .azureSecretType(AzureSecretType.SECRET_KEY)
-                        .secretKeyRef(secretKeyRef)
-                        .build())
         .build();
   }
 
