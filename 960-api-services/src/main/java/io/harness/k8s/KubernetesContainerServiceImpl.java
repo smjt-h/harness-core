@@ -1934,7 +1934,7 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
   @Override
   public String fetchReleaseHistoryFromConfigMap(KubernetesConfig kubernetesConfig, String releaseName)
       throws IOException {
-    V1ConfigMap configMap = getConfigMap(kubernetesConfig, releaseName);
+    ConfigMap configMap = getConfigMapFabric8(kubernetesConfig, releaseName);
     if (configMap != null && configMap.getData() != null && configMap.getData().containsKey(ReleaseHistoryKeyName)) {
       return fetchReleaseHistoryValue(configMap);
     }
@@ -1955,6 +1955,17 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
 
   @Override
   public String fetchReleaseHistoryValue(V1ConfigMap configMap) throws IOException {
+    Map<String, String> configMapData = configMap.getData();
+    String releaseHistory = configMapData.get(ReleaseHistoryKeyName);
+
+    if (configMapData.containsKey(CompressedReleaseHistoryFlag)
+        && Boolean.parseBoolean(configMapData.get(CompressedReleaseHistoryFlag))) {
+      return deCompressString(decodeBase64(releaseHistory));
+    }
+    return releaseHistory;
+  }
+
+  private String fetchReleaseHistoryValue(ConfigMap configMap) throws IOException {
     Map<String, String> configMapData = configMap.getData();
     String releaseHistory = configMapData.get(ReleaseHistoryKeyName);
 
