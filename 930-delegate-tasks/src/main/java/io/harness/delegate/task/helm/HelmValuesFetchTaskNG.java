@@ -71,9 +71,10 @@ public class HelmValuesFetchTaskNG extends AbstractDelegateRunnableTask {
       String valuesFileContent = helmTaskHelperBase.fetchValuesYamlFromChart(
           helmChartManifestDelegateConfig, helmValuesFetchRequest.getTimeout(), logCallback);
 
+      logCallback.saveExecutionLog("\nHelm values fetch task completed successfully.", INFO);
+
       if (helmValuesFetchRequest.isCloseLogStream()) {
-        logCallback.saveExecutionLog(
-            "\nHelm values fetch task completed successfully.", INFO, CommandExecutionStatus.SUCCESS);
+        logCallback.saveExecutionLog("Done.", INFO, CommandExecutionStatus.SUCCESS);
       }
       return HelmValuesFetchResponse.builder()
           .commandExecutionStatus(SUCCESS)

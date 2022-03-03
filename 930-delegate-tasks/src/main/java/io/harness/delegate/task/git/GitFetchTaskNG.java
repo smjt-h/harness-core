@@ -125,12 +125,13 @@ public class GitFetchTaskNG extends AbstractDelegateRunnableTask {
 
         filesFromMultipleRepo.put(gitFetchFilesConfig.getIdentifier(), gitFetchFilesResult);
       }
+      executionLogCallback.saveExecutionLog(
+          color(format("%nGit %s fetch task completed successfully.", gitFetchFilesConfigs.get(0).getIdentifier()),
+              LogColor.White, LogWeight.Bold),
+          INFO);
 
       if (gitFetchRequest.isCloseLogStream()) {
-        executionLogCallback.saveExecutionLog(
-            color(format("%nGit %s fetch task completed successfully.", gitFetchFilesConfigs.get(0).getIdentifier()),
-                LogColor.White, LogWeight.Bold),
-            INFO, CommandExecutionStatus.SUCCESS);
+        executionLogCallback.saveExecutionLog("Done.", INFO, CommandExecutionStatus.SUCCESS);
       }
       return GitFetchResponse.builder()
           .taskStatus(TaskStatus.SUCCESS)
