@@ -1029,7 +1029,7 @@ public class K8sStepHelperTest extends CategoryTest {
     UnitProgressData unitProgressData = UnitProgressData.builder().build();
     HelmValuesFetchResponse helmValuesFetchResponse =
         HelmValuesFetchResponse.builder()
-            .valuesFileContent("values yaml payload")
+            .valuesFileContent(null)
             .helmChartValuesFileContent(Arrays.asList("values yaml payload"))
             .commandExecutionStatus(SUCCESS)
             .unitProgressData(unitProgressData)
@@ -1411,14 +1411,11 @@ public class K8sStepHelperTest extends CategoryTest {
 
     List<ValuesManifestOutcome> aggregatedValuesManifests = new ArrayList<>();
 
-    String helmValuesYamlContent = "";
+    List<String> helmValuesYamlContents = new ArrayList<>();
 
-    List<String> overrideHelmValueYamlContent = new ArrayList<>();
-
-    assertThatCode(
-        ()
-            -> k8sStepHelper.executeValuesFetchTask(ambiance, stepElementParameters, outcomeBuilder.build(),
-                manifestOutcome, aggregatedValuesManifests, helmValuesYamlContent, overrideHelmValueYamlContent));
+    assertThatCode(()
+                       -> k8sStepHelper.executeValuesFetchTask(ambiance, stepElementParameters, outcomeBuilder.build(),
+                           manifestOutcome, aggregatedValuesManifests, helmValuesYamlContents));
   }
 
   @Test

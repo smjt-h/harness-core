@@ -216,6 +216,6 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(ManifestStepParameters.class, 12559);
     kryo.register(NGVariableOverrideSets.class, 12560);
     kryo.register(SshServiceSpec.class, 12561);
-    kryo.register(HelmChartValuesStoreConfig.class, 12563);
+    kryo.register(HelmChartValuesStoreConfig.class, 12562);
   }
 }

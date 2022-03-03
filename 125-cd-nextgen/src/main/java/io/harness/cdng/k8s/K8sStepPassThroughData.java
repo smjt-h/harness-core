@@ -34,6 +34,5 @@ public class K8sStepPassThroughData implements PassThroughData {
   List<OpenshiftParamManifestOutcome> openshiftParamManifestOutcomes;
   List<KustomizePatchesManifestOutcome> kustomizePatchesManifestOutcomes;
   InfrastructureOutcome infrastructure;
-  String helmValuesFileContent;
-  List<String> overrideHelmValuesFileContent;
+  List<String> helmValuesFileContents;
 }

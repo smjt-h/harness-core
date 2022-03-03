@@ -88,9 +88,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
   @Owner(developers = ACASIAN)
   @Category(UnitTests.class)
   public void shouldExecuteHelmValueFetchFromS3() throws Exception {
-    String valuesYaml = "values-file-content";
-    List<String> valuesYamlList = new ArrayList<>(Arrays.asList(valuesYaml));
-    List<Object> valuesYamlObjectList = new ArrayList<>(Arrays.asList(valuesYaml, valuesYamlList));
+    List<String> valuesYamlList = new ArrayList<>(Arrays.asList("values-file-content"));
     AwsConnectorDTO connectorDTO =
         AwsConnectorDTO.builder()
             .credential(
@@ -112,7 +110,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
             .build();
 
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
-    doReturn(valuesYamlObjectList)
+    doReturn(valuesYamlList)
         .when(helmTaskHelperBase)
         .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
 
@@ -125,7 +123,8 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     HelmValuesFetchResponse response = (HelmValuesFetchResponse) helmValuesFetchTaskNG.run(request);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
-    assertThat(response.getValuesFileContent()).isEqualTo(valuesYaml);
+    assertThat(response.getValuesFileContent()).isNull();
+    assertThat(response.getHelmChartValuesFileContent()).isEqualTo(valuesYamlList);
     assertThat(response.getUnitProgressData()).isNotNull();
   }
 
@@ -133,9 +132,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
   @Owner(developers = ACASIAN)
   @Category(UnitTests.class)
   public void shouldExecuteHelmValueFetchFromGcs() throws Exception {
-    String valuesYaml = "values-file-content";
-    List<String> valuesYamlList = new ArrayList<>(Arrays.asList(valuesYaml));
-    List<Object> valuesYamlObjectList = new ArrayList<>(Arrays.asList(valuesYaml, valuesYamlList));
+    List<String> valuesYamlList = new ArrayList<>(Arrays.asList("values-file-content"));
     GcpConnectorDTO connectorDTO =
         GcpConnectorDTO.builder()
             .credential(
@@ -155,7 +152,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
             .build();
 
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
-    doReturn(valuesYamlObjectList)
+    doReturn(valuesYamlList)
         .when(helmTaskHelperBase)
         .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
 
@@ -168,7 +165,8 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     HelmValuesFetchResponse response = (HelmValuesFetchResponse) helmValuesFetchTaskNG.run(request);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
-    assertThat(response.getValuesFileContent()).isEqualTo(valuesYaml);
+    assertThat(response.getValuesFileContent()).isNull();
+    assertThat(response.getHelmChartValuesFileContent()).isEqualTo(valuesYamlList);
     assertThat(response.getUnitProgressData()).isNotNull();
   }
 
@@ -176,9 +174,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
   @Owner(developers = ACASIAN)
   @Category(UnitTests.class)
   public void shouldExecuteHelmValueFetchFromHttp() throws Exception {
-    String valuesYaml = "values-file-content";
-    List<String> valuesYamlList = new ArrayList<>(Arrays.asList(valuesYaml));
-    List<Object> valuesYamlObjectList = new ArrayList<>(Arrays.asList(valuesYaml, valuesYamlList));
+    List<String> valuesYamlList = new ArrayList<>(Arrays.asList("values-file-content"));
     HttpHelmConnectorDTO connectorDTO =
         HttpHelmConnectorDTO.builder()
             .auth(HttpHelmAuthenticationDTO.builder()
@@ -199,7 +195,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
             .build();
 
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
-    doReturn(valuesYamlObjectList)
+    doReturn(valuesYamlList)
         .when(helmTaskHelperBase)
         .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
 
@@ -212,7 +208,8 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     HelmValuesFetchResponse response = (HelmValuesFetchResponse) helmValuesFetchTaskNG.run(request);
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
-    assertThat(response.getValuesFileContent()).isEqualTo(valuesYaml);
+    assertThat(response.getValuesFileContent()).isNull();
+    assertThat(response.getHelmChartValuesFileContent()).isEqualTo(valuesYamlList);
     assertThat(response.getUnitProgressData()).isNotNull();
   }
 

@@ -269,8 +269,7 @@ public class K8sStepHelper extends CDStepHelper {
 
   public TaskChainResponse executeValuesFetchTask(Ambiance ambiance, StepElementParameters stepElementParameters,
       InfrastructureOutcome infrastructure, ManifestOutcome k8sManifestOutcome,
-      List<ValuesManifestOutcome> aggregatedValuesManifests, String helmValuesYamlContent,
-      List<String> overrideHelmValuesYamlContent) {
+      List<ValuesManifestOutcome> aggregatedValuesManifests, List<String> helmValuesYamlContents) {
     List<GitFetchFilesConfig> gitFetchFilesConfigs =
         mapValuesManifestToGitFetchFileConfig(aggregatedValuesManifests, ambiance);
     K8sStepPassThroughData k8sStepPassThroughData = K8sStepPassThroughData.builder()
@@ -278,8 +277,7 @@ public class K8sStepHelper extends CDStepHelper {
                                                         .valuesManifestOutcomes(aggregatedValuesManifests)
                                                         .openshiftParamManifestOutcomes(emptyList())
                                                         .infrastructure(infrastructure)
-                                                        .helmValuesFileContent(helmValuesYamlContent)
-                                                        .overrideHelmValuesFileContent(overrideHelmValuesYamlContent)
+                                                        .helmValuesFileContents(helmValuesYamlContents)
                                                         .build();
 
     return getGitFetchFileTaskChainResponse(
@@ -763,14 +761,10 @@ public class K8sStepHelper extends CDStepHelper {
     }
     Map<String, FetchFilesResult> gitFetchFilesResultMap = gitFetchResponse.getFilesFromMultipleRepo();
     List<String> valuesFileContents = new ArrayList<>();
-    String helmValuesYamlContent = k8sStepPassThroughData.getHelmValuesFileContent();
-    List<String> overrideHelmValuesFileContent = k8sStepPassThroughData.getOverrideHelmValuesFileContent();
-    if (isNotEmpty(helmValuesYamlContent)) {
-      valuesFileContents.add(helmValuesYamlContent);
-    }
+    List<String> helmValuesFileContents = k8sStepPassThroughData.getHelmValuesFileContents();
 
-    if (isNotEmpty(overrideHelmValuesFileContent)) {
-      valuesFileContents.addAll(overrideHelmValuesFileContent);
+    if (isNotEmpty(helmValuesFileContents)) {
+      valuesFileContents.addAll(helmValuesFileContents);
     }
 
     if (!gitFetchFilesResultMap.isEmpty()) {
@@ -797,17 +791,13 @@ public class K8sStepHelper extends CDStepHelper {
               .build();
       return TaskChainResponse.builder().chainEnd(true).passThroughData(helmValuesFetchPassTroughData).build();
     }
-
-    String valuesFileContent = helmValuesFetchResponse.getValuesFileContent();
-    List<String> overrideValuesFileContents = new ArrayList<>(helmValuesFetchResponse.getHelmChartValuesFileContent());
+    List<String> valuesFileContents = new ArrayList<>(helmValuesFetchResponse.getHelmChartValuesFileContent());
     List<ValuesManifestOutcome> aggregatedValuesManifest = k8sStepPassThroughData.getValuesManifestOutcomes();
     if (isNotEmpty(aggregatedValuesManifest)) {
       return executeValuesFetchTask(ambiance, stepElementParameters, k8sStepPassThroughData.getInfrastructure(),
-          k8sStepPassThroughData.getK8sManifestOutcome(), aggregatedValuesManifest, valuesFileContent,
-          overrideValuesFileContents);
+          k8sStepPassThroughData.getK8sManifestOutcome(), aggregatedValuesManifest, valuesFileContents);
     } else {
-      overrideValuesFileContents.add(valuesFileContent);
-      return k8sStepExecutor.executeK8sTask(k8sManifest, ambiance, stepElementParameters, overrideValuesFileContents,
+      return k8sStepExecutor.executeK8sTask(k8sManifest, ambiance, stepElementParameters, valuesFileContents,
           K8sExecutionPassThroughData.builder()
               .infrastructure(k8sStepPassThroughData.getInfrastructure())
               .lastActiveUnitProgressData(helmValuesFetchResponse.getUnitProgressData())

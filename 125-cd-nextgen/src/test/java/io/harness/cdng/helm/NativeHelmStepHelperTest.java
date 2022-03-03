@@ -681,7 +681,7 @@ public class NativeHelmStepHelperTest extends CategoryTest {
     UnitProgressData unitProgressData = UnitProgressData.builder().build();
     HelmValuesFetchResponse helmValuesFetchResponse =
         HelmValuesFetchResponse.builder()
-            .valuesFileContent("values yaml payload")
+            .valuesFileContent(null)
             .helmChartValuesFileContent(Arrays.asList("values yaml payload"))
             .commandExecutionStatus(SUCCESS)
             .unitProgressData(unitProgressData)
@@ -953,13 +953,10 @@ public class NativeHelmStepHelperTest extends CategoryTest {
 
     List<ValuesManifestOutcome> aggregatedValuesManifests = new ArrayList<>();
 
-    String helmValuesYamlContent = "";
+    List<String> helmValuesYamlContents = new ArrayList<>();
 
-    List<String> overrideHelmValuesYamlContent = new ArrayList<>();
-
-    assertThatCode(
-        ()
-            -> nativeHelmStepHelper.executeValuesFetchTask(ambiance, stepElementParameters, outcomeBuilder.build(),
-                manifestOutcome, aggregatedValuesManifests, helmValuesYamlContent, overrideHelmValuesYamlContent));
+    assertThatCode(()
+                       -> nativeHelmStepHelper.executeValuesFetchTask(ambiance, stepElementParameters,
+                           outcomeBuilder.build(), manifestOutcome, aggregatedValuesManifests, helmValuesYamlContents));
   }
 }
