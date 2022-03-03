@@ -12,8 +12,6 @@ import static io.harness.logging.CommandExecutionStatus.FAILURE;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 import static io.harness.logging.LogLevel.INFO;
 
-import static software.wings.beans.LogHelper.color;
-
 import static java.lang.String.format;
 
 import io.harness.annotations.dev.OwnedBy;
@@ -32,9 +30,6 @@ import io.harness.exception.ExceptionUtils;
 import io.harness.k8s.K8sCommandUnitConstants;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
-
-import software.wings.beans.LogColor;
-import software.wings.beans.LogWeight;
 
 import com.google.inject.Inject;
 import java.util.function.BooleanSupplier;
