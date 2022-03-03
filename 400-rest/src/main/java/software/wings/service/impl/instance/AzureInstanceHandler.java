@@ -9,12 +9,15 @@ package software.wings.service.impl.instance;
 
 import static io.harness.beans.FeatureName.AZURE_INFRA_PERPETUAL_TASK;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 import static io.harness.validation.Validator.notNullCheck;
 
 import static java.util.stream.Collectors.toSet;
 
 import io.harness.beans.FeatureName;
 import io.harness.delegate.beans.DelegateResponseData;
+import io.harness.delegate.task.azure.AzureTaskExecutionResponse;
+import io.harness.delegate.task.azure.response.AzureListVMTaskResponse;
 import io.harness.exception.WingsException;
 import io.harness.security.encryption.EncryptedDataDetail;
 
@@ -38,9 +41,9 @@ import software.wings.beans.infrastructure.instance.key.deployment.DeploymentKey
 import software.wings.helpers.ext.azure.AzureHelperService;
 import software.wings.service.AzureInfraInstanceSyncPerpetualTaskCreator;
 import software.wings.service.InstanceSyncPerpetualTaskCreator;
-import software.wings.service.PdcInstanceSyncPerpetualTaskCreator;
 
 import com.google.inject.Inject;
+import io.jsonwebtoken.lang.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +59,11 @@ public class AzureInstanceHandler extends InstanceHandler implements InstanceSyn
 
   @Override
   public void syncInstances(String appId, String infraMappingId, InstanceSyncFlow instanceSyncFlow) {
+    syncInstancesInternal(appId, infraMappingId, instanceSyncFlow, Optional.empty());
+  }
+
+  private void syncInstancesInternal(String appId, String infraMappingId, InstanceSyncFlow instanceSyncFlow,
+      Optional<AzureTaskExecutionResponse> response) {
     InfrastructureMapping infrastructureMapping = infraMappingService.get(appId, infraMappingId);
     notNullCheck("Infra mapping is null for id:" + infraMappingId, infrastructureMapping);
 
@@ -67,18 +75,17 @@ public class AzureInstanceHandler extends InstanceHandler implements InstanceSyn
     }
 
     AzureInfrastructureMapping azureInfrastructureMapping = (AzureInfrastructureMapping) infrastructureMapping;
+
     Map<String, Instance> azureInstanceIdInstanceMap = new HashMap<>();
+    loadInstanceMapBasedOnType(appId, azureInfrastructureMapping.getUuid(), azureInstanceIdInstanceMap);
 
-    loadInstanceMapBasedOnType(appId, infraMappingId, azureInstanceIdInstanceMap);
+    log.info(
+        "Found {} azure instances for app {}, flow: {}", azureInstanceIdInstanceMap.size(), appId, instanceSyncFlow);
 
-    log.info("Found {} azure instances for app {}", azureInstanceIdInstanceMap.size(), appId);
+    boolean canUpdateDb = canUpdateInstancesInDb(instanceSyncFlow, infrastructureMapping.getAccountId());
 
-    SettingAttribute cloudProviderSetting = settingsService.get(infrastructureMapping.getComputeProviderSettingId());
-    List<EncryptedDataDetail> encryptedDataDetails =
-        secretManager.getEncryptionDetails((EncryptableSetting) cloudProviderSetting.getValue(), null, null);
-
-    if (azureInstanceIdInstanceMap.size() > 0) {
-      handleInstanceSync(azureInstanceIdInstanceMap, encryptedDataDetails, azureInfrastructureMapping);
+    if (azureInstanceIdInstanceMap.size() > 0 && canUpdateDb) {
+      handleInstanceSync(azureInstanceIdInstanceMap, azureInfrastructureMapping, response);
     }
   }
 
@@ -102,12 +109,20 @@ public class AzureInstanceHandler extends InstanceHandler implements InstanceSyn
   }
 
   protected void handleInstanceSync(Map<String, Instance> azureInstanceIdInstanceMap,
-      List<EncryptedDataDetail> encryptedDataDetails, AzureInfrastructureMapping azureInfrastructureMapping) {
+      AzureInfrastructureMapping azureInfrastructureMapping, Optional<AzureTaskExecutionResponse> response) {
     if (azureInstanceIdInstanceMap.size() > 0) {
-      SettingAttribute settingAttribute = settingsService.get(azureInfrastructureMapping.getComputeProviderSettingId());
+      SettingAttribute cloudProviderSetting =
+          settingsService.get(azureInfrastructureMapping.getComputeProviderSettingId());
+      List<EncryptedDataDetail> encryptedDataDetails =
+          secretManager.getEncryptionDetails((EncryptableSetting) cloudProviderSetting.getValue(), null, null);
 
-      List<Host> activeHostList =
-          azureHelperService.listHosts(azureInfrastructureMapping, settingAttribute, encryptedDataDetails, null);
+      List<Host> activeHostList;
+      if (response.isPresent() && null != response.get().getAzureTaskResponse()) {
+        activeHostList = ((AzureListVMTaskResponse) response.get().getAzureTaskResponse()).getHosts();
+      } else {
+        activeHostList =
+            azureHelperService.listHosts(azureInfrastructureMapping, cloudProviderSetting, encryptedDataDetails, null);
+      }
       deleteRunningInstancesFromMap(azureInstanceIdInstanceMap, activeHostList);
     }
   }
@@ -136,7 +151,8 @@ public class AzureInstanceHandler extends InstanceHandler implements InstanceSyn
   @Override
   public void handleNewDeployment(
       List<DeploymentSummary> deploymentSummaries, boolean rollback, OnDemandRollbackInfo onDemandRollbackInfo) {
-    // Not Implemented
+    // All the new deployments are either handled at AzureInstanceHandler or InstanceHelper
+    throw WingsException.builder().message("Deployments should be handled at InstanceHelper for azure infra.").build();
   }
 
   @Override
@@ -174,10 +190,23 @@ public class AzureInstanceHandler extends InstanceHandler implements InstanceSyn
 
   @Override
   public void processInstanceSyncResponseFromPerpetualTask(
-      InfrastructureMapping infrastructureMapping, DelegateResponseData response) {}
+      InfrastructureMapping infrastructureMapping, DelegateResponseData response) {
+    syncInstancesInternal(infrastructureMapping.getAppId(), infrastructureMapping.getUuid(),
+        InstanceSyncFlow.PERPETUAL_TASK, Optional.of((AzureTaskExecutionResponse) response));
+  }
 
   @Override
   public Status getStatus(InfrastructureMapping infrastructureMapping, DelegateResponseData response) {
-    return null;
+    AzureTaskExecutionResponse azureTaskExecutionResponse = (AzureTaskExecutionResponse) response;
+    boolean success = azureTaskExecutionResponse.getCommandExecutionStatus() == SUCCESS;
+    String errorMessage = success ? null : azureTaskExecutionResponse.getErrorMessage();
+    boolean canDeleteTask = success
+        && (azureTaskExecutionResponse.getAzureTaskResponse() == null
+            || Collections.isEmpty(
+                ((AzureListVMTaskResponse) azureTaskExecutionResponse.getAzureTaskResponse()).getHosts()));
+    if (canDeleteTask) {
+      log.info("[Azure Infra Sync]: Got 0 instances. Infrastructure Mapping : [{}]", infrastructureMapping.getUuid());
+    }
+    return Status.builder().success(success).errorMessage(errorMessage).retryable(!canDeleteTask).build();
   }
 }

@@ -41,6 +41,7 @@ public enum TaskGroup {
   S3,
   AZURE_ARTIFACTS,
   AZURE_VMSS,
+  AZURE_VM,
   AZURE_APP_SERVICE,
   AZURE_ARM,
   AZURE_RESOURCE,

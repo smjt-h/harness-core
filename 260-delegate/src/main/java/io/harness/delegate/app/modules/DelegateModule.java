@@ -384,6 +384,7 @@ import software.wings.delegatetasks.aws.ecs.ecstaskhandler.deploy.EcsDeployComma
 import software.wings.delegatetasks.aws.ecs.ecstaskhandler.deploy.EcsDeployRollbackDataFetchCommandHandler;
 import software.wings.delegatetasks.aws.ecs.ecstaskhandler.deploy.EcsRunTaskDeployCommandHandler;
 import software.wings.delegatetasks.azure.AzureVMSSTask;
+import software.wings.delegatetasks.azure.AzureVMTask;
 import software.wings.delegatetasks.azure.appservice.AbstractAzureAppServiceTaskHandler;
 import software.wings.delegatetasks.azure.appservice.AzureAppServiceTask;
 import software.wings.delegatetasks.azure.appservice.webapp.taskhandler.AzureWebAppListWebAppDeploymentSlotNamesTaskHandler;
@@ -1330,6 +1331,7 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.AZURE_APP_SERVICE_TASK).toInstance(AzureAppServiceTask.class);
     mapBinder.addBinding(TaskType.AZURE_ARM_TASK).toInstance(AzureARMTask.class);
     mapBinder.addBinding(TaskType.AZURE_RESOURCE_TASK).toInstance(AzureResourceTask.class);
+    mapBinder.addBinding(TaskType.AZURE_LIST_VM).toInstance(AzureVMTask.class);
     mapBinder.addBinding(TaskType.LDAP_TEST_CONN_SETTINGS).toInstance(ServiceImplDelegateTask.class);
     mapBinder.addBinding(TaskType.LDAP_TEST_USER_SETTINGS).toInstance(ServiceImplDelegateTask.class);
     mapBinder.addBinding(TaskType.LDAP_TEST_GROUP_SETTINGS).toInstance(ServiceImplDelegateTask.class);

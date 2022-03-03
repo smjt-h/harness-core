@@ -26,6 +26,7 @@ import io.harness.perpetualtask.instancesync.AwsAmiInstanceSyncPerpetualTaskPara
 import io.harness.perpetualtask.instancesync.AwsCodeDeployInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.AwsLambdaInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.AwsSshInstanceSyncPerpetualTaskParams;
+import io.harness.perpetualtask.instancesync.AzureInfraInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.AzureVmssInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.AzureWebAppInstanceSyncPerpetualProtoTaskParams;
 import io.harness.perpetualtask.instancesync.ContainerInstanceSyncPerpetualTaskParams;
@@ -76,6 +77,8 @@ public class PerpetualTaskWorkerModule extends AbstractModule {
     mapBinder.addBinding(AwsSshInstanceSyncPerpetualTaskParams.class.getSimpleName())
         .to(AwsSshInstanceSyncExecutor.class);
     mapBinder.addBinding(PdcInstanceSyncPerpetualTaskParams.class.getSimpleName()).to(PdcInstanceSyncExecutor.class);
+    mapBinder.addBinding(AzureInfraInstanceSyncPerpetualTaskParams.class.getSimpleName())
+        .to(AzureInfraInstanceSyncExecutor.class);
     mapBinder.addBinding(AwsLambdaInstanceSyncPerpetualTaskParams.class.getSimpleName())
         .to(AwsLambdaInstanceSyncPerpetualTaskExecutor.class);
     mapBinder.addBinding(SpotinstAmiInstanceSyncPerpetualTaskParams.class.getSimpleName())

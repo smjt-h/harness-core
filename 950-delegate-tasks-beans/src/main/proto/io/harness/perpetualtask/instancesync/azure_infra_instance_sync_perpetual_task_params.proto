@@ -11,6 +11,6 @@ option java_multiple_files = true;
 
 message AzureInfraInstanceSyncPerpetualTaskParams {
   bytes azure_infrastructure_mapping = 2;
-  bytes azure_config = 3;
+  bytes compute_provider_setting = 3;
   bytes encrypted_data = 4;
 }
