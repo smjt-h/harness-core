@@ -14,6 +14,7 @@ import io.harness.ng.core.activityhistory.entity.ConnectivityCheckDetail;
 import io.harness.ng.core.activityhistory.entity.EntityUsageActivityDetail;
 import io.harness.ng.core.activityhistory.entity.NGActivity;
 import io.harness.ng.core.environment.beans.Environment;
+import io.harness.ng.core.infraStructureDefinition.beans.InfraStructureDefinitionEntity;
 import io.harness.ng.core.service.entity.ServiceEntity;
 
 import java.util.Set;
@@ -27,6 +28,7 @@ public class NGCoreMorphiaClassesRegistrar implements MorphiaRegistrar {
     set.add(AccountSettings.class);
     set.add(ConnectivityCheckDetail.class);
     set.add(EntityUsageActivityDetail.class);
+    set.add(InfraStructureDefinitionEntity.class);
   }
 
   @Override
