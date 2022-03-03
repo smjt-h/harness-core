@@ -25,6 +25,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.InvalidYamlException;
 import io.harness.execution.PlanExecution;
 import io.harness.execution.PlanExecutionMetadata;
+import io.harness.logging.AutoLogContext;
 import io.harness.notification.bean.NotificationRules;
 import io.harness.plan.Plan;
 import io.harness.pms.contracts.plan.ExecutionMetadata;
@@ -48,6 +49,7 @@ import io.harness.pms.pipeline.service.PMSYamlSchemaService;
 import io.harness.pms.pipeline.service.PipelineEnforcementService;
 import io.harness.pms.pipeline.yaml.BasicPipeline;
 import io.harness.pms.plan.creation.PlanCreatorMergeService;
+import io.harness.pms.plan.creation.PlanCreatorUtils;
 import io.harness.pms.plan.execution.beans.ExecArgs;
 import io.harness.pms.plan.execution.beans.StagesExecutionInfo;
 import io.harness.pms.rbac.validator.PipelineRbacService;
@@ -285,29 +287,30 @@ public class ExecutionHelper {
       ExecutionMetadata executionMetadata, PlanExecutionMetadata planExecutionMetadata, boolean isRetry,
       List<String> identifierOfSkipStages, String previousExecutionId) {
     long startTs = System.currentTimeMillis();
-    PlanCreationBlobResponse resp;
-    try {
-      resp = planCreatorMergeService.createPlan(
-          accountId, orgIdentifier, projectIdentifier, executionMetadata, planExecutionMetadata);
-    } catch (IOException e) {
-      log.error(format("Invalid yaml in node [%s]", YamlUtils.getErrorNodePartialFQN(e)), e);
-      throw new InvalidYamlException(format("Invalid yaml in node [%s]", YamlUtils.getErrorNodePartialFQN(e)), e);
+    try (AutoLogContext ignore =
+             PlanCreatorUtils.autoLogContext(executionMetadata, accountId, orgIdentifier, projectIdentifier)) {
+      PlanCreationBlobResponse resp;
+      try {
+        resp = planCreatorMergeService.createPlan(
+            accountId, orgIdentifier, projectIdentifier, executionMetadata, planExecutionMetadata);
+      } catch (IOException e) {
+        log.error(format("Invalid yaml in node [%s]", YamlUtils.getErrorNodePartialFQN(e)), e);
+        throw new InvalidYamlException(format("Invalid yaml in node [%s]", YamlUtils.getErrorNodePartialFQN(e)), e);
+      }
+      Plan plan = PlanExecutionUtils.extractPlan(resp);
+      ImmutableMap<String, String> abstractions = ImmutableMap.<String, String>builder()
+                                                      .put(SetupAbstractionKeys.accountId, accountId)
+                                                      .put(SetupAbstractionKeys.orgIdentifier, orgIdentifier)
+                                                      .put(SetupAbstractionKeys.projectIdentifier, projectIdentifier)
+                                                      .build();
+      long endTs = System.currentTimeMillis();
+      log.info("Time taken to complete plan: {} ", endTs - startTs);
+      if (isRetry) {
+        Plan newPlan = retryExecutionHelper.transformPlan(plan, identifierOfSkipStages, previousExecutionId);
+        return orchestrationService.startExecution(newPlan, abstractions, executionMetadata, planExecutionMetadata);
+      }
+      return orchestrationService.startExecution(plan, abstractions, executionMetadata, planExecutionMetadata);
     }
-    Plan plan = PlanExecutionUtils.extractPlan(resp);
-    ImmutableMap<String, String> abstractions = ImmutableMap.<String, String>builder()
-                                                    .put(SetupAbstractionKeys.accountId, accountId)
-                                                    .put(SetupAbstractionKeys.orgIdentifier, orgIdentifier)
-                                                    .put(SetupAbstractionKeys.projectIdentifier, projectIdentifier)
-                                                    .build();
-    long endTs = System.currentTimeMillis();
-    log.info("Time taken to complete plan: {} for projectId - {}, orgIdentifier - {}, accountId - {}", endTs - startTs,
-        projectIdentifier, orgIdentifier, accountId);
-
-    if (isRetry) {
-      Plan newPlan = retryExecutionHelper.transformPlan(plan, identifierOfSkipStages, previousExecutionId);
-      return orchestrationService.startExecution(newPlan, abstractions, executionMetadata, planExecutionMetadata);
-    }
-    return orchestrationService.startExecution(plan, abstractions, executionMetadata, planExecutionMetadata);
   }
 
   public PlanExecution startExecutionV2(String accountId, String orgIdentifier, String projectIdentifier,
