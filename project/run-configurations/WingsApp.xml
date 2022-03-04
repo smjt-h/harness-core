@@ -7,8 +7,6 @@
                     blaze-command="run"
                     keep-in-sync="true">
         <blaze-target>//360-cg-manager:module</blaze-target>
-        <blaze-user-flag>
-        </blaze-user-flag>
         <blaze-user-exe-flag>server</blaze-user-exe-flag>
         <blaze-user-exe-flag>$PROJECT_DIR$/../360-cg-manager/config.yml</blaze-user-exe-flag>
     </blaze-settings>
