@@ -66,6 +66,7 @@ import com.amazonaws.services.ecs.model.Deployment;
 import com.amazonaws.services.ecs.model.DesiredStatus;
 import com.amazonaws.services.ecs.model.LaunchType;
 import com.amazonaws.services.ecs.model.Service;
+import com.amazonaws.services.ecs.model.Tag;
 import com.amazonaws.services.ecs.model.Task;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -166,9 +167,10 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
     updateContainerInstance(accountId, ceCluster, awsCrossAccountAttributes, containerInstances);
     List<Service> services = listServices(awsCrossAccountAttributes, ceCluster.getClusterArn(), ceCluster.getRegion());
     Map<String, String> deploymentIdServiceMap = getDeploymentIdsForService(services);
+    Map<String, List<Tag>> serviceArnTagsMap = getServiceArnTagsMap(services);
     List<Task> tasks = listTask(awsCrossAccountAttributes, ceCluster.getClusterArn(), ceCluster.getRegion());
     log.debug("Task list {}", tasks);
-    updateTasks(accountId, ceCluster, tasks, deploymentIdServiceMap);
+    updateTasks(accountId, ceCluster, tasks, deploymentIdServiceMap, serviceArnTagsMap);
     publishUtilizationMetrics(awsCrossAccountAttributes, ceCluster, services);
   }
 
@@ -282,8 +284,8 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
   }
 
   @VisibleForTesting
-  void updateTasks(
-      String accountId, CECluster ceCluster, List<Task> tasks, Map<String, String> deploymentIdServiceMap) {
+  void updateTasks(String accountId, CECluster ceCluster, List<Task> tasks, Map<String, String> deploymentIdServiceMap,
+      Map<String, List<Tag>> serviceArnTagsMap) {
     Instant stopTime = Instant.now();
     String clusterId = ceCluster.getUuid();
     String settingId = ceCluster.getParentAccountSettingId();
@@ -350,6 +352,13 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
             metaData.put(InstanceMetaDataConstants.CLOUD_PROVIDER, CloudProvider.AWS.name());
             metaData.put(InstanceMetaDataConstants.CLUSTER_TYPE, ClusterType.ECS.name());
             metaData.put(InstanceMetaDataConstants.LAUNCH_TYPE, task.getLaunchType());
+
+            Map<String, String> labels = new HashMap<>();
+            // Add Cluster Tags to the Task Labels
+            labels.putAll(ceCluster.getLabels());
+            // Add Task Level Tags
+            labels.putAll(task.getTags().stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
+
             HarnessServiceInfo harnessServiceInfo = null;
             if (null != task.getStartedBy() && null != deploymentIdServiceMap.get(task.getStartedBy())) {
               String serviceArn = deploymentIdServiceMap.get(task.getStartedBy());
@@ -357,6 +366,9 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
               metaData.put(InstanceMetaDataConstants.ECS_SERVICE_NAME, serviceName);
               metaData.put(InstanceMetaDataConstants.ECS_SERVICE_ARN, serviceArn);
               harnessServiceInfo = getHarnessServiceInfo(accountId, clusterName, serviceName);
+              // Fetch Service Tags and add to the Task Labels
+              List<Tag> serviceTagList = serviceArnTagsMap.get(serviceArn);
+              labels.putAll(serviceTagList.stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
             }
 
             Instant startInstant = task.getPullStartedAt().toInstant();
@@ -375,6 +387,7 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
                     .allocatableResource(resource)
                     .metaData(metaData)
                     .harnessServiceInfo(harnessServiceInfo)
+                    .labels(labels)
                     .build();
 
             updateInstanceStopTimeForTask(instanceData, task);
@@ -502,6 +515,9 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
                     InstanceMetaDataConstants.INSTANCE_FAMILY, metaData),
                 InstanceMetaDataUtils.getValueForKeyFromInstanceMetaData(InstanceMetaDataConstants.REGION, metaData),
                 CloudProvider.AWS);
+            Map<String, String> labels = new HashMap<>();
+            labels.putAll(ceCluster.getLabels());
+            labels.putAll(containerInstance.getTags().stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
             if (null != totalResource) {
               Instant startInstant = containerInstance.getRegisteredAt().toInstant();
               InstanceData instanceData =
@@ -519,6 +535,7 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
                       .totalResource(totalResource)
                       .allocatableResource(resource)
                       .metaData(metaData)
+                      .labels(labels)
                       .build();
               log.debug("Creating container instance {} ", containerInstanceId);
               instanceDataService.create(instanceData);
@@ -551,6 +568,10 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
 
     return deploymentIdsForService.entrySet().stream().collect(
         HashMap::new, (m, v) -> v.getValue().forEach(k -> m.put(k, v.getKey())), Map::putAll);
+  }
+
+  private Map<String, List<Tag>> getServiceArnTagsMap(List<Service> services) {
+    return services.stream().collect(Collectors.toMap(Service::getServiceArn, Service::getTags));
   }
 
   private List<String> listTaskDesiredStatus() {

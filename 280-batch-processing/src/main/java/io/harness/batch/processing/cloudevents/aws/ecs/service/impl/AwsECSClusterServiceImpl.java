@@ -18,6 +18,7 @@ import software.wings.beans.AwsCrossAccountAttributes;
 import software.wings.beans.NameValuePair;
 import software.wings.beans.ce.CEAwsConfig;
 
+import com.amazonaws.services.ecs.model.Tag;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +60,10 @@ public class AwsECSClusterServiceImpl implements AwsECSClusterService {
     awsRegions.forEach(awsRegion -> {
       List<String> ecsClusters = awsECSHelperService.listECSClusters(awsRegion.getValue(), awsCrossAccountAttributes);
       ecsClusters.forEach(ecsCluster -> {
+        Map<String, String> clusterTags =
+            awsECSHelperService.listTagsForResourceArn(awsCrossAccountAttributes, awsRegion.getValue(), ecsCluster)
+                .stream()
+                .collect(Collectors.toMap(Tag::getKey, Tag::getValue));
         CECluster ceCluster = CECluster.builder()
                                   .accountId(accountId)
                                   .clusterName(getNameFromArn(ecsCluster))
@@ -67,6 +72,7 @@ public class AwsECSClusterServiceImpl implements AwsECSClusterService {
                                   .infraAccountId(ceAwsConfig.getAwsAccountId())
                                   .infraMasterAccountId(ceAwsConfig.getAwsMasterAccountId())
                                   .parentAccountSettingId(settingId)
+                                  .labels(clusterTags)
                                   .build();
         clusters.add(ceCluster);
       });
