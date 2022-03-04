@@ -67,6 +67,7 @@ BAZEL_MODULES="\
   //340-ce-nextgen:module \
   //350-event-server:module \
   //360-cg-manager:module \
+  //360-cg-manager:module_deploy.jar \
   //380-cg-graphql:module \
   //400-rest:module \
   //400-rest:supporter-test \
@@ -83,12 +84,9 @@ BAZEL_MODULES="\
   //460-capability:module \
   //490-ce-commons:module \
   //800-pipeline-service:module \
+  //800-pipeline-service:module_deploy.jar \
   //810-ng-triggers:module \
   //815-cg-triggers:module \
-  //360-cg-manager:module \
-  //360-cg-manager:module_deploy.jar \
-  //800-pipeline-service:module \
-  //800-pipeline-service:module_deploy.jar \
   //820-platform-service:module \
   //820-platform-service:module_deploy.jar \
   //830-notification-service:module \
@@ -138,6 +136,8 @@ BAZEL_MODULES="\
   //945-license-usage-sdk:module \
   //945-ng-audit-client:module \
   //947-scim-core:module \
+  //948-access-control-admin-client:module \
+  //948-access-control-sdk:module \
   //950-command-library-common:module \
   //959-common-entities:module \
   //950-delegate-tasks-beans/src/main/proto:all \
@@ -196,18 +196,15 @@ BAZEL_MODULES="\
   //990-commons-test:module \
   //999-annotations:module \
   //access-control/service:module \
-  //access-control/libs/aggregator:module \
-  //access-control/libs/core:module \
+  //access-control/service:module_deploy.jar \
+  //access-control/libraries/80-aggregator:module \
+  //access-control/libraries/90-core:module \
   //access-control/contracts:module \
-  //clients/access-control/admin-client:module \
-  //clients/access-control/sdk:module \
   //product/ci/engine/proto:all \
   //product/ci/scm/proto:all \
-  //access-control/service:module \
-  //access-control/service:module_deploy.jar \
 "
 
-bazel ${bazelrc} build $BAZEL_MODULES `bazel query "//...:*" | grep "module_deploy.jar"` ${BAZEL_ARGUMENTS} --remote_download_outputs=all
+bazel ${bazelrc} build $BAZEL_MODULES ${BAZEL_ARGUMENTS} --remote_download_outputs=all
 
 build_bazel_module() {
   module=$1
@@ -294,6 +291,7 @@ build_protocol_info(){
   rm module-deps.sh /tmp/ProtoDeps.text /tmp/KryoDeps.text
 }
 
+build_bazel_application 940-notification-client
 build_bazel_application 820-platform-service
 
 build_bazel_module 100-migrator
@@ -406,6 +404,3 @@ if [ "${PLATFORM}" == "jenkins" ]; then
  build_protocol_info 800-pipeline-service pipeline-service
  build_protocol_info 310-ci-manager ci-manager
 fi
-build_bazel_module 878-pipeline-service-utilities
-if [ "${PLATFORM}" == "jenkins" ]; then
- build_protocol_info 800-pipeline-service pipeline-service

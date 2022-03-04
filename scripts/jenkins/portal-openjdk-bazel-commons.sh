@@ -57,7 +57,6 @@ function copy_event_server_jars(){
 	cp ../../350-event-server/key.pem .
 	cp ../../350-event-server/cert.pem .
 	cp ../../350-event-server/event-service-config.yml .
-	cp ../../alpn-boot-8.1.13.v20181017.jar .
 	cp ../../dockerization/event-server/Dockerfile-event-server-jenkins-k8-openjdk Dockerfile
 	cp ../../dockerization/event-server/Dockerfile-event-server-jenkins-k8-gcr-openjdk Dockerfile-gcr
 	cp -r ../../dockerization/event-server/scripts/ .
@@ -76,7 +75,6 @@ function copy_ng_manager_jars(){
 	cp ../../keystore.jks .
 	cp ../../120-ng-manager/key.pem .
 	cp ../../120-ng-manager/cert.pem .
-	cp ../../alpn-boot-8.1.13.v20181017.jar .
 	cp ../../120-ng-manager/src/main/resources/redisson-jcache.yaml .
 
 	cp ../../dockerization/ng-manager/Dockerfile-ng-manager-jenkins-k8-openjdk ./Dockerfile
@@ -99,7 +97,6 @@ function copy_ce_nextgen_jars(){
 	cp ${BAZEL_BIN}/${MODULE_NAME}/module_deploy.jar ce-nextgen-capsule.jar
 	cp ../../${MODULE_NAME}/keystore.jks .
 	cp ../../${MODULE_NAME}/config.yml .
-	cp ../../alpn-boot-8.1.13.v20181017.jar .
 	cp ../../dockerization/${FOLDER_NAME}/Dockerfile-ce-nextgen-jenkins-k8-gcr-openjdk Dockerfile-gcr
 	cp ../../dockerization/${FOLDER_NAME}/Dockerfile-ce-nextgen-jenkins-k8-openjdk Dockerfile
 	cp -r ../../dockerization/${FOLDER_NAME}/scripts/ .
