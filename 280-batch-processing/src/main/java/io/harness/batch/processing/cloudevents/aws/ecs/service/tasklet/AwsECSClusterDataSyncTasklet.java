@@ -355,7 +355,9 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
 
             Map<String, String> labels = new HashMap<>();
             // Add Cluster Tags to the Task Labels
-            labels.putAll(ceCluster.getLabels());
+            if (ceCluster.getLabels() != null) {
+              labels.putAll(ceCluster.getLabels());
+            }
             // Add Task Level Tags
             labels.putAll(task.getTags().stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
 
@@ -368,7 +370,9 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
               harnessServiceInfo = getHarnessServiceInfo(accountId, clusterName, serviceName);
               // Fetch Service Tags and add to the Task Labels
               List<Tag> serviceTagList = serviceArnTagsMap.get(serviceArn);
-              labels.putAll(serviceTagList.stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
+              if (serviceTagList != null && !serviceTagList.isEmpty()) {
+                labels.putAll(serviceTagList.stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
+              }
             }
 
             Instant startInstant = task.getPullStartedAt().toInstant();
@@ -516,7 +520,9 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
                 InstanceMetaDataUtils.getValueForKeyFromInstanceMetaData(InstanceMetaDataConstants.REGION, metaData),
                 CloudProvider.AWS);
             Map<String, String> labels = new HashMap<>();
-            labels.putAll(ceCluster.getLabels());
+            if (ceCluster.getLabels() != null) {
+              labels.putAll(ceCluster.getLabels());
+            }
             labels.putAll(containerInstance.getTags().stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
             if (null != totalResource) {
               Instant startInstant = containerInstance.getRegisteredAt().toInstant();
