@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.hash.Hashing;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -58,6 +59,7 @@ public final class CECluster implements PersistentEntity, UuidAware, CreatedAtAw
   String infraAccountId;
   String infraMasterAccountId;
   String parentAccountSettingId; // setting id of ce connectors
+  Map<String, String> labels;
   @FdIndex String hash;
   long lastReceivedAt;
   long createdAt;
