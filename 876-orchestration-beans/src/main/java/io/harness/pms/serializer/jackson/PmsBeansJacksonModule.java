@@ -29,6 +29,9 @@ import io.harness.pms.contracts.plan.TriggeredBy;
 import io.harness.pms.contracts.plan.YamlOutputProperties;
 import io.harness.pms.contracts.plan.YamlProperties;
 import io.harness.pms.contracts.steps.StepType;
+import io.harness.pms.deserializer.ExecutionErrorInfoDeserializer;
+import io.harness.pms.deserializer.ExecutionTriggerInfoDeserializer;
+import io.harness.pms.deserializer.GovernanceMetadataDeserializer;
 import io.harness.pms.serializer.json.serializers.YamlOutputPropertiesSerializer;
 import io.harness.pms.serializer.json.serializers.YamlPropertiesSerializer;
 import io.harness.serializer.json.ExecutableResponseSerializer;
@@ -73,5 +76,8 @@ public class PmsBeansJacksonModule extends SimpleModule {
     addSerializer(PolicyMetadata.class, new PolicyMetadataSerializer());
     addSerializer(PolicySetMetadata.class, new PolicySetMetadataSerializer());
     addSerializer(GovernanceMetadata.class, new GovernanceMetadataSerializer());
+    addDeserializer(ExecutionTriggerInfo.class, new ExecutionTriggerInfoDeserializer());
+    addDeserializer(ExecutionErrorInfo.class, new ExecutionErrorInfoDeserializer());
+    addDeserializer(GovernanceMetadata.class, new GovernanceMetadataDeserializer());
   }
 }

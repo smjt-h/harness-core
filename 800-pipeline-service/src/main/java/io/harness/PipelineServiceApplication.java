@@ -319,7 +319,7 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     }
     if (appConfig.getDebeziumConfig() != null && appConfig.getDebeziumConfig().isEnabled()) {
       new DebeziumEngineStarter().startDebeziumEngine(
-          appConfig.getDebeziumConfig(), new PipelineExecutionSummaryHandler());
+          appConfig.getDebeziumConfig(), new PipelineExecutionSummaryHandler(environment.getObjectMapper()));
     }
 
     // Pipeline Service Modules

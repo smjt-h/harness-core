@@ -8,37 +8,31 @@
 package io.harness.handlers;
 
 import io.harness.debezium.ChangeHandler;
-import io.harness.entity.PipelineExecutionSummaryDashboardEntity;
-import io.harness.pms.contracts.plan.ExecutionTriggerInfo;
+import io.harness.pms.plan.execution.beans.PipelineExecutionSummaryEntity;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.inject.Singleton;
 import io.debezium.engine.ChangeEvent;
 import lombok.SneakyThrows;
 
 @Singleton
 public class PipelineExecutionSummaryHandler implements ChangeHandler {
+  ObjectMapper objectMapper;
+
+  public PipelineExecutionSummaryHandler(ObjectMapper objectMapper) {
+    this.objectMapper = objectMapper;
+  }
+
   @SneakyThrows
-  PipelineExecutionSummaryDashboardEntity deserialize(ChangeEvent<String, String> changeEvent) {
-    ObjectMapper om = new ObjectMapper();
-
-    // creating a module
-    SimpleModule module = new SimpleModule();
-    // adding our custom serializer and deserializer
-    module.addDeserializer(ExecutionTriggerInfo.class, new TriggerInfoDeserializer());
-    // registering the module with ObjectMapper
-    om.registerModule(module);
-
+  PipelineExecutionSummaryEntity deserialize(ChangeEvent<String, String> changeEvent) {
     String s2 = changeEvent.value();
-
-    PipelineExecutionSummaryDashboardEntity p = om.readValue(s2, PipelineExecutionSummaryDashboardEntity.class);
+    PipelineExecutionSummaryEntity p = objectMapper.readValue(s2, PipelineExecutionSummaryEntity.class);
     return p;
   }
 
   @Override
   public void handleUpdateEvent(String id, ChangeEvent<String, String> changeEvent) {
-    PipelineExecutionSummaryDashboardEntity pipelineExecutionSummaryDashboardEntity = deserialize(changeEvent);
+    PipelineExecutionSummaryEntity pipelineExecutionSummaryEntity = deserialize(changeEvent);
   }
 
   @Override
@@ -46,6 +40,6 @@ public class PipelineExecutionSummaryHandler implements ChangeHandler {
 
   @Override
   public void handleCreateEvent(String id, ChangeEvent<String, String> changeEvent) {
-    PipelineExecutionSummaryDashboardEntity pipelineExecutionSummaryDashboardEntity = deserialize(changeEvent);
+    PipelineExecutionSummaryEntity pipelineExecutionSummaryDashboardEntity = deserialize(changeEvent);
   }
 }

@@ -1,4 +1,4 @@
-package io.harness.handlers;
+package io.harness.pms.deserializer;
 
 import io.harness.pms.contracts.plan.ExecutionTriggerInfo;
 
@@ -8,13 +8,13 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.google.protobuf.util.JsonFormat;
 import java.io.IOException;
 
-public class TriggerInfoDeserializer extends JsonDeserializer<ExecutionTriggerInfo> {
+public class ExecutionTriggerInfoDeserializer extends JsonDeserializer<ExecutionTriggerInfo> {
   @Override
   public ExecutionTriggerInfo deserialize(JsonParser p, DeserializationContext ctx) throws IOException {
     ExecutionTriggerInfo.Builder builder = ExecutionTriggerInfo.newBuilder();
     String p1 = p.readValueAsTree().toString();
     JsonFormat.parser().ignoringUnknownFields().merge(p1, builder);
-    ExecutionTriggerInfo triggerInfo = builder.build();
-    return triggerInfo;
+    ExecutionTriggerInfo executionTriggerInfo = builder.build();
+    return executionTriggerInfo;
   }
 }
