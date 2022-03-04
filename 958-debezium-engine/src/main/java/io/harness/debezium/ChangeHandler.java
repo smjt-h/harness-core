@@ -7,21 +7,23 @@
 
 package io.harness.debezium;
 
-public interface ChangeHandler<T> {
-  void handleUpdateEvent(String id, T updatedEntity);
+import io.debezium.engine.ChangeEvent;
+
+public interface ChangeHandler {
+  void handleUpdateEvent(String id, ChangeEvent<String, String> changeEvent);
 
   void handleDeleteEvent(String id);
 
-  void handleCreateEvent(String id, T createdEntity);
+  void handleCreateEvent(String id, ChangeEvent<String, String> changeEvent);
 
-  default void handleEvent(OpType opType, String id, T entity) {
+  default void handleEvent(OpType opType, String id, ChangeEvent<String, String> changeEvent) {
     switch (opType) {
       case SNAPSHOT:
       case CREATE:
-        handleCreateEvent(id, entity);
+        handleCreateEvent(id, changeEvent);
         break;
       case UPDATE:
-        handleUpdateEvent(id, entity);
+        handleUpdateEvent(id, changeEvent);
         break;
       case DELETE:
         handleDeleteEvent(id);
