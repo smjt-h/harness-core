@@ -9,6 +9,7 @@ package io.harness.batch.processing.cloudevents.aws.ecs.service.tasklet;
 
 import static io.harness.batch.processing.ccm.UtilizationInstanceType.ECS_CLUSTER;
 import static io.harness.batch.processing.ccm.UtilizationInstanceType.ECS_SERVICE;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import static software.wings.beans.SettingAttribute.SettingCategory.CE_CONNECTOR;
 import static software.wings.settings.SettingVariableTypes.CE_AWS;
@@ -355,7 +356,7 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
 
             Map<String, String> labels = new HashMap<>();
             // Add Cluster Tags to the Task Labels
-            if (ceCluster.getLabels() != null) {
+            if (isNotEmpty(ceCluster.getLabels())) {
               labels.putAll(ceCluster.getLabels());
             }
             // Add Task Level Tags
@@ -370,7 +371,7 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
               harnessServiceInfo = getHarnessServiceInfo(accountId, clusterName, serviceName);
               // Fetch Service Tags and add to the Task Labels
               List<Tag> serviceTagList = serviceArnTagsMap.get(serviceArn);
-              if (serviceTagList != null && !serviceTagList.isEmpty()) {
+              if (isNotEmpty(serviceTagList)) {
                 labels.putAll(serviceTagList.stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
               }
             }
@@ -520,7 +521,7 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
                 InstanceMetaDataUtils.getValueForKeyFromInstanceMetaData(InstanceMetaDataConstants.REGION, metaData),
                 CloudProvider.AWS);
             Map<String, String> labels = new HashMap<>();
-            if (ceCluster.getLabels() != null) {
+            if (isNotEmpty(ceCluster.getLabels())) {
               labels.putAll(ceCluster.getLabels());
             }
             labels.putAll(containerInstance.getTags().stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
