@@ -677,10 +677,11 @@ public class HelmTaskHelperBase {
 
       List<String> helmChartValuesFileContents = new ArrayList<>();
       String chartName = helmChartManifestDelegateConfig.getChartName();
-      if (new File(getChartDirectory(workingDirectory, chartName), VALUES_YAML).exists()) {
+      String chartDirectory = getChartDirectory(workingDirectory, chartName);
+      if (new File(chartDirectory, VALUES_YAML).exists()) {
         try {
           List<String> valuesFileContent =
-              readValuesYamlFromChartFiles(workingDirectory, chartName, Collections.singletonList(VALUES_YAML));
+              readValuesYamlFromChartFiles(chartDirectory, Collections.singletonList(VALUES_YAML));
           helmChartValuesFileContents.addAll(valuesFileContent);
           logCallback.saveExecutionLog("\nSuccessfully fetched values.yaml", INFO);
         } catch (IOException ignored) {
@@ -693,8 +694,8 @@ public class HelmTaskHelperBase {
       if (isNotEmpty(helmChartValuesFetchFileConfigList)) {
         for (HelmChartValuesFetchFileConfig helmChartValuesFetchFileConfig : helmChartValuesFetchFileConfigList) {
           try {
-            helmChartValuesFileContents.addAll(readValuesYamlFromChartFiles(workingDirectory,
-                helmChartManifestDelegateConfig.getChartName(), helmChartValuesFetchFileConfig.getFilePaths()));
+            helmChartValuesFileContents.addAll(
+                readValuesYamlFromChartFiles(chartDirectory, helmChartValuesFetchFileConfig.getFilePaths()));
           } catch (Exception ex) {
             String errorMsg =
                 format("Failed to fetch yaml file from %s manifest", helmChartValuesFetchFileConfig.getIdentifier());
@@ -719,12 +720,11 @@ public class HelmTaskHelperBase {
     }
   }
 
-  private List<String> readValuesYamlFromChartFiles(
-      String workingDirectory, String chartName, List<String> helmChartValuePaths) throws Exception {
+  private List<String> readValuesYamlFromChartFiles(String chartDirectory, List<String> helmChartValuePaths)
+      throws Exception {
     List<String> valueFileContent = new ArrayList<>();
     for (String path : helmChartValuePaths) {
-      valueFileContent.add(new String(
-          Files.readAllBytes(Paths.get(getChartDirectory(workingDirectory, chartName), path)), StandardCharsets.UTF_8));
+      valueFileContent.add(new String(Files.readAllBytes(Paths.get(chartDirectory, path)), StandardCharsets.UTF_8));
     }
     return valueFileContent;
   }
