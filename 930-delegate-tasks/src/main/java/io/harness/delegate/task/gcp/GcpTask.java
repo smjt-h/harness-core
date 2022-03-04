@@ -24,10 +24,9 @@ import io.harness.delegate.task.gcp.response.GcpValidationTaskResponse;
 import io.harness.delegate.task.gcp.taskHandlers.TaskHandler;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
-
-import com.google.inject.Inject;
 import io.harness.secret.SecretSanitizerThreadLocal;
 
+import com.google.inject.Inject;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;

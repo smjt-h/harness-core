@@ -101,8 +101,9 @@ public class AwsCFHelperServiceDelegateImpl extends AwsHelperServiceDelegateBase
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getParamsData", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getParamsData", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -121,8 +122,9 @@ public class AwsCFHelperServiceDelegateImpl extends AwsHelperServiceDelegateBase
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getStackBody", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getStackBody", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return "";
   }
@@ -145,8 +147,9 @@ public class AwsCFHelperServiceDelegateImpl extends AwsHelperServiceDelegateBase
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getCapabilities", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getCapabilities", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }

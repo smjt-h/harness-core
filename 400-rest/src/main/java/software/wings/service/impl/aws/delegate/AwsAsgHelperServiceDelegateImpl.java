@@ -163,8 +163,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listAutoScalingGroupInstanceIds", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listAutoScalingGroupInstanceIds", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -223,8 +224,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getAutoScalingGroup", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getAutoScalingGroup", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return null;
   }
@@ -249,8 +251,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getLaunchConfiguration", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getLaunchConfiguration", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return null;
   }
@@ -281,8 +284,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listAllAsgs", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listAllAsgs", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -302,8 +306,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception deleteLaunchConfig", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception deleteLaunchConfig", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -322,8 +327,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception createLaunchConfiguration", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception createLaunchConfiguration", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new CreateLaunchConfigurationResult();
   }
@@ -349,8 +355,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception createAutoScalingGroup", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception createAutoScalingGroup", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new CreateAutoScalingGroupResult();
   }
@@ -394,8 +401,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception deleteAutoScalingGroups", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception deleteAutoScalingGroups", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -424,8 +432,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getDesiredCapacitiesOfAsgs", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getDesiredCapacitiesOfAsgs", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyMap();
   }
@@ -462,8 +471,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception setAutoScalingGroupCapacityAndWaitForInstancesReadyState", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception setAutoScalingGroupCapacityAndWaitForInstancesReadyState", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -499,8 +509,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception setMinInstancesForAsg", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception setMinInstancesForAsg", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -549,8 +560,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception setAutoScalingGroupLimits", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception setAutoScalingGroupLimits", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -576,9 +588,10 @@ public class AwsAsgHelperServiceDelegateImpl
       throw new WingsException(INIT_TIMEOUT)
           .addParam("message", "Timed out waiting for autoscaling group to be deleted");
     } catch (WingsException e) {
-      throw e;
+      throw(WingsException) ExceptionMessageSanitizer.sanitizeException(e);
     } catch (Exception e) {
-      throw new InvalidRequestException("Error while waiting for autoscaling group to be deleted", e);
+      throw new InvalidRequestException(
+          "Error while waiting for autoscaling group to be deleted", ExceptionMessageSanitizer.sanitizeException(e));
     }
   }
 
@@ -617,7 +630,8 @@ public class AwsAsgHelperServiceDelegateImpl
             });
       }
     } catch (Exception e) {
-      log.warn("Failed to describe autoScalingGroup for [%s] %s", autoScalingGroupName, e);
+      log.warn("Failed to describe autoScalingGroup for [%s] %s", autoScalingGroupName,
+          ExceptionMessageSanitizer.sanitizeException(e));
     }
   }
 
@@ -645,9 +659,10 @@ public class AwsAsgHelperServiceDelegateImpl
       throw new WingsException(INIT_TIMEOUT)
           .addParam("message", "Timed out waiting for all instances to be in running state");
     } catch (WingsException e) {
-      throw e;
+      throw(WingsException) ExceptionMessageSanitizer.sanitizeException(e);
     } catch (Exception e) {
-      throw new InvalidRequestException("Error while waiting for all instances to be in running state", e);
+      throw new InvalidRequestException("Error while waiting for all instances to be in running state",
+          ExceptionMessageSanitizer.sanitizeException(e));
     }
     logCallback.saveExecutionLog("AutoScaling group reached steady state");
   }
@@ -677,10 +692,10 @@ public class AwsAsgHelperServiceDelegateImpl
       throw new WingsException(INIT_TIMEOUT)
           .addParam("message", "Timed out waiting for Auto Scaling Group to be in InService and Healthy state");
     } catch (WingsException e) {
-      throw e;
+      throw(WingsException) ExceptionMessageSanitizer.sanitizeException(e);
     } catch (Exception e) {
-      throw new InvalidRequestException(
-          "Error while waiting for all instances to be in InService and Healthy state", e);
+      throw new InvalidRequestException("Error while waiting for all instances to be in InService and Healthy state",
+          ExceptionMessageSanitizer.sanitizeException(e));
     }
     logCallback.saveExecutionLog("Auto Scaling Group reached steady state");
   }
@@ -763,8 +778,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception registerAsgWithTargetGroups", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception registerAsgWithTargetGroups", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -786,8 +802,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception registerAsgWithClassicLBs", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception registerAsgWithClassicLBs", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -810,8 +827,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception deRegisterAsgWithTargetGroups", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception deRegisterAsgWithTargetGroups", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -833,8 +851,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception deRegisterAsgWithClassicLBs", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception deRegisterAsgWithClassicLBs", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -885,9 +904,10 @@ public class AwsAsgHelperServiceDelegateImpl
     try {
       return mapper.writeValueAsString(scalingPolicy);
     } catch (Exception ex) {
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(ex);
       String errorMessage = format("Exception: [%s] while extracting policy JSON for scaling policy: [%s]. Ignored.",
-              ExceptionMessageSanitizer.sanitizeException(ex).getMessage(), scalingPolicy.getPolicyARN());
-      log.error(errorMessage, ex);
+          sanitizeException.getMessage(), scalingPolicy.getPolicyARN());
+      log.error(errorMessage, sanitizeException);
       logCallback.saveExecutionLog(errorMessage);
       return EMPTY;
     }
@@ -902,9 +922,10 @@ public class AwsAsgHelperServiceDelegateImpl
     try {
       return mapper.writeValueAsString(scheduledAction);
     } catch (Exception ex) {
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(ex);
       String errorMessage = format("Exception: [%s] while extracting JSON for scheduled action: [%s]. Ignored.",
-              ExceptionMessageSanitizer.sanitizeException(ex).getMessage(), scheduledAction.getScheduledActionARN());
-      log.error(errorMessage, ex);
+          sanitizeException.getMessage(), scheduledAction.getScheduledActionARN());
+      log.error(errorMessage, sanitizeException);
       logCallback.saveExecutionLog(errorMessage);
       return EMPTY;
     }
@@ -953,8 +974,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getScalingPolicyJSONs", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getScalingPolicyJSONs", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -985,8 +1007,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception clearAllScalingPoliciesForAsg", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception clearAllScalingPoliciesForAsg", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -995,9 +1018,10 @@ public class AwsAsgHelperServiceDelegateImpl
     try {
       return mapper.readValue(json, ScalingPolicy.class);
     } catch (Exception ex) {
-      String errorMessage = format("Exception: [%s] while deserializing cached JSON", ExceptionMessageSanitizer.sanitizeException(ex).getMessage());
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(ex);
+      String errorMessage = format("Exception: [%s] while deserializing cached JSON", sanitizeException.getMessage());
       logCallback.saveExecutionLog(errorMessage);
-      log.error(errorMessage, ex);
+      log.error(errorMessage, sanitizeException);
       return null;
     }
   }
@@ -1007,9 +1031,10 @@ public class AwsAsgHelperServiceDelegateImpl
     try {
       return mapper.readValue(json, ScheduledUpdateGroupAction.class);
     } catch (Exception ex) {
-      String errorMessage = format("Exception: [%s] while deserializing cached JSON", ExceptionMessageSanitizer.sanitizeException(ex).getMessage());
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(ex);
+      String errorMessage = format("Exception: [%s] while deserializing cached JSON", sanitizeException.getMessage());
       logCallback.saveExecutionLog(errorMessage);
-      log.error(errorMessage, ex);
+      log.error(errorMessage, sanitizeException);
       return null;
     }
   }
@@ -1038,8 +1063,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception addUpdateTagAutoScalingGroup", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception addUpdateTagAutoScalingGroup", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -1088,8 +1114,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception attachScalingPoliciesToAsg", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception attachScalingPoliciesToAsg", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -1132,8 +1159,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception attachScheduledActionsToAsg", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception attachScheduledActionsToAsg", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -1164,8 +1192,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getScheduledActionJSONs", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getScheduledActionJSONs", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
 
     return scheduledUpdateGroupActionJSONList;
@@ -1220,8 +1249,9 @@ public class AwsAsgHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception clearAllScheduledActionsForAsg", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception clearAllScheduledActionsForAsg", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 }

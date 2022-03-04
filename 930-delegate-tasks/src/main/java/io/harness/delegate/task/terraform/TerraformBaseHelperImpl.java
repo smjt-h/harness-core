@@ -556,7 +556,7 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
     secretDecryptionService.decrypt(
         artifactoryConnectorDTO.getAuth().getCredentials(), artifactoryStoreDelegateConfig.getEncryptedDataDetails());
     ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
-            artifactoryConnectorDTO.getAuth().getCredentials(), artifactoryStoreDelegateConfig.getEncryptedDataDetails());
+        artifactoryConnectorDTO.getAuth().getCredentials(), artifactoryStoreDelegateConfig.getEncryptedDataDetails());
     ArtifactoryConfigRequest artifactoryConfigRequest =
         artifactoryRequestMapper.toArtifactoryRequest(artifactoryConnectorDTO);
     Map<String, String> artifactMetadata = new HashMap<>();
@@ -755,7 +755,7 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
     secretDecryptionService.decrypt(
         artifactoryConnectorDTO.getAuth().getCredentials(), artifactoryStoreDelegateConfig.getEncryptedDataDetails());
     ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
-            artifactoryConnectorDTO.getAuth().getCredentials(), artifactoryStoreDelegateConfig.getEncryptedDataDetails());
+        artifactoryConnectorDTO.getAuth().getCredentials(), artifactoryStoreDelegateConfig.getEncryptedDataDetails());
     ArtifactoryConfigRequest artifactoryConfigRequest =
         artifactoryRequestMapper.toArtifactoryRequest(artifactoryConnectorDTO);
 
@@ -792,7 +792,8 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
         CommandExecutionStatus.RUNNING);
 
     secretDecryptionService.decrypt(gitConfigDTO.getGitAuth(), gitStoreDelegateConfig.getEncryptedDataDetails());
-    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(gitConfigDTO.getGitAuth(), gitStoreDelegateConfig.getEncryptedDataDetails());
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+        gitConfigDTO.getGitAuth(), gitStoreDelegateConfig.getEncryptedDataDetails());
 
     SshSessionConfig sshSessionConfig = null;
     if (gitConfigDTO.getGitAuthType() == SSH) {

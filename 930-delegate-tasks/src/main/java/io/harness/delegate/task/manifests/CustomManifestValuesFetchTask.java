@@ -32,6 +32,7 @@ import io.harness.logging.LogLevel;
 import io.harness.manifest.CustomManifestService;
 import io.harness.manifest.CustomManifestSource;
 import io.harness.manifest.CustomSourceFile;
+import io.harness.secret.SecretSanitizerThreadLocal;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
@@ -44,8 +45,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
-
-import io.harness.secret.SecretSanitizerThreadLocal;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 

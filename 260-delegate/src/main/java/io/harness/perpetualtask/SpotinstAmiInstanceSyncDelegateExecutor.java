@@ -96,7 +96,8 @@ public class SpotinstAmiInstanceSyncDelegateExecutor implements PerpetualTaskExe
       return taskHandler.executeTask(params, spotInstConfig, awsConfig);
     } catch (Exception ex) {
       Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(ex);
-      log.error("Failed to execute instance sync task for elastigroup id {}", taskParams.getElastigroupId(), sanitizedException);
+      log.error("Failed to execute instance sync task for elastigroup id {}", taskParams.getElastigroupId(),
+          sanitizedException);
       return SpotInstTaskExecutionResponse.builder()
           .commandExecutionStatus(CommandExecutionStatus.FAILURE)
           .errorMessage(sanitizedException.getMessage())

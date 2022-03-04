@@ -50,7 +50,6 @@ public class NGGitCommandTask extends AbstractDelegateRunnableTask {
   public NGGitCommandTask(DelegateTaskPackage delegateTaskPackage, ILogStreamingTaskClient logStreamingTaskClient,
       Consumer<DelegateTaskResponse> consumer, BooleanSupplier preExecute) {
     super(delegateTaskPackage, logStreamingTaskClient, consumer, preExecute);
-
     SecretSanitizerThreadLocal.addAll(delegateTaskPackage.getSecrets());
   }
 

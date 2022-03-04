@@ -138,7 +138,6 @@ public class TerragruntProvisionTask extends AbstractDelegateRunnableTask {
       ILogStreamingTaskClient logStreamingTaskClient, Consumer<DelegateTaskResponse> consumer,
       BooleanSupplier preExecute) {
     super(delegateTaskPackage, logStreamingTaskClient, consumer, preExecute);
-
     SecretSanitizerThreadLocal.addAll(delegateTaskPackage.getSecrets());
   }
 
@@ -217,7 +216,8 @@ public class TerragruntProvisionTask extends AbstractDelegateRunnableTask {
       fetchConfigFilesLogCallback.saveExecutionLog("Config files have been fetched successfully", INFO, SUCCESS);
 
     } catch (Exception ex) {
-      String message = String.format("Failed to fetch config files successfully - [%s]", ExceptionMessageSanitizer.sanitizeException(ex).getMessage());
+      String message = String.format("Failed to fetch config files successfully - [%s]",
+          ExceptionMessageSanitizer.sanitizeException(ex).getMessage());
       fetchConfigFilesLogCallback.saveExecutionLog(message, ERROR, FAILURE);
       throw ex;
     }
@@ -323,7 +323,8 @@ public class TerragruntProvisionTask extends AbstractDelegateRunnableTask {
           initLogCallback.saveExecutionLog(
               "Finished terragrunt init task", INFO, terragruntCliResponse.getCommandExecutionStatus());
         } catch (Exception ex) {
-          String message = String.format("Failed to perform terragrunt init tasks - [%s]", ExceptionMessageSanitizer.sanitizeException(ex).getMessage());
+          String message = String.format("Failed to perform terragrunt init tasks - [%s]",
+              ExceptionMessageSanitizer.sanitizeException(ex).getMessage());
           initLogCallback.saveExecutionLog(message, ERROR, FAILURE);
           throw ex;
         }
@@ -439,10 +440,12 @@ public class TerragruntProvisionTask extends AbstractDelegateRunnableTask {
       return terragruntExecutionDataBuilder.build();
 
     } catch (WingsException ex) {
-      return logErrorAndGetFailureResponse(wrapUpLogCallBack, ex, ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)));
-    } catch (IOException ex) {
       return logErrorAndGetFailureResponse(
-          wrapUpLogCallBack, ex, format("IO Failure occurred while performing Terragrunt Task: %s", ExceptionMessageSanitizer.sanitizeException(ex).getMessage()));
+          wrapUpLogCallBack, ex, ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)));
+    } catch (IOException ex) {
+      return logErrorAndGetFailureResponse(wrapUpLogCallBack, ex,
+          format("IO Failure occurred while performing Terragrunt Task: %s",
+              ExceptionMessageSanitizer.sanitizeException(ex).getMessage()));
     } catch (InterruptedException ex) {
       Thread.currentThread().interrupt();
       return logErrorAndGetFailureResponse(wrapUpLogCallBack, ex, "Interrupted while performing Terragrunt Task");
@@ -547,7 +550,7 @@ public class TerragruntProvisionTask extends AbstractDelegateRunnableTask {
 
   private TerragruntExecutionData logErrorAndGetFailureResponse(LogCallback logCallback, Exception ex, String message) {
     logCallback.saveExecutionLog(message, ERROR, CommandExecutionStatus.FAILURE);
-    log.error("Exception in processing terragrunt operation", ex);
+    log.error("Exception in processing terragrunt operation", ExceptionMessageSanitizer.sanitizeException(ex));
     return TerragruntExecutionData.builder().executionStatus(ExecutionStatus.FAILED).errorMessage(message).build();
   }
 

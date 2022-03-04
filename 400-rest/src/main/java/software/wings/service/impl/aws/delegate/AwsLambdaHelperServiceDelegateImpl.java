@@ -193,7 +193,7 @@ public class AwsLambdaHelperServiceDelegateImpl
           logResult = new String(Base64.decodeBase64(logResult), "UTF-8");
           responseBuilder.logResult(logResult);
         } catch (UnsupportedEncodingException ex) {
-          throw new WingsException(ex);
+          throw new WingsException(ExceptionMessageSanitizer.sanitizeException(ex));
         }
       }
       responseBuilder.payload(StandardCharsets.UTF_8.decode(invokeResult.getPayload()).toString());
@@ -206,7 +206,8 @@ public class AwsLambdaHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return null;
   }
@@ -241,7 +242,8 @@ public class AwsLambdaHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return null;
   }
@@ -304,15 +306,17 @@ public class AwsLambdaHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (IOException ioException) {
-      log.error(AWS_LAMBDA_LOG_PREFIX + "Exception in processing Lambda Setup task [{}]", request, ioException);
+      IOException sanitizeException = (IOException) ExceptionMessageSanitizer.sanitizeException(ioException);
+      log.error(AWS_LAMBDA_LOG_PREFIX + "Exception in processing Lambda Setup task [{}]", request, sanitizeException);
       logCallback.saveExecutionLog("\n\n ----------  AWS LAMBDA Setup process failed to complete successfully", ERROR,
           CommandExecutionStatus.FAILURE);
       return AwsLambdaExecuteWfResponse.builder()
           .executionStatus(FAILED)
-          .errorMessage(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ioException)))
+          .errorMessage(ExceptionUtils.getMessage(sanitizeException))
           .build();
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return responseBuilder.build();
   }
@@ -581,12 +585,12 @@ public class AwsLambdaHelperServiceDelegateImpl
       });
     } catch (UncheckedTimeoutException e) {
       throw new TimeoutException("Timed out waiting for function to reach " + ACTIVE_FUNCTION_STATE + " state",
-          "Timeout", e, WingsException.SRE);
+          "Timeout", ExceptionMessageSanitizer.sanitizeException(e), WingsException.SRE);
     } catch (WingsException e) {
-      throw e;
+      throw(WingsException) ExceptionMessageSanitizer.sanitizeException(e);
     } catch (Exception e) {
-      throw new InvalidRequestException(
-          "Error while waiting for function to reach " + ACTIVE_FUNCTION_STATE + " state", e);
+      throw new InvalidRequestException("Error while waiting for function to reach " + ACTIVE_FUNCTION_STATE + " state",
+          ExceptionMessageSanitizer.sanitizeException(e));
     }
   }
 
@@ -619,9 +623,9 @@ public class AwsLambdaHelperServiceDelegateImpl
       });
     } catch (UncheckedTimeoutException e) {
       throw new TimeoutException("Timed out waiting for function to reach " + ACTIVE_LAST_UPDATE_STATUS + " status",
-          "Timeout", e, WingsException.SRE);
+          "Timeout", ExceptionMessageSanitizer.sanitizeException(e), WingsException.SRE);
     } catch (WingsException e) {
-      throw e;
+      throw(WingsException) ExceptionMessageSanitizer.sanitizeException(e);
     } catch (Exception e) {
       throw new InvalidRequestException(
           "Error while waiting for function to reach " + ACTIVE_LAST_UPDATE_STATUS + " status", e);
@@ -863,7 +867,7 @@ public class AwsLambdaHelperServiceDelegateImpl
             new GetFunctionRequest().withFunctionName(request.getFunctionName()).withQualifier(request.getQualifier()));
       } catch (ResourceNotFoundException rnfe) {
         log.info("No function found with name =[{}], qualifier =[{}]. Error Msg is [{}]", request.getFunctionName(),
-            request.getQualifier(), rnfe.getMessage());
+            request.getQualifier(), ExceptionMessageSanitizer.sanitizeException(rnfe).getMessage());
         return AwsLambdaDetailsResponse.builder().executionStatus(SUCCESS).details(null).build();
       }
       ListAliasesResult listAliasesResult = null;
@@ -882,7 +886,8 @@ public class AwsLambdaHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return null;
   }

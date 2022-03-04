@@ -73,7 +73,8 @@ public class CloudFormationListStacksHandler extends CloudFormationCommandTaskHa
       builder.commandExecutionStatus(CommandExecutionStatus.SUCCESS)
           .commandResponse(CloudFormationListStacksResponse.builder().stackSummaryInfos(summaryInfos).build());
     } catch (Exception ex) {
-      String errorMessage = String.format("Exception: %s while getting stacks list: %s", ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)),
+      String errorMessage = String.format("Exception: %s while getting stacks list: %s",
+          ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)),
           cloudFormationListStacksRequest.getStackId());
       executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
       builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);

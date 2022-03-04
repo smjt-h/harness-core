@@ -20,12 +20,13 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.pcf.model.CfRequestConfig;
 import io.harness.security.encryption.EncryptedDataDetail;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.inject.Singleton;
 import java.util.List;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
 @NoArgsConstructor
 @Singleton
@@ -72,7 +73,8 @@ public class PcfValidationCommandTaskHandler extends PcfCommandTaskHandler {
       log.error("Exception in processing PCF validation task for Account {} ",
           cfInfraMappingDataRequest.getPcfConfig().getAccountId(), e);
       cfCommandExecutionResponse.setCommandExecutionStatus(CommandExecutionStatus.FAILURE);
-      cfCommandExecutionResponse.setErrorMessage(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)));
+      cfCommandExecutionResponse.setErrorMessage(
+          ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)));
     }
 
     return cfCommandExecutionResponse;

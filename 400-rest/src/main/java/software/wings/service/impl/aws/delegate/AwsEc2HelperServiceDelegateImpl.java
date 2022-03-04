@@ -121,8 +121,9 @@ public class AwsEc2HelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception validateAwsAccountCredential", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception validateAwsAccountCredential", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
 
     return AwsEc2ValidateCredentialsResponse.builder().valid(true).executionStatus(SUCCESS).build();
@@ -146,8 +147,9 @@ public class AwsEc2HelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listRegions", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listRegions", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -179,8 +181,9 @@ public class AwsEc2HelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listVPCs", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listVPCs", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -218,8 +221,9 @@ public class AwsEc2HelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listSubnets", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listSubnets", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -257,8 +261,9 @@ public class AwsEc2HelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listSGs", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listSGs", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return result;
   }
@@ -287,8 +292,9 @@ public class AwsEc2HelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listTags", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listTags", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return tags;
   }
@@ -317,8 +323,9 @@ public class AwsEc2HelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listEc2Instances", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listEc2Instances", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -350,8 +357,9 @@ public class AwsEc2HelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listEc2Instances", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listEc2Instances", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -384,8 +392,9 @@ public class AwsEc2HelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listBlockDeviceNamesOfAmi", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listBlockDeviceNamesOfAmi", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptySet();
   }
@@ -411,8 +420,9 @@ public class AwsEc2HelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getLaunchTemplateVersion", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getLaunchTemplateVersion", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
 
     return null;
@@ -433,8 +443,9 @@ public class AwsEc2HelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception createLaunchTemplateVersion", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception createLaunchTemplateVersion", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
 
     return null;

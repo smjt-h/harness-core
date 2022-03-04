@@ -116,7 +116,8 @@ public class ContainerServiceImpl implements ContainerService {
       KubernetesClusterConfig kubernetesClusterConfig =
           (KubernetesClusterConfig) containerServiceParams.getSettingAttribute().getValue();
       encryptionService.decrypt(kubernetesClusterConfig, containerServiceParams.getEncryptionDetails(), isInstanceSync);
-      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(kubernetesClusterConfig, containerServiceParams.getEncryptionDetails());
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+          kubernetesClusterConfig, containerServiceParams.getEncryptionDetails());
       kubernetesConfig = kubernetesClusterConfig.createKubernetesConfig(containerServiceParams.getNamespace());
     }
 
@@ -298,7 +299,8 @@ public class ContainerServiceImpl implements ContainerService {
     } else if (value instanceof KubernetesClusterConfig) {
       KubernetesClusterConfig kubernetesClusterConfig = (KubernetesClusterConfig) value;
       encryptionService.decrypt(kubernetesClusterConfig, containerServiceParams.getEncryptionDetails(), false);
-      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(kubernetesClusterConfig, containerServiceParams.getEncryptionDetails());
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+          kubernetesClusterConfig, containerServiceParams.getEncryptionDetails());
       KubernetesConfig kubernetesConfig = kubernetesClusterConfig.createKubernetesConfig(namespace);
       kubernetesContainerService.validate(kubernetesConfig, useNewKubectlVersion);
       return true;

@@ -43,6 +43,8 @@ import io.harness.pcf.model.CfAppAutoscalarRequestData;
 import io.harness.pcf.model.CfRequestConfig;
 import io.harness.security.encryption.EncryptedDataDetail;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Singleton;
 import java.io.File;
@@ -55,7 +57,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.cloudfoundry.operations.applications.ApplicationDetail;
 import org.cloudfoundry.operations.applications.ApplicationSummary;
-import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
 @NoArgsConstructor
 @Singleton

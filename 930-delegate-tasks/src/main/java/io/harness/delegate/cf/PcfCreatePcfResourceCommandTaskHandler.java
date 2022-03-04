@@ -24,6 +24,8 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.pcf.model.CfRequestConfig;
 import io.harness.security.encryption.EncryptedDataDetail;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.inject.Singleton;
 import java.util.Arrays;
 import java.util.List;
@@ -31,7 +33,6 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
 @NoArgsConstructor
 @Singleton

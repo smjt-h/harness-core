@@ -487,7 +487,8 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
           // This should not halt workflow execution.
           downsizeOldOrUnhealthy(kubernetesConfig, containerServiceName, setupParams, executionLogCallback);
         } catch (Exception e) {
-          log.warn("Cleaning up of old or unhealthy instances failed while setting up Kubernetes service: ", ExceptionMessageSanitizer.sanitizeException(e));
+          log.warn("Cleaning up of old or unhealthy instances failed while setting up Kubernetes service: ",
+              ExceptionMessageSanitizer.sanitizeException(e));
         }
         if (setupParams.isUseNewLabelMechanism()) {
           cleanupWithLabels(kubernetesConfig, executionLogCallback);
@@ -731,7 +732,8 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
             kubernetesContainerService.deleteService(kubernetesConfig, kubernetesServiceName);
           }
         } catch (Exception e) {
-          log.error("Couldn't delete service {}", kubernetesServiceName, ExceptionMessageSanitizer.sanitizeException(e));
+          log.error(
+              "Couldn't delete service {}", kubernetesServiceName, ExceptionMessageSanitizer.sanitizeException(e));
         }
       }
       return null;
@@ -1124,7 +1126,8 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
 
       return horizontalPodAutoscaler;
     } catch (Exception e) {
-      throw new WingsException("Error while loading custom yaml for horizontal pod autoscaler", ExceptionMessageSanitizer.sanitizeException(e));
+      throw new WingsException("Error while loading custom yaml for horizontal pod autoscaler",
+          ExceptionMessageSanitizer.sanitizeException(e));
     }
   }
 
@@ -1307,7 +1310,8 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
       try {
         configMap = KubernetesHelper.loadYaml(configMapYaml);
       } catch (Exception e) {
-        throw new InvalidArgumentsException("Couldn't parse configMap YAML: " + configMapYaml, ExceptionMessageSanitizer.sanitizeException(e), USER);
+        throw new InvalidArgumentsException(
+            "Couldn't parse configMap YAML: " + configMapYaml, ExceptionMessageSanitizer.sanitizeException(e), USER);
       }
       executionLogCallback.saveExecutionLog("Setting configMap:\n\n" + toDisplayYaml(configMap));
       kubernetesContainerService.createOrReplaceConfigMapFabric8(kubernetesConfig, configMap);
@@ -1331,7 +1335,8 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
       try {
         secretMap = KubernetesHelper.loadYaml(secretMapYaml);
       } catch (Exception e) {
-        throw new InvalidArgumentsException("Couldn't parse secretMap YAML: " + controllerName, ExceptionMessageSanitizer.sanitizeException(e), USER);
+        throw new InvalidArgumentsException(
+            "Couldn't parse secretMap YAML: " + controllerName, ExceptionMessageSanitizer.sanitizeException(e), USER);
       }
       executionLogCallback.saveExecutionLog("Setting secretMap:\n\n"
           + toDisplayYaml(
@@ -1361,7 +1366,8 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
       try {
         controller = KubernetesHelper.loadYaml(controllerYaml);
       } catch (Exception e) {
-        throw new InvalidArgumentsException("Couldn't parse controller YAML: " + controllerYaml, ExceptionMessageSanitizer.sanitizeException(e), USER);
+        throw new InvalidArgumentsException(
+            "Couldn't parse controller YAML: " + controllerYaml, ExceptionMessageSanitizer.sanitizeException(e), USER);
       }
       executionLogCallback.saveExecutionLog("Rolling back controller " + controllerName);
       executionLogCallback.saveExecutionLog("Setting controller:\n\n" + toDisplayYaml(controller));

@@ -143,8 +143,9 @@ public class AwsAppAutoScalingHelperServiceDelegateImpl
 
       return describeAlarmsResult.getMetricAlarms();
     } catch (Exception e) {
-      log.error("Exception fetchAlarmsByName", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception fetchAlarmsByName", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -183,8 +184,9 @@ public class AwsAppAutoScalingHelperServiceDelegateImpl
               .withTreatMissingData(alarm.getTreatMissingData())
               .withUnit(alarm.getUnit()));
     } catch (Exception e) {
-      log.error("Exception putMetricAlarm", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception putMetricAlarm", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -208,7 +210,8 @@ public class AwsAppAutoScalingHelperServiceDelegateImpl
         return Arrays.asList(mapper.readValue(json, ScalingPolicy.class));
       }
     } catch (IOException e) {
-      String errorMsg = "Failed to Deserialize json into AWS Service object" + ExceptionMessageSanitizer.sanitizeException(e);
+      String errorMsg =
+          "Failed to Deserialize json into AWS Service object" + ExceptionMessageSanitizer.sanitizeException(e);
       throw new WingsException(ErrorCode.GENERAL_ERROR, errorMsg, USER).addParam("message", errorMsg);
     }
   }
@@ -220,7 +223,8 @@ public class AwsAppAutoScalingHelperServiceDelegateImpl
     try {
       return mapper.readValue(json, ScalableTarget.class);
     } catch (IOException e) {
-      String errorMsg = "Failed to Deserialize json into AWS Service object" + ExceptionMessageSanitizer.sanitizeException(e);
+      String errorMsg =
+          "Failed to Deserialize json into AWS Service object" + ExceptionMessageSanitizer.sanitizeException(e);
       throw new WingsException(ErrorCode.GENERAL_ERROR, errorMsg, USER).addParam("message", errorMsg);
     }
   }

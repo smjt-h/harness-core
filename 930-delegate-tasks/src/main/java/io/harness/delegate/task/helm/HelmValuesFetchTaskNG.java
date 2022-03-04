@@ -30,12 +30,11 @@ import io.harness.exception.ExceptionUtils;
 import io.harness.k8s.K8sCommandUnitConstants;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
+import io.harness.secret.SecretSanitizerThreadLocal;
 
 import com.google.inject.Inject;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
-
-import io.harness.secret.SecretSanitizerThreadLocal;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

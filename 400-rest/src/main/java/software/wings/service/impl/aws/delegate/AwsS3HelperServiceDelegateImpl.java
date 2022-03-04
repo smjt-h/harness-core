@@ -66,8 +66,9 @@ public class AwsS3HelperServiceDelegateImpl extends AwsHelperServiceDelegateBase
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
       log.error("Exception listBucketNames", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }

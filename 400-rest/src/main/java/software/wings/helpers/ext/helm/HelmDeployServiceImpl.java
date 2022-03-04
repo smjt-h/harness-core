@@ -1043,8 +1043,8 @@ public class HelmDeployServiceImpl implements HelmDeployService {
           helmClient.repoUpdate(HelmCommandDataMapper.getHelmCommandData(helmCommandRequest));
       executionLogCallback.saveExecutionLog(helmCliResponse.getOutput());
     } catch (Exception ex) {
-      executionLogCallback.saveExecutionLog(
-          "Failed to update information about charts with message " + ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)));
+      executionLogCallback.saveExecutionLog("Failed to update information about charts with message "
+          + ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)));
       throw ex;
     }
   }

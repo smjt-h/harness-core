@@ -256,9 +256,10 @@ public class AwsAmiHelperServiceDelegateImpl
       logCallback.saveExecutionLog("Completed switch routes", INFO, CommandExecutionStatus.SUCCESS);
       return AwsAmiSwitchRoutesResponse.builder().executionStatus(SUCCESS).build();
     } catch (Exception ex) {
-      String errorMessage = ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex));
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(ex);
+      String errorMessage = ExceptionUtils.getMessage(sanitizeException);
       logCallback.saveExecutionLog(format("Exception: [%s].", errorMessage), ERROR, CommandExecutionStatus.FAILURE);
-      log.error(errorMessage, ex);
+      log.error(errorMessage, sanitizeException);
       return AwsAmiSwitchRoutesResponse.builder().errorMessage(errorMessage).executionStatus(FAILED).build();
     }
   }
@@ -388,9 +389,10 @@ public class AwsAmiHelperServiceDelegateImpl
       logCallback.saveExecutionLog("Completed rollback switch routes", INFO, CommandExecutionStatus.SUCCESS);
       return AwsAmiSwitchRoutesResponse.builder().executionStatus(SUCCESS).build();
     } catch (Exception ex) {
-      String errorMessage = ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex));
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(ex);
+      String errorMessage = ExceptionUtils.getMessage(sanitizeException);
       logCallback.saveExecutionLog(format("Exception: [%s].", errorMessage), ERROR, CommandExecutionStatus.FAILURE);
-      log.error(errorMessage, ex);
+      log.error(errorMessage, sanitizeException);
       return AwsAmiSwitchRoutesResponse.builder().errorMessage(errorMessage).executionStatus(FAILED).build();
     }
   }
@@ -1242,7 +1244,7 @@ public class AwsAmiHelperServiceDelegateImpl
       }
     } catch (Exception e) {
       String msg = "Failed while downsizing/deleting older ASGs";
-      log.error(msg, e);
+      log.error(msg, ExceptionMessageSanitizer.sanitizeException(e));
       executionLogCallback.saveExecutionLog(msg, ERROR);
     }
   }

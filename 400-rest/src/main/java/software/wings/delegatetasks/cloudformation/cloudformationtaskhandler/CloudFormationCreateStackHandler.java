@@ -173,8 +173,8 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
         }
       }
     } catch (Exception ex) {
-      String errorMessage =
-          format("# Exception: %s while Updating stack: %s", ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)), stack.getStackName());
+      String errorMessage = format("# Exception: %s while Updating stack: %s",
+          ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)), stack.getStackName());
       executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
       builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
     }
@@ -255,7 +255,8 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
         }
       }
     } catch (Exception ex) {
-      String errorMessage = format("Exception: %s while creating stack: %s", ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)), stackName);
+      String errorMessage = format("Exception: %s while creating stack: %s",
+          ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)), stackName);
       executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
       builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
     }

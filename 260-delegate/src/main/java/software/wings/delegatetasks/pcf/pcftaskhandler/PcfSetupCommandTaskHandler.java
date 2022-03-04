@@ -303,8 +303,8 @@ public class PcfSetupCommandTaskHandler extends PcfCommandTaskHandler {
 
     } catch (RuntimeException | PivotalClientApiException | IOException | ExecutionException e) {
       Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
-      log.error(
-          PIVOTAL_CLOUD_FOUNDRY_LOG_PREFIX + "Exception in processing PCF Setup task [{}]", cfCommandSetupRequest, sanitizedException);
+      log.error(PIVOTAL_CLOUD_FOUNDRY_LOG_PREFIX + "Exception in processing PCF Setup task [{}]", cfCommandSetupRequest,
+          sanitizedException);
       executionLogCallback.saveExecutionLog(
           "\n\n ----------  PCF Setup process failed to complete successfully", ERROR, CommandExecutionStatus.FAILURE);
 
@@ -520,7 +520,8 @@ public class PcfSetupCommandTaskHandler extends PcfCommandTaskHandler {
       List<EncryptedDataDetail> artifactServerEncryptedDataDetails =
           cfCommandSetupRequest.getArtifactStreamAttributes().getArtifactServerEncryptedDataDetails();
       secretDecryptionService.decrypt((EncryptableSetting) settingValue, artifactServerEncryptedDataDetails, false);
-      ExceptionMessageSanitizer.storeAllSecretsForSanitizing((EncryptableSetting) settingValue, artifactServerEncryptedDataDetails);
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+          (EncryptableSetting) settingValue, artifactServerEncryptedDataDetails);
     }
   }
 

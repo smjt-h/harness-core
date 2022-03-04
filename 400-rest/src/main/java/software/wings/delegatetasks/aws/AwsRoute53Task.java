@@ -22,8 +22,8 @@ import io.harness.delegate.task.TaskParameters;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
-
 import io.harness.secret.SecretSanitizerThreadLocal;
+
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.service.impl.aws.model.AwsResponse;
 import software.wings.service.impl.aws.model.AwsRoute53HostedZoneData;
@@ -74,7 +74,8 @@ public class AwsRoute53Task extends AbstractDelegateRunnableTask {
     } catch (WingsException exception) {
       throw exception;
     } catch (Exception ex) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)), USER);
+      throw new InvalidRequestException(
+          ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)), USER);
     }
   }
 }

@@ -495,8 +495,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listS3Buckets", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listS3Buckets", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return Collections.emptyList();
   }
@@ -530,8 +531,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getObjectMetadataFromS3", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getObjectMetadataFromS3", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return null;
   }
@@ -550,8 +552,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listObjectsInS3", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listObjectsInS3", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListObjectsV2Result();
   }
@@ -563,6 +566,8 @@ public class AwsHelperService {
       throw new InvalidRequestException("connectorConfig is not of type AwsConfig");
     }
     encryptionService.decrypt((EncryptableSetting) connectorConfig.getValue(), encryptedDataDetails, isInstanceSync);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+        (EncryptableSetting) connectorConfig.getValue(), encryptedDataDetails);
     return (AwsConfig) connectorConfig.getValue();
   }
 
@@ -580,8 +585,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listDeploymentGroupsResult", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listDeploymentGroupsResult", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListDeploymentGroupsResult();
   }
@@ -599,8 +605,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listApplicationsResult", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listApplicationsResult", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListApplicationsResult();
   }
@@ -619,8 +626,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listDeploymentConfigsResult", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listDeploymentConfigsResult", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListDeploymentConfigsResult();
   }
@@ -638,8 +646,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getCodeDeployDeployment", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getCodeDeployDeployment", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new GetDeploymentResult();
   }
@@ -657,8 +666,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getCodeDeployDeploymentGroup", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getCodeDeployDeploymentGroup", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new GetDeploymentGroupResult();
   }
@@ -676,8 +686,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception createCodeDeployDeployment", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception createCodeDeployDeployment", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new CreateDeploymentResult();
   }
@@ -696,8 +707,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listDeploymentInstances", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listDeploymentInstances", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListDeploymentInstancesResult();
   }
@@ -725,8 +737,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception describeEc2Instances", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception describeEc2Instances", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeInstancesResult();
   }
@@ -744,8 +757,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception desribeEc2Images", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception desribeEc2Images", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeImagesResult();
   }
@@ -784,8 +798,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listTags", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listTags", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return tags;
   }
@@ -803,7 +818,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new CreateClusterResult();
   }
@@ -821,7 +837,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeClustersResult();
   }
@@ -839,7 +856,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListClustersResult();
   }
@@ -853,7 +871,8 @@ public class AwsHelperService {
       tracker.trackECSCall("Register Task Definition");
       return closeableAmazonECSClient.getClient().registerTaskDefinition(registerTaskDefinitionRequest);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -870,7 +889,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListServicesResult();
   }
@@ -888,7 +908,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeServicesResult();
   }
@@ -921,14 +942,17 @@ public class AwsHelperService {
     } catch (WaiterTimedOutException waiterTimedOutException) {
       String msg = format("Timed out while waiting for service %s to be in stable state", serviceName);
       executionLogCallback.saveExecutionLog(msg, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
-      throw new TimeoutException(msg, "Timeout", waiterTimedOutException, WingsException.EVERYBODY);
+      throw new TimeoutException(msg, "Timeout",
+          (WaiterTimedOutException) ExceptionMessageSanitizer.sanitizeException(waiterTimedOutException),
+          WingsException.EVERYBODY);
     } catch (Exception e) {
-      if (e instanceof InterruptedException) {
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      if (sanitizeException instanceof InterruptedException) {
         String msg = format("Interrupted while waiting for service %s to reach stable state", serviceName);
         executionLogCallback.saveExecutionLog(msg, LogLevel.ERROR);
-        throw new InvalidRequestException(msg, e);
+        throw new InvalidRequestException(msg, sanitizeException);
       }
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -964,7 +988,8 @@ public class AwsHelperService {
       tracker.trackECSCall("Create Service");
       return closeableAmazonECSClient.getClient().createService(createServiceRequest);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -977,7 +1002,8 @@ public class AwsHelperService {
       tracker.trackECSCall("Ecs Run Task Request");
       return closeableAmazonECSClient.getClient().runTask(runTaskRequest);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -994,7 +1020,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new UpdateServiceResult();
   }
@@ -1012,7 +1039,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DeleteServiceResult();
   }
@@ -1026,15 +1054,18 @@ public class AwsHelperService {
       tracker.trackECSCall("List Tasks");
       return closeableAmazonECSClient.getClient().deregisterTaskDefinition(deregisterTaskDefinitionRequest);
     } catch (ClusterNotFoundException ex) {
-      throw new WingsException(ErrorCode.AWS_CLUSTER_NOT_FOUND).addParam("message", ExceptionUtils.getMessage(ex));
+      throw new WingsException(ErrorCode.AWS_CLUSTER_NOT_FOUND)
+          .addParam("message", ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)));
     } catch (ServiceNotFoundException ex) {
-      throw new WingsException(ErrorCode.AWS_SERVICE_NOT_FOUND).addParam("message", ExceptionUtils.getMessage(ex));
+      throw new WingsException(ErrorCode.AWS_SERVICE_NOT_FOUND)
+          .addParam("message", ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)));
     } catch (AmazonServiceException amazonServiceException) {
       awsApiHelperService.handleAmazonServiceException(amazonServiceException);
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DeregisterTaskDefinitionResult();
   }
@@ -1048,15 +1079,18 @@ public class AwsHelperService {
       tracker.trackECSCall("List Tasks");
       return closeableAmazonECSClient.getClient().listTasks(listTasksRequest.withMaxResults(100));
     } catch (ClusterNotFoundException ex) {
-      throw new WingsException(ErrorCode.AWS_CLUSTER_NOT_FOUND).addParam("message", ExceptionUtils.getMessage(ex));
+      throw new WingsException(ErrorCode.AWS_CLUSTER_NOT_FOUND)
+          .addParam("message", ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)));
     } catch (ServiceNotFoundException ex) {
-      throw new WingsException(ErrorCode.AWS_SERVICE_NOT_FOUND).addParam("message", ExceptionUtils.getMessage(ex));
+      throw new WingsException(ErrorCode.AWS_SERVICE_NOT_FOUND)
+          .addParam("message", ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)));
     } catch (AmazonServiceException amazonServiceException) {
       awsApiHelperService.handleAmazonServiceException(amazonServiceException);
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListTasksResult();
   }
@@ -1074,7 +1108,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeTaskDefinitionResult();
   }
@@ -1092,7 +1127,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeTasksResult();
   }
@@ -1111,7 +1147,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeContainerInstancesResult();
   }
@@ -1135,8 +1172,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listEcrImages", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listEcrImages", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListImagesResult();
   }
@@ -1152,8 +1190,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listRepositories", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listRepositories", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeRepositoriesResult();
   }
@@ -1183,8 +1222,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getLoadBalancerDescriptions", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getLoadBalancerDescriptions", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -1212,8 +1252,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getTargetGroupForAlb", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getTargetGroupForAlb", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return null;
   }
@@ -1243,8 +1284,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception setAutoScalingGroupCapacityAndWaitForInstancesReadyState", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception setAutoScalingGroupCapacityAndWaitForInstancesReadyState", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -1298,9 +1340,10 @@ public class AwsHelperService {
       throw new WingsException(INIT_TIMEOUT)
           .addParam("message", "Timed out waiting for all instances to be in running state");
     } catch (WingsException e) {
-      throw e;
+      throw(WingsException) ExceptionMessageSanitizer.sanitizeException(e);
     } catch (Exception e) {
-      throw new InvalidRequestException("Error while waiting for all instances to be in running state", e);
+      throw new InvalidRequestException("Error while waiting for all instances to be in running state",
+          ExceptionMessageSanitizer.sanitizeException(e));
     }
     executionLogCallback.saveExecutionLog("AutoScaling group reached steady state");
   }
@@ -1359,8 +1402,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listAutoScalingGroupInstances", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listAutoScalingGroupInstances", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return instanceList;
   }
@@ -1412,8 +1456,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception createAutoScalingGroup", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception createAutoScalingGroup", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new CreateAutoScalingGroupResult();
   }
@@ -1432,8 +1477,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception describeAutoScalingGroups", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception describeAutoScalingGroups", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeAutoScalingGroupsResult();
   }
@@ -1474,7 +1520,8 @@ public class AwsHelperService {
             });
       }
     } catch (Exception e) {
-      log.warn("Failed to describe autoScalingGroup for [{}]", autoScalingGroupName, e);
+      log.warn("Failed to describe autoScalingGroup for [{}]", autoScalingGroupName,
+          ExceptionMessageSanitizer.sanitizeException(e));
     }
   }
 
@@ -1501,8 +1548,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getCloudWatchMetrics", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getCloudWatchMetrics", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -1531,8 +1579,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getCloudWatchMetrics", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getCloudWatchMetrics", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -1556,8 +1605,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception registerInstancesWithLoadBalancer", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception registerInstancesWithLoadBalancer", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return false;
   }
@@ -1581,8 +1631,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception deregisterInstancesFromLoadBalancer", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception deregisterInstancesFromLoadBalancer", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return false;
   }
@@ -1597,8 +1648,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception createStack", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception createStack", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new CreateStackResult();
   }
@@ -1613,8 +1665,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception updateStack", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception updateStack", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new UpdateStackResult();
   }
@@ -1630,8 +1683,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception describeStacks", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception describeStacks", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeStacksResult();
   }
@@ -1655,8 +1709,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getAllStacks", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getAllStacks", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -1681,8 +1736,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getAllStackEvents", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getAllStackEvents", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -1713,8 +1769,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception deleteStack", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception deleteStack", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -1733,8 +1790,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception isVersioningEnabledForBucket", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception isVersioningEnabledForBucket", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return false;
   }
@@ -1761,8 +1819,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getBucketRegion", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getBucketRegion", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return null;
   }
@@ -1805,7 +1864,8 @@ public class AwsHelperService {
       tracker.trackECSCall("Tag Resource");
       return closeableAmazonECSClient.getClient().tagResource(tagResourceRequest);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -1818,7 +1878,8 @@ public class AwsHelperService {
       tracker.trackECSCall("Untag Resource");
       return closeableAmazonECSClient.getClient().untagResource(untagResourceRequest);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -1840,7 +1901,7 @@ public class AwsHelperService {
       Response<ResponseBody> response = credentialsRestClient.getRoleName().execute();
       roleName = response.body().string();
     } catch (IOException e) {
-      throw new InvalidRequestException("Cannot get the role name", e);
+      throw new InvalidRequestException("Cannot get the role name", ExceptionMessageSanitizer.sanitizeException(e));
     }
 
     if (isEmpty(roleName)) {
@@ -1856,7 +1917,8 @@ public class AwsHelperService {
       }
 
     } catch (IOException e) {
-      throw new InvalidRequestException("Cannot get the temporary credentials", e);
+      throw new InvalidRequestException(
+          "Cannot get the temporary credentials", ExceptionMessageSanitizer.sanitizeException(e));
     }
   }
 
