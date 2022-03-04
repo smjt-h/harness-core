@@ -57,6 +57,8 @@ fi
 BAZEL_MODULES="\
   //360-cg-manager:module \
   //360-cg-manager:module_deploy.jar \
+  //800-pipeline-service:module \
+  //800-pipeline-service:module_deploy.jar \
   //820-platform-service:module \
   //820-platform-service:module_deploy.jar \
   //access-control/service:module \
@@ -152,4 +154,5 @@ build_protocol_info(){
 
 build_bazel_application 820-platform-service
 
-
+if [ "${PLATFORM}" == "jenkins" ]; then
+ build_protocol_info 800-pipeline-service pipeline-service
