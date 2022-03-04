@@ -676,8 +676,7 @@ public class HelmTaskHelperBase {
       printHelmChartInfoWithVersionInExecutionLogs(workingDirectory, helmChartManifestDelegateConfig, logCallback);
 
       List<String> helmChartValuesFileContents = new ArrayList<>();
-      String chartName = helmChartManifestDelegateConfig.getChartName();
-      String chartDirectory = getChartDirectory(workingDirectory, chartName);
+      String chartDirectory = getChartDirectory(workingDirectory, helmChartManifestDelegateConfig.getChartName());
       if (new File(chartDirectory, VALUES_YAML).exists()) {
         try {
           List<String> valuesFileContent =
@@ -688,7 +687,7 @@ public class HelmTaskHelperBase {
           logCallback.saveExecutionLog("\nUnable to read values.yaml file " + ExceptionUtils.getMessage(ignored), WARN);
         }
       } else {
-        String errorMsg = format("\n Unable to find values.yaml in %s chart", chartName);
+        String errorMsg = format("\n Unable to find values.yaml in %s chart directory", chartDirectory);
         logCallback.saveExecutionLog(errorMsg, WARN);
       }
       if (isNotEmpty(helmChartValuesFetchFileConfigList)) {
