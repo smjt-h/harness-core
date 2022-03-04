@@ -14,7 +14,7 @@ import retrofit2.http.Query;
 
 public interface DelegateConfigClient {
 
-  String DELEGATE_SETUP_API = "/api/setup/delegates/ng/v2/tags";
+  String DELEGATE_SETUP_API = "setup/delegates/ng/v2/tags";
 
   @PUT(DELEGATE_SETUP_API)
   Call<RestResponse<DelegateGroup>> updateDelegateGroupTags(
