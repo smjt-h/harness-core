@@ -835,6 +835,7 @@ public class DelegateServiceImpl implements DelegateService {
     }
 
     if (newProfileApplied) {
+      log.info("New profile for delegate hence update delegate : {}", delegate.getUuid());
       delegateProfileSubject.fireInform(DelegateProfileObserver::onProfileApplied, delegate.getAccountId(),
           delegate.getUuid(), delegate.getDelegateProfileId());
       remoteObserverInformer.sendEvent(ReflectionUtils.getMethod(DelegateProfileObserver.class, "onProfileApplied",
