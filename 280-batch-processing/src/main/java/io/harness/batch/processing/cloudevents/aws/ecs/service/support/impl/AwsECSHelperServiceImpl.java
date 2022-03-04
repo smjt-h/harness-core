@@ -38,9 +38,12 @@ import com.amazonaws.services.ecs.model.ListContainerInstancesRequest;
 import com.amazonaws.services.ecs.model.ListContainerInstancesResult;
 import com.amazonaws.services.ecs.model.ListServicesRequest;
 import com.amazonaws.services.ecs.model.ListServicesResult;
+import com.amazonaws.services.ecs.model.ListTagsForResourceRequest;
+import com.amazonaws.services.ecs.model.ListTagsForResourceResult;
 import com.amazonaws.services.ecs.model.ListTasksRequest;
 import com.amazonaws.services.ecs.model.ListTasksResult;
 import com.amazonaws.services.ecs.model.Service;
+import com.amazonaws.services.ecs.model.Tag;
 import com.amazonaws.services.ecs.model.Task;
 import com.amazonaws.services.ecs.model.TaskField;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
@@ -68,6 +71,23 @@ public class AwsECSHelperServiceImpl implements AwsECSHelperService {
       log.error(exceptionMessage, awsCrossAccountAttributes, region, ex.getMessage());
       return Collections.emptyList();
     }
+  }
+
+  @Override
+  public List<Tag> listTagsForResourceArn(
+      AwsCrossAccountAttributes awsCrossAccountAttributes, String region, String resourceArn) {
+    try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
+             new CloseableAmazonWebServiceClient(getAmazonECSClient(region, awsCrossAccountAttributes))) {
+      ListTagsForResourceRequest listTagsForResourceRequest =
+          new ListTagsForResourceRequest().withResourceArn(resourceArn);
+
+      ListTagsForResourceResult listTagsForResourceResult =
+          closeableAmazonECSClient.getClient().listTagsForResource(listTagsForResourceRequest);
+      return listTagsForResourceResult.getTags();
+    } catch (Exception ex) {
+      log.error("Exception listTagsForResourceArn {}", ex.getMessage());
+    }
+    return emptyList();
   }
 
   @Override

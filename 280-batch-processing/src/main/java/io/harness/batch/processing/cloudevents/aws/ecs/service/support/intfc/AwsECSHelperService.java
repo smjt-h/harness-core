@@ -12,6 +12,7 @@ import software.wings.beans.AwsCrossAccountAttributes;
 import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.amazonaws.services.ecs.model.DesiredStatus;
 import com.amazonaws.services.ecs.model.Service;
+import com.amazonaws.services.ecs.model.Tag;
 import com.amazonaws.services.ecs.model.Task;
 import java.util.List;
 
@@ -29,4 +30,7 @@ public interface AwsECSHelperService {
 
   List<Task> listTasksForService(AwsCrossAccountAttributes awsCrossAccountAttributes, String region, String cluster,
       String service, DesiredStatus desiredStatus);
+
+  List<Tag> listTagsForResourceArn(
+      AwsCrossAccountAttributes awsCrossAccountAttributes, String region, String resourceArn);
 }
