@@ -740,7 +740,7 @@ public class InstanceHelper {
       handler.processInstanceSyncResponseFromPerpetualTask(infrastructureMapping, response);
     } catch (Exception ex) {
       log.error("Error handling Instance sync response. Infrastructure Mapping : [{}], Perpetual Task Id : [{}]",
-          infrastructureMapping.getUuid(), perpetualTaskRecord.getUuid());
+          infrastructureMapping.getUuid(), perpetualTaskRecord.getUuid(), ex);
       String errorMsg = getErrorMsg(ex);
 
       boolean continueSync = instanceService.handleSyncFailure(infrastructureMapping.getAppId(),

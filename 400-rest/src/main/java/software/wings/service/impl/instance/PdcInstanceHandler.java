@@ -76,7 +76,7 @@ public class PdcInstanceHandler extends InstanceHandler implements InstanceSyncB
 
   @Override
   public void syncInstances(String appId, String infraMappingId, InstanceSyncFlow instanceSyncFlow) {
-    log.info("[PDC Instance sync]: flow: {}", instanceSyncFlow);
+    log.info("[PDC Instance sync]: InfraMappingId : [{}] flow: {}", infraMappingId, instanceSyncFlow);
     InfrastructureMapping infrastructureMapping = infraMappingService.get(appId, infraMappingId);
     if (!(infrastructureMapping instanceof PhysicalInfrastructureMappingBase)) {
       String msg = "Incompatible infra mapping type. Expecting PhysicalInfrastructureMappingBase, found:"
@@ -120,7 +120,7 @@ public class PdcInstanceHandler extends InstanceHandler implements InstanceSyncB
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
 
-    updateInstances(hosts, settingAttribute, encryptedDataDetails, instances, instanceSyncFlow);
+    updateInstances(hosts, settingAttribute, encryptedDataDetails, instances, infraMappingId, instanceSyncFlow);
   }
 
   @Override
@@ -195,7 +195,8 @@ public class PdcInstanceHandler extends InstanceHandler implements InstanceSyncB
   }
 
   private void updateInstances(List<String> hostNames, SettingAttribute settingAttribute,
-      List<EncryptedDataDetail> encryptedDataDetails, List<Instance> instances, InstanceSyncFlow instanceSyncFlow) {
+      List<EncryptedDataDetail> encryptedDataDetails, List<Instance> instances, String infraMappingId,
+      InstanceSyncFlow instanceSyncFlow) {
     Map<String, Boolean> reachableMap = checkReachability(hostNames, settingAttribute, encryptedDataDetails);
 
     Set<String> instancesToRemove = instances.stream()
@@ -210,7 +211,8 @@ public class PdcInstanceHandler extends InstanceHandler implements InstanceSyncB
                                     .filter(i -> instancesToRemove.contains(i.getUuid()))
                                     .map(i -> i.getHostInstanceKey().getHostName())
                                     .collect(Collectors.toSet());
-    log.info("[PDC Instance sync]: hosts removed: {}, flow: {}", hostsToRemove, instanceSyncFlow);
+    log.info("[PDC Instance sync]: infraMappingId: [{}], hosts removed: {}, flow: {}", infraMappingId, hostsToRemove,
+        instanceSyncFlow);
     instanceService.delete(instancesToRemove);
   }
 
