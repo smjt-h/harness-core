@@ -20,25 +20,35 @@ import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.mongo.index.SortCompoundMongoIndex;
+import io.harness.persistence.CreatedAtAware;
+import io.harness.persistence.CreatedByAware;
+import io.harness.persistence.PersistentEntity;
+import io.harness.persistence.UpdatedAtAware;
+import io.harness.persistence.UpdatedByAware;
+import io.harness.persistence.UuidAware;
+import io.harness.validation.Update;
 
-import software.wings.beans.Base;
 import software.wings.beans.Service;
+import software.wings.beans.entityinterface.ApplicationAccess;
 import software.wings.expression.ArtifactLabelEvaluator;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.github.reinert.jjschema.SchemaIgnore;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.UtilityClass;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.mongodb.morphia.annotations.Entity;
+import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Transient;
 
 @OwnedBy(CDC)
@@ -49,7 +59,8 @@ import org.mongodb.morphia.annotations.Transient;
 @Entity(value = "artifacts", noClassnameStored = true)
 @HarnessEntity(exportable = true)
 @TargetModule(HarnessModule._957_CG_BEANS)
-public class Artifact extends Base {
+public class Artifact implements PersistentEntity, UuidAware, CreatedAtAware, CreatedByAware, UpdatedAtAware,
+                                 UpdatedByAware, ApplicationAccess {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -144,6 +155,34 @@ public class Artifact extends Base {
   private String uiDisplayName;
   private String buildIdentity;
   @Transient @JsonIgnore private boolean isDuplicate;
+
+  @Deprecated public static final String ID_KEY2 = "_id";
+  @Deprecated public static final String APP_ID_KEY2 = "appId";
+  @Deprecated public static final String ACCOUNT_ID_KEY2 = "accountId";
+  @Deprecated public static final String LAST_UPDATED_AT_KEY2 = "lastUpdatedAt";
+
+  @Id @NotNull(groups = {Update.class}) @SchemaIgnore private String uuid;
+  @FdIndex @NotNull @SchemaIgnore protected String appId;
+  @SchemaIgnore private EmbeddedUser createdBy;
+  @SchemaIgnore @FdIndex private long createdAt;
+
+  @SchemaIgnore private EmbeddedUser lastUpdatedBy;
+  @SchemaIgnore @NotNull private long lastUpdatedAt;
+
+  /**
+   * TODO: Add isDeleted boolean field to enable soft delete. @swagat
+   */
+
+  @JsonIgnore
+  @SchemaIgnore
+  @Transient
+  private transient String entityYamlPath; // TODO:: remove it with changeSet batching
+
+  @JsonIgnore
+  @SchemaIgnore
+  public String getEntityYamlPath() {
+    return entityYamlPath;
+  }
 
   /**
    * Gets buildNo.
