@@ -11,10 +11,9 @@ import io.harness.debezium.ChangeHandler;
 import io.harness.entity.PipelineExecutionSummaryDashboardEntity;
 import io.harness.pms.contracts.plan.ExecutionTriggerInfo;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.inject.Singleton;
-import com.google.protobuf.util.JsonFormat;
 import io.debezium.engine.ChangeEvent;
 import lombok.SneakyThrows;
 
@@ -22,24 +21,24 @@ import lombok.SneakyThrows;
 public class PipelineExecutionSummaryHandler implements ChangeHandler {
   @SneakyThrows
   PipelineExecutionSummaryDashboardEntity deserialize(ChangeEvent<String, String> changeEvent) {
-    return new ObjectMapper().readValue(changeEvent.value(), PipelineExecutionSummaryDashboardEntity.class);
-  }
+    ObjectMapper om = new ObjectMapper();
 
-  @SneakyThrows
-  ExecutionTriggerInfo getExecutionTriggerInfo(ChangeEvent<String, String> changeEvent) {
-    JsonNode executionTriggerInfoNode =
-        new ObjectMapper().readTree(changeEvent.value().getBytes()).get("executionTriggerInfo");
-    String triggerInfoJson = new ObjectMapper().writeValueAsString(executionTriggerInfoNode);
-    ExecutionTriggerInfo.Builder builder = ExecutionTriggerInfo.newBuilder();
-    JsonFormat.parser().ignoringUnknownFields().merge(triggerInfoJson, builder);
-    ExecutionTriggerInfo triggerInfo = builder.build();
-    return triggerInfo;
+    // creating a module
+    SimpleModule module = new SimpleModule();
+    // adding our custom serializer and deserializer
+    module.addDeserializer(ExecutionTriggerInfo.class, new TriggerInfoDeserializer());
+    // registering the module with ObjectMapper
+    om.registerModule(module);
+
+    String s2 = changeEvent.value();
+
+    PipelineExecutionSummaryDashboardEntity p = om.readValue(s2, PipelineExecutionSummaryDashboardEntity.class);
+    return p;
   }
 
   @Override
   public void handleUpdateEvent(String id, ChangeEvent<String, String> changeEvent) {
     PipelineExecutionSummaryDashboardEntity pipelineExecutionSummaryDashboardEntity = deserialize(changeEvent);
-    ExecutionTriggerInfo triggerInfo = getExecutionTriggerInfo(changeEvent);
   }
 
   @Override
@@ -48,6 +47,5 @@ public class PipelineExecutionSummaryHandler implements ChangeHandler {
   @Override
   public void handleCreateEvent(String id, ChangeEvent<String, String> changeEvent) {
     PipelineExecutionSummaryDashboardEntity pipelineExecutionSummaryDashboardEntity = deserialize(changeEvent);
-    ExecutionTriggerInfo triggerInfo = getExecutionTriggerInfo(changeEvent);
   }
 }

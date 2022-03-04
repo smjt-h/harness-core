@@ -2,6 +2,7 @@ package io.harness.entity;
 
 import io.harness.data.validator.Trimmed;
 import io.harness.mongo.index.FdUniqueIndex;
+import io.harness.pms.contracts.plan.ExecutionTriggerInfo;
 import io.harness.pms.execution.ExecutionStatus;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -25,4 +26,5 @@ public class PipelineExecutionSummaryDashboardEntity {
   Long startTs;
   Long endTs;
   @Builder.Default Map<String, Document> moduleInfo = new HashMap<>();
+  ExecutionTriggerInfo executionTriggerInfo;
 }
