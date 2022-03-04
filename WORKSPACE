@@ -118,7 +118,7 @@ go_repository(
 
 go_rules_dependencies()
 
-go_register_toolchains(version = "1.17.5")
+go_register_toolchains(version = "1.17.7")
 
 gazelle_dependencies()
 
@@ -4555,6 +4555,7 @@ plain_artifacts = [
     "de.danielbechler:java-object-diff:0.94",
     "de.javakaffee:kryo-serializers:0.41",
     "de.jkeylockmanager:jkeylockmanager:2.1.0",
+    "de.skuzzle:semantic-version:2.1.0",
     "dk.brics.automaton:automaton:1.11-8",
     "dnsjava:dnsjava:2.1.8",
     "es.moki.ratelimitj:ratelimitj-core:0.6.0",

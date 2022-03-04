@@ -302,6 +302,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   // Marker string to indicate task events.
   private static final String TASK_EVENT_MARKER = "{\"eventType\":\"DelegateTaskEvent\"";
+  private static final String ABORT_EVENT_MARKER = "{\"eventType\":\"DelegateTaskAbortEvent\"";
 
   private static final String HOST_NAME = getLocalHostName();
   private static final String DELEGATE_NAME =
@@ -321,6 +322,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private final boolean delegateNg = isNotBlank(System.getenv().get("DELEGATE_SESSION_IDENTIFIER"))
       || (isNotBlank(System.getenv().get("NEXT_GEN")) && Boolean.parseBoolean(System.getenv().get("NEXT_GEN")));
   public static final String JAVA_VERSION = "java.version";
+  private final double RESOURCE_USAGE_THRESHOLD = 0.75;
 
   private static volatile String delegateId;
   private static volatile String delegateInstanceId = generateUuid();
@@ -336,11 +338,10 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   @Inject @Named("watcherMonitorExecutor") private ScheduledExecutorService watcherMonitorExecutor;
   @Inject @Named("upgradeExecutor") private ScheduledExecutorService upgradeExecutor;
   @Inject @Named("inputExecutor") private ScheduledExecutorService inputExecutor;
-  @Inject @Named("rescheduleExecutor") private ScheduledExecutorService rescheduleExecutor;
   @Inject @Named("profileExecutor") private ScheduledExecutorService profileExecutor;
   @Inject @Named("watcherUpgradeExecutor") private ExecutorService watcherUpgradeExecutor;
   @Inject @Named("backgroundExecutor") private ExecutorService backgroundExecutor;
-  @Inject @Named("taskPollExecutor") private ExecutorService taskPollExecutor;
+  @Inject @Named("taskPollExecutor") private ScheduledExecutorService taskPollExecutor;
   @Inject @Named("taskExecutor") private ExecutorService taskExecutor;
   @Inject @Named("timeoutExecutor") private ExecutorService timeoutEnforcement;
   @Inject @Named("grpcServiceExecutor") private ExecutorService grpcServiceExecutor;
@@ -413,6 +414,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private final boolean multiVersion = DeployMode.KUBERNETES.name().equals(System.getenv().get(DeployMode.DEPLOY_MODE))
       || TRUE.toString().equals(System.getenv().get("MULTI_VERSION"));
   private boolean isServer;
+
+  private long maxRSS;
+  private final AtomicBoolean rejectRequest = new AtomicBoolean(false);
 
   public static Optional<String> getDelegateId() {
     return Optional.ofNullable(delegateId);
@@ -575,6 +579,10 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       log.info("[New] Delegate registered in {} ms", clock.millis() - start);
       DelegateStackdriverLogAppender.setDelegateId(delegateId);
 
+      if (delegateConfiguration.isDynamicHandlingOfRequestEnabled()) {
+        startDynamicHandlingOfTasks();
+      }
+
       if (isPollingForTasksEnabled()) {
         log.info("Polling is enabled for Delegate");
         startHeartbeat(builder);
@@ -732,6 +740,27 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       log.error("Exception while starting/running delegate", e);
     } catch (RuntimeException | IOException e) {
       log.error("Exception while starting/running delegate", e);
+    }
+  }
+
+  private void maybeUpdateTaskRejectionStatus() {
+    MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+    double currentRSS = memoryMXBean.getHeapMemoryUsage().getUsed();
+
+    OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
+    double currentCPU = osBean.getSystemCpuLoad();
+
+    if (currentRSS >= RESOURCE_USAGE_THRESHOLD * maxRSS || currentCPU >= RESOURCE_USAGE_THRESHOLD) {
+      log.warn(
+          "Reached resource threshold, temporarily reject incoming task request. CurrentCPU {} CurrentRSSMB {} ThresholdMB {}",
+          currentCPU, currentRSS, RESOURCE_USAGE_THRESHOLD * maxRSS);
+      rejectRequest.compareAndSet(false, true);
+      return;
+    }
+
+    if (rejectRequest.compareAndSet(true, false)) {
+      log.info("Accepting incoming task request. CurrentCPU {} CurrentRSSMB {} ThresholdMB {}", currentCPU, currentRSS,
+          RESOURCE_USAGE_THRESHOLD * maxRSS);
     }
   }
 
@@ -904,7 +933,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private void handleMessageSubmit(String message) {
-    if (StringUtils.startsWith(message, TASK_EVENT_MARKER)) {
+    if (StringUtils.startsWith(message, TASK_EVENT_MARKER) || StringUtils.startsWith(message, ABORT_EVENT_MARKER)) {
       // For task events, continue in same thread. We will decode the task and assign it for execution.
       log.info("New Task event received: " + message);
       try {
@@ -921,6 +950,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       }
       return;
     }
+
     if (log.isDebugEnabled()) {
       log.debug("^^MSG: " + message);
     }
@@ -1415,9 +1445,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private void startTaskPolling() {
-    rescheduleExecutor.scheduleAtFixedRate(
-        new Schedulable("Failed to poll for task", () -> taskPollExecutor.submit(this::pollForTask)), 0,
-        POLL_INTERVAL_SECONDS, TimeUnit.SECONDS);
+    taskPollExecutor.scheduleAtFixedRate(
+        new Schedulable("Failed to poll for task", () -> pollForTask()), 0, POLL_INTERVAL_SECONDS, TimeUnit.SECONDS);
   }
 
   private void startChroniqleQueueMonitor() {
@@ -1463,6 +1492,19 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         dispatchDelegateTaskAsync(taskEvent);
       }
     }
+  }
+
+  private void startDynamicHandlingOfTasks() {
+    log.info("Starting dynamic handling of tasks tp {} ms", 1000);
+    MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+    maxRSS = memoryMXBean.getHeapMemoryUsage().getMax();
+    healthMonitorExecutor.scheduleAtFixedRate(() -> {
+      try {
+        maybeUpdateTaskRejectionStatus();
+      } catch (Exception ex) {
+        log.error("Exception while determining delegate behaviour", ex);
+      }
+    }, 0, 1, TimeUnit.SECONDS);
   }
 
   private void startHeartbeat(DelegateParamsBuilder builder, Socket socket) {
@@ -1866,6 +1908,11 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       return;
     }
 
+    if (rejectRequest.get()) {
+      log.info("Delegate running out of resources, dropping this request [{}] " + delegateTaskId);
+      return;
+    }
+
     if (currentlyExecutingFutures.containsKey(delegateTaskEvent.getDelegateTaskId())) {
       log.info("Task [DelegateTaskEvent: {}] already queued, dropping this request ", delegateTaskEvent);
       return;
@@ -2175,7 +2222,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   private void addSystemSecrets(Set<String> secrets) {
     // Add config file secrets
-    secrets.add(delegateConfiguration.getAccountSecret());
+    secrets.add(delegateConfiguration.getDelegateToken());
 
     // Add environment variable secrets
     String delegateProfileId = System.getenv().get("DELEGATE_PROFILE");
@@ -2267,13 +2314,13 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
           response = delegateAgentManagerClient.sendTaskStatus(delegateId, taskId, accountId, taskResponse).execute();
           if (response != null && response.code() >= 200 && response.code() <= 299) {
             log.info("Task {} response sent to manager", taskId);
-          } else {
-            log.warn("Failed to send response for task {}: {}. {}", taskId, response == null ? "null" : response.code(),
-                attempt < (retries - 1) ? "Retrying." : "Giving up.");
-            if (attempt < retries - 1) {
-              // Do not sleep for last loop round, as we are going to fail.
-              sleep(ofSeconds(FibonacciBackOff.getFibonacciElement(attempt)));
-            }
+            break;
+          }
+          log.warn("Failed to send response for task {}: {}. {}", taskId, response == null ? "null" : response.code(),
+              attempt < (retries - 1) ? "Retrying." : "Giving up.");
+          if (attempt < retries - 1) {
+            // Do not sleep for last loop round, as we are going to fail.
+            sleep(ofSeconds(FibonacciBackOff.getFibonacciElement(attempt)));
           }
         }
       } catch (Exception e) {
