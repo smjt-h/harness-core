@@ -67,7 +67,7 @@ public final class CECluster implements PersistentEntity, UuidAware, CreatedAtAw
 
   @Builder(toBuilder = true)
   private CECluster(String accountId, String clusterName, String clusterArn, String region, String infraAccountId,
-      String infraMasterAccountId, String parentAccountSettingId) {
+      String infraMasterAccountId, String parentAccountSettingId, Map<String, String> labels) {
     this.accountId = accountId;
     this.clusterName = clusterName;
     this.clusterArn = clusterArn;
@@ -75,6 +75,7 @@ public final class CECluster implements PersistentEntity, UuidAware, CreatedAtAw
     this.infraAccountId = infraAccountId;
     this.infraMasterAccountId = infraMasterAccountId;
     this.parentAccountSettingId = parentAccountSettingId;
+    this.labels = labels;
     this.hash = hash(accountId, clusterName, region, infraAccountId);
   }
 
