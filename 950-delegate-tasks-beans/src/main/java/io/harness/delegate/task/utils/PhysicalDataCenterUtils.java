@@ -1,5 +1,7 @@
 package io.harness.delegate.task.utils;
 
+import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.DEFAULT_SSH_PORT;
+
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import java.util.Arrays;
@@ -9,8 +11,6 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class PhysicalDataCenterUtils {
-  private static final String DEFAULT_SSH_PORT = "22";
-
   public List<String> getHostsAsList(final String hostNames) {
     if (isBlank(hostNames)) {
       return Collections.emptyList();
