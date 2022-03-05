@@ -9,10 +9,8 @@ package software.wings.resources;
 
 import software.wings.beans.ApprovalDetails;
 
-import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Value;
 
 @NoArgsConstructor
 @Data

@@ -6001,7 +6001,9 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   @Override
   public PreviousApprovalDetails getPreviousApprovalDetails(
       String appId, String workflowExecutionId, String pipelineId) {
-    WorkflowExecution currentPipelineExecution = getWorkflowExecution(appId, workflowExecutionId);
+    WorkflowExecution currentPipelineExecution = fetchWorkflowExecution(appId, workflowExecutionId,
+        WorkflowExecutionKeys.createdAt, WorkflowExecutionKeys.pipelineExecution, WorkflowExecutionKeys.serviceIds,
+        WorkflowExecutionKeys.infraDefinitionIds);
 
     List<WorkflowExecution> pausedExecutions = wingsPersistence.createQuery(WorkflowExecution.class)
                                                    .filter("appId", appId)
@@ -6051,9 +6053,12 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   private void rejectPreviousDeployments(String accountId, String appId, String workflowExecutionId,
       ApprovalDetails approvalDetails, List<String> previousApprovalIds) {
     String baseUrl = subdomainUrlHelper.getPortalBaseUrl(accountId);
-    String executionUrl = generatePipelineExecutionUrl(accountId, appId, workflowExecutionId, baseUrl);
+    String executionUrl = "";
+    if (baseUrl != null) {
+      executionUrl = generatePipelineExecutionUrl(accountId, appId, workflowExecutionId, baseUrl);
+    }
     if (isNotEmpty(previousApprovalIds)) {
-      previousApprovalIds.forEach(approvalId -> {
+      for (String approvalId : previousApprovalIds) {
         ApprovalDetails rejectionDetails = new ApprovalDetails();
         rejectionDetails.setApprovalId(approvalId);
         rejectionDetails.setComments(isEmpty(approvalDetails.getComments())
@@ -6061,13 +6066,14 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
                 : approvalDetails.getComments());
         rejectionDetails.setAction(REJECT);
         approveOrRejectExecution(appId, rejectionDetails);
-      });
+      }
     }
   }
 
   @Override
   public void rejectPreviousDeployments(String appId, String workflowExecutionId, ApprovalDetails approvalDetails) {
-    WorkflowExecution pipelineExecution = getWorkflowExecution(appId, workflowExecutionId);
+    WorkflowExecution pipelineExecution = fetchWorkflowExecution(
+        appId, workflowExecutionId, WorkflowExecutionKeys.workflowId, WorkflowExecutionKeys.accountId);
     PreviousApprovalDetails previousApprovalDetails =
         getPreviousApprovalDetails(appId, workflowExecutionId, pipelineExecution.getWorkflowId());
     List<String> previousApprovalIds = new ArrayList<>();
