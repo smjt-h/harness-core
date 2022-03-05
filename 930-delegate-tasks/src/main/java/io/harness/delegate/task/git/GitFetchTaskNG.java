@@ -87,7 +87,7 @@ public class GitFetchTaskNG extends AbstractDelegateRunnableTask {
       List<GitFetchFilesConfig> gitFetchFilesConfigs = gitFetchRequest.getGitFetchFilesConfigs();
 
       executionLogCallback.saveExecutionLog(
-          color(format("%nStarting Git %s fetch task", gitFetchFilesConfigs.get(0).getIdentifier()), LogColor.White,
+          color(format("%nStarting Git %s Fetch", gitFetchFilesConfigs.get(0).getIdentifier()), LogColor.White,
               LogWeight.Bold));
 
       for (GitFetchFilesConfig gitFetchFilesConfig : gitFetchFilesConfigs) {
@@ -126,7 +126,7 @@ public class GitFetchTaskNG extends AbstractDelegateRunnableTask {
         filesFromMultipleRepo.put(gitFetchFilesConfig.getIdentifier(), gitFetchFilesResult);
       }
       executionLogCallback.saveExecutionLog(
-          color(format("%nGit %s fetch task completed successfully.", gitFetchFilesConfigs.get(0).getIdentifier()),
+          color(format("%nGit %s Fetch completed successfully.", gitFetchFilesConfigs.get(0).getIdentifier()),
               LogColor.White, LogWeight.Bold),
           INFO);
 

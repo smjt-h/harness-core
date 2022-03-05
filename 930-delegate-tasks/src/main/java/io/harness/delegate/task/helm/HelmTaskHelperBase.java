@@ -668,7 +668,7 @@ public class HelmTaskHelperBase {
 
   public String fetchValuesYamlFromChart(HelmChartManifestDelegateConfig helmChartManifestDelegateConfig,
       long timeoutInMillis, LogCallback logCallback) throws Exception {
-    logCallback.saveExecutionLog(color("\nStarting Helm values fetch task", LogColor.White, LogWeight.Bold));
+    logCallback.saveExecutionLog(color("\nStarting fetching Helm values", LogColor.White, LogWeight.Bold));
     String workingDirectory = createNewDirectoryAtPath(Paths.get(WORKING_DIR_BASE).toString());
     logCallback.saveExecutionLog(color("\nFetching values.yaml from helm chart repo", White, Bold));
 

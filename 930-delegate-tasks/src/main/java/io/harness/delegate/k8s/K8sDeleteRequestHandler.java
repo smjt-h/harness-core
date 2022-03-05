@@ -126,7 +126,7 @@ public class K8sDeleteRequestHandler extends K8sRequestHandler {
 
     LogCallback logCallback = k8sTaskHelperBase.getLogCallback(
         logStreamingTaskClient, FetchFiles, k8sDeleteRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress);
-    logCallback.saveExecutionLog(color("\nStarting Kubernetes Delete Task", LogColor.White, LogWeight.Bold));
+    logCallback.saveExecutionLog(color("\nStarting Kubernetes Delete", LogColor.White, LogWeight.Bold));
 
     k8sTaskHelperBase.fetchManifestFilesAndWriteToDirectory(k8sDeleteRequest.getManifestDelegateConfig(),
         manifestFilesDirectory, logCallback, steadyStateTimeoutInMillis, k8sDeleteRequest.getAccountId());

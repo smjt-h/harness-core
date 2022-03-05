@@ -124,7 +124,7 @@ public class K8sBGRequestHandler extends K8sRequestHandler {
     LogCallback executionLogCallback = k8sTaskHelperBase.getLogCallback(
         logStreamingTaskClient, FetchFiles, k8sBGDeployRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress);
     executionLogCallback.saveExecutionLog(
-        color("\nStarting Kubernetes Blue-Greeen Deployment Task", LogColor.White, LogWeight.Bold));
+        color("\nStarting Kubernetes Blue-Greeen Deployment", LogColor.White, LogWeight.Bold));
 
     k8sTaskHelperBase.fetchManifestFilesAndWriteToDirectory(k8sBGDeployRequest.getManifestDelegateConfig(),
         manifestFilesDirectory, executionLogCallback, timeoutInMillis, k8sBGDeployRequest.getAccountId());
