@@ -99,7 +99,7 @@ public class K8sApplyTaskHandler extends K8sTaskHandler {
     } else {
       ExecutionLogCallback executionLogCallback =
           k8sTaskHelper.getExecutionLogCallback(k8sApplyTaskParameters, FetchFiles);
-      executionLogCallback.saveExecutionLog(color("\nStarting Kubernetes Apply Task", LogColor.White, LogWeight.Bold));
+      executionLogCallback.saveExecutionLog(color("\nStarting Kubernetes Apply", LogColor.White, LogWeight.Bold));
 
       success =
           k8sTaskHelper.fetchManifestFilesAndWriteToDirectory(k8sApplyTaskParameters.getK8sDelegateManifestConfig(),

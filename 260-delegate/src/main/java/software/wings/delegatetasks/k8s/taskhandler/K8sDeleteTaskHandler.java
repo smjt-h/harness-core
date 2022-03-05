@@ -111,7 +111,7 @@ public class K8sDeleteTaskHandler extends K8sTaskHandler {
     long steadyStateTimeoutInMillis = getTimeoutMillisFromMinutes(k8sDeleteTaskParameters.getTimeoutIntervalInMin());
 
     ExecutionLogCallback logCallback = k8sTaskHelper.getExecutionLogCallback(k8sDeleteTaskParameters, FetchFiles);
-    logCallback.saveExecutionLog(color("\nStarting Kubernetes Delete Task", LogColor.White, LogWeight.Bold));
+    logCallback.saveExecutionLog(color("\nStarting Kubernetes Delete", LogColor.White, LogWeight.Bold));
 
     boolean success =
         k8sTaskHelper.fetchManifestFilesAndWriteToDirectory(k8sDeleteTaskParameters.getK8sDelegateManifestConfig(),

@@ -108,7 +108,7 @@ public class K8sCanaryDeployTaskHandler extends K8sTaskHandler {
     } else {
       ExecutionLogCallback executionLogCallback = getLogCallBack(k8sCanaryDeployTaskParameters, FetchFiles);
       executionLogCallback.saveExecutionLog(
-          color("\nStarting Kubernetes Canary Deployment Task", LogColor.White, LogWeight.Bold));
+          color("\nStarting Kubernetes Canary Deployment", LogColor.White, LogWeight.Bold));
 
       success = k8sTaskHelper.fetchManifestFilesAndWriteToDirectory(
           k8sCanaryDeployTaskParameters.getK8sDelegateManifestConfig(), canaryHandlerConfig.getManifestFilesDirectory(),
