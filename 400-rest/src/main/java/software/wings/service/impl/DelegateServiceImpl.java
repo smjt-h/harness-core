@@ -2475,8 +2475,9 @@ public class DelegateServiceImpl implements DelegateService {
     if (existingDelegate == null) {
       log.info("No existing delegate, adding for account {}: Hostname: {} IP: {}", delegate.getAccountId(),
           delegate.getHostName(), delegate.getIp());
-
-      createAuditHeaderForDelegateRegistration(delegate.getHostName());
+      if (!delegate.isNg()){
+        createAuditHeaderForDelegateRegistration(delegate.getHostName());
+      }
 
       registeredDelegate = add(delegate);
       sendTelemetryTrackEvents(
