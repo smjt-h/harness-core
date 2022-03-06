@@ -33,15 +33,16 @@ import org.springframework.data.annotation.TypeAlias;
 @EqualsAndHashCode(callSuper = true)
 @SimpleVisitorHelper(helperClass = ServerlessDeployStepInfoVisitorHelper.class)
 @JsonTypeName(StepSpecTypeConstants.SERVERLESS_DEPLOY)
-@TypeAlias("ServerlessDeployStepInfo")
+@TypeAlias("serverlessDeployStepInfo")
 @RecasterAlias("io.harness.cdng.serverless.ServerlessDeployStepInfo")
 public class ServerlessDeployStepInfo extends ServerlessDeployBaseStepInfo implements CDStepInfo, Visitable {
   // For Visitor Framework Impl
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 
   @Builder(builderMethodName = "infoBuilder")
-  public ServerlessDeployStepInfo(ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
-    super(delegateSelectors);
+  public ServerlessDeployStepInfo(
+      ParameterField<List<TaskSelectorYaml>> delegateSelectors, ParameterField<String> commandOptions) {
+    super(delegateSelectors, commandOptions);
   }
   @Override
   public StepType getStepType() {
@@ -55,6 +56,9 @@ public class ServerlessDeployStepInfo extends ServerlessDeployBaseStepInfo imple
 
   @Override
   public SpecParameters getSpecParameters() {
-    return ServerlessDeployStepParameters.infoBuilder().delegateSelectors(this.getDelegateSelectors()).build();
+    return ServerlessDeployStepParameters.infoBuilder()
+        .delegateSelectors(this.getDelegateSelectors())
+        .commandOptions(commandOptions)
+        .build();
   }
 }

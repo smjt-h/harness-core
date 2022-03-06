@@ -9,6 +9,8 @@ package io.harness.cdng.serverless;
 
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.yaml.ParameterField;
@@ -22,13 +24,16 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldNameConstants;
 import org.springframework.data.annotation.TypeAlias;
 
+@OwnedBy(HarnessTeam.CDP)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TypeAlias("ServerlessDeployBaseStepInfo")
+@TypeAlias("serverlessDeployBaseStepInfo")
 @FieldNameConstants(innerTypeName = "ServerlessDeployBaseStepInfoKeys")
 public class ServerlessDeployBaseStepInfo {
   @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   ParameterField<List<TaskSelectorYaml>> delegateSelectors;
+
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> commandOptions;
 }

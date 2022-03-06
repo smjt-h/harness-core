@@ -24,11 +24,12 @@ import org.springframework.data.annotation.TypeAlias;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@TypeAlias("ServerlessDeployStepParameters")
+@TypeAlias("serverlessDeployStepParameters")
 @RecasterAlias("io.harness.cdng.serverless.ServerlessDeployStepParameters")
 public class ServerlessDeployStepParameters extends ServerlessDeployBaseStepInfo implements ServerlessSpecParameters {
   @Builder(builderMethodName = "infoBuilder")
-  public ServerlessDeployStepParameters(ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
-    super(delegateSelectors);
+  public ServerlessDeployStepParameters(
+      ParameterField<List<TaskSelectorYaml>> delegateSelectors, ParameterField<String> commandOptions) {
+    super(delegateSelectors, commandOptions);
   }
 }

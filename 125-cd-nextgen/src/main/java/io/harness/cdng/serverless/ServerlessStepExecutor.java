@@ -14,11 +14,11 @@ import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.sdk.core.steps.executables.TaskChainResponse;
 
-import java.util.List;
+import org.apache.commons.lang3.tuple.Pair;
 
 public interface ServerlessStepExecutor {
   TaskChainResponse executeServerlessTask(ManifestOutcome serverlessManifestOutcome, Ambiance ambiance,
-      StepElementParameters stepParameters, String manifestFileContent,
+      StepElementParameters stepParameters, Pair<String, String> manifestFilePathContent,
       ServerlessExecutionPassThroughData executionPassThroughData, boolean shouldOpenFetchFilesLogStream,
       UnitProgressData unitProgressData);
 }
