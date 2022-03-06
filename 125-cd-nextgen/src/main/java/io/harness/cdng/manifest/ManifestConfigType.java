@@ -23,7 +23,8 @@ public enum ManifestConfigType {
   @JsonProperty(ManifestType.KustomizePatches) KUSTOMIZE_PATCHES(ManifestType.KustomizePatches),
   @JsonProperty(ManifestType.OpenshiftParam) OPEN_SHIFT_PARAM(ManifestType.OpenshiftParam),
   @JsonProperty(ManifestType.OpenshiftTemplate) OPEN_SHIFT_TEMPLATE(ManifestType.OpenshiftTemplate),
-  @JsonProperty(ManifestType.VALUES) VALUES(ManifestType.VALUES);
+  @JsonProperty(ManifestType.VALUES) VALUES(ManifestType.VALUES),
+  @JsonProperty(ManifestType.ServerlessAws) SERVERLESS_AWS(ManifestType.ServerlessAws);
   private final String displayName;
 
   ManifestConfigType(String displayName) {
