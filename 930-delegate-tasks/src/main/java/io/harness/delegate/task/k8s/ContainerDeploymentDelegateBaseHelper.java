@@ -120,8 +120,12 @@ public class ContainerDeploymentDelegateBaseHelper {
     } else if (clusterConfigDTO instanceof GcpK8sInfraDelegateConfig) {
       GcpK8sInfraDelegateConfig gcpK8sInfraDelegateConfig = (GcpK8sInfraDelegateConfig) clusterConfigDTO;
       GcpConnectorCredentialDTO gcpCredentials = gcpK8sInfraDelegateConfig.getGcpConnectorDTO().getCredential();
+      boolean useDelegate = gcpCredentials.getGcpCredentialType() == INHERIT_FROM_DELEGATE;
+      if (useDelegate) {
+        return k8sYamlToDelegateDTOMapper.createKubernetesConfigWhenInheritingCredentials(gcpK8sInfraDelegateConfig.getNamespace());
+      }
       return gkeClusterHelper.getCluster(getGcpServiceAccountKeyFileContent(gcpCredentials),
-          gcpCredentials.getGcpCredentialType() == INHERIT_FROM_DELEGATE, gcpK8sInfraDelegateConfig.getCluster(),
+          useDelegate, gcpK8sInfraDelegateConfig.getCluster(),
           gcpK8sInfraDelegateConfig.getNamespace());
     } else {
       throw new InvalidRequestException("Unhandled K8sInfraDelegateConfig " + clusterConfigDTO.getClass());
