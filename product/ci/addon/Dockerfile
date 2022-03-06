@@ -14,7 +14,7 @@ COPY ci-addon_/ci-addon /usr/local/bin/ci-addon-linux-amd64
 RUN chmod +x /usr/local/bin/ci-addon-linux-amd64
 COPY java-agent.jar /usr/local/bin/
 
-RUN groupadd harness && harness -g harness -s /bin/sh -u 1000 harness
+RUN groupadd harness && adduser -g harness -s /bin/sh -u 1000 harness
 USER harness:harness
 
 CMD ["/usr/local/bin/ci-addon-linux-amd64"]

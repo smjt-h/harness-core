@@ -11,7 +11,7 @@ RUN microdnf install git
 COPY engine_/engine /usr/local/bin/ci-lite-engine
 RUN chmod +x /usr/local/bin/ci-lite-engine
 
-RUN groupadd harness && harness -g harness -s /bin/sh -u 1000 harness
+RUN groupadd harness && adduser -g harness -s /bin/sh -u 1000 harness
 USER harness:harness
 
 CMD ["/usr/local/bin/ci-lite-engine"]
