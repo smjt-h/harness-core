@@ -51,10 +51,6 @@ public class ApiClientFactoryImpl implements ApiClientFactory {
   private static ApiClient createNewApiClient(KubernetesConfig kubernetesConfig, OidcTokenRetriever tokenRetriever) {
     // Enable SSL validation only if CA Certificate provided with configuration
     ClientBuilder clientBuilder = new ClientBuilder().setVerifyingSsl(isNotEmpty(kubernetesConfig.getCaCert()));
-    kubernetesConfig.setCaCert(null);
-    kubernetesConfig.setServiceAccountToken(
-        "eyJhbGciOiJSUzI1NiIsImtpZCI6InNnaDh4N0NwYVhDQnlmd0FtRlV3ZWJGaGNVem9KN3dndGxTTWxwWE9qMm8ifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJoYXJuZXNzLWRlbGVnYXRlLW5nIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImplbGVuYS1rc2EtdG9rZW4tdjR0c3AiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiamVsZW5hLWtzYSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImM0YmI3ZmYyLTAzYjMtNDU3Ni1iY2JjLTg4Y2NkOGVjYTY1OSIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpoYXJuZXNzLWRlbGVnYXRlLW5nOmplbGVuYS1rc2EifQ.sx0ThTFNMJTQKr3-2Xq4Rh57d8HhSxbbrB5v8FHWrHcGcXViNsOev8QiIGug5SZxcDDEZ7j2QQ4hk1dbpsRqTfLsAP_yzJhJNPftPY_2dDIZWP6_3BEO3lAOi7LDAXUiQsw-ZDTtO1BiUgWzHw7wS8tg6J6YAAJuh09mLgbnboUEOxzYTDWL9UV07smi2ozIBq0hwME7E-rXqd-sOGvqI-PtEdAH8KzUev5bUnHa3hBUBuyhfZRb4_8J7vus9t6_EKgspSx-bKKomrtAcwIGoB6wDNrVLTQa3ENuXe-3Q_a7L4GfyvY2_FJ3ouQEbw_VKoBN5l0wtbVG_Za1V70EIA"
-            .toCharArray());
     if (isNotBlank(kubernetesConfig.getMasterUrl())) {
       clientBuilder.setBasePath(kubernetesConfig.getMasterUrl());
     }
