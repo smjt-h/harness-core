@@ -34,7 +34,9 @@ public class CDPMSStepPlanCreator extends GenericStepPMSPlanCreator {
   @Override
   public Set<String> getSupportedStepTypes() {
     return Sets.newHashSet("K8sScale", "K8sBlueGreenDeploy", "K8sDelete", "K8sApply", "TerraformApply", "TerraformPlan",
-        "TerraformDestroy", StepSpecTypeConstants.TERRAFORM_ROLLBACK, StepSpecTypeConstants.HELM_DEPLOY);
+        "TerraformDestroy", StepSpecTypeConstants.TERRAFORM_ROLLBACK, StepSpecTypeConstants.HELM_DEPLOY,
+        StepSpecTypeConstants.SERVERLESS_DEPLOY, StepSpecTypeConstants.SERVERLESS_ROLLBACK);
+    // todo: add separate StepPlanCreato for serverless rollback if required
   }
 
   @Override

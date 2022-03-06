@@ -34,4 +34,5 @@ public interface StepSpecTypeConstants {
   String HELM_ROLLBACK = "HelmRollback";
 
   String SERVERLESS_DEPLOY = "ServerlessDeploy";
+  String SERVERLESS_ROLLBACK = "ServerlessRollback";
 }

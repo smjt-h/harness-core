@@ -32,4 +32,5 @@ public class OutcomeExpressionConstants {
   public final String DEPLOYMENT_INFO_OUTCOME = "deploymentInfoOutcome";
   public final String HELM_DEPLOY_OUTCOME = "helmDeployOutcome";
   public final String HELM_ROLLBACK_OUTCOME = "helmRollbackOutcome";
+  public final String SERVERLESS_DEPLOY_OUTCOME = "serverlessDeployOutcome";
 }

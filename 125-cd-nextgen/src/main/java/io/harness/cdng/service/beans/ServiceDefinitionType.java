@@ -25,7 +25,11 @@ public enum ServiceDefinitionType {
 
   @JsonProperty(ServiceSpecType.NATIVE_HELM)
   NATIVE_HELM("NativeHelm", Lists.newArrayList(ExecutionStrategyType.ROLLING, ExecutionStrategyType.DEFAULT),
-      ServiceSpecType.NATIVE_HELM);
+      ServiceSpecType.NATIVE_HELM),
+
+  @JsonProperty(ServiceSpecType.SERVERLESS)
+  SERVERLESS("Serverless", Lists.newArrayList(ExecutionStrategyType.BASIC, ExecutionStrategyType.DEFAULT),
+      ServiceSpecType.SERVERLESS);
 
   /*
   //Unsupported for now

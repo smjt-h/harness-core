@@ -85,9 +85,10 @@ public class ServiceVariableCreator {
       switch (typeField.getNode().getCurrJsonNode().textValue()) {
         case ServiceSpecType.KUBERNETES:
         case ServiceSpecType.NATIVE_HELM:
+        case ServiceSpecType.SERVERLESS:
           YamlField specNode = serviceDefNode.getNode().getField(YamlTypes.SERVICE_SPEC);
           if (specNode != null) {
-            addVariablesForKubernetesHelmServiceSpec(specNode, yamlPropertiesMap);
+            addVariablesForKubernetesHelmServerlessServiceSpec(specNode, yamlPropertiesMap);
           }
           break;
         default:
@@ -96,7 +97,7 @@ public class ServiceVariableCreator {
     }
   }
 
-  private void addVariablesForKubernetesHelmServiceSpec(
+  private void addVariablesForKubernetesHelmServerlessServiceSpec(
       YamlField serviceSpecNode, Map<String, YamlProperties> yamlPropertiesMap) {
     YamlField artifactsNode = serviceSpecNode.getNode().getField(YamlTypes.ARTIFACT_LIST_CONFIG);
     if (VariableCreatorHelper.isNotYamlFieldEmpty(artifactsNode)) {
@@ -166,6 +167,9 @@ public class ServiceVariableCreator {
       case ManifestType.HelmChart:
         addVariablesForHelmChartManifest(specNode, yamlPropertiesMap);
         break;
+      case ManifestType.ServerlessAws:
+        addVariablesForServerlessAwsStoreConfigYaml(specNode, yamlPropertiesMap);
+        break;
       default:
         throw new InvalidRequestException("Invalid manifest type");
     }
@@ -197,7 +201,7 @@ public class ServiceVariableCreator {
   }
 
   private void addVariablesFork8sManifest(YamlField manifestSpecNode, Map<String, YamlProperties> yamlPropertiesMap) {
-    addVariablesForK8sAndValueStoreConfigYaml(manifestSpecNode, yamlPropertiesMap);
+    addVariablesForStoreConfigYaml(manifestSpecNode, yamlPropertiesMap);
 
     List<YamlField> fields = manifestSpecNode.getNode().fields();
     fields.forEach(field -> {
@@ -209,10 +213,10 @@ public class ServiceVariableCreator {
 
   private void addVariablesForValuesManifest(
       YamlField manifestSpecNode, Map<String, YamlProperties> yamlPropertiesMap) {
-    addVariablesForK8sAndValueStoreConfigYaml(manifestSpecNode, yamlPropertiesMap);
+    addVariablesForStoreConfigYaml(manifestSpecNode, yamlPropertiesMap);
   }
 
-  private void addVariablesForK8sAndValueStoreConfigYaml(
+  private void addVariablesForStoreConfigYaml(
       YamlField manifestSpecNode, Map<String, YamlProperties> yamlPropertiesMap) {
     YamlField storeNode = manifestSpecNode.getNode().getField(YamlTypes.STORE_CONFIG_WRAPPER);
     if (storeNode != null) {
@@ -226,6 +230,17 @@ public class ServiceVariableCreator {
         throw new InvalidRequestException("Invalid store type");
       }
     }
+  }
+
+  private void addVariablesForServerlessAwsStoreConfigYaml(
+      YamlField manifestSpecNode, Map<String, YamlProperties> yamlPropertiesMap) {
+    addVariablesForStoreConfigYaml(manifestSpecNode, yamlPropertiesMap);
+    List<YamlField> fields = manifestSpecNode.getNode().fields();
+    fields.forEach(field -> {
+      if (!field.getName().equals(YamlTypes.UUID) && !field.getName().equals(YamlTypes.STORE_CONFIG_WRAPPER)) {
+        VariableCreatorHelper.addFieldToPropertiesMap(field, yamlPropertiesMap, YamlTypes.SERVICE_CONFIG);
+      }
+    });
   }
 
   private void addVariablesForGitOrStorage(YamlField gitNode, Map<String, YamlProperties> yamlPropertiesMap) {

@@ -81,7 +81,6 @@ public enum NGStepType {
   @JsonProperty("SHELL_SCRIPT_PROVISIONER")
   SHELL_SCRIPT_PROVISIONER("Shell Script Provisioner", Arrays.asList(ServiceDefinitionType.values()),
       "Infrastructure Provisioners/Shell Script Provisioner", StepSpecTypeConstants.PLACEHOLDER),
-
   // Issue Tracking
   @JsonProperty("JIRA")
   JIRA("Jira", Arrays.asList(ServiceDefinitionType.values()), "Issue Tracking", StepSpecTypeConstants.PLACEHOLDER),
@@ -101,7 +100,15 @@ public enum NGStepType {
       "Utilites/Non-Scripted/", StepSpecTypeConstants.PLACEHOLDER),
   @JsonProperty("TEMPLATIZED_SECRET_MANAGER")
   TEMPLATIZED_SECRET_MANAGER("Templatized Secret Manager", Arrays.asList(ServiceDefinitionType.values()),
-      "Utilites/Non-Scripted/", StepSpecTypeConstants.PLACEHOLDER);
+      "Utilites/Non-Scripted/", StepSpecTypeConstants.PLACEHOLDER),
+
+  // serverless steps
+  @JsonProperty(StepSpecTypeConstants.SERVERLESS_DEPLOY)
+  SERVERLESS_DEPLOY("Serverless Deploy", Arrays.asList(ServiceDefinitionType.SERVERLESS), "Serverless",
+      StepSpecTypeConstants.SERVERLESS_DEPLOY),
+  @JsonProperty(StepSpecTypeConstants.SERVERLESS_ROLLBACK)
+  SERVERLESS_ROLLBACK("Serverless Rollback", Arrays.asList(ServiceDefinitionType.SERVERLESS), "Serverless",
+      StepSpecTypeConstants.SERVERLESS_ROLLBACK);
 
   private String displayName;
   private List<ServiceDefinitionType> serviceDefinitionTypes;

@@ -44,6 +44,7 @@ public interface YamlTypes {
   String HELM_ROLLBACK = StepSpecTypeConstants.HELM_ROLLBACK;
 
   String SERVERLESS_DEPLOY = StepSpecTypeConstants.SERVERLESS_DEPLOY;
+  String SERVERLESS_ROLLBACK = StepSpecTypeConstants.SERVERLESS_ROLLBACK;
 
   String MANIFEST_LIST_CONFIG = "manifests";
   String MANIFEST_CONFIG = "manifest";
@@ -83,4 +84,6 @@ public interface YamlTypes {
   String DELEGATE_SELECTORS = "delegateSelectors";
 
   String COMMAND_FLAGS_WRAPPER = "commandFlags";
+  String REGION = "region";
+  String STAGE = "stage";
 }
