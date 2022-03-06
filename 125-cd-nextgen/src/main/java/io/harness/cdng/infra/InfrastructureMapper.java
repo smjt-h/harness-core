@@ -16,10 +16,8 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sDirectInfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sGcpInfrastructureOutcome;
-import io.harness.cdng.infra.yaml.Infrastructure;
-import io.harness.cdng.infra.yaml.InfrastructureKind;
-import io.harness.cdng.infra.yaml.K8SDirectInfrastructure;
-import io.harness.cdng.infra.yaml.K8sGcpInfrastructure;
+import io.harness.cdng.infra.beans.ServerlessAwsInfrastructureOutcome;
+import io.harness.cdng.infra.yaml.*;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
 import io.harness.common.ParameterFieldHelper;
 import io.harness.exception.InvalidArgumentsException;
@@ -60,6 +58,18 @@ public class InfrastructureMapper {
             .infrastructureKey(InfrastructureKey.generate(
                 service, environmentOutcome, k8sGcpInfrastructure.getInfrastructureKeyValues()))
             .build();
+      // todo: check calling of this function
+      case InfrastructureKind.SERVERLESS_AWS:
+        ServerlessAwsInfrastructure serverlessAwsInfrastructure = (ServerlessAwsInfrastructure) infrastructure;
+        validateServerlessAwsInfrastructure(serverlessAwsInfrastructure);
+        return ServerlessAwsInfrastructureOutcome.builder()
+            .connectorRef(serverlessAwsInfrastructure.getConnectorRef().getValue())
+            .region(serverlessAwsInfrastructure.getRegion().getValue())
+            .stage(serverlessAwsInfrastructure.getStage().getValue())
+            .environment(environmentOutcome)
+            .infrastructureKey(InfrastructureKey.generate(
+                service, environmentOutcome, serverlessAwsInfrastructure.getInfrastructureKeyValues()))
+            .build();
 
       default:
         throw new InvalidArgumentsException(format("Unknown Infrastructure Kind : [%s]", infrastructure.getKind()));
@@ -90,6 +100,16 @@ public class InfrastructureMapper {
     if (ParameterField.isNull(infrastructure.getCluster())
         || isEmpty(ParameterFieldHelper.getParameterFieldValue(infrastructure.getCluster()))) {
       throw new InvalidArgumentsException(Pair.of("cluster", "cannot be empty"));
+    }
+  }
+
+  private void validateServerlessAwsInfrastructure(ServerlessAwsInfrastructure infrastructure) {
+    if (ParameterField.isNull(infrastructure.getRegion())
+        || isEmpty(ParameterFieldHelper.getParameterFieldValue(infrastructure.getRegion()))) {
+      throw new InvalidArgumentsException(Pair.of("region", "cannot be empty"));
+    }
+    if (!hasValueOrExpression(infrastructure.getStage())) {
+      throw new InvalidArgumentsException(Pair.of("stage", "cannot be empty"));
     }
   }
 

@@ -18,10 +18,9 @@ import io.harness.beans.IdentifierRef;
 import io.harness.cdng.infra.InfrastructureMapper;
 import io.harness.cdng.infra.beans.InfraMapping;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
-import io.harness.cdng.infra.yaml.Infrastructure;
-import io.harness.cdng.infra.yaml.InfrastructureKind;
-import io.harness.cdng.infra.yaml.K8SDirectInfrastructure;
-import io.harness.cdng.infra.yaml.K8sGcpInfrastructure;
+import io.harness.cdng.infra.beans.K8sDirectInfrastructureOutcome;
+import io.harness.cdng.infra.beans.K8sGcpInfrastructureOutcome;
+import io.harness.cdng.infra.yaml.*;
 import io.harness.cdng.k8s.K8sStepHelper;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
@@ -31,6 +30,8 @@ import io.harness.connector.services.ConnectorService;
 import io.harness.connector.utils.ConnectorUtils;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.connector.ConnectorType;
+import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
+import io.harness.delegate.beans.connector.awsconnector.AwsCredentialType;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpCredentialType;
 import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
@@ -122,7 +123,7 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
     InfrastructureOutcome infrastructureOutcome =
         InfrastructureMapper.toOutcome(infrastructure, environmentOutcome, serviceOutcome);
 
-    publishK8sInfraDelegateConfigOutput(infrastructureOutcome, ambiance);
+    publishInfraDelegateConfigOutput(infrastructureOutcome, ambiance);
     ngManagerLogCallback.saveExecutionLog(
         "Infrastructure Step completed", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
     return StepResponse.builder()
@@ -141,14 +142,17 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
         .build();
   }
 
-  private void publishK8sInfraDelegateConfigOutput(InfrastructureOutcome infrastructureOutcome, Ambiance ambiance) {
-    K8sInfraDelegateConfig k8sInfraDelegateConfig =
-        k8sStepHelper.getK8sInfraDelegateConfig(infrastructureOutcome, ambiance);
+  private void publishInfraDelegateConfigOutput(InfrastructureOutcome infrastructureOutcome, Ambiance ambiance) {
+    if (infrastructureOutcome instanceof K8sGcpInfrastructureOutcome
+        || infrastructureOutcome instanceof K8sDirectInfrastructureOutcome) {
+      K8sInfraDelegateConfig k8sInfraDelegateConfig =
+          k8sStepHelper.getK8sInfraDelegateConfig(infrastructureOutcome, ambiance);
 
-    K8sInfraDelegateConfigOutput k8sInfraDelegateConfigOutput =
-        K8sInfraDelegateConfigOutput.builder().k8sInfraDelegateConfig(k8sInfraDelegateConfig).build();
-    executionSweepingOutputService.consume(ambiance, OutputExpressionConstants.K8S_INFRA_DELEGATE_CONFIG_OUTPUT_NAME,
-        k8sInfraDelegateConfigOutput, StepOutcomeGroup.STAGE.name());
+      K8sInfraDelegateConfigOutput k8sInfraDelegateConfigOutput =
+          K8sInfraDelegateConfigOutput.builder().k8sInfraDelegateConfig(k8sInfraDelegateConfig).build();
+      executionSweepingOutputService.consume(ambiance, OutputExpressionConstants.K8S_INFRA_DELEGATE_CONFIG_OUTPUT_NAME,
+          k8sInfraDelegateConfigOutput, StepOutcomeGroup.STAGE.name());
+    }
   }
 
   @VisibleForTesting
@@ -170,6 +174,20 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
       if (GcpCredentialType.INHERIT_FROM_DELEGATE == gcpConnector.getCredential().getGcpCredentialType()) {
         throw new InvalidRequestException(
             "Deployment using Google Kubernetes Engine infrastructure with inheriting credentials from delegate is not supported yet");
+      }
+    }
+
+    if (InfrastructureKind.SERVERLESS_AWS.equals(infrastructure.getKind())) {
+      if (!(connectorInfo.getConnectorConfig() instanceof AwsConnectorDTO)) {
+        throw new InvalidRequestException(String.format(
+            "Invalid connector type [%s] for identifier: [%s], expected [%s]", connectorInfo.getConnectorType().name(),
+            infrastructure.getConnectorReference().getValue(), ConnectorType.AWS.name()));
+      }
+
+      AwsConnectorDTO awsConnector = (AwsConnectorDTO) connectorInfo.getConnectorConfig();
+      if (AwsCredentialType.MANUAL_CREDENTIALS != awsConnector.getCredential().getAwsCredentialType()) {
+        throw new InvalidRequestException(
+            "Deployment using AWS infrastructure with manual credentials is only supported.");
       }
     }
   }
@@ -208,6 +226,11 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
         K8sGcpInfrastructure k8sGcpInfrastructure = (K8sGcpInfrastructure) infrastructure;
         validateExpression(k8sGcpInfrastructure.getConnectorRef(), k8sGcpInfrastructure.getNamespace(),
             k8sGcpInfrastructure.getCluster());
+        break;
+      case InfrastructureKind.SERVERLESS_AWS:
+        ServerlessAwsInfrastructure serverlessAwsInfrastructure = (ServerlessAwsInfrastructure) infrastructure;
+        validateExpression(serverlessAwsInfrastructure.getConnectorRef(), serverlessAwsInfrastructure.getRegion(),
+            serverlessAwsInfrastructure.getStage());
         break;
       default:
         throw new InvalidArgumentsException(format("Unknown Infrastructure Kind : [%s]", infrastructure.getKind()));

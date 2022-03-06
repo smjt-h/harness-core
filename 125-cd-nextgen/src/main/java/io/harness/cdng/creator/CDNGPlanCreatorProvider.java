@@ -33,6 +33,7 @@ import io.harness.cdng.creator.plan.steps.K8sRollingRollbackPMSStepPlanCreator;
 import io.harness.cdng.creator.variables.DeploymentStageVariableCreator;
 import io.harness.cdng.creator.variables.HelmStepVariableCreator;
 import io.harness.cdng.creator.variables.K8sStepVariableCreator;
+import io.harness.cdng.creator.variables.ServerlessStepVariableCreator;
 import io.harness.cdng.provision.terraform.variablecreator.TerraformStepsVariableCreator;
 import io.harness.enforcement.constants.FeatureRestrictionName;
 import io.harness.executions.steps.StepSpecTypeConstants;
@@ -103,6 +104,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     variableCreators.add(new K8sStepVariableCreator());
     variableCreators.add(new TerraformStepsVariableCreator());
     variableCreators.add(new HelmStepVariableCreator());
+    variableCreators.add(new ServerlessStepVariableCreator());
     return variableCreators;
   }
 
@@ -238,6 +240,21 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
             .setFeatureFlag(FeatureName.NG_NATIVE_HELM.name())
             .build();
 
+    StepInfo serverlessDeploy =
+        StepInfo.newBuilder()
+            .setName("Serverless Deploy")
+            .setType(StepSpecTypeConstants.SERVERLESS_DEPLOY)
+            .setStepMetaData(StepMetaData.newBuilder().addCategory("Serverless").setFolderPath("Serverless").build())
+            .build();
+
+    StepInfo serverlessRollback =
+        StepInfo.newBuilder()
+            .setName("Serverless Rollback")
+            .setType(StepSpecTypeConstants.SERVERLESS_ROLLBACK)
+            .setStepMetaData(StepMetaData.newBuilder().addCategory("Serverless").setFolderPath("Serverless").build())
+            .build();
+
+    // todo: need to add feature flag for serverless
     List<StepInfo> stepInfos = new ArrayList<>();
 
     stepInfos.add(k8sRolling);
@@ -255,6 +272,8 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     stepInfos.add(terraformDestroy);
     stepInfos.add(helmDeploy);
     stepInfos.add(helmRollback);
+    stepInfos.add(serverlessDeploy);
+    stepInfos.add(serverlessRollback);
     return stepInfos;
   }
 }

@@ -29,7 +29,7 @@ public class ServerlessAwsInfrastructureOutcome implements InfrastructureOutcome
   String infrastructureKey; // need to check with infrastructureKey param
   String connectorRef;
   String region;
-  String stage; // need to check this once
+  String stage;
 
   @Override
   public String getKind() {
