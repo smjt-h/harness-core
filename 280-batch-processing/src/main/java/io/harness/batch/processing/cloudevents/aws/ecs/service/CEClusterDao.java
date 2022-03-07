@@ -15,6 +15,8 @@ import io.harness.persistence.HPersistence;
 
 import com.google.inject.Inject;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.mongodb.morphia.query.Query;
 
@@ -42,6 +44,11 @@ public class CEClusterDao {
 
   public List<CECluster> getCECluster(String accountId) {
     return hPersistence.createQuery(CECluster.class).field(CEClusterKeys.accountId).equal(accountId).asList();
+  }
+
+  public List<String> getCEClusterIds(String accountId) {
+    return hPersistence.createQuery(CECluster.class).field(CEClusterKeys.accountId).equal(accountId)
+        .project(CEClusterKeys.uuid, true).asList().stream().map(CECluster::getUuid).collect(Collectors.toList());
   }
 
   public boolean deleteCluster(String uuid) {

@@ -10,7 +10,9 @@ package io.harness.batch.processing.billing.timeseries.service.impl;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.batch.processing.billing.service.UtilizationData;
+import io.harness.batch.processing.billing.service.UtilizationDataWithTime;
 import io.harness.batch.processing.billing.timeseries.data.InstanceUtilizationData;
+import io.harness.batch.processing.cloudevents.aws.ecs.service.util.ServiceIdAndClusterId;
 import io.harness.ccm.commons.beans.InstanceType;
 import io.harness.ccm.commons.constants.InstanceMetaDataConstants;
 import io.harness.ccm.commons.entities.batch.InstanceData;
@@ -26,6 +28,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +53,8 @@ public class UtilizationDataServiceImpl {
       "INSERT INTO UTILIZATION_DATA (STARTTIME, ENDTIME, ACCOUNTID, MAXCPU, MAXMEMORY, AVGCPU, AVGMEMORY, INSTANCEID, INSTANCETYPE, CLUSTERID, SETTINGID, MAXCPUVALUE, MAXMEMORYVALUE, AVGCPUVALUE, AVGMEMORYVALUE, AVGSTORAGECAPACITYVALUE, AVGSTORAGEUSAGEVALUE, AVGSTORAGEREQUESTVALUE, MAXSTORAGEUSAGEVALUE, MAXSTORAGEREQUESTVALUE) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING";
   private static final String UTILIZATION_DATA_QUERY =
       "SELECT MAX(MAXCPU) as MAXCPUUTILIZATION, MAX(MAXMEMORY) as MAXMEMORYUTILIZATION, AVG(AVGCPU) as AVGCPUUTILIZATION, AVG(AVGMEMORY) as AVGMEMORYUTILIZATION, MAX(MAXCPUVALUE) as MAXCPUVALUE, MAX(MAXMEMORYVALUE) as MAXMEMORYVALUE, AVG(AVGCPUVALUE) as AVGCPUVALUE, AVG(AVGMEMORYVALUE) as AVGMEMORYVALUE, AVG(AVGSTORAGECAPACITYVALUE) as AVGSTORAGECAPACITYVALUE ,AVG(AVGSTORAGEUSAGEVALUE) as AVGSTORAGEUSAGEVALUE, AVG(AVGSTORAGEREQUESTVALUE) as AVGSTORAGEREQUESTVALUE ,MAX(MAXSTORAGEUSAGEVALUE) as MAXSTORAGEUSAGEVALUE, MAX(MAXSTORAGEREQUESTVALUE) as MAXSTORAGEREQUESTVALUE, INSTANCEID FROM UTILIZATION_DATA WHERE ACCOUNTID = '%s' AND SETTINGID = '%s' AND CLUSTERID = '%s' AND INSTANCEID IN ('%s') AND STARTTIME >= '%s' AND STARTTIME < '%s' GROUP BY INSTANCEID;";
+  private static final String UTILIZATION_DATA_QUERY_BY_CLUSTER_IDS =
+      "SELECT INSTANCEID AS SERVICEID, CLUSTERID, MAX(MAXCPU) as MAXCPUUTILIZATION, MAX(MAXMEMORY) as MAXMEMORYUTILIZATION, AVG(AVGCPU) as AVGCPUUTILIZATION, AVG(AVGMEMORY) as AVGMEMORYUTILIZATION, MAX(MAXCPUVALUE) as MAXCPUVALUE, MAX(MAXMEMORYVALUE) as MAXMEMORYVALUE, AVG(AVGCPUVALUE) as AVGCPUVALUE, AVG(AVGMEMORYVALUE) as AVGMEMORYVALUE, AVG(AVGSTORAGECAPACITYVALUE) as AVGSTORAGECAPACITYVALUE ,AVG(AVGSTORAGEUSAGEVALUE) as AVGSTORAGEUSAGEVALUE, AVG(AVGSTORAGEREQUESTVALUE) as AVGSTORAGEREQUESTVALUE ,MAX(MAXSTORAGEUSAGEVALUE) as MAXSTORAGEUSAGEVALUE, MAX(MAXSTORAGEREQUESTVALUE) as MAXSTORAGEREQUESTVALUE, STARTTIME, ENDTIME FROM UTILIZATION_DATA WHERE ACCOUNTID = '%s' AND CLUSTERID IN ('%s') AND STARTTIME >= '%s' AND STARTTIME < '%s' GROUP BY CLUSTERID, INSTANCEID, STARTTIME, ENDTIME;";
 
   public boolean create(List<InstanceUtilizationData> instanceUtilizationDataList) {
     boolean successfulInsert = false;
@@ -123,6 +128,55 @@ public class UtilizationDataServiceImpl {
     }
   }
 
+  public Map<ServiceIdAndClusterId, List<UtilizationDataWithTime>> getUtilizationDataForECSClusters(String accountId,
+      List<String> clusterIds, String startTime, String endTime) {
+    try {
+      if (timeScaleDBService.isValid()) {
+        String query = String.format(UTILIZATION_DATA_QUERY_BY_CLUSTER_IDS, accountId,
+            String.join("','", clusterIds), startTime, endTime);
+        ResultSet resultSet = null;
+        Map<ServiceIdAndClusterId, List<UtilizationDataWithTime>> utilizationDataMap = new HashMap<>();
+        int retryCount = 0;
+        log.debug("Utilization data query : {}", query);
+        while (retryCount < SELECT_MAX_RETRY_COUNT) {
+          retryCount++;
+          try (Connection connection = timeScaleDBService.getDBConnection();
+               Statement statement = connection.createStatement()) {
+            resultSet = statement.executeQuery(query);
+            while (resultSet.next()) {
+              String clusterId = resultSet.getString("CLUSTERID");
+              String serviceId = resultSet.getString("SERVICEID");
+              Instant utilStartTime = resultSet.getTimestamp("STARTTIME").toInstant();
+              Instant utilEndTime = resultSet.getTimestamp("ENDTIME").toInstant();
+              try {
+                ServiceIdAndClusterId serviceIdAndClusterId = new ServiceIdAndClusterId(serviceId, clusterId);
+                if (!utilizationDataMap.containsKey(serviceIdAndClusterId))
+                  utilizationDataMap.put(serviceIdAndClusterId, new ArrayList<>());
+                utilizationDataMap.get(serviceIdAndClusterId)
+                    .add(UtilizationDataWithTime.builder()
+                        .utilizationData(getUtilizationDataFromRow(resultSet))
+                        .startTime(utilStartTime)
+                        .endTime(utilEndTime).build());
+              } catch (SQLException e) {
+                log.error("Error while fetching utilization data : exception", e);
+              }
+            }
+            return utilizationDataMap;
+          } catch (SQLException e) {
+            log.error("Error while fetching utilization data : exception", e);
+          } finally {
+            DBUtils.close(resultSet);
+          }
+        }
+        return null;
+      } else {
+        throw new InvalidRequestException("Cannot process request in InstanceBillingDataTasklet");
+      }
+    } catch (Exception e) {
+      throw new InvalidRequestException("Error while fetching utilization data {}", e);
+    }
+  }
+
   private Map<String, UtilizationData> getUtilizationDataFromTimescaleDB(
       String query, Map<String, List<String>> serviceArnToInstanceIds) {
     ResultSet resultSet = null;
@@ -137,41 +191,17 @@ public class UtilizationDataServiceImpl {
         resultSet = statement.executeQuery(query);
         while (resultSet.next()) {
           String instanceId = resultSet.getString("INSTANCEID");
-          double maxCpuUtilization = resultSet.getDouble("MAXCPUUTILIZATION");
-          double maxMemoryUtilization = resultSet.getDouble("MAXMEMORYUTILIZATION");
-          double avgCpuUtilization = resultSet.getDouble("AVGCPUUTILIZATION");
-          double avgMemoryUtilization = resultSet.getDouble("AVGMEMORYUTILIZATION");
-          double maxCpuValue = resultSet.getDouble("MAXCPUVALUE");
-          double maxMemoryValue = resultSet.getDouble("MAXMEMORYVALUE");
-          double avgCpuValue = resultSet.getDouble("AVGCPUVALUE");
-          double avgMemoryValue = resultSet.getDouble("AVGMEMORYVALUE");
-
-          double avgStorageCapacityValue = resultSet.getDouble("AVGSTORAGECAPACITYVALUE");
-          double avgStorageUsageValue = resultSet.getDouble("AVGSTORAGEUSAGEVALUE");
-          double avgStorageRequestValue = resultSet.getDouble("AVGSTORAGEREQUESTVALUE");
-
-          double maxStorageUsageValue = resultSet.getDouble("MAXSTORAGEUSAGEVALUE");
-          double maxStorageRequestValue = resultSet.getDouble("MAXSTORAGEREQUESTVALUE");
-
+          Instant startTime = resultSet.getTimestamp("STARTTIME").toInstant();
           if (serviceArnToInstanceIds.get(instanceId) != null) {
+            ResultSet finalResultSet = resultSet;
             serviceArnToInstanceIds.get(instanceId)
-                .forEach(instance
-                    -> utilizationDataForInstances.put(instance,
-                        UtilizationData.builder()
-                            .maxCpuUtilization(maxCpuUtilization)
-                            .maxMemoryUtilization(maxMemoryUtilization)
-                            .avgCpuUtilization(avgCpuUtilization)
-                            .avgMemoryUtilization(avgMemoryUtilization)
-                            .maxCpuUtilizationValue(maxCpuValue)
-                            .avgCpuUtilizationValue(avgCpuValue)
-                            .maxMemoryUtilizationValue(maxMemoryValue)
-                            .avgMemoryUtilizationValue(avgMemoryValue)
-                            .avgStorageCapacityValue(avgStorageCapacityValue)
-                            .avgStorageRequestValue(avgStorageRequestValue)
-                            .avgStorageUsageValue(avgStorageUsageValue)
-                            .maxStorageRequestValue(maxStorageRequestValue)
-                            .maxStorageUsageValue(maxStorageUsageValue)
-                            .build()));
+                .forEach(instance -> {
+                  try {
+                    utilizationDataForInstances.put(instance, getUtilizationDataFromRow(finalResultSet));
+                  } catch (SQLException e) {
+                    log.error("Error while fetching utilization data : exception", e);
+                  }
+                });
           }
         }
         return utilizationDataForInstances;
@@ -182,6 +212,39 @@ public class UtilizationDataServiceImpl {
       }
     }
     return null;
+  }
+
+  private UtilizationData getUtilizationDataFromRow(ResultSet resultSet) throws SQLException {
+    double maxCpuUtilization = resultSet.getDouble("MAXCPUUTILIZATION");
+    double maxMemoryUtilization = resultSet.getDouble("MAXMEMORYUTILIZATION");
+    double avgCpuUtilization = resultSet.getDouble("AVGCPUUTILIZATION");
+    double avgMemoryUtilization = resultSet.getDouble("AVGMEMORYUTILIZATION");
+    double maxCpuValue = resultSet.getDouble("MAXCPUVALUE");
+    double maxMemoryValue = resultSet.getDouble("MAXMEMORYVALUE");
+    double avgCpuValue = resultSet.getDouble("AVGCPUVALUE");
+    double avgMemoryValue = resultSet.getDouble("AVGMEMORYVALUE");
+
+    double avgStorageCapacityValue = resultSet.getDouble("AVGSTORAGECAPACITYVALUE");
+    double avgStorageUsageValue = resultSet.getDouble("AVGSTORAGEUSAGEVALUE");
+    double avgStorageRequestValue = resultSet.getDouble("AVGSTORAGEREQUESTVALUE");
+
+    double maxStorageUsageValue = resultSet.getDouble("MAXSTORAGEUSAGEVALUE");
+    double maxStorageRequestValue = resultSet.getDouble("MAXSTORAGEREQUESTVALUE");
+    return UtilizationData.builder()
+        .maxCpuUtilization(maxCpuUtilization)
+        .maxMemoryUtilization(maxMemoryUtilization)
+        .avgCpuUtilization(avgCpuUtilization)
+        .avgMemoryUtilization(avgMemoryUtilization)
+        .maxCpuUtilizationValue(maxCpuValue)
+        .avgCpuUtilizationValue(avgCpuValue)
+        .maxMemoryUtilizationValue(maxMemoryValue)
+        .avgMemoryUtilizationValue(avgMemoryValue)
+        .avgStorageCapacityValue(avgStorageCapacityValue)
+        .avgStorageRequestValue(avgStorageRequestValue)
+        .avgStorageUsageValue(avgStorageUsageValue)
+        .maxStorageRequestValue(maxStorageRequestValue)
+        .maxStorageUsageValue(maxStorageUsageValue)
+        .build();
   }
 
   private Map<String, List<String>> getServiceArnToInstanceIdMapping(List<? extends InstanceData> instanceDataList) {
