@@ -193,7 +193,7 @@ public class ExecutionHelperTest extends CategoryTest {
   public void testBuildTriggerInfo() {
     doReturn(triggeredBy).when(triggeredByHelper).getFromSecurityContext();
 
-    ExecutionTriggerInfo firstExecutionTriggerInfo = executionHelper.buildTriggerInfo(null);
+    ExecutionTriggerInfo firstExecutionTriggerInfo = executionHelper.buildTriggerInfoForManualFlow(null);
     assertThat(firstExecutionTriggerInfo.getIsRerun()).isEqualTo(false);
     assertThat(firstExecutionTriggerInfo.getTriggerType()).isEqualTo(MANUAL);
     assertThat(firstExecutionTriggerInfo.getTriggeredBy()).isEqualTo(triggeredBy);
@@ -205,7 +205,7 @@ public class ExecutionHelperTest extends CategoryTest {
     PlanExecution firstPlanExecution = PlanExecution.builder().metadata(firstExecutionMetadata).build();
     doReturn(firstPlanExecution).when(planExecutionService).get(originalExecutionId);
 
-    ExecutionTriggerInfo rerunExecutionTriggerInfo = executionHelper.buildTriggerInfo(originalExecutionId);
+    ExecutionTriggerInfo rerunExecutionTriggerInfo = executionHelper.buildTriggerInfoForManualFlow(originalExecutionId);
     rerunExecutionAssertions(triggeredBy, rerunExecutionTriggerInfo);
     verify(triggeredByHelper, times(2)).getFromSecurityContext();
     verify(planExecutionService, times(1)).get(originalExecutionId);
@@ -215,7 +215,8 @@ public class ExecutionHelperTest extends CategoryTest {
     PlanExecution secondPlanExecution = PlanExecution.builder().metadata(secondExecutionMetadata).build();
     doReturn(secondPlanExecution).when(planExecutionService).get("originalExecutionId2");
 
-    ExecutionTriggerInfo reRerunExecutionTriggerInfo = executionHelper.buildTriggerInfo("originalExecutionId2");
+    ExecutionTriggerInfo reRerunExecutionTriggerInfo =
+        executionHelper.buildTriggerInfoForManualFlow("originalExecutionId2");
     rerunExecutionAssertions(triggeredBy, reRerunExecutionTriggerInfo);
     verify(triggeredByHelper, times(3)).getFromSecurityContext();
     verify(planExecutionService, times(1)).get(originalExecutionId);
@@ -246,7 +247,7 @@ public class ExecutionHelperTest extends CategoryTest {
             pipelineEntity.getProjectIdentifier(), mergedYaml, true);
     ExecArgs execArgs =
         executionHelper.buildExecutionArgs(pipelineEntity, moduleType, runtimeInputYaml, Collections.emptyList(), null,
-            executionTriggerInfo, null, RetryExecutionParameters.builder().isRetry(false).build());
+            executionTriggerInfo, null, RetryExecutionParameters.builder().isRetry(false).build(), null);
     executionMetadataAssertions(execArgs.getMetadata());
 
     PlanExecutionMetadata planExecutionMetadata = execArgs.getPlanExecutionMetadata();
@@ -277,7 +278,7 @@ public class ExecutionHelperTest extends CategoryTest {
             mergedYaml, true);
     ExecArgs execArgs = executionHelper.buildExecutionArgs(entityWithTemplateReference, moduleType, runtimeInputYaml,
         Collections.emptyList(), null, executionTriggerInfo, null,
-        RetryExecutionParameters.builder().isRetry(false).build());
+        RetryExecutionParameters.builder().isRetry(false).build(), null);
     executionMetadataAssertions(execArgs.getMetadata());
 
     PlanExecutionMetadata planExecutionMetadata = execArgs.getPlanExecutionMetadata();
@@ -287,7 +288,7 @@ public class ExecutionHelperTest extends CategoryTest {
     assertThat(planExecutionMetadata.getStagesExecutionMetadata().isStagesExecution()).isEqualTo(false);
     assertThat(planExecutionMetadata.getProcessedYaml()).isEqualTo(YamlUtils.injectUuid(mergedPipelineYaml));
 
-    verify(principalInfoHelper, times(1)).getPrincipalInfoFromSecurityContext(MANUAL);
+    verify(principalInfoHelper, times(1)).getPrincipalInfoFromSecurityContext();
     verify(pmsGitSyncHelper, times(1)).getGitSyncBranchContextBytesThreadLocal(entityWithTemplateReference);
     verify(pmsYamlSchemaService, times(0)).validateYamlSchema(accountId, orgId, projectId, pipelineYaml);
     verify(pmsYamlSchemaService, times(1)).validateYamlSchema(accountId, orgId, projectId, mergedPipelineYaml);
@@ -315,7 +316,7 @@ public class ExecutionHelperTest extends CategoryTest {
             pipelineEntity.getProjectIdentifier(), mergedYaml, true);
     ExecArgs execArgs = executionHelper.buildExecutionArgs(pipelineEntity, moduleType, runtimeInputYaml,
         Collections.singletonList("s2"), null, executionTriggerInfo, null,
-        RetryExecutionParameters.builder().isRetry(false).build());
+        RetryExecutionParameters.builder().isRetry(false).build(), null);
     executionMetadataAssertions(execArgs.getMetadata());
 
     PlanExecutionMetadata planExecutionMetadata = execArgs.getPlanExecutionMetadata();
@@ -349,7 +350,7 @@ public class ExecutionHelperTest extends CategoryTest {
             pipelineYamlWithExpressions, true);
     ExecArgs execArgs = executionHelper.buildExecutionArgs(pipelineEntityWithExpressions, moduleType, null,
         Collections.singletonList("s2"), expressionValues, executionTriggerInfo, null,
-        RetryExecutionParameters.builder().isRetry(false).build());
+        RetryExecutionParameters.builder().isRetry(false).build(), null);
     executionMetadataAssertions(execArgs.getMetadata());
 
     PlanExecutionMetadata planExecutionMetadata = execArgs.getPlanExecutionMetadata();
@@ -363,7 +364,7 @@ public class ExecutionHelperTest extends CategoryTest {
     assertThat(planExecutionMetadata.getStagesExecutionMetadata().getExpressionValues()).isEqualTo(expressionValues);
     assertThat(planExecutionMetadata.getProcessedYaml()).isEqualTo(YamlUtils.injectUuid(mergedPipelineYamlForS2));
 
-    verify(principalInfoHelper, times(1)).getPrincipalInfoFromSecurityContext(MANUAL);
+    verify(principalInfoHelper, times(1)).getPrincipalInfoFromSecurityContext();
     verify(pmsGitSyncHelper, times(1)).getGitSyncBranchContextBytesThreadLocal(pipelineEntityWithExpressions);
     verify(pmsYamlSchemaService, times(1)).validateYamlSchema(accountId, orgId, projectId, pipelineYamlWithExpressions);
     verify(pipelineRbacServiceImpl, times(1))
@@ -378,7 +379,7 @@ public class ExecutionHelperTest extends CategoryTest {
     PowerMockito.mockStatic(UUIDGenerator.class);
     when(UUIDGenerator.generateUuid()).thenReturn(generatedExecutionId);
 
-    doReturn(executionPrincipalInfo).when(principalInfoHelper).getPrincipalInfoFromSecurityContext(MANUAL);
+    doReturn(executionPrincipalInfo).when(principalInfoHelper).getPrincipalInfoFromSecurityContext();
     doReturn(394).when(pmsPipelineService).incrementRunSequence(any());
     doReturn(null).when(pmsGitSyncHelper).getGitSyncBranchContextBytesThreadLocal(pipelineEntity);
     doNothing().when(pmsYamlSchemaService).validateYamlSchema(accountId, orgId, projectId, mergedPipelineYaml);
@@ -398,7 +399,7 @@ public class ExecutionHelperTest extends CategoryTest {
   }
 
   private void buildExecutionMetadataVerifications() {
-    verify(principalInfoHelper, times(1)).getPrincipalInfoFromSecurityContext(MANUAL);
+    verify(principalInfoHelper, times(1)).getPrincipalInfoFromSecurityContext();
     verify(pmsGitSyncHelper, times(1)).getGitSyncBranchContextBytesThreadLocal(pipelineEntity);
     verify(pmsYamlSchemaService, times(0)).validateYamlSchema(accountId, orgId, projectId, pipelineYaml);
     verify(pmsYamlSchemaService, times(1)).validateYamlSchema(accountId, orgId, projectId, mergedPipelineYaml);
