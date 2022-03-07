@@ -14,6 +14,8 @@ RUN apt-get update && apt-get install -y kubectl
 
 COPY scripts /opt/harness-delegate/
 
+RUN chmod -R 755 /opt/harness-delegate
+
 RUN /opt/harness-delegate/
 
 RUN chmod +x /opt/harness-delegate/*.sh
