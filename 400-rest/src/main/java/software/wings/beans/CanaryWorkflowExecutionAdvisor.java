@@ -899,20 +899,25 @@ public class CanaryWorkflowExecutionAdvisor implements ExecutionEventAdvisor {
     List<String> phaseNames =
         orchestrationWorkflow.getWorkflowPhases().stream().map(WorkflowPhase::getName).collect(toList());
     int index = phaseNames.indexOf(phaseSubWorkflow.getPhaseNameForRollback());
-    if (index == 0) {
-      // All Done
-      return anExecutionEventAdvice().withExecutionInterruptType(ExecutionInterruptType.ROLLBACK_DONE).build();
-    }
+    WorkflowPhase rollbackPhase = null;
+    while (index >= 0) {
+      if (index == 0) {
+        // All Done
+        return anExecutionEventAdvice().withExecutionInterruptType(ExecutionInterruptType.ROLLBACK_DONE).build();
+      }
 
-    String phaseId = orchestrationWorkflow.getWorkflowPhases().get(index - 1).getUuid();
-    WorkflowPhase rollbackPhase = orchestrationWorkflow.getRollbackWorkflowPhaseIdMap().get(phaseId);
-    if (rollbackPhase == null) {
-      return null;
+      String phaseId = orchestrationWorkflow.getWorkflowPhases().get(index - 1).getUuid();
+      rollbackPhase = orchestrationWorkflow.getRollbackWorkflowPhaseIdMap().get(phaseId);
+      if (rollbackPhase != null) {
+        return anExecutionEventAdvice()
+            .withExecutionInterruptType(ROLLBACK)
+            .withNextStateName(rollbackPhase.getName())
+            .build();
+      } else {
+        index--;
+      }
     }
-    return anExecutionEventAdvice()
-        .withExecutionInterruptType(ROLLBACK)
-        .withNextStateName(rollbackPhase.getName())
-        .build();
+    return null;
   }
 
   /*
@@ -937,27 +942,32 @@ public class CanaryWorkflowExecutionAdvisor implements ExecutionEventAdvisor {
     List<String> phaseNames =
         orchestrationWorkflow.getWorkflowPhases().stream().map(WorkflowPhase::getName).collect(toList());
     int index = phaseNames.indexOf(phaseSubWorkflow.getPhaseNameForRollback());
-    if (index == 0) {
-      // Rollback Provisioners in reverse manner when ROLLBACK_PROVISIONER_AFTER_PHASES failure strategy is chosen
-      ExecutionEventAdvice rollbackProvisionerAdvice = getRollbackProvisionerAdviceIfNeeded(
-          orchestrationWorkflow.getPreDeploymentSteps(), ROLLBACK_PROVISIONERS_REVERSE);
-      if (rollbackProvisionerAdvice != null) {
-        return rollbackProvisionerAdvice;
+    WorkflowPhase rollbackPhase = null;
+    while (index >= 0) {
+      if (index == 0) {
+        // Rollback Provisioners in reverse manner when ROLLBACK_PROVISIONER_AFTER_PHASES failure strategy is chosen
+        ExecutionEventAdvice rollbackProvisionerAdvice = getRollbackProvisionerAdviceIfNeeded(
+            orchestrationWorkflow.getPreDeploymentSteps(), ROLLBACK_PROVISIONERS_REVERSE);
+        if (rollbackProvisionerAdvice != null) {
+          return rollbackProvisionerAdvice;
+        }
+
+        // Mark rollback of workflow as done as there is no provisioner to rollback
+        return anExecutionEventAdvice().withExecutionInterruptType(ExecutionInterruptType.ROLLBACK_DONE).build();
       }
 
-      // Mark rollback of workflow as done as there is no provisioner to rollback
-      return anExecutionEventAdvice().withExecutionInterruptType(ExecutionInterruptType.ROLLBACK_DONE).build();
+      String phaseId = orchestrationWorkflow.getWorkflowPhases().get(index - 1).getUuid();
+      rollbackPhase = orchestrationWorkflow.getRollbackWorkflowPhaseIdMap().get(phaseId);
+      if (rollbackPhase != null) {
+        return anExecutionEventAdvice()
+            .withExecutionInterruptType(ROLLBACK)
+            .withNextStateName(rollbackPhase.getName())
+            .build();
+      } else {
+        index--;
+      }
     }
-
-    String phaseId = orchestrationWorkflow.getWorkflowPhases().get(index - 1).getUuid();
-    WorkflowPhase rollbackPhase = orchestrationWorkflow.getRollbackWorkflowPhaseIdMap().get(phaseId);
-    if (rollbackPhase == null) {
-      return null;
-    }
-    return anExecutionEventAdvice()
-        .withExecutionInterruptType(ROLLBACK)
-        .withNextStateName(rollbackPhase.getName())
-        .build();
+    return null;
   }
 
   public static FailureStrategy selectTopMatchingStrategy(List<FailureStrategy> failureStrategies,
