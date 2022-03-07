@@ -37,6 +37,7 @@ public class InstanceDataServiceImpl implements InstanceDataService {
   public Map<String, Map<String, String>> fetchLabelsForGivenInstances(List<String> instanceIds) {
     return instanceDataDao.fetchInstanceDataForGivenInstances(instanceIds)
         .stream()
+        .filter(instanceData -> instanceData.getLabels() != null)
         .collect(Collectors.toMap(InstanceData::getInstanceId, InstanceData::getLabels));
   }
 
