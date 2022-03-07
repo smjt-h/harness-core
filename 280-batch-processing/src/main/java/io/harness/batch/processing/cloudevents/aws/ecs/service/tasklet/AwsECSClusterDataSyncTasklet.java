@@ -314,7 +314,9 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
           if (null != activeInstanceDataMap.get(taskId)) {
             InstanceData instanceData = activeInstanceDataMap.get(taskId);
             boolean updated = updateInstanceStopTimeForTask(instanceData, task);
-            if (updated) {
+            boolean updatedLabels =
+                updateLabels(instanceData, task, ceCluster, serviceArnTagsMap, deploymentIdServiceMap);
+            if (updated || updatedLabels) {
               instanceDataDao.create(instanceData);
             }
           } else {
@@ -400,6 +402,31 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
             instanceDataService.create(instanceData);
           }
         });
+  }
+
+  private boolean updateLabels(InstanceData instanceData, Task task, CECluster ceCluster,
+      Map<String, List<Tag>> serviceArnTagsMap, Map<String, String> deploymentIdServiceMap) {
+    if (instanceData.getLabels() != null) {
+      Map<String, String> labels = new HashMap<>();
+      // Add Cluster Tags to the Task Labels
+      if (isNotEmpty(ceCluster.getLabels())) {
+        labels.putAll(ceCluster.getLabels());
+      }
+      // Add Task Level Tags
+      labels.putAll(task.getTags().stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
+
+      if (null != task.getStartedBy() && null != deploymentIdServiceMap.get(task.getStartedBy())) {
+        String serviceArn = deploymentIdServiceMap.get(task.getStartedBy());
+        // Fetch Service Tags and add to the Task Labels
+        List<Tag> serviceTagList = serviceArnTagsMap.get(serviceArn);
+        if (isNotEmpty(serviceTagList)) {
+          labels.putAll(serviceTagList.stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
+        }
+      }
+      instanceData.setLabels(labels);
+      return true;
+    }
+    return false;
   }
 
   private boolean updateInstanceStopTimeForTask(InstanceData instanceData, Task task) {
