@@ -12,9 +12,9 @@ COPY apt-source-list /etc/apt/sources.list.d/kubernetes.list
 
 RUN apt-get update && apt-get install -y kubectl
 
-RUN ls -l scripts/
-
 COPY scripts /opt/harness-delegate/
+
+RUN /opt/harness-delegate/
 
 RUN chmod +x /opt/harness-delegate/*.sh
 
