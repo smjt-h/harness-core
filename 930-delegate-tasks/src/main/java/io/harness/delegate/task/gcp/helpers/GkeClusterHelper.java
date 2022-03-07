@@ -120,11 +120,14 @@ public class GkeClusterHelper {
     if (useDelegate) {
       return k8sConfigMapper.createKubernetesConfigWhenInheritingCredentials(namespace);
     }
-    Container gkeContainerService = gcpHelperService.getGkeContainerService(serviceAccountKeyFileContent, useDelegate);
-    String projectId = getProjectIdFromCredentials(serviceAccountKeyFileContent, useDelegate);
+    if (EmptyPredicate.isEmpty(serviceAccountKeyFileContent)) {
+      throw new InvalidRequestException("ServiceAccountKey File Content is empty");
+    }
     if (EmptyPredicate.isEmpty(locationClusterName)) {
       throw new InvalidRequestException("Cluster name is empty in Inframapping");
     }
+    Container gkeContainerService = gcpHelperService.getGkeContainerService(serviceAccountKeyFileContent, useDelegate);
+    String projectId = getProjectIdFromCredentials(serviceAccountKeyFileContent, useDelegate);
     String[] locationCluster = locationClusterName.split(LOCATION_DELIMITER);
     if (locationCluster.length < 2) {
       throw new InvalidRequestException(String.format("Cluster name is not in proper format. "

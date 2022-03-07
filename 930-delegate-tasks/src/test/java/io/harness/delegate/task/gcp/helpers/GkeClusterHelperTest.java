@@ -27,6 +27,7 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.delegate.task.k8s.K8sYamlToDelegateDTOMapper;
 import io.harness.exception.GcpServerException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
@@ -76,6 +77,7 @@ public class GkeClusterHelperTest extends CategoryTest {
   @Mock private Container.Projects.Locations.Operations operations;
   @Mock private Container.Projects.Locations.Operations.Get operationsGet;
   @Mock private HttpHeaders httpHeaders;
+  @Mock private K8sYamlToDelegateDTOMapper k8sMapper;
 
   @Inject @InjectMocks private GkeClusterHelper gkeClusterHelper;
   private GoogleJsonResponseException notFoundException;
@@ -117,6 +119,13 @@ public class GkeClusterHelperTest extends CategoryTest {
                   .setName("node-pool2")
                   .setAutoscaling(new NodePoolAutoscaling().setEnabled(true).setMinNodeCount(5).setMaxNodeCount(10))));
 
+  private static final KubernetesConfig kubernetesClusterConfig = KubernetesConfig.builder()
+                                                                      .namespace("test-namespace")
+                                                                      .masterUrl("https://10.0.0.1:1010")
+                                                                      .serviceAccountToken("test-token".toCharArray())
+                                                                      .caCert("test-certificate".toCharArray())
+                                                                      .build();
+
   @Before
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
@@ -135,6 +144,7 @@ public class GkeClusterHelperTest extends CategoryTest {
     when(clusters.update(anyString(), any(UpdateClusterRequest.class))).thenReturn(clustersUpdate);
     when(clusters.delete(anyString())).thenReturn(clustersDelete);
     when(operations.get(anyString())).thenReturn(operationsGet);
+    when(k8sMapper.createKubernetesConfigWhenInheritingCredentials(anyString())).thenReturn(kubernetesClusterConfig);
 
     GoogleJsonError googleJsonError = new GoogleJsonError();
     googleJsonError.setCode(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
@@ -232,24 +242,22 @@ public class GkeClusterHelperTest extends CategoryTest {
   @Owner(developers = ACASIAN)
   @Category(UnitTests.class)
   public void shouldGetClusterWithInheritedCredentials() throws Exception {
-    when(clustersGet.execute()).thenReturn(CLUSTER_1);
-
     KubernetesConfig config = gkeClusterHelper.getCluster(null, true, ZONE_CLUSTER, "default");
 
-    verify(clusters).get(anyString());
-    assertThat(config.getMasterUrl()).isEqualTo("https://1.1.1.1/");
-    assertThat(config.getUsername()).isEqualTo("master1".toCharArray());
-    assertThat(config.getPassword()).isEqualTo("password1".toCharArray());
+    verify(k8sMapper.createKubernetesConfigWhenInheritingCredentials("default"));
+    assertThat(config.getMasterUrl()).isEqualTo("https://10.0.0.1:1010");
+    assertThat(config.getServiceAccountToken()).isEqualTo("test-token".toCharArray());
+    assertThat(config.getCaCert()).isEqualTo("test-certificate".toCharArray());
   }
 
   @Test
   @Owner(developers = SATYAM)
   @Category(UnitTests.class)
-  public void shouldThrowExceptionForInvalidClusterName() throws Exception {
+  public void shouldThrowExceptionForInvalidClusterLocationAndServiceAccountKey() throws Exception {
     when(clustersGet.execute()).thenReturn(CLUSTER_1);
-    assertThatThrownBy(() -> gkeClusterHelper.getCluster(null, true, null, "default"))
+    assertThatThrownBy(() -> gkeClusterHelper.getCluster(null, false, null, "default"))
         .isInstanceOf(InvalidRequestException.class);
-    assertThatThrownBy(() -> gkeClusterHelper.getCluster(null, true, "foo", "default"))
+    assertThatThrownBy(() -> gkeClusterHelper.getCluster(null, false, "foo", "default"))
         .isInstanceOf(InvalidRequestException.class);
   }
 
