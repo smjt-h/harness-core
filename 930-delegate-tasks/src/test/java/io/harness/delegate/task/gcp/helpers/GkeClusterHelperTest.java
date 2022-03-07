@@ -244,7 +244,7 @@ public class GkeClusterHelperTest extends CategoryTest {
   public void shouldGetClusterWithInheritedCredentials() throws Exception {
     KubernetesConfig config = gkeClusterHelper.getCluster(null, true, ZONE_CLUSTER, "default");
 
-    verify(k8sMapper.createKubernetesConfigWhenInheritingCredentials("default"));
+    verify(k8sMapper).createKubernetesConfigWhenInheritingCredentials("default");
     assertThat(config.getMasterUrl()).isEqualTo("https://10.0.0.1:1010");
     assertThat(config.getServiceAccountToken()).isEqualTo("test-token".toCharArray());
     assertThat(config.getCaCert()).isEqualTo("test-certificate".toCharArray());
