@@ -4,22 +4,10 @@ import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.DEFAULT
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class PhysicalDataCenterUtils {
-  public List<String> getHostsAsList(final String hostNames) {
-    if (isBlank(hostNames)) {
-      return Collections.emptyList();
-    }
-
-    String trimHostNames = hostNames.trim();
-    return Arrays.asList(trimHostNames.split(","));
-  }
-
   public String getPortOrSSHDefault(final String host) {
     if (isBlank(host)) {
       return DEFAULT_SSH_PORT;
