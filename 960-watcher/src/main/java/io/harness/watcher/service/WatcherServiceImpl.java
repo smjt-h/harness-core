@@ -1143,6 +1143,7 @@ public class WatcherServiceImpl implements WatcherService {
 
     executorService.submit(() -> {
       StartedProcess newDelegate = null;
+      String newDelegateProcess = null;
       try {
         newDelegate =
             new ProcessExecutor()
@@ -1152,7 +1153,7 @@ public class WatcherServiceImpl implements WatcherService {
                 .start();
 
         boolean success = false;
-        String newDelegateProcess = null;
+
 
         if (newDelegate.getProcess().isAlive()) {
           Message message =
@@ -1232,6 +1233,12 @@ public class WatcherServiceImpl implements WatcherService {
       } finally {
         working.set(false);
       }
+      log.info("sleeping for 60 seconds");
+      sleep(ofSeconds(60));
+      log.info("wake up");
+      log.info("killing delegate");
+      shutdownDelegate(newDelegateProcess);
+
     });
   }
 
