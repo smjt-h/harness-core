@@ -2,6 +2,7 @@ package io.harness.connector.entities.embedded.pdcconnector;
 
 import io.harness.connector.entities.Connector;
 
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,6 @@ import org.springframework.data.annotation.TypeAlias;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @TypeAlias("io.harness.connector.entities.embedded.pdcconnector.PhysicalDataCenterConnector")
 public class PhysicalDataCenterConnector extends Connector {
-  String hostNames;
+  List<Host> hosts;
   String sshKeyRef;
 }

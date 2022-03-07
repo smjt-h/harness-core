@@ -14,9 +14,10 @@ import lombok.experimental.UtilityClass;
 public class PhysicalDataCenterConnectorCapabilityHelper extends ConnectorCapabilityBaseHelper {
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(
       PhysicalDataCenterConnectorDTO physicalDataCenterConnectorDTO, ExpressionEvaluator maskingEvaluator) {
-    List<String> hosts = PhysicalDataCenterUtils.getHostsAsList(physicalDataCenterConnectorDTO.hostNames);
+    List<String> hostNames =
+        physicalDataCenterConnectorDTO.getHosts().stream().map(HostDTO::getHostName).collect(Collectors.toList());
     List<ExecutionCapability> capabilityList =
-        hosts.stream()
+        hostNames.stream()
             .map(host
                 -> SocketConnectivityCapabilityGenerator.buildSocketConnectivityCapability(
                     host, PhysicalDataCenterUtils.getPortOrSSHDefault(host)))

@@ -8,6 +8,7 @@ import io.harness.encryption.SecretReference;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Collections;
@@ -23,8 +24,10 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(name = "PhysicalDataCenterConnectorDTO", description = "This contains Physical Data Center connector details")
+
 public class PhysicalDataCenterConnectorDTO extends ConnectorConfigDTO implements DelegateSelectable {
-  @JsonProperty("hosts") String hostNames;
+  @JsonDeserialize(using = HostDTOsDeserializer.class) @JsonProperty("hosts") List<HostDTO> hosts;
+
   @NotNull @SecretReference @ApiModelProperty(dataType = "string") SecretRefData sshKeyRef;
   Set<String> delegateSelectors;
 
