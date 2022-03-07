@@ -67,7 +67,6 @@ BAZEL_MODULES="\
   //340-ce-nextgen:module \
   //350-event-server:module \
   //360-cg-manager:module \
-  //360-cg-manager:module_deploy.jar \
   //380-cg-graphql:module \
   //400-rest:module \
   //400-rest:supporter-test \
@@ -84,7 +83,6 @@ BAZEL_MODULES="\
   //460-capability:module \
   //490-ce-commons:module \
   //800-pipeline-service:module \
-  //800-pipeline-service:module_deploy.jar \
   //810-ng-triggers:module \
   //815-cg-triggers:module \
   //820-platform-service:module \
@@ -196,7 +194,6 @@ BAZEL_MODULES="\
   //990-commons-test:module \
   //999-annotations:module \
   //access-control/service:module \
-  //access-control/service:module_deploy.jar \
   //access-control/libraries/80-aggregator:module \
   //access-control/libraries/90-core:module \
   //access-control/contracts:module \
@@ -204,7 +201,7 @@ BAZEL_MODULES="\
   //product/ci/scm/proto:all \
 "
 
-bazel ${bazelrc} build $BAZEL_MODULES ${BAZEL_ARGUMENTS} --remote_download_outputs=all
+bazel ${bazelrc} build $BAZEL_MODULES `bazel query "//...:*" | grep "module_deploy.jar"` ${BAZEL_ARGUMENTS} --remote_download_outputs=all
 
 build_bazel_module() {
   module=$1
