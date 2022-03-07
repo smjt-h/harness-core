@@ -216,7 +216,6 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
   @Owner(developers = ACASIAN)
   @Category(UnitTests.class)
   public void shouldReturnErrorResponse() throws Exception {
-    HelmValuesFetchTaskNG spyHelmValuesFetchTaskNG = spy(helmValuesFetchTaskNG);
     HttpHelmConnectorDTO connectorDTO =
         HttpHelmConnectorDTO.builder()
             .auth(HttpHelmAuthenticationDTO.builder()
@@ -240,7 +239,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     doThrow(new RuntimeException("Something went wrong"))
         .when(helmTaskHelperBase)
         .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any());
-    doReturn(logCallback).when(spyHelmValuesFetchTaskNG).getLogCallback(any());
+    doReturn(logCallback).when(helmValuesFetchTaskNG).getLogCallback(any());
     doNothing().when(logCallback).saveExecutionLog(anyString(), any(), any());
 
     HelmValuesFetchRequest request = HelmValuesFetchRequest.builder()
@@ -249,7 +248,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
                                          .accountId("test")
                                          .build();
 
-    assertThatThrownBy(() -> spyHelmValuesFetchTaskNG.run(request))
+    assertThatThrownBy(() -> helmValuesFetchTaskNG.run(request))
         .isInstanceOf(TaskNGDataException.class)
         .getRootCause()
         .hasMessageContaining("Something went wrong");
