@@ -79,7 +79,7 @@ public class RunStepInfo implements CIStepInfo, WithConnectorRef {
   private ContainerResource resources;
   @YamlSchemaTypes({string}) @ApiModelProperty(dataType = BOOLEAN_CLASSPATH) private ParameterField<Boolean> privileged;
   @YamlSchemaTypes({string}) @ApiModelProperty(dataType = INTEGER_CLASSPATH) private ParameterField<Integer> runAsUser;
-  @YamlSchemaTypes({string})
+  @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.CIShellType")
   private ParameterField<CIShellType> shell;
   @YamlSchemaTypes({runtime})
