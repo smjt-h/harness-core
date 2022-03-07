@@ -18,8 +18,10 @@ import software.wings.beans.AwsCrossAccountAttributes;
 import software.wings.beans.NameValuePair;
 import software.wings.beans.ce.CEAwsConfig;
 
+import com.amazonaws.services.ecs.model.Cluster;
 import com.amazonaws.services.ecs.model.Tag;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -59,11 +61,14 @@ public class AwsECSClusterServiceImpl implements AwsECSClusterService {
     List<CECluster> clusters = new ArrayList<>();
     awsRegions.forEach(awsRegion -> {
       List<String> ecsClusters = awsECSHelperService.listECSClusters(awsRegion.getValue(), awsCrossAccountAttributes);
+
+      // If Customers have Describe Cluster permissions enabled - we will fetch the Tags
+      Map<String, List<Tag>> clusterArnTagsMap =
+          getClusterArnTagsMap(awsCrossAccountAttributes, awsRegion.getValue(), ecsClusters);
+
       ecsClusters.forEach(ecsCluster -> {
         Map<String, String> clusterTags =
-            awsECSHelperService.listTagsForResourceArn(awsCrossAccountAttributes, awsRegion.getValue(), ecsCluster)
-                .stream()
-                .collect(Collectors.toMap(Tag::getKey, Tag::getValue));
+            clusterArnTagsMap.get(ecsCluster).stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue));
         CECluster ceCluster = CECluster.builder()
                                   .accountId(accountId)
                                   .clusterName(getNameFromArn(ecsCluster))
@@ -78,6 +83,18 @@ public class AwsECSClusterServiceImpl implements AwsECSClusterService {
       });
     });
     return clusters;
+  }
+
+  private Map<String, List<Tag>> getClusterArnTagsMap(
+      AwsCrossAccountAttributes awsCrossAccountAttributes, String awsRegion, List<String> ecsClusters) {
+    Map<String, List<Tag>> clusterArnTagsMap = new HashMap<>();
+    List<Cluster> ecsClusterObjects =
+        awsECSHelperService.describeECSClusters(awsRegion, awsCrossAccountAttributes, ecsClusters);
+    if (!ecsClusterObjects.isEmpty()) {
+      clusterArnTagsMap =
+          ecsClusterObjects.stream().collect(Collectors.toMap(Cluster::getClusterArn, Cluster::getTags));
+    }
+    return clusterArnTagsMap;
   }
 
   protected void updateClusters(String accountId, String infraAccountId, List<CECluster> infraClusters) {

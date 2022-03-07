@@ -23,8 +23,12 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.STSAssumeRoleSessionCredentialsProvider;
 import com.amazonaws.services.ecs.AmazonECSClient;
 import com.amazonaws.services.ecs.AmazonECSClientBuilder;
+import com.amazonaws.services.ecs.model.Cluster;
+import com.amazonaws.services.ecs.model.ClusterField;
 import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.amazonaws.services.ecs.model.ContainerInstanceField;
+import com.amazonaws.services.ecs.model.DescribeClustersRequest;
+import com.amazonaws.services.ecs.model.DescribeClustersResult;
 import com.amazonaws.services.ecs.model.DescribeContainerInstancesRequest;
 import com.amazonaws.services.ecs.model.DescribeContainerInstancesResult;
 import com.amazonaws.services.ecs.model.DescribeServicesRequest;
@@ -38,12 +42,9 @@ import com.amazonaws.services.ecs.model.ListContainerInstancesRequest;
 import com.amazonaws.services.ecs.model.ListContainerInstancesResult;
 import com.amazonaws.services.ecs.model.ListServicesRequest;
 import com.amazonaws.services.ecs.model.ListServicesResult;
-import com.amazonaws.services.ecs.model.ListTagsForResourceRequest;
-import com.amazonaws.services.ecs.model.ListTagsForResourceResult;
 import com.amazonaws.services.ecs.model.ListTasksRequest;
 import com.amazonaws.services.ecs.model.ListTasksResult;
 import com.amazonaws.services.ecs.model.Service;
-import com.amazonaws.services.ecs.model.Tag;
 import com.amazonaws.services.ecs.model.Task;
 import com.amazonaws.services.ecs.model.TaskField;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
@@ -74,18 +75,28 @@ public class AwsECSHelperServiceImpl implements AwsECSHelperService {
   }
 
   @Override
-  public List<Tag> listTagsForResourceArn(
-      AwsCrossAccountAttributes awsCrossAccountAttributes, String region, String resourceArn) {
+  public List<Cluster> describeECSClusters(
+      String region, AwsCrossAccountAttributes awsCrossAccountAttributes, List<String> ecsClusters) {
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonECSClient(region, awsCrossAccountAttributes))) {
-      ListTagsForResourceRequest listTagsForResourceRequest =
-          new ListTagsForResourceRequest().withResourceArn(resourceArn);
-
-      ListTagsForResourceResult listTagsForResourceResult =
-          closeableAmazonECSClient.getClient().listTagsForResource(listTagsForResourceRequest);
-      return listTagsForResourceResult.getTags();
+      int counter = 0;
+      List<Cluster> clusters = newArrayList();
+      DescribeClustersRequest describeClustersRequest = new DescribeClustersRequest().withInclude(ClusterField.TAGS);
+      List<String> arnsBatch = newArrayList();
+      for (String clusterArn : ecsClusters) {
+        arnsBatch.add(clusterArn);
+        counter++;
+        if (counter % 100 == 0 || counter == ecsClusters.size()) {
+          describeClustersRequest.withClusters(arnsBatch);
+          DescribeClustersResult describeClustersResult =
+              closeableAmazonECSClient.getClient().describeClusters(describeClustersRequest);
+          clusters.addAll(describeClustersResult.getClusters());
+          arnsBatch = newArrayList();
+        }
+      }
+      return clusters;
     } catch (Exception ex) {
-      log.error("Exception listTagsForResourceArn {}", ex.getMessage());
+      log.warn("Exception describing Clusters - Skipping Adding Tags {}", ex.getMessage());
     }
     return emptyList();
   }
