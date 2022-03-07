@@ -139,6 +139,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -1180,6 +1181,7 @@ public class WatcherServiceImpl implements WatcherService {
               log.info("Sending new delegate process {} go-ahead message", newDelegateProcess);
               messageService.writeMessageToChannel(DELEGATE, newDelegateProcess, DELEGATE_GO_AHEAD);
               success = true;
+              log.info("appending entry in map pid {}", newDelegateProcess);
               delegateProcessMap.putIfAbsent(newDelegateProcess, newDelegate.getProcess());
             }
           }
@@ -1237,12 +1239,13 @@ public class WatcherServiceImpl implements WatcherService {
     executorService.submit(() -> {
       messageService.writeMessageToChannel(DELEGATE, delegateProcess, DELEGATE_STOP_ACQUIRING);
       try {
-        sleep(ofSeconds(5));
-        log.info("Send kill -3 to delegateProcess {}", delegateProcess);
-        final String killCmd = "kill -3 " + delegateProcess;
-        new ProcessExecutor().command("/bin/bash", "-c", killCmd).start();
-        sleep(ofSeconds(15));
-        ProcessControl.ensureKilled(delegateProcess, Duration.ofSeconds(120));
+        throw new RuntimeException("throwing run time exception while killing");
+//        sleep(ofSeconds(5));
+//        log.info("Send kill -3 to delegateProcess {}", delegateProcess);
+//        final String killCmd = "kill -3 " + delegateProcess;
+//        new ProcessExecutor().command("/bin/bash", "-c", killCmd).start();
+//        sleep(ofSeconds(15));
+//        ProcessControl.ensureKilled(delegateProcess, Duration.ofSeconds(120));
       } catch (Exception e) {
         log.error("Error killing delegate {}", delegateProcess, e);
         Process delegate = delegateProcessMap.get(delegateProcess);
