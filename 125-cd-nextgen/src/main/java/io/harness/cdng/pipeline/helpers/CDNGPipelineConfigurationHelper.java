@@ -12,12 +12,13 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.ExecutionStrategyType;
 import io.harness.beans.FeatureName;
-import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
+import io.harness.cdng.featureFlag.CdFeatureFlagFilterContext;
 import io.harness.cdng.infra.beans.ProvisionerType;
 import io.harness.cdng.pipeline.NGStepType;
 import io.harness.cdng.pipeline.StepCategory;
 import io.harness.cdng.pipeline.StepData;
 import io.harness.cdng.service.beans.ServiceDefinitionType;
+import io.harness.connector.featureflagfilter.FeatureFlagFilterService;
 import io.harness.exception.GeneralException;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -37,7 +38,9 @@ import java.util.stream.Collectors;
 
 @OwnedBy(CDP)
 public class CDNGPipelineConfigurationHelper {
-  @Inject private CDFeatureFlagHelper cdFeatureFlagHelper;
+  @Inject FeatureFlagFilterService featureFlagFilterService;
+  @Inject CdFeatureFlagFilterContext cdFeatureFlagFilterContext;
+
   @VisibleForTesting static String LIBRARY = "Library";
 
   private final LoadingCache<ServiceDefinitionType, StepCategory> stepsCache =
@@ -78,14 +81,9 @@ public class CDNGPipelineConfigurationHelper {
         StandardCharsets.UTF_8);
   }
 
-  public List<ServiceDefinitionType> getServiceDefinitionTypes() {
-    if (!cdFeatureFlagHelper.isEnabled(null, FeatureName.SSH_NG)) {
-      return Arrays.stream(ServiceDefinitionType.values())
-          .filter(definitionType -> !ServiceDefinitionType.SSH.name().equals(definitionType.name()))
-          .collect(Collectors.toList());
-    }
-
-    return Arrays.asList(ServiceDefinitionType.values());
+  public List<ServiceDefinitionType> getServiceDefinitionTypes(String accountId) {
+    return featureFlagFilterService.filterEnum(
+        accountId, FeatureName.SSH_NG, ServiceDefinitionType.class, cdFeatureFlagFilterContext);
   }
 
   public StepCategory getSteps(ServiceDefinitionType serviceDefinitionType) {

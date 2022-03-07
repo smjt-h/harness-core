@@ -91,7 +91,7 @@ public class ConnectorResourceTest extends CategoryTest {
 
   private ConnectorCatalogueResponseDTO setUpCatalogueResponse() {
     return ConnectorCatalogueResponseDTO.builder()
-        .catalogue(catalogueHelper.getConnectorTypeToCategoryMapping())
+        .catalogue(catalogueHelper.getConnectorTypeToCategoryMapping(accountIdentifier))
         .build();
   }
 
@@ -197,7 +197,7 @@ public class ConnectorResourceTest extends CategoryTest {
   @Owner(developers = OwnerRule.VARDAN_BANSAL)
   @Category(UnitTests.class)
   public void getConnectorCatalogueTest() {
-    when(connectorService.getConnectorCatalogue()).thenReturn(catalogueResponseDTO);
+    when(connectorService.getConnectorCatalogue(accountIdentifier)).thenReturn(catalogueResponseDTO);
     final ResponseDTO<ConnectorCatalogueResponseDTO> response =
         connectorResource.getConnectorCatalogue("accountIdentifier");
     assertThat(response).isNotNull();
@@ -206,6 +206,6 @@ public class ConnectorResourceTest extends CategoryTest {
     final int totalConnectorsWithinAllCategories =
         catalogue.stream().map(item -> item.getConnectors().size()).mapToInt(Integer::intValue).sum();
     assertThat(totalConnectorsWithinAllCategories).isEqualTo(ConnectorType.values().length);
-    Mockito.verify(connectorService, times(1)).getConnectorCatalogue();
+    Mockito.verify(connectorService, times(1)).getConnectorCatalogue(accountIdentifier);
   }
 }

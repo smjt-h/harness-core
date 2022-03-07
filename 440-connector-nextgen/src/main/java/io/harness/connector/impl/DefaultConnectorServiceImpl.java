@@ -850,9 +850,9 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
   }
 
   @Override
-  public ConnectorCatalogueResponseDTO getConnectorCatalogue() {
+  public ConnectorCatalogueResponseDTO getConnectorCatalogue(String accountIdentifier) {
     return ConnectorCatalogueResponseDTO.builder()
-        .catalogue(catalogueHelper.getConnectorTypeToCategoryMapping())
+        .catalogue(catalogueHelper.getConnectorTypeToCategoryMapping(accountIdentifier))
         .build();
   }
 

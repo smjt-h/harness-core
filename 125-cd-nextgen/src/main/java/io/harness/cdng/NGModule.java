@@ -39,6 +39,8 @@ import io.harness.cdng.servicenow.resources.service.ServiceNowResourceServiceImp
 import io.harness.cdng.usage.impl.CDLicenseUsageImpl;
 import io.harness.cdng.yaml.CdYamlSchemaService;
 import io.harness.cdng.yaml.CdYamlSchemaServiceImpl;
+import io.harness.connector.featureflagfilter.FeatureFlagFilterService;
+import io.harness.connector.featureflagfilter.FeatureFlagFilterServiceImpl;
 import io.harness.licensing.usage.interfaces.LicenseUsageInterface;
 import io.harness.ng.core.NGCoreModule;
 import io.harness.ng.core.service.services.ServiceEntityService;
@@ -85,5 +87,6 @@ public class NGModule extends AbstractModule {
     bind(ServiceEntityService.class).to(ServiceEntityServiceImpl.class);
     bind(ServiceNowResourceService.class).to(ServiceNowResourceServiceImpl.class);
     bind(ArtifactoryResourceService.class).to(ArtifactoryResourceServiceImpl.class);
+    bind(FeatureFlagFilterService.class).to(FeatureFlagFilterServiceImpl.class);
   }
 }

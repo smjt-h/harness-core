@@ -18,6 +18,7 @@ import io.harness.beans.ExecutionStrategyType;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.pipeline.helpers.CDNGPipelineConfigurationHelper;
 import io.harness.cdng.service.beans.ServiceDefinitionType;
+import io.harness.connector.featureflagfilter.FeatureFlagHelper;
 import io.harness.rule.Owner;
 
 import io.fabric8.utils.Lists;
@@ -32,6 +33,7 @@ import org.mockito.MockitoAnnotations;
 
 public class CDNGPipelineConfigurationResourceTest extends CategoryTest {
   @Mock CDNGPipelineConfigurationHelper pipelineService;
+  @Mock private FeatureFlagHelper featureFlagHelper;
   CDNGPipelineConfigurationResource cdngPipelineConfigurationResource;
   @Before
   public void setUp() {
@@ -75,9 +77,9 @@ public class CDNGPipelineConfigurationResourceTest extends CategoryTest {
   @Owner(developers = SAHIL)
   @Category(UnitTests.class)
   public void testGetServiceDefinitionTypes() {
-    when(pipelineService.getServiceDefinitionTypes()).thenReturn(Arrays.asList(ServiceDefinitionType.values()));
+    when(pipelineService.getServiceDefinitionTypes(null)).thenReturn(Arrays.asList(ServiceDefinitionType.values()));
     List<ServiceDefinitionType> serviceDefinitionTypes =
-        cdngPipelineConfigurationResource.getServiceDefinitionTypes().getData();
+        cdngPipelineConfigurationResource.getServiceDefinitionTypes(null).getData();
 
     assertThat(serviceDefinitionTypes).isNotNull();
     assertThat(serviceDefinitionTypes.size()).isEqualTo(3);

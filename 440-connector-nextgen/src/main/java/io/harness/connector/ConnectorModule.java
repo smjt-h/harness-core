@@ -15,6 +15,8 @@ import io.harness.aws.AwsClient;
 import io.harness.aws.AwsClientImpl;
 import io.harness.cistatus.service.GithubService;
 import io.harness.cistatus.service.GithubServiceImpl;
+import io.harness.connector.featureflagfilter.FeatureFlagFilterService;
+import io.harness.connector.featureflagfilter.FeatureFlagFilterServiceImpl;
 import io.harness.connector.heartbeat.ConnectorValidationParamsProvider;
 import io.harness.connector.impl.ConnectorActivityServiceImpl;
 import io.harness.connector.impl.ConnectorFilterServiceImpl;
@@ -118,6 +120,7 @@ public class ConnectorModule extends AbstractModule {
     bind(GithubService.class).to(GithubServiceImpl.class);
     bind(ScmServiceClient.class).to(ScmServiceClientImpl.class);
     bind(NGAccountSettingService.class).to(NGAccountSettingServiceImpl.class);
+    bind(FeatureFlagFilterService.class).to(FeatureFlagFilterServiceImpl.class);
     MapBinder<String, FilterPropertiesMapper> filterPropertiesMapper =
         MapBinder.newMapBinder(binder(), String.class, FilterPropertiesMapper.class);
     filterPropertiesMapper.addBinding(FilterType.CONNECTOR.toString()).to(ConnectorFilterPropertiesMapper.class);
