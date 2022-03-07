@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -34,9 +35,10 @@ import lombok.EqualsAndHashCode;
 @ApiModel("AzureConnector")
 @Schema(name = "AzureConnector", description = "This contains details of the Azure connector")
 public class AzureConnectorDTO extends ConnectorConfigDTO implements DelegateSelectable {
-  @Valid AzureCredentialDTO credential;
+  @NotNull @Valid AzureCredentialDTO credential;
   Set<String> delegateSelectors;
   @Builder.Default
+  @NotNull
   @Schema(description = "This specifies the Azure Environment type, which is AZURE by default.")
   private AzureEnvironmentType azureEnvironmentType;
 
