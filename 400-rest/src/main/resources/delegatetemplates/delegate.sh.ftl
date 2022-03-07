@@ -170,11 +170,13 @@ if ! `grep useCdn config-delegate.yml > /dev/null`; then
 else
   sed -i.bak "s|^useCdn:.*$|useCdn: ${useCdn}|" config-delegate.yml
 fi
+<#if useCdn == "true">
 if ! `grep cdnUrl config-delegate.yml > /dev/null`; then
   echo "cdnUrl: ${cdnUrl}" >> config-delegate.yml
 else
   sed -i.bak "s|^cdnUrl:.*$|cdnUrl: ${cdnUrl}|" config-delegate.yml
 fi
+</#if>
 
 <#if managerTarget??>
 if ! `grep managerTarget config-delegate.yml > /dev/null`; then
