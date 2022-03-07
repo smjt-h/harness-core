@@ -22,6 +22,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.concurrent.HTimeLimiter;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.delegate.task.k8s.K8sYamlToDelegateDTOMapper;
 import io.harness.exception.GcpServerException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
@@ -58,6 +59,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GkeClusterHelper {
   @Inject private GcpHelperService gcpHelperService = new GcpHelperService();
   @Inject private TimeLimiter timeLimiter;
+  @Inject private K8sYamlToDelegateDTOMapper k8sConfigMapper;
 
   public KubernetesConfig createCluster(char[] serviceAccountKeyFileContent, boolean useDelegate,
       String locationClusterName, String namespace, Map<String, String> params) {
@@ -115,6 +117,9 @@ public class GkeClusterHelper {
 
   public KubernetesConfig getCluster(
       char[] serviceAccountKeyFileContent, boolean useDelegate, String locationClusterName, String namespace) {
+    if (useDelegate) {
+      return k8sConfigMapper.createKubernetesConfigWhenInheritingCredentials(namespace);
+    }
     Container gkeContainerService = gcpHelperService.getGkeContainerService(serviceAccountKeyFileContent, useDelegate);
     String projectId = getProjectIdFromCredentials(serviceAccountKeyFileContent, useDelegate);
     if (EmptyPredicate.isEmpty(locationClusterName)) {
