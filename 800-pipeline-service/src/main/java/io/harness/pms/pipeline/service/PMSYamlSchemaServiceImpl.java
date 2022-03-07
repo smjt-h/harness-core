@@ -36,6 +36,8 @@ import io.harness.pms.pipeline.service.yamlschema.PmsYamlSchemaHelper;
 import io.harness.pms.pipeline.service.yamlschema.SchemaFetcher;
 import io.harness.pms.pipeline.service.yamlschema.approval.ApprovalYamlSchemaService;
 import io.harness.pms.pipeline.service.yamlschema.featureflag.FeatureFlagYamlService;
+import io.harness.pms.pipeline.yaml.YamlSchemaErrorDTO;
+import io.harness.pms.pipeline.yaml.YamlSchemaErrorWrapperDTO;
 import io.harness.pms.sdk.PmsSdkInstanceService;
 import io.harness.pms.utils.CompletableFutures;
 import io.harness.pms.yaml.YamlUtils;
@@ -131,8 +133,16 @@ public class PMSYamlSchemaServiceImpl implements PMSYamlSchemaService {
           pmsYamlSchemaHelper.isFeatureFlagEnabled(FeatureName.DONT_RESTRICT_PARALLEL_STAGE_COUNT, accountIdentifier),
           allowedParallelStages);
       if (!errors.isEmpty()) {
-        throw new JsonSchemaValidationException(String.join("\n", errors));
+        List<YamlSchemaErrorDTO> errorDTOS = new ArrayList<>();
+        for (String error : errors) {
+          // Add stage/step details here.
+          errorDTOS.add(YamlSchemaErrorDTO.builder().message(error).build());
+        }
+        YamlSchemaErrorWrapperDTO errorWrapperDTO = YamlSchemaErrorWrapperDTO.builder().schemaErrors(errorDTOS).build();
+        throw new io.harness.pms.pipeline.yaml.InvalidYamlException("Invalid Yaml", errorWrapperDTO);
       }
+    } catch (io.harness.pms.pipeline.yaml.InvalidYamlException e) {
+      throw e;
     } catch (Exception ex) {
       log.error(ex.getMessage(), ex);
       throw new JsonSchemaValidationException(ex.getMessage(), ex);
