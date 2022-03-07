@@ -23,6 +23,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 import io.harness.CategoryTest;
@@ -41,6 +42,7 @@ import io.harness.delegate.beans.connector.gcpconnector.GcpManualDetailsDTO;
 import io.harness.delegate.beans.connector.helm.HttpHelmAuthenticationDTO;
 import io.harness.delegate.beans.connector.helm.HttpHelmConnectorDTO;
 import io.harness.delegate.beans.connector.helm.HttpHelmUsernamePasswordDTO;
+import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.beans.storeconfig.GcsHelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.HttpHelmStoreDelegateConfig;
@@ -59,6 +61,7 @@ import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 
 @OwnedBy(CDP)
 public class HelmValuesFetchTaskNGTest extends CategoryTest {
@@ -69,6 +72,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
   @Mock private LogCallback logCallback;
 
   @InjectMocks
+  @Spy
   HelmValuesFetchTaskNG helmValuesFetchTaskNG =
       new HelmValuesFetchTaskNG(DelegateTaskPackage.builder()
                                     .delegateId("delegateid")
@@ -79,6 +83,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
+    doReturn(mock(LogCallback.class)).when(helmValuesFetchTaskNG).getLogCallback(any(CommandUnitsProgress.class));
   }
 
   @Test
