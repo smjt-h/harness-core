@@ -89,6 +89,7 @@ import io.harness.delegate.beans.ci.pod.HostAliasParams;
 import io.harness.delegate.beans.ci.pod.ImageDetailsWithConnector;
 import io.harness.delegate.beans.ci.pod.PVCParams;
 import io.harness.delegate.beans.ci.pod.PodParams;
+import io.harness.delegate.beans.ci.pod.PodToleration;
 import io.harness.delegate.beans.ci.pod.SSHKeyDetails;
 import io.harness.delegate.beans.ci.pod.SecretParams;
 import io.harness.delegate.beans.ci.pod.SecretVariableDTO;
@@ -1116,9 +1117,10 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(ArtifactoryFetchRepositoriesResponse.class, 543477);
     kryo.register(ArtifactoryFetchBuildsResponse.class, 543478);
     kryo.register(ArtifactoryStoreDelegateConfig.class, 543479);
-    kryo.register(AzureTaskParams.class, 543480);
-    kryo.register(AzureTaskType.class, 543481);
-    kryo.register(AzureValidateTaskResponse.class, 543482);
-    kryo.register(AzureValidationParams.class, 543483);
+    kryo.register(PodToleration.class, 543480);
+    kryo.register(AzureTaskParams.class, 543481);
+    kryo.register(AzureTaskType.class, 543482);
+    kryo.register(AzureValidateTaskResponse.class, 543483);
+    kryo.register(AzureValidationParams.class, 543484);
   }
 }
