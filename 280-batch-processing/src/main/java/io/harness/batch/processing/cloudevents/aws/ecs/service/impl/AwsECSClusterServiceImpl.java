@@ -67,8 +67,11 @@ public class AwsECSClusterServiceImpl implements AwsECSClusterService {
           getClusterArnTagsMap(awsCrossAccountAttributes, awsRegion.getValue(), ecsClusters);
 
       ecsClusters.forEach(ecsCluster -> {
-        Map<String, String> clusterTags =
-            clusterArnTagsMap.get(ecsCluster).stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue));
+        Map<String, String> clusterTags = null;
+        if (clusterArnTagsMap.get(ecsCluster) != null) {
+          clusterTags =
+              clusterArnTagsMap.get(ecsCluster).stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue));
+        }
         CECluster ceCluster = CECluster.builder()
                                   .accountId(accountId)
                                   .clusterName(getNameFromArn(ecsCluster))
