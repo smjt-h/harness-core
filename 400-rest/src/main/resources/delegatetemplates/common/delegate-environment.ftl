@@ -6,7 +6,7 @@
         - name: WATCHER_CHECK_LOCATION
           value: ${watcherCheckLocation}
         - name: REMOTE_WATCHER_URL_CDN
-          value: ${remoteWatcherUrlCdn}
+          value: "${remoteWatcherUrlCdn}"
         - name: DELEGATE_STORAGE_URL
           value: ${delegateStorageUrl}
         - name: DELEGATE_CHECK_LOCATION
@@ -14,7 +14,7 @@
         - name: HELM_DESIRED_VERSION
           value: ""
         - name: CDN_URL
-          value: ${cdnUrl}
+          value: "${cdnUrl}"
         - name: JRE_VERSION
           value: ${jreVersion}
         - name: HELM3_PATH
