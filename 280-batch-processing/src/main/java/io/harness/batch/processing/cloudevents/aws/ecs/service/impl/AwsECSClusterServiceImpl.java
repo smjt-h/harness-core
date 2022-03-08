@@ -109,7 +109,7 @@ public class AwsECSClusterServiceImpl implements AwsECSClusterService {
     infraClusterMap.forEach((clusterIdentifierKey, ceCluster) -> {
       if (!ceExistingClusterMap.containsKey(clusterIdentifierKey)) {
         ceClusterDao.create(ceCluster);
-      } else {
+      } else if (!ceCluster.getLabels().isEmpty()) {
         ceClusterDao.upsert(ceCluster);
       }
     });
