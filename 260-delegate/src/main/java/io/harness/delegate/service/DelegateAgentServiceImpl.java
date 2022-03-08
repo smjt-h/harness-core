@@ -1834,7 +1834,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     try {
       updateBuilderIfEcsDelegate(builder);
       DelegateParams delegateParams =
-          builder.build().toBuilder().keepAlivePacket(true).pollingModeEnabled(true).build();
+          builder.build().toBuilder().keepAlivePacket(true).delegateGroupId(delegateGroupId).pollingModeEnabled(true).build();
       executeRestCall(delegateAgentManagerClient.registerDelegate(accountId, delegateParams));
     } catch (UncheckedTimeoutException ex) {
       log.warn("Timed out sending Keep Alive Request", ex);
