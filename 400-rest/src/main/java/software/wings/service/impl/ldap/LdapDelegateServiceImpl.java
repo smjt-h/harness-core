@@ -146,7 +146,6 @@ public class LdapDelegateServiceImpl implements LdapDelegateService {
     } else {
       name = email;
     }
-
     String externalUserId = "";
     log.info("LDAPIterator: user with email {} ldap entry is {}", email, user);
     if (isNotEmpty(user.getAttributeNames())
@@ -158,7 +157,6 @@ public class LdapDelegateServiceImpl implements LdapDelegateService {
         externalUserId = user.getAttribute(userConfig.getUidAttr()).getStringValue().toLowerCase();
       }
     }
-
     if (isNotEmpty(user.getAttributeNames())
         && Arrays.asList(user.getAttributeNames()).contains(userConfig.getSamAccountNameAttr())
         && user.getAttribute(userConfig.getSamAccountNameAttr()) != null) {
