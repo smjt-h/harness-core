@@ -19,12 +19,10 @@ import lombok.Value;
 @Value
 @Builder
 @OwnedBy(HarnessTeam.CDP)
-public class ServerlessAwsInfraConfig implements ServerlessInfraConfig {
+public class ServerlessAwsLambdaInfraConfig implements ServerlessInfraConfig {
   ServerlessInfraType serverlessInfraType;
   AwsConnectorDTO awsConnectorDTO;
   List<EncryptedDataDetail> encryptionDataDetails;
   String region;
-  Boolean regionFlag;
   String stage;
-  Boolean stageFlag;
 }

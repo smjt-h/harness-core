@@ -7,22 +7,6 @@
 
 package io.harness.delegate.task.serverless;
 
-import static io.harness.expression.Expression.ALLOW_SECRETS;
-
-import io.harness.expression.Expression;
-
-import lombok.Builder;
-import lombok.Value;
-
-@Value
-@Builder
-public class ServerlessManifestConfig implements ServerlessManifest {
-  @Expression(ALLOW_SECRETS) String manifestContent;
-  String manifestPath;
-  ServerlessGitFetchFileConfig serverlessGitFetchFileConfig;
-
-  @Override
-  public ServerlessManifestType getServerlessManifestType() {
-    return ServerlessManifestType.SERVERLESS_MANIFEST;
-  }
+public interface ServerlessManifestConfig {
+  ServerlessManifestType getServerlessManifestType();
 }

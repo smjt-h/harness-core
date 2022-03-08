@@ -7,17 +7,21 @@
 
 package io.harness.serverless.model;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
+
 import lombok.Builder;
 import lombok.Data;
 
+@OwnedBy(HarnessTeam.CDP)
 @Data
-public class ServerlessAwsConfig implements ServerlessConfig {
+public class ServerlessAwsLambdaConfig implements ServerlessConfig {
   private String provider;
   private String accessKey;
   private String secretKey;
 
   @Builder
-  public ServerlessAwsConfig(String provider, String accessKey, String secretKey) {
+  public ServerlessAwsLambdaConfig(String provider, String accessKey, String secretKey) {
     this.provider = provider;
     this.accessKey = accessKey;
     this.secretKey = secretKey;
