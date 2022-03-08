@@ -105,6 +105,7 @@ import io.harness.exception.UnauthorizedException;
 import io.harness.exception.UserAlreadyPresentException;
 import io.harness.exception.UserRegistrationException;
 import io.harness.exception.WingsException;
+import io.harness.ff.FeatureFlagService;
 import io.harness.limits.LimitCheckerFactory;
 import io.harness.ng.core.account.AuthenticationMechanism;
 import io.harness.persistence.HPersistence;
@@ -269,6 +270,7 @@ public class UserServiceTest extends WingsBaseTest {
   @Mock private AuthenticationUtils authenticationUtils;
   @Mock private TOTPAuthHandler totpAuthHandler;
   @Mock private SSOSettingService ssoSettingService;
+  @Mock private FeatureFlagService featureFlagService;
 
   @Spy @InjectMocks private SignupServiceImpl signupService;
 
@@ -329,6 +331,8 @@ public class UserServiceTest extends WingsBaseTest {
     when(configurationController.isPrimary()).thenReturn(true);
     when(harnessCacheManager.getCache(anyString(), eq(String.class), eq(User.class), any())).thenReturn(cache);
     when(harnessUserGroupService.isHarnessSupportUser(any())).thenReturn(false);
+
+    when(featureFlagService.isEnabled(any(), anyString())).thenReturn(false);
   }
 
   @Test
@@ -1039,6 +1043,39 @@ public class UserServiceTest extends WingsBaseTest {
 
     verify(emailDataNotificationService).send(emailDataArgumentCaptor.capture());
     assertThat(emailDataArgumentCaptor.getValue().getTemplateName()).isEqualTo(INVITE_EMAIL_TEMPLATE_NAME);
+  }
+
+  @Test
+  @Owner(developers = UJJAWAL)
+  @Category(UnitTests.class)
+  public void shouldInviteNewUserFromLDAP() {
+    UserInvite userInvite = anUserInvite()
+                                .withAppId(GLOBAL_APP_ID)
+                                .withAccountId(ACCOUNT_ID)
+                                .withEmails(asList(USER_EMAIL))
+                                .withRoles(asList(aRole().withUuid(ROLE_ID).build()))
+                                .build();
+    Account account = Account.Builder.anAccount()
+                          .withAccountName(ACCOUNT_NAME)
+                          .withCompanyName(COMPANY_NAME)
+                          .withUuid(ACCOUNT_ID)
+                          .withAuthenticationMechanism(AuthenticationMechanism.USER_PASSWORD)
+                          .build();
+
+    when(subdomainUrlHelper.getPortalBaseUrl(any())).thenReturn(PORTAL_URL);
+    when(configuration.getPortal().getUrl()).thenReturn(PORTAL_URL);
+    when(accountService.get(ACCOUNT_ID)).thenReturn(account);
+    when(wingsPersistence.createQuery(User.class)).thenReturn(userQuery);
+    when(wingsPersistence.save(userInvite)).thenReturn(USER_INVITE_ID);
+    when(wingsPersistence.saveAndGet(eq(User.class), any(User.class))).thenReturn(userBuilder.uuid(USER_ID).build());
+    when(authenticationUtils.getDefaultAccount(any())).thenReturn(account);
+    when(wingsPersistence.getWithAppId(UserInvite.class, GLOBAL_APP_ID, USER_INVITE_ID)).thenReturn(userInvite);
+    when(featureFlagService.isEnabled(any(), anyString())).thenReturn(true);
+    userService.inviteUser(userInvite, false, true);
+    verify(wingsPersistence).save(any(UserInvite.class));
+    verify(wingsPersistence).saveAndGet(eq(User.class), any(User.class));
+    verify(auditServiceHelper, times(userInvite.getEmails().size()))
+        .reportForAuditingUsingAccountId(eq(ACCOUNT_ID), eq(null), any(UserInvite.class), eq(Type.CREATE));
   }
 
   /**

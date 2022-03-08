@@ -1335,11 +1335,12 @@ public class UserServiceImpl implements UserService {
       log.info("Updating email Id for user {} with current mail {} and new email {}", user.getUuid(), user.getEmail(),
           userInvite.getEmail().trim().toLowerCase());
       updateEmailOfUser(user, userInvite.getEmail().trim().toLowerCase());
-      user.setEmail(userInvite.getEmail());
+      user.setEmail(userInvite.getEmail().trim().toLowerCase());
     }
 
     List<UserGroup> userGroups = userGroupService.getUserGroupsFromUserInvite(userInvite);
     log.info("User {} is part of groups {}", user.getUuid(), userGroups);
+
     if (isUserAssignedToAccount(user, accountId)) {
       updateUserGroupsOfUser(user.getUuid(), userGroups, accountId, true);
       return USER_ALREADY_ADDED;
