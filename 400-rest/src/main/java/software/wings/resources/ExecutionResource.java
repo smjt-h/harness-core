@@ -431,7 +431,7 @@ public class ExecutionResource {
     if (approvalStateExecutionData.isAutoRejectPreviousDeployments()
         && approvalDetails.getAction() == ApprovalDetails.Action.APPROVE
         && featureFlagService.isEnabled(FeatureName.AUTO_REJECT_PREVIOUS_APPROVALS, accountId)) {
-      workflowExecutionService.rejectPreviousDeployments(appId, workflowExecutionId, stateExecutionId, approvalDetails);
+      workflowExecutionService.rejectPreviousDeployments(appId, workflowExecutionId, approvalDetails);
     }
 
     if (isEmpty(approvalStateExecutionData.getUserGroups())) {
