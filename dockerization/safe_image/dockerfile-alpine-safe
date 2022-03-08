@@ -1,5 +1,5 @@
 # Filename:  Dockerfile
-FROM harness/alpine:safe-alpine3.12-sec1338
+FROM us.gcr.io/platform-205701/alpine:safe-alpine3.12-jdk11
 CMD ["/bin/sh"]
 
 #add new package postgresql-client [OPS-2813]
