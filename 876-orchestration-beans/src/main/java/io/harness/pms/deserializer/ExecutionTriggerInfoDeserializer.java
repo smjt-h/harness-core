@@ -14,7 +14,6 @@ public class ExecutionTriggerInfoDeserializer extends JsonDeserializer<Execution
     ExecutionTriggerInfo.Builder builder = ExecutionTriggerInfo.newBuilder();
     String p1 = p.readValueAsTree().toString();
     JsonFormat.parser().ignoringUnknownFields().merge(p1, builder);
-    ExecutionTriggerInfo executionTriggerInfo = builder.build();
-    return executionTriggerInfo;
+    return builder.build();
   }
 }

@@ -56,7 +56,6 @@ import io.harness.govern.ProviderModule;
 import io.harness.governance.DefaultConnectorRefExpansionHandler;
 import io.harness.graph.stepDetail.PmsGraphStepDetailsServiceImpl;
 import io.harness.graph.stepDetail.service.PmsGraphStepDetailsService;
-import io.harness.handlers.PipelineExecutionSummaryHandler;
 import io.harness.health.HealthMonitor;
 import io.harness.health.HealthService;
 import io.harness.maintenance.MaintenanceController;
@@ -104,6 +103,7 @@ import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineEntityCrudObserver;
 import io.harness.pms.pipeline.PipelineSetupUsageHelper;
 import io.harness.pms.pipeline.gitsync.PipelineEntityGitSyncHelper;
+import io.harness.pms.pipeline.handlers.PipelineExecutionSummaryHandler;
 import io.harness.pms.plan.creation.PipelineServiceFilterCreationResponseMerger;
 import io.harness.pms.plan.creation.PipelineServiceInternalInfoProvider;
 import io.harness.pms.plan.execution.PmsExecutionServiceInfoProvider;
@@ -317,10 +317,6 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
         }
       });
     }
-    if (appConfig.getDebeziumConfig() != null && appConfig.getDebeziumConfig().isEnabled()) {
-      new DebeziumEngineStarter().startDebeziumEngine(
-          appConfig.getDebeziumConfig(), new PipelineExecutionSummaryHandler(environment.getObjectMapper()));
-    }
 
     // Pipeline Service Modules
     PmsSdkConfiguration pmsSdkConfiguration = getPmsSdkConfiguration(appConfig);
@@ -376,6 +372,11 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     }
 
     MaintenanceController.forceMaintenance(false);
+
+    if (appConfig.getDebeziumConfig() != null && appConfig.getDebeziumConfig().isEnabled()) {
+      new DebeziumEngineStarter().startDebeziumEngine(
+          appConfig.getDebeziumConfig(), new PipelineExecutionSummaryHandler(environment.getObjectMapper()));
+    }
   }
 
   private void intializeSdkInstanceCacheSync(Injector injector) {
