@@ -99,6 +99,8 @@ import io.harness.delegate.beans.connector.nexusconnector.NexusConnectorDTO;
 import io.harness.delegate.beans.connector.nexusconnector.NexusConstants;
 import io.harness.delegate.beans.connector.nexusconnector.NexusUsernamePasswordAuthDTO;
 import io.harness.delegate.beans.connector.pagerduty.PagerDutyConnectorDTO;
+import io.harness.delegate.beans.connector.pdcconnector.HostAttributeDTO;
+import io.harness.delegate.beans.connector.pdcconnector.HostDTO;
 import io.harness.delegate.beans.connector.pdcconnector.PhysicalDataCenterConnectorDTO;
 import io.harness.delegate.beans.connector.prometheusconnector.PrometheusConnectorDTO;
 import io.harness.delegate.beans.connector.scm.GitAuthType;
@@ -316,5 +318,7 @@ public class ConnectorBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(ServiceNowConnectorDTO.class, 19678);
     kryo.register(ErrorTrackingConnectorDTO.class, 19679);
     kryo.register(PhysicalDataCenterConnectorDTO.class, 19680);
+    kryo.register(HostDTO.class, 19681);
+    kryo.register(HostAttributeDTO.class, 19682);
   }
 }
