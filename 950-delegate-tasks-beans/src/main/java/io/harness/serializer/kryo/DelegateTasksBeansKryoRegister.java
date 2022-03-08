@@ -1117,7 +1117,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(ArtifactoryStoreDelegateConfig.class, 543479);
     kryo.register(PodToleration.class, 543480);
 
-    kryo.register(ServerlessAwsLambdaServerInstanceInfo.class, 543477);
+    kryo.register(ServerlessAwsLambdaServerInstanceInfo.class, 563477);
     // todo: may need to add more classes
   }
 }
