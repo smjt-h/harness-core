@@ -27,4 +27,10 @@ public class CDNGRbacPermissions {
   public String ENVIRONMENT_RUNTIME_PERMISSION = "core_environment_access";
   public String ENVIRONMENT_UPDATE_PERMISSION = "core_environment_edit";
   public String ENVIRONMENT_VIEW_PERMISSION = "core_environment_view";
+
+  // EnvironmentGroup
+  public String ENVIRONMENT_GROUP_CREATE_PERMISSION = "core_environment_group_edit";
+  public String ENVIRONMENT_GROUP_RUNTIME_PERMISSION = "core_environment_group_access";
+  public String ENVIRONMENT_GROUP_UPDATE_PERMISSION = "core_environment_group_edit";
+  public String ENVIRONMENT_GROUP_VIEW_PERMISSION = "core_environment_group_view";
 }
