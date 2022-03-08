@@ -22,12 +22,12 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(HarnessTeam.CDP)
 @Value
 @Builder
-@TypeAlias("ServerlessAwsManifestOutcome")
-@JsonTypeName(ManifestType.ServerlessAws)
-@RecasterAlias("io.harness.cdng.manifest.yaml.ServerlessAwsManifestOutcome")
-public class ServerlessAwsManifestOutcome implements ManifestOutcome {
+@TypeAlias("serverlessAwsLambdaManifestOutcome")
+@JsonTypeName(ManifestType.ServerlessAwsLambda)
+@RecasterAlias("io.harness.cdng.manifest.yaml.ServerlessAwsLambdaManifestOutcome")
+public class ServerlessAwsLambdaManifestOutcome implements ManifestOutcome {
   String identifier;
-  String type = ManifestType.ServerlessAws;
+  String type = ManifestType.ServerlessAwsLambda;
   StoreConfig store;
   int order;
   ParameterField<String> configOverridePath;

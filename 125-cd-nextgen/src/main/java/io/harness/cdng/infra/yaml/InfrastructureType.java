@@ -19,7 +19,8 @@ import java.util.Arrays;
 public enum InfrastructureType {
   @JsonProperty(InfrastructureKind.KUBERNETES_DIRECT) KUBERNETES_DIRECT(InfrastructureKind.KUBERNETES_DIRECT),
   @JsonProperty(InfrastructureKind.KUBERNETES_GCP) KUBERNETES_GCP(InfrastructureKind.KUBERNETES_GCP),
-  @JsonProperty(InfrastructureKind.SERVERLESS_AWS) SERVERLESS_AWS(InfrastructureKind.SERVERLESS_AWS);
+  @JsonProperty(InfrastructureKind.SERVERLESS_AWS_LAMBDA)
+  SERVERLESS_AWS_LAMBDA(InfrastructureKind.SERVERLESS_AWS_LAMBDA);
   private final String displayName;
 
   InfrastructureType(String displayName) {

@@ -11,7 +11,7 @@ import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.pipeline.CDStepInfo;
-import io.harness.cdng.visitor.helpers.cdstepinfo.ServerlessDeployStepInfoVisitorHelper;
+import io.harness.cdng.visitor.helpers.cdstepinfo.ServerlessAwsLambdaDeployStepInfoVisitorHelper;
 import io.harness.executions.steps.StepSpecTypeConstants;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
@@ -31,22 +31,23 @@ import org.springframework.data.annotation.TypeAlias;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@SimpleVisitorHelper(helperClass = ServerlessDeployStepInfoVisitorHelper.class)
-@JsonTypeName(StepSpecTypeConstants.SERVERLESS_DEPLOY)
-@TypeAlias("serverlessDeployStepInfo")
-@RecasterAlias("io.harness.cdng.serverless.ServerlessDeployStepInfo")
-public class ServerlessDeployStepInfo extends ServerlessDeployBaseStepInfo implements CDStepInfo, Visitable {
+@SimpleVisitorHelper(helperClass = ServerlessAwsLambdaDeployStepInfoVisitorHelper.class)
+@JsonTypeName(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_DEPLOY)
+@TypeAlias("serverlessAwsLambdaDeployStepInfo")
+@RecasterAlias("io.harness.cdng.serverless.ServerlessAwsLambdaDeployStepInfo")
+public class ServerlessAwsLambdaDeployStepInfo
+    extends ServerlessAwsLambdaDeployBaseStepInfo implements CDStepInfo, Visitable {
   // For Visitor Framework Impl
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 
   @Builder(builderMethodName = "infoBuilder")
-  public ServerlessDeployStepInfo(
+  public ServerlessAwsLambdaDeployStepInfo(
       ParameterField<List<TaskSelectorYaml>> delegateSelectors, ParameterField<String> commandOptions) {
     super(delegateSelectors, commandOptions);
   }
   @Override
   public StepType getStepType() {
-    return ServerlessDeployStep.STEP_TYPE;
+    return ServerlessAwsLambdaDeployAwsLambdaStep.STEP_TYPE;
   }
 
   @Override
@@ -56,7 +57,7 @@ public class ServerlessDeployStepInfo extends ServerlessDeployBaseStepInfo imple
 
   @Override
   public SpecParameters getSpecParameters() {
-    return ServerlessDeployStepParameters.infoBuilder()
+    return ServerlessAwsLambdaDeployStepParameters.infoBuilder()
         .delegateSelectors(this.getDelegateSelectors())
         .commandOptions(commandOptions)
         .build();

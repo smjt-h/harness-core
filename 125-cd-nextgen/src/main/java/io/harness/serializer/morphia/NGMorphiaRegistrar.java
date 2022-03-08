@@ -40,7 +40,7 @@ public class NGMorphiaRegistrar implements MorphiaRegistrar {
     set.add(InfraMapping.class);
     set.add(K8sDirectInfraMapping.class);
     set.add(K8sGcpInfraMapping.class);
-    set.add(ServerlessAwsInfraMapping.class); // todo: need to check with sainath
+    set.add(ServerlessAwsLambdaInfraMapping.class); // todo: need to check with sainath
     set.add(DockerArtifactSource.class);
     set.add(ArtifactSource.class);
     set.add(TerraformConfig.class);

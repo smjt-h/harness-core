@@ -111,7 +111,7 @@ public class InfraVariableCreator {
           addVariablesForKubernetesGcpInfra(infraDefNode, yamlPropertiesMap);
           break;
 
-        case InfrastructureKind.SERVERLESS_AWS:
+        case InfrastructureKind.SERVERLESS_AWS_LAMBDA:
           addVariablesForServerlessAwsInfra(infraDefNode, yamlPropertiesMap);
           break;
 

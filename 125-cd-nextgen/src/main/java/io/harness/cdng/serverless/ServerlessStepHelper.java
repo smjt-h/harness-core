@@ -97,10 +97,11 @@ public class ServerlessStepHelper extends CDStepHelper {
   @Inject private KryoSerializer kryoSerializer;
   @Inject private StepHelper stepHelper;
 
-  private static final Set<String> SERVERLESS_SUPPORTED_MANIFEST_TYPES = ImmutableSet.of(ManifestType.ServerlessAws);
+  private static final Set<String> SERVERLESS_SUPPORTED_MANIFEST_TYPES =
+      ImmutableSet.of(ManifestType.ServerlessAwsLambda);
 
-  public TaskChainResponse startChainLink(
-      ServerlessStepExecutor serverlessStepExecutor, Ambiance ambiance, StepElementParameters stepElementParameters) {
+  public TaskChainResponse startChainLink(ServerlessAwsLambdaStepExecutor serverlessStepExecutor, Ambiance ambiance,
+      StepElementParameters stepElementParameters) {
     ManifestsOutcome manifestsOutcome = resolveServerlessManifestsOutcome(ambiance);
     // todo: validation for manifest and infrastructure type
     InfrastructureOutcome infrastructureOutcome = (InfrastructureOutcome) outcomeService.resolve(
@@ -113,7 +114,7 @@ public class ServerlessStepHelper extends CDStepHelper {
         serverlessStepExecutor, serverlessManifestOutcome, ambiance, stepElementParameters, infrastructureOutcome);
   }
 
-  public TaskChainResponse executeNextLink(ServerlessStepExecutor serverlessStepExecutor, Ambiance ambiance,
+  public TaskChainResponse executeNextLink(ServerlessAwsLambdaStepExecutor serverlessStepExecutor, Ambiance ambiance,
       StepElementParameters stepElementParameters, PassThroughData passThroughData,
       ThrowingSupplier<ResponseData> responseDataSupplier) throws Exception {
     ServerlessStepPassThroughData serverlessStepPassThroughData = (ServerlessStepPassThroughData) passThroughData;
@@ -151,12 +152,13 @@ public class ServerlessStepHelper extends CDStepHelper {
     return (ManifestsOutcome) manifestsOutcome.getOutcome();
   }
 
-  private TaskChainResponse prepareServerlessManifestFetchTask(ServerlessStepExecutor serverlessStepExecutor,
-      ManifestOutcome manifestOutcome, Ambiance ambiance, StepElementParameters stepElementParameters,
-      InfrastructureOutcome infrastructureOutcome) {
+  private TaskChainResponse prepareServerlessManifestFetchTask(
+      ServerlessAwsLambdaStepExecutor serverlessAwsLambdaStepExecutor, ManifestOutcome manifestOutcome,
+      Ambiance ambiance, StepElementParameters stepElementParameters, InfrastructureOutcome infrastructureOutcome) {
     switch (manifestOutcome.getType()) {
-      case ManifestType.ServerlessAws:
-        ServerlessAwsManifestOutcome serverlessAwsManifestOutcome = (ServerlessAwsManifestOutcome) manifestOutcome;
+      case ManifestType.ServerlessAwsLambda:
+        ServerlessAwsLambdaManifestOutcome serverlessAwsManifestOutcome =
+            (ServerlessAwsLambdaManifestOutcome) manifestOutcome;
         return prepareAwsLambdaGitFetchManifestTaskChainResponse(
             ambiance, stepElementParameters, infrastructureOutcome, manifestOutcome, serverlessAwsManifestOutcome);
       default:
@@ -166,7 +168,7 @@ public class ServerlessStepHelper extends CDStepHelper {
 
   private TaskChainResponse prepareAwsLambdaGitFetchManifestTaskChainResponse(Ambiance ambiance,
       StepElementParameters stepElementParameters, InfrastructureOutcome infrastructureOutcome,
-      ManifestOutcome manifestOutcome, ServerlessAwsManifestOutcome serverlessAwsManifestOutcome) {
+      ManifestOutcome manifestOutcome, ServerlessAwsLambdaManifestOutcome serverlessAwsManifestOutcome) {
     StoreConfig storeConfig = manifestOutcome.getStore();
     GitStoreConfig gitStoreConfig = (GitStoreConfig) storeConfig;
     if (!ManifestStoreType.isInGitSubset(storeConfig.getKind())) {
@@ -194,12 +196,13 @@ public class ServerlessStepHelper extends CDStepHelper {
                             .build();
     String taskName =
         TaskType.SERVERLESS_COMMAND_TASK.getDisplayName() + " : " + serverlessDeployRequest.getCommandName();
-    ServerlessSpecParameters serverlessSpecParameters = (ServerlessSpecParameters) stepElementParameters.getSpec();
-    final TaskRequest taskRequest =
-        prepareCDTaskRequest(ambiance, taskData, kryoSerializer, serverlessSpecParameters.getCommandUnits(), taskName,
-            TaskSelectorYaml.toTaskSelector(
-                emptyIfNull(getParameterFieldValue(serverlessSpecParameters.getDelegateSelectors()))),
-            stepHelper.getEnvironmentType(ambiance));
+    ServerlessAwsLambdaSpecParameters serverlessAwsLambdaSpecParameters =
+        (ServerlessAwsLambdaSpecParameters) stepElementParameters.getSpec();
+    final TaskRequest taskRequest = prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
+        serverlessAwsLambdaSpecParameters.getCommandUnits(), taskName,
+        TaskSelectorYaml.toTaskSelector(
+            emptyIfNull(getParameterFieldValue(serverlessAwsLambdaSpecParameters.getDelegateSelectors()))),
+        stepHelper.getEnvironmentType(ambiance));
     return TaskChainResponse.builder()
         .taskRequest(taskRequest)
         .chainEnd(true)
@@ -208,8 +211,9 @@ public class ServerlessStepHelper extends CDStepHelper {
   }
 
   private TaskChainResponse handleServerlessGitFetchFilesResponse(ServerlessGitFetchResponse serverlessGitFetchResponse,
-      ServerlessStepExecutor serverlessStepExecutor, Ambiance ambiance, StepElementParameters stepElementParameters,
-      ServerlessStepPassThroughData serverlessStepPassThroughData, ManifestOutcome serverlessManifest) {
+      ServerlessAwsLambdaStepExecutor serverlessAwsLambdaStepExecutor, Ambiance ambiance,
+      StepElementParameters stepElementParameters, ServerlessStepPassThroughData serverlessStepPassThroughData,
+      ManifestOutcome serverlessManifest) {
     if (serverlessGitFetchResponse.getTaskStatus() != TaskStatus.SUCCESS) {
       ServerlessGitFetchResponsePassThroughData serverlessGitFetchResponsePassThroughData =
           ServerlessGitFetchResponsePassThroughData.builder()
@@ -232,7 +236,7 @@ public class ServerlessStepHelper extends CDStepHelper {
             .infrastructure(serverlessStepPassThroughData.getInfrastructureOutcome())
             .lastActiveUnitProgressData(serverlessGitFetchResponse.getUnitProgressData())
             .build();
-    return serverlessStepExecutor.executeServerlessTask(serverlessManifest, ambiance, stepElementParameters,
+    return serverlessAwsLambdaStepExecutor.executeServerlessTask(serverlessManifest, ambiance, stepElementParameters,
         manifestFilePathContent.get(), serverlessExecutionPassThroughData, false,
         serverlessGitFetchResponse.getUnitProgressData());
   }
@@ -341,12 +345,13 @@ public class ServerlessStepHelper extends CDStepHelper {
                                   .parameters(new Object[] {serverlessGitFetchRequest})
                                   .build();
     String taskName = TaskType.SERVERLESS_GIT_FETCH_TASK_NG.getDisplayName();
-    ServerlessSpecParameters serverlessSpecParameters = (ServerlessSpecParameters) stepElementParameters.getSpec();
-    final TaskRequest taskRequest =
-        prepareCDTaskRequest(ambiance, taskData, kryoSerializer, serverlessSpecParameters.getCommandUnits(), taskName,
-            TaskSelectorYaml.toTaskSelector(
-                emptyIfNull(getParameterFieldValue(serverlessSpecParameters.getDelegateSelectors()))),
-            stepHelper.getEnvironmentType(ambiance));
+    ServerlessAwsLambdaSpecParameters serverlessAwsLambdaSpecParameters =
+        (ServerlessAwsLambdaSpecParameters) stepElementParameters.getSpec();
+    final TaskRequest taskRequest = prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
+        serverlessAwsLambdaSpecParameters.getCommandUnits(), taskName,
+        TaskSelectorYaml.toTaskSelector(
+            emptyIfNull(getParameterFieldValue(serverlessAwsLambdaSpecParameters.getDelegateSelectors()))),
+        stepHelper.getEnvironmentType(ambiance));
     return TaskChainResponse.builder()
         .chainEnd(false)
         .taskRequest(taskRequest)
@@ -355,7 +360,7 @@ public class ServerlessStepHelper extends CDStepHelper {
   }
 
   private ServerlessGitFetchFileConfig mapAwsLambdaServerlessManifestToGitFetchFileConfig(Ambiance ambiance,
-      ManifestOutcome manifestOutcome, ServerlessAwsManifestOutcome serverlessAwsManifestOutcome,
+      ManifestOutcome manifestOutcome, ServerlessAwsLambdaManifestOutcome serverlessAwsManifestOutcome,
       GitStoreConfig gitStoreConfig) {
     String validationMessage = format("Serverless manifest with Id [%s]", serverlessAwsManifestOutcome.getIdentifier());
     return getAwsLambdaManifestGitFetchFilesConfig(
@@ -364,12 +369,12 @@ public class ServerlessStepHelper extends CDStepHelper {
 
   private ServerlessGitFetchFileConfig getAwsLambdaManifestGitFetchFilesConfig(Ambiance ambiance,
       String validationMessage, GitStoreConfig gitStoreConfig, ManifestOutcome manifestOutcome,
-      ServerlessAwsManifestOutcome serverlessAwsManifestOutcome) {
+      ServerlessAwsLambdaManifestOutcome serverlessAwsLambdaManifestOutcome) {
     return ServerlessGitFetchFileConfig.builder()
         .gitStoreDelegateConfig(getGitStoreDelegateConfig(ambiance, gitStoreConfig, manifestOutcome))
         .identifier(manifestOutcome.getIdentifier())
-        .manifestType(ManifestType.ServerlessAws)
-        .configOverridePath(getParameterFieldValue(serverlessAwsManifestOutcome.getConfigOverridePath()))
+        .manifestType(ManifestType.ServerlessAwsLambda)
+        .configOverridePath(getParameterFieldValue(serverlessAwsLambdaManifestOutcome.getConfigOverridePath()))
         .succeedIfFileNotFound(false)
         .build();
   }
@@ -393,7 +398,7 @@ public class ServerlessStepHelper extends CDStepHelper {
 
   public ServerlessCommandType getServerlessDeployCommandType(InfrastructureOutcome infrastructureOutcome) {
     switch (infrastructureOutcome.getKind()) {
-      case InfrastructureKind.SERVERLESS_AWS:
+      case InfrastructureKind.SERVERLESS_AWS_LAMBDA:
         return ServerlessCommandType.AWS_LAMBDA_DEPLOY;
       default:
         throw new UnsupportedOperationException(
@@ -406,8 +411,8 @@ public class ServerlessStepHelper extends CDStepHelper {
     return serverlessEntityHelper.getServerlessInfraConfig(infrastructure, ngAccess);
   }
 
-  public ServerlessDeployConfig getServerlessDeployConfig(
-      ServerlessCommandType serverlessCommandType, ServerlessDeployStepParameters serverlessDeployStepParameters) {
+  public ServerlessDeployConfig getServerlessDeployConfig(ServerlessCommandType serverlessCommandType,
+      ServerlessAwsLambdaDeployStepParameters serverlessDeployStepParameters) {
     switch (serverlessCommandType) {
       case AWS_LAMBDA_DEPLOY:
         ServerlessAwsDeployConfig serverlessAwsDeployConfig =
@@ -423,10 +428,10 @@ public class ServerlessStepHelper extends CDStepHelper {
   public ServerlessManifest getServerlessManifestConfig(Pair<String, String> manifestFilePathContent,
       String manifestFileOverrideContent, ManifestOutcome serverlessManifestOutcome, Ambiance ambiance) {
     switch (serverlessManifestOutcome.getType()) {
-      case ManifestType.ServerlessAws:
-        ServerlessAwsManifestOutcome serverlessAwsManifestOutcome =
-            (ServerlessAwsManifestOutcome) serverlessManifestOutcome;
-        GitStoreConfig gitStoreConfig = (GitStoreConfig) serverlessAwsManifestOutcome.getStore();
+      case ManifestType.ServerlessAwsLambda:
+        ServerlessAwsLambdaManifestOutcome serverlessAwsLambdaManifestOutcome =
+            (ServerlessAwsLambdaManifestOutcome) serverlessManifestOutcome;
+        GitStoreConfig gitStoreConfig = (GitStoreConfig) serverlessAwsLambdaManifestOutcome.getStore();
         ServerlessManifestConfig serverlessManifestConfig =
             ServerlessManifestConfig.builder()
                 .manifestPath(manifestFilePathContent.getKey())

@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
       @JsonSubTypes.Type(value = KustomizePatchesManifestOutcome.class, name = ManifestType.KustomizePatches),
       @JsonSubTypes.Type(value = OpenshiftManifestOutcome.class, name = ManifestType.OpenshiftTemplate),
       @JsonSubTypes.Type(value = OpenshiftParamManifestOutcome.class, name = ManifestType.OpenshiftParam),
-      @JsonSubTypes.Type(value = ServerlessAwsManifestOutcome.class, name = ManifestType.ServerlessAws)
+      @JsonSubTypes.Type(value = ServerlessAwsLambdaManifestOutcome.class, name = ManifestType.ServerlessAwsLambda)
 })
 public interface ManifestOutcome extends Outcome, WithIdentifier {
   String getIdentifier();

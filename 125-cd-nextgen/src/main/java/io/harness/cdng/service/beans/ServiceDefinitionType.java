@@ -27,9 +27,10 @@ public enum ServiceDefinitionType {
   NATIVE_HELM("NativeHelm", Lists.newArrayList(ExecutionStrategyType.ROLLING, ExecutionStrategyType.DEFAULT),
       ServiceSpecType.NATIVE_HELM),
 
-  @JsonProperty(ServiceSpecType.SERVERLESS)
-  SERVERLESS("Serverless", Lists.newArrayList(ExecutionStrategyType.BASIC, ExecutionStrategyType.DEFAULT),
-      ServiceSpecType.SERVERLESS);
+  @JsonProperty(ServiceSpecType.SERVERLESS_AWS_LAMBDA)
+  SERVERLESS_AWS_LAMBDA("Serverless Aws Lambda",
+      Lists.newArrayList(ExecutionStrategyType.BASIC, ExecutionStrategyType.DEFAULT),
+      ServiceSpecType.SERVERLESS_AWS_LAMBDA);
 
   /*
   //Unsupported for now

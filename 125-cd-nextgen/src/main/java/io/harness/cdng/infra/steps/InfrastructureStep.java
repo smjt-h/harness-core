@@ -177,7 +177,7 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
       }
     }
 
-    if (InfrastructureKind.SERVERLESS_AWS.equals(infrastructure.getKind())) {
+    if (InfrastructureKind.SERVERLESS_AWS_LAMBDA.equals(infrastructure.getKind())) {
       if (!(connectorInfo.getConnectorConfig() instanceof AwsConnectorDTO)) {
         throw new InvalidRequestException(String.format(
             "Invalid connector type [%s] for identifier: [%s], expected [%s]", connectorInfo.getConnectorType().name(),
@@ -227,10 +227,11 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
         validateExpression(k8sGcpInfrastructure.getConnectorRef(), k8sGcpInfrastructure.getNamespace(),
             k8sGcpInfrastructure.getCluster());
         break;
-      case InfrastructureKind.SERVERLESS_AWS:
-        ServerlessAwsInfrastructure serverlessAwsInfrastructure = (ServerlessAwsInfrastructure) infrastructure;
-        validateExpression(serverlessAwsInfrastructure.getConnectorRef(), serverlessAwsInfrastructure.getRegion(),
-            serverlessAwsInfrastructure.getStage());
+      case InfrastructureKind.SERVERLESS_AWS_LAMBDA:
+        ServerlessAwsLambdaInfrastructure serverlessAwsLambdaInfrastructure =
+            (ServerlessAwsLambdaInfrastructure) infrastructure;
+        validateExpression(serverlessAwsLambdaInfrastructure.getConnectorRef(),
+            serverlessAwsLambdaInfrastructure.getRegion(), serverlessAwsLambdaInfrastructure.getStage());
         break;
       default:
         throw new InvalidArgumentsException(format("Unknown Infrastructure Kind : [%s]", infrastructure.getKind()));

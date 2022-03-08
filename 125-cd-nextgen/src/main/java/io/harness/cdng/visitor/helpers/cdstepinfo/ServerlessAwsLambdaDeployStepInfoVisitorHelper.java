@@ -7,21 +7,18 @@
 
 package io.harness.cdng.visitor.helpers.cdstepinfo;
 
-import io.harness.annotations.dev.HarnessTeam;
-import io.harness.annotations.dev.OwnedBy;
-import io.harness.cdng.serverless.ServerlessRollbackStepInfo;
+import io.harness.cdng.serverless.ServerlessAwsLambdaDeployStepInfo;
 import io.harness.walktree.visitor.validation.ConfigValidator;
 import io.harness.walktree.visitor.validation.ValidationVisitor;
 
-@OwnedBy(HarnessTeam.CDP)
-public class ServerlessRollbackStepInfoVisitorHelper implements ConfigValidator {
+public class ServerlessAwsLambdaDeployStepInfoVisitorHelper implements ConfigValidator {
   @Override
   public Object createDummyVisitableElement(Object originalElement) {
-    return ServerlessRollbackStepInfo.infoBuilder().build();
+    return ServerlessAwsLambdaDeployStepInfo.infoBuilder().build();
   }
 
   @Override
   public void validate(Object object, ValidationVisitor visitor) {
-    // Nothing to validate.
+    // nothing to validate
   }
 }

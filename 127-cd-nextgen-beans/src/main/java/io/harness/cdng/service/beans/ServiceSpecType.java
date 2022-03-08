@@ -13,5 +13,5 @@ public interface ServiceSpecType {
   String ECS = "Ecs";
   String NATIVE_HELM = "NativeHelm";
   String PCF = "Pcf";
-  String SERVERLESS = "Serverless";
+  String SERVERLESS_AWS_LAMBDA = "ServerlessAwsLambda";
 }

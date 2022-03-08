@@ -17,7 +17,7 @@ import java.util.Set;
 public class ServerlessStepVariableCreator extends GenericStepVariableCreator {
   @Override
   public Set<String> getSupportedStepTypes() {
-    return new HashSet<>(
-        Arrays.asList(StepSpecTypeConstants.SERVERLESS_DEPLOY, StepSpecTypeConstants.SERVERLESS_ROLLBACK));
+    return new HashSet<>(Arrays.asList(
+        StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_DEPLOY, StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK));
   }
 }

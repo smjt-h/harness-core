@@ -25,9 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(HarnessTeam.CDP)
 @Slf4j
-public class ServerlessRollbackStep extends TaskExecutableWithRollbackAndRbac<ServerlessDeployResponse> {
+public class ServerlessAwsLambdaRollbackStep extends TaskExecutableWithRollbackAndRbac<ServerlessDeployResponse> {
   public static final StepType STEP_TYPE = StepType.newBuilder()
-                                               .setType(ExecutionNodeType.SERVERLESS_ROLLBACK.getYamlType())
+                                               .setType(ExecutionNodeType.SERVERLESS_AWS_LAMBDA_ROLLBACK.getYamlType())
                                                .setStepCategory(StepCategory.STEP)
                                                .build();
   @Override

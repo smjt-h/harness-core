@@ -16,7 +16,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sDirectInfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sGcpInfrastructureOutcome;
-import io.harness.cdng.infra.beans.ServerlessAwsInfrastructureOutcome;
+import io.harness.cdng.infra.beans.ServerlessAwsLambdaInfrastructureOutcome;
 import io.harness.cdng.infra.yaml.*;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
 import io.harness.common.ParameterFieldHelper;
@@ -59,16 +59,17 @@ public class InfrastructureMapper {
                 service, environmentOutcome, k8sGcpInfrastructure.getInfrastructureKeyValues()))
             .build();
       // todo: check calling of this function
-      case InfrastructureKind.SERVERLESS_AWS:
-        ServerlessAwsInfrastructure serverlessAwsInfrastructure = (ServerlessAwsInfrastructure) infrastructure;
-        validateServerlessAwsInfrastructure(serverlessAwsInfrastructure);
-        return ServerlessAwsInfrastructureOutcome.builder()
-            .connectorRef(serverlessAwsInfrastructure.getConnectorRef().getValue())
-            .region(serverlessAwsInfrastructure.getRegion().getValue())
-            .stage(serverlessAwsInfrastructure.getStage().getValue())
+      case InfrastructureKind.SERVERLESS_AWS_LAMBDA:
+        ServerlessAwsLambdaInfrastructure serverlessAwsLambdaInfrastructure =
+            (ServerlessAwsLambdaInfrastructure) infrastructure;
+        validateServerlessAwsInfrastructure(serverlessAwsLambdaInfrastructure);
+        return ServerlessAwsLambdaInfrastructureOutcome.builder()
+            .connectorRef(serverlessAwsLambdaInfrastructure.getConnectorRef().getValue())
+            .region(serverlessAwsLambdaInfrastructure.getRegion().getValue())
+            .stage(serverlessAwsLambdaInfrastructure.getStage().getValue())
             .environment(environmentOutcome)
             .infrastructureKey(InfrastructureKey.generate(
-                service, environmentOutcome, serverlessAwsInfrastructure.getInfrastructureKeyValues()))
+                service, environmentOutcome, serverlessAwsLambdaInfrastructure.getInfrastructureKeyValues()))
             .build();
 
       default:
@@ -103,7 +104,7 @@ public class InfrastructureMapper {
     }
   }
 
-  private void validateServerlessAwsInfrastructure(ServerlessAwsInfrastructure infrastructure) {
+  private void validateServerlessAwsInfrastructure(ServerlessAwsLambdaInfrastructure infrastructure) {
     if (ParameterField.isNull(infrastructure.getRegion())
         || isEmpty(ParameterFieldHelper.getParameterFieldValue(infrastructure.getRegion()))) {
       throw new InvalidArgumentsException(Pair.of("region", "cannot be empty"));

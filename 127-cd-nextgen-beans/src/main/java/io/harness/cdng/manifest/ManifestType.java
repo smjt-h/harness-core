@@ -23,11 +23,11 @@ public interface ManifestType {
   String OpenshiftTemplate = "OpenshiftTemplate";
   String OpenshiftParam = "OpenshiftParam";
   String KustomizePatches = "KustomizePatches";
-  String ServerlessAws = "ServerlessAws";
+  String ServerlessAwsLambda = "ServerlessAwsLambda";
 
   static HashSet<String> getAllManifestTypes() {
     return new HashSet<>(Arrays.asList(ManifestType.K8Manifest, ManifestType.VALUES, ManifestType.OpenshiftTemplate,
         ManifestType.KustomizePatches, ManifestType.Kustomize, ManifestType.HelmChart, ManifestType.CONFIG_FILE,
-        ManifestType.OpenshiftParam, ManifestType.ServerlessAws));
+        ManifestType.OpenshiftParam, ManifestType.ServerlessAwsLambda));
   }
 }

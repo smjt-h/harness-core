@@ -103,12 +103,14 @@ public enum NGStepType {
       "Utilites/Non-Scripted/", StepSpecTypeConstants.PLACEHOLDER),
 
   // serverless steps
-  @JsonProperty(StepSpecTypeConstants.SERVERLESS_DEPLOY)
-  SERVERLESS_DEPLOY("Serverless Deploy", Arrays.asList(ServiceDefinitionType.SERVERLESS), "Serverless",
-      StepSpecTypeConstants.SERVERLESS_DEPLOY),
-  @JsonProperty(StepSpecTypeConstants.SERVERLESS_ROLLBACK)
-  SERVERLESS_ROLLBACK("Serverless Rollback", Arrays.asList(ServiceDefinitionType.SERVERLESS), "Serverless",
-      StepSpecTypeConstants.SERVERLESS_ROLLBACK);
+  @JsonProperty(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_DEPLOY)
+  SERVERLESS_AWS_LAMBDA_DEPLOY("Serverless Aws Lambda Deploy",
+      Arrays.asList(ServiceDefinitionType.SERVERLESS_AWS_LAMBDA), "Serverless Aws Lambda",
+      StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_DEPLOY),
+  @JsonProperty(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK)
+  SERVERLESS_AWS_LAMBDA_ROLLBACK("Serverless Aws Lambda Rollback",
+      Arrays.asList(ServiceDefinitionType.SERVERLESS_AWS_LAMBDA), "Serverless Aws Lambda",
+      StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK);
 
   private String displayName;
   private List<ServiceDefinitionType> serviceDefinitionTypes;

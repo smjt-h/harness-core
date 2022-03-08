@@ -22,8 +22,8 @@ public class CDCreatorUtils {
     return Sets.newHashSet("K8sRollingDeploy", "K8sRollingRollback", "K8sScale", "K8sBlueGreenDeploy",
         "K8sBGSwapServices", "K8sDelete", "K8sCanaryDelete", "K8sApply", "TerraformApply", "TerraformPlan",
         "TerraformDestroy", StepSpecTypeConstants.TERRAFORM_ROLLBACK, StepSpecTypeConstants.HELM_DEPLOY,
-        StepSpecTypeConstants.HELM_ROLLBACK, StepSpecTypeConstants.SERVERLESS_DEPLOY,
-        StepSpecTypeConstants.SERVERLESS_ROLLBACK);
+        StepSpecTypeConstants.HELM_ROLLBACK, StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_DEPLOY,
+        StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK);
   }
   public Set<String> getSupportedStepsV2() {
     return Sets.newHashSet("K8sCanaryDeploy");

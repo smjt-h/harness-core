@@ -24,12 +24,13 @@ import org.springframework.data.annotation.TypeAlias;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@TypeAlias("serverlessRollbackStepParameters")
-@RecasterAlias("io.harness.cdng.serverless.ServerlessRollbackStepParameters")
-public class ServerlessRollbackStepParameters
-    extends ServerlessRollbackBaseStepInfo implements ServerlessSpecParameters {
+@TypeAlias("serverlessAwsLambdaDeployStepParameters")
+@RecasterAlias("io.harness.cdng.serverless.ServerlessAwsLambdaDeployStepParameters")
+public class ServerlessAwsLambdaDeployStepParameters
+    extends ServerlessAwsLambdaDeployBaseStepInfo implements ServerlessAwsLambdaSpecParameters {
   @Builder(builderMethodName = "infoBuilder")
-  public ServerlessRollbackStepParameters(ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
-    super(delegateSelectors);
+  public ServerlessAwsLambdaDeployStepParameters(
+      ParameterField<List<TaskSelectorYaml>> delegateSelectors, ParameterField<String> commandOptions) {
+    super(delegateSelectors, commandOptions);
   }
 }

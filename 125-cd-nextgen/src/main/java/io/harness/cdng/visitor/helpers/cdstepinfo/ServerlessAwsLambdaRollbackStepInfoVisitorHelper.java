@@ -5,17 +5,19 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.cdng.visitor.helpers.manifest;
+package io.harness.cdng.visitor.helpers.cdstepinfo;
 
-import io.harness.cdng.manifest.yaml.kinds.ServerlessAwsManifest;
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.serverless.ServerlessAwsLambdaRollbackStepInfo;
 import io.harness.walktree.visitor.validation.ConfigValidator;
 import io.harness.walktree.visitor.validation.ValidationVisitor;
 
-public class ServerlessAwsManifestVisitorHelper implements ConfigValidator {
+@OwnedBy(HarnessTeam.CDP)
+public class ServerlessAwsLambdaRollbackStepInfoVisitorHelper implements ConfigValidator {
   @Override
   public Object createDummyVisitableElement(Object originalElement) {
-    ServerlessAwsManifest serverlessAwsManifest = (ServerlessAwsManifest) originalElement;
-    return ServerlessAwsManifest.builder().identifier(serverlessAwsManifest.getIdentifier()).build();
+    return ServerlessAwsLambdaRollbackStepInfo.infoBuilder().build();
   }
 
   @Override

@@ -43,8 +43,8 @@ public interface YamlTypes {
   String HELM_DEPLOY = StepSpecTypeConstants.HELM_DEPLOY;
   String HELM_ROLLBACK = StepSpecTypeConstants.HELM_ROLLBACK;
 
-  String SERVERLESS_DEPLOY = StepSpecTypeConstants.SERVERLESS_DEPLOY;
-  String SERVERLESS_ROLLBACK = StepSpecTypeConstants.SERVERLESS_ROLLBACK;
+  String SERVERLESS_AWS_LAMBDA_DEPLOY = StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_DEPLOY;
+  String SERVERLESS_AWS_LAMBDA_ROLLBACK = StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK;
 
   String MANIFEST_LIST_CONFIG = "manifests";
   String MANIFEST_CONFIG = "manifest";

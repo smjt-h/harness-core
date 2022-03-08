@@ -11,7 +11,7 @@ import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.pipeline.CDStepInfo;
-import io.harness.cdng.visitor.helpers.cdstepinfo.ServerlessRollbackStepInfoVisitorHelper;
+import io.harness.cdng.visitor.helpers.cdstepinfo.ServerlessAwsLambdaRollbackStepInfoVisitorHelper;
 import io.harness.executions.steps.StepSpecTypeConstants;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
@@ -31,16 +31,17 @@ import org.springframework.data.annotation.TypeAlias;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@SimpleVisitorHelper(helperClass = ServerlessRollbackStepInfoVisitorHelper.class)
-@JsonTypeName(StepSpecTypeConstants.SERVERLESS_ROLLBACK)
-@TypeAlias("serverlessRollbackStepInfo")
-@RecasterAlias("io.harness.cdng.serverless.ServerlessRollbackStepInfo")
-public class ServerlessRollbackStepInfo extends ServerlessRollbackBaseStepInfo implements CDStepInfo, Visitable {
+@SimpleVisitorHelper(helperClass = ServerlessAwsLambdaRollbackStepInfoVisitorHelper.class)
+@JsonTypeName(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK)
+@TypeAlias("serverlessAwsLambdaRollbackStepInfo")
+@RecasterAlias("io.harness.cdng.serverless.ServerlessAwsLambdaRollbackStepInfo")
+public class ServerlessAwsLambdaRollbackStepInfo
+    extends ServerlessAwsLambdaRollbackBaseStepInfo implements CDStepInfo, Visitable {
   // For Visitor Framework Impl
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 
   @Builder(builderMethodName = "infoBuilder")
-  public ServerlessRollbackStepInfo(ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
+  public ServerlessAwsLambdaRollbackStepInfo(ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
     super(delegateSelectors);
   }
 
@@ -56,6 +57,6 @@ public class ServerlessRollbackStepInfo extends ServerlessRollbackBaseStepInfo i
 
   @Override
   public SpecParameters getSpecParameters() {
-    return ServerlessDeployStepParameters.infoBuilder().delegateSelectors(this.getDelegateSelectors()).build();
+    return ServerlessAwsLambdaDeployStepParameters.infoBuilder().delegateSelectors(this.getDelegateSelectors()).build();
   }
 }

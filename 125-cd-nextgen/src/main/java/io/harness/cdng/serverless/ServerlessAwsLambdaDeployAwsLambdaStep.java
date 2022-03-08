@@ -53,9 +53,10 @@ import org.apache.commons.lang3.tuple.Pair;
 
 @OwnedBy(HarnessTeam.CDP)
 @Slf4j
-public class ServerlessDeployStep extends TaskChainExecutableWithRollbackAndRbac implements ServerlessStepExecutor {
+public class ServerlessAwsLambdaDeployAwsLambdaStep
+    extends TaskChainExecutableWithRollbackAndRbac implements ServerlessAwsLambdaStepExecutor {
   public static final StepType STEP_TYPE = StepType.newBuilder()
-                                               .setType(ExecutionNodeType.SERVERLESS_DEPLOY.getYamlType())
+                                               .setType(ExecutionNodeType.SERVERLESS_AWS_LAMBDA_DEPLOY.getYamlType())
                                                .setStepCategory(StepCategory.STEP)
                                                .build();
   private final String SERVERLESS_DEPLOY_COMMAND_NAME = "Deploy";
@@ -80,8 +81,8 @@ public class ServerlessDeployStep extends TaskChainExecutableWithRollbackAndRbac
       ServerlessExecutionPassThroughData executionPassThroughData, boolean shouldOpenFetchFilesLogStream,
       UnitProgressData unitProgressData) {
     InfrastructureOutcome infrastructureOutcome = executionPassThroughData.getInfrastructure();
-    ServerlessDeployStepParameters serverlessDeployStepParameters =
-        (ServerlessDeployStepParameters) stepElementParameters.getSpec();
+    ServerlessAwsLambdaDeployStepParameters serverlessDeployStepParameters =
+        (ServerlessAwsLambdaDeployStepParameters) stepElementParameters.getSpec();
     String manifestFileOverrideContent =
         serverlessStepHelper.renderManifestContent(ambiance, manifestFilePathContent.getValue());
     final String accountId = AmbianceUtils.getAccountId(ambiance);

@@ -5,16 +5,17 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.cdng.visitor.helpers.serviceconfig;
+package io.harness.cdng.visitor.helpers.manifest;
 
-import io.harness.cdng.service.beans.ServerlessServiceSpec;
+import io.harness.cdng.manifest.yaml.kinds.ServerlessAwsLambdaManifest;
 import io.harness.walktree.visitor.validation.ConfigValidator;
 import io.harness.walktree.visitor.validation.ValidationVisitor;
 
-public class ServerlessServiceSpecVisitorHelper implements ConfigValidator {
+public class ServerlessAwsLambdaManifestVisitorHelper implements ConfigValidator {
   @Override
   public Object createDummyVisitableElement(Object originalElement) {
-    return ServerlessServiceSpec.builder().build();
+    ServerlessAwsLambdaManifest serverlessAwsLambdaManifest = (ServerlessAwsLambdaManifest) originalElement;
+    return ServerlessAwsLambdaManifest.builder().identifier(serverlessAwsLambdaManifest.getIdentifier()).build();
   }
 
   @Override

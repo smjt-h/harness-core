@@ -12,7 +12,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
 import io.harness.cdng.infra.beans.InfraMapping;
-import io.harness.cdng.infra.beans.ServerlessAwsInfraMapping;
+import io.harness.cdng.infra.beans.ServerlessAwsLambdaInfraMapping;
 import io.harness.filters.ConnectorRefExtractorHelper;
 import io.harness.filters.WithConnectorRef;
 import io.harness.pms.yaml.ParameterField;
@@ -34,11 +34,11 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(HarnessTeam.CDP)
 @Value
 @Builder
-@JsonTypeName(InfrastructureKind.SERVERLESS_AWS)
+@JsonTypeName(InfrastructureKind.SERVERLESS_AWS_LAMBDA)
 @SimpleVisitorHelper(helperClass = ConnectorRefExtractorHelper.class)
-@TypeAlias("serverlessAwsInfrastructure")
-@RecasterAlias("io.harness.cdng.infra.yaml.ServerlessAwsInfrastructure")
-public class ServerlessAwsInfrastructure implements Infrastructure, Visitable, WithConnectorRef {
+@TypeAlias("serverlessAwsLambdaInfrastructure")
+@RecasterAlias("io.harness.cdng.infra.yaml.ServerlessAwsLambdaInfrastructure")
+public class ServerlessAwsLambdaInfrastructure implements Infrastructure, Visitable, WithConnectorRef {
   @NotNull
   @NotEmpty
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
@@ -57,7 +57,7 @@ public class ServerlessAwsInfrastructure implements Infrastructure, Visitable, W
 
   @Override
   public InfraMapping getInfraMapping() {
-    return ServerlessAwsInfraMapping.builder()
+    return ServerlessAwsLambdaInfraMapping.builder()
         .awsConnector(connectorRef.getValue())
         .region(region.getValue())
         .stage(stage.getValue())
@@ -66,7 +66,7 @@ public class ServerlessAwsInfrastructure implements Infrastructure, Visitable, W
 
   @Override
   public String getKind() {
-    return InfrastructureKind.SERVERLESS_AWS;
+    return InfrastructureKind.SERVERLESS_AWS_LAMBDA;
   }
 
   @Override
@@ -88,8 +88,8 @@ public class ServerlessAwsInfrastructure implements Infrastructure, Visitable, W
 
   @Override
   public Infrastructure applyOverrides(Infrastructure overrideConfig) {
-    ServerlessAwsInfrastructure config = (ServerlessAwsInfrastructure) overrideConfig;
-    ServerlessAwsInfrastructure resultantInfra = this;
+    ServerlessAwsLambdaInfrastructure config = (ServerlessAwsLambdaInfrastructure) overrideConfig;
+    ServerlessAwsLambdaInfrastructure resultantInfra = this;
     if (!ParameterField.isNull(config.getConnectorRef())) {
       resultantInfra = resultantInfra.withConnectorRef(config.getConnectorRef());
     }

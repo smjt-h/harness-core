@@ -53,7 +53,7 @@ public class ManifestOutcomeMapper {
         return getOpenshiftOutcome(manifestAttributes);
       case OpenshiftParam:
         return getOpenshiftParamOutcome(manifestAttributes, parameters);
-      case ServerlessAws:
+      case ServerlessAwsLambda:
         return getServerlessAwsOutcome(manifestAttributes, parameters);
       default:
         throw new UnsupportedOperationException(
@@ -135,10 +135,10 @@ public class ManifestOutcomeMapper {
         .build();
   }
 
-  private ServerlessAwsManifestOutcome getServerlessAwsOutcome(
+  private ServerlessAwsLambdaManifestOutcome getServerlessAwsOutcome(
       ManifestAttributes manifestAttributes, ManifestStepParameters param) {
-    ServerlessAwsManifest attributes = (ServerlessAwsManifest) manifestAttributes;
-    return ServerlessAwsManifestOutcome.builder()
+    ServerlessAwsLambdaManifest attributes = (ServerlessAwsLambdaManifest) manifestAttributes;
+    return ServerlessAwsLambdaManifestOutcome.builder()
         .identifier(attributes.getIdentifier())
         .store(attributes.getStoreConfig())
         .configOverridePath(attributes.getConfigOverridePath())

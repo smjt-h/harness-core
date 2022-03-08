@@ -85,7 +85,7 @@ public class ServiceVariableCreator {
       switch (typeField.getNode().getCurrJsonNode().textValue()) {
         case ServiceSpecType.KUBERNETES:
         case ServiceSpecType.NATIVE_HELM:
-        case ServiceSpecType.SERVERLESS:
+        case ServiceSpecType.SERVERLESS_AWS_LAMBDA:
           YamlField specNode = serviceDefNode.getNode().getField(YamlTypes.SERVICE_SPEC);
           if (specNode != null) {
             addVariablesForKubernetesHelmServerlessServiceSpec(specNode, yamlPropertiesMap);
@@ -167,7 +167,7 @@ public class ServiceVariableCreator {
       case ManifestType.HelmChart:
         addVariablesForHelmChartManifest(specNode, yamlPropertiesMap);
         break;
-      case ManifestType.ServerlessAws:
+      case ManifestType.ServerlessAwsLambda:
         addVariablesForServerlessAwsStoreConfigYaml(specNode, yamlPropertiesMap);
         break;
       default:

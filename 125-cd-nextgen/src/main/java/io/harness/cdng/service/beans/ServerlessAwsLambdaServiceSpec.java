@@ -16,7 +16,7 @@ import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
 import io.harness.cdng.manifest.yaml.ManifestOverrideSetWrapper;
 import io.harness.cdng.service.ServiceSpec;
 import io.harness.cdng.variables.beans.NGVariableOverrideSetWrapper;
-import io.harness.cdng.visitor.helpers.serviceconfig.ServerlessServiceSpecVisitorHelper;
+import io.harness.cdng.visitor.helpers.serviceconfig.ServerlessAwsLambdaServiceSpecVisitorHelper;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.walktree.beans.VisitableChildren;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
@@ -32,11 +32,11 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(HarnessTeam.CDP)
 @Value
 @Builder
-@JsonTypeName(ServiceSpecType.SERVERLESS)
-@SimpleVisitorHelper(helperClass = ServerlessServiceSpecVisitorHelper.class)
-@TypeAlias("serverlessServiceSpec")
-@RecasterAlias("io.harness.cdng.service.beans.ServerlessServiceSpec")
-public class ServerlessServiceSpec implements ServiceSpec, Visitable {
+@JsonTypeName(ServiceSpecType.SERVERLESS_AWS_LAMBDA)
+@SimpleVisitorHelper(helperClass = ServerlessAwsLambdaServiceSpecVisitorHelper.class)
+@TypeAlias("serverlessAwsLambdaServiceSpec")
+@RecasterAlias("io.harness.cdng.service.beans.ServerlessAwsLambdaServiceSpec")
+public class ServerlessAwsLambdaServiceSpec implements ServiceSpec, Visitable {
   List<NGVariable> variables;
   ArtifactListConfig artifacts;
   List<ManifestConfigWrapper> manifests;
@@ -50,7 +50,7 @@ public class ServerlessServiceSpec implements ServiceSpec, Visitable {
 
   @Override
   public String getType() {
-    return ServiceDefinitionType.SERVERLESS.getYamlName();
+    return ServiceDefinitionType.SERVERLESS_AWS_LAMBDA.getYamlName();
   }
 
   @Override

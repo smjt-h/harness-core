@@ -24,7 +24,7 @@ public enum ManifestConfigType {
   @JsonProperty(ManifestType.OpenshiftParam) OPEN_SHIFT_PARAM(ManifestType.OpenshiftParam),
   @JsonProperty(ManifestType.OpenshiftTemplate) OPEN_SHIFT_TEMPLATE(ManifestType.OpenshiftTemplate),
   @JsonProperty(ManifestType.VALUES) VALUES(ManifestType.VALUES),
-  @JsonProperty(ManifestType.ServerlessAws) SERVERLESS_AWS(ManifestType.ServerlessAws);
+  @JsonProperty(ManifestType.ServerlessAwsLambda) SERVERLESS_AWS_LAMBDA(ManifestType.ServerlessAwsLambda);
   private final String displayName;
 
   ManifestConfigType(String displayName) {

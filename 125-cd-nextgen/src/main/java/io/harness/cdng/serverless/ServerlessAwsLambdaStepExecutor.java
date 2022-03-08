@@ -16,7 +16,7 @@ import io.harness.pms.sdk.core.steps.executables.TaskChainResponse;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-public interface ServerlessStepExecutor {
+public interface ServerlessAwsLambdaStepExecutor {
   TaskChainResponse executeServerlessTask(ManifestOutcome serverlessManifestOutcome, Ambiance ambiance,
       StepElementParameters stepParameters, Pair<String, String> manifestFilePathContent,
       ServerlessExecutionPassThroughData executionPassThroughData, boolean shouldOpenFetchFilesLogStream,

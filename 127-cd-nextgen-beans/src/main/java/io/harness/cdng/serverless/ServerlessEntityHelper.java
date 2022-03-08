@@ -20,7 +20,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.DecryptableEntity;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
-import io.harness.cdng.infra.beans.ServerlessAwsInfrastructureOutcome;
+import io.harness.cdng.infra.beans.ServerlessAwsLambdaInfrastructureOutcome;
 import io.harness.cdng.infra.yaml.InfrastructureKind;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
@@ -78,15 +78,15 @@ public class ServerlessEntityHelper {
       InfrastructureOutcome infrastructureOutcome, NGAccess ngAccess) {
     ConnectorInfoDTO connectorDTO = getConnectorInfoDTO(infrastructureOutcome.getConnectorRef(), ngAccess);
     switch (infrastructureOutcome.getKind()) {
-      case InfrastructureKind.SERVERLESS_AWS:
-        ServerlessAwsInfrastructureOutcome serverlessAwsInfrastructureOutcome =
-            (ServerlessAwsInfrastructureOutcome) infrastructureOutcome;
+      case InfrastructureKind.SERVERLESS_AWS_LAMBDA:
+        ServerlessAwsLambdaInfrastructureOutcome serverlessAwsLambdaInfrastructureOutcome =
+            (ServerlessAwsLambdaInfrastructureOutcome) infrastructureOutcome;
         return ServerlessAwsInfraConfig.builder()
             .encryptionDataDetails(getEncryptionDataDetails(connectorDTO, ngAccess))
             .awsConnectorDTO((AwsConnectorDTO) connectorDTO.getConnectorConfig())
             .serverlessInfraType(AWS_INFRA)
-            .region(serverlessAwsInfrastructureOutcome.getRegion())
-            .stage(serverlessAwsInfrastructureOutcome.getStage())
+            .region(serverlessAwsLambdaInfrastructureOutcome.getRegion())
+            .stage(serverlessAwsLambdaInfrastructureOutcome.getStage())
             .build();
       default:
         throw new UnsupportedOperationException(

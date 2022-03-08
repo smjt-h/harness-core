@@ -240,21 +240,26 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
             .setFeatureFlag(FeatureName.NG_NATIVE_HELM.name())
             .build();
 
-    StepInfo serverlessDeploy =
-        StepInfo.newBuilder()
-            .setName("Serverless Deploy")
-            .setType(StepSpecTypeConstants.SERVERLESS_DEPLOY)
-            .setStepMetaData(StepMetaData.newBuilder().addCategory("Serverless").setFolderPath("Serverless").build())
-            .build();
+    StepInfo serverlessDeploy = StepInfo.newBuilder()
+                                    .setName("Serverless Aws Lambda Deploy")
+                                    .setType(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_DEPLOY)
+                                    .setStepMetaData(StepMetaData.newBuilder()
+                                                         .addCategory("ServerlessAwsLambda")
+                                                         .setFolderPath("ServerlessAwsLambda")
+                                                         .build())
+                                    .setFeatureFlag(FeatureName.SERVERLESS_SUPPORT.name())
+                                    .build();
 
-    StepInfo serverlessRollback =
-        StepInfo.newBuilder()
-            .setName("Serverless Rollback")
-            .setType(StepSpecTypeConstants.SERVERLESS_ROLLBACK)
-            .setStepMetaData(StepMetaData.newBuilder().addCategory("Serverless").setFolderPath("Serverless").build())
-            .build();
+    StepInfo serverlessRollback = StepInfo.newBuilder()
+                                      .setName("Serverless Aws Lambda Rollback")
+                                      .setType(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK)
+                                      .setStepMetaData(StepMetaData.newBuilder()
+                                                           .addCategory("Serverless Aws Lambda")
+                                                           .setFolderPath("Serverless Aws Lambda")
+                                                           .build())
+                                      .setFeatureFlag(FeatureName.SERVERLESS_SUPPORT.name())
+                                      .build();
 
-    // todo: need to add feature flag for serverless
     List<StepInfo> stepInfos = new ArrayList<>();
 
     stepInfos.add(k8sRolling);

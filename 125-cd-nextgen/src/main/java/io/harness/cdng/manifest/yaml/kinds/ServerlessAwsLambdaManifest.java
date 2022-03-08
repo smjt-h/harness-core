@@ -17,7 +17,7 @@ import io.harness.cdng.manifest.ManifestType;
 import io.harness.cdng.manifest.yaml.ManifestAttributes;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
-import io.harness.cdng.visitor.helpers.manifest.ServerlessAwsManifestVisitorHelper;
+import io.harness.cdng.visitor.helpers.manifest.ServerlessAwsLambdaManifestVisitorHelper;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.SkipAutoEvaluation;
@@ -38,12 +38,12 @@ import org.springframework.data.annotation.TypeAlias;
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = false)
-@JsonTypeName(ManifestType.ServerlessAws)
+@JsonTypeName(ManifestType.ServerlessAwsLambda)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@SimpleVisitorHelper(helperClass = ServerlessAwsManifestVisitorHelper.class)
-@TypeAlias("serverlessAwsManifest")
-@RecasterAlias("io.harness.cdng.manifest.yaml.kinds.ServerlessAwsManifest")
-public class ServerlessAwsManifest implements ManifestAttributes, Visitable {
+@SimpleVisitorHelper(helperClass = ServerlessAwsLambdaManifestVisitorHelper.class)
+@TypeAlias("serverlessAwsLambdaManifest")
+@RecasterAlias("io.harness.cdng.manifest.yaml.kinds.ServerlessAwsLambdaManifest")
+public class ServerlessAwsLambdaManifest implements ManifestAttributes, Visitable {
   @EntityIdentifier String identifier;
 
   @Wither
@@ -53,7 +53,6 @@ public class ServerlessAwsManifest implements ManifestAttributes, Visitable {
   ParameterField<StoreConfigWrapper> store;
 
   @Wither @ApiModelProperty(dataType = STRING_CLASSPATH) @SkipAutoEvaluation ParameterField<String> configOverridePath;
-  // todo: check with sainath for better validation type
   // For Visitor Framework Impl
   String metadata;
 
@@ -61,7 +60,7 @@ public class ServerlessAwsManifest implements ManifestAttributes, Visitable {
 
   @Override
   public String getKind() {
-    return ManifestType.ServerlessAws;
+    return ManifestType.ServerlessAwsLambda;
   }
 
   @Override
@@ -78,26 +77,26 @@ public class ServerlessAwsManifest implements ManifestAttributes, Visitable {
 
   @Override
   public ManifestAttributeStepParameters getManifestAttributeStepParameters() {
-    return new ServerlessAwsManifestStepParameters(
+    return new ServerlessAwsLambdaManifestStepParameters(
         identifier, StoreConfigWrapperParameters.fromStoreConfigWrapper(store.getValue()), configOverridePath);
   }
 
   @Override
   public ManifestAttributes applyOverrides(ManifestAttributes overrideConfig) {
-    ServerlessAwsManifest serverlessAwsManifest = (ServerlessAwsManifest) overrideConfig;
-    ServerlessAwsManifest resultantManifest = this;
-    if (serverlessAwsManifest.getStore() != null && serverlessAwsManifest.getStore().getValue() != null) {
+    ServerlessAwsLambdaManifest serverlessAwsLambdaManifest = (ServerlessAwsLambdaManifest) overrideConfig;
+    ServerlessAwsLambdaManifest resultantManifest = this;
+    if (serverlessAwsLambdaManifest.getStore() != null && serverlessAwsLambdaManifest.getStore().getValue() != null) {
       resultantManifest = resultantManifest.withStore(ParameterField.createValueField(
-          store.getValue().applyOverrides(serverlessAwsManifest.getStore().getValue())));
+          store.getValue().applyOverrides(serverlessAwsLambdaManifest.getStore().getValue())));
     }
-    if (serverlessAwsManifest.getConfigOverridePath() != null) {
-      resultantManifest = resultantManifest.withConfigOverridePath(serverlessAwsManifest.getConfigOverridePath());
+    if (serverlessAwsLambdaManifest.getConfigOverridePath() != null) {
+      resultantManifest = resultantManifest.withConfigOverridePath(serverlessAwsLambdaManifest.getConfigOverridePath());
     }
     return resultantManifest;
   }
 
   @Value
-  public static class ServerlessAwsManifestStepParameters implements ManifestAttributeStepParameters {
+  public static class ServerlessAwsLambdaManifestStepParameters implements ManifestAttributeStepParameters {
     String identifier;
     StoreConfigWrapperParameters store;
     ParameterField<String> configOverridePath;
