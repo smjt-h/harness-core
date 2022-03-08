@@ -1772,6 +1772,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
               .toBuilder()
               .keepAlivePacket(false)
               .pollingModeEnabled(true)
+              .delegateGroupId(delegateGroupId)
               .currentlyExecutingDelegateTasks(currentlyExecutingTasks.values()
                                                    .stream()
                                                    .map(DelegateTaskPackage::getDelegateTaskId)

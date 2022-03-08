@@ -2352,6 +2352,7 @@ public class DelegateServiceImpl implements DelegateService {
 
     String delegateGroupId = delegateParams.getDelegateGroupId();
     if (isBlank(delegateGroupId) && isNotBlank(delegateParams.getDelegateGroupName())) {
+      log.info("Delegate group id is null");
       final DelegateGroup delegateGroup =
           upsertDelegateGroup(delegateParams.getDelegateGroupName(), delegateParams.getAccountId(), null);
       delegateGroupId = delegateGroup.getUuid();
