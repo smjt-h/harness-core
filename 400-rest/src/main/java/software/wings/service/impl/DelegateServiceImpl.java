@@ -2857,6 +2857,7 @@ public class DelegateServiceImpl implements DelegateService {
     }
 
     DelegateGroup delegateGroup = persistence.upsert(query, updateOperations, HPersistence.upsertReturnNewOptions);
+    log.info("Updating delegate group");
     outboxService.save(
         DelegateGroupUpsertEvent.builder()
             .accountIdentifier(accountId)
