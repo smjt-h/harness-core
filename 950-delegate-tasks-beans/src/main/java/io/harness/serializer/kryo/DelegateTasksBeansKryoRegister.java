@@ -332,7 +332,6 @@ import io.harness.delegate.task.git.GitFetchRequest;
 import io.harness.delegate.task.git.GitFetchResponse;
 import io.harness.delegate.task.git.TaskStatus;
 import io.harness.delegate.task.helm.HelmChartInfo;
-import io.harness.delegate.task.helm.HelmChartValuesFetchFileConfig;
 import io.harness.delegate.task.helm.HelmCmdExecResponseNG;
 import io.harness.delegate.task.helm.HelmCommandFlag;
 import io.harness.delegate.task.helm.HelmCommandRequestNG;
@@ -1113,6 +1112,5 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(ArtifactoryFetchRepositoriesResponse.class, 543477);
     kryo.register(ArtifactoryFetchBuildsResponse.class, 543478);
     kryo.register(ArtifactoryStoreDelegateConfig.class, 543479);
-    kryo.register(HelmChartValuesFetchFileConfig.class, 543480);
   }
 }
