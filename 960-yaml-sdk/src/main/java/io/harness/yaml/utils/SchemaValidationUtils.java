@@ -7,6 +7,8 @@
 
 package io.harness.yaml.utils;
 
+import io.harness.yaml.validator.NodeErrorInfo;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.networknt.schema.ValidationMessage;
 import java.util.ArrayList;
@@ -59,8 +61,12 @@ public class SchemaValidationUtils {
   }
 
   public JsonNode parseJsonNodeByPath(ValidationMessage validationMessage, JsonNode jsonNode) {
+    return parseJsonNodeByPath(validationMessage.getPath(), jsonNode);
+  }
+
+  public JsonNode parseJsonNodeByPath(String errorPath, JsonNode jsonNode) {
     JsonNode currentNode = jsonNode.deepCopy();
-    String[] pathList = validationMessage.getPath().split("\\.");
+    String[] pathList = errorPath.split("\\.");
     for (String path : pathList) {
       if (path.equals("$")) {
         continue;
@@ -86,5 +92,48 @@ public class SchemaValidationUtils {
       }
     }
     return currentNode;
+  }
+
+  public NodeErrorInfo getStageErrorInfo(String path, JsonNode jsonNode) {
+    try {
+      char[] stringBuffer = path.toCharArray();
+      int index = path.indexOf("stages[");
+      while (index < path.length() && stringBuffer[index] != ']') {
+        index++;
+      }
+      // Adding stage in path after stages[index].
+      String pathToStage = path.substring(0, index + 7);
+      JsonNode stageNode = parseJsonNodeByPath(pathToStage, jsonNode);
+      return NodeErrorInfo.builder()
+          .name(stageNode.get("name").asText())
+          .identifier(stageNode.get("identifier").asText())
+          .type(stageNode.get("type").asText())
+          .fqn(pathToStage)
+          .build();
+    } catch (IndexOutOfBoundsException | NullPointerException e) {
+      return null;
+    }
+  }
+
+  public NodeErrorInfo getStepErrorInfo(String path, JsonNode jsonNode) {
+    try {
+      char[] stringBuffer = path.toCharArray();
+      int index = path.indexOf("steps[");
+      while (index < path.length() && stringBuffer[index] != ']') {
+        index++;
+      }
+      // Adding step in path after steps[index].
+      String pathToStage = path.substring(0, index + 6);
+      JsonNode stepNode = parseJsonNodeByPath(pathToStage, jsonNode);
+      return NodeErrorInfo.builder()
+          .name(stepNode.get("name").asText())
+          .identifier(stepNode.get("identifier").asText())
+          .type(stepNode.get("type").asText())
+          .fqn(pathToStage)
+          .build();
+
+    } catch (IndexOutOfBoundsException | NullPointerException e) {
+      return null;
+    }
   }
 }

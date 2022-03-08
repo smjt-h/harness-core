@@ -5,25 +5,21 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.pms.pipeline.yaml;
-
-import io.harness.exception.ngexception.ErrorMetadataDTO;
+package io.harness.yaml.validator;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModel;
-import java.util.List;
 import lombok.Builder;
 import lombok.Value;
 
 @Value
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-@ApiModel("YamlSchemaErrorWrapperDTO")
-public class YamlSchemaErrorWrapperDTO implements ErrorMetadataDTO {
-  List<YamlSchemaErrorDTO> schemaErrors;
-
-  @Override
-  public String getType() {
-    return "YamlSchemaErrorWrapperDTO";
-  }
+@ApiModel("YamlSchemaErrorDTO")
+public class YamlSchemaErrorDTO {
+  String message;
+  NodeErrorInfo stageInfo;
+  NodeErrorInfo stepInfo;
+  String fqn;
+  String hintMessage;
 }

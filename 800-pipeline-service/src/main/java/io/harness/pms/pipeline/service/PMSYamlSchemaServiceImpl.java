@@ -36,8 +36,6 @@ import io.harness.pms.pipeline.service.yamlschema.PmsYamlSchemaHelper;
 import io.harness.pms.pipeline.service.yamlschema.SchemaFetcher;
 import io.harness.pms.pipeline.service.yamlschema.approval.ApprovalYamlSchemaService;
 import io.harness.pms.pipeline.service.yamlschema.featureflag.FeatureFlagYamlService;
-import io.harness.pms.pipeline.yaml.YamlSchemaErrorDTO;
-import io.harness.pms.pipeline.yaml.YamlSchemaErrorWrapperDTO;
 import io.harness.pms.sdk.PmsSdkInstanceService;
 import io.harness.pms.utils.CompletableFutures;
 import io.harness.pms.yaml.YamlUtils;
@@ -63,7 +61,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -129,19 +126,10 @@ public class PMSYamlSchemaServiceImpl implements PMSYamlSchemaService {
     try {
       JsonNode schema = getPipelineYamlSchema(accountIdentifier, projectId, orgId, Scope.PROJECT);
       String schemaString = JsonPipelineUtils.writeJsonString(schema);
-      Set<String> errors = yamlSchemaValidator.validate(yaml, schemaString,
+      yamlSchemaValidator.validate(yaml, schemaString,
           pmsYamlSchemaHelper.isFeatureFlagEnabled(FeatureName.DONT_RESTRICT_PARALLEL_STAGE_COUNT, accountIdentifier),
           allowedParallelStages);
-      if (!errors.isEmpty()) {
-        List<YamlSchemaErrorDTO> errorDTOS = new ArrayList<>();
-        for (String error : errors) {
-          // Add stage/step details here.
-          errorDTOS.add(YamlSchemaErrorDTO.builder().message(error).build());
-        }
-        YamlSchemaErrorWrapperDTO errorWrapperDTO = YamlSchemaErrorWrapperDTO.builder().schemaErrors(errorDTOS).build();
-        throw new io.harness.pms.pipeline.yaml.InvalidYamlException("Invalid Yaml", errorWrapperDTO);
-      }
-    } catch (io.harness.pms.pipeline.yaml.InvalidYamlException e) {
+    } catch (io.harness.yaml.validator.InvalidYamlException e) {
       throw e;
     } catch (Exception ex) {
       log.error(ex.getMessage(), ex);
