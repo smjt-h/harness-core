@@ -20,15 +20,12 @@ import lombok.Value;
 @OwnedBy(HarnessTeam.CDP)
 public class ServerlessDeployRequest implements ServerlessCommandRequest {
   String accountId;
-  String appId;
-  String activityId;
   ServerlessCommandType serverlessCommandType;
   String commandName;
-  ServerlessCliVersion serverlessCliVersion;
-  String workingDirectory;
   ServerlessArtifactConfig serverlessArtifactConfig;
   CommandUnitsProgress commandUnitsProgress;
-  ServerlessManifest serverlessManifest;
+  ServerlessManifestConfig serverlessManifestConfig;
   ServerlessInfraConfig serverlessInfraConfig;
   ServerlessDeployConfig serverlessDeployConfig;
+  Integer timeoutIntervalInMin;
 }

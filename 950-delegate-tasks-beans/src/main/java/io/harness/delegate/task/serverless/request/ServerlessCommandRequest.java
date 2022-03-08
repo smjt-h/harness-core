@@ -8,20 +8,21 @@
 package io.harness.delegate.task.serverless.request;
 
 import static io.harness.delegate.beans.connector.awsconnector.AwsCredentialType.MANUAL_CREDENTIALS;
+import static io.harness.delegate.beans.storeconfig.StoreDelegateConfigType.GIT;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.connector.awsconnector.AwsCapabilityHelper;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
+import io.harness.delegate.beans.connector.scm.GitCapabilityHelper;
+import io.harness.delegate.beans.connector.scm.adapter.ScmConnectorMapper;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.ExecutionCapabilityDemander;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
+import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.capability.EncryptedDataDetailsCapabilityHelper;
 import io.harness.delegate.task.TaskParameters;
-import io.harness.delegate.task.serverless.ServerlessAwsInfraConfig;
-import io.harness.delegate.task.serverless.ServerlessCliVersion;
-import io.harness.delegate.task.serverless.ServerlessCommandType;
-import io.harness.delegate.task.serverless.ServerlessInfraConfig;
+import io.harness.delegate.task.serverless.*;
 import io.harness.exception.UnknownEnumTypeException;
 import io.harness.expression.ExpressionEvaluator;
 import io.harness.security.encryption.EncryptedDataDetail;
@@ -33,30 +34,41 @@ import org.hibernate.validator.constraints.NotEmpty;
 @OwnedBy(HarnessTeam.CDP)
 public interface ServerlessCommandRequest extends TaskParameters, ExecutionCapabilityDemander {
   String getAccountId();
-  String getAppId();
-  String getActivityId();
   @NotEmpty ServerlessCommandType getServerlessCommandType();
   String getCommandName();
   CommandUnitsProgress getCommandUnitsProgress();
-  ServerlessCliVersion getServerlessCliVersion();
   ServerlessInfraConfig getServerlessInfraConfig();
-  // todo: add timeout
+  ServerlessManifestConfig getServerlessManifestConfig();
+  Integer getTimeoutIntervalInMin();
 
   @Override
   default List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
     ServerlessInfraConfig serverlessInfraConfig = getServerlessInfraConfig();
+    ServerlessManifestConfig serverlessManifestConfig = getServerlessManifestConfig();
     List<EncryptedDataDetail> cloudProviderEncryptionDetails = serverlessInfraConfig.getEncryptionDataDetails();
 
     List<ExecutionCapability> capabilities =
         new ArrayList<>(EncryptedDataDetailsCapabilityHelper.fetchExecutionCapabilitiesForEncryptedDataDetails(
             cloudProviderEncryptionDetails, maskingEvaluator));
-    if (serverlessInfraConfig instanceof ServerlessAwsInfraConfig) {
-      AwsConnectorDTO awsConnectorDTO = ((ServerlessAwsInfraConfig) serverlessInfraConfig).getAwsConnectorDTO();
+    if (serverlessInfraConfig instanceof ServerlessAwsLambdaInfraConfig) {
+      AwsConnectorDTO awsConnectorDTO = ((ServerlessAwsLambdaInfraConfig) serverlessInfraConfig).getAwsConnectorDTO();
       if (awsConnectorDTO.getCredential().getAwsCredentialType() != MANUAL_CREDENTIALS) {
         throw new UnknownEnumTypeException(
             "AWS Credential Type", String.valueOf(awsConnectorDTO.getCredential().getAwsCredentialType()));
       }
       capabilities.addAll(AwsCapabilityHelper.fetchRequiredExecutionCapabilities(awsConnectorDTO, maskingEvaluator));
+    }
+    if (serverlessManifestConfig instanceof ServerlessAwsLambdaManifestConfig) {
+      ServerlessAwsLambdaManifestConfig serverlessAwsLambdaManifestConfig =
+          (ServerlessAwsLambdaManifestConfig) serverlessManifestConfig;
+      if (serverlessAwsLambdaManifestConfig.getGitStoreDelegateConfig().getType() == GIT) {
+        GitStoreDelegateConfig gitStoreDelegateConfig = serverlessAwsLambdaManifestConfig.getGitStoreDelegateConfig();
+        capabilities.addAll(GitCapabilityHelper.fetchRequiredExecutionCapabilities(
+            ScmConnectorMapper.toGitConfigDTO(gitStoreDelegateConfig.getGitConfigDTO()),
+            gitStoreDelegateConfig.getEncryptedDataDetails(), gitStoreDelegateConfig.getSshKeySpecDTO()));
+        capabilities.addAll(EncryptedDataDetailsCapabilityHelper.fetchExecutionCapabilitiesForEncryptedDataDetails(
+            gitStoreDelegateConfig.getEncryptedDataDetails(), maskingEvaluator));
+      }
     }
     // todo:sls installation capability
     return capabilities;

@@ -26,7 +26,7 @@ import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.services.ConnectorService;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
-import io.harness.delegate.task.serverless.ServerlessAwsInfraConfig;
+import io.harness.delegate.task.serverless.ServerlessAwsLambdaInfraConfig;
 import io.harness.delegate.task.serverless.ServerlessInfraConfig;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.NGAccess;
@@ -81,7 +81,7 @@ public class ServerlessEntityHelper {
       case InfrastructureKind.SERVERLESS_AWS_LAMBDA:
         ServerlessAwsLambdaInfrastructureOutcome serverlessAwsLambdaInfrastructureOutcome =
             (ServerlessAwsLambdaInfrastructureOutcome) infrastructureOutcome;
-        return ServerlessAwsInfraConfig.builder()
+        return ServerlessAwsLambdaInfraConfig.builder()
             .encryptionDataDetails(getEncryptionDataDetails(connectorDTO, ngAccess))
             .awsConnectorDTO((AwsConnectorDTO) connectorDTO.getConnectorConfig())
             .serverlessInfraType(AWS_INFRA)

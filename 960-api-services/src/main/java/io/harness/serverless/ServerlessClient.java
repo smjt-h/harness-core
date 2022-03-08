@@ -38,6 +38,10 @@ public class ServerlessClient {
     return new PluginCommand(this);
   }
 
+  public DeployListCommand deployList() {
+    return new DeployListCommand(this);
+  }
+
   public String command() {
     StringBuilder command = new StringBuilder(256);
     if (StringUtils.isNotBlank(homeDirectoryPath)) {

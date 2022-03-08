@@ -24,7 +24,7 @@ import io.harness.delegate.exception.ServerlessNGException;
 import io.harness.delegate.task.serverless.ServerlessCommandType;
 import io.harness.delegate.task.serverless.ServerlessDeployConfig;
 import io.harness.delegate.task.serverless.ServerlessInfraConfig;
-import io.harness.delegate.task.serverless.ServerlessManifest;
+import io.harness.delegate.task.serverless.ServerlessManifestConfig;
 import io.harness.delegate.task.serverless.request.ServerlessDeployRequest;
 import io.harness.delegate.task.serverless.response.ServerlessDeployResponse;
 import io.harness.exception.ExceptionUtils;
@@ -92,7 +92,7 @@ public class ServerlessAwsLambdaDeployAwsLambdaStep
         serverlessStepHelper.getServerlessInfraConfig(infrastructureOutcome, ambiance);
     ServerlessDeployConfig serverlessDeployConfig =
         serverlessStepHelper.getServerlessDeployConfig(serverlessDeployCommandType, serverlessDeployStepParameters);
-    ServerlessManifest serverlessManifest = serverlessStepHelper.getServerlessManifestConfig(
+    ServerlessManifestConfig serverlessManifestConfig = serverlessStepHelper.getServerlessManifestConfig(
         manifestFilePathContent, manifestFileOverrideContent, serverlessManifestOutcome, ambiance);
     ServerlessDeployRequest serverlessDeployRequest =
         ServerlessDeployRequest.builder()
@@ -101,7 +101,7 @@ public class ServerlessAwsLambdaDeployAwsLambdaStep
             .serverlessCommandType(serverlessDeployCommandType)
             .serverlessInfraConfig(serverlessInfraConfig)
             .serverlessDeployConfig(serverlessDeployConfig)
-            .serverlessManifest(serverlessManifest)
+            .serverlessManifestConfig(serverlessManifestConfig)
             .commandUnitsProgress(UnitProgressDataMapper.toCommandUnitsProgress(unitProgressData))
             .build();
     // todo: need to add artifact config and others

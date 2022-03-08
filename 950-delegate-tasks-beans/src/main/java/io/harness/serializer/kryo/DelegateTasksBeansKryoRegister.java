@@ -188,6 +188,7 @@ import io.harness.delegate.beans.gitapi.GitApiTaskParams;
 import io.harness.delegate.beans.gitapi.GitApiTaskResponse;
 import io.harness.delegate.beans.gitapi.GitRepoType;
 import io.harness.delegate.beans.instancesync.info.K8sServerInstanceInfo;
+import io.harness.delegate.beans.instancesync.info.ServerlessAwsLambdaServerInstanceInfo;
 import io.harness.delegate.beans.logstreaming.CommandUnitProgress;
 import io.harness.delegate.beans.logstreaming.CommandUnitStatusProgress;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
@@ -1101,5 +1102,8 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(VmServiceDependency.class, 543474);
     kryo.register(VmServiceStatus.class, 543475);
     kryo.register(VmServiceStatus.Status.class, 543476);
+
+    kryo.register(ServerlessAwsLambdaServerInstanceInfo.class, 543477);
+    // todo: may need to add more classes
   }
 }

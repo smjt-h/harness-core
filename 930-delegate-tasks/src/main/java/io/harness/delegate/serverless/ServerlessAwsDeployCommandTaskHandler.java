@@ -25,7 +25,7 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.serverless.ServerlessClient;
 import io.harness.serverless.ServerlessCommandUnitConstants;
-import io.harness.serverless.model.ServerlessAwsConfig;
+import io.harness.serverless.model.ServerlessAwsLambdaConfig;
 import io.harness.serverless.model.ServerlessDelegateTaskParams;
 
 import com.google.inject.Inject;
@@ -42,9 +42,9 @@ public class ServerlessAwsDeployCommandTaskHandler extends ServerlessCommandTask
   @Inject private ServerlessInfraConfigHelper serverlessInfraConfigHelper;
   @Inject private ServerlessAwsCommandTaskHelper serverlessAwsCommandTaskHelper;
 
-  private ServerlessAwsConfig serverlessAwsConfig;
+  private ServerlessAwsLambdaConfig serverlessAwsLambdaConfig;
   private ServerlessClient serverlessClient;
-  private ServerlessManifestConfig serverlessManifestConfig;
+  private ServerlessAwsLambdaManifestConfig serverlessManifestConfig;
 
   private static final String HOME_DIRECTORY = "./repository/serverless/home";
   // todo: need to move to constants file
@@ -58,9 +58,17 @@ public class ServerlessAwsDeployCommandTaskHandler extends ServerlessCommandTask
     }
 
     ServerlessDeployRequest serverlessDeployRequest = (ServerlessDeployRequest) serverlessCommandRequest;
-    if (!(serverlessDeployRequest.getServerlessInfraConfig() instanceof ServerlessAwsInfraConfig)) {
+    if (!(serverlessDeployRequest.getServerlessInfraConfig() instanceof ServerlessAwsLambdaInfraConfig)) {
       throw new InvalidArgumentsException(
-          Pair.of("ServerlessInfraConfig", "Must be instance of AwsServerlessInfraConfig"));
+          Pair.of("ServerlessInfraConfig", "Must be instance of ServerlessAwsLambdaInfraConfig"));
+    }
+    if (!(serverlessDeployRequest.getServerlessManifestConfig() instanceof ServerlessAwsLambdaManifestConfig)) {
+      throw new InvalidArgumentsException(
+          Pair.of("ServerlessManifestConfig", "Must be instance of ServerlessAwsLambdaManifestConfig"));
+    }
+    if (!(serverlessDeployRequest.getServerlessDeployConfig() instanceof ServerlessAwsLambdaDeployConfig)) {
+      throw new InvalidArgumentsException(
+          Pair.of("ServerlessDeployConfig", "Must be instance of ServerlessAwsLambdaDeployConfig"));
     }
     // todo: instance check for other configs
     LogCallback initLogCallback = serverlessTaskHelperBase.getLogCallback(
@@ -85,15 +93,16 @@ public class ServerlessAwsDeployCommandTaskHandler extends ServerlessCommandTask
                                .toAbsolutePath()
                                .toString();
     serverlessTaskHelperBase.createHomeDirectory(homeDirectory);
-    serverlessManifestConfig = (ServerlessManifestConfig) serverlessDeployRequest.getServerlessManifest();
+    serverlessManifestConfig =
+        (ServerlessAwsLambdaManifestConfig) serverlessDeployRequest.getServerlessManifestConfig();
     serverlessTaskHelperBase.fetchManifestFilesAndWriteToDirectory(serverlessManifestConfig,
         serverlessDeployRequest.getAccountId(), executionLogCallback, serverlessDelegateTaskParams);
     serverlessTaskHelperBase.replaceManifestWithRenderedContent(serverlessDelegateTaskParams, serverlessManifestConfig);
-    serverlessAwsConfig = (ServerlessAwsConfig) serverlessInfraConfigHelper.createServerlessConfig(
+    serverlessAwsLambdaConfig = (ServerlessAwsLambdaConfig) serverlessInfraConfigHelper.createServerlessConfig(
         serverlessDeployRequest.getServerlessInfraConfig());
     serverlessClient = ServerlessClient.client(serverlessDelegateTaskParams.getServerlessClientPath(), homeDirectory);
-    boolean success = serverlessAwsCommandTaskHelper.setServerlessAwsConfigCredentials(
-        serverlessClient, serverlessAwsConfig, serverlessDelegateTaskParams, executionLogCallback, true);
+    boolean success = serverlessAwsCommandTaskHelper.configCredential(
+        serverlessClient, serverlessAwsLambdaConfig, serverlessDelegateTaskParams, executionLogCallback, true);
     if (success == false) {
       // todo: handle failure case
     }
@@ -102,8 +111,8 @@ public class ServerlessAwsDeployCommandTaskHandler extends ServerlessCommandTask
   private ServerlessAwsDeployResult deploy(ServerlessDeployRequest serverlessDeployRequest,
       LogCallback executionLogCallback, ServerlessDelegateTaskParams serverlessDelegateTaskParams) throws Exception {
     executionLogCallback.saveExecutionLog("Deploying..\n");
-    ServerlessAwsDeployConfig serverlessAwsDeployConfig =
-        (ServerlessAwsDeployConfig) serverlessDeployRequest.getServerlessDeployConfig();
+    ServerlessAwsLambdaDeployConfig serverlessAwsDeployConfig =
+        (ServerlessAwsLambdaDeployConfig) serverlessDeployRequest.getServerlessDeployConfig();
     return serverlessAwsCommandTaskHelper.deploy(
         serverlessClient, serverlessDelegateTaskParams, executionLogCallback, serverlessAwsDeployConfig);
   }

@@ -8,7 +8,7 @@
 package io.harness.delegate.task.serverless;
 
 public enum ServerlessCommandType {
-  LAMBDA_DEPLOY,
-  LAMBDA_ROLLBACK,
+  AWS_LAMBDA_DEPLOY,
+  AWS_LAMBDA_ROLLBACK,
 
 }

@@ -17,16 +17,15 @@ import io.harness.delegate.beans.serverless.ServerlessAwsManifestSchema;
 import io.harness.logging.LogCallback;
 import io.harness.serializer.YamlUtils;
 import io.harness.serverless.*;
-import io.harness.serverless.model.ServerlessAwsConfig;
+import io.harness.serverless.model.ServerlessAwsLambdaConfig;
 import io.harness.serverless.model.ServerlessDelegateTaskParams;
 
+import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.zeroturnaround.exec.ProcessResult;
@@ -40,14 +39,17 @@ public class ServerlessAwsCommandTaskHelper {
 
   private static String AWS_LAMBDA_FUNCTION_RESOURCE_TYPE = "AWS::Lambda::Function";
   private static String AWS_LAMBDA_FUNCTION_NAME_PROPERTY_KEY = "FunctionName";
+  private static String NEW_LINE_REGEX = "\\r?\\n";
+  private static String WHITESPACE_REGEX = "[\\s]";
+  private static String DEPLOY_TIMESTAMP_REGEX = ".*Timestamp:\\s([0-9])*";
 
-  public boolean setServerlessAwsConfigCredentials(ServerlessClient serverlessClient,
-      ServerlessAwsConfig serverlessAwsConfig, ServerlessDelegateTaskParams serverlessDelegateTaskParams,
+  public boolean configCredential(ServerlessClient serverlessClient,
+      ServerlessAwsLambdaConfig serverlessAwsLambdaConfig, ServerlessDelegateTaskParams serverlessDelegateTaskParams,
       LogCallback executionLogCallback, boolean overwrite) throws Exception {
     ConfigCredentialCommand command = serverlessClient.configCredential()
-                                          .provider(serverlessAwsConfig.getProvider())
-                                          .key(serverlessAwsConfig.getAccessKey())
-                                          .secret(serverlessAwsConfig.getSecretKey())
+                                          .provider(serverlessAwsLambdaConfig.getProvider())
+                                          .key(serverlessAwsLambdaConfig.getAccessKey())
+                                          .secret(serverlessAwsLambdaConfig.getSecretKey())
                                           .overwrite(overwrite);
     ProcessResult result = serverlessCommandTaskHelper.executeCommand(
         command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true);
@@ -59,13 +61,8 @@ public class ServerlessAwsCommandTaskHelper {
 
   public ServerlessAwsDeployResult deploy(ServerlessClient serverlessClient,
       ServerlessDelegateTaskParams serverlessDelegateTaskParams, LogCallback executionLogCallback,
-      ServerlessAwsDeployConfig serverlessAwsDeployConfig) throws Exception {
-    DeployCommand command = serverlessClient.deploy()
-                                .region(serverlessAwsDeployConfig.getRegion())
-                                .stage(serverlessAwsDeployConfig.getStage())
-                                .forceDeployment(serverlessAwsDeployConfig.isForceDeploymentFlag())
-                                .awsS3Accelerate(serverlessAwsDeployConfig.isAwsS3AccelerateFlag())
-                                .noAwsS3Accelerate(serverlessAwsDeployConfig.isNoAwsS3AccelerateFlag());
+      ServerlessAwsLambdaDeployConfig serverlessAwsLambdaDeployConfig) throws Exception {
+    DeployCommand command = serverlessClient.deploy();
     // todo: add other options for deploy command
     ProcessResult result = serverlessCommandTaskHelper.executeCommand(
         command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true);
@@ -76,7 +73,15 @@ public class ServerlessAwsCommandTaskHelper {
     return null;
   }
 
-  public ServerlessAwsManifestSchema parseServerlessManifest(ServerlessManifestConfig serverlessManifestConfig)
+  public String deployList(ServerlessClient serverlessClient, ServerlessDelegateTaskParams serverlessDelegateTaskParams,
+      LogCallback executionLogCallback) throws Exception {
+    DeployListCommand command = serverlessClient.deployList();
+    ProcessResult result = serverlessCommandTaskHelper.executeCommand(
+        command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true);
+    return result.outputString();
+  }
+
+  public ServerlessAwsManifestSchema parseServerlessManifest(ServerlessAwsLambdaManifestConfig serverlessManifestConfig)
       throws IOException {
     String manifestContent = serverlessManifestConfig.getManifestContent();
     YamlUtils yamlUtils = new YamlUtils();
@@ -113,7 +118,7 @@ public class ServerlessAwsCommandTaskHelper {
       List<Map<String, Object>> functionProperties =
           resources.stream()
               .filter(resource -> resource.getType().equals(AWS_LAMBDA_FUNCTION_RESOURCE_TYPE))
-              .map(resource -> resource.getProperties())
+              .map(ServerlessAwsCloudFormationTemplateSchema.Resource::getProperties)
               .collect(Collectors.toList());
       return functionProperties.stream()
           .filter(properties -> properties.containsKey(AWS_LAMBDA_FUNCTION_NAME_PROPERTY_KEY))
@@ -121,5 +126,18 @@ public class ServerlessAwsCommandTaskHelper {
           .collect(Collectors.toList());
     }
     return Collections.emptyList();
+  }
+
+  public String getPreviousVersionTimeStamp(String deployListOutput) {
+    if (EmptyPredicate.isEmpty(deployListOutput)) {
+      return deployListOutput;
+    }
+    Pattern deployTimeOutPattern = Pattern.compile(DEPLOY_TIMESTAMP_REGEX);
+    List<String> outputLines = Arrays.asList(deployListOutput.split(NEW_LINE_REGEX));
+    List<String> filteredOutputLines = outputLines.stream()
+                                           .filter(outputLine -> deployTimeOutPattern.matcher(outputLine).matches())
+                                           .collect(Collectors.toList());
+    String lastOutputLine = Iterables.getLast(filteredOutputLines, " ");
+    return Iterables.getLast(Arrays.asList(lastOutputLine.split(WHITESPACE_REGEX)), "");
   }
 }

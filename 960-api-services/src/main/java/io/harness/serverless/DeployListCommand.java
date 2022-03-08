@@ -9,39 +9,30 @@ package io.harness.serverless;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class DeployCommand extends AbstractExecutable {
+public class DeployListCommand extends AbstractExecutable {
   private ServerlessClient client;
   private String stage;
   private String region;
-  private String options;
-  public DeployCommand(ServerlessClient client) {
+  public DeployListCommand(ServerlessClient client) {
     this.client = client;
   }
-  public DeployCommand stage(String stage) {
+  public DeployListCommand stage(String stage) {
     this.stage = stage;
     return this;
   }
-  public DeployCommand region(String region) {
+  public DeployListCommand region(String region) {
     this.region = region;
     return this;
   }
-  public DeployCommand options(String options) {
-    this.options = options;
-    return this;
-  }
-
   @Override
   public String command() {
     StringBuilder command = new StringBuilder();
-    command.append(client.command()).append("deploy ");
+    command.append(client.command()).append("deploy list ");
     if (StringUtils.isNotBlank(this.stage)) {
       command.append(ServerlessClient.option(Option.stage, this.stage));
     }
     if (StringUtils.isNotBlank(this.region)) {
       command.append(ServerlessClient.option(Option.region, this.region));
-    }
-    if (StringUtils.isNotBlank(this.options)) {
-      command.append(this.options);
     }
     return command.toString().trim();
   }

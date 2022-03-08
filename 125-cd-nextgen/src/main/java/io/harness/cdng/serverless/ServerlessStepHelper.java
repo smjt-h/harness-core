@@ -415,25 +415,25 @@ public class ServerlessStepHelper extends CDStepHelper {
       ServerlessAwsLambdaDeployStepParameters serverlessDeployStepParameters) {
     switch (serverlessCommandType) {
       case AWS_LAMBDA_DEPLOY:
-        ServerlessAwsDeployConfig serverlessAwsDeployConfig =
-            ServerlessAwsDeployConfig.builder().commandOptions(Collections.emptyList()).build();
+        ServerlessAwsLambdaDeployConfig serverlessAwsLambdaDeployConfig =
+            ServerlessAwsLambdaDeployConfig.builder().commandOptions(Collections.emptyList()).build();
         // todo: need to change command options
-        return serverlessAwsDeployConfig;
+        return serverlessAwsLambdaDeployConfig;
       default:
         throw new UnsupportedOperationException(
             format("Unsupported serverless command: [%s]", serverlessCommandType.name()));
     }
   }
 
-  public ServerlessManifest getServerlessManifestConfig(Pair<String, String> manifestFilePathContent,
+  public ServerlessManifestConfig getServerlessManifestConfig(Pair<String, String> manifestFilePathContent,
       String manifestFileOverrideContent, ManifestOutcome serverlessManifestOutcome, Ambiance ambiance) {
     switch (serverlessManifestOutcome.getType()) {
       case ManifestType.ServerlessAwsLambda:
         ServerlessAwsLambdaManifestOutcome serverlessAwsLambdaManifestOutcome =
             (ServerlessAwsLambdaManifestOutcome) serverlessManifestOutcome;
         GitStoreConfig gitStoreConfig = (GitStoreConfig) serverlessAwsLambdaManifestOutcome.getStore();
-        ServerlessManifestConfig serverlessManifestConfig =
-            ServerlessManifestConfig.builder()
+        ServerlessAwsLambdaManifestConfig serverlessManifestConfig =
+            ServerlessAwsLambdaManifestConfig.builder()
                 .manifestPath(manifestFilePathContent.getKey())
                 .manifestContent(manifestFileOverrideContent)
                 .gitStoreDelegateConfig(getGitStoreDelegateConfig(ambiance, gitStoreConfig, serverlessManifestOutcome))

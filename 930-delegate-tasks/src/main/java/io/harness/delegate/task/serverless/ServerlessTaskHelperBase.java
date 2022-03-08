@@ -49,10 +49,9 @@ public class ServerlessTaskHelperBase {
     waitForDirectoryToBeAccessibleOutOfProcess(directoryPath, 10);
   }
 
-  public void fetchManifestFilesAndWriteToDirectory(ServerlessManifestConfig serverlessManifestConfig, String accountId,
-      LogCallback executionLogCallback, ServerlessDelegateTaskParams serverlessDelegateTaskParams) {
-    GitStoreDelegateConfig gitStoreDelegateConfig =
-        serverlessManifestConfig.getServerlessGitFetchFileConfig().getGitStoreDelegateConfig();
+  public void fetchManifestFilesAndWriteToDirectory(ServerlessAwsLambdaManifestConfig serverlessManifestConfig,
+      String accountId, LogCallback executionLogCallback, ServerlessDelegateTaskParams serverlessDelegateTaskParams) {
+    GitStoreDelegateConfig gitStoreDelegateConfig = serverlessManifestConfig.getGitStoreDelegateConfig();
     downloadFilesFromGit(
         gitStoreDelegateConfig, executionLogCallback, accountId, serverlessDelegateTaskParams.getWorkingDirectory());
     // todo: print file download statements
@@ -77,8 +76,8 @@ public class ServerlessTaskHelperBase {
     } catch (Exception e) {
     }
   }
-  public boolean replaceManifestWithRenderedContent(
-      ServerlessDelegateTaskParams serverlessDelegateTaskParams, ServerlessManifestConfig serverlessManifestConfig) {
+  public boolean replaceManifestWithRenderedContent(ServerlessDelegateTaskParams serverlessDelegateTaskParams,
+      ServerlessAwsLambdaManifestConfig serverlessManifestConfig) {
     String updatedManifestContent = serverlessManifestConfig.getManifestContent();
     String manifestFilePath =
         Paths.get(serverlessDelegateTaskParams.getWorkingDirectory(), serverlessManifestConfig.getManifestPath())

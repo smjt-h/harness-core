@@ -5,24 +5,21 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.delegate.beans.serverless;
+package io.harness.serverless.model;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.serverless.model.ServerlessAwsLambdaFunction;
 
-import java.util.List;
 import lombok.Builder;
 import lombok.Data;
 
+@OwnedBy(HarnessTeam.CDP)
 @Data
 @Builder
-@OwnedBy(HarnessTeam.CDP)
-public class ServerlessAwsDeployResult implements ServerlessDeployResult {
-  private String service;
-  private String region;
-  private String stage;
-  private String previousVersionTimeStamp;
-  private String errorMessage;
-  private List<ServerlessAwsLambdaFunction> functions;
+public class ServerlessAwsLambdaFunction {
+  private String functionName;
+  private String handler;
+  private Double memorySize;
+  private String runTime;
+  private Double timeout;
 }

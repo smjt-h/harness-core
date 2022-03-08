@@ -17,8 +17,8 @@ import io.harness.delegate.beans.connector.awsconnector.AwsManualConfigSpecDTO;
 import io.harness.exception.InvalidRequestException;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.security.encryption.SecretDecryptionService;
-import io.harness.serverless.model.ServerlessAwsConfig;
-import io.harness.serverless.model.ServerlessAwsConfig.ServerlessAwsConfigBuilder;
+import io.harness.serverless.model.ServerlessAwsLambdaConfig;
+import io.harness.serverless.model.ServerlessAwsLambdaConfig.ServerlessAwsLambdaConfigBuilder;
 import io.harness.serverless.model.ServerlessConfig;
 
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
@@ -34,10 +34,11 @@ public class ServerlessInfraConfigHelper {
   @Inject private SecretDecryptionService secretDecryptionService;
 
   public void decryptServerlessInfraConfig(ServerlessInfraConfig serverlessInfraConfig) {
-    if (serverlessInfraConfig instanceof ServerlessAwsInfraConfig) {
-      ServerlessAwsInfraConfig serverlessAwsInfraConfig = (ServerlessAwsInfraConfig) serverlessInfraConfig;
-      decryptAwsInfraConfig(
-          serverlessAwsInfraConfig.getAwsConnectorDTO(), serverlessAwsInfraConfig.getEncryptionDataDetails());
+    if (serverlessInfraConfig instanceof ServerlessAwsLambdaInfraConfig) {
+      ServerlessAwsLambdaInfraConfig serverlessAwsLambdaInfraConfig =
+          (ServerlessAwsLambdaInfraConfig) serverlessInfraConfig;
+      decryptAwsInfraConfig(serverlessAwsLambdaInfraConfig.getAwsConnectorDTO(),
+          serverlessAwsLambdaInfraConfig.getEncryptionDataDetails());
     }
   }
 
@@ -51,20 +52,20 @@ public class ServerlessInfraConfigHelper {
   }
 
   public ServerlessConfig createServerlessConfig(ServerlessInfraConfig serverlessInfraConfigDTO) {
-    if (serverlessInfraConfigDTO instanceof ServerlessAwsInfraConfig) {
-      return createServerlessAwsConfig((ServerlessAwsInfraConfig) serverlessInfraConfigDTO);
+    if (serverlessInfraConfigDTO instanceof ServerlessAwsLambdaInfraConfig) {
+      return createServerlessAwsConfig((ServerlessAwsLambdaInfraConfig) serverlessInfraConfigDTO);
     } else {
       throw new InvalidRequestException("Unhandled ServerlessInfraConfig " + serverlessInfraConfigDTO.getClass());
     }
   }
 
-  public ServerlessConfig createServerlessAwsConfig(ServerlessAwsInfraConfig serverlessAwsInfraConfig) {
+  public ServerlessConfig createServerlessAwsConfig(ServerlessAwsLambdaInfraConfig serverlessAwsLambdaInfraConfig) {
     AwsCredentialType awsCredentialType =
-        serverlessAwsInfraConfig.getAwsConnectorDTO().getCredential().getAwsCredentialType();
+        serverlessAwsLambdaInfraConfig.getAwsConnectorDTO().getCredential().getAwsCredentialType();
     switch (awsCredentialType) {
       case MANUAL_CREDENTIALS:
         return getServerlessAwsConfigFromManualCreds(
-            (AwsManualConfigSpecDTO) serverlessAwsInfraConfig.getAwsConnectorDTO().getCredential().getConfig());
+            (AwsManualConfigSpecDTO) serverlessAwsLambdaInfraConfig.getAwsConnectorDTO().getCredential().getConfig());
       default:
         throw new UnsupportedOperationException(
             String.format("Unsupported Serverless Aws Credential type: [%s]", awsCredentialType));
@@ -72,7 +73,7 @@ public class ServerlessInfraConfigHelper {
   }
 
   public ServerlessConfig getServerlessAwsConfigFromManualCreds(AwsManualConfigSpecDTO awsManualConfigSpecDTO) {
-    ServerlessAwsConfigBuilder serverlessAwsConfigBuilder = ServerlessAwsConfig.builder();
+    ServerlessAwsLambdaConfigBuilder serverlessAwsConfigBuilder = ServerlessAwsLambdaConfig.builder();
     serverlessAwsConfigBuilder.provider("aws");
     serverlessAwsConfigBuilder.accessKey(getSecretAsStringFromPlainTextOrSecretRef(
         awsManualConfigSpecDTO.getAccessKey(), awsManualConfigSpecDTO.getAccessKeyRef()));

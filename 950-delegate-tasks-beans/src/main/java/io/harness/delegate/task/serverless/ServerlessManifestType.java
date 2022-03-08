@@ -7,4 +7,4 @@
 
 package io.harness.delegate.task.serverless;
 
-public enum ServerlessManifestType { SERVERLESS_MANIFEST }
+public enum ServerlessManifestType { SERVERLESS_AWS_LAMBDA_MANIFEST }
