@@ -10,11 +10,14 @@ package io.harness.stateutils.buildstate;
 import static io.harness.beans.serializer.RunTimeInputHandler.UNRESOLVED_PARAMETER;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveArchiveFormat;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveBooleanParameter;
+import static io.harness.beans.serializer.RunTimeInputHandler.resolveJsonNodeMapParameter;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveListParameter;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveMapParameter;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveStringParameter;
+import static io.harness.common.CIExecutionConstants.AWS_ROLE_ARN;
 import static io.harness.common.CIExecutionConstants.PLUGIN_ACCESS_KEY;
 import static io.harness.common.CIExecutionConstants.PLUGIN_ARTIFACT_FILE_VALUE;
+import static io.harness.common.CIExecutionConstants.PLUGIN_ASSUME_ROLE;
 import static io.harness.common.CIExecutionConstants.PLUGIN_JSON_KEY;
 import static io.harness.common.CIExecutionConstants.PLUGIN_PASSW;
 import static io.harness.common.CIExecutionConstants.PLUGIN_SECRET_KEY;
@@ -39,14 +42,17 @@ import io.harness.beans.steps.stepinfo.RestoreCacheGCSStepInfo;
 import io.harness.beans.steps.stepinfo.RestoreCacheS3StepInfo;
 import io.harness.beans.steps.stepinfo.SaveCacheGCSStepInfo;
 import io.harness.beans.steps.stepinfo.SaveCacheS3StepInfo;
+import io.harness.beans.steps.stepinfo.SecurityStepInfo;
 import io.harness.beans.steps.stepinfo.UploadToArtifactoryStepInfo;
 import io.harness.beans.steps.stepinfo.UploadToGCSStepInfo;
 import io.harness.beans.steps.stepinfo.UploadToS3StepInfo;
 import io.harness.beans.sweepingoutputs.StageInfraDetails.Type;
 import io.harness.beans.yaml.extended.ArchiveFormat;
+import io.harness.ci.serializer.SerializerUtils;
 import io.harness.delegate.beans.ci.pod.EnvVariableEnum;
 import io.harness.exception.InvalidArgumentsException;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +76,7 @@ public class PluginSettingUtils {
   public static final String PLUGIN_ENDPOINT = "PLUGIN_ENDPOINT";
   public static final String PLUGIN_REGION = "PLUGIN_REGION";
   public static final String PLUGIN_SOURCE = "PLUGIN_SOURCE";
+  public static final String PLUGIN_STEP_ID = "PLUGIN_STEP_ID";
   public static final String PLUGIN_RESTORE = "PLUGIN_RESTORE";
   public static final String PLUGIN_REBUILD = "PLUGIN_REBUILD";
   public static final String PLUGIN_EXIT_CODE = "PLUGIN_EXIT_CODE";
@@ -77,6 +84,7 @@ public class PluginSettingUtils {
   public static final String PLUGIN_FAIL_RESTORE_IF_KEY_NOT_PRESENT = "PLUGIN_FAIL_RESTORE_IF_KEY_NOT_PRESENT";
   public static final String PLUGIN_SNAPSHOT_MODE = "PLUGIN_SNAPSHOT_MODE";
   public static final String REDO_SNAPSHOT_MODE = "redo";
+  public static final String SECURITY_ENV_PREFIX = "SECURITY_";
   public static final String PLUGIN_BACKEND_OPERATION_TIMEOUT = "PLUGIN_BACKEND_OPERATION_TIMEOUT";
   public static final String PLUGIN_CACHE_KEY = "PLUGIN_CACHE_KEY";
   public static final String PLUGIN_BACKEND = "PLUGIN_BACKEND";
@@ -103,6 +111,8 @@ public class PluginSettingUtils {
         return getUploadToS3StepInfoEnvVariables((UploadToS3StepInfo) stepInfo, identifier);
       case SAVE_CACHE_GCS:
         return getSaveCacheGCSStepInfoEnvVariables((SaveCacheGCSStepInfo) stepInfo, identifier, timeout);
+      case SECURITY:
+        return getSecurityStepInfoEnvVariables((SecurityStepInfo) stepInfo, identifier);
       case RESTORE_CACHE_GCS:
         return getRestoreCacheGCSStepInfoEnvVariables((RestoreCacheGCSStepInfo) stepInfo, identifier, timeout);
       case SAVE_CACHE_S3:
@@ -124,11 +134,16 @@ public class PluginSettingUtils {
     Map<EnvVariableEnum, String> map = new HashMap<>();
     switch (stepInfo.getNonYamlInfo().getStepInfoType()) {
       case ECR:
+        map.put(EnvVariableEnum.AWS_ACCESS_KEY, PLUGIN_ACCESS_KEY);
+        map.put(EnvVariableEnum.AWS_SECRET_KEY, PLUGIN_SECRET_KEY);
+        map.put(EnvVariableEnum.AWS_CROSS_ACCOUNT_ROLE_ARN, AWS_ROLE_ARN);
+        return map;
       case RESTORE_CACHE_S3:
       case SAVE_CACHE_S3:
       case UPLOAD_S3:
         map.put(EnvVariableEnum.AWS_ACCESS_KEY, PLUGIN_ACCESS_KEY);
         map.put(EnvVariableEnum.AWS_SECRET_KEY, PLUGIN_SECRET_KEY);
+        map.put(EnvVariableEnum.AWS_CROSS_ACCOUNT_ROLE_ARN, PLUGIN_ASSUME_ROLE);
         return map;
       case GCR:
       case RESTORE_CACHE_GCS:
@@ -136,6 +151,7 @@ public class PluginSettingUtils {
       case UPLOAD_GCS:
         map.put(EnvVariableEnum.GCP_KEY, PLUGIN_JSON_KEY);
         return map;
+      case SECURITY:
       case DOCKER:
         map.put(EnvVariableEnum.DOCKER_USERNAME, PLUGIN_USERNAME);
         map.put(EnvVariableEnum.DOCKER_PASSWORD, PLUGIN_PASSW);
@@ -364,6 +380,23 @@ public class PluginSettingUtils {
     setMandatoryEnvironmentVariable(map, PLUGIN_BACKEND, "gcs");
     setMandatoryEnvironmentVariable(map, PLUGIN_BACKEND_OPERATION_TIMEOUT, format("%ss", timeout));
 
+    return map;
+  }
+
+  private static Map<String, String> getSecurityStepInfoEnvVariables(SecurityStepInfo stepInfo, String identifier) {
+    Map<String, String> map = new HashMap<>();
+
+    Map<String, JsonNode> settings =
+        resolveJsonNodeMapParameter("settings", "Security", identifier, stepInfo.getSettings(), false);
+
+    if (!isEmpty(settings)) {
+      for (Map.Entry<String, JsonNode> entry : settings.entrySet()) {
+        String key = SECURITY_ENV_PREFIX + entry.getKey().toUpperCase();
+        map.put(key, SerializerUtils.convertJsonNodeToString(entry.getKey(), entry.getValue()));
+      }
+    }
+
+    setMandatoryEnvironmentVariable(map, PLUGIN_STEP_ID, identifier);
     return map;
   }
 

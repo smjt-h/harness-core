@@ -2582,6 +2582,10 @@ public class UserServiceImpl implements UserService {
       updateOperations.set(UserKeys.lastLogin, user.getLastLogin());
     }
 
+    if (isNotEmpty(user.getExternalUserId())) {
+      updateOperations.set(UserKeys.externalUserId, user.getExternalUserId());
+    }
+
     return updateUser(user.getUuid(), updateOperations);
   }
 
@@ -3657,6 +3661,7 @@ public class UserServiceImpl implements UserService {
     } else {
       query = getListUserQuery(accountId, includeUsersPendingInviteAcceptance);
     }
+    query.criteria(UserKeys.disabled).notEqual(true);
     applySortFilter(pageRequest, query);
     FindOptions findOptions = new FindOptions().skip(offset).limit(pageSize);
     List<User> userList = query.asList(findOptions);

@@ -52,6 +52,7 @@ import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.helper.GitApiAccessDecryptionHelper;
 import io.harness.connector.services.ConnectorService;
 import io.harness.connector.validator.scmValidators.GitConfigAuthenticationInfoHelper;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.beans.connector.helm.HttpHelmConnectorDTO;
@@ -445,6 +446,12 @@ public class CDStepHelper {
               format("Invalid connector selected in %s. Select Amazon Web Services connector", message));
         }
         break;
+      case ManifestStoreType.ARTIFACTORY:
+        if (!((connectorInfoDTO.getConnectorConfig()) instanceof ArtifactoryConnectorDTO)) {
+          throw new InvalidRequestException(
+              format("Invalid connector selected in %s. Select Artifactory connector", message));
+        }
+        break;
 
       case ManifestStoreType.GCS:
         if (!(connectorInfoDTO.getConnectorConfig() instanceof GcpConnectorDTO)) {
@@ -555,6 +562,10 @@ public class CDStepHelper {
 
   public boolean isUseNewKubectlVersion(String accountId) {
     return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.NEW_KUBECTL_VERSION);
+  }
+
+  public boolean isSkipAddingTrackSelectorToDeployment(String accountId) {
+    return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.SKIP_ADDING_TRACK_LABEL_SELECTOR_IN_ROLLING);
   }
 
   public List<String> getValuesFileContents(Ambiance ambiance, List<String> valuesFileContents) {

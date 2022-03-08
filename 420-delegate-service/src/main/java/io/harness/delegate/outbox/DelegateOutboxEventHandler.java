@@ -24,10 +24,10 @@ import io.harness.delegate.events.DelegateNgTokenCreateEvent;
 import io.harness.delegate.events.DelegateNgTokenRevokeEvent;
 import io.harness.outbox.OutboxEvent;
 import io.harness.outbox.api.OutboxEventHandler;
-import io.harness.remote.NGObjectMapperHelper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import io.serializer.HObjectMapper;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,7 +38,7 @@ public class DelegateOutboxEventHandler implements OutboxEventHandler {
   private final AuditClientService auditClientService;
   @Inject
   DelegateOutboxEventHandler(AuditClientService auditClientService) {
-    this.objectMapper = NGObjectMapperHelper.NG_DEFAULT_OBJECT_MAPPER;
+    this.objectMapper = HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
     this.auditClientService = auditClientService;
   }
 
@@ -99,7 +99,7 @@ public class DelegateOutboxEventHandler implements OutboxEventHandler {
     DelegateNgTokenCreateEvent delegateNgTokenCreateEvent =
         objectMapper.readValue(outboxEvent.getEventData(), DelegateNgTokenCreateEvent.class);
     AuditEntry auditEntry = AuditEntry.builder()
-                                .action(Action.CREATE)
+                                .action(Action.CREATE_TOKEN)
                                 .module(ModuleType.CORE)
                                 .newYaml(getYamlString(delegateNgTokenCreateEvent.getToken()))
                                 .timestamp(outboxEvent.getCreatedAt())

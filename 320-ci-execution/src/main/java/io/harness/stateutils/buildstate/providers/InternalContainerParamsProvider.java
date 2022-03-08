@@ -18,7 +18,6 @@ import static io.harness.common.CIExecutionConstants.HARNESS_ORG_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_PIPELINE_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_PROJECT_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_STAGE_ID_VARIABLE;
-import static io.harness.common.CIExecutionConstants.HARNESS_STEP_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_WORKSPACE;
 import static io.harness.common.CIExecutionConstants.LITE_ENGINE_CONTAINER_CPU;
 import static io.harness.common.CIExecutionConstants.LITE_ENGINE_CONTAINER_MEM;
@@ -42,6 +41,7 @@ import io.harness.delegate.beans.ci.pod.ContainerResourceParams;
 import io.harness.delegate.beans.ci.pod.ContainerSecrets;
 import io.harness.delegate.beans.ci.pod.ImageDetailsWithConnector;
 import io.harness.delegate.beans.ci.pod.SecretParams;
+import io.harness.execution.CIExecutionConfigService;
 import io.harness.ff.CIFeatureFlagService;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
@@ -62,15 +62,16 @@ import java.util.Map;
 @OwnedBy(HarnessTeam.CI)
 public class InternalContainerParamsProvider {
   @Inject CIExecutionServiceConfig ciExecutionServiceConfig;
+  @Inject CIExecutionConfigService ciExecutionConfigService;
   @Inject private CIFeatureFlagService featureFlagService;
 
-  public CIK8ContainerParams getSetupAddonContainerParams(
-      ConnectorDetails harnessInternalImageConnector, Map<String, String> volumeToMountPath, String workDir) {
+  public CIK8ContainerParams getSetupAddonContainerParams(ConnectorDetails harnessInternalImageConnector,
+      Map<String, String> volumeToMountPath, String workDir, String accountIdentifier) {
     List<String> args = new ArrayList<>(Collections.singletonList(SETUP_ADDON_ARGS));
     Map<String, String> envVars = new HashMap<>();
     envVars.put(HARNESS_WORKSPACE, workDir);
 
-    String imageName = ciExecutionServiceConfig.getAddonImage();
+    String imageName = ciExecutionConfigService.getAddonImage(accountIdentifier);
     String fullyQualifiedImage =
         IntegrationStageUtils.getFullyQualifiedImageName(imageName, harnessInternalImageConnector);
     return CIK8ContainerParams.builder()
@@ -91,7 +92,7 @@ public class InternalContainerParamsProvider {
       Map<String, ConnectorDetails> publishArtifactConnectors, K8PodDetails k8PodDetails, Integer stageCpuRequest,
       Integer stageMemoryRequest, Map<String, String> logEnvVars, Map<String, String> tiEnvVars,
       Map<String, String> volumeToMountPath, String workDirPath, String logPrefix, Ambiance ambiance) {
-    String imageName = ciExecutionServiceConfig.getLiteEngineImage();
+    String imageName = ciExecutionConfigService.getLiteEngineImage(AmbianceUtils.getAccountId(ambiance));
     String fullyQualifiedImage =
         IntegrationStageUtils.getFullyQualifiedImageName(imageName, harnessInternalImageConnector);
     return CIK8ContainerParams.builder()
@@ -116,7 +117,6 @@ public class InternalContainerParamsProvider {
       K8PodDetails k8PodDetails, String workDirPath, String logPrefix, Ambiance ambiance) {
     Map<String, String> envVars = new HashMap<>();
     final String accountID = AmbianceUtils.getAccountId(ambiance);
-    final String stepIdentifier = AmbianceUtils.obtainStepIdentifier(ambiance);
     final String orgID = AmbianceUtils.getOrgIdentifier(ambiance);
     final String projectID = AmbianceUtils.getProjectIdentifier(ambiance);
     final String pipelineID = ambiance.getMetadata().getPipelineIdentifier();
@@ -138,7 +138,6 @@ public class InternalContainerParamsProvider {
     envVars.put(HARNESS_PIPELINE_ID_VARIABLE, pipelineID);
     envVars.put(HARNESS_BUILD_ID_VARIABLE, String.valueOf(buildNumber));
     envVars.put(HARNESS_STAGE_ID_VARIABLE, stageID);
-    envVars.put(HARNESS_STEP_ID_VARIABLE, stepIdentifier);
     envVars.put(HARNESS_LOG_PREFIX_VARIABLE, logPrefix);
     return envVars;
   }

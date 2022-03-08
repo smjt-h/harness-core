@@ -1,3 +1,10 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.cvng.core.beans.monitoredService.healthSouceSpec;
 
 import io.harness.cvng.beans.CVMonitoringCategory;
@@ -38,7 +45,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode(callSuper = true)
-public class DynatraceHealthSourceSpec extends HealthSourceSpec {
+public class DynatraceHealthSourceSpec extends MetricHealthSourceSpec {
   @NotNull String feature;
   @NotEmpty String serviceId;
   String serviceName;
@@ -137,6 +144,7 @@ public class DynatraceHealthSourceSpec extends HealthSourceSpec {
                                    .dynatraceServiceName(serviceName)
                                    .dynatraceServiceId(serviceId)
                                    .envIdentifier(environmentRef)
+                                   .serviceMethodIds(serviceMethodIds)
                                    .serviceIdentifier(serviceRef)
                                    .groupName(metricDefinitionList.get(0).getGroupName())
                                    .category(metricDefinitionList.get(0).getRiskProfile().getCategory())

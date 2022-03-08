@@ -91,6 +91,12 @@ public class ServiceVariableCreator {
             addVariablesForKubernetesHelmServerlessServiceSpec(specNode, yamlPropertiesMap);
           }
           break;
+        case ServiceSpecType.SSH:
+          YamlField sshSpecNode = serviceDefNode.getNode().getField(YamlTypes.SERVICE_SPEC);
+          if (sshSpecNode != null) {
+            addVariablesForSshServiceSpec(sshSpecNode, yamlPropertiesMap);
+          }
+          break;
         default:
           throw new InvalidRequestException("Invalid service type");
       }
@@ -114,6 +120,28 @@ public class ServiceVariableCreator {
     YamlField manifestOverrideSetsNode = serviceSpecNode.getNode().getField(YamlTypes.MANIFEST_OVERRIDE_SETS);
     if (manifestOverrideSetsNode != null) {
       addVariablesForManifestOverrideSets(manifestOverrideSetsNode, yamlPropertiesMap);
+    }
+
+    YamlField variablesField = serviceSpecNode.getNode().getField(YAMLFieldNameConstants.VARIABLES);
+    if (variablesField != null) {
+      VariableCreatorHelper.addVariablesForVariables(variablesField, yamlPropertiesMap, YamlTypes.SERVICE_CONFIG);
+    }
+
+    YamlField variableOverrideSetsField = serviceSpecNode.getNode().getField(YamlTypes.VARIABLE_OVERRIDE_SETS);
+    if (variableOverrideSetsField != null) {
+      addVariablesForVariableOverrideSets(variableOverrideSetsField, yamlPropertiesMap);
+    }
+  }
+
+  private void addVariablesForSshServiceSpec(YamlField serviceSpecNode, Map<String, YamlProperties> yamlPropertiesMap) {
+    YamlField artifactsNode = serviceSpecNode.getNode().getField(YamlTypes.ARTIFACT_LIST_CONFIG);
+    if (VariableCreatorHelper.isNotYamlFieldEmpty(artifactsNode)) {
+      addVariablesForArtifacts(artifactsNode, yamlPropertiesMap);
+    }
+
+    YamlField artifactOverrideSetsNode = serviceSpecNode.getNode().getField(YamlTypes.ARTIFACT_OVERRIDE_SETS);
+    if (artifactOverrideSetsNode != null) {
+      addVariablesForArtifactOverrideSets(artifactOverrideSetsNode, yamlPropertiesMap);
     }
 
     YamlField variablesField = serviceSpecNode.getNode().getField(YAMLFieldNameConstants.VARIABLES);
