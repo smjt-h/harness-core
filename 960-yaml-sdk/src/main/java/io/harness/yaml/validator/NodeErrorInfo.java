@@ -8,10 +8,8 @@
 package io.harness.yaml.validator;
 
 import lombok.Builder;
-import lombok.Data;
 
 @Builder
-@Data
 public class NodeErrorInfo {
   String identifier;
   String type;

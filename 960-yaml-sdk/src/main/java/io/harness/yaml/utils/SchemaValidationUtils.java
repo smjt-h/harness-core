@@ -104,13 +104,16 @@ public class SchemaValidationUtils {
       // Adding stage in path after stages[index].
       String pathToStage = path.substring(0, index + 7);
       JsonNode stageNode = parseJsonNodeByPath(pathToStage, jsonNode);
+      if (stageNode == null) {
+        return null;
+      }
       return NodeErrorInfo.builder()
           .name(stageNode.get("name").asText())
           .identifier(stageNode.get("identifier").asText())
           .type(stageNode.get("type").asText())
           .fqn(pathToStage)
           .build();
-    } catch (IndexOutOfBoundsException | NullPointerException e) {
+    } catch (IndexOutOfBoundsException e) {
       return null;
     }
   }
@@ -125,6 +128,9 @@ public class SchemaValidationUtils {
       // Adding step in path after steps[index].
       String pathToStage = path.substring(0, index + 6);
       JsonNode stepNode = parseJsonNodeByPath(pathToStage, jsonNode);
+      if (stepNode == null) {
+        return null;
+      }
       return NodeErrorInfo.builder()
           .name(stepNode.get("name").asText())
           .identifier(stepNode.get("identifier").asText())
@@ -132,7 +138,7 @@ public class SchemaValidationUtils {
           .fqn(pathToStage)
           .build();
 
-    } catch (IndexOutOfBoundsException | NullPointerException e) {
+    } catch (IndexOutOfBoundsException e) {
       return null;
     }
   }
