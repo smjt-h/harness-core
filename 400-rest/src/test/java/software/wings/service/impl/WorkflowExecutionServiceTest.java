@@ -150,6 +150,8 @@ import software.wings.beans.Variable;
 import software.wings.beans.Workflow;
 import software.wings.beans.WorkflowExecution;
 import software.wings.beans.appmanifest.HelmChart;
+import software.wings.beans.approval.ApprovalInfo;
+import software.wings.beans.approval.PreviousApprovalDetails;
 import software.wings.beans.artifact.Artifact;
 import software.wings.beans.deployment.DeploymentMetadata;
 import software.wings.beans.security.UserGroup;
@@ -157,8 +159,6 @@ import software.wings.beans.trigger.Trigger;
 import software.wings.beans.trigger.WebHookTriggerCondition;
 import software.wings.dl.WingsPersistence;
 import software.wings.helpers.ext.url.SubdomainUrlHelper;
-import software.wings.resources.ApprovalInfo;
-import software.wings.resources.PreviousApprovalDetails;
 import software.wings.rules.Listeners;
 import software.wings.security.UserThreadLocal;
 import software.wings.service.impl.deployment.checks.AccountExpirationChecker;
@@ -184,7 +184,6 @@ import software.wings.sm.WorkflowStandardParams;
 import software.wings.sm.states.ForkState.ForkStateExecutionData;
 import software.wings.utils.JsonUtils;
 
-import com.amazonaws.services.codecommit.model.ApprovalState;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
@@ -1907,7 +1906,7 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
     saveUserGroupToPersistence(userGroup);
 
     when(wingsPersistence.query(eq(StateExecutionInstance.class), any()))
-        .thenReturn(PageResponse.PageResponseBuilder.aPageResponse().withResponse(Collections.emptyList()).build());
+        .thenReturn(aPageResponse().withResponse(Collections.emptyList()).build());
 
     ApprovalStateExecutionData stateExecutionData =
         ApprovalStateExecutionData.builder().currentStatus(PAUSED.name()).approvalId(approvalId).build();

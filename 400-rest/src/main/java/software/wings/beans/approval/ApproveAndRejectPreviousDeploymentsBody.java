@@ -5,15 +5,15 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package software.wings.resources;
+package software.wings.beans.approval;
 
 import software.wings.beans.ApprovalDetails;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
 @Data
+@NoArgsConstructor
 public class ApproveAndRejectPreviousDeploymentsBody {
   private ApprovalDetails approvalDetails;
   private PreviousApprovalDetails previousApprovalDetails;
