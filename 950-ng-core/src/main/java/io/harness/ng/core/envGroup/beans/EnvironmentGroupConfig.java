@@ -10,11 +10,13 @@ import io.harness.ng.core.common.beans.NGTag;
 import java.util.List;
 import lombok.Builder;
 import lombok.Data;
+import org.springframework.data.annotation.TypeAlias;
 
 @OwnedBy(PIPELINE)
 @Data
 @Builder
-public class BasicEnvironmentGroup {
+@TypeAlias("environmentGroupConfig")
+public class EnvironmentGroupConfig {
   @EntityName String name;
   @EntityIdentifier String identifier;
 

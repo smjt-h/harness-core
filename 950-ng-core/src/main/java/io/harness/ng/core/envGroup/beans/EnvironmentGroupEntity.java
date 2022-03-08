@@ -7,7 +7,8 @@
 
 package io.harness.ng.core.envGroup.beans;
 
-import com.google.common.collect.ImmutableList;
+import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.EntityName;
@@ -16,6 +17,10 @@ import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.core.common.beans.NGTag;
 import io.harness.persistence.PersistentEntity;
+
+import com.google.common.collect.ImmutableList;
+import java.util.List;
+import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Singular;
@@ -23,13 +28,12 @@ import lombok.experimental.FieldNameConstants;
 import lombok.experimental.Wither;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.mongodb.morphia.annotations.Entity;
-import org.springframework.data.annotation.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.TypeAlias;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import javax.validation.constraints.Size;
-import java.util.List;
-
-import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 @OwnedBy(PIPELINE)
 @Data
