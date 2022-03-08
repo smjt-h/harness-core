@@ -751,7 +751,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
     OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
     double currentCPU = osBean.getSystemCpuLoad();
-
+    log.info("***** measure perf  CurrentCPU {} CurrentRSSMB {} ThresholdMB {} .. executing threads {}" ,
+        currentCPU, currentRSS, RESOURCE_USAGE_THRESHOLD * maxRSS, ((ThreadPoolExecutor)taskExecutor).getActiveCount());
     if (currentRSS >= RESOURCE_USAGE_THRESHOLD * maxRSS || currentCPU >= RESOURCE_USAGE_THRESHOLD) {
       log.warn(
           "Reached resource threshold, temporarily reject incoming task request. CurrentCPU {} CurrentRSSMB {} ThresholdMB {}",
