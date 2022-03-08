@@ -33,6 +33,7 @@ import io.harness.logging.LogCallback;
 
 import com.google.inject.Inject;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
@@ -70,7 +71,7 @@ public class HelmValuesFetchTaskNG extends AbstractDelegateRunnableTask {
       helmTaskHelperBase.decryptEncryptedDetails(helmChartManifestDelegateConfig);
       List<HelmChartValuesFetchFileConfig> helmChartValuesFetchFileConfigList =
           helmValuesFetchRequest.getHelmChartValuesFetchFileConfigList();
-      List<String> helmChartValuesFileContents =
+      Map<String, List<String>> helmChartValuesFileMapContents =
           helmTaskHelperBase.fetchValuesYamlFromChart(helmChartManifestDelegateConfig,
               helmValuesFetchRequest.getTimeout(), logCallback, helmChartValuesFetchFileConfigList);
       if (helmValuesFetchRequest.isCloseLogStream()) {
@@ -79,8 +80,7 @@ public class HelmValuesFetchTaskNG extends AbstractDelegateRunnableTask {
       return HelmValuesFetchResponse.builder()
           .commandExecutionStatus(SUCCESS)
           .unitProgressData(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))
-          .valuesFileContent(null)
-          .helmChartValuesFileContent(helmChartValuesFileContents)
+          .helmChartValuesFileMapContent(helmChartValuesFileMapContents)
           .build();
     } catch (Exception e) {
       String exceptionMsg = e.getMessage() == null ? ExceptionUtils.getMessage(e) : e.getMessage();

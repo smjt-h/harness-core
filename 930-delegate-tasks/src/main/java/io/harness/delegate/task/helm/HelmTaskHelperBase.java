@@ -665,8 +665,8 @@ public class HelmTaskHelperBase {
     return Paths.get(parentDir, chartName).toString();
   }
 
-  public List<String> fetchValuesYamlFromChart(HelmChartManifestDelegateConfig helmChartManifestDelegateConfig,
-      long timeoutInMillis, LogCallback logCallback,
+  public Map<String, List<String>> fetchValuesYamlFromChart(
+      HelmChartManifestDelegateConfig helmChartManifestDelegateConfig, long timeoutInMillis, LogCallback logCallback,
       List<HelmChartValuesFetchFileConfig> helmChartValuesFetchFileConfigList) throws Exception {
     String workingDirectory = createNewDirectoryAtPath(Paths.get(WORKING_DIR_BASE).toString());
     logCallback.saveExecutionLog(color("\nFetching values.yaml from helm chart repo", White, Bold));
@@ -675,26 +675,14 @@ public class HelmTaskHelperBase {
       downloadHelmChartFiles(helmChartManifestDelegateConfig, workingDirectory, timeoutInMillis);
       printHelmChartInfoWithVersionInExecutionLogs(workingDirectory, helmChartManifestDelegateConfig, logCallback);
 
-      List<String> helmChartValuesFileContents = new ArrayList<>();
+      Map<String, List<String>> helmValueFetchFilesResultMap = new HashMap<>();
       String chartDirectory = getChartDirectory(workingDirectory, helmChartManifestDelegateConfig.getChartName());
-      if (new File(chartDirectory, VALUES_YAML).exists()) {
-        try {
-          List<String> valuesFileContent =
-              readValuesYamlFromChartFiles(chartDirectory, Collections.singletonList(VALUES_YAML));
-          helmChartValuesFileContents.addAll(valuesFileContent);
-          logCallback.saveExecutionLog("\nSuccessfully fetched values.yaml", INFO);
-        } catch (IOException ignored) {
-          logCallback.saveExecutionLog("\nUnable to read values.yaml file " + ExceptionUtils.getMessage(ignored), WARN);
-        }
-      } else {
-        String errorMsg = format("\n Unable to find values.yaml in %s chart directory", chartDirectory);
-        logCallback.saveExecutionLog(errorMsg, WARN);
-      }
       if (isNotEmpty(helmChartValuesFetchFileConfigList)) {
         for (HelmChartValuesFetchFileConfig helmChartValuesFetchFileConfig : helmChartValuesFetchFileConfigList) {
           try {
-            helmChartValuesFileContents.addAll(
-                readValuesYamlFromChartFiles(chartDirectory, helmChartValuesFetchFileConfig.getFilePaths()));
+            List<String> valuesFileContentList = readValuesYamlFromChartFiles(
+                chartDirectory, helmChartValuesFetchFileConfig.getFilePaths(), logCallback);
+            helmValueFetchFilesResultMap.put(helmChartValuesFetchFileConfig.getIdentifier(), valuesFileContentList);
           } catch (Exception ex) {
             String errorMsg =
                 format("Failed to fetch yaml file from %s manifest", helmChartValuesFetchFileConfig.getIdentifier());
@@ -703,7 +691,7 @@ public class HelmTaskHelperBase {
           }
         }
       }
-      return helmChartValuesFileContents;
+      return helmValueFetchFilesResultMap;
     } catch (HelmClientException ex) {
       String errorMsg = format("Failed to fetch values yaml from %s repo. ",
           helmChartManifestDelegateConfig.getStoreDelegateConfig().getType());
@@ -719,13 +707,35 @@ public class HelmTaskHelperBase {
     }
   }
 
-  private List<String> readValuesYamlFromChartFiles(String chartDirectory, List<String> helmChartValuePaths)
-      throws Exception {
-    List<String> valueFileContent = new ArrayList<>();
-    for (String path : helmChartValuePaths) {
-      valueFileContent.add(new String(Files.readAllBytes(Paths.get(chartDirectory, path)), StandardCharsets.UTF_8));
+  private List<String> readValuesYamlFromChartFiles(
+      String chartDirectory, List<String> helmChartValuePaths, LogCallback logCallback) throws Exception {
+    List<String> valueFileContentList = new ArrayList<>();
+    if (helmChartValuePaths.equals(Collections.singletonList(VALUES_YAML))) {
+      if (new File(chartDirectory, VALUES_YAML).exists()) {
+        try {
+          String valueFileContent =
+              new String(Files.readAllBytes(Paths.get(chartDirectory, VALUES_YAML)), StandardCharsets.UTF_8);
+          valueFileContentList.add(valueFileContent);
+          logCallback.saveExecutionLog("\nSuccessfully fetched values.yaml", INFO);
+        } catch (IOException ioException) {
+          logCallback.saveExecutionLog(
+              "\nUnable to read values.yaml file " + ExceptionUtils.getMessage(ioException), WARN);
+        }
+      } else {
+        String errorMsg = format("\n No values.yaml found in %s chart directory", chartDirectory);
+        logCallback.saveExecutionLog(errorMsg, WARN);
+      }
     }
-    return valueFileContent;
+    for (String path : helmChartValuePaths) {
+      try {
+        String valueFileContent =
+            new String(Files.readAllBytes(Paths.get(chartDirectory, path)), StandardCharsets.UTF_8);
+        valueFileContentList.add(valueFileContent);
+      } catch (Exception ex) {
+        throw ex;
+      }
+    }
+    return valueFileContentList;
   }
 
   private void downloadHelmChartFiles(HelmChartManifestDelegateConfig helmChartManifestDelegateConfig,

@@ -269,7 +269,7 @@ public class K8sStepHelper extends CDStepHelper {
 
   public TaskChainResponse executeValuesFetchTask(Ambiance ambiance, StepElementParameters stepElementParameters,
       InfrastructureOutcome infrastructure, ManifestOutcome k8sManifestOutcome,
-      List<ValuesManifestOutcome> aggregatedValuesManifests, List<String> helmValuesYamlContents) {
+      List<ValuesManifestOutcome> aggregatedValuesManifests, Map<String, List<String>> helmChartValuesFileContent) {
     List<GitFetchFilesConfig> gitFetchFilesConfigs =
         mapValuesManifestToGitFetchFileConfig(aggregatedValuesManifests, ambiance);
     K8sStepPassThroughData k8sStepPassThroughData = K8sStepPassThroughData.builder()
@@ -277,7 +277,7 @@ public class K8sStepHelper extends CDStepHelper {
                                                         .valuesManifestOutcomes(aggregatedValuesManifests)
                                                         .openshiftParamManifestOutcomes(emptyList())
                                                         .infrastructure(infrastructure)
-                                                        .helmValuesFileContents(helmValuesYamlContents)
+                                                        .helmValuesFileMapContents(helmChartValuesFileContent)
                                                         .build();
 
     return getGitFetchFileTaskChainResponse(
@@ -759,17 +759,15 @@ public class K8sStepHelper extends CDStepHelper {
               .build();
       return TaskChainResponse.builder().chainEnd(true).passThroughData(gitFetchResponsePassThroughData).build();
     }
-    Map<String, FetchFilesResult> gitFetchFilesResultMap = gitFetchResponse.getFilesFromMultipleRepo();
     List<String> valuesFileContents = new ArrayList<>();
-    List<String> helmValuesFileContents = k8sStepPassThroughData.getHelmValuesFileContents();
-
-    if (isNotEmpty(helmValuesFileContents)) {
-      valuesFileContents.addAll(helmValuesFileContents);
+    Map<String, FetchFilesResult> gitFetchFilesResultMap = gitFetchResponse.getFilesFromMultipleRepo();
+    List<String> baseValuesFileContent = k8sStepPassThroughData.getHelmValuesFileMapContents().get(
+        k8sStepPassThroughData.getK8sManifestOutcome().getIdentifier());
+    if (isNotEmpty(baseValuesFileContent)) {
+      valuesFileContents.addAll(baseValuesFileContent);
     }
 
-    if (!gitFetchFilesResultMap.isEmpty()) {
-      valuesFileContents.addAll(getFileContents(gitFetchFilesResultMap, k8sStepPassThroughData));
-    }
+    valuesFileContents.addAll(getFileContents(gitFetchFilesResultMap, k8sStepPassThroughData));
 
     return k8sStepExecutor.executeK8sTask(k8sManifest, ambiance, stepElementParameters, valuesFileContents,
         K8sExecutionPassThroughData.builder()
@@ -791,11 +789,16 @@ public class K8sStepHelper extends CDStepHelper {
               .build();
       return TaskChainResponse.builder().chainEnd(true).passThroughData(helmValuesFetchPassTroughData).build();
     }
-    List<String> valuesFileContents = new ArrayList<>(helmValuesFetchResponse.getHelmChartValuesFileContent());
+    List<String> valuesFileContents = new ArrayList<>();
+    String valuesFileContent = helmValuesFetchResponse.getValuesFileContent();
+    if (isNotEmpty(valuesFileContent)) {
+      valuesFileContents.add(valuesFileContent);
+    }
     List<ValuesManifestOutcome> aggregatedValuesManifest = k8sStepPassThroughData.getValuesManifestOutcomes();
     if (isNotEmpty(aggregatedValuesManifest)) {
       return executeValuesFetchTask(ambiance, stepElementParameters, k8sStepPassThroughData.getInfrastructure(),
-          k8sStepPassThroughData.getK8sManifestOutcome(), aggregatedValuesManifest, valuesFileContents);
+          k8sStepPassThroughData.getK8sManifestOutcome(), aggregatedValuesManifest,
+          helmValuesFetchResponse.getHelmChartValuesFileMapContent());
     } else {
       return k8sStepExecutor.executeK8sTask(k8sManifest, ambiance, stepElementParameters, valuesFileContents,
           K8sExecutionPassThroughData.builder()
@@ -809,22 +812,25 @@ public class K8sStepHelper extends CDStepHelper {
   private List<String> getFileContents(
       Map<String, FetchFilesResult> gitFetchFilesResultMap, K8sStepPassThroughData k8sStepPassThroughData) {
     ManifestOutcome k8sManifest = k8sStepPassThroughData.getK8sManifestOutcome();
+    Map<String, List<String>> helmChartFetchFilesResultMap = k8sStepPassThroughData.getHelmValuesFileMapContents();
     if (ManifestType.OpenshiftTemplate.equals(k8sManifest.getType())) {
       List<? extends ManifestOutcome> openshiftParamManifestOutcomes =
           k8sStepPassThroughData.getOpenshiftParamManifestOutcomes();
-      return getManifestFilesContents(gitFetchFilesResultMap, openshiftParamManifestOutcomes);
+      return getManifestFilesContents(
+          gitFetchFilesResultMap, openshiftParamManifestOutcomes, helmChartFetchFilesResultMap);
     } else if (ManifestType.Kustomize.equals(k8sManifest.getType())) {
       List<? extends ManifestOutcome> kustomizePatchesManifestOutcomes =
           k8sStepPassThroughData.getKustomizePatchesManifestOutcomes();
-      return getManifestFilesContents(gitFetchFilesResultMap, kustomizePatchesManifestOutcomes);
+      return getManifestFilesContents(
+          gitFetchFilesResultMap, kustomizePatchesManifestOutcomes, helmChartFetchFilesResultMap);
     } else {
       List<? extends ManifestOutcome> valuesManifests = k8sStepPassThroughData.getValuesManifestOutcomes();
-      return getManifestFilesContents(gitFetchFilesResultMap, valuesManifests);
+      return getManifestFilesContents(gitFetchFilesResultMap, valuesManifests, helmChartFetchFilesResultMap);
     }
   }
 
-  private List<String> getManifestFilesContents(
-      Map<String, FetchFilesResult> gitFetchFilesResultMap, List<? extends ManifestOutcome> valuesManifests) {
+  private List<String> getManifestFilesContents(Map<String, FetchFilesResult> gitFetchFilesResultMap,
+      List<? extends ManifestOutcome> valuesManifests, Map<String, List<String>> helmChartFetchFilesResultMap) {
     List<String> valuesFileContents = new ArrayList<>();
 
     for (ManifestOutcome valuesManifest : valuesManifests) {
@@ -834,6 +840,12 @@ public class K8sStepHelper extends CDStepHelper {
         if (gitFetchFilesResult != null) {
           valuesFileContents.addAll(
               gitFetchFilesResult.getFiles().stream().map(GitFile::getFileContent).collect(Collectors.toList()));
+        }
+      } else if (isNotEmpty(helmChartFetchFilesResultMap)
+          && ManifestStoreType.HELMCHARTVALUES.equals(store.getKind())) {
+        List<String> helmChartValuesFileContent = helmChartFetchFilesResultMap.get(valuesManifest.getIdentifier());
+        if (helmChartValuesFileContent != null) {
+          valuesFileContents.addAll(helmChartValuesFileContent);
         }
       }
       // TODO: for local store, add files directly

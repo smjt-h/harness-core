@@ -13,6 +13,7 @@ import static io.harness.delegate.beans.connector.awsconnector.AwsCredentialType
 import static io.harness.delegate.beans.connector.helm.HttpHelmAuthType.USER_PASSWORD;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 import static io.harness.rule.OwnerRule.ACASIAN;
+import static io.harness.rule.OwnerRule.PRATYUSH;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -55,7 +56,9 @@ import io.harness.security.encryption.SecretDecryptionService;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -88,7 +91,138 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
   @Owner(developers = ACASIAN)
   @Category(UnitTests.class)
   public void shouldExecuteHelmValueFetchFromS3() throws Exception {
-    List<String> valuesYamlList = new ArrayList<>(Arrays.asList("values-file-content"));
+    String valuesYaml = "values-file-content";
+    List<String> valuesYamlList = new ArrayList<>(Arrays.asList(valuesYaml));
+    AwsConnectorDTO connectorDTO =
+        AwsConnectorDTO.builder()
+            .credential(
+                AwsCredentialDTO.builder()
+                    .awsCredentialType(MANUAL_CREDENTIALS)
+                    .config(AwsManualConfigSpecDTO.builder()
+                                .accessKey("test-access-key")
+                                .secretKeyRef(
+                                    SecretRefData.builder().decryptedValue("test-secret-key".toCharArray()).build())
+                                .build())
+                    .build())
+            .build();
+    HelmChartManifestDelegateConfig manifestDelegateConfig =
+        HelmChartManifestDelegateConfig.builder()
+            .storeDelegateConfig(S3HelmStoreDelegateConfig.builder()
+                                     .encryptedDataDetails(Collections.emptyList())
+                                     .awsConnector(connectorDTO)
+                                     .build())
+            .build();
+
+    doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
+    doReturn(valuesYamlList)
+        .when(helmTaskHelperBase)
+        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
+
+    HelmValuesFetchRequest request = HelmValuesFetchRequest.builder()
+                                         .timeout(DEFAULT_ASYNC_CALL_TIMEOUT)
+                                         .helmChartManifestDelegateConfig(manifestDelegateConfig)
+                                         .accountId("test")
+                                         .build();
+
+    HelmValuesFetchResponse response = (HelmValuesFetchResponse) helmValuesFetchTaskNG.run(request);
+    assertThat(response).isNotNull();
+    assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
+    assertThat(response.getValuesFileContent()).isEqualTo(valuesYaml);
+    assertThat(response.getUnitProgressData()).isNotNull();
+  }
+
+  @Test
+  @Owner(developers = ACASIAN)
+  @Category(UnitTests.class)
+  public void shouldExecuteHelmValueFetchFromGcs() throws Exception {
+    String valuesYaml = "values-file-content";
+    List<String> valuesYamlList = new ArrayList<>(Arrays.asList(valuesYaml));
+    GcpConnectorDTO connectorDTO =
+        GcpConnectorDTO.builder()
+            .credential(
+                GcpConnectorCredentialDTO.builder()
+                    .gcpCredentialType(GcpCredentialType.MANUAL_CREDENTIALS)
+                    .config(GcpManualDetailsDTO.builder()
+                                .secretKeyRef(SecretRefData.builder().decryptedValue("gcp-key".toCharArray()).build())
+                                .build())
+                    .build())
+            .build();
+    HelmChartManifestDelegateConfig manifestDelegateConfig =
+        HelmChartManifestDelegateConfig.builder()
+            .storeDelegateConfig(GcsHelmStoreDelegateConfig.builder()
+                                     .encryptedDataDetails(Collections.emptyList())
+                                     .gcpConnector(connectorDTO)
+                                     .build())
+            .build();
+
+    doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
+    doReturn(valuesYamlList)
+        .when(helmTaskHelperBase)
+        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
+
+    HelmValuesFetchRequest request = HelmValuesFetchRequest.builder()
+                                         .timeout(DEFAULT_ASYNC_CALL_TIMEOUT)
+                                         .helmChartManifestDelegateConfig(manifestDelegateConfig)
+                                         .accountId("test")
+                                         .build();
+
+    HelmValuesFetchResponse response = (HelmValuesFetchResponse) helmValuesFetchTaskNG.run(request);
+    assertThat(response).isNotNull();
+    assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
+    assertThat(response.getValuesFileContent()).isEqualTo(valuesYaml);
+    assertThat(response.getUnitProgressData()).isNotNull();
+  }
+
+  @Test
+  @Owner(developers = ACASIAN)
+  @Category(UnitTests.class)
+  public void shouldExecuteHelmValueFetchFromHttp() throws Exception {
+    String valuesYaml = "values-file-content";
+    List<String> valuesYamlList = new ArrayList<>(Arrays.asList(valuesYaml));
+    HttpHelmConnectorDTO connectorDTO =
+        HttpHelmConnectorDTO.builder()
+            .auth(HttpHelmAuthenticationDTO.builder()
+                      .authType(USER_PASSWORD)
+                      .credentials(
+                          HttpHelmUsernamePasswordDTO.builder()
+                              .username("test")
+                              .passwordRef(SecretRefData.builder().decryptedValue("password".toCharArray()).build())
+                              .build())
+                      .build())
+            .build();
+    HelmChartManifestDelegateConfig manifestDelegateConfig =
+        HelmChartManifestDelegateConfig.builder()
+            .storeDelegateConfig(HttpHelmStoreDelegateConfig.builder()
+                                     .encryptedDataDetails(Collections.emptyList())
+                                     .httpHelmConnector(connectorDTO)
+                                     .build())
+            .build();
+
+    doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
+    doReturn(valuesYamlList)
+        .when(helmTaskHelperBase)
+        .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
+
+    HelmValuesFetchRequest request = HelmValuesFetchRequest.builder()
+                                         .timeout(DEFAULT_ASYNC_CALL_TIMEOUT)
+                                         .helmChartManifestDelegateConfig(manifestDelegateConfig)
+                                         .accountId("test")
+                                         .build();
+
+    HelmValuesFetchResponse response = (HelmValuesFetchResponse) helmValuesFetchTaskNG.run(request);
+    assertThat(response).isNotNull();
+    assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
+    assertThat(response.getValuesFileContent()).isEqualTo(valuesYaml);
+    assertThat(response.getUnitProgressData()).isNotNull();
+  }
+
+  @Test
+  @Owner(developers = PRATYUSH)
+  @Category(UnitTests.class)
+  public void shouldExecuteHelmValueFetchFromS3OnNewDelegate() throws Exception {
+    List<String> valuesYamlList = new ArrayList<>(Arrays.asList("values yaml payload"));
+    Map<String, List<String>> helmChartValuesFileMapContent = new HashMap<>();
+    helmChartValuesFileMapContent.put("manifest-identifier", valuesYamlList);
     AwsConnectorDTO connectorDTO =
         AwsConnectorDTO.builder()
             .credential(
@@ -124,15 +258,17 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getValuesFileContent()).isNull();
-    assertThat(response.getHelmChartValuesFileContent()).isEqualTo(valuesYamlList);
+    assertThat(response.getHelmChartValuesFileMapContent()).isEqualTo(helmChartValuesFileMapContent);
     assertThat(response.getUnitProgressData()).isNotNull();
   }
 
   @Test
-  @Owner(developers = ACASIAN)
+  @Owner(developers = PRATYUSH)
   @Category(UnitTests.class)
-  public void shouldExecuteHelmValueFetchFromGcs() throws Exception {
-    List<String> valuesYamlList = new ArrayList<>(Arrays.asList("values-file-content"));
+  public void shouldExecuteHelmValueFetchFromGcsOnNewDelegate() throws Exception {
+    List<String> valuesYamlList = new ArrayList<>(Arrays.asList("values yaml payload"));
+    Map<String, List<String>> helmChartValuesFileMapContent = new HashMap<>();
+    helmChartValuesFileMapContent.put("manifest-identifier", valuesYamlList);
     GcpConnectorDTO connectorDTO =
         GcpConnectorDTO.builder()
             .credential(
@@ -166,15 +302,17 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getValuesFileContent()).isNull();
-    assertThat(response.getHelmChartValuesFileContent()).isEqualTo(valuesYamlList);
+    assertThat(response.getHelmChartValuesFileMapContent()).isEqualTo(helmChartValuesFileMapContent);
     assertThat(response.getUnitProgressData()).isNotNull();
   }
 
   @Test
-  @Owner(developers = ACASIAN)
+  @Owner(developers = PRATYUSH)
   @Category(UnitTests.class)
-  public void shouldExecuteHelmValueFetchFromHttp() throws Exception {
-    List<String> valuesYamlList = new ArrayList<>(Arrays.asList("values-file-content"));
+  public void shouldExecuteHelmValueFetchFromHttpOnNewDelegate() throws Exception {
+    List<String> valuesYamlList = new ArrayList<>(Arrays.asList("values yaml payload"));
+    Map<String, List<String>> helmChartValuesFileMapContent = new HashMap<>();
+    helmChartValuesFileMapContent.put("manifest-identifier", valuesYamlList);
     HttpHelmConnectorDTO connectorDTO =
         HttpHelmConnectorDTO.builder()
             .auth(HttpHelmAuthenticationDTO.builder()
@@ -209,7 +347,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getValuesFileContent()).isNull();
-    assertThat(response.getHelmChartValuesFileContent()).isEqualTo(valuesYamlList);
+    assertThat(response.getHelmChartValuesFileMapContent()).isEqualTo(helmChartValuesFileMapContent);
     assertThat(response.getUnitProgressData()).isNotNull();
   }
 

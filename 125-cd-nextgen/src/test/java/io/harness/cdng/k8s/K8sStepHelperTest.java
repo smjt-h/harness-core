@@ -25,6 +25,7 @@ import static io.harness.rule.OwnerRule.ACASIAN;
 import static io.harness.rule.OwnerRule.ACHYUTH;
 import static io.harness.rule.OwnerRule.ANSHUL;
 import static io.harness.rule.OwnerRule.NAMAN_TALAYCHA;
+import static io.harness.rule.OwnerRule.PRATYUSH;
 import static io.harness.rule.OwnerRule.VAIBHAV_SI;
 
 import static java.util.Arrays.asList;
@@ -49,6 +50,9 @@ import io.harness.category.element.UnitTests;
 import io.harness.cdng.CDStepHelper;
 import io.harness.cdng.common.beans.SetupAbstractionKeys;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
+import io.harness.cdng.helm.HelmDeployStepParams;
+import io.harness.cdng.helm.NativeHelmStepPassThroughData;
+import io.harness.cdng.helm.beans.NativeHelmExecutionPassThroughData;
 import io.harness.cdng.infra.beans.K8sDirectInfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sDirectInfrastructureOutcome.K8sDirectInfrastructureOutcomeBuilder;
 import io.harness.cdng.k8s.beans.HelmValuesFetchResponsePassThroughData;
@@ -1027,13 +1031,11 @@ public class K8sStepHelperTest extends CategoryTest {
                                                  .build();
 
     UnitProgressData unitProgressData = UnitProgressData.builder().build();
-    HelmValuesFetchResponse helmValuesFetchResponse =
-        HelmValuesFetchResponse.builder()
-            .valuesFileContent(null)
-            .helmChartValuesFileContent(Arrays.asList("values yaml payload"))
-            .commandExecutionStatus(SUCCESS)
-            .unitProgressData(unitProgressData)
-            .build();
+    HelmValuesFetchResponse helmValuesFetchResponse = HelmValuesFetchResponse.builder()
+                                                          .valuesFileContent("values yaml payload")
+                                                          .commandExecutionStatus(SUCCESS)
+                                                          .unitProgressData(unitProgressData)
+                                                          .build();
     Map<String, ResponseData> responseDataMap = ImmutableMap.of("helm-value-fetch-response", helmValuesFetchResponse);
     ThrowingSupplier responseDataSuplier = StrategyHelper.buildResponseDataSupplier(responseDataMap);
 
@@ -1053,6 +1055,48 @@ public class K8sStepHelperTest extends CategoryTest {
     List<String> valuesFilesContent = valuesFilesContentCaptor.getValue();
     assertThat(valuesFilesContent).isNotEmpty();
     assertThat(valuesFilesContent.get(0)).isEqualTo("values yaml payload");
+  }
+
+  @Test
+  @Owner(developers = PRATYUSH)
+  @Category(UnitTests.class)
+  public void shouldHandleHelmValueFetchResponseOnNewDelegate() throws Exception {
+    StepElementParameters rollingStepElementParams =
+        StepElementParameters.builder().spec(K8sRollingStepParameters.infoBuilder().build()).build();
+
+    K8sStepPassThroughData passThroughData = K8sStepPassThroughData.builder()
+                                                 .k8sManifestOutcome(K8sManifestOutcome.builder().build())
+                                                 .infrastructure(K8sDirectInfrastructureOutcome.builder().build())
+                                                 .build();
+
+    UnitProgressData unitProgressData = UnitProgressData.builder().build();
+    List<String> valuesYamlList = new ArrayList<>(Arrays.asList("values yaml payload"));
+    Map<String, List<String>> helmChartValuesFileMapContent = new HashMap<>();
+    helmChartValuesFileMapContent.put("manifest-identifier", valuesYamlList);
+    HelmValuesFetchResponse helmValuesFetchResponse = HelmValuesFetchResponse.builder()
+                                                          .helmChartValuesFileMapContent(helmChartValuesFileMapContent)
+                                                          .commandExecutionStatus(SUCCESS)
+                                                          .unitProgressData(unitProgressData)
+                                                          .build();
+    Map<String, ResponseData> responseDataMap = ImmutableMap.of("helm-value-fetch-response", helmValuesFetchResponse);
+    ThrowingSupplier responseDataSuplier = StrategyHelper.buildResponseDataSupplier(responseDataMap);
+
+    k8sStepHelper.executeNextLink(
+        k8sStepExecutor, ambiance, rollingStepElementParams, passThroughData, responseDataSuplier);
+
+    ArgumentCaptor<List> valuesFilesContentCaptor = ArgumentCaptor.forClass(List.class);
+    verify(k8sStepExecutor, times(1))
+        .executeK8sTask(eq(passThroughData.getK8sManifestOutcome()), eq(ambiance), eq(rollingStepElementParams),
+            valuesFilesContentCaptor.capture(),
+            eq(K8sExecutionPassThroughData.builder()
+                    .infrastructure(passThroughData.getInfrastructure())
+                    .lastActiveUnitProgressData(unitProgressData)
+                    .build()),
+            eq(false), eq(unitProgressData));
+
+    List<String> valuesFilesContent = valuesFilesContentCaptor.getValue();
+    assertThat(valuesFilesContent).isNotEmpty();
+    assertThat(valuesFilesContent).isEqualTo(valuesYamlList);
   }
 
   @Test
@@ -1411,11 +1455,11 @@ public class K8sStepHelperTest extends CategoryTest {
 
     List<ValuesManifestOutcome> aggregatedValuesManifests = new ArrayList<>();
 
-    List<String> helmValuesYamlContents = new ArrayList<>();
+    Map<String, List<String>> helmChartFetchFilesResultMap = new HashMap<>();
 
     assertThatCode(()
                        -> k8sStepHelper.executeValuesFetchTask(ambiance, stepElementParameters, outcomeBuilder.build(),
-                           manifestOutcome, aggregatedValuesManifests, helmValuesYamlContents));
+                           manifestOutcome, aggregatedValuesManifests, helmChartFetchFilesResultMap));
   }
 
   @Test

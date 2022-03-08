@@ -19,6 +19,7 @@ import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
 
 import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
 import org.springframework.data.annotation.TypeAlias;
@@ -34,5 +35,5 @@ public class K8sStepPassThroughData implements PassThroughData {
   List<OpenshiftParamManifestOutcome> openshiftParamManifestOutcomes;
   List<KustomizePatchesManifestOutcome> kustomizePatchesManifestOutcomes;
   InfrastructureOutcome infrastructure;
-  List<String> helmValuesFileContents;
+  Map<String, List<String>> helmValuesFileMapContents;
 }
