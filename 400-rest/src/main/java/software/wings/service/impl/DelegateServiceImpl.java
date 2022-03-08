@@ -2351,6 +2351,7 @@ public class DelegateServiceImpl implements DelegateService {
     log.info("Registering delegate for Hostname: {} IP: {}", delegateParams.getHostName(), delegateParams.getIp());
 
     String delegateGroupId = delegateParams.getDelegateGroupId();
+    log.info("Delegate group id is {}", delegateGroupId);
     if (isBlank(delegateGroupId) && isNotBlank(delegateParams.getDelegateGroupName())) {
       log.info("Delegate group id is null");
       final DelegateGroup delegateGroup =

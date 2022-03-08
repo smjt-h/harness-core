@@ -29,7 +29,7 @@ public class DelegateGroupUpsertEvent extends AbstractDelegateConfigurationEvent
 
   @Override
   public Resource getResource() {
-    return Resource.builder().identifier(delegateGroupId).type(ResourceTypeConstants.DELEGATE).build();
+    return Resource.builder().identifier(delegateGroupId).type(ResourceTypeConstants.DELEGATE_GROUP).build();
   }
 
   @Override
