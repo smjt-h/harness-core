@@ -7,6 +7,8 @@
 
 package io.harness.batch.processing.cloudevents.aws.ecs.service.impl;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
 import io.harness.batch.processing.cloudevents.aws.ecs.service.CEClusterDao;
 import io.harness.batch.processing.cloudevents.aws.ecs.service.intfc.AwsECSClusterService;
 import io.harness.batch.processing.cloudevents.aws.ecs.service.support.intfc.AwsECSHelperService;
@@ -109,7 +111,7 @@ public class AwsECSClusterServiceImpl implements AwsECSClusterService {
     infraClusterMap.forEach((clusterIdentifierKey, ceCluster) -> {
       if (!ceExistingClusterMap.containsKey(clusterIdentifierKey)) {
         ceClusterDao.create(ceCluster);
-      } else if (!ceCluster.getLabels().isEmpty()) {
+      } else if (isNotEmpty(ceCluster.getLabels())) {
         ceClusterDao.upsert(ceCluster);
       }
     });
