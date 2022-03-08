@@ -106,11 +106,7 @@ public class AwsECSClusterServiceImpl implements AwsECSClusterService {
     List<CECluster> ceExistingClusters = ceClusterDao.getByInfraAccountId(accountId, infraAccountId);
     Map<ClusterIdentifierKey, CECluster> ceExistingClusterMap = createClusterMap(ceExistingClusters);
 
-    infraClusterMap.forEach((clusterIdentifierKey, ceCluster) -> {
-      if (!ceExistingClusterMap.containsKey(clusterIdentifierKey)) {
-        ceClusterDao.create(ceCluster);
-      }
-    });
+    infraClusterMap.forEach((clusterIdentifierKey, ceCluster) -> ceClusterDao.create(ceCluster));
 
     ceExistingClusterMap.forEach((clusterIdentifierKey, ceCluster) -> {
       if (!infraClusterMap.containsKey(clusterIdentifierKey)) {
