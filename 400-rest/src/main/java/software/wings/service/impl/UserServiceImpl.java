@@ -270,6 +270,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.mindrot.jbcrypt.BCrypt;
+import org.mongodb.morphia.FindAndModifyOptions;
 import org.mongodb.morphia.query.CriteriaContainer;
 import org.mongodb.morphia.query.FindOptions;
 import org.mongodb.morphia.query.Query;
@@ -1297,9 +1298,21 @@ public class UserServiceImpl implements UserService {
     }
   }
 
+  private void updateEmailOfUser(User user, String newEmail) {
+    if (user != null) {
+      UpdateOperations<User> updateOperations = wingsPersistence.createUpdateOperations(User.class);
+      setUnset(updateOperations, UserKeys.email, newEmail);
+      Query<User> query = wingsPersistence.createQuery(User.class).filter("_id", user.getUuid());
+      wingsPersistence.findAndModify(query, updateOperations, new FindAndModifyOptions());
+    }
+  }
+
   @Override
   public InviteOperationResponse inviteUser(
       UserInvite userInvite, boolean isInviteAcceptanceRequired, boolean markEmailVerified) {
+    log.info("Inviting user {} with isInviteAcceptanceRequired {} and markEmailVerified {}", userInvite.getEmail(),
+        isInviteAcceptanceRequired, markEmailVerified);
+
     signupService.checkIfEmailIsValid(userInvite.getEmail());
 
     String accountId = userInvite.getAccountId();
@@ -1317,7 +1330,17 @@ public class UserServiceImpl implements UserService {
       user = anUser().build();
     }
 
+    if (featureFlagService.isEnabled(FeatureName.LDAP_USER_ID_SYNC, accountId) && isNotEmpty(userInvite.getEmail())
+        && !userInvite.getEmail().equals(user.getEmail())) {
+      log.info("Updating email Id for user {} with current mail {} and new email {}", user.getUuid(), user.getEmail(),
+          userInvite.getEmail().trim().toLowerCase());
+      updateEmailOfUser(user, userInvite.getEmail().trim().toLowerCase());
+      user.setEmail(userInvite.getEmail().trim().toLowerCase());
+    }
+
     List<UserGroup> userGroups = userGroupService.getUserGroupsFromUserInvite(userInvite);
+    log.info("User {} is being part of groups {}", user.getUuid(), userGroups);
+
     if (isUserAssignedToAccount(user, accountId)) {
       updateUserGroupsOfUser(user.getUuid(), userGroups, accountId, true);
       return USER_ALREADY_ADDED;
