@@ -3,7 +3,6 @@ package io.harness.delegate.beans.connector.pdcconnector;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import io.harness.exception.InvalidRequestException;
-import io.harness.serializer.JsonUtils;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -50,19 +49,11 @@ public class HostDTOsDeserializer extends StdDeserializer<List<HostDTO>> {
       return Collections.emptyList();
     }
 
-    return isJSONListFormat(hosts) ? parseHostDTOsFromJSONList(hosts) : parseHostDTOsFromPlanText(hosts);
-  }
-
-  private boolean isJSONListFormat(final String hosts) {
-    return hosts.trim().matches("^\\[[\\s|\\S]*]$");
-  }
-
-  private List<HostDTO> parseHostDTOsFromJSONList(final String hosts) {
-    return JsonUtils.asObject(hosts, List.class, HostDTO.class);
+    return parseHostDTOsFromPlanText(hosts);
   }
 
   private List<HostDTO> parseHostDTOsFromPlanText(final String hosts) {
-    String[] hostsArr = hosts.replace("\\n", ",").split(",");
+    String[] hostsArr = hosts.replace("\n", ",").split(",");
     return getUnmodifiableHostDTOsList(hostsArr);
   }
 
