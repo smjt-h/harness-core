@@ -409,7 +409,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   @Inject private ServiceInstanceService serviceInstanceService;
   @Inject private ArtifactService artifactService;
   @Inject private StateMachineExecutionSimulator stateMachineExecutionSimulator;
-  @Inject private GraphRenderer graphRenderer;
+  @Inject private software.wings.service.impl.GraphRenderer graphRenderer;
   @Inject private AppService appService;
   @Inject private WorkflowService workflowService;
   @Inject private InfrastructureMappingService infrastructureMappingService;
@@ -425,13 +425,15 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   @Inject private UserGroupService userGroupService;
   @Inject private AuthHandler authHandler;
   @Inject private SweepingOutputService sweepingOutputService;
-  @Inject private PreDeploymentChecks preDeploymentChecks;
+  @Inject private software.wings.service.impl.PreDeploymentChecks preDeploymentChecks;
   @Inject private AlertService alertService;
   @Inject private WorkflowServiceHelper workflowServiceHelper;
   @Inject private ArtifactStreamServiceBindingService artifactStreamServiceBindingService;
   @Inject private FeatureFlagService featureFlagService;
-  @Inject private WorkflowExecutionServiceHelper workflowExecutionServiceHelper;
-  @Inject private MultiArtifactWorkflowExecutionServiceHelper multiArtifactWorkflowExecutionServiceHelper;
+  @Inject private software.wings.service.impl.WorkflowExecutionServiceHelper workflowExecutionServiceHelper;
+  @Inject
+  private software.wings.service.impl
+      .MultiArtifactWorkflowExecutionServiceHelper multiArtifactWorkflowExecutionServiceHelper;
   @Inject private ArtifactStreamService artifactStreamService;
   @Inject private ArtifactCollectionUtils artifactCollectionUtils;
   @Inject private GovernanceConfigService governanceConfigService;
@@ -439,7 +441,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   @Inject private WorkflowConcurrencyHelper workflowConcurrencyHelper;
   @Inject private ResourceConstraintService resourceConstraintService;
   @Inject private RollbackStateMachineGenerator rollbackStateMachineGenerator;
-  @Inject private ResourceLookupFilterHelper resourceLookupFilterHelper;
+  @Inject private software.wings.service.impl.ResourceLookupFilterHelper resourceLookupFilterHelper;
   @Inject private PipelineResumeUtils pipelineResumeUtils;
   @Inject private ApiKeyService apiKeyService;
   @Inject private BuildSourceService buildSourceService;
@@ -457,7 +459,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   @Inject @ServiceInstanceUsage private PreDeploymentChecker siUsageChecker;
   @Inject @AccountExpiryCheck private PreDeploymentChecker accountExpirationChecker;
   @Inject private WorkflowStatusPropagatorFactory workflowStatusPropagatorFactory;
-  @Inject private WorkflowExecutionUpdate executionUpdate;
+  @Inject private software.wings.service.impl.WorkflowExecutionUpdate executionUpdate;
   private static final long SIXTY_DAYS_IN_MILLIS = 60 * 24 * 60 * 60 * 1000L;
 
   @Inject private EventService eventService;
@@ -1202,9 +1204,10 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
   @Override
   public void stateExecutionStatusUpdated(@NotNull StateStatusUpdateInfo updateInfo) {
-    try (AutoLogContext ignore = new WorkflowExecutionLogContext(updateInfo.getWorkflowExecutionId(), OVERRIDE_NESTS);
-         AutoLogContext ignore2 =
-             new StateExecutionInstanceLogContext(updateInfo.getStateExecutionInstanceId(), OVERRIDE_NESTS)) {
+    try (AutoLogContext ignore = new software.wings.service.impl.WorkflowExecutionLogContext(
+             updateInfo.getWorkflowExecutionId(), OVERRIDE_NESTS);
+         AutoLogContext ignore2 = new software.wings.service.impl.StateExecutionInstanceLogContext(
+             updateInfo.getStateExecutionInstanceId(), OVERRIDE_NESTS)) {
       WorkflowStatusPropagator workflowStatusPropagator =
           workflowStatusPropagatorFactory.obtainHandler(updateInfo.getStatus());
       workflowStatusPropagator.handleStatusUpdate(updateInfo);
@@ -1215,7 +1218,8 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     }
   }
 
-  private WorkflowTree calculateTree(String appId, String workflowExecutionId, String accountId) {
+  private software.wings.service.impl.WorkflowTree calculateTree(
+      String appId, String workflowExecutionId, String accountId) {
     Map<String, StateExecutionInstance> allInstancesIdMap =
         stateExecutionService.executionStatesMap(appId, workflowExecutionId);
     Long lastUpdate = allInstancesIdMap.values()
@@ -1225,28 +1229,32 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
                           .orElseGet(() -> Long.valueOf(0));
 
     List<String> params = getParamsForTree();
-    WorkflowTree tree =
-        mongoStore.get(GraphRenderer.algorithmId, WorkflowTree.STRUCTURE_HASH, workflowExecutionId, params);
+    software.wings.service.impl.WorkflowTree tree =
+        mongoStore.get(software.wings.service.impl.GraphRenderer.algorithmId,
+            software.wings.service.impl.WorkflowTree.STRUCTURE_HASH, workflowExecutionId, params);
     if (tree != null && tree.getContextOrder() >= lastUpdate) {
       return tree;
     }
 
-    WorkflowTreeBuilder workflowTreeBuilder =
-        WorkflowTree.builder().key(workflowExecutionId).params(params).contextOrder(lastUpdate).wasInvalidated(false);
+    WorkflowTreeBuilder workflowTreeBuilder = software.wings.service.impl.WorkflowTree.builder()
+                                                  .key(workflowExecutionId)
+                                                  .params(params)
+                                                  .contextOrder(lastUpdate)
+                                                  .wasInvalidated(false);
     if (allInstancesIdMap.values().stream().anyMatch(i -> i.getStatus() == ExecutionStatus.WAITING)) {
       workflowTreeBuilder.overrideStatus(ExecutionStatus.WAITING);
     }
 
     workflowTreeBuilder.graph(graphRenderer.generateHierarchyNode(allInstancesIdMap));
 
-    WorkflowTree cacheTree = workflowTreeBuilder.build();
+    software.wings.service.impl.WorkflowTree cacheTree = workflowTreeBuilder.build();
 
     executorService.submit(() -> { mongoStore.upsert(cacheTree, ofDays(30), false, accountId); });
     return cacheTree;
   }
 
   private List<String> getParamsForTree() {
-    return Collections.singletonList(String.valueOf(GraphRenderer.AGGREGATION_LIMIT));
+    return Collections.singletonList(String.valueOf(software.wings.service.impl.GraphRenderer.AGGREGATION_LIMIT));
   }
 
   @Override
@@ -1273,13 +1281,15 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
       return;
     }
 
-    try (AutoLogContext ignore = new WorkflowExecutionLogContext(workflowExecution.getUuid(), OVERRIDE_NESTS)) {
-      WorkflowTree tree = null;
+    try (AutoLogContext ignore =
+             new software.wings.service.impl.WorkflowExecutionLogContext(workflowExecution.getUuid(), OVERRIDE_NESTS)) {
+      software.wings.service.impl.WorkflowTree tree = null;
       List<String> params = null;
       params = getParamsForTree();
       if (!upToDate) {
-        tree = mongoStore.<WorkflowTree>get(
-            GraphRenderer.algorithmId, WorkflowTree.STRUCTURE_HASH, workflowExecution.getUuid(), params);
+        tree = mongoStore.<software.wings.service.impl.WorkflowTree>get(
+            software.wings.service.impl.GraphRenderer.algorithmId,
+            software.wings.service.impl.WorkflowTree.STRUCTURE_HASH, workflowExecution.getUuid(), params);
       }
 
       if (upToDate || tree == null || tree.isWasInvalidated()
@@ -1377,14 +1387,15 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
    */
   @VisibleForTesting
   WorkflowExecution triggerPipelineExecution(String appId, String pipelineId, ExecutionArgs executionArgs,
-      WorkflowExecutionUpdate workflowExecutionUpdate, Trigger trigger) {
+      software.wings.service.impl.WorkflowExecutionUpdate workflowExecutionUpdate, Trigger trigger) {
     Pipeline pipeline = pipelineService.readPipelineResolvedVariablesLoopedInfo(
         appId, pipelineId, executionArgs.getWorkflowVariables());
     return triggerPipelineExecution(appId, pipeline, executionArgs, workflowExecutionUpdate, trigger, null);
   }
 
   private WorkflowExecution triggerPipelineExecution(String appId, Pipeline pipeline, ExecutionArgs executionArgs,
-      WorkflowExecutionUpdate workflowExecutionUpdate, Trigger trigger, String pipelineResumeId) {
+      software.wings.service.impl.WorkflowExecutionUpdate workflowExecutionUpdate, Trigger trigger,
+      String pipelineResumeId) {
     if (pipeline == null) {
       throw new WingsException(ErrorCode.NON_EXISTING_PIPELINE);
     }
@@ -1594,8 +1605,8 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
   @Override
   public WorkflowExecution triggerOrchestrationWorkflowExecution(String appId, String envId, String workflowId,
-      String pipelineExecutionId, @NotNull ExecutionArgs executionArgs, WorkflowExecutionUpdate workflowExecutionUpdate,
-      Trigger trigger) {
+      String pipelineExecutionId, @NotNull ExecutionArgs executionArgs,
+      software.wings.service.impl.WorkflowExecutionUpdate workflowExecutionUpdate, Trigger trigger) {
     String accountId = appService.getAccountIdByAppId(appId);
 
     log.info("Execution Triggered. Type: {}", executionArgs.getWorkflowType());
@@ -1729,16 +1740,16 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   }
 
   private WorkflowExecution triggerExecution(WorkflowExecution workflowExecution, StateMachine stateMachine,
-      WorkflowExecutionUpdate workflowExecutionUpdate, WorkflowStandardParams stdParams, Trigger trigger,
-      Pipeline pipeline, Workflow workflow, ContextElement... contextElements) {
+      software.wings.service.impl.WorkflowExecutionUpdate workflowExecutionUpdate, WorkflowStandardParams stdParams,
+      Trigger trigger, Pipeline pipeline, Workflow workflow, ContextElement... contextElements) {
     return triggerExecution(workflowExecution, stateMachine, new PipelineStageExecutionAdvisor(),
         workflowExecutionUpdate, stdParams, trigger, pipeline, workflow, contextElements);
   }
 
   private WorkflowExecution triggerExecution(WorkflowExecution workflowExecution, StateMachine stateMachine,
-      ExecutionEventAdvisor workflowExecutionAdvisor, WorkflowExecutionUpdate workflowExecutionUpdate,
-      WorkflowStandardParams stdParams, Trigger trigger, Pipeline pipeline, Workflow workflow,
-      ContextElement... contextElements) {
+      ExecutionEventAdvisor workflowExecutionAdvisor,
+      software.wings.service.impl.WorkflowExecutionUpdate workflowExecutionUpdate, WorkflowStandardParams stdParams,
+      Trigger trigger, Pipeline pipeline, Workflow workflow, ContextElement... contextElements) {
     Set<String> keywords = new HashSet<>();
     keywords.add(workflowExecution.normalizedName());
     if (workflowExecution.getWorkflowType() != null) {
@@ -1930,9 +1941,10 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   @SuppressWarnings("squid:S00107")
   @VisibleForTesting
   protected void collectArtifactsAndStartExecution(WorkflowExecution workflowExecution, StateMachine stateMachine,
-      ExecutionEventAdvisor workflowExecutionAdvisor, WorkflowExecutionUpdate workflowExecutionUpdate,
-      WorkflowStandardParams stdParams, Application app, Workflow workflow, Pipeline pipeline,
-      ExecutionArgs executionArgs, ContextElement... contextElements) {
+      ExecutionEventAdvisor workflowExecutionAdvisor,
+      software.wings.service.impl.WorkflowExecutionUpdate workflowExecutionUpdate, WorkflowStandardParams stdParams,
+      Application app, Workflow workflow, Pipeline pipeline, ExecutionArgs executionArgs,
+      ContextElement... contextElements) {
     // Resolve artifact source parameters and collect artifacts before starting execution
     List<Artifact> artifacts = collectArtifacts(workflowExecution, executionArgs.getArtifactVariables(), app.getUuid());
     if (isNotEmpty(artifacts)) {
@@ -1989,9 +2001,10 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
   @SuppressWarnings("squid:S00107")
   private WorkflowExecution continueWorkflowExecution(WorkflowExecution workflowExecution, StateMachine stateMachine,
-      ExecutionEventAdvisor workflowExecutionAdvisor, WorkflowExecutionUpdate workflowExecutionUpdate,
-      WorkflowStandardParams stdParams, Application app, Workflow workflow, Pipeline pipeline,
-      ExecutionArgs executionArgs, ContextElement... contextElements) {
+      ExecutionEventAdvisor workflowExecutionAdvisor,
+      software.wings.service.impl.WorkflowExecutionUpdate workflowExecutionUpdate, WorkflowStandardParams stdParams,
+      Application app, Workflow workflow, Pipeline pipeline, ExecutionArgs executionArgs,
+      ContextElement... contextElements) {
     updateWorkflowElement(workflowExecution, stdParams, workflow, app.getAccountId());
 
     LinkedList<ContextElement> elements = new LinkedList<>();
@@ -2012,7 +2025,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     stateExecutionInstance.setPipelineStageParallelIndex(executionArgs.getPipelinePhaseParallelIndex());
     stateExecutionInstance.setIsOnDemandRollback(workflowExecution.isOnDemandRollback());
     if (workflowExecutionUpdate == null) {
-      workflowExecutionUpdate = new WorkflowExecutionUpdate();
+      workflowExecutionUpdate = new software.wings.service.impl.WorkflowExecutionUpdate();
     }
     workflowExecutionUpdate.setAppId(workflowExecution.getAppId());
     workflowExecutionUpdate.setWorkflowExecutionId(workflowExecution.getUuid());
@@ -2218,7 +2231,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
                                           .description(pipeline.getDescription())
                                           .startTs(savedWorkflowExecution.getStartTs())
                                           .build();
-    sweepingOutputService.save(SweepingOutputServiceImpl
+    sweepingOutputService.save(software.wings.service.impl.SweepingOutputServiceImpl
                                    .prepareSweepingOutputBuilder(workflowExecution.getAppId(),
                                        workflowExecution.getUuid(), null, null, null, Scope.PIPELINE)
                                    .name("pipeline")
@@ -2815,7 +2828,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
       String appId, int parallelIndexToResume, WorkflowExecution prevWorkflowExecution) {
     String accountId = prevWorkflowExecution.getAccountId();
     try (AutoLogContext ignore1 = new AccountLogContext(accountId, OVERRIDE_ERROR);
-         AutoLogContext ignore2 = new AppLogContext(appId, OVERRIDE_ERROR)) {
+         AutoLogContext ignore2 = new software.wings.service.impl.AppLogContext(appId, OVERRIDE_ERROR)) {
       ImmutableMap<String, StateExecutionInstance> stateExecutionInstanceMap =
           getStateExecutionInstanceMap(prevWorkflowExecution);
 
@@ -2828,7 +2841,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
       String appId, String stageName, WorkflowExecution prevWorkflowExecution) {
     String accountId = prevWorkflowExecution.getAccountId();
     try (AutoLogContext ignore1 = new AccountLogContext(accountId, OVERRIDE_ERROR);
-         AutoLogContext ignore2 = new AppLogContext(appId, OVERRIDE_ERROR)) {
+         AutoLogContext ignore2 = new software.wings.service.impl.AppLogContext(appId, OVERRIDE_ERROR)) {
       ImmutableMap<String, StateExecutionInstance> stateExecutionInstanceMap =
           getStateExecutionInstanceMap(prevWorkflowExecution);
       Pipeline pipeline = pipelineResumeUtils.getPipelineFromWorkflowExecution(prevWorkflowExecution, appId);
@@ -2870,7 +2883,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   public List<PipelineStageGroupedInfo> getResumeStages(String appId, WorkflowExecution prevWorkflowExecution) {
     String accountId = prevWorkflowExecution.getAccountId();
     try (AutoLogContext ignore1 = new AccountLogContext(accountId, OVERRIDE_ERROR);
-         AutoLogContext ignore2 = new AppLogContext(appId, OVERRIDE_ERROR)) {
+         AutoLogContext ignore2 = new software.wings.service.impl.AppLogContext(appId, OVERRIDE_ERROR)) {
       return pipelineResumeUtils.getResumeStages(appId, prevWorkflowExecution);
     }
   }
@@ -2879,7 +2892,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   public List<WorkflowExecution> getResumeHistory(String appId, WorkflowExecution prevWorkflowExecution) {
     String accountId = prevWorkflowExecution.getAccountId();
     try (AutoLogContext ignore1 = new AccountLogContext(accountId, OVERRIDE_ERROR);
-         AutoLogContext ignore2 = new AppLogContext(appId, OVERRIDE_ERROR)) {
+         AutoLogContext ignore2 = new software.wings.service.impl.AppLogContext(appId, OVERRIDE_ERROR)) {
       return pipelineResumeUtils.getResumeHistory(appId, prevWorkflowExecution);
     }
   }
@@ -3067,7 +3080,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
    * @return the workflow execution
    */
   WorkflowExecution triggerEnvExecution(String appId, String envId, ExecutionArgs executionArgs,
-      WorkflowExecutionUpdate workflowExecutionUpdate, Trigger trigger) {
+      software.wings.service.impl.WorkflowExecutionUpdate workflowExecutionUpdate, Trigger trigger) {
     String accountId = this.appService.getAccountIdByAppId(appId);
     try (AutoLogContext ignore1 = new AccountLogContext(accountId, OVERRIDE_ERROR)) {
       log.info("Execution Triggered. Type: {}", executionArgs.getWorkflowType());
@@ -4100,7 +4113,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
                   .executionContextElementId(stateExecutionElement.getExecutionContextElementId())
                   .name(stat.getElement())
                   .progress(100 * stat.getChildren() / subStates)
-                  .status(GraphRenderer.aggregateStatus(stat.getAllStatuses()))
+                  .status(software.wings.service.impl.GraphRenderer.aggregateStatus(stat.getAllStatuses()))
                   .build());
         }
       }
@@ -4949,7 +4962,8 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
   @Override
   public Set<WorkflowExecutionBaseline> markBaseline(String appId, String workflowExecutionId, boolean isBaseline) {
-    try (WorkflowExecutionLogContext ignored = new WorkflowExecutionLogContext(workflowExecutionId, OVERRIDE_ERROR)) {
+    try (software.wings.service.impl.WorkflowExecutionLogContext ignored =
+             new software.wings.service.impl.WorkflowExecutionLogContext(workflowExecutionId, OVERRIDE_ERROR)) {
       log.info("marking baseline for app {} execution {} value {}", appId, workflowExecutionId, isBaseline);
       WorkflowExecution workflowExecution =
           wingsPersistence.getWithAppId(WorkflowExecution.class, appId, workflowExecutionId);
@@ -5910,19 +5924,21 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
    */
   private void invalidateCache(WorkflowExecution workflowExecution, ExecutionInterrupt executionInterrupt) {
     long downgradeValueInMillis = 60_000; // 1 hour
-    WorkflowTree tree = mongoStore.get(
-        GraphRenderer.algorithmId, WorkflowTree.STRUCTURE_HASH, workflowExecution.getUuid(), getParamsForTree());
+    software.wings.service.impl.WorkflowTree tree =
+        mongoStore.get(software.wings.service.impl.GraphRenderer.algorithmId,
+            software.wings.service.impl.WorkflowTree.STRUCTURE_HASH, workflowExecution.getUuid(), getParamsForTree());
     if (tree != null) {
       log.info("Invalidating cache after interrupt {} for workflow {}", executionInterrupt.getUuid(),
           workflowExecution.getUuid());
-      WorkflowTree downgradedTree = WorkflowTree.builder()
-                                        .contextOrder(System.currentTimeMillis() - downgradeValueInMillis)
-                                        .overrideStatus(tree.getOverrideStatus())
-                                        .key(tree.getKey())
-                                        .wasInvalidated(true)
-                                        .params(tree.getParams())
-                                        .graph(tree.getGraph())
-                                        .build();
+      software.wings.service.impl.WorkflowTree downgradedTree =
+          software.wings.service.impl.WorkflowTree.builder()
+              .contextOrder(System.currentTimeMillis() - downgradeValueInMillis)
+              .overrideStatus(tree.getOverrideStatus())
+              .key(tree.getKey())
+              .wasInvalidated(true)
+              .params(tree.getParams())
+              .graph(tree.getGraph())
+              .build();
 
       String accountId = workflowExecution.getAccountId();
       executorService.submit(() -> mongoStore.upsert(downgradedTree, ofMinutes(1), true, accountId));
@@ -6001,7 +6017,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   @Override
   public PreviousApprovalDetails getPreviousApprovalDetails(
       String appId, String workflowExecutionId, String pipelineId) {
-    WorkflowExecution currentPipelineExecution = fetchWorkflowExecution(appId, workflowExecutionId,
+    WorkflowExecution currentExecution = fetchWorkflowExecution(appId, workflowExecutionId,
         WorkflowExecutionKeys.createdAt, WorkflowExecutionKeys.pipelineExecution, WorkflowExecutionKeys.serviceIds,
         WorkflowExecutionKeys.infraDefinitionIds);
 
@@ -6010,10 +6026,23 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
                                                    .filter(WorkflowExecutionKeys.workflowId, pipelineId)
                                                    .filter(WorkflowExecutionKeys.status, PAUSED)
                                                    .field(WorkflowExecutionKeys.createdAt)
-                                                   .lessThan(currentPipelineExecution.getCreatedAt())
+                                                   .lessThan(currentExecution.getCreatedAt())
                                                    .order(Sort.descending(WorkflowExecutionKeys.createdAt))
                                                    .asList();
-    PipelineStageExecution pausedStage = currentPipelineExecution.getPipelineExecution()
+
+    List<String> serviceIds = currentExecution.getServiceIds();
+    List<String> infraIds = currentExecution.getInfraDefinitionIds();
+
+    if (currentExecution.getWorkflowType() == ORCHESTRATION) {
+      List<String> approvalIds = getPreviousApprovalIdsWithSameServicesAndInfraForWorkflow(
+          currentExecution, pausedExecutions, serviceIds, infraIds);
+      return PreviousApprovalDetails.builder()
+          .previousApprovals(approvalIds.stream().map(ApprovalInfo::new).collect(toList()))
+          .size(approvalIds.size())
+          .build();
+    }
+
+    PipelineStageExecution pausedStage = currentExecution.getPipelineExecution()
                                              .getPipelineStageExecutions()
                                              .stream()
                                              .filter(pse -> PAUSED.equals(pse.getStatus()))
@@ -6021,8 +6050,6 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
                                              .orElse(null);
     if (pausedStage != null) {
       String pipelineStageElementId = pausedStage.getPipelineStageElementId();
-      List<String> serviceIds = currentPipelineExecution.getServiceIds();
-      List<String> infraIds = currentPipelineExecution.getInfraDefinitionIds();
       List<String> approvalIds = getPreviousApprovalIdsWithSameServicesAndInfra(
           pausedExecutions, pipelineStageElementId, serviceIds, infraIds);
       return PreviousApprovalDetails.builder()
@@ -6031,6 +6058,26 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
           .build();
     }
     return PreviousApprovalDetails.builder().previousApprovals(Collections.emptyList()).size(0).build();
+  }
+
+  private List<String> getPreviousApprovalIdsWithSameServicesAndInfraForWorkflow(WorkflowExecution currentExecution,
+      List<WorkflowExecution> pausedExecutions, List<String> serviceIds, List<String> infraIds) {
+    List<WorkflowExecution> executionsWithSameServiceAndInfra =
+        pausedExecutions.stream()
+            .filter(e
+                -> (new HashSet<>(e.getServiceIds()).equals(new HashSet<>(serviceIds)))
+                    && (new HashSet<>(e.getInfraDefinitionIds()).equals(new HashSet<>(infraIds))))
+            .collect(toList());
+    List<String> approvalIds = new ArrayList<>();
+    executionsWithSameServiceAndInfra.forEach(execution -> {
+      List<ApprovalStateExecutionData> approvalDataForWorkflow =
+          fetchApprovalStateExecutionsDataFromWorkflowExecution(currentExecution.getAppId(), execution.getUuid());
+      if (approvalDataForWorkflow != null) {
+        approvalIds.addAll(
+            approvalDataForWorkflow.stream().map(ApprovalStateExecutionData::getApprovalId).collect(toList()));
+      }
+    });
+    return approvalIds;
   }
 
   @Override
@@ -6072,17 +6119,17 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
   @Override
   public void rejectPreviousDeployments(String appId, String workflowExecutionId, ApprovalDetails approvalDetails) {
-    WorkflowExecution pipelineExecution = fetchWorkflowExecution(
+    WorkflowExecution execution = fetchWorkflowExecution(
         appId, workflowExecutionId, WorkflowExecutionKeys.workflowId, WorkflowExecutionKeys.accountId);
     PreviousApprovalDetails previousApprovalDetails =
-        getPreviousApprovalDetails(appId, workflowExecutionId, pipelineExecution.getWorkflowId());
+        getPreviousApprovalDetails(appId, workflowExecutionId, execution.getWorkflowId());
     List<String> previousApprovalIds = new ArrayList<>();
     if (previousApprovalDetails.getPreviousApprovals() != null) {
       previousApprovalIds =
           previousApprovalDetails.getPreviousApprovals().stream().map(ApprovalInfo::getApprovalId).collect(toList());
     }
     rejectPreviousDeployments(
-        pipelineExecution.getAccountId(), appId, workflowExecutionId, approvalDetails, previousApprovalIds);
+        execution.getAccountId(), appId, workflowExecutionId, approvalDetails, previousApprovalIds);
   }
 
   private List<String> getPreviousApprovalIdsWithSameServicesAndInfra(List<WorkflowExecution> pausedExecutions,
@@ -6095,18 +6142,29 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
             .collect(toList());
 
     List<String> approvalIds = new ArrayList<>();
-    executionsWithSameServiceAndInfra.forEach(e -> {
+    executionsWithSameServiceAndInfra.forEach(execution -> {
       Optional<PipelineStageExecution> pausedStage =
-          e.getPipelineExecution()
+          execution.getPipelineExecution()
               .getPipelineStageExecutions()
               .stream()
               .filter(pse
                   -> PAUSED.equals(pse.getStatus()) && pipelineStageElementId.equals(pse.getPipelineStageElementId()))
               .findFirst();
-      if (pausedStage.isPresent() && pausedStage.get().getStateType().equals(APPROVAL.name())) {
-        ApprovalStateExecutionData stateExecutionData =
-            (ApprovalStateExecutionData) pausedStage.get().getStateExecutionData();
-        approvalIds.add(stateExecutionData.getApprovalId());
+
+      if (pausedStage.isPresent()) {
+        if (pausedStage.get().getStateType().equals(APPROVAL.name())) {
+          ApprovalStateExecutionData stateExecutionData =
+              (ApprovalStateExecutionData) pausedStage.get().getStateExecutionData();
+          approvalIds.add(stateExecutionData.getApprovalId());
+        } else {
+          String workflowExecutionId = pausedStage.get().getWorkflowExecutions().get(0).getUuid();
+          List<ApprovalStateExecutionData> approvalDataForWorkflow =
+              fetchApprovalStateExecutionsDataFromWorkflowExecution(execution.getAppId(), workflowExecutionId);
+          if (approvalDataForWorkflow != null) {
+            approvalIds.addAll(
+                approvalDataForWorkflow.stream().map(ApprovalStateExecutionData::getApprovalId).collect(toList()));
+          }
+        }
       }
     });
     return approvalIds;
