@@ -33,7 +33,18 @@ function check_branch_name(){
     fi
 }
 
-PROJECTS="BT|CCE|CCM|CDC|CDNG|CDP|CDS|CE|CI|CV|CVNG|CVS|DEL|DOC|DX|ER|FFM|OPA|OPS|PIE|PL|SEC|SWAT|GTM|ONP"
+function check_file_present(){
+     local_file=$1
+     if [ ! -f "$local_file" ]; then
+        echo "ERROR: Line $LINENO: File $local_file not found. Exiting..."
+        exit 1
+     fi
+}
+
+SHDIR=$(dirname "$0")
+PROJFILE="$SHDIR/jira-projects.txt"
+check_file_present $PROJFILE
+PROJECTS=$(<$PROJFILE)
 
 #RELEASE TYPE is required to increment tag accordingly.
 check_empty_output "$RELEASE_TYPE" "Release Type is not defined."
@@ -51,11 +62,6 @@ then
     exit 1
 fi
 
-# Update jira issues
-echo "STEP2: INFO: Update jira issues"
-scripts/jenkins/release-branch-update-jiras.sh
-scripts/jenkins/release-branch-update-jira_status.sh
-
 #Performing operations of getting SHA and TAGGING SHA on master branch.
 export BRANCH=`echo "${GIT_BRANCH}" | sed -e "s/origin\///g"`
 export SHA=`git rev-parse HEAD`
@@ -63,7 +69,7 @@ export SHA=`git rev-parse HEAD`
 check_branch_name "master"
 
 #Get Previous Tag and Tagging Master Branch according to type of release.
-echo "STEP3: INFO: Get Previous Tag and Tagging Master Branch according to type of release."
+echo "STEP2: INFO: Get Previous Tag and Tagging Master Branch according to type of release."
 if [[ "$EXECUTE_NEW_CODE" == "true" ]]; then
     #Getting Latest Tag on master branch
     TAG=$(git describe --tags --abbrev=0 --match "*.*.*" 2> /dev/null || echo 0.0.0)
@@ -111,7 +117,7 @@ if [[ "$EXECUTE_NEW_CODE" == "true" ]]; then
 fi
 
 # Bumping version in build.properties in develop branch.
-echo "STEP4: INFO: Bumping version in build.properties in develop branch."
+echo "STEP3: INFO: Bumping version in build.properties in develop branch."
 git fetch origin refs/heads/develop; git checkout develop && git branch
 check_branch_name "develop"
 
@@ -139,3 +145,10 @@ git add ${VERSION_FILE}
 git commit -m "Branching to release/${PURPOSE}/${VERSION}xx. New version ${NEW_VERSION}xx"
 git push origin develop
 print_err "$?" "Pushing build.properties to develop branch failed"
+
+# Update jira issues
+echo "STEP4: INFO: Update jira issues"
+git fetch origin refs/heads/master; git checkout master && git branch
+check_branch_name "master"
+scripts/jenkins/release-branch-update-jiras.sh
+scripts/jenkins/release-branch-update-jira_status.sh

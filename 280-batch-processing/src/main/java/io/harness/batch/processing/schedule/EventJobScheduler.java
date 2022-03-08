@@ -26,6 +26,7 @@ import io.harness.batch.processing.connectors.ConnectorsHealthUpdateService;
 import io.harness.batch.processing.metrics.ProductMetricsService;
 import io.harness.batch.processing.reports.ScheduledReportServiceImpl;
 import io.harness.batch.processing.service.AccountExpiryCleanupService;
+import io.harness.batch.processing.service.AwsAccountTagsCollectionService;
 import io.harness.batch.processing.service.impl.BatchJobBucketLogContext;
 import io.harness.batch.processing.service.impl.BatchJobRunningModeContext;
 import io.harness.batch.processing.service.impl.BatchJobTypeLogContext;
@@ -89,6 +90,7 @@ public class EventJobScheduler {
   @Autowired private FeatureFlagService featureFlagService;
   @Autowired private ConnectorsHealthUpdateService connectorsHealthUpdateService;
   @Autowired private K8SWorkloadService k8SWorkloadService;
+  @Autowired private AwsAccountTagsCollectionService awsAccountTagsCollectionService;
 
   @PostConstruct
   public void orderJobs() {
@@ -293,6 +295,20 @@ public class EventJobScheduler {
       log.info("Updated health of the connectors in NG");
     } catch (Exception ex) {
       log.error("Exception while running runNGConnectorsHealthUpdateJob", ex);
+    }
+  }
+
+  @Scheduled(cron = "${scheduler-jobs-config.awsAccountTagsCollectionJobCron}") //  0 */10 * * * ? for testing
+  public void runAwsAccountTagsCollectionJob() {
+    try {
+      if (!batchMainConfig.getAwsAccountTagsCollectionJobConfig().isEnabled()) {
+        log.info("awsAccountTagsCollectionJobConfig is disabled in config");
+        return;
+      }
+      log.info("running aws account tags collection job");
+      awsAccountTagsCollectionService.update();
+    } catch (Exception ex) {
+      log.error("Exception while running runAwsAccountTagsCollectionJob", ex);
     }
   }
 

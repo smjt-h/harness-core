@@ -10,8 +10,7 @@ package io.harness.cvng;
 import static io.harness.AuthorizationServiceHeader.CV_NEXT_GEN;
 import static io.harness.cvng.beans.change.ChangeSourceType.HARNESS_CD;
 import static io.harness.cvng.cdng.services.impl.CVNGNotifyEventListener.CVNG_ORCHESTRATION;
-import static io.harness.data.structure.CollectionUtils.emptyIfNull;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.eventsframework.EventsFrameworkConstants.SRM_STATEMACHINE_EVENT;
 
 import io.harness.AccessControlClientModule;
 import io.harness.annotations.dev.HarnessTeam;
@@ -96,6 +95,10 @@ import io.harness.cvng.core.jobs.ConnectorChangeEventMessageProcessor;
 import io.harness.cvng.core.jobs.ConsumerMessageProcessor;
 import io.harness.cvng.core.jobs.OrganizationChangeEventMessageProcessor;
 import io.harness.cvng.core.jobs.ProjectChangeEventMessageProcessor;
+import io.harness.cvng.core.jobs.StateMachineEventPublisherService;
+import io.harness.cvng.core.jobs.StateMachineEventPublisherServiceImpl;
+import io.harness.cvng.core.jobs.StateMachineMessageProcessor;
+import io.harness.cvng.core.jobs.StateMachineMessageProcessorImpl;
 import io.harness.cvng.core.services.CVNextGenConstants;
 import io.harness.cvng.core.services.api.AppDynamicsService;
 import io.harness.cvng.core.services.api.CVConfigService;
@@ -109,6 +112,7 @@ import io.harness.cvng.core.services.api.DataCollectionTaskManagementService;
 import io.harness.cvng.core.services.api.DataCollectionTaskService;
 import io.harness.cvng.core.services.api.DataSourceConnectivityChecker;
 import io.harness.cvng.core.services.api.DatadogService;
+import io.harness.cvng.core.services.api.DebugService;
 import io.harness.cvng.core.services.api.DeleteEntityByHandler;
 import io.harness.cvng.core.services.api.DeletedCVConfigService;
 import io.harness.cvng.core.services.api.DynatraceService;
@@ -129,6 +133,7 @@ import io.harness.cvng.core.services.api.SplunkService;
 import io.harness.cvng.core.services.api.StackdriverService;
 import io.harness.cvng.core.services.api.SumoLogicService;
 import io.harness.cvng.core.services.api.TimeSeriesRecordService;
+import io.harness.cvng.core.services.api.TimeSeriesThresholdService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.core.services.api.WebhookService;
 import io.harness.cvng.core.services.api.demo.CVNGDemoDataIndexService;
@@ -151,6 +156,7 @@ import io.harness.cvng.core.services.impl.CustomHealthServiceImpl;
 import io.harness.cvng.core.services.impl.DataCollectionTaskServiceImpl;
 import io.harness.cvng.core.services.impl.DatadogMetricDataCollectionInfoMapper;
 import io.harness.cvng.core.services.impl.DatadogServiceImpl;
+import io.harness.cvng.core.services.impl.DebugServiceImpl;
 import io.harness.cvng.core.services.impl.DefaultDeleteEntityByHandler;
 import io.harness.cvng.core.services.impl.DeletedCVConfigServiceImpl;
 import io.harness.cvng.core.services.impl.DynatraceDataCollectionInfoMapper;
@@ -181,6 +187,7 @@ import io.harness.cvng.core.services.impl.StackdriverLogDataCollectionInfoMapper
 import io.harness.cvng.core.services.impl.StackdriverServiceImpl;
 import io.harness.cvng.core.services.impl.SumoLogicServiceImpl;
 import io.harness.cvng.core.services.impl.TimeSeriesRecordServiceImpl;
+import io.harness.cvng.core.services.impl.TimeSeriesThresholdServiceImpl;
 import io.harness.cvng.core.services.impl.VerificationTaskServiceImpl;
 import io.harness.cvng.core.services.impl.WebhookServiceImpl;
 import io.harness.cvng.core.services.impl.demo.CVNGDemoDataIndexServiceImpl;
@@ -291,9 +298,7 @@ import io.harness.packages.HarnessPackages;
 import io.harness.persistence.HPersistence;
 import io.harness.pms.sdk.core.waiter.AsyncWaitEngine;
 import io.harness.redis.RedisConfig;
-import io.harness.serializer.AnnotationAwareJsonSubtypeResolver;
 import io.harness.serializer.CvNextGenRegistrars;
-import io.harness.serializer.jackson.HarnessJacksonModule;
 import io.harness.threading.ThreadPool;
 import io.harness.waiter.AbstractWaiterModule;
 import io.harness.waiter.AsyncWaitEngineImpl;
@@ -304,15 +309,7 @@ import io.harness.yaml.YamlSdkModule;
 import io.harness.yaml.core.StepSpecType;
 import io.harness.yaml.schema.beans.YamlSchemaRootClass;
 
-import software.wings.jersey.JsonViews;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.introspect.Annotated;
-import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
-import com.fasterxml.jackson.databind.jsontype.NamedType;
-import com.fasterxml.jackson.datatype.guava.GuavaModule;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -481,11 +478,20 @@ public class CVServiceModule extends AbstractModule {
     dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.APP_DYNAMICS)
         .to(AppDynamicsDataCollectionInfoMapper.class)
         .in(Scopes.SINGLETON);
+    dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.NEW_RELIC)
+        .to(NewRelicDataCollectionInfoMapper.class)
+        .in(Scopes.SINGLETON);
     dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.DATADOG_METRICS)
         .to(DatadogMetricDataCollectionInfoMapper.class)
         .in(Scopes.SINGLETON);
     dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.STACKDRIVER_LOG)
         .to(StackdriverDataCollectionInfoMapper.class)
+        .in(Scopes.SINGLETON);
+    dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.CUSTOM_HEALTH)
+        .to(CustomHealthDataCollectionInfoMapper.class)
+        .in(Scopes.SINGLETON);
+    dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.DYNATRACE)
+        .to(DynatraceDataCollectionInfoMapper.class)
         .in(Scopes.SINGLETON);
 
     bind(MetricPackService.class).to(MetricPackServiceImpl.class);
@@ -530,6 +536,7 @@ public class CVServiceModule extends AbstractModule {
     bind(NewRelicService.class).to(NewRelicServiceImpl.class);
     bind(ParseSampleDataService.class).to(ParseSampleDataServiceImpl.class);
     bind(VerifyStepDemoService.class).to(VerifyStepDemoServiceImpl.class);
+    bind(StateMachineEventPublisherService.class).to(StateMachineEventPublisherServiceImpl.class);
     bind(String.class)
         .annotatedWith(Names.named("portalUrl"))
         .toInstance(verificationConfiguration.getPortalUrl().endsWith("/")
@@ -626,6 +633,7 @@ public class CVServiceModule extends AbstractModule {
     bind(SLODashboardService.class).to(SLODashboardServiceImpl.class);
     bind(SLIDataProcessorService.class).to(SLIDataProcessorServiceImpl.class);
     bind(SLOHealthIndicatorService.class).to(SLOHealthIndicatorServiceImpl.class);
+    bind(TimeSeriesThresholdService.class).to(TimeSeriesThresholdServiceImpl.class);
     MapBinder<ChangeSourceType, ChangeSourceSpecTransformer> changeSourceTypeChangeSourceSpecTransformerMapBinder =
         MapBinder.newMapBinder(binder(), ChangeSourceType.class, ChangeSourceSpecTransformer.class);
     changeSourceTypeChangeSourceSpecTransformerMapBinder.addBinding(ChangeSourceType.HARNESS_CD)
@@ -695,6 +703,7 @@ public class CVServiceModule extends AbstractModule {
     bind(ServiceLevelIndicatorService.class).to(ServiceLevelIndicatorServiceImpl.class).in(Singleton.class);
     bind(SLIDataProcessorService.class).to(SLIDataProcessorServiceImpl.class);
     bind(ServiceLevelIndicatorEntityAndDTOTransformer.class);
+    bind(DebugService.class).to(DebugServiceImpl.class).in(Singleton.class);
     MapBinder<SLIMetricType, ServiceLevelIndicatorTransformer> serviceLevelIndicatorTransformerMapBinder =
         MapBinder.newMapBinder(binder(), SLIMetricType.class, ServiceLevelIndicatorTransformer.class);
     serviceLevelIndicatorTransformerMapBinder.addBinding(SLIMetricType.RATIO)
@@ -719,6 +728,8 @@ public class CVServiceModule extends AbstractModule {
     changeTypeMetaDataTransformerMapBinder.addBinding(ChangeSourceType.HARNESS_CD_CURRENT_GEN)
         .to(HarnessCDCurrentGenChangeEventTransformer.class)
         .in(Scopes.SINGLETON);
+
+    bind(StateMachineMessageProcessor.class).to(StateMachineMessageProcessorImpl.class);
 
     MapBinder<SLIMetricType, SLIAnalyserService> sliAnalyserServiceMapBinder =
         MapBinder.newMapBinder(binder(), SLIMetricType.class, SLIAnalyserService.class);
@@ -833,11 +844,25 @@ public class CVServiceModule extends AbstractModule {
   }
 
   @Provides
+  @Singleton
+  @Named("stateMachineMessageProcessorExecutor")
+  public ExecutorService stateMachineMessageProcessorExecutor() {
+    ExecutorService stateMachineMessageProcessorExecutor =
+        ThreadPool.create(4, CVNextGenConstants.SRM_STATEMACHINE_MAX_THREADS, 5, TimeUnit.SECONDS,
+            new ThreadFactoryBuilder()
+                .setNameFormat(SRM_STATEMACHINE_EVENT + "_thread_pool")
+                .setPriority(Thread.MIN_PRIORITY)
+                .build());
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> stateMachineMessageProcessorExecutor.shutdownNow()));
+    return stateMachineMessageProcessorExecutor;
+  }
+
+  @Provides
   @Named("yaml-schema-mapper")
   @Singleton
   public ObjectMapper getYamlSchemaObjectMapper() {
     ObjectMapper objectMapper = Jackson.newObjectMapper();
-    configureYAMLSchemaObjectMapper(objectMapper);
+    VerificationApplication.configureObjectMapper(objectMapper);
     return objectMapper;
   }
 
@@ -857,26 +882,5 @@ public class CVServiceModule extends AbstractModule {
   @Singleton
   List<YamlSchemaRootClass> yamlSchemaRootClasses() {
     return ImmutableList.<YamlSchemaRootClass>builder().addAll(CvNextGenRegistrars.yamlSchemaRegistrars).build();
-  }
-
-  private void configureYAMLSchemaObjectMapper(final ObjectMapper mapper) {
-    final AnnotationAwareJsonSubtypeResolver subtypeResolver =
-        AnnotationAwareJsonSubtypeResolver.newInstance(mapper.getSubtypeResolver());
-    mapper.setSubtypeResolver(subtypeResolver);
-    mapper.setConfig(mapper.getSerializationConfig().withView(JsonViews.Public.class));
-    mapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
-      @Override
-      public List<NamedType> findSubtypes(Annotated a) {
-        final List<NamedType> subtypesFromSuper = super.findSubtypes(a);
-        if (isNotEmpty(subtypesFromSuper)) {
-          return subtypesFromSuper;
-        }
-        return emptyIfNull(subtypeResolver.findSubtypes(a));
-      }
-    });
-    mapper.registerModule(new Jdk8Module());
-    mapper.registerModule(new GuavaModule());
-    mapper.registerModule(new JavaTimeModule());
-    mapper.registerModule(new HarnessJacksonModule());
   }
 }

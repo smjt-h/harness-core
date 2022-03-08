@@ -7,7 +7,6 @@
 
 package io.harness.engine.pms.execution.strategy;
 
-import io.harness.engine.ExecutionEngineDispatcher;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.event.handlers.SdkResponseProcessor;
 import io.harness.execution.NodeExecution;
@@ -33,27 +32,36 @@ public abstract class AbstractNodeExecutionStrategy<P extends Node, M extends Pm
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
 
   @Override
-  public NodeExecution triggerNode(@NonNull Ambiance ambiance, @NonNull P node, M metadata) {
-    String parentId = AmbianceUtils.obtainParentRuntimeId(ambiance);
-    String notifyId = parentId == null ? null : AmbianceUtils.obtainCurrentRuntimeId(ambiance);
-    NodeExecution save = createNodeExecution(ambiance, node, notifyId, parentId, null);
-    // TODO: Should add to an execution queue rather than submitting straight to thread pool
-    executorService.submit(
-        ExecutionEngineDispatcher.builder().ambiance(ambiance).orchestrationEngine(orchestrationEngine).build());
-    return save;
+  public NodeExecution runNode(@NonNull Ambiance ambiance, @NonNull P node, M metadata) {
+    try (AutoLogContext ignore = AmbianceUtils.autoLogContext(ambiance)) {
+      String parentId = AmbianceUtils.obtainParentRuntimeId(ambiance);
+      String notifyId = parentId == null ? null : AmbianceUtils.obtainCurrentRuntimeId(ambiance);
+      return createAndRunNodeExecution(ambiance, node, metadata, notifyId, parentId, null);
+    } catch (Exception ex) {
+      log.error("Exception happened while running Node", ex);
+      handleError(ambiance, ex);
+      return null;
+    }
   }
 
   @Override
-  public NodeExecution triggerNextNode(
-      @NonNull Ambiance ambiance, @NonNull P node, NodeExecution prevExecution, PmsNodeExecutionMetadata metadata) {
-    NodeExecution saved = createNodeExecution(
-        ambiance, node, prevExecution.getNotifyId(), prevExecution.getParentId(), prevExecution.getUuid());
-    // TODO: Should add to an execution queue rather than submitting straight to thread pool
-    executorService.submit(ExecutionEngineDispatcher.builder()
-                               .ambiance(saved.getAmbiance())
-                               .orchestrationEngine(orchestrationEngine)
-                               .build());
-    return saved;
+  public NodeExecution runNextNode(
+      @NonNull Ambiance ambiance, @NonNull P node, NodeExecution prevExecution, M metadata) {
+    try (AutoLogContext ignore = AmbianceUtils.autoLogContext(ambiance)) {
+      return createAndRunNodeExecution(
+          ambiance, node, metadata, prevExecution.getNotifyId(), prevExecution.getParentId(), prevExecution.getUuid());
+    } catch (Exception ex) {
+      log.error("Exception happened while running next Node", ex);
+      handleError(ambiance, ex);
+      return null;
+    }
+  }
+
+  private NodeExecution createAndRunNodeExecution(
+      Ambiance ambiance, P node, M metadata, String notifyId, String parentId, String previousId) {
+    NodeExecution savedExecution = createNodeExecution(ambiance, node, metadata, notifyId, parentId, previousId);
+    executorService.submit(() -> orchestrationEngine.startNodeExecution(savedExecution.getAmbiance()));
+    return savedExecution;
   }
 
   @Override
@@ -63,9 +71,11 @@ public abstract class AbstractNodeExecutionStrategy<P extends Node, M extends Pm
       SdkResponseProcessor handler = sdkResponseProcessorFactory.getHandler(event.getSdkResponseEventType());
       handler.handleEvent(event);
       log.info("Event for SdkResponseEvent for event type {} completed successfully", event.getSdkResponseEventType());
+    } catch (Exception ex) {
+      handleError(event.getAmbiance(), ex);
     }
   }
 
   public abstract NodeExecution createNodeExecution(
-      Ambiance ambiance, P node, String notifyId, String parentId, String previousId);
+      Ambiance ambiance, P node, M metadata, String notifyId, String parentId, String previousId);
 }

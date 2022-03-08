@@ -257,6 +257,9 @@ public class SettingsServiceImpl implements SettingsService {
   @Inject
   @Getter(onMethod = @__(@SuppressValidation))
   private Subject<SettingAttributeObserver> artifactStreamSubject = new Subject<>();
+  @Inject
+  @Getter(onMethod = @__(@SuppressValidation))
+  private Subject<SettingAttributeObserver> appManifestSubject = new Subject<>();
   @Inject private SettingAttributeDao settingAttributeDao;
   @Inject private CEMetadataRecordDao ceMetadataRecordDao;
   @Inject private RemoteObserverInformer remoteObserverInformer;
@@ -269,15 +272,15 @@ public class SettingsServiceImpl implements SettingsService {
 
   @Override
   public PageResponse<SettingAttribute> list(
-      PageRequest<SettingAttribute> req, String appIdFromRequest, String envIdFromRequest) {
+      PageRequest<SettingAttribute> req, String appIdFromRequest, String envIdFromRequest, boolean forUsageInNewApp) {
     try {
       long timestamp = System.currentTimeMillis();
       PageResponse<SettingAttribute> pageResponse = wingsPersistence.query(SettingAttribute.class, req);
       log.info("Time taken in DB Query for while fetching settings:  {}", System.currentTimeMillis() - timestamp);
 
       timestamp = System.currentTimeMillis();
-      List<SettingAttribute> filteredSettingAttributes =
-          getFilteredSettingAttributes(pageResponse.getResponse(), appIdFromRequest, envIdFromRequest);
+      List<SettingAttribute> filteredSettingAttributes = getFilteredSettingAttributes(
+          pageResponse.getResponse(), appIdFromRequest, envIdFromRequest, forUsageInNewApp);
       log.info("Total time taken in filtering setting records:  {}.", System.currentTimeMillis() - timestamp);
       return aPageResponse()
           .withResponse(filteredSettingAttributes)
@@ -301,7 +304,7 @@ public class SettingsServiceImpl implements SettingsService {
                                                     .build();
     PageResponse<SettingAttribute> pageResponse;
     do {
-      pageResponse = list(pageRequest, null, null);
+      pageResponse = list(pageRequest, null, null, false);
       settingAttributeList.addAll(pageResponse.getResponse());
       pageRequest.setOffset(String.valueOf(previousOffset + limit));
       previousOffset += limit;
@@ -312,7 +315,7 @@ public class SettingsServiceImpl implements SettingsService {
   @Override
   public PageResponse<SettingAttribute> list(PageRequest<SettingAttribute> req, String appIdFromRequest,
       String envIdFromRequest, String accountId, boolean gitSshConfigOnly, boolean withArtifactStreamCount,
-      String artifactStreamSearchString, int maxArtifactStreams, ArtifactType artifactType) {
+      String artifactStreamSearchString, int maxArtifactStreams, ArtifactType artifactType, boolean forUsageInNewApp) {
     try {
       PageRequest<SettingAttribute> pageRequest = req.copy();
       int offset = pageRequest.getStart();
@@ -322,8 +325,8 @@ public class SettingsServiceImpl implements SettingsService {
       pageRequest.setLimit(String.valueOf(Integer.MAX_VALUE));
       PageResponse<SettingAttribute> pageResponse = wingsPersistence.query(SettingAttribute.class, pageRequest);
 
-      List<SettingAttribute> filteredSettingAttributes =
-          getFilteredSettingAttributes(pageResponse.getResponse(), appIdFromRequest, envIdFromRequest);
+      List<SettingAttribute> filteredSettingAttributes = getFilteredSettingAttributes(
+          pageResponse.getResponse(), appIdFromRequest, envIdFromRequest, forUsageInNewApp);
 
       if (gitSshConfigOnly) {
         filteredSettingAttributes =
@@ -408,10 +411,12 @@ public class SettingsServiceImpl implements SettingsService {
    * Extracts all secret Ids and there state referenced by collection of SettingAttribute. This function helps to
    * optimize RBAC rule evaluations by batching DB accesses.
    * @param settingAttributes
+   * @param forUsageInNewApp
    * @return
    */
   Map<String, SecretState> extractAllSecretIdsWithState(Collection<SettingAttribute> settingAttributes,
-      String accountId, String appIdFromRequest, String envIdFromRequest) {
+      String accountId, String appIdFromRequest, String envIdFromRequest, boolean forUsageInNewApp) {
+    // useInApp
     if (isEmpty(settingAttributes)) {
       return Collections.emptyMap();
     }
@@ -424,8 +429,8 @@ public class SettingsServiceImpl implements SettingsService {
       }
     }
 
-    List<SecretMetadata> secretMetadataList =
-        secretManager.filterSecretIdsByReadPermission(allSecrets, accountId, appIdFromRequest, envIdFromRequest);
+    List<SecretMetadata> secretMetadataList = secretManager.filterSecretIdsByReadPermission(
+        allSecrets, accountId, appIdFromRequest, envIdFromRequest, forUsageInNewApp);
     if (!isEmpty(secretMetadataList)) {
       return secretMetadataList.stream().collect(
           Collectors.toMap(SecretMetadata::getSecretId, SecretMetadata::getSecretState));
@@ -435,8 +440,8 @@ public class SettingsServiceImpl implements SettingsService {
   }
 
   @Override
-  public List<SettingAttribute> getFilteredSettingAttributes(
-      List<SettingAttribute> inputSettingAttributes, String appIdFromRequest, String envIdFromRequest) {
+  public List<SettingAttribute> getFilteredSettingAttributes(List<SettingAttribute> inputSettingAttributes,
+      String appIdFromRequest, String envIdFromRequest, boolean forUsageInNewApp) {
     if (inputSettingAttributes == null) {
       return Collections.emptyList();
     }
@@ -457,8 +462,8 @@ public class SettingsServiceImpl implements SettingsService {
 
     Set<SettingAttribute> helmRepoSettingAttributes = new HashSet<>();
     boolean isAccountAdmin;
-    Map<String, SecretState> secretIdsStateMap =
-        extractAllSecretIdsWithState(inputSettingAttributes, accountId, appIdFromRequest, envIdFromRequest);
+    Map<String, SecretState> secretIdsStateMap = extractAllSecretIdsWithState(
+        inputSettingAttributes, accountId, appIdFromRequest, envIdFromRequest, forUsageInNewApp);
     for (SettingAttribute settingAttribute : inputSettingAttributes) {
       PermissionAttribute.PermissionType permissionType = settingServiceHelper.getPermissionType(settingAttribute);
       isAccountAdmin = userService.hasPermission(accountId, permissionType);
@@ -466,15 +471,16 @@ public class SettingsServiceImpl implements SettingsService {
       if (isRefereincing) {
         helmRepoSettingAttributes.add(settingAttribute);
       } else {
-        if (isFilteredSettingAttribute(appIdFromRequest, envIdFromRequest, accountId, appEnvMapFromUserPermissions,
-                restrictionsFromUserPermissions, isAccountAdmin, appIdEnvMap, settingAttribute, settingAttribute,
-                secretIdsStateMap)) {
+        if (isFilteredSettingAttribute(appIdFromRequest, envIdFromRequest, accountId, forUsageInNewApp,
+                appEnvMapFromUserPermissions, restrictionsFromUserPermissions, isAccountAdmin, appIdEnvMap,
+                settingAttribute, settingAttribute, secretIdsStateMap)) {
           filteredSettingAttributes.add(settingAttribute);
         }
       }
     }
-    getFilteredHelmRepoSettingAttributes(appIdFromRequest, envIdFromRequest, accountId, filteredSettingAttributes,
-        appEnvMapFromUserPermissions, restrictionsFromUserPermissions, appIdEnvMap, helmRepoSettingAttributes);
+    getFilteredHelmRepoSettingAttributes(appIdFromRequest, envIdFromRequest, accountId, forUsageInNewApp,
+        filteredSettingAttributes, appEnvMapFromUserPermissions, restrictionsFromUserPermissions, appIdEnvMap,
+        helmRepoSettingAttributes);
 
     return filteredSettingAttributes;
   }
@@ -486,7 +492,7 @@ public class SettingsServiceImpl implements SettingsService {
             .addFilter(SettingAttributeKeys.accountId, Operator.EQ, settingAttribute.getAccountId())
             .addFilter(SettingAttributeKeys.value_type, Operator.EQ, SettingVariableTypes.GIT)
             .build();
-    int currentGitConnectorCount = list(request, null, null).getResponse().size();
+    int currentGitConnectorCount = list(request, null, null, false).getResponse().size();
     if (currentGitConnectorCount >= maxGitConnectorsAllowed) {
       log.info("Did not save Setting Attribute of type {} for account ID {} because usage limit exceeded",
           settingAttribute.getValue().getType(), settingAttribute.getAccountId());
@@ -496,9 +502,9 @@ public class SettingsServiceImpl implements SettingsService {
   }
 
   private void getFilteredHelmRepoSettingAttributes(String appIdFromRequest, String envIdFromRequest, String accountId,
-      List<SettingAttribute> filteredSettingAttributes, Map<String, Set<String>> appEnvMapFromUserPermissions,
-      UsageRestrictions restrictionsFromUserPermissions, Map<String, List<Base>> appIdEnvMap,
-      Set<SettingAttribute> helmRepoSettingAttributes) {
+      boolean forUsageInNewApp, List<SettingAttribute> filteredSettingAttributes,
+      Map<String, Set<String>> appEnvMapFromUserPermissions, UsageRestrictions restrictionsFromUserPermissions,
+      Map<String, List<Base>> appIdEnvMap, Set<SettingAttribute> helmRepoSettingAttributes) {
     if (isNotEmpty(helmRepoSettingAttributes)) {
       Set<String> cloudProviderIds = new HashSet<>();
 
@@ -521,16 +527,16 @@ public class SettingsServiceImpl implements SettingsService {
         settingAttributes.forEach(
             settingAttribute -> { cloudProvidersMap.put(settingAttribute.getUuid(), settingAttribute); });
       }
-      Map<String, SecretState> secretIdsStateMap =
-          extractAllSecretIdsWithState(cloudProvidersMap.values(), accountId, appIdFromRequest, envIdFromRequest);
+      Map<String, SecretState> secretIdsStateMap = extractAllSecretIdsWithState(
+          cloudProvidersMap.values(), accountId, appIdFromRequest, envIdFromRequest, forUsageInNewApp);
       helmRepoSettingAttributes.forEach(settingAttribute -> {
         PermissionAttribute.PermissionType permissionType = settingServiceHelper.getPermissionType(settingAttribute);
         boolean isAccountAdmin = userService.hasPermission(accountId, permissionType);
         String cloudProviderId = ((HelmRepoConfig) settingAttribute.getValue()).getConnectorId();
         if (isNotBlank(cloudProviderId) && cloudProvidersMap.containsKey(cloudProviderId)
-            && isFilteredSettingAttribute(appIdFromRequest, envIdFromRequest, accountId, appEnvMapFromUserPermissions,
-                restrictionsFromUserPermissions, isAccountAdmin, appIdEnvMap, settingAttribute,
-                cloudProvidersMap.get(cloudProviderId), secretIdsStateMap)) {
+            && isFilteredSettingAttribute(appIdFromRequest, envIdFromRequest, accountId, forUsageInNewApp,
+                appEnvMapFromUserPermissions, restrictionsFromUserPermissions, isAccountAdmin, appIdEnvMap,
+                settingAttribute, cloudProvidersMap.get(cloudProviderId), secretIdsStateMap)) {
           filteredSettingAttributes.add(settingAttribute);
         }
       });
@@ -539,9 +545,10 @@ public class SettingsServiceImpl implements SettingsService {
 
   @VisibleForTesting
   public boolean isFilteredSettingAttribute(String appIdFromRequest, String envIdFromRequest, String accountId,
-      Map<String, Set<String>> appEnvMapFromUserPermissions, UsageRestrictions restrictionsFromUserPermissions,
-      boolean isAccountAdmin, Map<String, List<Base>> appIdEnvMap, SettingAttribute settingAttribute,
-      SettingAttribute settingAttributeWithUsageRestrictions, Map<String, SecretState> secretIdsStateMap) {
+      boolean forUsageInNewApp, Map<String, Set<String>> appEnvMapFromUserPermissions,
+      UsageRestrictions restrictionsFromUserPermissions, boolean isAccountAdmin, Map<String, List<Base>> appIdEnvMap,
+      SettingAttribute settingAttribute, SettingAttribute settingAttributeWithUsageRestrictions,
+      Map<String, SecretState> secretIdsStateMap) {
     if (settingServiceHelper.hasReferencedSecrets(settingAttributeWithUsageRestrictions)) {
       // Try to get any secret references if possible.
       Set<String> usedSecretIds = settingServiceHelper.getUsedSecretIds(settingAttributeWithUsageRestrictions);
@@ -556,8 +563,8 @@ public class SettingsServiceImpl implements SettingsService {
 
     UsageRestrictions usageRestrictionsFromEntity = settingAttributeWithUsageRestrictions.getUsageRestrictions();
     if (usageRestrictionsService.hasAccess(accountId, isAccountAdmin, appIdFromRequest, envIdFromRequest,
-            usageRestrictionsFromEntity, restrictionsFromUserPermissions, appEnvMapFromUserPermissions, appIdEnvMap,
-            false)) {
+            forUsageInNewApp, usageRestrictionsFromEntity, restrictionsFromUserPermissions,
+            appEnvMapFromUserPermissions, appIdEnvMap, false)) {
       // HAR-7726: Mask the encrypted field values when listing all settings.
       SettingValue settingValue = settingAttribute.getValue();
       if (settingValue instanceof EncryptableSetting) {
@@ -739,6 +746,16 @@ public class SettingsServiceImpl implements SettingsService {
   }
 
   @Override
+  public List<SettingAttribute> getSettingAttributeByReferencedConnector(
+      String accountId, String settingAttributeUuid) {
+    return wingsPersistence.createQuery(SettingAttribute.class)
+        .disableValidation()
+        .filter(SettingAttributeKeys.accountId, accountId)
+        .filter(SettingAttributeKeys.referencedConnector, settingAttributeUuid)
+        .asList();
+  }
+
+  @Override
   public ValidationResult validateConnectivity(SettingAttribute settingAttribute) {
     try {
       SettingAttribute existingSetting = get(settingAttribute.getAppId(), settingAttribute.getUuid());
@@ -863,6 +880,7 @@ public class SettingsServiceImpl implements SettingsService {
 
     syncCEInfra(settingAttribute);
     artifactStreamSubject.fireInform(SettingAttributeObserver::onSaved, newSettingAttribute);
+    appManifestSubject.fireInform(SettingAttributeObserver::onSaved, newSettingAttribute);
     remoteObserverInformer.sendEvent(
         ReflectionUtils.getMethod(SettingAttributeObserver.class, "onSaved", SettingAttribute.class),
         SettingsServiceImpl.class, newSettingAttribute);
@@ -1251,6 +1269,7 @@ public class SettingsServiceImpl implements SettingsService {
     }
 
     artifactStreamSubject.fireInform(SettingAttributeObserver::onUpdated, prevSettingAttribute, settingAttribute);
+    appManifestSubject.fireInform(SettingAttributeObserver::onUpdated, prevSettingAttribute, settingAttribute);
     remoteObserverInformer.sendEvent(ReflectionUtils.getMethod(SettingAttributeObserver.class, "onUpdated",
                                          SettingAttribute.class, SettingAttribute.class),
         SettingsServiceImpl.class, prevSettingAttribute, settingAttribute);
@@ -1367,6 +1386,7 @@ public class SettingsServiceImpl implements SettingsService {
     }
 
     artifactStreamSubject.fireInform(SettingAttributeObserver::onDeleted, settingAttribute);
+    appManifestSubject.fireInform(SettingAttributeObserver::onDeleted, settingAttribute);
     remoteObserverInformer.sendEvent(
         ReflectionUtils.getMethod(SettingAttributeObserver.class, "onDeleted", SettingAttribute.class),
         SettingsServiceImpl.class, settingAttribute);
@@ -1705,7 +1725,7 @@ public class SettingsServiceImpl implements SettingsService {
   public List<SettingAttribute> getFilteredSettingAttributesByType(
       String appId, String envId, String type, String currentAppId, String currentEnvId) {
     List<SettingAttribute> settingAttributeList = getSettingAttributesByType(appId, envId, type);
-    return getFilteredSettingAttributes(settingAttributeList, currentAppId, currentEnvId);
+    return getFilteredSettingAttributes(settingAttributeList, currentAppId, currentEnvId, false);
   }
 
   @Override
@@ -1738,7 +1758,7 @@ public class SettingsServiceImpl implements SettingsService {
   public List<SettingAttribute> getFilteredGlobalSettingAttributesByType(
       String accountId, String type, String currentAppId, String currentEnvId) {
     List<SettingAttribute> settingAttributeList = getGlobalSettingAttributesByType(accountId, type);
-    return getFilteredSettingAttributes(settingAttributeList, currentAppId, currentEnvId);
+    return getFilteredSettingAttributes(settingAttributeList, currentAppId, currentEnvId, false);
   }
 
   @Override

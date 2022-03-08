@@ -68,8 +68,8 @@ public class IdentityNodeExecutionStrategy
   private final String SERVICE_NAME_IDENTITY = ModuleType.PMS.name().toLowerCase();
 
   @Override
-  public NodeExecution createNodeExecution(
-      @NotNull Ambiance ambiance, @NotNull IdentityPlanNode node, String notifyId, String parentId, String previousId) {
+  public NodeExecution createNodeExecution(@NotNull Ambiance ambiance, @NotNull IdentityPlanNode node,
+      IdentityNodeExecutionMetadata metadata, String notifyId, String parentId, String previousId) {
     String uuid = AmbianceUtils.obtainCurrentRuntimeId(ambiance);
     NodeExecution originalExecution = nodeExecutionService.get(node.getOriginalNodeExecutionId());
     NodeExecution execution = NodeExecution.builder()
@@ -87,6 +87,8 @@ public class IdentityNodeExecutionStrategy
                                   .identifier(node.getIdentifier())
                                   .stepType(node.getStepType())
                                   .nodeId(node.getUuid())
+                                  .stageFqn(node.getStageFqn())
+                                  .group(node.getGroup())
                                   .notifyId(notifyId)
                                   .parentId(parentId)
                                   .previousId(previousId)
@@ -190,7 +192,6 @@ public class IdentityNodeExecutionStrategy
                                                 .nodeUuid(level.getSetupId())
                                                 .failureInfo(nodeExecution.getFailureInfo())
                                                 .identifier(level.getIdentifier())
-                                                .group(level.getGroup())
                                                 .status(nodeExecution.getStatus())
                                                 .adviserResponse(nodeExecution.getAdviserResponse())
                                                 .build();

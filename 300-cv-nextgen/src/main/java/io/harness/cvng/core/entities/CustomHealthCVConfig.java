@@ -12,10 +12,8 @@ import static io.harness.cvng.core.utils.ErrorMessageUtils.generateErrorMessageF
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import io.harness.cvng.beans.DataSourceType;
+import io.harness.cvng.beans.TimeSeriesMetricType;
 import io.harness.cvng.beans.customhealth.TimestampInfo;
-import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
-import io.harness.cvng.core.beans.HealthSourceMetricDefinition.AnalysisDTO;
-import io.harness.cvng.core.beans.HealthSourceMetricDefinition.SLIDTO;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
 import io.harness.cvng.core.beans.RiskProfile;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
@@ -45,14 +43,16 @@ import org.mongodb.morphia.query.UpdateOperations;
 @EqualsAndHashCode(callSuper = true)
 public class CustomHealthCVConfig extends MetricCVConfig {
   String groupName;
+  HealthSourceQueryType queryType;
   List<MetricDefinition> metricDefinitions;
 
   @Data
   @SuperBuilder
   @FieldDefaults(level = AccessLevel.PRIVATE)
   @FieldNameConstants(innerTypeName = "CustomHealthMetricDefinitionKeys")
-  public static class MetricDefinition extends HealthSourceMetricDefinition {
-    HealthSourceQueryType queryType;
+  public static class MetricDefinition extends AnalysisInfo {
+    TimeSeriesMetricType metricType;
+    String metricName;
     String urlPath;
     String requestBody;
     CustomHealthMethod method;
@@ -88,29 +88,25 @@ public class CustomHealthCVConfig extends MetricCVConfig {
           generateErrorMessageFromParam(MetricDefinition.CustomHealthMetricDefinitionKeys.urlPath) + " for index "
               + metricDefinitionIndex);
 
-      AnalysisDTO analysisDTO = metricDefinition.getAnalysis();
-      SLIDTO sliDTO = metricDefinition.getSli();
+      AnalysisInfo.SLI sliDTO = metricDefinition.getSli();
+      AnalysisInfo.DeploymentVerification deploymentVerification = metricDefinition.getDeploymentVerification();
+      AnalysisInfo.LiveMonitoring liveMonitoring = metricDefinition.getLiveMonitoring();
 
-      switch (metricDefinition.getQueryType()) {
+      switch (queryType) {
         case HOST_BASED:
-          if ((analysisDTO != null && analysisDTO.getLiveMonitoring() != null
-                  && analysisDTO.getLiveMonitoring().getEnabled() != null
-                  && analysisDTO.getLiveMonitoring().getEnabled() == true)
-              || (sliDTO != null && sliDTO.getEnabled() != null && sliDTO.getEnabled())) {
+          if ((liveMonitoring != null && liveMonitoring.enabled) || (sliDTO != null && sliDTO.enabled)) {
             throw new InvalidRequestException("Host based queries can only be used for deployment verification.");
           }
           break;
         case SERVICE_BASED:
-          if (analysisDTO != null && analysisDTO.getDeploymentVerification() != null
-              && analysisDTO.getDeploymentVerification().getEnabled() != null
-              && analysisDTO.getDeploymentVerification().getEnabled()) {
+          if (deploymentVerification != null && deploymentVerification.enabled) {
             throw new InvalidRequestException(
                 "Service based queries can only be used for live monitoring and service level indicators.");
           }
           break;
         default:
-          throw new InvalidRequestException(String.format(
-              "Invalid query type %s provided, must be SERVICE_BASED or HOST_BASED", metricDefinition.queryType));
+          throw new InvalidRequestException(
+              String.format("Invalid query type %s provided, must be SERVICE_BASED or HOST_BASED", queryType));
       }
 
       String uniqueKey = getMetricAndGroupNameKey(groupName, metricDefinition.getMetricName());
@@ -123,7 +119,7 @@ public class CustomHealthCVConfig extends MetricCVConfig {
     }
   }
 
-  public MetricPack generateMetricPack(String metricName, RiskProfile riskProfile) {
+  public MetricPack generateMetricPack(String identifier, String metricName, RiskProfile riskProfile) {
     Set<TimeSeriesThreshold> timeSeriesThresholds = getThresholdsToCreateOnSaveForCustomProviders(
         metricName, riskProfile.getMetricType(), riskProfile.getThresholdTypes());
     MetricPack metricPack = MetricPack.builder()
@@ -138,6 +134,7 @@ public class CustomHealthCVConfig extends MetricCVConfig {
                                 .thresholds(new ArrayList<>(timeSeriesThresholds))
                                 .type(riskProfile.getMetricType())
                                 .name(metricName)
+                                .identifier(identifier)
                                 .included(true)
                                 .build());
 

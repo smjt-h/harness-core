@@ -31,6 +31,7 @@ public enum ServiceDefinitionType {
   SERVERLESS_AWS_LAMBDA("Serverless Aws Lambda",
       Lists.newArrayList(ExecutionStrategyType.BASIC, ExecutionStrategyType.DEFAULT),
       ServiceSpecType.SERVERLESS_AWS_LAMBDA);
+  @JsonProperty(ServiceSpecType.SSH) SSH("Ssh", Lists.newArrayList(ExecutionStrategyType.DEFAULT), ServiceSpecType.SSH);
 
   /*
   //Unsupported for now

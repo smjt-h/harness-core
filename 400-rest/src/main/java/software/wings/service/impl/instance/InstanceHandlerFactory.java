@@ -37,6 +37,7 @@ public class InstanceHandlerFactory implements InstanceHandlerFactoryService {
   private AzureInstanceHandler azureInstanceHandler;
   private SpotinstAmiInstanceHandler spotinstAmiInstanceHandler;
   private AwsLambdaInstanceHandler awsLambdaInstanceHandler;
+  private PdcInstanceHandler pdcInstanceHandler;
   private CustomDeploymentInstanceHandler customDeploymentInstanceHandler;
   private AzureVMSSInstanceHandler azureVMSSInstanceHandler;
   private AzureWebAppInstanceHandler azureWebAppInstanceHandler;
@@ -46,7 +47,7 @@ public class InstanceHandlerFactory implements InstanceHandlerFactoryService {
       AwsInstanceHandler awsInstanceHandler, AwsAmiInstanceHandler awsAmiInstanceHandler,
       AwsCodeDeployInstanceHandler awsCodeDeployInstanceHandler, PcfInstanceHandler pcfInstanceHandler,
       AzureInstanceHandler azureInstanceHandler, SpotinstAmiInstanceHandler spotinstAmiInstanceHandler,
-      AwsLambdaInstanceHandler awsLambdaInstanceHandler,
+      AwsLambdaInstanceHandler awsLambdaInstanceHandler, PdcInstanceHandler pdcInstanceHandler,
       CustomDeploymentInstanceHandler customDeploymentInstanceHandler,
       AzureVMSSInstanceHandler azureVMSSInstanceHandler, AzureWebAppInstanceHandler azureWebAppInstanceHandler) {
     this.containerInstanceHandler = containerInstanceHandler;
@@ -57,6 +58,7 @@ public class InstanceHandlerFactory implements InstanceHandlerFactoryService {
     this.azureInstanceHandler = azureInstanceHandler;
     this.spotinstAmiInstanceHandler = spotinstAmiInstanceHandler;
     this.awsLambdaInstanceHandler = awsLambdaInstanceHandler;
+    this.pdcInstanceHandler = pdcInstanceHandler;
     this.customDeploymentInstanceHandler = customDeploymentInstanceHandler;
     this.azureVMSSInstanceHandler = azureVMSSInstanceHandler;
     this.azureWebAppInstanceHandler = azureWebAppInstanceHandler;
@@ -90,6 +92,7 @@ public class InstanceHandlerFactory implements InstanceHandlerFactoryService {
       case GCP_KUBERNETES:
       case AZURE_KUBERNETES:
       case DIRECT_KUBERNETES:
+      case RANCHER_KUBERNETES:
       case AWS_ECS:
         return containerInstanceHandler;
       case AZURE_INFRA:
@@ -102,7 +105,7 @@ public class InstanceHandlerFactory implements InstanceHandlerFactoryService {
         return awsLambdaInstanceHandler;
       case PHYSICAL_DATA_CENTER_SSH:
       case PHYSICAL_DATA_CENTER_WINRM:
-        return null;
+        return pdcInstanceHandler;
       case CUSTOM:
         return customDeploymentInstanceHandler;
       default:
@@ -114,7 +117,7 @@ public class InstanceHandlerFactory implements InstanceHandlerFactoryService {
   public Set<InstanceHandler> getAllInstanceHandlers() {
     return Sets.newHashSet(containerInstanceHandler, awsInstanceHandler, awsAmiInstanceHandler,
         awsCodeDeployInstanceHandler, pcfInstanceHandler, azureInstanceHandler, spotinstAmiInstanceHandler,
-        awsLambdaInstanceHandler, customDeploymentInstanceHandler, azureVMSSInstanceHandler,
+        awsLambdaInstanceHandler, pdcInstanceHandler, customDeploymentInstanceHandler, azureVMSSInstanceHandler,
         azureWebAppInstanceHandler);
   }
 }

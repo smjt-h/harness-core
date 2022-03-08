@@ -16,6 +16,9 @@ import io.harness.annotation.HarnessEntity;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.EmbeddedUser;
+import io.harness.mongo.CollationLocale;
+import io.harness.mongo.CollationStrength;
+import io.harness.mongo.index.Collation;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.persistence.AccountAccess;
@@ -64,6 +67,8 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
                  .name("yaml")
                  .field(ApplicationKeys.accountId)
                  .field(ApplicationKeys.name)
+                 .collation(
+                     Collation.builder().locale(CollationLocale.ENGLISH).strength(CollationStrength.PRIMARY).build())
                  .build())
         .build();
   }
@@ -95,6 +100,7 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
   private boolean sample;
 
   @Getter @Setter private Boolean isManualTriggerAuthorized;
+  @Getter @Setter private Boolean areWebHookSecretsMandated;
 
   public boolean isSample() {
     return sample;
@@ -352,6 +358,7 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
     private YamlGitConfig yamlGitConfig;
     private boolean sample;
     private Boolean isManualTriggerAuthorized;
+    private Boolean areWebHookSecretsMandated;
 
     private Builder() {}
 
@@ -454,6 +461,11 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
       return this;
     }
 
+    public Builder areWebHookSecretsMandated(Boolean areWebHookSecretsMandated) {
+      this.areWebHookSecretsMandated = areWebHookSecretsMandated;
+      return this;
+    }
+
     public Builder but() {
       return anApplication()
           .name(name)
@@ -473,7 +485,8 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
           .lastUpdatedAt(lastUpdatedAt)
           .yamlGitConfig(yamlGitConfig)
           .sample(sample)
-          .isManualTriggerAuthorized(isManualTriggerAuthorized);
+          .isManualTriggerAuthorized(isManualTriggerAuthorized)
+          .areWebHookSecretsMandated(areWebHookSecretsMandated);
     }
 
     public Application build() {
@@ -497,6 +510,7 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
       application.setYamlGitConfig(yamlGitConfig);
       application.setSample(sample);
       application.setIsManualTriggerAuthorized(isManualTriggerAuthorized);
+      application.setAreWebHookSecretsMandated(areWebHookSecretsMandated);
       return application;
     }
   }
@@ -514,6 +528,7 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
   public static final class Yaml extends BaseEntityYaml {
     private String description;
     private Boolean isManualTriggerAuthorized;
+    private Boolean areWebHookSecretsMandated;
     private Boolean isGitSyncEnabled;
     private String gitConnector;
     private String branchName;

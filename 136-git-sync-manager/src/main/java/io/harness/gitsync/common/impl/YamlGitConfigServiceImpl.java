@@ -10,6 +10,7 @@ package io.harness.gitsync.common.impl;
 import static io.harness.NGConstants.ENTITY_REFERENCE_LOG_PREFIX;
 import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.data.structure.CollectionUtils.emptyIfNull;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.HarnessStringUtils.nullIfEmpty;
 import static io.harness.encryption.ScopeHelper.getScope;
@@ -17,6 +18,7 @@ import static io.harness.gitsync.common.YamlConstants.HARNESS_FOLDER_EXTENSION;
 import static io.harness.gitsync.common.YamlConstants.PATH_DELIMITER;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.SYNCED;
 import static io.harness.gitsync.common.remote.YamlGitConfigMapper.toYamlGitConfig;
+import static io.harness.ng.core.utils.URLDecoderUtility.getDecodedString;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.HookEventType;
@@ -38,6 +40,7 @@ import io.harness.eventsframework.schemas.entity.EntityScopeInfo;
 import io.harness.eventsframework.schemas.entity.EntityTypeProtoEnum;
 import io.harness.eventsframework.schemas.entity.IdentifierRefProtoDTO;
 import io.harness.eventsframework.schemas.entitysetupusage.EntitySetupUsageCreateV2DTO;
+import io.harness.exception.DuplicateEntityException;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.common.beans.YamlGitConfig;
@@ -46,9 +49,11 @@ import io.harness.gitsync.common.events.GitSyncConfigChangeEventConstants;
 import io.harness.gitsync.common.events.GitSyncConfigChangeEventType;
 import io.harness.gitsync.common.events.GitSyncConfigSwitchType;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
+import io.harness.gitsync.common.helper.UserProfileHelper;
 import io.harness.gitsync.common.remote.YamlGitConfigMapper;
 import io.harness.gitsync.common.service.GitBranchService;
 import io.harness.gitsync.common.service.GitSyncSettingsService;
+import io.harness.gitsync.common.service.ScmFacilitatorService;
 import io.harness.gitsync.common.service.YamlGitConfigService;
 import io.harness.lock.AcquiredLock;
 import io.harness.lock.PersistentLocker;
@@ -100,6 +105,8 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
   private final IdentifierRefProtoDTOHelper identifierRefProtoDTOHelper;
   private final Producer setupUsageEventProducer;
   private final GitSyncSettingsService gitSyncSettingsService;
+  private final UserProfileHelper userProfileHelper;
+  private final ScmFacilitatorService scmFacilitatorService;
 
   @Inject
   public YamlGitConfigServiceImpl(YamlGitConfigRepository yamlGitConfigRepository,
@@ -109,7 +116,8 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
       WebhookEventService webhookEventService, PersistentLocker persistentLocker,
       IdentifierRefProtoDTOHelper identifierRefProtoDTOHelper,
       @Named(EventsFrameworkConstants.SETUP_USAGE) Producer setupUsageEventProducer,
-      GitSyncSettingsService gitSyncSettingsService) {
+      GitSyncSettingsService gitSyncSettingsService, UserProfileHelper userProfileHelper,
+      ScmFacilitatorService scmFacilitatorService) {
     this.yamlGitConfigRepository = yamlGitConfigRepository;
     this.connectorService = connectorService;
     this.gitSyncConfigEventProducer = gitSyncConfigEventProducer;
@@ -121,6 +129,8 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
     this.identifierRefProtoDTOHelper = identifierRefProtoDTOHelper;
     this.setupUsageEventProducer = setupUsageEventProducer;
     this.gitSyncSettingsService = gitSyncSettingsService;
+    this.userProfileHelper = userProfileHelper;
+    this.scmFacilitatorService = scmFacilitatorService;
   }
 
   @Override
@@ -190,6 +200,11 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
 
   @Override
   public YamlGitConfigDTO save(YamlGitConfigDTO ygs) {
+    userProfileHelper.validateIfScmUserProfileIsSet(ygs.getAccountIdentifier());
+
+    // before saving the git config, check if branch exists
+    // otherwise we end-up saving invalid git configs
+    checkIfBranchExists(ygs);
     return saveInternal(ygs, ygs.getAccountIdentifier());
   }
 
@@ -256,9 +271,8 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
     } catch (DuplicateKeyException ex) {
       log.error("A git sync config with this identifier or repo %s and branch %s already exists",
           gitSyncConfigDTO.getRepo(), gitSyncConfigDTO.getBranch());
-      throw new InvalidRequestException(
-          String.format("A git sync config with this identifier or repo %s and branch %s already exists",
-              gitSyncConfigDTO.getRepo(), gitSyncConfigDTO.getBranch()));
+      throw new DuplicateEntityException(String.format(
+          "A git sync config with this identifier or repo %s already exists", gitSyncConfigDTO.getRepo()));
     }
 
     executorService.submit(() -> {
@@ -613,6 +627,19 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
       if (yamlGitConfigDTOList.size() == 0) {
         gitBranchService.deleteAll(gitSyncConfigDTO.getAccountIdentifier(), gitSyncConfigDTO.getRepo());
       }
+    }
+  }
+
+  private void checkIfBranchExists(YamlGitConfigDTO ygs) {
+    IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRef(ygs.getGitConnectorRef(),
+        ygs.getAccountIdentifier(), ygs.getOrganizationIdentifier(), ygs.getProjectIdentifier());
+    // listBranchesUsingConnector will throw error if repo url doesn't exists
+    List<String> branches = scmFacilitatorService.listBranchesUsingConnector(identifierRef.getAccountIdentifier(),
+        ygs.getOrganizationIdentifier(), ygs.getProjectIdentifier(), ygs.getGitConnectorRef(),
+        getDecodedString(ygs.getRepo()), null, null);
+
+    if (isEmpty(branches) || !branches.contains(ygs.getBranch())) {
+      throw new InvalidRequestException(String.format("Error while checking the branch. Branch doesn't exists."));
     }
   }
 }

@@ -7,22 +7,21 @@
 
 package io.harness.cvng.core.resources;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
 import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.accesscontrol.NGAccessControlCheck;
 import io.harness.accesscontrol.OrgIdentifier;
 import io.harness.accesscontrol.ProjectIdentifier;
 import io.harness.accesscontrol.ResourceIdentifier;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.Resource;
-import io.harness.accesscontrol.clients.ResourceScope;
 import io.harness.annotations.ExposeInternalException;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.beans.MonitoredServiceType;
-import io.harness.cvng.beans.change.ChangeCategory;
-import io.harness.cvng.beans.change.ChangeEventDTO;
 import io.harness.cvng.core.beans.HealthMonitoringFlagResponse;
-import io.harness.cvng.core.beans.change.ChangeSummaryDTO;
 import io.harness.cvng.core.beans.monitoredService.AnomaliesSummaryDTO;
 import io.harness.cvng.core.beans.monitoredService.CountServiceDTO;
 import io.harness.cvng.core.beans.monitoredService.DurationDTO;
@@ -34,6 +33,7 @@ import io.harness.cvng.core.beans.monitoredService.MonitoredServiceListItemDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceResponse;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceWithHealthSources;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.HealthSourceDTO;
+import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.beans.params.TimeRangeParams;
@@ -53,6 +53,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import javax.validation.Valid;
 import javax.ws.rs.BeanParam;
@@ -246,7 +247,8 @@ public class MonitoredServiceResource {
   public ResponseDTO<PageResponse<MonitoredServiceResponse>> getList(@NotNull @QueryParam("accountId") String accountId,
       @NotNull @QueryParam("orgIdentifier") String orgIdentifier,
       @NotNull @QueryParam("projectIdentifier") String projectIdentifier,
-      @NotNull @QueryParam("environmentIdentifier") String environmentIdentifier,
+      @QueryParam("environmentIdentifier") String environmentIdentifier,
+      @QueryParam("environmentIdentifiers") List<String> environmentIdentifiers,
       @QueryParam("offset") @NotNull Integer offset, @QueryParam("pageSize") @NotNull Integer pageSize,
       @QueryParam("filter") String filter) {
     ProjectParams projectParams = ProjectParams.builder()
@@ -254,8 +256,12 @@ public class MonitoredServiceResource {
                                       .orgIdentifier(orgIdentifier)
                                       .projectIdentifier(projectIdentifier)
                                       .build();
+    // for backward comparability. Need to remove this.
+    if (isNotEmpty(environmentIdentifier)) {
+      environmentIdentifiers = Collections.singletonList(environmentIdentifier);
+    }
     return ResponseDTO.newResponse(
-        monitoredServiceService.getList(projectParams, environmentIdentifier, offset, pageSize, filter));
+        monitoredServiceService.getList(projectParams, environmentIdentifiers, offset, pageSize, filter));
   }
 
   @GET
@@ -296,6 +302,25 @@ public class MonitoredServiceResource {
                                                             .projectIdentifier(projectIdentifier)
                                                             .build();
     return ResponseDTO.newResponse(monitoredServiceService.get(serviceEnvironmentParams));
+  }
+
+  @GET
+  @Timed
+  @ExceptionMetered
+  @Path("{identifier}/scores")
+  @ApiOperation(value = "get monitored service scores", nickname = "getMonitoredServiceScores")
+  public ResponseDTO<HealthScoreDTO> getMonitoredServiceScore(@NotNull @QueryParam("accountId") String accountId,
+      @NotNull @QueryParam("orgIdentifier") String orgIdentifier,
+      @NotNull @QueryParam("projectIdentifier") String projectIdentifier,
+      @NotNull @PathParam("identifier") String identifier) {
+    MonitoredServiceParams serviceEnvironmentParams = MonitoredServiceParams.builder()
+                                                          .accountIdentifier(accountId)
+                                                          .orgIdentifier(orgIdentifier)
+                                                          .projectIdentifier(projectIdentifier)
+                                                          .monitoredServiceIdentifier(identifier)
+                                                          .build();
+    return ResponseDTO.newResponse(
+        monitoredServiceService.getCurrentAndDependentServicesScore(serviceEnvironmentParams));
   }
 
   @GET
@@ -399,45 +424,14 @@ public class MonitoredServiceResource {
 
   @GET
   @Timed
-  @Path("{identifier}/change-event")
   @ExceptionMetered
-  @ApiOperation(value = "get ChangeEvent List", nickname = "getChangeEventList")
-  public RestResponse<List<ChangeEventDTO>> get(
-      @ApiParam(required = true) @NotNull @QueryParam("accountId") String accountId,
-      @ApiParam(required = true) @NotNull @QueryParam("orgIdentifier") String orgIdentifier,
-      @ApiParam(required = true) @NotNull @QueryParam("projectIdentifier") String projectIdentifier,
-      @NotNull @PathParam("identifier") String identifier,
-      @ApiParam(required = true) @NotNull @QueryParam("startTime") long startTime,
-      @ApiParam(required = true) @NotNull @QueryParam("endTime") long endTime,
-      @ApiParam @NotNull @QueryParam("changeCategories") List<ChangeCategory> changeCategories) {
-    ProjectParams projectParams = ProjectParams.builder()
-                                      .accountIdentifier(accountId)
-                                      .orgIdentifier(orgIdentifier)
-                                      .projectIdentifier(projectIdentifier)
-                                      .build();
-    return new RestResponse<>(monitoredServiceService.getChangeEvents(
-        projectParams, identifier, Instant.ofEpochMilli(startTime), Instant.ofEpochMilli(endTime), changeCategories));
-  }
-
-  @GET
-  @Timed
-  @Path("{identifier}/change-event/summary")
-  @ExceptionMetered
-  @ApiOperation(value = "get ChangeEvent summary", nickname = "getChangeSummary")
-  public RestResponse<ChangeSummaryDTO> get(
-      @ApiParam(required = true) @NotNull @QueryParam("accountId") String accountId,
-      @ApiParam(required = true) @NotNull @QueryParam("orgIdentifier") String orgIdentifier,
-      @ApiParam(required = true) @NotNull @QueryParam("projectIdentifier") String projectIdentifier,
-      @NotNull @PathParam("identifier") String identifier,
-      @ApiParam(required = true) @NotNull @QueryParam("startTime") long startTime,
-      @ApiParam(required = true) @NotNull @QueryParam("endTime") long endTime) {
-    ProjectParams projectParams = ProjectParams.builder()
-                                      .accountIdentifier(accountId)
-                                      .orgIdentifier(orgIdentifier)
-                                      .projectIdentifier(projectIdentifier)
-                                      .build();
-    return new RestResponse<>(monitoredServiceService.getChangeSummary(
-        projectParams, identifier, Instant.ofEpochMilli(startTime), Instant.ofEpochMilli(endTime)));
+  @Path("{monitoredServiceIdentifier}/health-sources")
+  @ApiOperation(value = "get all health sources for service and environment",
+      nickname = "getAllHealthSourcesForMonitoredServiceIdentifier")
+  public RestResponse<List<HealthSourceDTO>>
+  getHealthSourcesForMonitoredServiceIdentifier(@BeanParam ProjectParams projectParams,
+      @NotNull @PathParam("monitoredServiceIdentifier") String monitoredServiceIdentifier) {
+    return new RestResponse<>(monitoredServiceService.getHealthSources(projectParams, monitoredServiceIdentifier));
   }
 
   @GET

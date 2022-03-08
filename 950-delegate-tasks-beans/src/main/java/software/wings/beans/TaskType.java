@@ -279,6 +279,8 @@ public enum TaskType {
   BUILD_SOURCE_TASK(TaskGroup.BUILD_SOURCE),
   DOCKER_ARTIFACT_TASK_NG(TaskGroup.ARTIFACT_COLLECT_NG, "DockerHub Task"),
   GCR_ARTIFACT_TASK_NG(TaskGroup.ARTIFACT_COLLECT_NG, "GCR Task"),
+  NEXUS_ARTIFACT_TASK_NG(TaskGroup.ARTIFACT_COLLECT_NG),
+  ARTIFACTORY_ARTIFACT_TASK_NG(TaskGroup.ARTIFACT_COLLECT_NG),
   AWS_ROUTE53_TASK(TaskGroup.AWS),
   SHELL_SCRIPT_APPROVAL(TaskGroup.SCRIPT),
   CUSTOM_GET_BUILDS(TaskGroup.CUSTOM),
@@ -339,6 +341,7 @@ public enum TaskType {
   SERVICENOW_CONNECTIVITY_TASK_NG(TaskGroup.SERVICENOW_NG, "ServiceNow connectivity test Task"),
   SERVICENOW_TASK_NG(TaskGroup.SERVICENOW_NG, "ServiceNow Task"),
   SERVERLESS_GIT_FETCH_TASK_NG(TaskGroup.SERVERLESS_NG, "Git Fetch Files Task");
+  RANCHER_RESOLVE_CLUSTERS(TaskGroup.K8S, "Rancher Resolve Clusters");
 
   private final TaskGroup taskGroup;
   private final String displayName;

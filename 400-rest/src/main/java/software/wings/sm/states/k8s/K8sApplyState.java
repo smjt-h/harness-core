@@ -31,10 +31,12 @@ import io.harness.k8s.model.KubernetesResource;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.tasks.ResponseData;
 
+import software.wings.api.RancherClusterElement;
 import software.wings.api.k8s.K8sStateExecutionData;
 import software.wings.beans.Activity;
 import software.wings.beans.Application;
 import software.wings.beans.ContainerInfrastructureMapping;
+import software.wings.beans.GitFileConfig;
 import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.command.CommandUnit;
 import software.wings.beans.command.K8sDummyCommandUnit;
@@ -58,6 +60,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -88,6 +91,14 @@ public class K8sApplyState extends AbstractK8sState {
   @Getter @Setter @Attributes(title = "Skip manifest rendering") private boolean skipRendering;
   @Getter @Setter @Attributes(title = "Export manifests") private boolean exportManifests;
   @Getter @Setter @Attributes(title = "Inherit manifests") private boolean inheritManifests;
+  @Getter @Setter @Attributes(title = "Apply Step Override") private boolean stepOverride;
+  @Getter @Setter @Attributes(title = "Override remote values yaml") private GitFileConfig remoteStepOverride;
+  @Getter @Setter @Attributes(title = "Override inline values yaml") private String inlineStepOverride;
+
+  @Override
+  public GitFileConfig getStepRemoteOverrideGitConfig() {
+    return this.remoteStepOverride;
+  }
 
   @Override
   public Integer getTimeoutMillis() {
@@ -128,6 +139,12 @@ public class K8sApplyState extends AbstractK8sState {
 
   @Override
   public ExecutionResponse execute(ExecutionContext context) {
+    if (k8sStateHelper.isRancherInfraMapping(context)
+        && !(Objects.nonNull(context.getContextElement())
+            && context.getContextElement() instanceof RancherClusterElement)) {
+      return k8sStateHelper.getInvalidInfraDefFailedResponse();
+    }
+
     if (inheritManifests && k8sStateHelper.isExportManifestsEnabled(context.getAccountId())) {
       Activity activity = createK8sActivity(
           context, commandName(), stateType(), activityService, commandUnitList(false, context.getAccountId()));
@@ -173,7 +190,7 @@ public class K8sApplyState extends AbstractK8sState {
             .filePaths(filePaths)
             .k8sDelegateManifestConfig(
                 createDelegateManifestConfig(context, appManifestMap.get(K8sValuesLocation.Service)))
-            .valuesYamlList(fetchRenderedValuesFiles(appManifestMap, context))
+            .valuesYamlList(fetchRenderedValuesFilesAndAddInlineStepOverride(appManifestMap, context))
             .skipDryRun(skipDryRun)
             .skipRendering(skipRendering)
             .useLatestKustomizeVersion(isUseLatestKustomizeVersion(context.getAccountId()))
@@ -243,5 +260,20 @@ public class K8sApplyState extends AbstractK8sState {
     if (isNotBlank(stateTimeoutInMinutes)) {
       stateTimeoutInMinutes = context.renderExpression(stateTimeoutInMinutes);
     }
+
+    if (isNotBlank(inlineStepOverride)) {
+      inlineStepOverride = context.renderExpression(inlineStepOverride);
+    }
+  }
+
+  public List<String> fetchRenderedValuesFilesAndAddInlineStepOverride(
+      Map<K8sValuesLocation, ApplicationManifest> appManifestMap, ExecutionContext context) {
+    List<String> result = fetchRenderedValuesFiles(appManifestMap, context);
+
+    if (isNotBlank(inlineStepOverride)) {
+      result.add(inlineStepOverride);
+    }
+
+    return result;
   }
 }

@@ -22,9 +22,9 @@ import static io.harness.gitsync.common.remote.YamlGitConfigMapper.toYamlGitConf
 import static io.harness.ng.core.rbac.ProjectPermissions.EDIT_PROJECT_PERMISSION;
 
 import io.harness.NGCommonEntityConstants;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.Resource;
-import io.harness.accesscontrol.clients.ResourceScope;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.accesscontrol.ResourceTypes;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
@@ -42,6 +42,7 @@ import io.harness.ng.core.dto.FailureDTO;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -109,6 +110,7 @@ public class YamlGitConfigResource {
   }
 
   @PUT
+  @Hidden
   @Path("/disable")
   @ApiOperation(value = "Disable git experience", nickname = "disableGitSync", hidden = true)
   public boolean putGitExperience(
