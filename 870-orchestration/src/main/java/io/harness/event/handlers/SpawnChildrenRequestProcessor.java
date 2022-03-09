@@ -14,12 +14,14 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.pms.resume.EngineResumeCallback;
+import io.harness.event.OrchestrationLogPublisher;
 import io.harness.execution.InitiateNodeHelper;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.logging.AutoLogContext;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ChildrenExecutableResponse.Child;
 import io.harness.pms.contracts.execution.ExecutableResponse;
+import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
 import io.harness.pms.contracts.execution.events.SpawnChildrenRequest;
 import io.harness.pms.execution.utils.AmbianceUtils;
@@ -41,6 +43,7 @@ public class SpawnChildrenRequestProcessor implements SdkResponseProcessor {
   @Inject private WaitNotifyEngine waitNotifyEngine;
   @Inject private InitiateNodeHelper initiateNodeHelper;
   @Inject @Named(OrchestrationPublisherName.PUBLISHER_NAME) private String publisherName;
+  @Inject private OrchestrationLogPublisher orchestrationLogPublisher;
 
   @Override
   public void handleEvent(SdkResponseEventProto event) {
@@ -59,12 +62,13 @@ public class SpawnChildrenRequestProcessor implements SdkResponseProcessor {
       EngineResumeCallback callback = EngineResumeCallback.builder().ambiance(ambiance).build();
       waitNotifyEngine.waitForAllOn(publisherName, callback, callbackIds.toArray(new String[0]));
 
-      // Todo: Add here
       // Update the parent with executable response
       nodeExecutionService.updateV2(nodeExecutionId,
           ops
           -> ops.addToSet(NodeExecutionKeys.executableResponses,
               ExecutableResponse.newBuilder().setChildren(request.getChildren()).build()));
+      orchestrationLogPublisher.createAndHandleEventLog(ambiance.getPlanExecutionId(),
+          AmbianceUtils.obtainCurrentRuntimeId(ambiance), OrchestrationEventType.NODE_EXECUTION_UPDATE);
     }
   }
 }

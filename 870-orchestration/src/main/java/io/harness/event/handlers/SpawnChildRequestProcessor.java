@@ -14,13 +14,16 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.pms.resume.EngineResumeCallback;
+import io.harness.event.OrchestrationLogPublisher;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.InitiateNodeHelper;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ExecutableResponse;
+import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
 import io.harness.pms.contracts.execution.events.SpawnChildRequest;
+import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.SdkResponseEventUtils;
 import io.harness.waiter.WaitNotifyEngine;
 
@@ -36,6 +39,7 @@ public class SpawnChildRequestProcessor implements SdkResponseProcessor {
   @Inject private NodeExecutionService nodeExecutionService;
   @Inject private WaitNotifyEngine waitNotifyEngine;
   @Inject private InitiateNodeHelper initiateNodeHelper;
+  @Inject private OrchestrationLogPublisher orchestrationLogPublisher;
   @Inject @Named(OrchestrationPublisherName.PUBLISHER_NAME) private String publisherName;
 
   @Override
@@ -50,10 +54,11 @@ public class SpawnChildRequestProcessor implements SdkResponseProcessor {
     EngineResumeCallback callback = EngineResumeCallback.builder().ambiance(ambiance).build();
     waitNotifyEngine.waitForAllOn(publisherName, callback, childInstanceId);
 
-    // Todo: Add here
     // Update the parent with executable response
     nodeExecutionService.updateV2(SdkResponseEventUtils.getNodeExecutionId(event),
         ops -> ops.addToSet(NodeExecutionKeys.executableResponses, buildExecutableResponse(request)));
+    orchestrationLogPublisher.createAndHandleEventLog(ambiance.getPlanExecutionId(),
+        AmbianceUtils.obtainCurrentRuntimeId(ambiance), OrchestrationEventType.NODE_EXECUTION_UPDATE);
   }
 
   private String extractChildNodeId(SpawnChildRequest spawnChildRequest) {
