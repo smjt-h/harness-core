@@ -7,21 +7,21 @@ import io.harness.connector.HostValidationResult;
 import io.harness.delegate.beans.connector.pdcconnector.HostDTO;
 import io.harness.delegate.beans.connector.pdcconnector.PhysicalDataCenterConnectorDTO;
 import io.harness.encryption.SecretRefHelper;
-import io.harness.ng.validator.HostValidatoionService;
+import io.harness.ng.validator.HostValidationService;
 
 import com.google.inject.Inject;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class PhysicalDataCenterConnectorValidator implements ConnectionValidator<PhysicalDataCenterConnectorDTO> {
-  @Inject private HostValidatoionService hostValidatoionService;
+  @Inject private HostValidationService hostValidationService;
 
   @Override
   public ConnectorValidationResult validate(PhysicalDataCenterConnectorDTO connectorDTO, String accountIdentifier,
       String orgIdentifier, String projectIdentifier, String identifier) {
     List<String> hostNames = connectorDTO.getHosts().stream().map(HostDTO::getHostName).collect(Collectors.toList());
     List<HostValidationResult> hostValidationResults =
-        hostValidatoionService.validateSSHHosts(hostNames, accountIdentifier, orgIdentifier, projectIdentifier,
+        hostValidationService.validateSSHHosts(hostNames, accountIdentifier, orgIdentifier, projectIdentifier,
             SecretRefHelper.getSecretConfigString(connectorDTO.getSshKeyRef()));
 
     return buildConnectorValidationResult(hostValidationResults);

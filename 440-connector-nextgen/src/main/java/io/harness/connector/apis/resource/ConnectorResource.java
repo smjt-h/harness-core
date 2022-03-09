@@ -452,7 +452,7 @@ public class ConnectorResource {
   public ResponseDTO<ConnectorCatalogueResponseDTO>
   getConnectorCatalogue(@Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotBlank @QueryParam(
       NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier) {
-    return ResponseDTO.newResponse(connectorService.getConnectorCatalogue());
+    return ResponseDTO.newResponse(connectorService.getConnectorCatalogue(accountIdentifier));
   }
 
   @GET

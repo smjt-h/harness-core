@@ -7,11 +7,14 @@
 
 package io.harness.connector.helper;
 
+import io.harness.beans.FeatureName;
 import io.harness.connector.ConnectorCatalogueItem;
 import io.harness.connector.ConnectorCategory;
 import io.harness.connector.ConnectorRegistryFactory;
+import io.harness.connector.featureflagfilter.ConnectorEnumFilter;
 import io.harness.delegate.beans.connector.ConnectorType;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -21,9 +24,12 @@ import java.util.stream.Collectors;
 
 @Singleton
 public class CatalogueHelper {
-  public List<ConnectorCatalogueItem> getConnectorTypeToCategoryMapping() {
+  @Inject ConnectorEnumFilter enumFilter;
+
+  public List<ConnectorCatalogueItem> getConnectorTypeToCategoryMapping(String accountIdentifier) {
     final Map<ConnectorCategory, List<ConnectorType>> connectorCategoryListMap =
         Arrays.stream(ConnectorType.values())
+            .filter(enumFilter.filter(accountIdentifier, FeatureName.SSH_NG))
             .collect(Collectors.groupingBy(ConnectorRegistryFactory::getConnectorCategory));
     return connectorCategoryListMap.entrySet()
         .stream()
