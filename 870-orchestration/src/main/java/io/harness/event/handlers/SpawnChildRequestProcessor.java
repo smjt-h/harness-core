@@ -20,10 +20,8 @@ import io.harness.execution.InitiateNodeHelper;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ExecutableResponse;
-import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
 import io.harness.pms.contracts.execution.events.SpawnChildRequest;
-import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.SdkResponseEventUtils;
 import io.harness.waiter.WaitNotifyEngine;
 
@@ -57,8 +55,6 @@ public class SpawnChildRequestProcessor implements SdkResponseProcessor {
     // Update the parent with executable response
     nodeExecutionService.updateV2(SdkResponseEventUtils.getNodeExecutionId(event),
         ops -> ops.addToSet(NodeExecutionKeys.executableResponses, buildExecutableResponse(request)));
-    orchestrationLogPublisher.createAndHandleEventLog(ambiance.getPlanExecutionId(),
-        AmbianceUtils.obtainCurrentRuntimeId(ambiance), OrchestrationEventType.NODE_EXECUTION_UPDATE);
   }
 
   private String extractChildNodeId(SpawnChildRequest spawnChildRequest) {

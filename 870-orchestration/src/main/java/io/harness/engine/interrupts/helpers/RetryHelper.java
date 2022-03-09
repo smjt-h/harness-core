@@ -49,7 +49,6 @@ public class RetryHelper {
   @Inject private NodeExecutionService nodeExecutionService;
   @Inject private OrchestrationEngine engine;
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
-  @Inject private OrchestrationLogPublisher orchestrationLogPublisher;
 
   public void retryNodeExecution(String nodeExecutionId, String interruptId, InterruptConfig interruptConfig) {
     NodeExecution nodeExecution = Preconditions.checkNotNull(nodeExecutionService.get(nodeExecutionId));
@@ -78,8 +77,6 @@ public class RetryHelper {
     if (updatedNodeExecution != null && updatedNodeExecution.getEndTs() == null) {
       updatedNodeExecution = nodeExecutionService.update(
           updatedNodeExecution.getUuid(), ops -> ops.set(NodeExecutionKeys.endTs, System.currentTimeMillis()));
-      orchestrationLogPublisher.createAndHandleEventLog(
-          nodeExecution.getPlanExecutionId(), nodeExecution.getUuid(), OrchestrationEventType.NODE_EXECUTION_UPDATE);
     }
     return updatedNodeExecution == null ? nodeExecution : updatedNodeExecution;
   }

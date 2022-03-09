@@ -24,7 +24,6 @@ import io.harness.engine.observers.StepDetailsUpdateObserver;
 import io.harness.eventsframework.EventsFrameworkConstants;
 import io.harness.eventsframework.api.Producer;
 import io.harness.eventsframework.producer.Message;
-import io.harness.pms.PmsFeatureFlagService;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.contracts.visualisation.log.OrchestrationLogEvent;
@@ -46,7 +45,7 @@ public class OrchestrationLogPublisher
                NodeExecutionStartObserver {
   @Inject private OrchestrationEventLogRepository orchestrationEventLogRepository;
   @Inject @Named(EventsFrameworkConstants.ORCHESTRATION_LOG) private Producer producer;
-  @Inject OrchestrationModuleConfig orchestrationModuleConfig;
+
   @Override
   public void onNodeStatusUpdate(NodeUpdateInfo nodeUpdateInfo) {
     createAndHandleEventLogV1(nodeUpdateInfo.getPlanExecutionId(), nodeUpdateInfo.getNodeExecutionId(),
@@ -61,20 +60,9 @@ public class OrchestrationLogPublisher
 
   @Override
   public void onNodeUpdate(NodeUpdateInfo nodeUpdateInfo) {
-    if (!orchestrationModuleConfig.isReduceOrchestrationLog()) {
-      createAndHandleEventLogV1(nodeUpdateInfo.getNodeExecution().getPlanExecutionId(),
-          AmbianceUtils.obtainCurrentRuntimeId(nodeUpdateInfo.getNodeExecution().getAmbiance()),
-          OrchestrationEventType.NODE_EXECUTION_UPDATE);
-    }
-  }
-
-  // Todo: Introduce batching over here
-  public void createAndHandleEventLog(
-      String planExecutionId, String nodeExecutionId, OrchestrationEventType eventType) {
-    if (!orchestrationModuleConfig.isReduceOrchestrationLog()) {
-      return;
-    }
-    createAndHandleEventLogV1(planExecutionId, nodeExecutionId, eventType);
+    createAndHandleEventLogV1(nodeUpdateInfo.getNodeExecution().getPlanExecutionId(),
+        AmbianceUtils.obtainCurrentRuntimeId(nodeUpdateInfo.getNodeExecution().getAmbiance()),
+        OrchestrationEventType.NODE_EXECUTION_UPDATE);
   }
 
   // Todo: Introduce batching over here

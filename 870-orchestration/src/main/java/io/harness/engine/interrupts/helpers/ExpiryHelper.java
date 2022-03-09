@@ -17,7 +17,6 @@ import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.node.NodeExecutionUpdateFailedException;
 import io.harness.engine.interrupts.InterruptProcessingFailedException;
 import io.harness.eraro.Level;
-import io.harness.event.OrchestrationLogPublisher;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
@@ -25,7 +24,6 @@ import io.harness.interrupts.Interrupt;
 import io.harness.interrupts.InterruptEffect;
 import io.harness.logging.UnitProgress;
 import io.harness.pms.contracts.execution.Status;
-import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.contracts.execution.failure.FailureData;
 import io.harness.pms.contracts.execution.failure.FailureInfo;
 import io.harness.pms.contracts.execution.failure.FailureType;
@@ -45,7 +43,6 @@ public class ExpiryHelper {
   @Inject private OrchestrationEngine engine;
   @Inject private InterruptHelper interruptHelper;
   @Inject private NodeExecutionService nodeExecutionService;
-  @Inject private OrchestrationLogPublisher orchestrationLogPublisher;
 
   public void expireMarkedInstance(NodeExecution nodeExecution, Interrupt interrupt) {
     try {
@@ -81,8 +78,6 @@ public class ExpiryHelper {
               .addAllUnitProgress(unitProgressList)
               .build();
       engine.processStepResponse(nodeExecution.getAmbiance(), expiredStepResponse);
-      orchestrationLogPublisher.createAndHandleEventLog(
-          nodeExecution.getPlanExecutionId(), nodeExecution.getUuid(), OrchestrationEventType.NODE_EXECUTION_UPDATE);
     } catch (NodeExecutionUpdateFailedException ex) {
       throw new InterruptProcessingFailedException(
           InterruptType.MARK_EXPIRED, "Expiry failed for NodeExecutionId: " + nodeExecution.getUuid(), ex);

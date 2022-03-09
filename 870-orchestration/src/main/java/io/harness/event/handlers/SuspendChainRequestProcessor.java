@@ -11,12 +11,9 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
-import io.harness.event.OrchestrationLogPublisher;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
-import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
 import io.harness.pms.contracts.execution.events.SuspendChainRequest;
-import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.SdkResponseEventUtils;
 
 import com.google.inject.Inject;
@@ -27,7 +24,6 @@ import com.google.inject.Singleton;
 public class SuspendChainRequestProcessor implements SdkResponseProcessor {
   @Inject private NodeExecutionService nodeExecutionService;
   @Inject private OrchestrationEngine engine;
-  @Inject private OrchestrationLogPublisher orchestrationLogPublisher;
 
   @Override
   public void handleEvent(SdkResponseEventProto event) {
@@ -36,7 +32,5 @@ public class SuspendChainRequestProcessor implements SdkResponseProcessor {
     nodeExecutionService.updateV2(SdkResponseEventUtils.getNodeExecutionId(event),
         ops -> ops.addToSet(NodeExecutionKeys.executableResponses, request.getExecutableResponse()));
     engine.resumeNodeExecution(event.getAmbiance(), request.getResponseMap(), request.getIsError());
-    orchestrationLogPublisher.createAndHandleEventLog(SdkResponseEventUtils.getPlanExecutionId(event),
-        SdkResponseEventUtils.getNodeExecutionId(event), OrchestrationEventType.NODE_EXECUTION_UPDATE);
   }
 }

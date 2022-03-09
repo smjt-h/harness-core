@@ -94,7 +94,6 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
   @Inject private OrchestrationEngine orchestrationEngine;
   @Inject private PmsOutcomeService outcomeService;
   @Inject private KryoSerializer kryoSerializer;
-  @Inject private OrchestrationLogPublisher orchestrationLogPublisher;
 
   @Override
   public NodeExecution createNodeExecution(@NotNull Ambiance ambiance, @NotNull PlanNode node,
@@ -286,8 +285,6 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
       log.info("Ending Execution");
       orchestrationEngine.endNodeExecution(AmbianceUtils.cloneForFinish(ambiance));
     }
-    orchestrationLogPublisher.createAndHandleEventLog(
-        ambiance.getPlanExecutionId(), nodeExecutionId, OrchestrationEventType.NODE_EXECUTION_UPDATE);
   }
 
   @VisibleForTesting

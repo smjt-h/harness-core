@@ -15,12 +15,10 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.interrupts.InterruptService;
-import io.harness.event.OrchestrationLogPublisher;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.interrupts.InterruptEffect;
 import io.harness.pms.contracts.execution.Status;
-import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.contracts.interrupts.InterruptConfig;
 import io.harness.pms.contracts.interrupts.InterruptType;
 import io.harness.pms.execution.utils.NodeProjectionUtils;
@@ -37,7 +35,6 @@ public class FailureInterruptCallback implements OldNotifyCallback {
   @Inject private NodeExecutionService nodeExecutionService;
   @Inject private InterruptService interruptService;
   @Inject private OrchestrationEngine orchestrationEngine;
-  @Inject private OrchestrationLogPublisher orchestrationLogPublisher;
 
   String nodeExecutionId;
   Status originalStatus;
@@ -74,8 +71,6 @@ public class FailureInterruptCallback implements OldNotifyCallback {
                   .build()));
       orchestrationEngine.concludeNodeExecution(
           updatedNodeExecution.getAmbiance(), Status.FAILED, originalStatus, EnumSet.noneOf(Status.class));
-      orchestrationLogPublisher.createAndHandleEventLog(
-          updatedNodeExecution.getPlanExecutionId(), nodeExecutionId, OrchestrationEventType.NODE_EXECUTION_UPDATE);
     } catch (Exception ex) {
       interruptService.markProcessed(interruptId, PROCESSED_UNSUCCESSFULLY);
       throw ex;

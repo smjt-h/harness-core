@@ -337,7 +337,7 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     registerManagedBeans(environment, injector);
     registerAuthFilters(appConfig, environment, injector);
     registerHealthCheck(environment, injector);
-    registerObservers(injector);
+    registerObservers(appConfig, injector);
     registerRequestContextFilter(environment);
     registerOasResource(appConfig, environment, injector);
     intializeSdkInstanceCacheSync(injector);
@@ -435,7 +435,7 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
         .scannerClass("io.swagger.v3.jaxrs2.integration.JaxrsAnnotationScanner");
   }
 
-  private static void registerObservers(Injector injector) {
+  private static void registerObservers(PipelineServiceConfiguration appConfig, Injector injector) {
     PmsGraphStepDetailsServiceImpl pmsGraphStepDetailsService =
         (PmsGraphStepDetailsServiceImpl) injector.getInstance(Key.get(PmsGraphStepDetailsService.class));
     pmsGraphStepDetailsService.getStepDetailsUpdateObserverSubject().register(
@@ -464,21 +464,22 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     nodeExecutionService.getStepStatusUpdateSubject().register(injector.getInstance(Key.get(BarrierDropper.class)));
     nodeExecutionService.getStepStatusUpdateSubject().register(
         injector.getInstance(Key.get(NodeExecutionStatusUpdateEventHandler.class)));
-    nodeExecutionService.getStepStatusUpdateSubject().register(
-        injector.getInstance(Key.get(OrchestrationLogPublisher.class)));
 
     nodeExecutionService.getStepStatusUpdateSubject().register(
         injector.getInstance(Key.get(TimeoutInstanceRemover.class)));
 
-    // NodeUpdateObservers
-    nodeExecutionService.getNodeUpdateObserverSubject().register(
-        injector.getInstance(Key.get(OrchestrationLogPublisher.class)));
+    if (!appConfig.getReduceOrchestrationLog()) {
+      nodeExecutionService.getNodeUpdateObserverSubject().register(
+          injector.getInstance(Key.get(OrchestrationLogPublisher.class)));
+      nodeExecutionService.getNodeExecutionStartSubject().register(
+          injector.getInstance(Key.get(OrchestrationLogPublisher.class)));
+      nodeExecutionService.getStepStatusUpdateSubject().register(
+          injector.getInstance(Key.get(OrchestrationLogPublisher.class)));
+    }
 
     // NodeExecutionStartObserver
     nodeExecutionService.getNodeExecutionStartSubject().register(
         injector.getInstance(Key.get(StageStartNotificationHandler.class)));
-    nodeExecutionService.getNodeExecutionStartSubject().register(
-        injector.getInstance(Key.get(OrchestrationLogPublisher.class)));
 
     PlanStatusEventEmitterHandler planStatusEventEmitterHandler =
         injector.getInstance(Key.get(PlanStatusEventEmitterHandler.class));

@@ -15,9 +15,7 @@ import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.event.OrchestrationLogPublisher;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.pms.contracts.execution.events.HandleProgressRequest;
-import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
-import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.SdkResponseEventUtils;
 import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
 
@@ -37,7 +35,5 @@ public class HandleProgressRequestProcessor implements SdkResponseProcessor {
     Map<String, Object> progressDoc = RecastOrchestrationUtils.fromJson(progressRequest.getProgressJson());
     nodeExecutionService.updateV2(SdkResponseEventUtils.getNodeExecutionId(event),
         ops -> setUnset(ops, NodeExecutionKeys.progressData, progressDoc));
-    orchestrationLogPublisher.createAndHandleEventLog(event.getAmbiance().getPlanExecutionId(),
-        AmbianceUtils.obtainCurrentRuntimeId(event.getAmbiance()), OrchestrationEventType.NODE_EXECUTION_UPDATE);
   }
 }
