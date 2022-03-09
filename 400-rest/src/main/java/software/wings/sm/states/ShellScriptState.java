@@ -528,6 +528,9 @@ public class ShellScriptState extends State implements SweepingOutputStateMixin 
 
     int expressionFunctorToken = HashGenerator.generateIntegerHash();
 
+    ShellScriptParameters params = shellScriptParameters.build();
+    log.info("Working directory for accountId: {} appId: {} activityId: {} commandPath: {} is {}",
+        params.getAccountId(), params.getAppId(), params.getActivityId(), commandPath, params.getWorkingDirectory());
     DelegateTask delegateTask =
         DelegateTask.builder()
             .accountId(executionContext.getApp().getAccountId())
@@ -539,7 +542,7 @@ public class ShellScriptState extends State implements SweepingOutputStateMixin 
             .data(TaskData.builder()
                       .async(true)
                       .taskType(TaskType.SCRIPT.name())
-                      .parameters(new Object[] {shellScriptParameters.build()})
+                      .parameters(new Object[] {params})
                       .timeout(defaultIfNullTimeout(DEFAULT_ASYNC_CALL_TIMEOUT))
                       .expressionFunctorToken(expressionFunctorToken)
                       .build())
