@@ -241,6 +241,7 @@ public class ApprovalState extends State implements SweepingOutputStateMixin {
                                                    .approvalStateType(approvalStateType)
                                                    .timeoutMillis(getTimeoutMillis())
                                                    .variables(getVariables())
+                                                   .stageName(getStageName())
                                                    .triggeredBy(workflowStandardParams.getCurrentUser())
                                                    .build();
     if (disableAssertion != null) {

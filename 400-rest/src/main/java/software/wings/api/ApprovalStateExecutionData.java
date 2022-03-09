@@ -102,7 +102,7 @@ public class ApprovalStateExecutionData extends StateExecutionData implements De
   @Transient private transient boolean isAuthorized;
 
   // Used to return information in graphQL Apis for approval Data
-  private transient String stageName;
+  private String stageName;
   @Transient private transient String executionUuid;
 
   @Transient @Inject private transient WorkflowExecutionService workflowExecutionService;
