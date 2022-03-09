@@ -6016,7 +6016,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
         WorkflowExecutionKeys.infraDefinitionIds);
 
     List<WorkflowExecution> pausedExecutions = wingsPersistence.createQuery(WorkflowExecution.class)
-                                                   .filter("appId", appId)
+                                                   .filter(WorkflowExecutionKeys.appId, appId)
                                                    .filter(WorkflowExecutionKeys.workflowId, pipelineId)
                                                    .filter(WorkflowExecutionKeys.status, PAUSED)
                                                    .field(WorkflowExecutionKeys.createdAt)
@@ -6131,8 +6131,8 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     List<WorkflowExecution> executionsWithSameServiceAndInfra =
         pausedExecutions.stream()
             .filter(e
-                -> (new HashSet<>(e.getServiceIds()).equals(new HashSet<>(serviceIds)))
-                    && (new HashSet<>(e.getInfraDefinitionIds()).equals(new HashSet<>(infraIds))))
+                -> CollectionUtils.isEqualCollection(e.getServiceIds(), serviceIds)
+                    && CollectionUtils.isEqualCollection(e.getInfraDefinitionIds(), infraIds))
             .collect(toList());
 
     List<String> approvalIds = new ArrayList<>();
