@@ -116,8 +116,10 @@ Official steps to install docker on mac: [docker.com](https://docs.docker.com/de
    
 4. Go to `harness-core` directory and run
 
-    `scripts/bazel/generate_credentials.sh`
-    `bazel build //...` or `bazel build :all`
+    ```
+    scripts/bazel/generate_credentials.sh
+    bazel build //... or bazel build :all
+    ```
 
 5. If Global Search is not required:
 
@@ -201,7 +203,7 @@ cd to `harness-core` directory
 
 3. Start Delegate
 
-   * `java -Xmx4096m -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:mygclogfilename.gc -XX:+UseParallelGC -XX:MaxGCPauseMillis=500 -jar ~/.bazel-dirs/bin/260-delegate/module_deploy.jar 260-delegate/config-delegate.yml &`
+   * `java -Xmx1536m -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:mygclogfilename.gc -XX:+UseParallelGC -XX:MaxGCPauseMillis=500 -jar ~/.bazel-dirs/bin/260-delegate/module_deploy.jar 260-delegate/config-delegate.yml &`
 
 4. Start Verification service (Optional)
 
