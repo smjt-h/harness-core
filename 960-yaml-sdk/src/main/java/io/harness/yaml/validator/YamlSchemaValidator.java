@@ -99,7 +99,7 @@ public class YamlSchemaValidator {
       for (ValidationMessage validationMessage : processValidationMessages) {
         // Add stage/step details here.
         errorDTOS.add(YamlSchemaErrorDTO.builder()
-                          .message(validationMessage.getMessage())
+                          .message(removeFqnFromErrorMessage(validationMessage.getMessage()))
                           .stageInfo(SchemaValidationUtils.getStageErrorInfo(validationMessage.getPath(), jsonNode))
                           .stepInfo(SchemaValidationUtils.getStepErrorInfo(validationMessage.getPath(), jsonNode))
                           .fqn(validationMessage.getPath())
@@ -109,6 +109,12 @@ public class YamlSchemaValidator {
       throw new InvalidYamlException("Invalid Yaml", errorWrapperDTO);
     }
     return Collections.emptySet();
+  }
+
+  private String removeFqnFromErrorMessage(String message) {
+    String pathInMessage = message.split(":")[0];
+    String[] pathComponents = pathInMessage.split("\\.");
+    return message.replace(pathInMessage, pathComponents[pathComponents.length - 1]);
   }
 
   protected void validateParallelStagesCount(
