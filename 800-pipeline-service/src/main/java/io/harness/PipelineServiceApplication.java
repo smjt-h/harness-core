@@ -470,6 +470,10 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     nodeExecutionService.getStepStatusUpdateSubject().register(
         injector.getInstance(Key.get(TimeoutInstanceRemover.class)));
 
+    // NodeUpdateObservers
+    nodeExecutionService.getNodeUpdateObserverSubject().register(
+        injector.getInstance(Key.get(OrchestrationLogPublisher.class)));
+
     // NodeExecutionStartObserver
     nodeExecutionService.getNodeExecutionStartSubject().register(
         injector.getInstance(Key.get(StageStartNotificationHandler.class)));
