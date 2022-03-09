@@ -50,7 +50,7 @@ http_archive(
 )
 
 # Load and call the dependencies
-load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
+load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies", "go_download_sdk")
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
 
 go_repository(
@@ -116,9 +116,13 @@ go_repository(
     version = "v1.1.0",
 )
 
-go_rules_dependencies()
+go_download_sdk(
+    name = "go_sdk",
+    version = "1.17.7",
+)
 
-go_register_toolchains(version = "1.17.7")
+go_rules_dependencies()
+go_register_toolchains()
 
 gazelle_dependencies()
 
