@@ -1,16 +1,7 @@
 package io.harness.ng.validator.service;
 
-import static io.harness.connector.HostValidationResult.HostValidationStatus.FAILED;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.delegate.beans.NgSetupFields.NG;
-import static io.harness.delegate.beans.NgSetupFields.OWNER;
-import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.DEFAULT_HOST_VALIDATION_FAILED_MSG;
-import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.TRUE_STR;
-import static io.harness.exception.WingsException.USER;
-import static io.harness.exception.WingsException.USER_SRE;
-
-import static org.apache.commons.lang3.StringUtils.isBlank;
-
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.harness.beans.DelegateTaskRequest;
 import io.harness.connector.HostValidationResult;
 import io.harness.delegate.beans.DelegateResponseData;
@@ -33,11 +24,10 @@ import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.services.SshKeySpecDTOHelper;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.service.DelegateGrpcClientWrapper;
-
+import lombok.extern.slf4j.Slf4j;
 import software.wings.beans.TaskType;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import javax.validation.constraints.NotNull;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,12 +39,22 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import javax.validation.constraints.NotNull;
-import lombok.extern.slf4j.Slf4j;
+
+import static io.harness.connector.HostValidationResult.HostValidationStatus.FAILED;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.delegate.beans.NgSetupFields.NG;
+import static io.harness.delegate.beans.NgSetupFields.OWNER;
+import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.DEFAULT_HOST_VALIDATION_FAILED_MSG;
+import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.TRUE_STR;
+import static io.harness.exception.WingsException.USER;
+import static io.harness.exception.WingsException.USER_SRE;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @Singleton
 @Slf4j
 public class HostValidationServiceImpl implements HostValidationService {
+
+  private static final int LIMIT = 10;
   @Inject private SshKeySpecDTOHelper sshKeySpecDTOHelper;
   @Inject private NGSecretServiceV2 ngSecretServiceV2;
   @Inject private TaskSetupAbstractionHelper taskSetupAbstractionHelper;
@@ -63,17 +63,21 @@ public class HostValidationServiceImpl implements HostValidationService {
 
   @Override
   public List<HostValidationResult> validateSSHHosts(List<String> hosts, String accountIdentifier, String orgIdentifier,
-      String projectIdentifier, String secretIdentifier) {
+      String projectIdentifier, String secretIdentifier, Optional<Integer> limit) {
     if (hosts.isEmpty()) {
       return Collections.emptyList();
     }
 
     CompletableFutures<HostValidationResult> validateHostTasks = new CompletableFutures<>(executor);
-    for (String host : hosts) {
+    int maxHostsNum = limit.orElse(LIMIT);
+    if(hosts.size() > maxHostsNum) {
+      log.info("Limit number of validated hosts to {}", maxHostsNum);
+    }
+    for (String host : hosts.size() > maxHostsNum ? hosts.subList(0, Math.min(maxHostsNum, hosts.size())) : hosts) {
       validateHostTasks.supplyAsyncExceptionally(
           ()
               -> validateSSHHost(host, accountIdentifier, orgIdentifier, projectIdentifier, secretIdentifier),
-          ex -> HostValidationResult.builder().status(FAILED).error(buildErrorDetailsWithMsg(ex.getMessage())).build());
+          ex -> HostValidationResult.builder().host(host).status(FAILED).error(buildErrorDetailsWithMsg(ex.getMessage())).build());
     }
 
     CompletableFuture<List<HostValidationResult>> listCompletableFuture = validateHostTasks.allOf();
@@ -127,15 +131,17 @@ public class HostValidationServiceImpl implements HostValidationService {
     if (delegateResponseData instanceof SSHConfigValidationTaskResponse) {
       SSHConfigValidationTaskResponse responseData = (SSHConfigValidationTaskResponse) delegateResponseData;
       return HostValidationResult.builder()
-          .status(HostValidationResult.HostValidationStatus.fromBoolean(responseData.isConnectionSuccessful()))
-          .error(buildErrorDetailsWithMsg(responseData.getErrorMessage()))
-          .build();
+              .host(host)
+              .status(HostValidationResult.HostValidationStatus.fromBoolean(responseData.isConnectionSuccessful()))
+              .error(buildErrorDetailsWithMsg(responseData.getErrorMessage()))
+              .build();
     }
 
     return HostValidationResult.builder()
-        .status(FAILED)
-        .error(buildErrorDetailsWithMsg(getErrorMessageFromDelegateResponseData(delegateResponseData)))
-        .build();
+            .host(host)
+            .status(FAILED)
+            .error(buildErrorDetailsWithMsg(getErrorMessageFromDelegateResponseData(delegateResponseData)))
+            .build();
   }
 
   private BaseNGAccess getBaseNGAccess(

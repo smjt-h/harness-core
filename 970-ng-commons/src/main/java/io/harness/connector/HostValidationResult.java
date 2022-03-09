@@ -18,6 +18,7 @@ public class HostValidationResult {
       return status ? SUCCESS : FAILED;
     }
   }
+  @Schema(description = "Hostname") private String host;
   @Schema(description = "This has the validation status for a host.") private HostValidationStatus status;
   @Schema(description = "Host error details") private ErrorDetail error;
 }

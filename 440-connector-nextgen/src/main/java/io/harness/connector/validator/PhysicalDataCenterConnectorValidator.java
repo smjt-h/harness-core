@@ -11,6 +11,7 @@ import io.harness.ng.validator.HostValidationService;
 
 import com.google.inject.Inject;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class PhysicalDataCenterConnectorValidator implements ConnectionValidator<PhysicalDataCenterConnectorDTO> {
@@ -22,7 +23,7 @@ public class PhysicalDataCenterConnectorValidator implements ConnectionValidator
     List<String> hostNames = connectorDTO.getHosts().stream().map(HostDTO::getHostName).collect(Collectors.toList());
     List<HostValidationResult> hostValidationResults =
         hostValidationService.validateSSHHosts(hostNames, accountIdentifier, orgIdentifier, projectIdentifier,
-            SecretRefHelper.getSecretConfigString(connectorDTO.getSshKeyRef()));
+            SecretRefHelper.getSecretConfigString(connectorDTO.getSshKeyRef()), Optional.empty());
 
     return buildConnectorValidationResult(hostValidationResults);
   }
