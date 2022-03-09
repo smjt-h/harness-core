@@ -90,6 +90,8 @@ func (h *handler) ExecuteStep(ctx context.Context, in *pb.ExecuteStepRequest) (*
 			Output:     stepOutput,
 			NumRetries: numRetries,
 		}
+
+		h.log.Infow("Plugin results", "output", stepOutput, "response", response)
 		err = close(rl.Writer, err)
 		return response, err
 	case nil:

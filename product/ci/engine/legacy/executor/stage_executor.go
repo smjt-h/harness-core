@@ -115,17 +115,18 @@ func (e *stageExecutor) executeStep(ctx context.Context, step *pb.Step, accountI
 	switch x := step.GetStep().(type) {
 	case *pb.Step_Unit:
 		stepOutput, err := e.unitExecutor.Run(ctx, step.GetUnit(), e.stageOutput, accountID)
+		e.stageOutput[step.GetUnit().GetId()] = stepOutput
+
 		if err != nil {
 			return err
 		}
-		e.stageOutput[step.GetUnit().GetId()] = stepOutput
 	case *pb.Step_Parallel:
 		stepOutputByID, err := e.parallelExecutor.Run(ctx, step.GetParallel(), e.stageOutput, accountID)
-		if err != nil {
-			return err
-		}
 		for stepID, stepOutput := range stepOutputByID {
 			e.stageOutput[stepID] = stepOutput
+		}
+		if err != nil {
+			return err
 		}
 	default:
 		return fmt.Errorf("Step has unexpected type %T", x)

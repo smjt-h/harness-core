@@ -112,7 +112,7 @@ func (e *unitExecutor) Run(ctx context.Context, step *pb.UnitStep, so output.Sta
 	}
 	statusErr := e.updateStepStatus(ctx, step, stepStatus, errMsg, numRetries, stepOutput, accountID, time.Since(start))
 	if statusErr != nil {
-		return nil, statusErr
+		return stepOutput, statusErr
 	}
 	return stepOutput, err
 }
@@ -188,7 +188,7 @@ func (e *unitExecutor) execute(ctx context.Context, step *pb.UnitStep,
 		e.log.Infow("Plugin step info", "step", x.Plugin.String(), "step_id", step.GetId())
 		stepOutput, numRetries, err = pluginStep(step, e.tmpFilePath, so, e.log).Run(ctx)
 		if err != nil {
-			return nil, numRetries, err
+			return stepOutput, numRetries, err
 		}
 	case *pb.UnitStep_SaveCache:
 		rl, err = newRemoteLogger(step.GetLogKey())

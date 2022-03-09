@@ -86,6 +86,7 @@ func (e *parallelExecutor) Run(ctx context.Context, ps *pb.ParallelStep, so outp
 	for i := 0; i < numSteps; i++ {
 		result := <-results
 		stepStatusByID[result.stepID] = completed
+		stepOutputByID[result.stepID] = result.stepOutput
 		if result.err != nil {
 			e.log.Errorw(
 				"failed to execute parallel step",
@@ -94,10 +95,8 @@ func (e *parallelExecutor) Run(ctx context.Context, ps *pb.ParallelStep, so outp
 				zap.Error(result.err),
 			)
 			e.sendAbortToPendingSteps(ctx, stepStatusByID, ps.GetSteps(), start, accountID)
-			return nil, result.err
+			return stepOutputByID, result.err
 		}
-
-		stepOutputByID[result.stepID] = result.stepOutput
 	}
 
 	e.log.Infow(

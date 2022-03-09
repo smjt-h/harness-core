@@ -84,13 +84,13 @@ func (e *pluginStep) execute(ctx context.Context) (*output.StepOutput, int32, er
 	c := addonClient.Client()
 	arg := e.getExecuteStepArg()
 	ret, err := c.ExecuteStep(ctx, arg, grpc_retry.WithMax(maxAddonRetries))
-	if err != nil {
-		e.log.Errorw("Plugin step RPC failed", "step_id", e.id, "elapsed_time_ms", utils.TimeSince(st), zap.Error(err))
-		return nil, int32(1), err
-	}
-	e.log.Infow("Successfully executed step", "step_id", e.id, "elapsed_time_ms", utils.TimeSince(st))
 	stepOutput := &output.StepOutput{}
 	stepOutput.Output.Variables = ret.GetOutput()
+	if err != nil {
+		e.log.Errorw("Plugin step RPC failed", "step_id", e.id, "elapsed_time_ms", utils.TimeSince(st), zap.Error(err))
+		return stepOutput, int32(1), err
+	}
+	e.log.Infow("Successfully executed step", "step_id", e.id, "elapsed_time_ms", utils.TimeSince(st))
 	return stepOutput, ret.GetNumRetries(), nil
 }
 

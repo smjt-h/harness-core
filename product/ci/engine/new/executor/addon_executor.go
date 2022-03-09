@@ -56,16 +56,17 @@ func ExecuteStepOnAddon(ctx context.Context, step *pb.UnitStep, tmpFilePath stri
 		TmpFilePath: tmpFilePath,
 	}
 	ret, err := c.ExecuteStep(ctx, arg, grpc_retry.WithMax(maxAddonRetries))
+	stepOutput := &output.StepOutput{}
+	stepOutput.Output.Variables = ret.GetOutput()
+
 	if err != nil {
 		log.Errorw("Execute step RPC failed", "step_id", stepID,
-			"elapsed_time_ms", utils.TimeSince(st), zap.Error(err))
-		return nil, nil, err
+			"elapsed_time_ms", utils.TimeSince(st), "step output", ret, zap.Error(err))
+		return stepOutput, nil, err
 	}
 
 	log.Infow("Successfully executed step", "step_id", stepID,
 		"elapsed_time_ms", utils.TimeSince(st))
-	stepOutput := &output.StepOutput{}
-	stepOutput.Output.Variables = ret.GetOutput()
 	artifact := ret.GetArtifact()
 	return stepOutput, artifact, nil
 }
