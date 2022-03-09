@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -21,6 +22,6 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(name = "HostDTO", description = "This entity contains the Host details")
 public class HostDTO {
-  @JsonProperty("hostname") String hostName;
+  @JsonProperty("hostname") @NotNull String hostName;
   @JsonProperty("hostAttributes") List<HostAttributeDTO> hostAttributes;
 }

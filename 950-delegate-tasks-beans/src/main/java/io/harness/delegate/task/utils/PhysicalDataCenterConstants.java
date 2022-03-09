@@ -5,4 +5,5 @@ public interface PhysicalDataCenterConstants {
   String DEFAULT_HOST_VALIDATION_FAILED_MSG = "Host Validation failed";
   String TRUE_STR = "true";
   String DEFAULT_SSH_PORT = "22";
+  int HOSTS_NUMBER_VALIDATION_LIMIT = 10;
 }

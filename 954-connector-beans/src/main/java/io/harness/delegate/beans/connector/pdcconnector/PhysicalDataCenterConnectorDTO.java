@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
@@ -26,7 +27,7 @@ import lombok.EqualsAndHashCode;
 @Schema(name = "PhysicalDataCenterConnectorDTO", description = "This contains Physical Data Center connector details")
 
 public class PhysicalDataCenterConnectorDTO extends ConnectorConfigDTO implements DelegateSelectable {
-  @JsonDeserialize(using = HostDTOsDeserializer.class) @JsonProperty("hosts") List<HostDTO> hosts;
+  @JsonDeserialize(using = HostDTOsDeserializer.class) @JsonProperty("hosts") @Valid List<HostDTO> hosts;
 
   @NotNull @SecretReference @ApiModelProperty(dataType = "string") SecretRefData sshKeyRef;
   Set<String> delegateSelectors;
