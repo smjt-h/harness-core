@@ -57,7 +57,6 @@ fi
 BAZEL_MODULES="\
   //100-migrator:module \
   //270-verification:module \
-  //280-batch-processing:module \
   //290-dashboard-service:module \
   //295-cdng-contracts:module \
   //300-cv-nextgen:module \
