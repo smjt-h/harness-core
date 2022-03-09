@@ -737,9 +737,10 @@ public class ExecutionResource {
   @ExceptionMetered
   @AuthRule(permissionType = DEPLOYMENT, action = EXECUTE_PIPELINE, skipAuth = true)
   public RestResponse<PreviousApprovalDetails> getPreviousApprovalDetails(@QueryParam("appId") String appId,
-      @PathParam("workflowExecutionId") String workflowExecutionId, @QueryParam("pipelineId") String pipelineId) {
+      @PathParam("workflowExecutionId") String workflowExecutionId, @QueryParam("pipelineId") String pipelineId,
+      @QueryParam("approvalId") String approvalId) {
     return new RestResponse<>(
-        workflowExecutionService.getPreviousApprovalDetails(appId, workflowExecutionId, pipelineId));
+        workflowExecutionService.getPreviousApprovalDetails(appId, workflowExecutionId, pipelineId, approvalId));
   }
 
   @POST

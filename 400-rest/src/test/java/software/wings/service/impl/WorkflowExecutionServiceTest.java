@@ -1878,7 +1878,7 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
         .thenReturn(asList(previousWorkflowExecution1, previousWorkflowExecution2, previousWorkflowExecution3));
 
     PreviousApprovalDetails previousApprovalDetails =
-        workflowExecutionService.getPreviousApprovalDetails(APP_ID, WORKFLOW_EXECUTION_ID, PIPELINE_ID);
+        workflowExecutionService.getPreviousApprovalDetails(APP_ID, WORKFLOW_EXECUTION_ID, PIPELINE_ID, approvalId);
     assertThat(previousApprovalDetails.getSize()).isEqualTo(1);
     assertThat(previousApprovalDetails.getPreviousApprovals().get(0).getApprovalId()).isEqualTo(APPROVAL_EXECUTION_ID);
     UserThreadLocal.unset();

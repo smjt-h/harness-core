@@ -335,7 +335,8 @@ public interface WorkflowExecutionService extends StateStatusUpdate {
   List<WorkflowExecution> getLatestSuccessWorkflowExecutions(String appId, String workflowId, List<String> serviceIds,
       int executionsToSkip, int executionsToIncludeInResponse);
 
-  PreviousApprovalDetails getPreviousApprovalDetails(String appId, String workflowExecutionId, String pipelineId);
+  PreviousApprovalDetails getPreviousApprovalDetails(
+      String appId, String workflowExecutionId, String pipelineId, String approvalId);
   Boolean approveAndRejectPreviousExecutions(String accountId, String appId, String workflowExecutionId,
       String stateExecutionId, ApprovalDetails approvalDetails, PreviousApprovalDetails previousApprovalIds);
 

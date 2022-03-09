@@ -6010,7 +6010,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
   @Override
   public PreviousApprovalDetails getPreviousApprovalDetails(
-      String appId, String workflowExecutionId, String pipelineId) {
+      String appId, String workflowExecutionId, String pipelineId, String approvalId) {
     WorkflowExecution currentExecution = fetchWorkflowExecution(appId, workflowExecutionId,
         WorkflowExecutionKeys.createdAt, WorkflowExecutionKeys.pipelineExecution, WorkflowExecutionKeys.serviceIds,
         WorkflowExecutionKeys.infraDefinitionIds);
@@ -6036,14 +6036,24 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
           .build();
     }
 
-    PipelineStageExecution pausedStage = currentExecution.getPipelineExecution()
-                                             .getPipelineStageExecutions()
-                                             .stream()
-                                             .filter(pse -> PAUSED.equals(pse.getStatus()))
-                                             .findFirst()
-                                             .orElse(null);
-    if (pausedStage != null) {
-      String pipelineStageElementId = pausedStage.getPipelineStageElementId();
+    PipelineStageExecution requiredStage =
+        currentExecution.getPipelineExecution()
+            .getPipelineStageExecutions()
+            .stream()
+            .filter(pse -> {
+              if (pse.getStateType().equals(APPROVAL.name())) {
+                ApprovalStateExecutionData stateExecutionData =
+                    (ApprovalStateExecutionData) pse.getStateExecutionData();
+                return PAUSED.equals(pse.getStatus())
+                    && StringUtils.equals(stateExecutionData.getApprovalId(), approvalId);
+              }
+              return false;
+            })
+            .findFirst()
+            .orElse(null);
+
+    if (requiredStage != null) {
+      String pipelineStageElementId = requiredStage.getPipelineStageElementId();
       List<String> approvalIds = getPreviousApprovalIdsWithSameServicesAndInfra(
           pausedExecutions, pipelineStageElementId, serviceIds, infraIds);
       return PreviousApprovalDetails.builder()
@@ -6059,8 +6069,8 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     List<WorkflowExecution> executionsWithSameServiceAndInfra =
         pausedExecutions.stream()
             .filter(e
-                -> (new HashSet<>(e.getServiceIds()).equals(new HashSet<>(serviceIds)))
-                    && (new HashSet<>(e.getInfraDefinitionIds()).equals(new HashSet<>(infraIds))))
+                -> CollectionUtils.isEqualCollection(e.getServiceIds(), serviceIds)
+                    && CollectionUtils.isEqualCollection(e.getInfraDefinitionIds(), infraIds))
             .collect(toList());
     List<String> approvalIds = new ArrayList<>();
     executionsWithSameServiceAndInfra.forEach(execution -> {
@@ -6115,8 +6125,8 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   public void rejectPreviousDeployments(String appId, String workflowExecutionId, ApprovalDetails approvalDetails) {
     WorkflowExecution execution = fetchWorkflowExecution(
         appId, workflowExecutionId, WorkflowExecutionKeys.workflowId, WorkflowExecutionKeys.accountId);
-    PreviousApprovalDetails previousApprovalDetails =
-        getPreviousApprovalDetails(appId, workflowExecutionId, execution.getWorkflowId());
+    PreviousApprovalDetails previousApprovalDetails = getPreviousApprovalDetails(
+        appId, workflowExecutionId, execution.getWorkflowId(), approvalDetails.getApprovalId());
     List<String> previousApprovalIds = new ArrayList<>();
     if (previousApprovalDetails.getPreviousApprovals() != null) {
       previousApprovalIds =
