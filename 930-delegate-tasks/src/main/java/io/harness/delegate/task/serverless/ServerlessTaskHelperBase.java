@@ -76,20 +76,13 @@ public class ServerlessTaskHelperBase {
     } catch (Exception e) {
     }
   }
-  public boolean replaceManifestWithRenderedContent(ServerlessDelegateTaskParams serverlessDelegateTaskParams,
-      ServerlessAwsLambdaManifestConfig serverlessManifestConfig) {
+  public void replaceManifestWithRenderedContent(ServerlessDelegateTaskParams serverlessDelegateTaskParams,
+      ServerlessAwsLambdaManifestConfig serverlessManifestConfig) throws IOException {
     String updatedManifestContent = serverlessManifestConfig.getManifestContent();
     String manifestFilePath =
         Paths.get(serverlessDelegateTaskParams.getWorkingDirectory(), serverlessManifestConfig.getManifestPath())
             .toString();
-    // todo: add suitable print statements
-    // todo: validate content and file
-    try {
-      updateManifestFileContent(manifestFilePath, updatedManifestContent);
-      return true;
-    } catch (IOException e) {
-    }
-    return false;
+    updateManifestFileContent(manifestFilePath, updatedManifestContent);
   }
 
   private void updateManifestFileContent(String manifestFilePath, String manifestContent) throws IOException {

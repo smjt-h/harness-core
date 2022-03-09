@@ -11,126 +11,161 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
-import io.harness.delegate.beans.serverless.ServerlessAwsCloudFormationTemplateSchema;
-import io.harness.delegate.beans.serverless.ServerlessAwsDeployResult;
-import io.harness.delegate.beans.serverless.ServerlessAwsManifestSchema;
+import io.harness.delegate.beans.serverless.ServerlessAwsLambdaCloudFormationSchema;
+import io.harness.delegate.beans.serverless.ServerlessAwsLambdaManifestSchema;
+import io.harness.filesystem.FileIo;
+import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.serializer.YamlUtils;
 import io.harness.serverless.*;
 import io.harness.serverless.model.ServerlessAwsLambdaConfig;
+import io.harness.serverless.model.ServerlessAwsLambdaFunction;
+import io.harness.serverless.model.ServerlessAwsLambdaFunction.ServerlessAwsLambdaFunctionBuilder;
 import io.harness.serverless.model.ServerlessDelegateTaskParams;
 
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.zeroturnaround.exec.ProcessResult;
+import org.apache.commons.lang3.StringUtils;
 
 @OwnedBy(CDP)
 @Singleton
 @Slf4j
 public class ServerlessAwsCommandTaskHelper {
-  @Inject private ServerlessCommandTaskHelper serverlessCommandTaskHelper;
   @Inject private ServerlessTaskPluginHelper serverlessTaskPluginHelper;
 
   private static String AWS_LAMBDA_FUNCTION_RESOURCE_TYPE = "AWS::Lambda::Function";
   private static String AWS_LAMBDA_FUNCTION_NAME_PROPERTY_KEY = "FunctionName";
+  private static String AWS_LAMBDA_FUNCTION_HANDLER_PROPERTY_KEY = "Handler";
+  private static String AWS_LAMBDA_FUNCTION_MEMORY_PROPERTY_KEY = "MemorySize";
+  private static String AWS_LAMBDA_FUNCTION_RUNTIME_PROPERTY_KEY = "Runtime";
+  private static String AWS_LAMBDA_FUNCTION_TIMEOUT_PROPERTY_KEY = "Timeout";
+  private static String CLOUDFORMATION_CREATE_FILE = "cloudformation-template-create-stack.json";
+  private static String CLOUDFORMATION_UPDATE_FILE = "cloudformation-template-update-stack.json";
   private static String NEW_LINE_REGEX = "\\r?\\n";
   private static String WHITESPACE_REGEX = "[\\s]";
   private static String DEPLOY_TIMESTAMP_REGEX = ".*Timestamp:\\s([0-9])*";
 
-  public boolean configCredential(ServerlessClient serverlessClient,
+  public ServerlessCliResponse configCredential(ServerlessClient serverlessClient,
       ServerlessAwsLambdaConfig serverlessAwsLambdaConfig, ServerlessDelegateTaskParams serverlessDelegateTaskParams,
-      LogCallback executionLogCallback, boolean overwrite) throws Exception {
+      LogCallback executionLogCallback, boolean overwrite, long timeoutInMillis) throws Exception {
     ConfigCredentialCommand command = serverlessClient.configCredential()
                                           .provider(serverlessAwsLambdaConfig.getProvider())
                                           .key(serverlessAwsLambdaConfig.getAccessKey())
                                           .secret(serverlessAwsLambdaConfig.getSecretKey())
                                           .overwrite(overwrite);
-    ProcessResult result = serverlessCommandTaskHelper.executeCommand(
-        command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true);
-    if (result.getExitValue() == 0) {
-      return true;
-    }
-    return false;
+    return ServerlessCommandTaskHelper.executeCommand(
+        command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true, timeoutInMillis);
   }
 
-  public ServerlessAwsDeployResult deploy(ServerlessClient serverlessClient,
+  public ServerlessCliResponse deploy(ServerlessClient serverlessClient,
       ServerlessDelegateTaskParams serverlessDelegateTaskParams, LogCallback executionLogCallback,
-      ServerlessAwsLambdaDeployConfig serverlessAwsLambdaDeployConfig) throws Exception {
-    DeployCommand command = serverlessClient.deploy();
-    // todo: add other options for deploy command
-    ProcessResult result = serverlessCommandTaskHelper.executeCommand(
-        command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true);
-    if (result.getExitValue() == 0) {
-      // todo: parse result into java object
-    }
-    // todo: add error handling
-    return null;
+      ServerlessAwsLambdaDeployConfig serverlessAwsLambdaDeployConfig,
+      ServerlessAwsLambdaInfraConfig serverlessAwsLambdaInfraConfig, long timeoutInMillis) throws Exception {
+    DeployCommand command = serverlessClient.deploy()
+                                .options(serverlessAwsLambdaDeployConfig.getCommandOptions())
+                                .region(serverlessAwsLambdaInfraConfig.getRegion())
+                                .stage(serverlessAwsLambdaInfraConfig.getStage());
+    return ServerlessCommandTaskHelper.executeCommand(
+        command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true, timeoutInMillis);
   }
 
-  public String deployList(ServerlessClient serverlessClient, ServerlessDelegateTaskParams serverlessDelegateTaskParams,
-      LogCallback executionLogCallback) throws Exception {
-    DeployListCommand command = serverlessClient.deployList();
-    ProcessResult result = serverlessCommandTaskHelper.executeCommand(
-        command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true);
-    return result.outputString();
+  public ServerlessCliResponse deployList(ServerlessClient serverlessClient,
+      ServerlessDelegateTaskParams serverlessDelegateTaskParams, LogCallback executionLogCallback,
+      ServerlessAwsLambdaInfraConfig serverlessAwsLambdaInfraConfig, long timeoutInMillis) throws Exception {
+    DeployListCommand command = serverlessClient.deployList()
+                                    .region(serverlessAwsLambdaInfraConfig.getRegion())
+                                    .stage(serverlessAwsLambdaInfraConfig.getStage());
+    return ServerlessCommandTaskHelper.executeCommand(
+        command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true, timeoutInMillis);
   }
 
-  public ServerlessAwsManifestSchema parseServerlessManifest(ServerlessAwsLambdaManifestConfig serverlessManifestConfig)
-      throws IOException {
+  public ServerlessAwsLambdaManifestSchema parseServerlessManifest(
+      ServerlessAwsLambdaManifestConfig serverlessManifestConfig) throws IOException {
     String manifestContent = serverlessManifestConfig.getManifestContent();
     YamlUtils yamlUtils = new YamlUtils();
-    ServerlessAwsManifestSchema serverlessAwsManifestSchema =
-        yamlUtils.read(manifestContent, ServerlessAwsManifestSchema.class);
-    return serverlessAwsManifestSchema;
+    return yamlUtils.read(manifestContent, ServerlessAwsLambdaManifestSchema.class);
   }
 
-  public boolean installRequiredPlugins(ServerlessAwsManifestSchema serverlessAwsManifestSchema,
+  public boolean installPlugins(ServerlessAwsLambdaManifestSchema serverlessAwsLambdaManifestSchema,
       ServerlessDelegateTaskParams serverlessDelegateTaskParams, LogCallback executionLogCallback,
-      ServerlessClient serverlessClient) throws Exception {
-    // todo: validate serverless manifest
-    if (EmptyPredicate.isNotEmpty(serverlessAwsManifestSchema.getPlugins())) {
-      List<String> plugins = serverlessAwsManifestSchema.getPlugins();
+      ServerlessClient serverlessClient, long timeoutInMillis) throws Exception {
+    ServerlessCliResponse response;
+    if (EmptyPredicate.isNotEmpty(serverlessAwsLambdaManifestSchema.getPlugins())) {
+      List<String> plugins = serverlessAwsLambdaManifestSchema.getPlugins();
       for (String plugin : plugins) {
-        // todo: print statement
-        serverlessTaskPluginHelper.installServerlessPlugin(
-            serverlessDelegateTaskParams, serverlessClient, plugin, executionLogCallback);
+        response = serverlessTaskPluginHelper.installServerlessPlugin(
+            serverlessDelegateTaskParams, serverlessClient, plugin, executionLogCallback, timeoutInMillis);
+        if (response.getCommandExecutionStatus() != CommandExecutionStatus.SUCCESS) {
+          // todo: error handling
+        }
       }
       return true;
     }
     return false;
   }
 
-  public List<String> fetchFunctionOutputFromCloudFormationTemplate(String cloudFormationTemplateContent)
-      throws Exception {
-    // todo: validate cloudformation content
-    YamlUtils yamlUtils = new YamlUtils();
-    if (EmptyPredicate.isNotEmpty(cloudFormationTemplateContent)) {
-      ServerlessAwsCloudFormationTemplateSchema serverlessAwsCloudFormationTemplate =
-          yamlUtils.read(cloudFormationTemplateContent, ServerlessAwsCloudFormationTemplateSchema.class);
-      Collection<ServerlessAwsCloudFormationTemplateSchema.Resource> resources =
-          serverlessAwsCloudFormationTemplate.getResources().values();
-      List<Map<String, Object>> functionProperties =
-          resources.stream()
-              .filter(resource -> resource.getType().equals(AWS_LAMBDA_FUNCTION_RESOURCE_TYPE))
-              .map(ServerlessAwsCloudFormationTemplateSchema.Resource::getProperties)
-              .collect(Collectors.toList());
-      return functionProperties.stream()
-          .filter(properties -> properties.containsKey(AWS_LAMBDA_FUNCTION_NAME_PROPERTY_KEY))
-          .map(properties -> properties.get(AWS_LAMBDA_FUNCTION_NAME_PROPERTY_KEY).toString())
-          .collect(Collectors.toList());
+  public List<ServerlessAwsLambdaFunction> fetchFunctionOutputFromCloudFormationTemplate(
+      String cloudFormationTemplateDirectory) throws Exception {
+    String cloudFormationTemplatePath =
+        Paths.get(cloudFormationTemplateDirectory, CLOUDFORMATION_CREATE_FILE).toString();
+    String cloudFormationTemplateContent =
+        FileIo.getFileContentsWithSharedLockAcrossProcesses(cloudFormationTemplatePath);
+    if (EmptyPredicate.isEmpty(cloudFormationTemplateContent)) {
+      cloudFormationTemplatePath = Paths.get(cloudFormationTemplateDirectory, CLOUDFORMATION_UPDATE_FILE).toString();
+      cloudFormationTemplateContent = FileIo.getFileContentsWithSharedLockAcrossProcesses(cloudFormationTemplatePath);
     }
-    return Collections.emptyList();
+    if (EmptyPredicate.isEmpty(cloudFormationTemplateContent)) {
+      return Collections.emptyList();
+    }
+    YamlUtils yamlUtils = new YamlUtils();
+    ServerlessAwsLambdaCloudFormationSchema serverlessAwsCloudFormationTemplate =
+        yamlUtils.read(cloudFormationTemplateContent, ServerlessAwsLambdaCloudFormationSchema.class);
+    Collection<ServerlessAwsLambdaCloudFormationSchema.Resource> resources =
+        serverlessAwsCloudFormationTemplate.getResources().values();
+    List<Map<String, Object>> functionPropertyMaps =
+        resources.stream()
+            .filter(resource -> resource.getType().equals(AWS_LAMBDA_FUNCTION_RESOURCE_TYPE))
+            .map(ServerlessAwsLambdaCloudFormationSchema.Resource::getProperties)
+            .collect(Collectors.toList());
+    List<ServerlessAwsLambdaFunction> serverlessAwsLambdaFunctions = new ArrayList<>();
+    for (Map<String, Object> functionPropertyMap : functionPropertyMaps) {
+      if (!functionPropertyMap.containsKey(AWS_LAMBDA_FUNCTION_NAME_PROPERTY_KEY)) {
+        continue;
+      }
+      ServerlessAwsLambdaFunctionBuilder serverlessAwsLambdaFunctionBuilder = ServerlessAwsLambdaFunction.builder();
+      serverlessAwsLambdaFunctionBuilder.functionName(
+          functionPropertyMap.get(AWS_LAMBDA_FUNCTION_NAME_PROPERTY_KEY).toString());
+      if (functionPropertyMap.containsKey(AWS_LAMBDA_FUNCTION_MEMORY_PROPERTY_KEY)) {
+        serverlessAwsLambdaFunctionBuilder.memorySize(
+            functionPropertyMap.get(AWS_LAMBDA_FUNCTION_MEMORY_PROPERTY_KEY).toString());
+      }
+      if (functionPropertyMap.containsKey(AWS_LAMBDA_FUNCTION_HANDLER_PROPERTY_KEY)) {
+        serverlessAwsLambdaFunctionBuilder.handler(
+            functionPropertyMap.get(AWS_LAMBDA_FUNCTION_HANDLER_PROPERTY_KEY).toString());
+      }
+      if (functionPropertyMap.containsKey(AWS_LAMBDA_FUNCTION_RUNTIME_PROPERTY_KEY)) {
+        serverlessAwsLambdaFunctionBuilder.runTime(
+            functionPropertyMap.get(AWS_LAMBDA_FUNCTION_RUNTIME_PROPERTY_KEY).toString());
+      }
+      if (functionPropertyMap.containsKey(AWS_LAMBDA_FUNCTION_TIMEOUT_PROPERTY_KEY)) {
+        serverlessAwsLambdaFunctionBuilder.timeout(
+            functionPropertyMap.get(AWS_LAMBDA_FUNCTION_TIMEOUT_PROPERTY_KEY).toString());
+      }
+      serverlessAwsLambdaFunctions.add(serverlessAwsLambdaFunctionBuilder.build());
+    }
+    return serverlessAwsLambdaFunctions;
   }
 
-  public String getPreviousVersionTimeStamp(String deployListOutput) {
+  public Optional<String> getPreviousVersionTimeStamp(String deployListOutput) {
     if (EmptyPredicate.isEmpty(deployListOutput)) {
-      return deployListOutput;
+      return Optional.empty();
     }
     Pattern deployTimeOutPattern = Pattern.compile(DEPLOY_TIMESTAMP_REGEX);
     List<String> outputLines = Arrays.asList(deployListOutput.split(NEW_LINE_REGEX));
@@ -138,6 +173,10 @@ public class ServerlessAwsCommandTaskHelper {
                                            .filter(outputLine -> deployTimeOutPattern.matcher(outputLine).matches())
                                            .collect(Collectors.toList());
     String lastOutputLine = Iterables.getLast(filteredOutputLines, " ");
-    return Iterables.getLast(Arrays.asList(lastOutputLine.split(WHITESPACE_REGEX)), "");
+    String lastVersionTimeStamp = Iterables.getLast(Arrays.asList(lastOutputLine.split(WHITESPACE_REGEX)), "");
+    if (StringUtils.isNotBlank(lastVersionTimeStamp)) {
+      return Optional.of(lastVersionTimeStamp);
+    }
+    return Optional.empty();
   }
 }

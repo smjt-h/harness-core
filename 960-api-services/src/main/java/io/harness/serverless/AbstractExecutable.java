@@ -7,17 +7,46 @@
 
 package io.harness.serverless;
 
+import static io.harness.logging.CommandExecutionStatus.FAILURE;
+import static io.harness.logging.CommandExecutionStatus.SUCCESS;
+
+import io.harness.logging.CommandExecutionStatus;
+
+import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 import org.zeroturnaround.exec.ProcessResult;
 
 public abstract class AbstractExecutable implements Executable {
   @Override
-  public ProcessResult execute(String directory, OutputStream output, OutputStream error, boolean printCommand)
-      throws Exception {
+  public ServerlessCliResponse execute(String directory, OutputStream output, OutputStream error, boolean printCommand,
+      long timeoutInMillis) throws IOException, TimeoutException, InterruptedException {
     String command = this.command();
     if (printCommand) {
-      // todo: write command to output
+      writeCommandToOutput(command, output);
     }
-    return ServerlessUtils.executeScript(directory, command, output, error);
+    ProcessResult processResult = ServerlessUtils.executeScript(directory, command, output, error, timeoutInMillis);
+    return ServerlessCliResponse.builder()
+        .commandExecutionStatus(processResult.getExitValue() == 0 ? SUCCESS : FAILURE)
+        .output(processResult.outputUTF8())
+        .build();
+  }
+
+  public static Optional<String> getPrintableCommand(String command) {
+    int index = command.indexOf("serverless ");
+    if (index != -1) {
+      return Optional.of(command.substring(index));
+    }
+    return Optional.empty();
+  }
+
+  private void writeCommandToOutput(String command, OutputStream output) throws IOException {
+    Optional<String> printCommandOption = getPrintableCommand(command);
+    if (printCommandOption.isPresent()) {
+      String printCommand = "\n" + printCommandOption.get() + "\n\n";
+      output.write(printCommand.getBytes(StandardCharsets.UTF_8));
+    }
   }
 }

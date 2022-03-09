@@ -15,12 +15,13 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
 
-import com.google.inject.Singleton;
-import org.zeroturnaround.exec.ProcessResult;
+import java.io.IOException;
+import java.util.concurrent.TimeoutException;
+import lombok.experimental.UtilityClass;
 import org.zeroturnaround.exec.stream.LogOutputStream;
 
 @OwnedBy(CDP)
-@Singleton
+@UtilityClass
 public class ServerlessCommandTaskHelper {
   public static LogOutputStream getExecutionLogOutputStream(LogCallback executionLogCallback, LogLevel logLevel) {
     return new LogOutputStream() {
@@ -31,11 +32,12 @@ public class ServerlessCommandTaskHelper {
     };
   }
 
-  public static ProcessResult executeCommand(AbstractExecutable command, String workingDirectory,
-      LogCallback executionLogCallback, boolean printCommand) throws Exception {
+  public static ServerlessCliResponse executeCommand(AbstractExecutable command, String workingDirectory,
+      LogCallback executionLogCallback, boolean printCommand, long timeoutInMillis)
+      throws InterruptedException, TimeoutException, IOException {
     try (LogOutputStream logOutputStream = getExecutionLogOutputStream(executionLogCallback, INFO);
          LogOutputStream logErrorStream = getExecutionLogOutputStream(executionLogCallback, ERROR)) {
-      return command.execute(workingDirectory, logOutputStream, logErrorStream, printCommand);
+      return command.execute(workingDirectory, logOutputStream, logErrorStream, printCommand, timeoutInMillis);
     }
   }
 }

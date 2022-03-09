@@ -11,21 +11,22 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Map;
+import java.util.List;
 import lombok.Builder;
 import lombok.Data;
 
 @OwnedBy(HarnessTeam.CDP)
 @Data
 @Builder
-public class ServerlessAwsCloudFormationTemplateSchema {
-  @JsonProperty("Description") private String description;
-  @JsonProperty("Resources") private Map<String, Resource> resources;
+public class ServerlessAwsLambdaManifestSchema {
+  @JsonProperty("service") private String service;
+  @JsonProperty("plugins") private List<String> plugins;
+  @JsonProperty("provider") private Provider provider;
 
   @Data
   @Builder
-  public static class Resource {
-    @JsonProperty("Type") private String type;
-    @JsonProperty("Properties") private Map<String, Object> properties;
+  public static class Provider {
+    @JsonProperty("name") private String name;
+    @JsonProperty("runtime") private String runtime;
   }
 }

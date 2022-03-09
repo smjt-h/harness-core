@@ -18,7 +18,7 @@ import lombok.Data;
 @Data
 @Builder
 @OwnedBy(HarnessTeam.CDP)
-public class ServerlessAwsDeployResult implements ServerlessDeployResult {
+public class ServerlessAwsLambdaDeployResult implements ServerlessDeployResult {
   private String service;
   private String region;
   private String stage;

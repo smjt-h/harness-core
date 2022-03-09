@@ -8,7 +8,10 @@
 package io.harness.serverless;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 import org.zeroturnaround.exec.ProcessExecutor;
@@ -16,10 +19,11 @@ import org.zeroturnaround.exec.ProcessResult;
 
 @UtilityClass
 public class ServerlessUtils {
-  public static ProcessResult executeScript(
-      String directoryPath, String command, OutputStream output, OutputStream error) throws Exception {
+  public static ProcessResult executeScript(String directoryPath, String command, OutputStream output,
+      OutputStream error, long timeoutInMillis) throws InterruptedException, TimeoutException, IOException {
     ProcessExecutor processExecutor = new ProcessExecutor()
                                           .directory(new File(directoryPath))
+                                          .timeout(timeoutInMillis, TimeUnit.MILLISECONDS)
                                           .commandSplit(command)
                                           .readOutput(true)
                                           .redirectOutput(output)

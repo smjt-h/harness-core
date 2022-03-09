@@ -7,11 +7,14 @@
 
 package io.harness.serverless;
 
+import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.TimeoutException;
 import org.zeroturnaround.exec.ProcessResult;
 
 public interface Executable {
-  ProcessResult execute(String directory, OutputStream output, OutputStream error, boolean printCommand)
-      throws Exception;
   String command();
+
+  ServerlessCliResponse execute(String directory, OutputStream output, OutputStream error, boolean printCommand,
+      long timeoutInMillis) throws IOException, TimeoutException, InterruptedException;
 }
