@@ -17,6 +17,7 @@ import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
 
 import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
 import org.springframework.data.annotation.TypeAlias;
@@ -30,5 +31,5 @@ public class NativeHelmStepPassThroughData implements PassThroughData {
   ManifestOutcome helmChartManifestOutcome;
   List<ValuesManifestOutcome> valuesManifestOutcomes;
   InfrastructureOutcome infrastructure;
-  String helmValuesFileContent;
+  Map<String, List<String>> helmValuesFileMapContents;
 }

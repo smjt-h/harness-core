@@ -1702,6 +1702,34 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "HelmChartValuesStoreConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/StoreConfig"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "paths": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "HelmDeployStepInfo": {
       "allOf": [
         {
@@ -5607,7 +5635,8 @@
             "Http",
             "S3",
             "Gcs",
-            "Artifactory"
+            "Artifactory",
+            "HelmChartValues"
           ]
         }
       },
@@ -5705,6 +5734,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/GithubStore"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "HelmChartValues"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/HelmChartValuesStoreConfig"
               }
             }
           }
