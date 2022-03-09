@@ -12,7 +12,6 @@ import static io.harness.springdata.SpringDataMongoUtils.setUnset;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.executions.node.NodeExecutionService;
-import io.harness.event.OrchestrationLogPublisher;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.pms.contracts.execution.events.HandleProgressRequest;
 import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
@@ -27,7 +26,6 @@ import java.util.Map;
 @OwnedBy(HarnessTeam.PIPELINE)
 public class HandleProgressRequestProcessor implements SdkResponseProcessor {
   @Inject private NodeExecutionService nodeExecutionService;
-  @Inject private OrchestrationLogPublisher orchestrationLogPublisher;
 
   @Override
   public void handleEvent(SdkResponseEventProto event) {
