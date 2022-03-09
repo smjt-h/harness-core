@@ -82,6 +82,7 @@ public abstract class GenericStepVariableCreator extends ChildrenVariableCreator
     YamlField specField = yamlNode.getField(YAMLFieldNameConstants.SPEC);
     if (specField != null) {
       addVariablesInComplexObject(yamlPropertiesMap, yamlOutputPropertiesMap, specField.getNode());
+      addStepOutputs(yamlOutputPropertiesMap, specField.getNode());
     }
   }
 
@@ -103,6 +104,8 @@ public abstract class GenericStepVariableCreator extends ChildrenVariableCreator
       }
     });
   }
+
+  protected void addStepOutputs(Map<String, YamlOutputProperties> yamlOutputPropertiesMap, YamlNode yamlNode) {}
 
   @Override
   public LinkedHashMap<String, VariableCreationResponse> createVariablesForChildrenNodes(
