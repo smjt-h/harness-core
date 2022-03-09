@@ -7,6 +7,7 @@
 
 package io.harness.yaml.utils;
 
+import io.harness.jackson.JsonNodeUtils;
 import io.harness.yaml.validator.NodeErrorInfo;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -107,12 +108,7 @@ public class SchemaValidationUtils {
       if (stageNode == null) {
         return null;
       }
-      return NodeErrorInfo.builder()
-          .name(stageNode.get("name").asText())
-          .identifier(stageNode.get("identifier").asText())
-          .type(stageNode.get("type").asText())
-          .fqn(pathToStage)
-          .build();
+      return getNodeErrorInfoFromJsonNode(jsonNode, pathToStage);
     } catch (IndexOutOfBoundsException e) {
       return null;
     }
@@ -126,20 +122,24 @@ public class SchemaValidationUtils {
         index++;
       }
       // Adding step in path after steps[index].
-      String pathToStage = path.substring(0, index + 6);
-      JsonNode stepNode = parseJsonNodeByPath(pathToStage, jsonNode);
+      String pathToStep = path.substring(0, index + 6);
+      JsonNode stepNode = parseJsonNodeByPath(pathToStep, jsonNode);
       if (stepNode == null) {
         return null;
       }
-      return NodeErrorInfo.builder()
-          .name(stepNode.get("name").asText())
-          .identifier(stepNode.get("identifier").asText())
-          .type(stepNode.get("type").asText())
-          .fqn(pathToStage)
-          .build();
+      return getNodeErrorInfoFromJsonNode(jsonNode, pathToStep);
 
     } catch (IndexOutOfBoundsException e) {
       return null;
     }
+  }
+
+  private NodeErrorInfo getNodeErrorInfoFromJsonNode(JsonNode jsonNode, String fqn) {
+    return NodeErrorInfo.builder()
+        .name(JsonNodeUtils.getString(jsonNode, "name"))
+        .identifier(JsonNodeUtils.getString(jsonNode, "identifier"))
+        .type(JsonNodeUtils.getString(jsonNode, "type"))
+        .fqn(fqn)
+        .build();
   }
 }
