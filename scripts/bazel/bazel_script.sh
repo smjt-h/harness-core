@@ -200,7 +200,7 @@ BAZEL_MODULES="\
   //product/ci/scm/proto:all \
 "
 
-bazel ${bazelrc} build $BAZEL_MODULES `bazel query "//...:*" | grep "module_deploy.jar"` ${BAZEL_ARGUMENTS} --remote_download_outputs=all
+bazel ${bazelrc} build $BAZEL_MODULES `bazel query "//...:*" | grep -v '280-batch-processing'| grep "module_deploy.jar"` ${BAZEL_ARGUMENTS} --remote_download_outputs=all
 
 build_bazel_module() {
   module=$1
