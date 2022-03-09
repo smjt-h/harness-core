@@ -10,9 +10,9 @@ package io.harness.batch.processing.billing.timeseries.service.impl;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.batch.processing.billing.service.UtilizationData;
-import io.harness.batch.processing.billing.service.UtilizationDataWithTime;
 import io.harness.batch.processing.billing.timeseries.data.InstanceUtilizationData;
-import io.harness.batch.processing.cloudevents.aws.ecs.service.util.ServiceIdAndClusterId;
+import io.harness.batch.processing.cloudevents.aws.ecs.service.util.ClusterIdAndServiceArn;
+import io.harness.batch.processing.cloudevents.aws.ecs.service.util.UtilizationDataWithTime;
 import io.harness.ccm.commons.beans.InstanceType;
 import io.harness.ccm.commons.constants.InstanceMetaDataConstants;
 import io.harness.ccm.commons.entities.batch.InstanceData;
@@ -54,7 +54,7 @@ public class UtilizationDataServiceImpl {
   private static final String UTILIZATION_DATA_QUERY =
       "SELECT MAX(MAXCPU) as MAXCPUUTILIZATION, MAX(MAXMEMORY) as MAXMEMORYUTILIZATION, AVG(AVGCPU) as AVGCPUUTILIZATION, AVG(AVGMEMORY) as AVGMEMORYUTILIZATION, MAX(MAXCPUVALUE) as MAXCPUVALUE, MAX(MAXMEMORYVALUE) as MAXMEMORYVALUE, AVG(AVGCPUVALUE) as AVGCPUVALUE, AVG(AVGMEMORYVALUE) as AVGMEMORYVALUE, AVG(AVGSTORAGECAPACITYVALUE) as AVGSTORAGECAPACITYVALUE ,AVG(AVGSTORAGEUSAGEVALUE) as AVGSTORAGEUSAGEVALUE, AVG(AVGSTORAGEREQUESTVALUE) as AVGSTORAGEREQUESTVALUE ,MAX(MAXSTORAGEUSAGEVALUE) as MAXSTORAGEUSAGEVALUE, MAX(MAXSTORAGEREQUESTVALUE) as MAXSTORAGEREQUESTVALUE, INSTANCEID FROM UTILIZATION_DATA WHERE ACCOUNTID = '%s' AND SETTINGID = '%s' AND CLUSTERID = '%s' AND INSTANCEID IN ('%s') AND STARTTIME >= '%s' AND STARTTIME < '%s' GROUP BY INSTANCEID;";
   private static final String UTILIZATION_DATA_QUERY_BY_CLUSTER_IDS =
-      "SELECT INSTANCEID AS SERVICEID, CLUSTERID, MAX(MAXCPU) as MAXCPUUTILIZATION, MAX(MAXMEMORY) as MAXMEMORYUTILIZATION, AVG(AVGCPU) as AVGCPUUTILIZATION, AVG(AVGMEMORY) as AVGMEMORYUTILIZATION, MAX(MAXCPUVALUE) as MAXCPUVALUE, MAX(MAXMEMORYVALUE) as MAXMEMORYVALUE, AVG(AVGCPUVALUE) as AVGCPUVALUE, AVG(AVGMEMORYVALUE) as AVGMEMORYVALUE, AVG(AVGSTORAGECAPACITYVALUE) as AVGSTORAGECAPACITYVALUE ,AVG(AVGSTORAGEUSAGEVALUE) as AVGSTORAGEUSAGEVALUE, AVG(AVGSTORAGEREQUESTVALUE) as AVGSTORAGEREQUESTVALUE ,MAX(MAXSTORAGEUSAGEVALUE) as MAXSTORAGEUSAGEVALUE, MAX(MAXSTORAGEREQUESTVALUE) as MAXSTORAGEREQUESTVALUE, STARTTIME, ENDTIME FROM UTILIZATION_DATA WHERE ACCOUNTID = '%s' AND CLUSTERID IN ('%s') AND STARTTIME >= '%s' AND STARTTIME < '%s' GROUP BY CLUSTERID, INSTANCEID, STARTTIME, ENDTIME;";
+      "SELECT INSTANCEID AS SERVICEID, CLUSTERID, MAX(MAXCPU) as MAXCPUUTILIZATION, MAX(MAXMEMORY) as MAXMEMORYUTILIZATION, AVG(AVGCPU) as AVGCPUUTILIZATION, AVG(AVGMEMORY) as AVGMEMORYUTILIZATION, MAX(MAXCPUVALUE) as MAXCPUVALUE, MAX(MAXMEMORYVALUE) as MAXMEMORYVALUE, AVG(AVGCPUVALUE) as AVGCPUVALUE, AVG(AVGMEMORYVALUE) as AVGMEMORYVALUE, AVG(AVGSTORAGECAPACITYVALUE) as AVGSTORAGECAPACITYVALUE ,AVG(AVGSTORAGEUSAGEVALUE) as AVGSTORAGEUSAGEVALUE, AVG(AVGSTORAGEREQUESTVALUE) as AVGSTORAGEREQUESTVALUE ,MAX(MAXSTORAGEUSAGEVALUE) as MAXSTORAGEUSAGEVALUE, MAX(MAXSTORAGEREQUESTVALUE) as MAXSTORAGEREQUESTVALUE, STARTTIME, ENDTIME FROM UTILIZATION_DATA WHERE ACCOUNTID = '%s' AND CLUSTERID IN ('%s') AND STARTTIME >= '%s' AND STARTTIME < '%s' GROUP BY CLUSTERID, INSTANCEID, STARTTIME, ENDTIME ORDER BY STARTTIME ASC;";
 
   public boolean create(List<InstanceUtilizationData> instanceUtilizationDataList) {
     boolean successfulInsert = false;
@@ -128,14 +128,14 @@ public class UtilizationDataServiceImpl {
     }
   }
 
-  public Map<ServiceIdAndClusterId, List<UtilizationDataWithTime>> getUtilizationDataForECSClusters(String accountId,
-      List<String> clusterIds, String startTime, String endTime) {
+  public Map<ClusterIdAndServiceArn, List<UtilizationDataWithTime>> getUtilizationDataForECSClusters(String accountId,
+                                                                                                     List<String> clusterIds, String startTime, String endTime) {
     try {
       if (timeScaleDBService.isValid()) {
         String query = String.format(UTILIZATION_DATA_QUERY_BY_CLUSTER_IDS, accountId,
             String.join("','", clusterIds), startTime, endTime);
         ResultSet resultSet = null;
-        Map<ServiceIdAndClusterId, List<UtilizationDataWithTime>> utilizationDataMap = new HashMap<>();
+        Map<ClusterIdAndServiceArn, List<UtilizationDataWithTime>> utilizationDataMap = new HashMap<>();
         int retryCount = 0;
         log.debug("Utilization data query : {}", query);
         while (retryCount < SELECT_MAX_RETRY_COUNT) {
@@ -149,10 +149,10 @@ public class UtilizationDataServiceImpl {
               Instant utilStartTime = resultSet.getTimestamp("STARTTIME").toInstant();
               Instant utilEndTime = resultSet.getTimestamp("ENDTIME").toInstant();
               try {
-                ServiceIdAndClusterId serviceIdAndClusterId = new ServiceIdAndClusterId(serviceId, clusterId);
-                if (!utilizationDataMap.containsKey(serviceIdAndClusterId))
-                  utilizationDataMap.put(serviceIdAndClusterId, new ArrayList<>());
-                utilizationDataMap.get(serviceIdAndClusterId)
+                ClusterIdAndServiceArn clusterIdAndServiceArn = new ClusterIdAndServiceArn(serviceId, clusterId);
+                if (!utilizationDataMap.containsKey(clusterIdAndServiceArn))
+                  utilizationDataMap.put(clusterIdAndServiceArn, new ArrayList<>());
+                utilizationDataMap.get(clusterIdAndServiceArn)
                     .add(UtilizationDataWithTime.builder()
                         .utilizationData(getUtilizationDataFromRow(resultSet))
                         .startTime(utilStartTime)

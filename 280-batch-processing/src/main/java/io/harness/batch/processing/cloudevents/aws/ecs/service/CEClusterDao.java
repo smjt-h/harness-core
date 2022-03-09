@@ -14,7 +14,10 @@ import io.harness.ccm.commons.entities.billing.CECluster.CEClusterKeys;
 import io.harness.persistence.HPersistence;
 
 import com.google.inject.Inject;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -46,9 +49,10 @@ public class CEClusterDao {
     return hPersistence.createQuery(CECluster.class).field(CEClusterKeys.accountId).equal(accountId).asList();
   }
 
-  public List<String> getCEClusterIds(String accountId) {
+  public Map<String, String> getClusterIdNameMapping(String accountId) {
     return hPersistence.createQuery(CECluster.class).field(CEClusterKeys.accountId).equal(accountId)
-        .project(CEClusterKeys.uuid, true).asList().stream().map(CECluster::getUuid).collect(Collectors.toList());
+        .project(CEClusterKeys.uuid, true).project(CEClusterKeys.clusterName, true).asList().stream()
+        .collect(Collectors.toMap(CECluster::getUuid, CECluster::getClusterName));
   }
 
   public boolean deleteCluster(String uuid) {

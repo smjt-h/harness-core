@@ -5,8 +5,9 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.batch.processing.billing.service;
+package io.harness.batch.processing.cloudevents.aws.ecs.service.util;
 
+import io.harness.batch.processing.billing.service.UtilizationData;
 import lombok.Builder;
 import lombok.Value;
 
@@ -16,6 +17,7 @@ import java.time.Instant;
 @Builder
 public class UtilizationDataWithTime {
   private UtilizationData utilizationData;
+  private String serviceId;
   private Instant startTime;
   private Instant endTime;
 }

@@ -5,7 +5,7 @@
  * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
  */
 
-package io.harness.ccm.commons.entities.k8s.recommendation;
+package io.harness.ccm.commons.entities.ecs.recommendation;
 
 import com.google.common.collect.ImmutableList;
 import io.harness.annotation.StoreIn;
@@ -42,13 +42,13 @@ public final class ECSPartialRecommendationHistogram
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
-                 .name("unique_accountId_clusterId_namespace_workloadName_workloadType_date")
+                 .name("unique_accountId_clusterId_clusterName_serviceName_serviceArn_date")
                  .unique(true)
                  .field(ECSPartialRecommendationHistogramKeys.accountId)
                  .field(ECSPartialRecommendationHistogramKeys.clusterId)
-                 .field(ECSPartialRecommendationHistogramKeys.serviceId)
+                 .field(ECSPartialRecommendationHistogramKeys.clusterName)
                  .field(ECSPartialRecommendationHistogramKeys.serviceName)
-                 .field(ECSPartialRecommendationHistogramKeys.serviceType)
+                 .field(ECSPartialRecommendationHistogramKeys.serviceArn)
                  .field(ECSPartialRecommendationHistogramKeys.date)
                  .build())
         .build();
@@ -61,8 +61,8 @@ public final class ECSPartialRecommendationHistogram
   @NotEmpty String accountId;
   @NotEmpty String clusterId;
   @NotEmpty String clusterName;
-  @NotEmpty String serviceName; // last part of serviceArn
   @NotEmpty String serviceArn; // instanceId from utilData
+  @NotEmpty String serviceName; // last part of serviceArn
   // Date for which the data corresponds to.
   Instant date;
 

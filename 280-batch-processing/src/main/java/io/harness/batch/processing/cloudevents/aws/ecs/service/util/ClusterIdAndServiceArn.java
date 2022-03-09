@@ -9,10 +9,12 @@ package io.harness.batch.processing.cloudevents.aws.ecs.service.util;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.Value;
 
 @EqualsAndHashCode
 @AllArgsConstructor
-public class ServiceIdAndClusterId {
-  String serviceId;
+@Value
+public class ClusterIdAndServiceArn {
   String clusterId;
+  String serviceArn;
 }

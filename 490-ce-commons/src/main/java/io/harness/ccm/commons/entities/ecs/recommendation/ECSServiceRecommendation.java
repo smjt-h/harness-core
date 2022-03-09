@@ -1,0 +1,131 @@
+/*
+ * Copyright 2021 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Shield 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
+ */
+
+
+package io.harness.ccm.commons.entities.ecs.recommendation;
+
+import com.google.common.collect.ImmutableList;
+import io.harness.annotation.StoreIn;
+import io.harness.annotations.dev.OwnedBy;
+import io.harness.ccm.commons.beans.HarnessServiceInfo;
+import io.harness.data.structure.MongoMapSanitizer;
+import io.harness.histogram.HistogramCheckpoint;
+import io.harness.mongo.index.CompoundMongoIndex;
+import io.harness.mongo.index.FdIndex;
+import io.harness.mongo.index.FdTtlIndex;
+import io.harness.mongo.index.MongoIndex;
+import io.harness.ng.DbAliases;
+import io.harness.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.FieldNameConstants;
+import org.hibernate.validator.constraints.NotEmpty;
+import org.mongodb.morphia.annotations.Entity;
+import org.mongodb.morphia.annotations.Id;
+import software.wings.graphql.datafetcher.ce.recommendation.entity.Cost;
+import software.wings.graphql.datafetcher.ce.recommendation.entity.ResourceRequirement;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+
+import static io.harness.annotations.dev.HarnessTeam.CE;
+
+@Data
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldNameConstants(innerTypeName = "ECSServiceRecommendationKeys")
+@StoreIn(DbAliases.CENG)
+@Entity(value = "ecsServiceRecommendation", noClassnameStored = true)
+@OwnedBy(CE)
+public final class ECSServiceRecommendation
+    implements PersistentEntity, UuidAware, CreatedAtAware, UpdatedAtAware, AccountAccess {
+  public static List<MongoIndex> mongoIndexes() {
+    return ImmutableList.<MongoIndex>builder()
+        .add(CompoundMongoIndex.builder()
+            .name("unique_accountId_clusterId_namespace_workloadName_workloadType")
+            .unique(true)
+            .field(ECSServiceRecommendationKeys.accountId)
+            .field(ECSServiceRecommendationKeys.clusterId)
+            .field(ECSServiceRecommendationKeys.clusterName)
+            .field(ECSServiceRecommendationKeys.serviceName)
+            .field(ECSServiceRecommendationKeys.serviceArn)
+            .build())
+        .add(CompoundMongoIndex.builder()
+            .name("accountId_dirty")
+            .field(ECSServiceRecommendationKeys.accountId)
+            .field(ECSServiceRecommendationKeys.dirty)
+            .build())
+        .build();
+  }
+
+  private static final MongoMapSanitizer SANITIZER = new MongoMapSanitizer('~');
+
+  @Id
+  String uuid;
+  long createdAt;
+  long lastUpdatedAt;
+
+  @NotEmpty
+  String accountId;
+  @NotEmpty String clusterId;
+  @NotEmpty String clusterName;
+  @NotEmpty String serviceArn; // instanceId from utilData
+  @NotEmpty String serviceName; // last part of serviceArn
+
+  // Recommendation
+  ResourceRequirement current;
+  @Deprecated ResourceRequirement burstable;
+  @Deprecated ResourceRequirement guaranteed;
+  @Deprecated ResourceRequirement recommended;
+  Map<String, ResourceRequirement> percentileBased;
+  Cost lastDayCost;
+  int totalSamplesCount;
+
+  // Checkpoint
+  Instant lastUpdateTime;
+  HistogramCheckpoint cpuHistogram;
+  HistogramCheckpoint memoryHistogram;
+  Instant firstSampleStart;
+  Instant lastSampleStart;
+  long memoryPeak;
+  Instant windowEnd;
+  int version;
+
+  @FdIndex
+  BigDecimal estimatedSavings;
+
+  @EqualsAndHashCode.Exclude @FdTtlIndex
+  Instant ttl;
+
+  // Timestamp at which we last sampled util data for this workload
+  // max(lastSampleStart) across containerCheckpoints
+  Instant lastReceivedUtilDataAt;
+
+  // Timestamp at which we last computed recommendations for this workload
+  Instant lastComputedRecommendationAt;
+
+  // For intermediate stages in batch-processing
+  boolean dirty;
+
+  // Set to true if we have non-empty recommendations
+  boolean validRecommendation;
+
+  // To avoid showing recommendation if cost computation cannot be done due to lastDay's cost not being available
+  boolean lastDayCostAvailable;
+
+  // number of days of data (min across containers)
+  int numDays;
+
+  HarnessServiceInfo harnessServiceInfo;
+
+  // decision whether to show the recommendation in the Recommendation Overview List page or not.
+  public boolean shouldShowRecommendation() {
+    return validRecommendation && lastDayCostAvailable && numDays >= 1;
+  }
+}
