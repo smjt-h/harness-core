@@ -38,7 +38,7 @@ cat ${BAZEL_DIRS}/out/volatile-status.txt
 if [ "${RUN_BAZEL_TESTS}" == "true" ]; then
   bazel ${bazelrc} build ${BAZEL_ARGUMENTS} -- //... -//product/... -//commons/... \
   && bazel ${bazelrc} test ${CACHE_TEST_RESULTS_ARG} --define=HARNESS_ARGS=${HARNESS_ARGS} --keep_going ${BAZEL_ARGUMENTS} -- \
-  //... -//product/... -//commons/... -//190-deployment-functional-tests/...
+  //... -//product/... -//commons/... -//200-functional-test/... -//190-deployment-functional-tests/...
   exit $?
 fi
 
@@ -200,7 +200,7 @@ BAZEL_MODULES="\
   //product/ci/scm/proto:all \
 "
 
-bazel ${bazelrc} build $BAZEL_MODULES `bazel query "//...:*" | grep -v '001-microservice-intfc-tool' | grep -v '200-functional-test' | grep -v '280-batch-processing'| grep "module_deploy.jar"` ${BAZEL_ARGUMENTS} --remote_download_outputs=all
+bazel ${bazelrc} build $BAZEL_MODULES `bazel query "//...:*" | grep "module_deploy.jar"` ${BAZEL_ARGUMENTS} --remote_download_outputs=all
 
 build_bazel_module() {
   module=$1
@@ -283,7 +283,7 @@ build_protocol_info(){
   bazel query "deps(//${module}:module)" | grep -i "KryoRegistrar" | rev | cut -f 1 -d "/" | rev | cut -f 1 -d "." > /tmp/KryoDeps.text
   cp scripts/interface-hash/module-deps.sh .
   sh module-deps.sh //${module}:module > /tmp/ProtoDeps.text
-  bazel ${bazelrc} run ${BAZEL_ARGUMENTS} -- kryo-file=/tmp/KryoDeps.text proto-file=/tmp/ProtoDeps.text ignore-json | grep "Codebase Hash:" > ${moduleName}-protocol.info
+  bazel ${bazelrc} run ${BAZEL_ARGUMENTS}  //001-microservice-intfc-tool:module -- kryo-file=/tmp/KryoDeps.text proto-file=/tmp/ProtoDeps.text ignore-json | grep "Codebase Hash:" > ${moduleName}-protocol.info
   rm module-deps.sh /tmp/ProtoDeps.text /tmp/KryoDeps.text
 }
 
@@ -394,7 +394,7 @@ build_java_proto_module 960-notification-beans
 build_proto_module ciengine product/ci/engine/proto
 build_proto_module ciscm product/ci/scm/proto
 
-bazel ${bazelrc} run ${BAZEL_ARGUMENTS} | grep "Codebase Hash:" > protocol.info
+bazel ${bazelrc} run ${BAZEL_ARGUMENTS} //001-microservice-intfc-tool:module | grep "Codebase Hash:" > protocol.info
 
 if [ "${PLATFORM}" == "jenkins" ]; then
  build_protocol_info 800-pipeline-service pipeline-service
