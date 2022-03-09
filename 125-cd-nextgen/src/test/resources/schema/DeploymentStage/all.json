@@ -5726,6 +5726,22 @@
           "if": {
             "properties": {
               "type": {
+                "const": "HelmChartValues"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/HelmChartValuesStoreConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
                 "const": "Github"
               }
             }
