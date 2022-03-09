@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
@@ -21,6 +22,6 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(name = "HostDTO", description = "This entity contains the Host details")
 public class HostDTO {
-  @JsonProperty("hostname") String hostName;
+  @JsonProperty("hostname") @NotNull String hostName;
   @JsonProperty("hostAttributes") List<HostAttributeDTO> hostAttributes;
 }
