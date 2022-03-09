@@ -10,21 +10,12 @@ package io.harness.delegate.task.cloudformation;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
-
-import software.wings.beans.command.ExecutionLogCallback;
-import software.wings.helpers.ext.cloudformation.request.CloudformationTaskInternalRequest;
-import software.wings.helpers.ext.cloudformation.response.CloudformationTaskInternalResponse;
+import io.harness.aws.beans.AwsInternalConfig;
 
 import com.amazonaws.services.cloudformation.model.Stack;
+import java.util.Optional;
 
 @OwnedBy(CDP)
 public interface CloudformationBaseHelper {
-  CloudformationTaskInternalResponse createStack(
-      CloudformationTaskInternalRequest cloudFormationInternalRequest, ExecutionLogCallback executionLogCallback);
-
-  CloudformationTaskInternalResponse updateStack(CloudformationTaskInternalRequest cloudFormationInternalRequest,
-      Stack stack, ExecutionLogCallback executionLogCallback);
-
-  CloudformationTaskInternalResponse deleteStack(String stackId, String stackName,
-      CloudformationTaskInternalRequest cloudFormationInternalRequest, ExecutionLogCallback executionLogCallback);
+  Optional<Stack> getIfStackExists(String customStackName, String suffix, AwsInternalConfig awsConfig, String region);
 }
