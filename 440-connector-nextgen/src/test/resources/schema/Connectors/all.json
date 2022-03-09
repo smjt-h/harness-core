@@ -1526,6 +1526,7 @@
             "Gcp",
             "Aws",
             "Azure",
+            "Pdc",
             "Artifactory",
             "Jira",
             "Nexus",
@@ -2026,6 +2027,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/PagerDutyConnectorDTO"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Pdc"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/PhysicalDataCenterConnectorDTO"
               }
             }
           }
@@ -3443,6 +3460,33 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "HostAttributeDTO": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "HostDTO": {
+      "type": "object",
+      "properties": {
+        "hostAttributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/HostAttributeDTO"
+          }
+        },
+        "hostname": {
+          "type": "string"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "HttpHelmAuthCredentialsDTO": {
       "type": "object",
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -4100,6 +4144,38 @@
               "items": {
                 "type": "string"
               }
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "PhysicalDataCenterConnectorDTO": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ConnectorConfigDTO"
+        },
+        {
+          "type": "object",
+          "required": [
+            "sshKeyRef"
+          ],
+          "properties": {
+            "delegateSelectors": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            },
+            "hosts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/HostDTO"
+              }
+            },
+            "sshKeyRef": {
+              "type": "string"
             }
           }
         }

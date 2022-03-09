@@ -4,7 +4,7 @@ import io.harness.connector.HostValidationResult;
 
 import java.util.List;
 
-public interface HostValidatoionService {
+public interface HostValidationService {
   List<HostValidationResult> validateSSHHosts(List<String> hosts, String accountIdentifier, String orgIdentifier,
       String projectIdentifier, String secretIdentifier);
 

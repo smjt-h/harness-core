@@ -27,7 +27,7 @@ import io.harness.ng.core.api.NGSecretServiceV2;
 import io.harness.ng.core.dto.ErrorDetail;
 import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
 import io.harness.ng.core.models.Secret;
-import io.harness.ng.validator.HostValidatoionService;
+import io.harness.ng.validator.HostValidationService;
 import io.harness.pms.utils.CompletableFutures;
 import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.services.SshKeySpecDTOHelper;
@@ -54,7 +54,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @Slf4j
-public class HostValidationServiceImpl implements HostValidatoionService {
+public class HostValidationServiceImpl implements HostValidationService {
   @Inject private SshKeySpecDTOHelper sshKeySpecDTOHelper;
   @Inject private NGSecretServiceV2 ngSecretServiceV2;
   @Inject private TaskSetupAbstractionHelper taskSetupAbstractionHelper;

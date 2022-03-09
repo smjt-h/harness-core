@@ -328,8 +328,6 @@ public class ConnectorBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(CustomHealthMethod.class, 19677);
     kryo.register(ServiceNowConnectorDTO.class, 19678);
     kryo.register(ErrorTrackingConnectorDTO.class, 19679);
-<<<<<<< HEAD
-<<<<<<< HEAD
 
     kryo.register(AzureConnectorDTO.class, 19680);
     kryo.register(AzureConstants.class, 19681);
@@ -342,6 +340,7 @@ public class ConnectorBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(AzureAuthDTO.class, 19688);
     kryo.register(AzureClientSecretKeyDTO.class, 19689);
     kryo.register(AzureClientKeyCertDTO.class, 19690);
+    
     kryo.register(PhysicalDataCenterConnectorDTO.class, 19691);
     kryo.register(HostDTO.class, 19692);
     kryo.register(HostAttributeDTO.class, 19693);
