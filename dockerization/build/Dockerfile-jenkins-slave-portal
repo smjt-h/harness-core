@@ -13,7 +13,7 @@ USER root
 COPY mongodb-org-4.4.repo /etc/yum.repos.d/
 
 ENV LC_ALL en_US.UTF-8
-ENV PATH ${PATH}:/opt/gsutil
+ENV PATH ${PATH}:/opt/gsutil:/usr/local/go/bin
 
 RUN yum update -y \
     && yum upgrade -y \
@@ -41,10 +41,11 @@ RUN yum group install -y "Development Tools" \
     && yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
     && yum install -y jq \
     && yum install -y moreutils bc \
-    && yum install -y golang \
+    && wget https://dl.google.com/go/go1.17.linux-amd64.tar.gz \
+    && tar -C /usr/local -xzf go1.17.linux-amd64.tar.gz \
     && go version \
     && yum clean all \
-    && rm -rf /var/cache/yum \
+    && rm -rf /var/cache/yum go1.17.linux-amd64.tar.gz \
     && scl enable devtoolset-7 bash \
     && cd / \
     && rm -rf /tmp/*
