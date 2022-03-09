@@ -97,7 +97,10 @@ public class YamlSchemaValidator {
     if (!processValidationMessages.isEmpty()) {
       List<YamlSchemaErrorDTO> errorDTOS = new ArrayList<>();
       for (ValidationMessage validationMessage : processValidationMessages) {
-        // Add stage/step details here.
+        // Skipping Additional properties messages until Library Upgrade.
+        if (validationMessage.getCode().equals(ValidatorTypeCode.ADDITIONAL_PROPERTIES.getErrorCode())) {
+          continue;
+        }
         errorDTOS.add(YamlSchemaErrorDTO.builder()
                           .message(removeFqnFromErrorMessage(validationMessage.getMessage()))
                           .stageInfo(SchemaValidationUtils.getStageErrorInfo(validationMessage.getPath(), jsonNode))
