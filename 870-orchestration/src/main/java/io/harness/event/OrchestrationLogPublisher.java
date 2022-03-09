@@ -9,6 +9,7 @@ package io.harness.event;
 
 import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
 
+import io.harness.OrchestrationModuleConfig;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.OrchestrationEventLog;
@@ -23,6 +24,7 @@ import io.harness.engine.observers.StepDetailsUpdateObserver;
 import io.harness.eventsframework.EventsFrameworkConstants;
 import io.harness.eventsframework.api.Producer;
 import io.harness.eventsframework.producer.Message;
+import io.harness.pms.PmsFeatureFlagService;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.contracts.visualisation.log.OrchestrationLogEvent;
@@ -44,27 +46,39 @@ public class OrchestrationLogPublisher
                NodeExecutionStartObserver {
   @Inject private OrchestrationEventLogRepository orchestrationEventLogRepository;
   @Inject @Named(EventsFrameworkConstants.ORCHESTRATION_LOG) private Producer producer;
-
+  @Inject OrchestrationModuleConfig orchestrationModuleConfig;
   @Override
   public void onNodeStatusUpdate(NodeUpdateInfo nodeUpdateInfo) {
-    createAndHandleEventLog(nodeUpdateInfo.getPlanExecutionId(), nodeUpdateInfo.getNodeExecutionId(),
+    createAndHandleEventLogV1(nodeUpdateInfo.getPlanExecutionId(), nodeUpdateInfo.getNodeExecutionId(),
         OrchestrationEventType.NODE_EXECUTION_STATUS_UPDATE);
   }
 
   @Override
   public void onPlanStatusUpdate(Ambiance ambiance) {
-    createAndHandleEventLog(ambiance.getPlanExecutionId(), AmbianceUtils.obtainCurrentRuntimeId(ambiance),
+    createAndHandleEventLogV1(ambiance.getPlanExecutionId(), AmbianceUtils.obtainCurrentRuntimeId(ambiance),
         OrchestrationEventType.PLAN_EXECUTION_STATUS_UPDATE);
   }
 
   @Override
   public void onNodeUpdate(NodeUpdateInfo nodeUpdateInfo) {
-    createAndHandleEventLog(nodeUpdateInfo.getPlanExecutionId(), nodeUpdateInfo.getNodeExecutionId(),
-        OrchestrationEventType.NODE_EXECUTION_UPDATE);
+    if (!orchestrationModuleConfig.isReduceOrchestrationLog()) {
+      createAndHandleEventLogV1(nodeUpdateInfo.getNodeExecution().getPlanExecutionId(),
+          AmbianceUtils.obtainCurrentRuntimeId(nodeUpdateInfo.getNodeExecution().getAmbiance()),
+          OrchestrationEventType.NODE_EXECUTION_UPDATE);
+    }
   }
 
   // Todo: Introduce batching over here
-  private void createAndHandleEventLog(
+  public void createAndHandleEventLog(
+      String planExecutionId, String nodeExecutionId, OrchestrationEventType eventType) {
+    if (!orchestrationModuleConfig.isReduceOrchestrationLog()) {
+      return;
+    }
+    createAndHandleEventLogV1(planExecutionId, nodeExecutionId, eventType);
+  }
+
+  // Todo: Introduce batching over here
+  private void createAndHandleEventLogV1(
       String planExecutionId, String nodeExecutionId, OrchestrationEventType eventType) {
     orchestrationEventLogRepository.save(
         OrchestrationEventLog.builder()
@@ -86,19 +100,19 @@ public class OrchestrationLogPublisher
 
   @Override
   public void onNodeStart(NodeStartInfo nodeStartInfo) {
-    createAndHandleEventLog(nodeStartInfo.getNodeExecution().getPlanExecutionId(),
+    createAndHandleEventLogV1(nodeStartInfo.getNodeExecution().getPlanExecutionId(),
         nodeStartInfo.getNodeExecution().getUuid(), OrchestrationEventType.NODE_EXECUTION_START);
   }
 
   @Override
   public void onStepDetailsUpdate(StepDetailsUpdateInfo stepDetailsUpdateInfo) {
-    createAndHandleEventLog(stepDetailsUpdateInfo.getPlanExecutionId(), stepDetailsUpdateInfo.getNodeExecutionId(),
+    createAndHandleEventLogV1(stepDetailsUpdateInfo.getPlanExecutionId(), stepDetailsUpdateInfo.getNodeExecutionId(),
         OrchestrationEventType.STEP_DETAILS_UPDATE);
   }
 
   @Override
   public void onStepInputsAdd(StepDetailsUpdateInfo stepDetailsUpdateInfo) {
-    createAndHandleEventLog(stepDetailsUpdateInfo.getPlanExecutionId(), stepDetailsUpdateInfo.getNodeExecutionId(),
+    createAndHandleEventLogV1(stepDetailsUpdateInfo.getPlanExecutionId(), stepDetailsUpdateInfo.getNodeExecutionId(),
         OrchestrationEventType.STEP_INPUTS_UPDATE);
   }
 }

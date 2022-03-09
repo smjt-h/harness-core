@@ -12,8 +12,10 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.progress.publisher.ProgressEventPublisher;
+import io.harness.event.OrchestrationLogPublisher;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.pms.contracts.ambiance.Ambiance;
+import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.serializer.KryoSerializer;
 import io.harness.tasks.BinaryResponseData;
@@ -34,6 +36,7 @@ public class EngineProgressCallback implements ProgressCallback {
   @Inject @Transient NodeExecutionService nodeExecutionService;
   @Inject @Transient KryoSerializer kryoSerializer;
   @Inject @Transient ProgressEventPublisher progressEventPublisher;
+  @Inject @Transient OrchestrationLogPublisher orchestrationLogPublisher;
 
   Ambiance ambiance;
 
@@ -52,6 +55,8 @@ public class EngineProgressCallback implements ProgressCallback {
       if (data instanceof UnitProgressData) {
         nodeExecutionService.updateV2(getNodeExecutionId(),
             ops -> ops.set(NodeExecutionKeys.unitProgresses, ((UnitProgressData) data).getUnitProgresses()));
+        orchestrationLogPublisher.createAndHandleEventLog(
+            ambiance.getPlanExecutionId(), getNodeExecutionId(), OrchestrationEventType.NODE_EXECUTION_UPDATE);
       }
       log.info("Node Execution updated for progress data");
     } catch (Exception ex) {

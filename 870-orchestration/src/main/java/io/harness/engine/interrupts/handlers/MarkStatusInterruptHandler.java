@@ -19,12 +19,14 @@ import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanExecutionService;
 import io.harness.engine.interrupts.InterruptHandler;
 import io.harness.engine.interrupts.InterruptService;
+import io.harness.event.OrchestrationLogPublisher;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.interrupts.Interrupt;
 import io.harness.interrupts.InterruptEffect;
 import io.harness.pms.contracts.execution.Status;
+import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.execution.utils.NodeProjectionUtils;
 import io.harness.pms.execution.utils.StatusUtils;
 
@@ -41,6 +43,7 @@ public abstract class MarkStatusInterruptHandler implements InterruptHandler {
   @Inject protected InterruptService interruptService;
   @Inject private OrchestrationEngine orchestrationEngine;
   @Inject private PlanExecutionService planExecutionService;
+  @Inject private OrchestrationLogPublisher orchestrationLogPublisher;
 
   @Override
   public Interrupt registerInterrupt(Interrupt interrupt) {
@@ -90,6 +93,8 @@ public abstract class MarkStatusInterruptHandler implements InterruptHandler {
       handlePlanStatus(interrupt.getPlanExecutionId(), nodeExecution.getUuid());
       orchestrationEngine.concludeNodeExecution(
           nodeExecution.getAmbiance(), status, nodeExecution.getStatus(), overrideStatusSet);
+      orchestrationLogPublisher.createAndHandleEventLog(
+          nodeExecution.getPlanExecutionId(), nodeExecutionId, OrchestrationEventType.NODE_EXECUTION_UPDATE);
     } catch (Exception ex) {
       interruptService.markProcessed(interrupt.getUuid(), PROCESSED_UNSUCCESSFULLY);
       throw ex;

@@ -20,6 +20,7 @@ import io.harness.engine.pms.commons.events.PmsEventSender;
 import io.harness.engine.pms.data.PmsOutcomeService;
 import io.harness.engine.pms.data.PmsSweepingOutputService;
 import io.harness.engine.pms.execution.strategy.AbstractNodeExecutionStrategy;
+import io.harness.event.OrchestrationLogPublisher;
 import io.harness.execution.ExecutionModeUtils;
 import io.harness.execution.IdentityNodeExecutionMetadata;
 import io.harness.execution.NodeExecution;
@@ -32,6 +33,7 @@ import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.Status;
+import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.contracts.execution.start.NodeStartEvent;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
 import io.harness.pms.events.base.PmsEventCategory;
@@ -64,6 +66,7 @@ public class IdentityNodeExecutionStrategy
   @Inject private IdentityNodeResumeHelper identityNodeResumeHelper;
   @Inject private TransactionHelper transactionHelper;
   @Inject private PmsGraphStepDetailsService pmsGraphStepDetailsService;
+  @Inject private OrchestrationLogPublisher orchestrationLogPublisher;
 
   private final String SERVICE_NAME_IDENTITY = ModuleType.PMS.name().toLowerCase();
 
@@ -200,6 +203,8 @@ public class IdentityNodeExecutionStrategy
       log.info("Ending Execution");
       orchestrationEngine.endNodeExecution(AmbianceUtils.cloneForFinish(ambiance));
     }
+    orchestrationLogPublisher.createAndHandleEventLog(
+        ambiance.getPlanExecutionId(), nodeExecutionId, OrchestrationEventType.NODE_EXECUTION_UPDATE);
   }
 
   @Override
