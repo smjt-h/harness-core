@@ -31,6 +31,7 @@ import io.harness.engine.pms.execution.strategy.EndNodeExecutionHelper;
 import io.harness.engine.pms.resume.NodeResumeHelper;
 import io.harness.engine.pms.start.NodeStartHelper;
 import io.harness.eraro.ResponseMessage;
+import io.harness.event.OrchestrationLogPublisher;
 import io.harness.exception.exceptionmanager.ExceptionManager;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
@@ -43,6 +44,7 @@ import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.ExecutableResponse;
 import io.harness.pms.contracts.execution.Status;
+import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
 import io.harness.pms.data.stepparameters.PmsStepParameters;
@@ -92,6 +94,7 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
   @Inject private OrchestrationEngine orchestrationEngine;
   @Inject private PmsOutcomeService outcomeService;
   @Inject private KryoSerializer kryoSerializer;
+  @Inject private OrchestrationLogPublisher orchestrationLogPublisher;
 
   @Override
   public NodeExecution createNodeExecution(@NotNull Ambiance ambiance, @NotNull PlanNode node,
@@ -283,6 +286,8 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
       log.info("Ending Execution");
       orchestrationEngine.endNodeExecution(AmbianceUtils.cloneForFinish(ambiance));
     }
+    orchestrationLogPublisher.createAndHandleEventLog(
+        ambiance.getPlanExecutionId(), nodeExecutionId, OrchestrationEventType.NODE_EXECUTION_UPDATE);
   }
 
   @VisibleForTesting

@@ -10,11 +10,14 @@ package io.harness.event.handlers;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.OrchestrationEngine;
+import io.harness.event.OrchestrationLogPublisher;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.events.FacilitatorResponseRequest;
+import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
 import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
+import io.harness.pms.execution.utils.AmbianceUtils;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -25,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class FacilitateResponseRequestProcessor implements SdkResponseProcessor {
   @Inject private OrchestrationEngine orchestrationEngine;
+  @Inject private OrchestrationLogPublisher orchestrationLogPublisher;
 
   @Override
   public void handleEvent(SdkResponseEventProto event) {
@@ -37,5 +41,7 @@ public class FacilitateResponseRequestProcessor implements SdkResponseProcessor 
       StepResponseProto stepResponseProto = StepResponseProto.newBuilder().setStatus(Status.FAILED).build();
       orchestrationEngine.processStepResponse(event.getAmbiance(), stepResponseProto);
     }
+    orchestrationLogPublisher.createAndHandleEventLog(event.getAmbiance().getPlanExecutionId(),
+        AmbianceUtils.obtainCurrentRuntimeId(event.getAmbiance()), OrchestrationEventType.NODE_EXECUTION_UPDATE);
   }
 }
