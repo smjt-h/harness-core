@@ -54,7 +54,7 @@ public class OrchestrationEndGraphHandler implements AsyncInformObserver, Orches
         // One last time try to update the graph to process any unprocessed logs
         graphGenerationService.updateGraphWithWaitLock(planExecution.getUuid());
         // We are not deleting logs pro-actively if exception occurred, they will be helpful in debugging.
-        // orchestrationEventLogRepository.deleteLogsForGivenPlanExecutionId(ambiance.getPlanExecutionId());
+        orchestrationEventLogRepository.deleteLogsForGivenPlanExecutionId(ambiance.getPlanExecutionId());
       } catch (Exception ex) {
         log.error(
             "[GRAPH_ERROR] Exception occurred while updating graph through logs. Regenerating the graph from nodeExecutions");
