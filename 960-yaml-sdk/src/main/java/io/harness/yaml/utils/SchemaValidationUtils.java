@@ -163,7 +163,7 @@ public class SchemaValidationUtils {
       // Currently, filtering the ".type" errors only. Will keep adding more cases here.
       if (path.endsWith(".type")) {
         String pathTillNode = path.substring(0, path.length() - 5);
-        if (checkIfNodePathIsPresentInAllPaths(errorLocations, pathTillNode, path)) {
+        if (checkIfNodePathIsPresentInAllPaths(errorLocations, pathTillNode)) {
           return true;
         }
       }
@@ -171,14 +171,23 @@ public class SchemaValidationUtils {
     return false;
   }
 
-  private boolean checkIfNodePathIsPresentInAllPaths(
-      Collection<String> allPaths, String pathTillNode, String completePath) {
+  private boolean checkIfNodePathIsPresentInAllPaths(Collection<String> allPaths, String pathTillNode) {
     for (String path : allPaths) {
       // Checking if pathTillNode's children is present in errors.
-      if (path.startsWith(pathTillNode) && !path.equals(completePath)) {
+      String pathTillPreviousNode = getPathTillPreviousNode(path);
+      if (path.startsWith(pathTillNode) && !pathTillNode.startsWith(pathTillPreviousNode)) {
         return true;
       }
     }
     return false;
+  }
+
+  private String getPathTillPreviousNode(String path) {
+    String[] pathComponents = path.split("\\.");
+    if (pathComponents.length <= 1) {
+      return "";
+    }
+    int lastElementLength = pathComponents[pathComponents.length - 1].length();
+    return path.substring(0, path.length() - lastElementLength - 1);
   }
 }
