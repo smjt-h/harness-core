@@ -12,15 +12,19 @@ import io.harness.yaml.validator.NodeErrorInfo;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.networknt.schema.ValidationMessage;
+import com.networknt.schema.ValidatorTypeCode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class SchemaValidationUtils {
+  public static final String ENUM_SCHEMA_ERROR_CODE = ValidatorTypeCode.ENUM.getErrorCode();
   public String[] removeParenthesisFromArguments(String[] arguments) {
     List<String> cleanArguments = new ArrayList<>();
     int length = arguments.length;
@@ -141,5 +145,38 @@ public class SchemaValidationUtils {
         .type(JsonNodeUtils.getString(jsonNode, "type"))
         .fqn(fqn)
         .build();
+  }
+
+  public Set<ValidationMessage> filterErrorsIfMoreSpecificErrorIsPresent(
+      Collection<ValidationMessage> validationMessages) {
+    Set<String> errorLocations =
+        validationMessages.stream().map(ValidationMessage::getPath).collect(Collectors.toSet());
+    return validationMessages.stream()
+        .filter(message -> !checkIfMoreSpecificErrorIsPresent(errorLocations, message))
+        .collect(Collectors.toSet());
+  }
+
+  private boolean checkIfMoreSpecificErrorIsPresent(Collection<String> errorLocations, ValidationMessage message) {
+    if (message.getCode().equals(ENUM_SCHEMA_ERROR_CODE)) {
+      String path = message.getPath();
+      // Currently, filtering the .type errors only. Will keep adding more cases here.
+      if (path.endsWith(".type")) {
+        String pathTillNode = path.substring(0, path.length() - 5);
+        if (checkIfNodePathIsPresentInAllPaths(errorLocations, pathTillNode, path)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private boolean checkIfNodePathIsPresentInAllPaths(
+      Collection<String> allPaths, String pathTillNode, String completePath) {
+    for (String path : allPaths) {
+      if (path.startsWith(pathTillNode) && !path.equals(completePath)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -172,6 +172,6 @@ public class YamlSchemaValidator {
         validationMessageList.addAll(validationEntry.getValue());
       }
     }
-    return validationMessageList;
+    return SchemaValidationUtils.filterErrorsIfMoreSpecificErrorIsPresent(validationMessageList);
   }
 }
