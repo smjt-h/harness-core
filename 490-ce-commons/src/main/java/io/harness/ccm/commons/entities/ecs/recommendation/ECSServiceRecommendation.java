@@ -47,7 +47,7 @@ public final class ECSServiceRecommendation
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
-            .name("unique_accountId_clusterId_namespace_workloadName_workloadType")
+            .name("unique_accountId_clusterId_clusterName_serviceName_serviceArn")
             .unique(true)
             .field(ECSServiceRecommendationKeys.accountId)
             .field(ECSServiceRecommendationKeys.clusterId)
