@@ -78,6 +78,7 @@ import static org.apache.commons.lang3.StringUtils.substringBefore;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.concurrent.HTimeLimiter;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.delegate.beans.DelegateConfiguration;
 import io.harness.delegate.beans.DelegateScripts;
@@ -157,6 +158,7 @@ import org.apache.commons.io.LineIterator;
 import org.apache.commons.io.filefilter.AgeFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.Seconds;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.StartedProcess;
 import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
@@ -222,6 +224,7 @@ public class WatcherServiceImpl implements WatcherService {
   private final AtomicInteger minMinorVersion = new AtomicInteger(0);
   private final Set<Integer> illegalVersions = new HashSet<>();
   private final Map<String, Long> delegateVersionMatchedAt = new HashMap<>();
+  private final TimeLimiter watcherTimeLimter = HTimeLimiter.create(watchExecutor);
 
   @Override
   public void run(boolean upgrade) {
@@ -458,8 +461,7 @@ public class WatcherServiceImpl implements WatcherService {
         new Schedulable("Error while heart-beating", this::heartbeat), 0, 10, TimeUnit.SECONDS);
     heartbeatExecutor.scheduleWithFixedDelay(
         new Schedulable("Error while logging-performance", this::logPerformance), 0, 30, TimeUnit.SECONDS);
-    watchExecutor.scheduleWithFixedDelay(
-        new Schedulable("Error while watching delegate", this::syncWatchDelegate), 0, 10, TimeUnit.SECONDS);
+    watchExecutor.submit(this::syncWatchDelegate);
   }
 
   private void logPerformance() {
@@ -502,13 +504,23 @@ public class WatcherServiceImpl implements WatcherService {
 
   private void syncWatchDelegate() {
     synchronized (this) {
-      if (!working.get()) {
-        watchDelegate();
+      log.info("calling watcher scheduler");
+      try {
+        if (!working.get()) {
+          HTimeLimiter.callInterruptible21(watcherTimeLimter, ofMinutes(10), () -> watchDelegate());
+        }
+      } catch (UncheckedTimeoutException ex) {
+        log.warn("Timed out watching delegate process", ex);
+      } catch (Exception e) {
+        log.error("Error watching delegate process", e);
+      } finally {
+        watchExecutor.schedule(
+            new Schedulable("Error while watching delegate", this::syncWatchDelegate), 10, TimeUnit.SECONDS);
       }
     }
   }
 
-  private void watchDelegate() {
+  private Void watchDelegate() {
     try {
       if (!multiVersion) {
         log.info("Watching delegate processes: {}", runningDelegates);
@@ -555,7 +567,7 @@ public class WatcherServiceImpl implements WatcherService {
       if (expectedVersions == null) {
         // Something went wrong with obtaining the list with expected delegates.
         // Postpone this for better times.
-        return;
+        return null;
       }
       Multimap<String, String> runningVersions = LinkedHashMultimap.create();
       List<String> shutdownPendingList = new ArrayList<>();
@@ -801,6 +813,7 @@ public class WatcherServiceImpl implements WatcherService {
     } catch (Exception e) {
       log.error("Error processing delegate stream: {}", e.getMessage(), e);
     }
+    return null;
   }
 
   @VisibleForTesting
@@ -1138,96 +1151,94 @@ public class WatcherServiceImpl implements WatcherService {
       return;
     }
 
-    executorService.submit(() -> {
-      StartedProcess newDelegate = null;
-      try {
-        newDelegate =
-            new ProcessExecutor()
-                .command("nohup", versionFolder + File.separator + DELEGATE_SCRIPT, watcherProcess, versionFolder)
-                .redirectError(Slf4jStream.of(scriptName).asError())
-                .setMessageLogger((log, format, arguments) -> log.info(format, arguments))
-                .start();
+    StartedProcess newDelegate = null;
+    try {
+      newDelegate =
+          new ProcessExecutor()
+              .command("nohup", versionFolder + File.separator + DELEGATE_SCRIPT, watcherProcess, versionFolder)
+              .redirectError(Slf4jStream.of(scriptName).asError())
+              .setMessageLogger((log, format, arguments) -> log.info(format, arguments))
+              .start();
 
-        boolean success = false;
-        String newDelegateProcess = null;
+      boolean success = false;
+      String newDelegateProcess = null;
 
-        if (newDelegate.getProcess().isAlive()) {
-          Message message =
-              messageService.waitForMessage(NEW_DELEGATE, TimeUnit.MINUTES.toMillis(version == null ? 15 : 4));
-          if (message != null) {
-            newDelegateProcess = message.getParams().get(0);
-            log.info("Got process ID from new delegate: {}", newDelegateProcess);
-            Map<String, Object> delegateData = new HashMap<>();
-            delegateData.put(DELEGATE_IS_NEW, true);
-            if (version != null) {
-              delegateData.put(DELEGATE_VERSION, version);
-            }
-            delegateData.put(DELEGATE_HEARTBEAT, clock.millis());
-            messageService.putAllData(DELEGATE_DASH + newDelegateProcess, delegateData);
-            synchronized (runningDelegates) {
-              runningDelegates.add(newDelegateProcess);
-              messageService.putData(WATCHER_DATA, RUNNING_DELEGATES, runningDelegates);
-            }
-            message = messageService.readMessageFromChannel(DELEGATE, newDelegateProcess, TimeUnit.MINUTES.toMillis(2));
-            if (message != null && message.getMessage().equals(DELEGATE_STARTED)) {
-              log.info("Retrieved delegate-started message from new delegate {}", newDelegateProcess);
-              oldDelegateProcesses.forEach(oldDelegateProcess -> {
-                log.info("Sending old delegate process {} stop-acquiring message", oldDelegateProcess);
-                messageService.writeMessageToChannel(DELEGATE, oldDelegateProcess, DELEGATE_STOP_ACQUIRING);
-              });
-              log.info("Sending new delegate process {} go-ahead message", newDelegateProcess);
-              messageService.writeMessageToChannel(DELEGATE, newDelegateProcess, DELEGATE_GO_AHEAD);
-              success = true;
-            }
+      if (newDelegate.getProcess().isAlive()) {
+        Message message =
+            messageService.waitForMessage(NEW_DELEGATE, TimeUnit.MINUTES.toMillis(version == null ? 15 : 4));
+        if (message != null) {
+          newDelegateProcess = message.getParams().get(0);
+          log.info("Got process ID from new delegate: {}", newDelegateProcess);
+          Map<String, Object> delegateData = new HashMap<>();
+          delegateData.put(DELEGATE_IS_NEW, true);
+          if (version != null) {
+            delegateData.put(DELEGATE_VERSION, version);
+          }
+          delegateData.put(DELEGATE_HEARTBEAT, clock.millis());
+          messageService.putAllData(DELEGATE_DASH + newDelegateProcess, delegateData);
+          synchronized (runningDelegates) {
+            runningDelegates.add(newDelegateProcess);
+            messageService.putData(WATCHER_DATA, RUNNING_DELEGATES, runningDelegates);
+          }
+          message = messageService.readMessageFromChannel(DELEGATE, newDelegateProcess, TimeUnit.MINUTES.toMillis(2));
+          if (message != null && message.getMessage().equals(DELEGATE_STARTED)) {
+            log.info("Retrieved delegate-started message from new delegate {}", newDelegateProcess);
+            oldDelegateProcesses.forEach(oldDelegateProcess -> {
+              log.info("Sending old delegate process {} stop-acquiring message", oldDelegateProcess);
+              messageService.writeMessageToChannel(DELEGATE, oldDelegateProcess, DELEGATE_STOP_ACQUIRING);
+            });
+            log.info("Sending new delegate process {} go-ahead message", newDelegateProcess);
+            messageService.writeMessageToChannel(DELEGATE, newDelegateProcess, DELEGATE_GO_AHEAD);
+            success = true;
           }
         }
-        if (!success) {
-          log.error("Failed to start new delegate");
-          log.error("Watcher messages:");
-          messageService.logAllMessages(WATCHER, watcherProcess);
-          messageService.clearChannel(WATCHER, watcherProcess);
-          if (isNotBlank(newDelegateProcess)) {
-            log.error("Delegate messages:");
-            messageService.logAllMessages(DELEGATE, newDelegateProcess);
-            messageService.clearChannel(DELEGATE, newDelegateProcess);
-          }
-          newDelegate.getProcess().destroy();
-          newDelegate.getProcess().waitFor();
-          oldDelegateProcesses.forEach(oldDelegateProcess -> {
-            log.info("Sending old delegate process {} resume message", oldDelegateProcess);
-            messageService.writeMessageToChannel(DELEGATE, oldDelegateProcess, DELEGATE_RESUME);
-          });
+      }
+      if (!success) {
+        log.error("Failed to start new delegate");
+        log.error("Watcher messages:");
+        messageService.logAllMessages(WATCHER, watcherProcess);
+        messageService.clearChannel(WATCHER, watcherProcess);
+        if (isNotBlank(newDelegateProcess)) {
+          log.error("Delegate messages:");
+          messageService.logAllMessages(DELEGATE, newDelegateProcess);
+          messageService.clearChannel(DELEGATE, newDelegateProcess);
         }
-      } catch (Exception e) {
-        log.error("Exception while upgrading", e);
+        newDelegate.getProcess().destroy();
+        newDelegate.getProcess().waitFor();
         oldDelegateProcesses.forEach(oldDelegateProcess -> {
           log.info("Sending old delegate process {} resume message", oldDelegateProcess);
           messageService.writeMessageToChannel(DELEGATE, oldDelegateProcess, DELEGATE_RESUME);
         });
-        if (newDelegate != null) {
-          try {
-            log.warn("Killing new delegate");
-            newDelegate.getProcess().destroy();
-            newDelegate.getProcess().waitFor();
-          } catch (Exception ex) {
-            // ignore
-          }
-          try {
-            if (newDelegate.getProcess().isAlive()) {
-              log.warn("Killing new delegate forcibly");
-              newDelegate.getProcess().destroyForcibly();
-              if (newDelegate.getProcess() != null) {
-                newDelegate.getProcess().waitFor();
-              }
-            }
-          } catch (Exception ex) {
-            log.error("ALERT: Couldn't kill forcibly", ex);
-          }
-        }
-      } finally {
-        working.set(false);
       }
-    });
+    } catch (Exception e) {
+      log.error("Exception while upgrading", e);
+      oldDelegateProcesses.forEach(oldDelegateProcess -> {
+        log.info("Sending old delegate process {} resume message", oldDelegateProcess);
+        messageService.writeMessageToChannel(DELEGATE, oldDelegateProcess, DELEGATE_RESUME);
+      });
+      if (newDelegate != null) {
+        try {
+          log.warn("Killing new delegate");
+          newDelegate.getProcess().destroy();
+          newDelegate.getProcess().waitFor();
+        } catch (Exception ex) {
+          // ignore
+        }
+        try {
+          if (newDelegate.getProcess().isAlive()) {
+            log.warn("Killing new delegate forcibly");
+            newDelegate.getProcess().destroyForcibly();
+            if (newDelegate.getProcess() != null) {
+              newDelegate.getProcess().waitFor();
+            }
+          }
+        } catch (Exception ex) {
+          log.error("ALERT: Couldn't kill forcibly", ex);
+        }
+      }
+    } finally {
+      working.set(false);
+    }
   }
 
   private void shutdownDelegate(String delegateProcess) {
