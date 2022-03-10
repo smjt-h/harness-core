@@ -124,7 +124,7 @@ public class DelegateApplication {
     boolean watched = watcherProcess != null;
     if (watched) {
       log.info("***** sleep before sending new process message");
-      sleep(ofSeconds(120));
+      sleep(ofSeconds(720));
       log.info("***** sleep after sending new process message");
       log.info("Sending watcher {} new delegate process ID: {}", watcherProcess, processId);
       messageService.writeMessageToChannel(WATCHER, watcherProcess, NEW_DELEGATE, processId);
