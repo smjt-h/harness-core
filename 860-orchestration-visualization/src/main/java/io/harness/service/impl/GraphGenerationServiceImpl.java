@@ -102,7 +102,7 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
         log.debug(String.format(
             "[PMS_GRAPH_LOCK_TEST] Not able to take lock on graph generation for lockName - %s, returning early.",
             lockName));
-        return false;
+        return true;
       }
 
       return updateGraphUnderLock(planExecutionId);
