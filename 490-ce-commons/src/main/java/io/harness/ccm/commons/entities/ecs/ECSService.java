@@ -1,12 +1,19 @@
 package io.harness.ccm.commons.entities.ecs;
 
-import com.google.common.collect.ImmutableList;
 import io.harness.annotation.StoreIn;
 import io.harness.ccm.commons.beans.Resource;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.DbAliases;
-import io.harness.persistence.*;
+import io.harness.persistence.PersistentEntity;
+import io.harness.persistence.UuidAware;
+import io.harness.persistence.CreatedAtAware;
+import io.harness.persistence.UpdatedAtAware;
+import io.harness.persistence.AccountAccess;
+
+import com.google.common.collect.ImmutableList;
+import java.util.List;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -14,9 +21,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.FieldNameConstants;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
-
-import java.util.List;
-import java.util.Map;
 
 @Data
 @Builder
@@ -28,17 +32,16 @@ public final class ECSService implements PersistentEntity, UuidAware, CreatedAtA
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
-            .name("no_dup")
-            .unique(true)
-            .field(ECSServiceKeys.accountId)
-            .field(ECSServiceKeys.clusterId)
-            .field(ECSServiceKeys.serviceArn)
-            .field(ECSServiceKeys.serviceName)
-            .build())
+                 .name("accountId_clusterId_serviceArn_serviceName")
+                 .unique(true)
+                 .field(ECSServiceKeys.accountId)
+                 .field(ECSServiceKeys.clusterId)
+                 .field(ECSServiceKeys.serviceArn)
+                 .field(ECSServiceKeys.serviceName)
+                 .build())
         .build();
   }
-  @Id
-  String uuid;
+  @Id String uuid;
   String accountId;
   String clusterId;
   String serviceArn;
