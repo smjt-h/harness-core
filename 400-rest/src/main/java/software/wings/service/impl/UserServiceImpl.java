@@ -1315,6 +1315,7 @@ public class UserServiceImpl implements UserService {
 
     signupService.checkIfEmailIsValid(userInvite.getEmail());
 
+    log.info("LDAPIterator: email {} of account {} is valid", userInvite.getEmail(), userInvite.getAccountId());
     String accountId = userInvite.getAccountId();
     limitCheck(accountId, userInvite.getEmail());
 
