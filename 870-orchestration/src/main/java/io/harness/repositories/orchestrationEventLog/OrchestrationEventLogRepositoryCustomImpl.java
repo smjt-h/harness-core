@@ -29,7 +29,7 @@ public class OrchestrationEventLogRepositoryCustomImpl implements OrchestrationE
   @Override
   public List<OrchestrationEventLog> findUnprocessedEvents(String planExecutionId, long lastUpdatedAt) {
     Criteria criteria = Criteria.where(OrchestrationEventLogKeys.planExecutionId).is(planExecutionId);
-    criteria.andOperator(Criteria.where(OrchestrationEventLogKeys.createdAt).gt(lastUpdatedAt));
+    criteria.andOperator(Criteria.where(OrchestrationEventLogKeys.createdAt).gte(lastUpdatedAt));
     Query query = new Query(criteria).with(Sort.by(Sort.Order.asc("createdAt")));
     return mongoTemplate.find(query, OrchestrationEventLog.class);
   }
