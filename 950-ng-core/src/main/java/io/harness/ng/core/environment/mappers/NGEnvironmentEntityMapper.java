@@ -13,7 +13,6 @@ import static io.harness.ng.core.mapper.TagMapper.convertToMap;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.environment.beans.Environment;
-import io.harness.ng.core.environment.beans.EnvironmentType;
 import io.harness.ng.core.environment.yaml.NGEnvironmentConfig;
 import io.harness.ng.core.environment.yaml.NGEnvironmentInfoConfig;
 import io.harness.utils.YamlPipelineUtils;
@@ -41,14 +40,8 @@ public class NGEnvironmentEntityMapper {
                                      .projectIdentifier(environmentEntity.getProjectIdentifier())
                                      .description(environmentEntity.getDescription())
                                      .tags(convertToMap(environmentEntity.getTags()))
-                                     .type(checkEnvironmentType(environmentEntity.getType()))
+                                     .type(environmentEntity.getType())
                                      .build())
         .build();
-  }
-  public EnvironmentType checkEnvironmentType(EnvironmentType type) {
-    if (type == EnvironmentType.PreProduction) {
-      return EnvironmentType.NonProduction;
-    }
-    return type;
   }
 }
