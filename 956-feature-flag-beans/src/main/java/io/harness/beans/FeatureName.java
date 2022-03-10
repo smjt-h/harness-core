@@ -10,7 +10,6 @@ package io.harness.beans;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureFlag.Scope;
-
 import lombok.Getter;
 
 /**
@@ -325,13 +324,14 @@ public enum FeatureName {
   GIT_SIMPLIFICATION,
   CIE_HOSTED_BUILDS;
 
-  FeatureName() {
-    scope = Scope.PER_ACCOUNT;
-  }
+    FeatureName() {
+        scope = Scope.PER_ACCOUNT;
+    }
 
-  FeatureName(Scope scope) {
-    this.scope = scope;
-  }
+    FeatureName(Scope scope) {
+        this.scope = scope;
+    }
 
-  @Getter private FeatureFlag.Scope scope;
+    @Getter
+    private FeatureFlag.Scope scope;
 }

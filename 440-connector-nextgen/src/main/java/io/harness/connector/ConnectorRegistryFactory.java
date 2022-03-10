@@ -31,6 +31,7 @@ import io.harness.connector.heartbeat.PhysicalDataCenterConnectorValidationParam
 import io.harness.connector.heartbeat.ScmConnectorValidationParamsProvider;
 import io.harness.connector.heartbeat.ServiceNowValidationParamsProvider;
 import io.harness.connector.heartbeat.VaultConnectorValidationParamsProvider;
+import io.harness.connector.heartbeat.AzureBlobConnectorValidationParamsProvider;
 import io.harness.connector.mappers.ConnectorDTOToEntityMapper;
 import io.harness.connector.mappers.ConnectorEntityToDTOMapper;
 import io.harness.connector.mappers.appdynamicsmapper.AppDynamicsDTOToEntity;
@@ -89,18 +90,7 @@ import io.harness.connector.mappers.pdcconnector.PhysicalDataCenterDTOToEntity;
 import io.harness.connector.mappers.pdcconnector.PhysicalDataCenterEntityToDTO;
 import io.harness.connector.mappers.prometheusmapper.PrometheusDTOToEntity;
 import io.harness.connector.mappers.prometheusmapper.PrometheusEntityToDTO;
-import io.harness.connector.mappers.secretmanagermapper.AwsKmsDTOToEntity;
-import io.harness.connector.mappers.secretmanagermapper.AwsKmsEntityToDTO;
-import io.harness.connector.mappers.secretmanagermapper.AwsSecretManagerDTOToEntity;
-import io.harness.connector.mappers.secretmanagermapper.AwsSecretManagerEntityToDTO;
-import io.harness.connector.mappers.secretmanagermapper.AzureKeyVaultDTOToEntity;
-import io.harness.connector.mappers.secretmanagermapper.AzureKeyVaultEntityToDTO;
-import io.harness.connector.mappers.secretmanagermapper.GcpKmsDTOToEntity;
-import io.harness.connector.mappers.secretmanagermapper.GcpKmsEntityToDTO;
-import io.harness.connector.mappers.secretmanagermapper.LocalDTOToEntity;
-import io.harness.connector.mappers.secretmanagermapper.LocalEntityToDTO;
-import io.harness.connector.mappers.secretmanagermapper.VaultDTOToEntity;
-import io.harness.connector.mappers.secretmanagermapper.VaultEntityToDTO;
+import io.harness.connector.mappers.secretmanagermapper.*;
 import io.harness.connector.mappers.servicenow.ServiceNowDTOtoEntity;
 import io.harness.connector.mappers.servicenow.ServiceNowEntityToDTO;
 import io.harness.connector.mappers.splunkconnectormapper.SplunkDTOToEntity;
@@ -191,6 +181,10 @@ public class ConnectorRegistryFactory {
         new ConnectorRegistrar(ConnectorCategory.SECRET_MANAGER, SecretManagerConnectorValidator.class,
             AzureKeyVaultConnectorValidationParamsProvider.class, AzureKeyVaultDTOToEntity.class,
             AzureKeyVaultEntityToDTO.class, NotSupportedValidationHandler.class));
+    registrar.put(ConnectorType.AZURE_BLOB,
+        new ConnectorRegistrar(ConnectorCategory.SECRET_MANAGER, SecretManagerConnectorValidator.class,
+            AzureBlobConnectorValidationParamsProvider.class, AzureBlobDTOToEntity.class, AzureBlobEntityToDTO.class,
+            NotSupportedValidationHandler.class));
     registrar.put(ConnectorType.GCP_KMS,
         new ConnectorRegistrar(ConnectorCategory.SECRET_MANAGER, SecretManagerConnectorValidator.class,
             GcpKmsConnectorValidationParamsProvider.class, GcpKmsDTOToEntity.class, GcpKmsEntityToDTO.class,
