@@ -122,7 +122,7 @@ public class PipelineResource implements YamlSchemaResource {
   private final PmsFeatureFlagHelper pmsFeatureFlagHelper;
 
   @POST
-  @ApiOperation(value = "Create a Pipeline", nickname = "createPipeline")
+  @ApiOperation(value = "Create a Pipeli", nickname = "createPipeline")
   @Operation(operationId = "postPipeline", summary = "Create a Pipeline",
       responses =
       {
