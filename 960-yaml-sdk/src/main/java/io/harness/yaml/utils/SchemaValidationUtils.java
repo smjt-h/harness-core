@@ -147,6 +147,7 @@ public class SchemaValidationUtils {
         .build();
   }
 
+  // If more specific error is present then we can ignore an error message.
   public Set<ValidationMessage> filterErrorsIfMoreSpecificErrorIsPresent(
       Collection<ValidationMessage> validationMessages) {
     Set<String> errorLocations =
@@ -159,7 +160,7 @@ public class SchemaValidationUtils {
   private boolean checkIfMoreSpecificErrorIsPresent(Collection<String> errorLocations, ValidationMessage message) {
     if (message.getCode().equals(ENUM_SCHEMA_ERROR_CODE)) {
       String path = message.getPath();
-      // Currently, filtering the .type errors only. Will keep adding more cases here.
+      // Currently, filtering the ".type" errors only. Will keep adding more cases here.
       if (path.endsWith(".type")) {
         String pathTillNode = path.substring(0, path.length() - 5);
         if (checkIfNodePathIsPresentInAllPaths(errorLocations, pathTillNode, path)) {
@@ -173,6 +174,7 @@ public class SchemaValidationUtils {
   private boolean checkIfNodePathIsPresentInAllPaths(
       Collection<String> allPaths, String pathTillNode, String completePath) {
     for (String path : allPaths) {
+      // Checking if pathTillNode's children is present in errors.
       if (path.startsWith(pathTillNode) && !path.equals(completePath)) {
         return true;
       }
