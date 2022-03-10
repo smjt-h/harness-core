@@ -35,7 +35,7 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("serverlessAwsLambdaDeployStepNode")
 @RecasterAlias("io.harness.cdng.serverless.ServerlessAwsLambdaDeployStepNode")
 public class ServerlessAwsLambdaDeployStepNode extends CdAbstractStepNode {
-  @JsonProperty("type") @NotNull StepType type = StepType.serverlessAwsLambdaDeploy;
+  @JsonProperty("type") @NotNull StepType type = StepType.ServerlessAwsLambdaDeploy;
   @JsonProperty("spec")
   @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
   ServerlessAwsLambdaDeployStepInfo serverlessAwsLambdaDeployStepInfo;
@@ -51,7 +51,7 @@ public class ServerlessAwsLambdaDeployStepNode extends CdAbstractStepNode {
   }
 
   enum StepType {
-    serverlessAwsLambdaDeploy(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_DEPLOY);
+    ServerlessAwsLambdaDeploy(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_DEPLOY);
     @Getter String name;
     StepType(String name) {
       this.name = name;

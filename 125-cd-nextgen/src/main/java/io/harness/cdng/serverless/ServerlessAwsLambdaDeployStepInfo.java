@@ -47,7 +47,7 @@ public class ServerlessAwsLambdaDeployStepInfo
   }
   @Override
   public StepType getStepType() {
-    return ServerlessAwsLambdaDeployAwsLambdaStep.STEP_TYPE;
+    return ServerlessAwsLambdaDeployStep.STEP_TYPE;
   }
 
   @Override

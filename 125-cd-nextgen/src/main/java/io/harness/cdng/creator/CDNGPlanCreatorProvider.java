@@ -278,8 +278,8 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
                                       .setName("Serverless Aws Lambda Rollback")
                                       .setType(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK)
                                       .setStepMetaData(StepMetaData.newBuilder()
-                                                           .addCategory("Serverless Aws Lambda")
-                                                           .setFolderPath("Serverless Aws Lambda")
+                                                           .addCategory("ServerlessAwsLambda")
+                                                           .setFolderPath("ServerlessAwsLambda")
                                                            .build())
                                       .setFeatureFlag(FeatureName.SERVERLESS_SUPPORT.name())
                                       .build();

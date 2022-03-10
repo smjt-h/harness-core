@@ -35,7 +35,7 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("serverlessAwsLambdaRollbackStepNode")
 @RecasterAlias("io.harness.cdng.serverless.ServerlessAwsLambdaRollbackStepNode")
 public class ServerlessAwsLambdaRollbackStepNode extends CdAbstractStepNode {
-  @JsonProperty("type") @NotNull StepType type = StepType.serverlessAwsLambdaRollback;
+  @JsonProperty("type") @NotNull StepType type = StepType.ServerlessAwsLambdaRollback;
   @JsonProperty("spec")
   @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
   ServerlessAwsLambdaRollbackStepInfo serverlessAwsLambdaRollbackStepInfo;
@@ -51,7 +51,7 @@ public class ServerlessAwsLambdaRollbackStepNode extends CdAbstractStepNode {
   }
 
   enum StepType {
-    serverlessAwsLambdaRollback(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK);
+    ServerlessAwsLambdaRollback(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK);
     @Getter String name;
     StepType(String name) {
       this.name = name;

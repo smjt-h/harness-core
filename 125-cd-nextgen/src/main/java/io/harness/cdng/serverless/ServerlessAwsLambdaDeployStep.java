@@ -53,7 +53,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 @OwnedBy(HarnessTeam.CDP)
 @Slf4j
-public class ServerlessAwsLambdaDeployAwsLambdaStep
+public class ServerlessAwsLambdaDeployStep
     extends TaskChainExecutableWithRollbackAndRbac implements ServerlessAwsLambdaStepExecutor {
   public static final StepType STEP_TYPE = StepType.newBuilder()
                                                .setType(ExecutionNodeType.SERVERLESS_AWS_LAMBDA_DEPLOY.getYamlType())
