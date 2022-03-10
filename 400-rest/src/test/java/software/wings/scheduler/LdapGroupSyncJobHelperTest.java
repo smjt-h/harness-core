@@ -89,6 +89,30 @@ public class LdapGroupSyncJobHelperTest extends CategoryTest {
   @Test
   @Owner(developers = UJJAWAL)
   @Category(UnitTests.class)
+  public void shouldSyncUserGroupWithNullInputs() {
+    UserGroup userGroup = mock(UserGroup.class);
+    Account account = new Account();
+    account.setUuid(UUIDGenerator.generateUuid());
+    when(userGroup.getName()).thenReturn("userGroupName");
+    when(userGroup.getAccountId()).thenReturn(UUIDGenerator.generateUuid());
+    userGroup.setAccountId(UUIDGenerator.generateUuid());
+    doReturn(LdapGroupResponse.builder().selectable(true).build())
+        .when(ldapGroupSyncJobHelper)
+        .fetchGroupDetails(any(), any(), any());
+    doReturn(userGroup).when(ldapGroupSyncJobHelper).syncUserGroupMetadata(any(), any());
+    doReturn(true).when(ldapGroupSyncJobHelper).validateUserGroupStates(any());
+    boolean exceptionThrown = false;
+    try {
+      ldapGroupSyncJobHelper.syncUserGroupMembers(account.getUuid(), null, null);
+    } catch (Exception e) {
+      exceptionThrown = true;
+    }
+    assertThat(exceptionThrown).isEqualTo(false);
+  }
+
+  @Test
+  @Owner(developers = UJJAWAL)
+  @Category(UnitTests.class)
   public void testLdapSyncTimeout() {
     long NEGATIVE_TIME = -10000;
     long HALF_MINUTE = 30 * 1000;
