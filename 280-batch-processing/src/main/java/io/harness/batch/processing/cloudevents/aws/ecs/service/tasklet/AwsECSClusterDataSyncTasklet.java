@@ -383,15 +383,14 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
               }
             }
 
-            ECSService ecsService =
-                ECSService.builder()
-                    .accountId(accountId)
-                    .clusterId(clusterId)
-                    .serviceArn(metaData.get(InstanceMetaDataConstants.ECS_SERVICE_ARN))
-                    .serviceName(metaData.get(InstanceMetaDataConstants.ECS_SERVICE_NAME))
-                    .resource(resource)
-                    .labels(labels)
-                    .build();
+            ECSService ecsService = ECSService.builder()
+                                        .accountId(accountId)
+                                        .clusterId(clusterId)
+                                        .serviceArn(metaData.get(InstanceMetaDataConstants.ECS_SERVICE_ARN))
+                                        .serviceName(metaData.get(InstanceMetaDataConstants.ECS_SERVICE_NAME))
+                                        .resource(resource)
+                                        .labels(labels)
+                                        .build();
 
             Instant startInstant = task.getPullStartedAt().toInstant();
             InstanceData instanceData =
