@@ -231,6 +231,7 @@ import software.wings.beans.StateExecutionElement;
 import software.wings.beans.StateExecutionInterrupt;
 import software.wings.beans.User;
 import software.wings.beans.Variable;
+import software.wings.beans.VariableType;
 import software.wings.beans.Workflow;
 import software.wings.beans.WorkflowExecution;
 import software.wings.beans.WorkflowExecution.WorkflowExecutionKeys;
@@ -3640,6 +3641,15 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
         wingsPersistence.createQuery(StateExecutionInstance.class).filter("_id", stateExecutionInstance.getUuid()), ops,
         HPersistence.returnNewOptions);
 
+    UpdateOperations<WorkflowExecution> executionUpdates =
+        wingsPersistence.createUpdateOperations(WorkflowExecution.class);
+    executionUpdates.set(WorkflowExecutionKeys.envIds, pipelineExecution.getEnvIds());
+    executionUpdates.set(WorkflowExecutionKeys.serviceIds, pipelineExecution.getServiceIds());
+    executionUpdates.set(WorkflowExecutionKeys.infraDefinitionIds, pipelineExecution.getInfraDefinitionIds());
+    wingsPersistence.findAndModify(
+        wingsPersistence.createQuery(WorkflowExecution.class).filter("_id", pipelineExecutionId), executionUpdates,
+        HPersistence.returnNewOptions);
+
     // Replace with WF variables and not pipeline Vars.
     ResponseData responseData = new ContinuePipelineResponseData(wfVariables, null);
     waitNotifyEngine.doneWith(
@@ -3841,7 +3851,80 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     List<Artifact> existingArtifacts = pipelineExecution.getArtifacts();
     List<Artifact> newArtifacts = executionArgs.getArtifacts();
     validateArtifactOverrides(existingArtifacts, newArtifacts);
+
+    updateServiceInfraEnvInPipelineExecution(pipelineExecution, wfVariables, workflowVariables, envIdInStage);
     return wfVariables;
+  }
+
+  private void updateServiceInfraEnvInPipelineExecution(WorkflowExecution pipelineExecution,
+      Map<String, String> wfVariables, List<Variable> workflowVariables, String envIdInStage) {
+    if (pipelineExecution.getEnvIds() == null) {
+      List<String> envIds = new ArrayList<>();
+      envIds.add(envIdInStage);
+      pipelineExecution.setEnvIds(envIds);
+    } else {
+      if (!pipelineExecution.getEnvIds().contains(envIdInStage)) {
+        pipelineExecution.getEnvIds().add(envIdInStage);
+      }
+    }
+
+    updateServiceIdInExecution(pipelineExecution, wfVariables, workflowVariables);
+
+    updateInfraIdInExecution(pipelineExecution, wfVariables, workflowVariables);
+  }
+
+  private void updateInfraIdInExecution(
+      WorkflowExecution pipelineExecution, Map<String, String> wfVariables, List<Variable> workflowVariables) {
+    List<String> infraVariableNames =
+        workflowVariables.stream()
+            .filter(v -> EntityType.INFRASTRUCTURE_DEFINITION.equals(v.obtainEntityType()))
+            .map(Variable::getName)
+            .collect(toList());
+
+    List<String> infraIdsFromRuntime = infraVariableNames.stream().map(wfVariables::get).collect(toList());
+
+    if (isNotEmpty(infraIdsFromRuntime)) {
+      if (pipelineExecution.getInfraDefinitionIds() == null) {
+        pipelineExecution.setInfraDefinitionIds(infraIdsFromRuntime);
+      } else {
+        infraIdsFromRuntime.forEach(infraId -> {
+          if (infraId.contains(",")) {
+            String[] multiInfraIds = infraId.split(",");
+            for (String infra : multiInfraIds) {
+              if (!pipelineExecution.getInfraDefinitionIds().contains(infra)) {
+                pipelineExecution.getInfraDefinitionIds().add(infra);
+              }
+            }
+          } else {
+            if (!pipelineExecution.getInfraDefinitionIds().contains(infraId)) {
+              pipelineExecution.getInfraDefinitionIds().add(infraId);
+            }
+          }
+        });
+      }
+    }
+  }
+
+  private void updateServiceIdInExecution(
+      WorkflowExecution pipelineExecution, Map<String, String> wfVariables, List<Variable> workflowVariables) {
+    List<String> serviceVariableNames = workflowVariables.stream()
+                                            .filter(v -> EntityType.SERVICE.equals(v.obtainEntityType()))
+                                            .map(Variable::getName)
+                                            .collect(toList());
+
+    List<String> serviceIdsFromRuntime = serviceVariableNames.stream().map(wfVariables::get).collect(toList());
+
+    if (isNotEmpty(serviceIdsFromRuntime)) {
+      if (pipelineExecution.getServiceIds() == null) {
+        pipelineExecution.setServiceIds(serviceIdsFromRuntime);
+      } else {
+        serviceIdsFromRuntime.forEach(serviceId -> {
+          if (!pipelineExecution.getServiceIds().contains(serviceId)) {
+            pipelineExecution.getServiceIds().add(serviceId);
+          }
+        });
+      }
+    }
   }
 
   private void validateArtifactOverrides(List<Artifact> existingArtifacts, List<Artifact> newArtifacts) {
