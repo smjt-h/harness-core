@@ -40,6 +40,8 @@ import io.harness.cdng.creator.plan.steps.TerraformApplyStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.TerraformDestroyStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.TerraformPlanStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.TerraformRollbackStepPlanCreator;
+import io.harness.cdng.creator.plan.steps.serverless.ServerlessAwsLambdaDeployStepPlanCreator;
+import io.harness.cdng.creator.plan.steps.serverless.ServerlessAwsLambdaRollbackStepPlanCreator;
 import io.harness.cdng.creator.variables.DeploymentStageVariableCreator;
 import io.harness.cdng.creator.variables.HelmStepVariableCreator;
 import io.harness.cdng.creator.variables.K8sStepVariableCreator;
@@ -101,6 +103,8 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     planCreators.add(new ManifestsPlanCreator());
     planCreators.add(new IndividualManifestPlanCreator());
     planCreators.add(new CDStepsPlanCreator());
+    planCreators.add(new ServerlessAwsLambdaDeployStepPlanCreator());
+    planCreators.add(new ServerlessAwsLambdaRollbackStepPlanCreator());
     injectorUtils.injectMembers(planCreators);
     return planCreators;
   }

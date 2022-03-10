@@ -73,6 +73,8 @@ import io.harness.cdng.provision.terraform.TerraformApplyStepNode;
 import io.harness.cdng.provision.terraform.TerraformDestroyStepNode;
 import io.harness.cdng.provision.terraform.TerraformPlanStepNode;
 import io.harness.cdng.provision.terraform.TerraformRollbackStepNode;
+import io.harness.cdng.serverless.ServerlessAwsLambdaDeployStepNode;
+import io.harness.cdng.serverless.ServerlessAwsLambdaRollbackStepNode;
 import io.harness.connector.ConnectorModule;
 import io.harness.connector.ConnectorResourceClientModule;
 import io.harness.connector.events.ConnectorEventHandler;
@@ -314,6 +316,8 @@ public class NextGenModule extends AbstractModule {
       add(TerraformRollbackStepNode.class);
       add(HelmDeployStepNode.class);
       add(HelmRollbackStepNode.class);
+      add(ServerlessAwsLambdaDeployStepNode.class);
+      add(ServerlessAwsLambdaRollbackStepNode.class);
     }
   };
   private final NextGenConfiguration appConfig;

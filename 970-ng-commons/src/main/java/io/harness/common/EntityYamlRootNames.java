@@ -91,4 +91,6 @@ public class EntityYamlRootNames {
   public static String BUILD_AND_PUSH_GCR = "BuildAndPushGCR";
   public static String BUILD_AND_PUSH_ECR = "BuildAndPushECR";
   public static String BUILD_AND_PUSH_DOCKER_REGISTRY = "BuildAndPushDockerRegistry";
+  public static String SERVERLESS_AWS_LAMBDA_DEPLOY = "ServerlessAwsLambdaDeploy";
+  public static String SERVERLESS_AWS_LAMBDA_ROLLBACK = "ServerlessAwsLambdaRollback";
 }

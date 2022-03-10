@@ -81,4 +81,6 @@ public interface EntityTypeConstants {
   String POLICY_STEP = "PolicyStep";
   String SERVICENOW_CREATE = "ServiceNowCreate";
   String SERVICENOW_UPDATE = "ServiceNowUpdate";
+  String SERVERLESS_AWS_LAMBDA_DEPLOY = "ServerlessAwsLambdaDeploy";
+  String SERVERLESS_AWS_LAMBDA_ROLLBACK = "ServerlessAwsLambdaRollback";
 }

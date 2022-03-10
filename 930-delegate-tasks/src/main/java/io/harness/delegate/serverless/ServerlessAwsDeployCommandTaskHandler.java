@@ -56,17 +56,15 @@ public class ServerlessAwsDeployCommandTaskHandler extends ServerlessCommandTask
   private long timeoutInMillis;
   private String previousDeployTimeStamp;
   private static final String HOME_DIRECTORY = "./repository/serverless/home";
-  private
 
-      @Override
-      protected ServerlessCommandResponse executeTaskInternal(ServerlessCommandRequest serverlessCommandRequest,
-          ServerlessDelegateTaskParams serverlessDelegateTaskParams, ILogStreamingTaskClient iLogStreamingTaskClient,
-          CommandUnitsProgress commandUnitsProgress) throws Exception {
+  @Override
+  protected ServerlessCommandResponse executeTaskInternal(ServerlessCommandRequest serverlessCommandRequest,
+      ServerlessDelegateTaskParams serverlessDelegateTaskParams, ILogStreamingTaskClient iLogStreamingTaskClient,
+      CommandUnitsProgress commandUnitsProgress) throws Exception {
     if (!(serverlessCommandRequest instanceof ServerlessDeployRequest)) {
       throw new InvalidArgumentsException(
           Pair.of("serverlessCommandRequest", "Must be instance of ServerlessDeployRequest"));
     }
-
     ServerlessDeployRequest serverlessDeployRequest = (ServerlessDeployRequest) serverlessCommandRequest;
     if (!(serverlessDeployRequest.getServerlessInfraConfig() instanceof ServerlessAwsLambdaInfraConfig)) {
       throw new InvalidArgumentsException(
