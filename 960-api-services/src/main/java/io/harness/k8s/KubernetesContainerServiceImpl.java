@@ -58,6 +58,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
+import static me.snowdrop.istio.api.internal.IstioSpecRegistry.getCRDInfo;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -107,7 +108,6 @@ import io.fabric8.kubernetes.api.model.ContainerStateRunning;
 import io.fabric8.kubernetes.api.model.ContainerStateTerminated;
 import io.fabric8.kubernetes.api.model.ContainerStateWaiting;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
-import io.fabric8.kubernetes.api.model.DoneableReplicationController;
 import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
@@ -121,29 +121,26 @@ import io.fabric8.kubernetes.api.model.ReplicationControllerList;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinition;
-import io.fabric8.kubernetes.api.model.apps.DaemonSet;
-import io.fabric8.kubernetes.api.model.apps.DaemonSetList;
-import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.apps.DeploymentList;
-import io.fabric8.kubernetes.api.model.apps.DoneableDaemonSet;
-import io.fabric8.kubernetes.api.model.apps.DoneableDeployment;
-import io.fabric8.kubernetes.api.model.apps.DoneableReplicaSet;
-import io.fabric8.kubernetes.api.model.apps.DoneableStatefulSet;
-import io.fabric8.kubernetes.api.model.apps.ReplicaSet;
-import io.fabric8.kubernetes.api.model.apps.ReplicaSetList;
 import io.fabric8.kubernetes.api.model.apps.StatefulSet;
 import io.fabric8.kubernetes.api.model.apps.StatefulSetList;
 import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
+import io.fabric8.kubernetes.api.model.extensions.DaemonSet;
+import io.fabric8.kubernetes.api.model.extensions.DaemonSetList;
+import io.fabric8.kubernetes.api.model.extensions.Deployment;
+import io.fabric8.kubernetes.api.model.extensions.DeploymentList;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.extensions.ReplicaSet;
+import io.fabric8.kubernetes.api.model.extensions.ReplicaSetList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.kubernetes.client.NamespacedKubernetesClient;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import io.fabric8.kubernetes.client.dsl.ScalableResource;
+import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.api.model.DeploymentConfig;
 import io.fabric8.openshift.api.model.DeploymentConfigList;
-import io.fabric8.openshift.api.model.DoneableDeploymentConfig;
 import io.fabric8.openshift.client.dsl.DeployableScalableResource;
 import io.github.resilience4j.retry.Retry;
 import io.kubernetes.client.openapi.ApiClient;
@@ -200,11 +197,10 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import me.snowdrop.istio.api.IstioResource;
 import me.snowdrop.istio.api.internal.IstioSpecRegistry;
+import me.snowdrop.istio.api.internal.IstioSpecRegistry.CRDInfo;
 import me.snowdrop.istio.api.networking.v1alpha3.DestinationRule;
 import me.snowdrop.istio.api.networking.v1alpha3.DestinationRuleBuilder;
-import me.snowdrop.istio.api.networking.v1alpha3.DestinationWeight;
-import me.snowdrop.istio.api.networking.v1alpha3.DoneableDestinationRule;
-import me.snowdrop.istio.api.networking.v1alpha3.DoneableVirtualService;
+import me.snowdrop.istio.api.networking.v1alpha3.HTTPRouteDestination;
 import me.snowdrop.istio.api.networking.v1alpha3.VirtualService;
 import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceBuilder;
 import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceSpec;
@@ -1036,8 +1032,8 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
     return podTemplateSpec;
   }
 
-  private NonNamespaceOperation<ReplicationController, ReplicationControllerList, DoneableReplicationController,
-      RollableScalableResource<ReplicationController, DoneableReplicationController>>
+  private NonNamespaceOperation<ReplicationController, ReplicationControllerList,
+      RollableScalableResource<ReplicationController>>
   rcOperations(KubernetesConfig kubernetesConfig, String namespace) {
     namespace = isNotBlank(namespace) ? namespace : kubernetesConfig.getNamespace();
     return kubernetesHelperService.getKubernetesClient(kubernetesConfig)
@@ -1045,9 +1041,8 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
         .inNamespace(namespace);
   }
 
-  private NonNamespaceOperation<Deployment, DeploymentList, DoneableDeployment,
-      ScalableResource<Deployment, DoneableDeployment>>
-  deploymentOperations(KubernetesConfig kubernetesConfig, String namespace) {
+  private NonNamespaceOperation<Deployment, DeploymentList, RollableScalableResource<Deployment>> deploymentOperations(
+      KubernetesConfig kubernetesConfig, String namespace) {
     namespace = isNotBlank(namespace) ? namespace : kubernetesConfig.getNamespace();
     return kubernetesHelperService.getKubernetesClient(kubernetesConfig)
         .extensions()
@@ -1055,9 +1050,8 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
         .inNamespace(namespace);
   }
 
-  private NonNamespaceOperation<ReplicaSet, ReplicaSetList, DoneableReplicaSet,
-      RollableScalableResource<ReplicaSet, DoneableReplicaSet>>
-  replicaOperations(KubernetesConfig kubernetesConfig, String namespace) {
+  private NonNamespaceOperation<ReplicaSet, ReplicaSetList, RollableScalableResource<ReplicaSet>> replicaOperations(
+      KubernetesConfig kubernetesConfig, String namespace) {
     namespace = isNotBlank(namespace) ? namespace : kubernetesConfig.getNamespace();
     return kubernetesHelperService.getKubernetesClient(kubernetesConfig)
         .extensions()
@@ -1065,8 +1059,8 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
         .inNamespace(namespace);
   }
 
-  private NonNamespaceOperation<DaemonSet, DaemonSetList, DoneableDaemonSet, Resource<DaemonSet, DoneableDaemonSet>>
-  daemonOperations(KubernetesConfig kubernetesConfig, String namespace) {
+  private NonNamespaceOperation<DaemonSet, DaemonSetList, Resource<DaemonSet>> daemonOperations(
+      KubernetesConfig kubernetesConfig, String namespace) {
     namespace = isNotBlank(namespace) ? namespace : kubernetesConfig.getNamespace();
     return kubernetesHelperService.getKubernetesClient(kubernetesConfig)
         .extensions()
@@ -1074,15 +1068,13 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
         .inNamespace(namespace);
   }
 
-  private NonNamespaceOperation<StatefulSet, StatefulSetList, DoneableStatefulSet,
-      RollableScalableResource<StatefulSet, DoneableStatefulSet>>
-  statefulOperations(KubernetesConfig kubernetesConfig, String namespace) {
+  private NonNamespaceOperation<StatefulSet, StatefulSetList, RollableScalableResource<StatefulSet>> statefulOperations(
+      KubernetesConfig kubernetesConfig, String namespace) {
     namespace = isNotBlank(namespace) ? namespace : kubernetesConfig.getNamespace();
     return kubernetesHelperService.getKubernetesClient(kubernetesConfig).apps().statefulSets().inNamespace(namespace);
   }
 
-  private NonNamespaceOperation<DeploymentConfig, DeploymentConfigList, DoneableDeploymentConfig,
-      DeployableScalableResource<DeploymentConfig, DoneableDeploymentConfig>>
+  private NonNamespaceOperation<DeploymentConfig, DeploymentConfigList, DeployableScalableResource<DeploymentConfig>>
   deploymentConfigOperations(KubernetesConfig kubernetesConfig, String namespace) {
     namespace = isNotBlank(namespace) ? namespace : kubernetesConfig.getNamespace();
     return kubernetesHelperService.getOpenShiftClient(kubernetesConfig).deploymentConfigs().inNamespace(namespace);
@@ -1390,9 +1382,7 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
     try {
       VirtualService virtualService = new VirtualServiceBuilder().build();
 
-      return kubernetesClient
-          .customResources(getCustomResourceDefinition(kubernetesClient, virtualService), VirtualService.class,
-              KubernetesResourceList.class, DoneableVirtualService.class)
+      return kubernetesClient.resources(VirtualService.class, KubernetesResourceList.class)
           .inNamespace(kubernetesConfig.getNamespace())
           .withName(name)
           .get();
@@ -1407,10 +1397,7 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
     KubernetesClient kubernetesClient = kubernetesHelperService.getKubernetesClient(kubernetesConfig);
     try {
       DestinationRule destinationRule = new DestinationRuleBuilder().build();
-
-      return kubernetesClient
-          .customResources(getCustomResourceDefinition(kubernetesClient, destinationRule), DestinationRule.class,
-              KubernetesResourceList.class, DoneableDestinationRule.class)
+      return kubernetesClient.resources(DestinationRule.class, KubernetesResourceList.class)
           .inNamespace(kubernetesConfig.getNamespace())
           .withName(name)
           .get();
@@ -1420,16 +1407,42 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
     }
   }
 
+  //  @Override
+  //  public CustomResourceDefinition getCustomResourceDefinition(KubernetesClient client, IstioResource resource) {
+  //    final Optional<String> crdName = IstioSpecRegistry.getCRDNameFor(resource.getKind().toLowerCase());
+  //    final CustomResourceDefinition customResourceDefinition =
+  //        client.customResourceDefinitions().withName(crdName.get()).get();
+  //    client.customResources()
+  //
+  //    if (customResourceDefinition == null) {
+  //      throw new IllegalArgumentException(
+  //          format("Custom Resource Definition %s is not found in cluster %s", crdName, client.getMasterUrl()));
+  //    }
+  //    return customResourceDefinition;
+  //  }
+
   @Override
   public CustomResourceDefinition getCustomResourceDefinition(KubernetesClient client, IstioResource resource) {
-    final Optional<String> crdName = IstioSpecRegistry.getCRDNameFor(resource.getKind().toLowerCase());
+    final String crdName = getCRDNameFor(resource.getKind(), resource.getApiVersion());
     final CustomResourceDefinition customResourceDefinition =
-        client.customResourceDefinitions().withName(crdName.get()).get();
+        client.apiextensions().v1().customResourceDefinitions().withName(crdName).get();
     if (customResourceDefinition == null) {
       throw new IllegalArgumentException(
           format("Custom Resource Definition %s is not found in cluster %s", crdName, client.getMasterUrl()));
     }
     return customResourceDefinition;
+  }
+
+  public static String getCRDNameFor(String kind, String version) {
+    CRDInfo crdInfo =
+        getCRDInfo(kind, version.substring(version.lastIndexOf('/') + 1))
+            .orElseThrow(
+                () -> new IllegalArgumentException(format("%s/%s is not a known Istio resource.", kind, version)));
+
+    String crdNameSuffix = crdInfo.getAPIVersion().lastIndexOf("/") == -1
+        ? EMPTY
+        : crdInfo.getAPIVersion().substring(0, crdInfo.getAPIVersion().lastIndexOf("/"));
+    return isEmpty(crdNameSuffix) ? EMPTY : format("%s.%s", crdInfo.getPlural(), crdNameSuffix);
   }
 
   @Override
@@ -1480,7 +1493,7 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
         .getRoute()
         .stream()
         .filter(dw -> Integer.toString(revision.get()).equals(dw.getDestination().getSubset()))
-        .map(DestinationWeight::getWeight)
+        .map(HTTPRouteDestination::getWeight)
         .findFirst()
         .orElse(0);
   }
@@ -1498,9 +1511,9 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
     if (isEmpty(virtualServiceSpec.getHttp()) || isEmpty(virtualServiceSpec.getHttp().get(0).getRoute())) {
       return new HashMap<>();
     }
-    List<DestinationWeight> destinationWeights = virtualServiceSpec.getHttp().get(0).getRoute();
+    List<HTTPRouteDestination> destinationWeights = virtualServiceSpec.getHttp().get(0).getRoute();
     return destinationWeights.stream().collect(
-        toMap(dw -> controllerNamePrefix + DASH + dw.getDestination().getSubset(), DestinationWeight::getWeight));
+        toMap(dw -> controllerNamePrefix + DASH + dw.getDestination().getSubset(), HTTPRouteDestination::getWeight));
   }
 
   @Override
@@ -1837,7 +1850,8 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
       Set<String> podNames = new LinkedHashSet<>(originalPodNames);
       podNames.addAll(currentPods.stream().map(pod -> pod.getMetadata().getName()).collect(toList()));
 
-      List<Event> newEvents = kubernetesClient.events()
+      List<Event> newEvents = kubernetesClient.v1()
+                                  .events()
                                   .inNamespace(namespace)
                                   .list()
                                   .getItems()
@@ -1869,7 +1883,8 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
   private void showControllerEvents(KubernetesClient kubernetesClient, String namespace, String controllerName,
       Set<String> seenEvents, long startTime, LogCallback executionLogCallback) {
     try {
-      List<Event> newEvents = kubernetesClient.events()
+      List<Event> newEvents = kubernetesClient.v1()
+                                  .events()
                                   .inNamespace(namespace)
                                   .list()
                                   .getItems()

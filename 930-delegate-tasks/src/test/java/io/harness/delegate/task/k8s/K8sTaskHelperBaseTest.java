@@ -231,7 +231,7 @@ import junitparams.JUnitParamsRunner;
 import lombok.extern.slf4j.Slf4j;
 import me.snowdrop.istio.api.networking.v1alpha3.Destination;
 import me.snowdrop.istio.api.networking.v1alpha3.DestinationBuilder;
-import me.snowdrop.istio.api.networking.v1alpha3.DestinationWeight;
+import me.snowdrop.istio.api.networking.v1alpha3.HTTPRouteDestination;
 import me.snowdrop.istio.api.networking.v1alpha3.DestinationWeightBuilder;
 import me.snowdrop.istio.api.networking.v1alpha3.HTTPRoute;
 import me.snowdrop.istio.api.networking.v1alpha3.HTTPRouteBuilder;
@@ -1602,9 +1602,9 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
             IstioDestinationWeight.builder().destination("host: test\nsubset: default").weight("50").build());
 
     k8sTaskHelperBase.updateVirtualServiceWithDestinationWeights(destinationWeights, service, executionLogCallback);
-    List<DestinationWeight> routes = service.getSpec().getHttp().get(0).getRoute();
-    assertThat(routes.stream().map(DestinationWeight::getWeight)).containsExactly(10, 40, 50);
-    assertThat(routes.stream().map(DestinationWeight::getDestination).map(Destination::getSubset))
+    List<HTTPRouteDestination> routes = service.getSpec().getHttp().get(0).getRoute();
+    assertThat(routes.stream().map(HTTPRouteDestination::getWeight)).containsExactly(10, 40, 50);
+    assertThat(routes.stream().map(HTTPRouteDestination::getDestination).map(Destination::getSubset))
         .containsExactly(HarnessLabelValues.trackCanary, HarnessLabelValues.trackStable, "default");
   }
 
@@ -1680,9 +1680,9 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
     doReturn(asList(service1)).when(resource).get();
     VirtualService result = k8sTaskHelperBase.updateVirtualServiceManifestFilesWithRoutesForCanary(
         resources, KubernetesConfig.builder().build(), executionLogCallback);
-    List<DestinationWeight> routes = result.getSpec().getHttp().get(0).getRoute();
-    assertThat(routes.stream().map(DestinationWeight::getWeight)).containsExactly(100, 0);
-    assertThat(routes.stream().map(DestinationWeight::getDestination).map(Destination::getSubset))
+    List<HTTPRouteDestination> routes = result.getSpec().getHttp().get(0).getRoute();
+    assertThat(routes.stream().map(HTTPRouteDestination::getWeight)).containsExactly(100, 0);
+    assertThat(routes.stream().map(HTTPRouteDestination::getDestination).map(Destination::getSubset))
         .containsExactly(HarnessLabelValues.trackStable, HarnessLabelValues.trackCanary);
   }
 
@@ -1693,7 +1693,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
             .map(entry
                 -> new HTTPRouteBuilder()
                        .withRoute(
-                           new DestinationWeightBuilder()
+                           new HTTPRouteDestinationBuilder()
                                .withDestination(
                                    new DestinationBuilder()
                                        .withHost(entry.getKey())

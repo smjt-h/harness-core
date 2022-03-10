@@ -46,6 +46,7 @@ import static software.wings.beans.LogWeight.Bold;
 import static software.wings.beans.LogWeight.Normal;
 
 import static com.google.common.base.MoreObjects.firstNonNull;
+import static io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext.fromCrd;
 import static java.lang.Boolean.FALSE;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -216,10 +217,8 @@ import lombok.extern.slf4j.Slf4j;
 import me.snowdrop.istio.api.networking.v1alpha3.Destination;
 import me.snowdrop.istio.api.networking.v1alpha3.DestinationRule;
 import me.snowdrop.istio.api.networking.v1alpha3.DestinationRuleBuilder;
-import me.snowdrop.istio.api.networking.v1alpha3.DestinationWeight;
-import me.snowdrop.istio.api.networking.v1alpha3.DoneableDestinationRule;
-import me.snowdrop.istio.api.networking.v1alpha3.DoneableVirtualService;
 import me.snowdrop.istio.api.networking.v1alpha3.HTTPRoute;
+import me.snowdrop.istio.api.networking.v1alpha3.HTTPRouteDestination;
 import me.snowdrop.istio.api.networking.v1alpha3.PortSelector;
 import me.snowdrop.istio.api.networking.v1alpha3.Subset;
 import me.snowdrop.istio.api.networking.v1alpha3.TCPRoute;
@@ -637,16 +636,16 @@ public class K8sTaskHelperBase {
     }
   }
 
-  private List<DestinationWeight> generateDestinationWeights(
+  private List<HTTPRouteDestination> generateDestinationWeights(
       List<IstioDestinationWeight> istioDestinationWeights, String host, PortSelector portSelector) throws IOException {
-    List<DestinationWeight> destinationWeights = new ArrayList<>();
+    List<HTTPRouteDestination> destinationWeights = new ArrayList<>();
 
     for (IstioDestinationWeight istioDestinationWeight : istioDestinationWeights) {
       String destinationYaml = getDestinationYaml(istioDestinationWeight.getDestination(), host);
       Destination destination = new YamlUtils().read(destinationYaml, Destination.class);
       destination.setPort(portSelector);
 
-      DestinationWeight destinationWeight = new DestinationWeight();
+      HTTPRouteDestination destinationWeight = new HTTPRouteDestination();
       destinationWeight.setWeight(Integer.parseInt(istioDestinationWeight.getWeight()));
       destinationWeight.setDestination(destination);
 
@@ -656,7 +655,7 @@ public class K8sTaskHelperBase {
     return destinationWeights;
   }
 
-  private String getHostFromRoute(List<DestinationWeight> routes) {
+  private String getHostFromRoute(List<HTTPRouteDestination> routes) {
     if (isEmpty(routes)) {
       throw new InvalidRequestException("No routes exist in VirtualService", USER);
     }
@@ -672,7 +671,7 @@ public class K8sTaskHelperBase {
     return routes.get(0).getDestination().getHost();
   }
 
-  private PortSelector getPortSelectorFromRoute(List<DestinationWeight> routes) {
+  private PortSelector getPortSelectorFromRoute(List<HTTPRouteDestination> routes) {
     return routes.get(0).getDestination().getPort();
   }
 
@@ -731,9 +730,9 @@ public class K8sTaskHelperBase {
     }
 
     KubernetesClient kubernetesClient = kubernetesHelperService.getKubernetesClient(kubernetesConfig);
-    kubernetesClient.customResources(
-        kubernetesContainerService.getCustomResourceDefinition(kubernetesClient, new VirtualServiceBuilder().build()),
-        VirtualService.class, KubernetesResourceList.class, DoneableVirtualService.class);
+    kubernetesClient.customResources(fromCrd(kubernetesContainerService.getCustomResourceDefinition(
+                                         kubernetesClient, new VirtualServiceBuilder().build())),
+        VirtualService.class, KubernetesResourceList.class);
 
     KubernetesResource kubernetesResource = virtualServiceResources.get(0);
     InputStream inputStream = IOUtils.toInputStream(kubernetesResource.getSpec(), UTF_8);
@@ -778,9 +777,9 @@ public class K8sTaskHelperBase {
     }
 
     KubernetesClient kubernetesClient = kubernetesHelperService.getKubernetesClient(kubernetesConfig);
-    kubernetesClient.customResources(
-        kubernetesContainerService.getCustomResourceDefinition(kubernetesClient, new DestinationRuleBuilder().build()),
-        DestinationRule.class, KubernetesResourceList.class, DoneableDestinationRule.class);
+    kubernetesClient.customResources(fromCrd(kubernetesContainerService.getCustomResourceDefinition(
+                                         kubernetesClient, new DestinationRuleBuilder().build())),
+        DestinationRule.class, KubernetesResourceList.class);
 
     KubernetesResource kubernetesResource = destinationRuleResources.get(0);
     InputStream inputStream = IOUtils.toInputStream(kubernetesResource.getSpec(), UTF_8);

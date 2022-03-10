@@ -246,7 +246,7 @@ public class KubernetesContainerTask extends ContainerTask {
             volumeMap.put(volumeName,
                 new VolumeBuilder()
                     .withName(volumeName)
-                    .withHostPath(new HostPathVolumeSource(strip(storageConfiguration.getHostSourcePath())))
+                    .withHostPath(new HostPathVolumeSource(strip(storageConfiguration.getHostSourcePath()),null))
                     .build());
           }
         }
