@@ -379,6 +379,7 @@ import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.validation.executable.ValidateOnExecution;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -3882,23 +3883,16 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
             .collect(toList());
 
     List<String> infraIdsFromRuntime = infraVariableNames.stream().map(wfVariables::get).collect(toList());
+    List<String> infraIdsSeparated =
+        infraIdsFromRuntime.stream().flatMap(infraId -> Stream.of(infraId.split(","))).collect(toList());
 
-    if (isNotEmpty(infraIdsFromRuntime)) {
+    if (isNotEmpty(infraIdsSeparated)) {
       if (pipelineExecution.getInfraDefinitionIds() == null) {
-        pipelineExecution.setInfraDefinitionIds(infraIdsFromRuntime);
+        pipelineExecution.setInfraDefinitionIds(infraIdsSeparated);
       } else {
-        infraIdsFromRuntime.forEach(infraId -> {
-          if (infraId.contains(",")) {
-            String[] multiInfraIds = infraId.split(",");
-            for (String infra : multiInfraIds) {
-              if (!pipelineExecution.getInfraDefinitionIds().contains(infra)) {
-                pipelineExecution.getInfraDefinitionIds().add(infra);
-              }
-            }
-          } else {
-            if (!pipelineExecution.getInfraDefinitionIds().contains(infraId)) {
-              pipelineExecution.getInfraDefinitionIds().add(infraId);
-            }
+        infraIdsSeparated.forEach(infraId -> {
+          if (!pipelineExecution.getInfraDefinitionIds().contains(infraId)) {
+            pipelineExecution.getInfraDefinitionIds().add(infraId);
           }
         });
       }
