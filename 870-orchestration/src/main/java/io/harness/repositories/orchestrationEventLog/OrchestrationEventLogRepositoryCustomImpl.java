@@ -25,12 +25,18 @@ import org.springframework.data.mongodb.core.query.Query;
 @AllArgsConstructor(access = AccessLevel.PRIVATE, onConstructor = @__({ @Inject }))
 public class OrchestrationEventLogRepositoryCustomImpl implements OrchestrationEventLogRepositoryCustom {
   private final MongoTemplate mongoTemplate;
+  private final String logLimit = System.getProperty("UNPROCESSED_EVENT_LOG_LIMIT");
 
   @Override
   public List<OrchestrationEventLog> findUnprocessedEvents(String planExecutionId, long lastUpdatedAt) {
     Criteria criteria = Criteria.where(OrchestrationEventLogKeys.planExecutionId).is(planExecutionId);
     criteria.andOperator(Criteria.where(OrchestrationEventLogKeys.createdAt).gt(lastUpdatedAt));
     Query query = new Query(criteria).with(Sort.by(Sort.Order.asc("createdAt")));
+    if (logLimit == null) {
+      query.limit(1000);
+    } else {
+      query.limit(Integer.parseInt(logLimit));
+    }
     return mongoTemplate.find(query, OrchestrationEventLog.class);
   }
 
