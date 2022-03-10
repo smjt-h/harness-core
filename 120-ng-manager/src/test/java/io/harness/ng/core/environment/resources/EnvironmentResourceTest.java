@@ -80,6 +80,9 @@ public class EnvironmentResourceTest extends CategoryTest {
                                  .type(EnvironmentType.PreProduction)
                                  .tags(singletonMap("k1", "v1"))
                                  .version(0L)
+                                 .yaml("environment:\n  orgIdentifier: \"ORG_ID\"\n  "
+                                     + "projectIdentifier: \"PROJECT_ID\"\n  identifier: \"IDENTIFIER\"\n  "
+                                     + "tags:\n    k1: \"v1\"\n  name: \"ENV\"\n  type: \"PreProduction\"\n")
                                  .build();
 
     environmentEntity = Environment.builder()
@@ -92,6 +95,9 @@ public class EnvironmentResourceTest extends CategoryTest {
                             .type(EnvironmentType.PreProduction)
                             .tags(tags)
                             .version(0L)
+                            .yaml("environment:\n  orgIdentifier: \"ORG_ID\"\n  "
+                                + "projectIdentifier: \"PROJECT_ID\"\n  identifier: \"IDENTIFIER\"\n  "
+                                + "tags:\n    k1: \"v1\"\n  name: \"ENV\"\n  type: \"PreProduction\"\n")
                             .build();
   }
 
