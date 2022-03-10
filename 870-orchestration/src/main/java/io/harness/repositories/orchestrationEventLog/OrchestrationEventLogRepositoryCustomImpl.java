@@ -24,6 +24,7 @@ import org.springframework.data.mongodb.core.query.Query;
 @OwnedBy(HarnessTeam.PIPELINE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE, onConstructor = @__({ @Inject }))
 public class OrchestrationEventLogRepositoryCustomImpl implements OrchestrationEventLogRepositoryCustom {
+  private static final int LOG_LIMIT = 1000;
   private final MongoTemplate mongoTemplate;
   private final String logLimit = System.getProperty("UNPROCESSED_EVENT_LOG_LIMIT");
 
@@ -31,12 +32,7 @@ public class OrchestrationEventLogRepositoryCustomImpl implements OrchestrationE
   public List<OrchestrationEventLog> findUnprocessedEvents(String planExecutionId, long lastUpdatedAt) {
     Criteria criteria = Criteria.where(OrchestrationEventLogKeys.planExecutionId).is(planExecutionId);
     criteria.andOperator(Criteria.where(OrchestrationEventLogKeys.createdAt).gte(lastUpdatedAt));
-    Query query = new Query(criteria).with(Sort.by(Sort.Order.asc("createdAt")));
-    if (logLimit == null) {
-      query.limit(1000);
-    } else {
-      query.limit(Integer.parseInt(logLimit));
-    }
+    Query query = new Query(criteria).with(Sort.by(Sort.Order.asc("createdAt"))).limit(LOG_LIMIT);
     return mongoTemplate.find(query, OrchestrationEventLog.class);
   }
 
