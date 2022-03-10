@@ -7,6 +7,7 @@
 
 package io.harness.batch.processing.cloudevents.aws.ecs.service.tasklet;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.inject.Singleton;
 import io.harness.batch.processing.billing.timeseries.service.impl.UtilizationDataServiceImpl;
@@ -20,7 +21,6 @@ import io.harness.ccm.commons.entities.ecs.recommendation.ECSPartialRecommendati
 import io.harness.ccm.commons.entities.ecs.recommendation.ECSServiceRecommendation;
 import io.harness.histogram.Histogram;
 import io.harness.histogram.HistogramCheckpoint;
-import io.harness.histogram.HistogramImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -31,10 +31,10 @@ import org.springframework.util.CollectionUtils;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import static io.harness.batch.processing.config.k8s.recommendation.estimators.ResourceAmountUtils.convertToReadableForm;
+import static io.harness.batch.processing.config.k8s.recommendation.estimators.ResourceAmountUtils.makeResourceMap;
 import static software.wings.graphql.datafetcher.ce.recommendation.entity.RecommenderUtils.*;
 
 @Slf4j
@@ -47,6 +47,8 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
   private static final int BATCH_SIZE = 20;
   private static final int AVG_UTILIZATION_WEIGHT = 2;
   private static final int RECOMMENDATION_FOR_DAYS = 7;
+  private static final Set<Integer> requiredPercentiles = ImmutableSet.of(50, 80, 90, 95, 99);
+  private static final String PERCENTILE_KEY = "p%d";
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
@@ -115,6 +117,17 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
         }
         ecsServiceRecommendation.setCpuHistogram(cpuHistogram.saveToCheckpoint());
         ecsServiceRecommendation.setMemoryHistogram(memoryHistogram.saveToCheckpoint());
+        ecsServiceRecommendation.setCurrentResourceRequirements(
+            convertToReadableForm(makeResourceMap(cpuUnits, (long) memoryMb * 1024 * 1024)));
+
+        Map<String, Map<String, String>> computedPercentiles = new HashMap<>();
+        for (Integer percentile : requiredPercentiles) {
+          computedPercentiles.put(
+              String.format(PERCENTILE_KEY, percentile),
+              convertToReadableForm(makeResourceMap((long) cpuHistogram.getPercentile(percentile),
+                      (long) (memoryHistogram.getPercentile(percentile * (double) 1024 * (double) 1024)))));
+        }
+        ecsServiceRecommendation.setPercentileBasedResourceRecommendation(computedPercentiles);
 
         ecsRecommendationDAO.saveRecommendation(ecsServiceRecommendation);
       }
@@ -123,7 +136,8 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
     // generate recommendation
     // (done) 1. get partial recommendations for this cluster for the last 7 days
     // (done) 2. merge
-    // 3. create percentile recommendations
+    // (done) 3. create percentile recommendations
+    // (small) 4. calculate benefits
     // (done) 4. save
 
     return null;

@@ -27,7 +27,6 @@ import org.hibernate.validator.constraints.NotEmpty;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 import software.wings.graphql.datafetcher.ce.recommendation.entity.Cost;
-import software.wings.graphql.datafetcher.ce.recommendation.entity.ResourceRequirement;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -79,11 +78,11 @@ public final class ECSServiceRecommendation
   @NotEmpty String serviceName; // last part of serviceArn
 
   // Recommendation
-  ResourceRequirement current;
-  @Deprecated ResourceRequirement burstable;
-  @Deprecated ResourceRequirement guaranteed;
-  @Deprecated ResourceRequirement recommended;
-  Map<String, ResourceRequirement> percentileBased;
+  Map<String, String> currentResourceRequirements;
+//  @Deprecated ECSResourceRequirement burstable;
+//  @Deprecated ECSResourceRequirement guaranteed;
+//  @Deprecated ECSResourceRequirement recommended;
+  Map<String, Map<String, String>> percentileBasedResourceRecommendation;
   Cost lastDayCost;
   int totalSamplesCount;
 
