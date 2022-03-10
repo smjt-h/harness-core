@@ -15,6 +15,7 @@ import static software.wings.ngmigration.NGMigrationEntityType.SERVICE;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.MigratedEntityMapping;
 import io.harness.cdng.artifact.bean.yaml.ArtifactListConfig;
 import io.harness.cdng.artifact.bean.yaml.DockerHubArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.PrimaryArtifact;
@@ -25,8 +26,12 @@ import io.harness.cdng.service.beans.ServiceDefinition;
 import io.harness.cdng.service.beans.ServiceDefinitionType;
 import io.harness.cdng.service.beans.ServiceYaml;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
+import io.harness.encryption.Scope;
 import io.harness.exception.UnsupportedOperationException;
+import io.harness.ngmigration.beans.BaseEntityInput;
+import io.harness.ngmigration.beans.BaseInputDefinition;
 import io.harness.ngmigration.beans.MigrationInputDTO;
+import io.harness.ngmigration.beans.MigratorInputType;
 import io.harness.ngmigration.beans.NgEntityDetail;
 import io.harness.ngmigration.client.NGClient;
 import io.harness.ngmigration.client.PmsClient;
@@ -58,6 +63,11 @@ public class ServiceMigrationService implements NgMigrationService {
   @Inject private ServiceResourceService serviceResourceService;
   @Inject private ArtifactStreamService artifactStreamService;
   @Inject private ManifestMigrationService manifestMigrationService;
+
+  @Override
+  public MigratedEntityMapping generateMappingEntity(NGYamlFile yamlFile) {
+    throw new IllegalAccessError("Mapping not allowed for Service entities");
+  }
 
   @Override
   public DiscoveryNode discover(NGMigrationEntity entity) {
@@ -92,7 +102,7 @@ public class ServiceMigrationService implements NgMigrationService {
       return PrimaryArtifact.builder()
           .sourceType(ArtifactSourceType.DOCKER_REGISTRY)
           .spec(DockerHubArtifactConfig.builder()
-                    .connectorRef(ParameterField.createValueField(connector.getIdentifier()))
+                    .connectorRef(ParameterField.createValueField(MigratorUtility.getIdentifierWithScope(connector)))
                     .imagePath(ParameterField.createValueField(dockerArtifactStream.getImageName()))
                     .tag(ParameterField.createValueField("<+input>"))
                     .build())
@@ -118,7 +128,7 @@ public class ServiceMigrationService implements NgMigrationService {
     }
 
     List<ManifestConfigWrapper> manifestConfigWrapperList =
-        manifestMigrationService.getManifests(manifests, entities, graph, migratedEntities);
+        manifestMigrationService.getManifests(manifests, inputDTO, entities, graph, migratedEntities);
     ServiceDefinition serviceDefinition =
         ServiceDefinition.builder()
             .type(ServiceDefinitionType.KUBERNETES)
@@ -152,5 +162,18 @@ public class ServiceMigrationService implements NgMigrationService {
   public List<NGYamlFile> getYamls(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,
       Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId, Map<CgEntityId, NgEntityDetail> migratedEntities) {
     return new ArrayList<>();
+  }
+
+  @Override
+  public BaseEntityInput generateInput(
+      Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId) {
+    Service service = (Service) entities.get(entityId).getEntity();
+    return BaseEntityInput.builder()
+        .migrationStatus(MigratorInputType.CREATE_NEW)
+        .identifier(BaseInputDefinition.buildIdentifier(MigratorUtility.generateIdentifier(service.getName())))
+        .name(BaseInputDefinition.buildName(service.getName()))
+        .scope(BaseInputDefinition.buildScope(Scope.PROJECT))
+        .spec(null)
+        .build();
   }
 }
