@@ -118,7 +118,7 @@ go_repository(
 
 go_rules_dependencies()
 
-go_register_toolchains(version = "1.17.1")
+go_register_toolchains(version = "1.17.7")
 
 gazelle_dependencies()
 
@@ -1008,8 +1008,8 @@ go_repository(
 go_repository(
     name = "com_github_drone_go_scm",
     importpath = "github.com/drone/go-scm",
-    sum = "h1:VU6C6r2Hxf5FZUjTazCH2xlXBe21JDg7gBcJvsL7twk=",
-    version = "v1.18.0",
+    sum = "h1:BQn5DpjS33LenuXwMufodhNAeY9+VxiMltq87J+nU+k=",
+    version = "v1.19.1",
 )
 
 go_repository(
@@ -1465,13 +1465,6 @@ go_repository(
     importpath = "github.com/devigned/tab",
     sum = "h1:3mD6Kb1mUOYeLpJvTVSDwSg5ZsfSxfvxGRTxRsJsITA=",
     version = "v0.1.1",
-)
-
-go_repository(
-    name = "com_github_dgrijalva_jwt_go",
-    importpath = "github.com/dgrijalva/jwt-go",
-    sum = "h1:7qlOGliEKZXTDg6OTjfoBKDXWrumCAMpl/TFQ4/5kLM=",
-    version = "v3.2.0+incompatible",
 )
 
 go_repository(
@@ -4339,7 +4332,7 @@ plain_artifacts = [
     "com.bugsnag:bugsnag:3.6.2",
     "com.carrotsearch:hppc:0.8.1",
     "com.coveo:saml-client:3.0.2",
-    "com.cronutils:cron-utils:9.0.1",
+    "com.cronutils:cron-utils:9.1.6",
     "com.datadoghq:java-dogstatsd-client:2.3",
     "com.deftlabs:mongo-java-distributed-lock:0.1.7",
     "com.eclipsesource.j2v8:j2v8_macosx_x86_64:4.6.0",
@@ -4549,7 +4542,7 @@ plain_artifacts = [
     "com.zaxxer:HikariCP-java7:2.4.13",
     "commons-beanutils:commons-beanutils:1.9.4",
     "commons-cli:commons-cli:1.2",
-    "commons-codec:commons-codec:1.10",
+    "commons-codec:commons-codec:1.15",
     "commons-collections:commons-collections:3.2.2",
     "commons-dbcp:commons-dbcp:1.4",
     "commons-digester:commons-digester:2.1",
@@ -4562,6 +4555,7 @@ plain_artifacts = [
     "de.danielbechler:java-object-diff:0.94",
     "de.javakaffee:kryo-serializers:0.41",
     "de.jkeylockmanager:jkeylockmanager:2.1.0",
+    "de.skuzzle:semantic-version:2.1.0",
     "dk.brics.automaton:automaton:1.11-8",
     "dnsjava:dnsjava:2.1.8",
     "es.moki.ratelimitj:ratelimitj-core:0.6.0",
@@ -4584,10 +4578,9 @@ plain_artifacts = [
     "io.confluent:kafka-schema-registry-client:5.5.1",
     "io.confluent:kafka-schema-serializer:5.5.1",
     "io.confluent:kafka-schema-serializer:5.5.1",
-    "io.debezium:debezium-api:1.5.4.Final",
-    "io.debezium:debezium-connector-mongodb:1.5.4.Final",
-    "io.debezium:debezium-core:1.5.4.Final",
-    "io.debezium:debezium-embedded:1.5.4.Final",
+    "io.debezium:debezium-api:1.7.2.Final",
+    "io.debezium:debezium-connector-mongodb:1.7.2.Final",
+    "io.debezium:debezium-core:1.7.2.Final",
     "io.dropwizard-bundles:dropwizard-configurable-assets-bundle:1.3.5",
     "io.dropwizard.metrics:metrics-annotation:4.0.5",
     "io.dropwizard.metrics:metrics-core:4.0.5",
@@ -4644,13 +4637,13 @@ plain_artifacts = [
     "io.grpc:grpc-services:1.33.1",
     "io.grpc:grpc-stub:1.33.1",
     "io.gsonfire:gson-fire:1.8.3",
-    "io.harness.cv:data-collection-dsl:0.31-RELEASE",
+    "io.harness.cv:data-collection-dsl:0.33-RELEASE",
     "io.harness:ff-java-server-sdk:1.0.5.1",
     "io.jsonwebtoken:jjwt:0.9.1",
-    "io.kubernetes:client-java-api:9.0.2",
-    "io.kubernetes:client-java-extended:9.0.2",
-    "io.kubernetes:client-java-proto:9.0.2",
-    "io.kubernetes:client-java:9.0.2",
+    "io.kubernetes:client-java-api:11.0.2",
+    "io.kubernetes:client-java-extended:11.0.2",
+    "io.kubernetes:client-java-proto:11.0.2",
+    "io.kubernetes:client-java:11.0.2",
     "io.leangen.graphql:spqr:0.11.2",
     "io.netty:netty-all:4.1.51.Final",
     "io.netty:netty-buffer:4.1.52.Final",
@@ -4744,7 +4737,7 @@ plain_artifacts = [
     "org.apache.avro:avro:1.9.2",
     "org.apache.avro:avro:1.9.2",
     "org.apache.commons:commons-collections4:4.1",
-    "org.apache.commons:commons-compress:1.10",
+    "org.apache.commons:commons-compress:1.21",
     "org.apache.commons:commons-csv:1.5",
     "org.apache.commons:commons-email:1.5",
     "org.apache.commons:commons-exec:1.3",
@@ -4773,9 +4766,8 @@ plain_artifacts = [
     "org.apache.httpcomponents:httpcore:4.4.14",
     "org.apache.httpcomponents:httpmime:4.5.13",
     "org.mybatis:mybatis:jar:3.5.7",
-    "org.apache.kafka:connect-api:2.6.1",
-    "org.apache.kafka:connect-runtime:2.6.1",
-    "org.apache.kafka:kafka-clients:2.6.1",
+    "org.apache.kafka:connect-api:2.8.1",
+    "org.apache.kafka:kafka-clients:2.8.1",
     "org.apache.logging.log4j:log4j-api:2.16.0",
     "org.apache.logging.log4j:log4j-to-slf4j:2.16.0",
     "org.apache.lucene:lucene-analyzers-common:8.5.1",
@@ -5130,6 +5122,24 @@ maven_install(
             version = "0.1.143",
             exclusions = [
                 "org.clojure:clojure",
+            ],
+        ),
+        maven.artifact(
+            group = "io.debezium",
+            artifact = "debezium-embedded",
+            version = "1.7.2.Final",
+            exclusions = [
+                "log4j:log4j",
+                "org.slf4j:slf4j-log4j12",
+            ],
+        ),
+        maven.artifact(
+            group = "org.apache.kafka",
+            artifact = "connect-runtime",
+            version = "2.8.1",
+            exclusions = [
+                "log4j:log4j",
+                "org.slf4j:slf4j-log4j12",
             ],
         ),
         maven_test_artifact("com.github.tomakehurst:wiremock-jre8-standalone:2.27.2"),

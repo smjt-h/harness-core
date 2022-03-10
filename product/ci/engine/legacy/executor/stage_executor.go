@@ -12,11 +12,11 @@ import (
 
 	"github.com/gogo/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
+	addonpb "github.com/harness/harness-core/product/ci/addon/proto"
+	"github.com/harness/harness-core/product/ci/engine/legacy/state"
+	"github.com/harness/harness-core/product/ci/engine/output"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"github.com/pkg/errors"
-	addonpb "github.com/wings-software/portal/product/ci/addon/proto"
-	"github.com/wings-software/portal/product/ci/engine/legacy/state"
-	"github.com/wings-software/portal/product/ci/engine/output"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
 	"go.uber.org/zap"
 )
 

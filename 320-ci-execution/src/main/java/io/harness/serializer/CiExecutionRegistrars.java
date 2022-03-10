@@ -27,12 +27,11 @@ public class CiExecutionRegistrars {
           .addAll(CommonsRegistrars.kryoRegistrars)
           .addAll(CiBeansRegistrars.kryoRegistrars)
           .addAll(NGCoreRegistrars.kryoRegistrars)
-          .addAll(NGPipelineRegistrars.kryoRegistrars)
           .addAll(ApiServicesRegistrars.kryoRegistrars)
           .addAll(SMCoreRegistrars.kryoRegistrars)
           .addAll(ConnectorNextGenRegistrars.kryoRegistrars)
+          .addAll(NGCommonModuleRegistrars.kryoRegistrars)
           .add(CIExecutionKryoRegistrar.class)
-          .add(PipelineServiceUtilKryoRegistrar.class)
           .build();
 
   public static final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =
@@ -40,10 +39,10 @@ public class CiExecutionRegistrars {
           .addAll(CommonsRegistrars.morphiaRegistrars)
           .addAll(CiBeansRegistrars.morphiaRegistrars)
           .addAll(NGCoreRegistrars.morphiaRegistrars)
-          .addAll(NGPipelineRegistrars.morphiaRegistrars)
           .addAll(ApiServicesRegistrars.morphiaRegistrars)
           .addAll(SMCoreRegistrars.morphiaRegistrars)
           .addAll(ConnectorNextGenRegistrars.morphiaRegistrars)
+          .addAll(NGCommonModuleRegistrars.morphiaRegistrars)
           .add(CIExecutionMorphiaRegistrar.class)
           .build();
 
@@ -56,5 +55,6 @@ public class CiExecutionRegistrars {
   public static final ImmutableList<Class<? extends Converter<?, ?>>> springConverters =
       ImmutableList.<Class<? extends Converter<?, ?>>>builder()
           .addAll(OrchestrationRegistrars.springConverters)
+          .addAll(NGCommonModuleRegistrars.springConverters)
           .build();
 }

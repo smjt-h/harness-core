@@ -13,8 +13,11 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.eventsframework.api.AbstractConsumer;
 import io.harness.eventsframework.api.EventsFrameworkDownException;
 import io.harness.eventsframework.consumer.Message;
+import io.harness.eventsframework.impl.redis.monitoring.dto.RedisEventMetricDTOMapper;
+import io.harness.eventsframework.impl.redis.monitoring.publisher.RedisEventMetricPublisher;
 import io.harness.redis.RedisConfig;
 
+import com.google.inject.Inject;
 import io.github.resilience4j.core.IntervalFunction;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
@@ -37,12 +40,14 @@ import org.redisson.client.RedisException;
 @OwnedBy(PL)
 @Slf4j
 public abstract class RedisAbstractConsumer extends AbstractConsumer {
+  private static final String REDIS_CONSUMER_EVENT_METRIC = "redis_consumer_event_metric";
   protected RStream<String, String> stream;
   protected RStream<String, String> deadLetterQueue;
   protected RedissonClient redissonClient;
   protected Duration maxProcessingTime;
   protected int batchSize;
   private Retry retry;
+  @Inject RedisEventMetricPublisher redisEventMetricPublisher;
 
   public RedisAbstractConsumer(
       String topicName, String groupName, @NotNull RedisConfig redisConfig, Duration maxProcessingTime, int batchSize) {
@@ -140,6 +145,7 @@ public abstract class RedisAbstractConsumer extends AbstractConsumer {
       Map<StreamMessageId, Map<String, String>> messages = executeClaimCommand(pendingEntries);
       for (PendingEntry entry : pendingEntries) {
         StreamMessageId messageId = entry.getId();
+        // If the message has been delivered breach our redelivery threshold then move this to deadLetterQueue
         if (entry.getLastTimeDelivered() >= RedisUtils.UNACKED_RETRY_COUNT) {
           moveMessageToDeadLetterQueue(messageId, groupName, messages);
         }
@@ -152,6 +158,7 @@ public abstract class RedisAbstractConsumer extends AbstractConsumer {
     StreamMessageId[] messageIds = pendingEntries.stream().map(PendingEntry::getId).toArray(StreamMessageId[] ::new);
     Map<StreamMessageId, Map<String, String>> messages = Collections.emptyMap();
     try {
+      // Try to claim the pending messages from the group that are pending over max max processing time
       messages =
           stream.claim(getGroupName(), getName(), maxProcessingTime.toMillis(), TimeUnit.MILLISECONDS, messageIds);
     } catch (RedisException e) {
@@ -178,15 +185,33 @@ public abstract class RedisAbstractConsumer extends AbstractConsumer {
   private List<Message> getNewMessagesInternal(Duration maxWaitTime) {
     Map<StreamMessageId, Map<String, String>> result =
         stream.readGroup(getGroupName(), getName(), batchSize, maxWaitTime.toMillis(), TimeUnit.MILLISECONDS);
-    return RedisUtils.getMessageObject(result);
+    List<Message> messages = RedisUtils.getMessageObject(result);
+    for (Message message : messages) {
+      addMonitoring(message);
+    }
+    return messages;
+  }
+
+  private void addMonitoring(Message message) {
+    try {
+      redisEventMetricPublisher.sendMetricWithEventContext(
+          RedisEventMetricDTOMapper.prepareRedisEventMetricDTO(message.getMessage(), getTopicName()),
+          REDIS_CONSUMER_EVENT_METRIC);
+    } catch (Exception ex) {
+      log.warn("Error while sending metrics for redis consumer events :", ex);
+    }
   }
 
   protected List<Message> getMessages(boolean processUnackedMessagesBeforeNewMessages, Duration maxWaitTime) {
+    // Find all the pending entries on the consumer group
     List<PendingEntry> pendingEntries = getPendingEntries();
+
+    // If no entry is pending then we request for new messages
     if (pendingEntries.isEmpty()) {
       return getNewMessages(maxWaitTime);
     }
 
+    // If pending entries are not empty then claim the pending entries
     List<Message> claimedMessages = claimEntries(pendingEntries);
     if (!claimedMessages.isEmpty()) {
       return claimedMessages;

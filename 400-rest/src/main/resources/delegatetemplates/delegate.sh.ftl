@@ -124,6 +124,9 @@ if [ ! -e config-delegate.yml ]; then
   echo "accountSecret: ${accountSecret}" >> config-delegate.yml
 fi
 test "$(tail -c 1 config-delegate.yml)" && `echo "" >> config-delegate.yml`
+if ! `grep dynamicHandlingOfRequestEnabled config-delegate.yml > /dev/null`; then
+  echo "dynamicHandlingOfRequestEnabled: ${dynamicHandlingOfRequestEnabled}" >> config-delegate.yml
+fi
 if ! `grep managerUrl config-delegate.yml > /dev/null`; then
   echo "managerUrl: ${managerHostAndPort}/api/" >> config-delegate.yml
 fi
@@ -212,13 +215,6 @@ if ! `grep installClientToolsInBackground config-delegate.yml > /dev/null`; then
   echo "installClientToolsInBackground: $INSTALL_CLIENT_TOOLS_IN_BACKGROUND" >> config-delegate.yml
 fi
 
-if ! `grep versionCheckDisabled config-delegate.yml > /dev/null`; then
-  echo "versionCheckDisabled: ${versionCheckDisabled}" >> config-delegate.yml
-else
-  sed -i.bak "s|^versionCheckDisabled:.*$|versionCheckDisabled: ${versionCheckDisabled}|" config-delegate.yml
-fi
-
-
 if [ ! -z "$KUSTOMIZE_PATH" ] && ! `grep kustomizePath config-delegate.yml > /dev/null` ; then
   echo "kustomizePath: $KUSTOMIZE_PATH" >> config-delegate.yml
 fi
@@ -241,8 +237,6 @@ fi
 
 rm -f -- *.bak
 
-export KUBECTL_VERSION=${kubectlVersion}
-
 export SCM_VERSION=${scmVersion}
 
 <#if delegateName??>
@@ -254,7 +248,6 @@ export DELEGATE_PROFILE=${delegateProfile}
 <#if delegateType??>
 export DELEGATE_TYPE=${delegateType}
 </#if>
-export VERSION_CHECK_DISABLED=${versionCheckDisabled}
 
 export HOSTNAME
 export CAPSULE_CACHE_DIR="$DIR/.cache"

@@ -212,6 +212,7 @@ public class LogAnalysisServiceImpl implements LogAnalysisService {
         .project(LogAnalysisClusterKeys.analysisMinute, true)
         .project(LogAnalysisClusterKeys.label, true)
         .project(LogAnalysisClusterKeys.text, true)
+        .project(LogAnalysisClusterKeys.compressedText, true)
         .project(LogAnalysisClusterKeys.frequencyTrend, true)
         .project(LogAnalysisClusterKeys.firstSeenTime, true)
         .asList(new FindOptions().maxTime(MONGO_QUERY_TIMEOUT_SEC, TimeUnit.SECONDS));
@@ -261,7 +262,7 @@ public class LogAnalysisServiceImpl implements LogAnalysisService {
             .filter(LogAnalysisClusterKeys.isEvicted, false));
     // next, save the new records.
     // TODO: move this to LogAnalysisClusterService
-    hPersistence.save(analysisClusters);
+    hPersistence.saveBatch(analysisClusters);
     // TODO: move this to LogAnalysisResultService
     hPersistence.save(analysisResult);
     learningEngineTaskService.markCompleted(taskId);
@@ -274,9 +275,8 @@ public class LogAnalysisServiceImpl implements LogAnalysisService {
                                  .filter(result -> LogAnalysisTag.getAnomalousTags().contains(result.getTag()))
                                  .count();
     heatMapService.updateRiskScore(cvConfig.getAccountId(), cvConfig.getOrgIdentifier(),
-        cvConfig.getProjectIdentifier(), cvConfig.getServiceIdentifier(), cvConfig.getEnvIdentifier(), cvConfig,
-        cvConfig.getCategory(), learningEngineTask.getAnalysisStartTime(), analysisBody.getScore(), 0,
-        anomalousLogCount);
+        cvConfig.getProjectIdentifier(), cvConfig, cvConfig.getCategory(), learningEngineTask.getAnalysisStartTime(),
+        analysisBody.getScore(), 0, anomalousLogCount);
   }
 
   @Override

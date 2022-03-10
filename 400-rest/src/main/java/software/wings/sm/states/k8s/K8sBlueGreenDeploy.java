@@ -20,7 +20,6 @@ import io.harness.annotations.dev.BreakDependencyOn;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.ExecutionStatus;
-import io.harness.beans.FeatureName;
 import io.harness.delegate.task.k8s.K8sTaskType;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ff.FeatureFlagService;
@@ -30,6 +29,7 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.tasks.ResponseData;
 
 import software.wings.api.InstanceElementListParam;
+import software.wings.api.RancherClusterElement;
 import software.wings.api.k8s.K8sElement;
 import software.wings.api.k8s.K8sStateExecutionData;
 import software.wings.beans.Activity;
@@ -63,6 +63,7 @@ import com.google.inject.Inject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -114,6 +115,12 @@ public class K8sBlueGreenDeploy extends AbstractK8sState {
 
   @Override
   public ExecutionResponse execute(ExecutionContext context) {
+    if (k8sStateHelper.isRancherInfraMapping(context)
+        && !(Objects.nonNull(context.getContextElement())
+            && context.getContextElement() instanceof RancherClusterElement)) {
+      return k8sStateHelper.getInvalidInfraDefFailedResponse();
+    }
+
     if (k8sStateHelper.isExportManifestsEnabled(context.getAccountId()) && inheritManifests) {
       Activity activity = createK8sActivity(
           context, commandName(), stateType(), activityService, commandUnitList(false, context.getAccountId()));
@@ -156,8 +163,7 @@ public class K8sBlueGreenDeploy extends AbstractK8sState {
             .skipVersioningForAllK8sObjects(
                 appManifestMap.get(K8sValuesLocation.Service).getSkipVersioningForAllK8sObjects())
             .isPruningEnabled(featureFlagService.isEnabled(PRUNE_KUBERNETES_RESOURCES, context.getAccountId()))
-            .useVarSupportForKustomize(
-                featureFlagService.isEnabled(FeatureName.VARIABLE_SUPPORT_FOR_KUSTOMIZE, context.getAccountId()))
+            .useLatestKustomizeVersion(isUseLatestKustomizeVersion(context.getAccountId()))
             .useNewKubectlVersion(featureFlagService.isEnabled(NEW_KUBECTL_VERSION, infraMapping.getAccountId()))
             .build();
 

@@ -18,7 +18,6 @@ services:
       - REMOTE_WATCHER_URL_CDN=${remoteWatcherUrlCdn}
       - DELEGATE_STORAGE_URL=${delegateStorageUrl}
       - DELEGATE_CHECK_LOCATION=${delegateCheckLocation}
-      - USE_CDN=${useCdn}
       - CDN_URL=${cdnUrl}
 </#if>
       - DEPLOY_MODE=${deployMode}
@@ -30,5 +29,4 @@ services:
       - DELEGATE_ORG_IDENTIFIER=${delegateOrgIdentifier}
       - DELEGATE_PROJECT_IDENTIFIER=${delegateProjectIdentifier}
       - PROXY_MANAGER=true
-      - VERSION_CHECK_DISABLED=${versionCheckDisabled}
       - INIT_SCRIPT=echo "Docker delegate init script executed."

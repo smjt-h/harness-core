@@ -42,6 +42,10 @@ import io.harness.logging.LogCallback;
 import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.shell.SshSessionConfig;
 
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.inject.Inject;
 import java.nio.file.NoSuchFileException;
 import java.util.HashMap;
@@ -82,6 +86,9 @@ public class GitFetchTaskNG extends AbstractDelegateRunnableTask {
       Map<String, FetchFilesResult> filesFromMultipleRepo = new HashMap<>();
       List<GitFetchFilesConfig> gitFetchFilesConfigs = gitFetchRequest.getGitFetchFilesConfigs();
 
+      executionLogCallback.saveExecutionLog(
+          color(format("%nStarting Git Fetch Files"), LogColor.White, LogWeight.Bold));
+
       for (GitFetchFilesConfig gitFetchFilesConfig : gitFetchFilesConfigs) {
         FetchFilesResult gitFetchFilesResult;
         if (gitFetchFilesConfig.isSucceedIfFileNotFound()) {
@@ -117,6 +124,8 @@ public class GitFetchTaskNG extends AbstractDelegateRunnableTask {
 
         filesFromMultipleRepo.put(gitFetchFilesConfig.getIdentifier(), gitFetchFilesResult);
       }
+      executionLogCallback.saveExecutionLog(
+          color(format("%nGit Fetch Files completed successfully."), LogColor.White, LogWeight.Bold), INFO);
 
       if (gitFetchRequest.isCloseLogStream()) {
         executionLogCallback.saveExecutionLog("Done.", INFO, CommandExecutionStatus.SUCCESS);
@@ -154,6 +163,9 @@ public class GitFetchTaskNG extends AbstractDelegateRunnableTask {
     if (gitStoreDelegateConfig.isOptimizedFilesFetch()) {
       executionLogCallback.saveExecutionLog("Using optimized file fetch");
       secretDecryptionService.decrypt(
+          GitApiAccessDecryptionHelper.getAPIAccessDecryptableEntity(gitStoreDelegateConfig.getGitConfigDTO()),
+          gitStoreDelegateConfig.getApiAuthEncryptedDataDetails());
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
           GitApiAccessDecryptionHelper.getAPIAccessDecryptableEntity(gitStoreDelegateConfig.getGitConfigDTO()),
           gitStoreDelegateConfig.getApiAuthEncryptedDataDetails());
       gitFetchFilesResult = scmFetchFilesHelper.fetchFilesFromRepoWithScm(gitStoreDelegateConfig, filePathsToFetch);

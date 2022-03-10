@@ -13,12 +13,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/wings-software/portal/commons/go/lib/exec"
-	"github.com/wings-software/portal/commons/go/lib/logs"
-	plogs "github.com/wings-software/portal/product/ci/common/logs"
-	ticlient "github.com/wings-software/portal/product/ci/ti-service/client"
-	"github.com/wings-software/portal/product/ci/ti-service/types"
-	"github.com/wings-software/portal/product/log-service/client"
+	"github.com/harness/harness-core/commons/go/lib/exec"
+	"github.com/harness/harness-core/commons/go/lib/logs"
+	plogs "github.com/harness/harness-core/product/ci/common/logs"
+	ticlient "github.com/harness/harness-core/product/ci/ti-service/client"
+	"github.com/harness/harness-core/product/ci/ti-service/types"
+	"github.com/harness/harness-core/product/log-service/client"
 	"go.uber.org/zap"
 )
 
@@ -96,6 +96,10 @@ func GetNudges() []logs.Nudge {
 		logs.NewNudge("Cannot connect to the Docker daemon",
 			"Setup dind if it's not running. If dind is running, privileged should be set to true",
 			errors.New("Could not connect to the docker daemon")),
+		logs.NewNudge("x509",
+			"If you are using self signed certs, Harness allows setting them "+
+				"at a global level on the delegate agent. Visit documentation for more details!",
+			errors.New("Certificate issue")),
 	}
 }
 

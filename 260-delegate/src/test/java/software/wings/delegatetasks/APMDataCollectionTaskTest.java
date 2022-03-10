@@ -7,6 +7,7 @@
 
 package software.wings.delegatetasks;
 
+import static io.harness.rule.OwnerRule.ANJAN;
 import static io.harness.rule.OwnerRule.PRAVEEN;
 
 import static software.wings.beans.TaskType.APM_METRIC_DATA_COLLECTION_TASK;
@@ -36,7 +37,6 @@ import software.wings.service.impl.analysis.DataCollectionTaskResult;
 import software.wings.service.impl.apm.APMDataCollectionInfo;
 import software.wings.service.impl.apm.APMMetricInfo;
 import software.wings.service.intfc.security.EncryptionService;
-import software.wings.sm.StateType;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -44,6 +44,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import com.google.inject.Inject;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -83,7 +84,7 @@ public class APMDataCollectionTaskTest extends WingsBaseTest {
     dataCollectionInfo =
         APMDataCollectionInfo.builder()
             .startTime(12312321123L)
-            .stateType(StateType.APM_VERIFICATION)
+            .stateType(DelegateStateType.APM_VERIFICATION)
             .dataCollectionFrequency(2)
             .hosts(ImmutableMap.<String, String>builder()
                        .put("test.host.node1", DEFAULT_GROUP_NAME)
@@ -218,6 +219,66 @@ public class APMDataCollectionTaskTest extends WingsBaseTest {
     verify(requestExecutor).executeRequest(any(), requestCaptor.capture(), maskPatternsCaptor.capture());
 
     List<Map> maskPatterns = maskPatternsCaptor.getAllValues();
+    maskPatterns.forEach(
+        maskPatternsMap -> assertThat(((Map<String, String>) maskPatternsMap).containsKey("decryptedApiKey")).isTrue());
+    assertThat(requestCaptor.getValue().request().url().toString().contains("apiKey=decryptedApiKey")).isTrue();
+  }
+
+  @Test
+  @Owner(developers = ANJAN)
+  @Category(UnitTests.class)
+  public void testDataCollection_withBase64EncodedHeader() throws Exception {
+    String text500 = Resources.toString(
+        APMDataCollectionTaskTest.class.getResource("/apm/insights_sample_response.json"), Charsets.UTF_8);
+
+    Map<String, APMMetricInfo.ResponseMapper> responseMapperMap = new HashMap<>();
+    responseMapperMap.put(
+        "host", APMMetricInfo.ResponseMapper.builder().fieldName("host").jsonPath("facets[*].name[1]").build());
+    responseMapperMap.put("timestamp",
+        APMMetricInfo.ResponseMapper.builder()
+            .fieldName("timestamp")
+            .jsonPath("facets[*].timeSeries[*].endTimeSeconds")
+            .build());
+    responseMapperMap.put("value",
+        APMMetricInfo.ResponseMapper.builder()
+            .fieldName("value")
+            .jsonPath("facets[*].timeSeries[*].results[*].count")
+            .build());
+    responseMapperMap.put(
+        "txnName", APMMetricInfo.ResponseMapper.builder().fieldName("txnName").jsonPath("facets[*].name[0]").build());
+
+    List<APMMetricInfo> metricInfos = Lists.newArrayList(APMMetricInfo.builder()
+                                                             .metricName("HttpErrors")
+                                                             .metricType(MetricType.ERROR)
+                                                             .tag("NRHTTP")
+                                                             .responseMappers(responseMapperMap)
+                                                             .build());
+    Map<String, List<APMMetricInfo>> infoMap = new HashMap<>();
+    infoMap.put("?query=data+123&apiKey=${apiKey}", metricInfos);
+    setup(infoMap);
+
+    // base 64 encoding header
+    dataCollectionInfo.setBase64EncodingRequired(true);
+    ArrayList<EncryptedDataDetail> encryptedDataDetailArrayList =
+        new ArrayList<>(dataCollectionInfo.getEncryptedDataDetails());
+    encryptedDataDetailArrayList.add(EncryptedDataDetail.builder().fieldName("password").build());
+    dataCollectionInfo.setEncryptedDataDetails(encryptedDataDetailArrayList);
+    HashMap<String, String> headersMap = new HashMap<>();
+    headersMap.put("Authorization", "Basic encodeWithBase64(user:${password})");
+    dataCollectionInfo.setHeaders(headersMap);
+
+    FieldUtils.writeField(dataCollectionTask, "metricStoreService", metricStoreService, true);
+    when(requestExecutor.executeRequest(any(), any(), any())).thenReturn(text500);
+    DataCollectionTaskResult tr =
+        dataCollectionTask.initDataCollection((TaskParameters) dataCollectionTask.getParameters()[0]);
+    dataCollectionTask.getDataCollector(tr).run();
+
+    ArgumentCaptor<Map> maskPatternsCaptor = ArgumentCaptor.forClass(Map.class);
+    ArgumentCaptor<Call> requestCaptor = ArgumentCaptor.forClass(Call.class);
+    verify(requestExecutor).executeRequest(any(), requestCaptor.capture(), maskPatternsCaptor.capture());
+
+    List<Map> maskPatterns = maskPatternsCaptor.getAllValues();
+
     maskPatterns.forEach(
         maskPatternsMap -> assertThat(((Map<String, String>) maskPatternsMap).containsKey("decryptedApiKey")).isTrue());
     assertThat(requestCaptor.getValue().request().url().toString().contains("apiKey=decryptedApiKey")).isTrue();

@@ -22,7 +22,6 @@ import io.harness.annotations.dev.BreakDependencyOn;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.ExecutionStatus;
-import io.harness.beans.FeatureName;
 import io.harness.context.ContextElementType;
 import io.harness.delegate.task.k8s.K8sTaskType;
 import io.harness.exception.ExceptionUtils;
@@ -33,6 +32,7 @@ import io.harness.k8s.K8sCommandUnitConstants;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.tasks.ResponseData;
 
+import software.wings.api.RancherClusterElement;
 import software.wings.api.k8s.K8sContextElement;
 import software.wings.api.k8s.K8sHelmDeploymentElement;
 import software.wings.api.k8s.K8sStateExecutionData;
@@ -67,6 +67,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -112,6 +113,12 @@ public class K8sRollingDeployRollback extends AbstractK8sState {
 
   @Override
   public ExecutionResponse execute(ExecutionContext context) {
+    if (k8sStateHelper.isRancherInfraMapping(context)
+        && !(Objects.nonNull(context.getContextElement())
+            && context.getContextElement() instanceof RancherClusterElement)) {
+      return k8sStateHelper.getInvalidInfraDefFailedResponse();
+    }
+
     try {
       K8sContextElement k8sContextElement = context.getContextElement(ContextElementType.K8S);
       ContainerInfrastructureMapping infraMapping = k8sStateHelper.fetchContainerInfrastructureMapping(context);
@@ -141,8 +148,7 @@ public class K8sRollingDeployRollback extends AbstractK8sState {
                       ? emptyList()
                       : k8sContextElement.getPrunedResourcesIds())
               .isPruningEnabled(featureFlagService.isEnabled(PRUNE_KUBERNETES_RESOURCES, context.getAccountId()))
-              .useVarSupportForKustomize(
-                  featureFlagService.isEnabled(FeatureName.VARIABLE_SUPPORT_FOR_KUSTOMIZE, context.getAccountId()))
+              .useLatestKustomizeVersion(isUseLatestKustomizeVersion(context.getAccountId()))
               .useNewKubectlVersion(featureFlagService.isEnabled(NEW_KUBECTL_VERSION, infraMapping.getAccountId()))
               .build();
 

@@ -19,12 +19,13 @@ import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.accesscontrol.OrgIdentifier;
 import io.harness.accesscontrol.ProjectIdentifier;
 import io.harness.accesscontrol.ResourceIdentifier;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.Resource;
-import io.harness.accesscontrol.clients.ResourceScope;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.encryption.Scope;
+import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
 import io.harness.exception.InvalidRequestException;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.interceptor.GitEntityCreateInfoDTO;
@@ -54,6 +55,7 @@ import io.harness.template.beans.yaml.NGTemplateConfig;
 import io.harness.template.entity.TemplateEntity;
 import io.harness.template.entity.TemplateEntity.TemplateEntityKeys;
 import io.harness.template.helpers.TemplateMergeHelper;
+import io.harness.template.helpers.TemplateReferenceHelper;
 import io.harness.template.helpers.TemplateYamlConversionHelper;
 import io.harness.template.mappers.NGTemplateDtoMapper;
 import io.harness.template.services.NGTemplateService;
@@ -145,6 +147,7 @@ public class NGTemplateResource {
   private final TemplateMergeHelper templateMergeHelper;
   private final VariablesServiceBlockingStub variablesServiceBlockingStub;
   private final TemplateYamlConversionHelper templateYamlConversionHelper;
+  private final TemplateReferenceHelper templateReferenceHelper;
 
   public static final String TEMPLATE_PARAM_MESSAGE = "Template Identifier for the entity";
 
@@ -501,7 +504,9 @@ public class NGTemplateResource {
       @Parameter(description = TEMPLATE_PARAM_MESSAGE) @PathParam(
           "templateIdentifier") @ResourceIdentifier String templateIdentifier,
       @Parameter(description = "Template Label") @NotNull @QueryParam(
-          NGCommonEntityConstants.VERSION_LABEL_KEY) String templateLabel) {
+          NGCommonEntityConstants.VERSION_LABEL_KEY) String templateLabel,
+      @Parameter(
+          description = "This contains details of Git Entity") @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
     accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgId, projectId),
         Resource.of(TEMPLATE, templateIdentifier), PermissionTypes.TEMPLATE_VIEW_PERMISSION);
     // if label not given, then consider stable template label
@@ -520,8 +525,9 @@ public class NGTemplateResource {
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountId,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgId,
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectId,
-      @NotNull TemplateApplyRequestDTO templateApplyRequestDTO) {
-    TemplateMergeResponseDTO templateMergeResponseDTO = templateMergeHelper.mergeTemplateSpecToPipelineYaml(
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo, @NotNull TemplateApplyRequestDTO templateApplyRequestDTO) {
+    log.info("Applying templates to pipeline yaml in project {}, org {}, account {}", projectId, orgId, accountId);
+    TemplateMergeResponseDTO templateMergeResponseDTO = templateMergeHelper.applyTemplatesToYaml(
         accountId, orgId, projectId, templateApplyRequestDTO.getOriginalEntityYaml());
     if (templateApplyRequestDTO.isCheckForAccess() && templateMergeResponseDTO != null
         && EmptyPredicate.isNotEmpty(templateMergeResponseDTO.getTemplateReferenceSummaries())) {
@@ -565,7 +571,10 @@ public class NGTemplateResource {
           NGCommonEntityConstants.PROJECT_KEY) String projectId,
       @RequestBody(required = true, description = "Template YAML") @NotNull @ApiParam(hidden = true) String yaml) {
     log.info("Creating variables for template.");
-    TemplateEntity templateEntity = NGTemplateDtoMapper.toTemplateEntity(accountId, orgId, projectId, yaml);
+    String appliedTemplateYaml =
+        templateMergeHelper.applyTemplatesToYaml(accountId, orgId, projectId, yaml).getMergedPipelineYaml();
+    TemplateEntity templateEntity =
+        NGTemplateDtoMapper.toTemplateEntity(accountId, orgId, projectId, appliedTemplateYaml);
     String pmsUnderstandableYaml =
         templateYamlConversionHelper.convertTemplateYamlToPMSUnderstandableYaml(templateEntity);
     VariablesServiceRequest request = VariablesServiceRequest.newBuilder().setYaml(pmsUnderstandableYaml).build();
@@ -598,5 +607,15 @@ public class NGTemplateResource {
           NGCommonEntityConstants.VERSION_LABEL_KEY) String versionLabel) {
     return ResponseDTO.newResponse(templateService.validateIdentifierIsUnique(
         accountIdentifier, orgIdentifier, projectIdentifier, templateIdentifier, versionLabel));
+  }
+
+  @POST
+  @Path("templateReferences")
+  public ResponseDTO<List<EntityDetailProtoDTO>> getTemplateReferences(
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
+      @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgId,
+      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectId, @NotNull String yaml) {
+    return ResponseDTO.newResponse(
+        templateReferenceHelper.getNestedTemplateReferences(accountId, orgId, projectId, yaml, false));
   }
 }

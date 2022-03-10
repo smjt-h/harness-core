@@ -15,10 +15,19 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
+import io.harness.cdng.artifact.outcome.ArtifactOutcome;
+import io.harness.cdng.artifact.outcome.ArtifactoryArtifactOutcome;
+import io.harness.cdng.artifact.outcome.DockerArtifactOutcome;
+import io.harness.cdng.artifact.outcome.EcrArtifactOutcome;
+import io.harness.cdng.artifact.outcome.GcrArtifactOutcome;
+import io.harness.cdng.artifact.outcome.NexusArtifactOutcome;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.services.ConnectorService;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryAuthType;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryUsernamePasswordAuthDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.docker.DockerAuthType;
 import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
@@ -26,6 +35,9 @@ import io.harness.delegate.beans.connector.docker.DockerUserNamePasswordDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpCredentialType;
 import io.harness.delegate.beans.connector.gcpconnector.GcpManualDetailsDTO;
+import io.harness.delegate.beans.connector.nexusconnector.NexusAuthType;
+import io.harness.delegate.beans.connector.nexusconnector.NexusConnectorDTO;
+import io.harness.delegate.beans.connector.nexusconnector.NexusUsernamePasswordAuthDTO;
 import io.harness.delegate.task.artifacts.ArtifactDelegateRequestUtils;
 import io.harness.delegate.task.artifacts.ArtifactSourceConstants;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
@@ -39,10 +51,6 @@ import io.harness.k8s.model.ImageDetails;
 import io.harness.ng.NextGenModule;
 import io.harness.ng.core.BaseNGAccess;
 import io.harness.ng.core.NGAccess;
-import io.harness.ngpipeline.artifact.bean.ArtifactOutcome;
-import io.harness.ngpipeline.artifact.bean.DockerArtifactOutcome;
-import io.harness.ngpipeline.artifact.bean.EcrArtifactOutcome;
-import io.harness.ngpipeline.artifact.bean.GcrArtifactOutcome;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.security.encryption.EncryptedDataDetail;
@@ -78,6 +86,12 @@ public class ImagePullSecretUtils {
         break;
       case ArtifactSourceConstants.ECR_NAME:
         getImageDetailsFromEcr((EcrArtifactOutcome) artifactOutcome, imageDetailsBuilder, ambiance);
+        break;
+      case ArtifactSourceConstants.NEXUS3_REGISTRY_NAME:
+        getImageDetailsFromNexus((NexusArtifactOutcome) artifactOutcome, imageDetailsBuilder, ambiance);
+        break;
+      case ArtifactSourceConstants.ARTIFACTORY_REGISTRY_NAME:
+        getImageDetailsFromArtifactory((ArtifactoryArtifactOutcome) artifactOutcome, imageDetailsBuilder, ambiance);
         break;
       default:
         throw new UnsupportedOperationException(
@@ -167,6 +181,46 @@ public class ImagePullSecretUtils {
         .registryUrl(imageUrlToRegistryUrl(imageUrl))
         .username("AWS");
     imageDetailsBuilder.password("\"" + password + "\"");
+  }
+
+  private void getImageDetailsFromNexus(
+      NexusArtifactOutcome nexusArtifactOutcome, ImageDetailsBuilder imageDetailsBuilder, Ambiance ambiance) {
+    String connectorRef = nexusArtifactOutcome.getConnectorRef();
+    ConnectorInfoDTO connectorDTO = getConnector(connectorRef, ambiance);
+    NexusConnectorDTO connectorConfig = (NexusConnectorDTO) connectorDTO.getConnectorConfig();
+    if (connectorConfig.getAuth() != null && connectorConfig.getAuth().getCredentials() != null
+        && connectorConfig.getAuth().getAuthType() == NexusAuthType.USER_PASSWORD) {
+      NexusUsernamePasswordAuthDTO credentials =
+          (NexusUsernamePasswordAuthDTO) connectorConfig.getAuth().getCredentials();
+      String passwordRef = credentials.getPasswordRef().toSecretRefStringValue();
+      if (credentials.getUsernameRef() != null) {
+        imageDetailsBuilder.usernameRef(
+            getPasswordExpression(credentials.getUsernameRef().toSecretRefStringValue(), ambiance));
+      }
+      imageDetailsBuilder.username(credentials.getUsername());
+      imageDetailsBuilder.password(getPasswordExpression(passwordRef, ambiance));
+      imageDetailsBuilder.registryUrl(connectorConfig.getNexusServerUrl());
+    }
+  }
+
+  private void getImageDetailsFromArtifactory(ArtifactoryArtifactOutcome artifactoryArtifactOutcome,
+      ImageDetailsBuilder imageDetailsBuilder, Ambiance ambiance) {
+    String connectorRef = artifactoryArtifactOutcome.getConnectorRef();
+    ConnectorInfoDTO connectorDTO = getConnector(connectorRef, ambiance);
+    ArtifactoryConnectorDTO connectorConfig = (ArtifactoryConnectorDTO) connectorDTO.getConnectorConfig();
+    if (connectorConfig.getAuth() != null && connectorConfig.getAuth().getCredentials() != null
+        && connectorConfig.getAuth().getAuthType() == ArtifactoryAuthType.USER_PASSWORD) {
+      ArtifactoryUsernamePasswordAuthDTO credentials =
+          (ArtifactoryUsernamePasswordAuthDTO) connectorConfig.getAuth().getCredentials();
+      String passwordRef = credentials.getPasswordRef().toSecretRefStringValue();
+      if (credentials.getUsernameRef() != null) {
+        imageDetailsBuilder.usernameRef(
+            getPasswordExpression(credentials.getUsernameRef().toSecretRefStringValue(), ambiance));
+      }
+      imageDetailsBuilder.username(credentials.getUsername());
+      imageDetailsBuilder.password(getPasswordExpression(passwordRef, ambiance));
+      imageDetailsBuilder.registryUrl(connectorConfig.getArtifactoryServerUrl());
+    }
   }
 
   private String imageUrlToRegistryUrl(String imageUrl) {

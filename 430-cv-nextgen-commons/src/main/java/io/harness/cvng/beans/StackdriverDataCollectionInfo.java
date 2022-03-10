@@ -28,6 +28,12 @@ import lombok.Data;
 public class StackdriverDataCollectionInfo extends TimeSeriesDataCollectionInfo<GcpConnectorDTO> {
   List<StackDriverMetricDefinition> metricDefinitions;
 
+  public List<StackDriverMetricDefinition> getMetricDefinitions() {
+    if (metricDefinitions == null) {
+      return Collections.emptyList();
+    }
+    return metricDefinitions;
+  }
   @Override
   public Map<String, Object> getDslEnvVariables(GcpConnectorDTO connectorConfigDTO) {
     Map<String, Object> dslEnvVariables = StackdriverUtils.getCommonEnvVariables(connectorConfigDTO, METRIC_SCOPE);
@@ -38,11 +44,11 @@ public class StackdriverDataCollectionInfo extends TimeSeriesDataCollectionInfo<
     List<List<String>> groupByFieldsList = new ArrayList<>();
     Map<String, List<String>> groupByResponseList = new HashMap<>();
     List<String> serviceInstanceFieldList = new ArrayList<>();
-    Map<String, String> serviceInstanceResponseFields = new HashMap<>();
-    metricDefinitions.forEach(metricDefinition -> {
+    List<String> serviceInstanceResponseFields = new ArrayList<>();
+    getMetricDefinitions().forEach(metricDefinition -> {
       if (this.isCollectHostData() && metricDefinition.getServiceInstanceField() != null) {
         serviceInstanceFieldList.add(metricDefinition.getServiceInstanceField());
-        serviceInstanceResponseFields.put(metricDefinition.getMetricName(),
+        serviceInstanceResponseFields.add(
             metricDefinition.getServiceInstanceField().replace("\"", "").replace("label", "labels"));
       }
       metricIdentifiers.add(metricDefinition.getMetricIdentifier());

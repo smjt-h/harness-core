@@ -25,6 +25,7 @@ import io.harness.gitsync.FileChange;
 import io.harness.gitsync.ScopeDetails;
 import io.harness.ng.core.entitydetail.EntityDetailRestToProtoMapper;
 import io.harness.ng.core.template.TemplateEntityType;
+import io.harness.repositories.NGTemplateRepository;
 import io.harness.rule.Owner;
 import io.harness.template.beans.yaml.NGTemplateConfig;
 import io.harness.template.entity.TemplateEntity;
@@ -61,6 +62,7 @@ public class TemplateFullGitSyncHelperTest extends CategoryTest {
 
   @Mock FilterService filterService;
   NGTemplateServiceHelper templateServiceHelper;
+  @Mock NGTemplateRepository templateRepository;
 
   private final String ACCOUNT_ID = "accountId";
   private final String ORG_IDENTIFIER = "orgId";
@@ -80,7 +82,7 @@ public class TemplateFullGitSyncHelperTest extends CategoryTest {
     String filename = "template.yaml";
     yaml = Resources.toString(Objects.requireNonNull(classLoader.getResource(filename)), StandardCharsets.UTF_8);
 
-    templateServiceHelper = new NGTemplateServiceHelper(filterService);
+    templateServiceHelper = new NGTemplateServiceHelper(filterService, templateRepository);
     Reflect.on(templateFullGitSyncHelper).set("templateServiceHelper", templateServiceHelper);
 
     entityDetailProtoDTO = EntityDetailProtoDTO.newBuilder().setType(EntityTypeProtoEnum.TEMPLATE).build();

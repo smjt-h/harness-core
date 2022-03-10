@@ -118,13 +118,13 @@ public class InitializeStepInfo implements CIStepInfo, WithConnectorRef {
   public Map<String, ParameterField<String>> extractConnectorRefs() {
     Map<String, ParameterField<String>> connectorRefMap = new HashMap<>();
     if (infrastructure.getType() == Infrastructure.Type.KUBERNETES_DIRECT) {
-      connectorRefMap.put(YAMLFieldNameConstants.CONNECTOR_REF,
-          ParameterField.createValueField(((K8sDirectInfraYaml) infrastructure).getSpec().getConnectorRef()));
+      connectorRefMap.put(
+          YAMLFieldNameConstants.CONNECTOR_REF, ((K8sDirectInfraYaml) infrastructure).getSpec().getConnectorRef());
     }
 
     if (!skipGitClone) {
-      connectorRefMap.put(
-          YAMLFieldNameConstants.CODEBASE_CONNECTOR_REF, ParameterField.createValueField(ciCodebase.getConnectorRef()));
+      connectorRefMap.put(YAMLFieldNameConstants.CODEBASE_CONNECTOR_REF,
+          ParameterField.createValueField(ciCodebase.getConnectorRef().getValue()));
     }
 
     return connectorRefMap;

@@ -9,6 +9,8 @@ package io.harness.cdng.creator;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.artifact.outcome.ArtifactOutcome;
+import io.harness.cdng.artifact.outcome.ArtifactsOutcome;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.infra.steps.InfrastructureStep;
 import io.harness.cdng.pipeline.executions.beans.CDPipelineModuleInfo;
@@ -21,12 +23,11 @@ import io.harness.cdng.service.steps.ServiceConfigStep;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.data.structure.EmptyPredicate;
-import io.harness.ngpipeline.artifact.bean.ArtifactOutcome;
-import io.harness.ngpipeline.artifact.bean.ArtifactsOutcome;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.utils.AmbianceUtils;
+import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.sdk.core.data.OptionalOutcome;
 import io.harness.pms.sdk.core.events.OrchestrationEvent;
 import io.harness.pms.sdk.core.execution.ExecutionSummaryModuleInfoProvider;
@@ -100,11 +101,11 @@ public class CDNGModuleInfoProvider implements ExecutionSummaryModuleInfoProvide
   }
 
   private boolean isServiceNodeAndCompleted(StepType stepType, Status status) {
-    return Objects.equals(stepType, ServiceConfigStep.STEP_TYPE) && status == Status.SUCCEEDED;
+    return Objects.equals(stepType, ServiceConfigStep.STEP_TYPE) && StatusUtils.isFinalStatus(status);
   }
 
   private boolean isInfrastructureNodeAndCompleted(StepType stepType, Status status) {
-    return Objects.equals(stepType, InfrastructureStep.STEP_TYPE) && status == Status.SUCCEEDED;
+    return Objects.equals(stepType, InfrastructureStep.STEP_TYPE) && StatusUtils.isFinalStatus(status);
   }
 
   @Override
@@ -119,11 +120,14 @@ public class CDNGModuleInfoProvider implements ExecutionSummaryModuleInfoProvide
                  .serviceIdentifier(outcome.getIdentifier()));
     }
     if (isInfrastructureNodeAndCompleted(stepType, event.getStatus())) {
-      InfrastructureOutcome infrastructureOutcome = (InfrastructureOutcome) outcomeService.resolve(
+      OptionalOutcome infraOptionalOutcome = outcomeService.resolveOptional(
           ambiance, RefObjectUtils.getOutcomeRefObject(OutcomeExpressionConstants.INFRASTRUCTURE_OUTCOME));
-      cdPipelineModuleInfoBuilder.envIdentifier(infrastructureOutcome.getEnvironment().getIdentifier())
-          .environmentType(infrastructureOutcome.getEnvironment().getType())
-          .infrastructureType(infrastructureOutcome.getKind());
+      if (infraOptionalOutcome.isFound()) {
+        InfrastructureOutcome infrastructureOutcome = (InfrastructureOutcome) infraOptionalOutcome.getOutcome();
+        cdPipelineModuleInfoBuilder.envIdentifier(infrastructureOutcome.getEnvironment().getIdentifier())
+            .environmentType(infrastructureOutcome.getEnvironment().getType())
+            .infrastructureType(infrastructureOutcome.getKind());
+      }
     }
     return cdPipelineModuleInfoBuilder.build();
   }

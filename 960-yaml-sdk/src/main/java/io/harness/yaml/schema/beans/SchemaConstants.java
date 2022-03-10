@@ -12,6 +12,9 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 import io.harness.annotations.dev.OwnedBy;
 @OwnedBy(DX)
 public class SchemaConstants {
+  public static final String PIPELINE_NODE = "pipeline";
+  public static final String STAGES_NODE = "stages";
+  public static final String PARALLEL_NODE = "parallel";
   public static final String IF_NODE = "if";
   public static final String THEN_NODE = "then";
   public static final String ALL_OF_NODE = "allOf";
@@ -42,4 +45,6 @@ public class SchemaConstants {
   public static final String MIN_LENGTH_NODE = "minLength";
   public static final String RUNTIME_INPUT_PATTERN = "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$";
   public static final String SPEC_NODE = "spec";
+  public static final String STAGE_ELEMENT_WRAPPER_CONFIG = "StageElementWrapperConfig";
+  public static final String STAGE_NODE = "stage";
 }

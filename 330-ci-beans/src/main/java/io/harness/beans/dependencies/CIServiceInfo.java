@@ -13,6 +13,7 @@ import static io.harness.beans.SwaggerConstants.INTEGER_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.STRING_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.STRING_LIST_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.STRING_MAP_CLASSPATH;
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
 
 import io.harness.annotations.dev.OwnedBy;
@@ -63,7 +64,11 @@ public class CIServiceInfo implements DependencySpecType {
   @NotNull @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> connectorRef;
   @YamlSchemaTypes({string}) @ApiModelProperty(dataType = BOOLEAN_CLASSPATH) private ParameterField<Boolean> privileged;
   @YamlSchemaTypes({string}) @ApiModelProperty(dataType = INTEGER_CLASSPATH) private ParameterField<Integer> runAsUser;
+  @YamlSchemaTypes(value = {string})
+  @ApiModelProperty(dataType = STRING_MAP_CLASSPATH)
+  private ParameterField<Map<String, String>> portBindings;
   private ContainerResource resources;
+  @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.ImagePullPolicy")
   private ParameterField<ImagePullPolicy> imagePullPolicy;
 

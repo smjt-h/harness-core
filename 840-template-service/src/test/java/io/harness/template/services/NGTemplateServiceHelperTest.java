@@ -24,6 +24,7 @@ import io.harness.filter.service.FilterService;
 import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.ng.core.template.TemplateListType;
+import io.harness.repositories.NGTemplateRepository;
 import io.harness.rule.Owner;
 import io.harness.template.TemplateFilterPropertiesDTO;
 import io.harness.template.entity.TemplateEntity;
@@ -46,6 +47,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 public class NGTemplateServiceHelperTest extends CategoryTest {
   NGTemplateServiceHelper templateServiceHelper;
   @Mock FilterService filterService;
+  @Mock NGTemplateRepository templateRepository;
 
   private final String ACCOUNT_ID = "account_id";
   private final String ORG_IDENTIFIER = "orgId";
@@ -56,7 +58,7 @@ public class NGTemplateServiceHelperTest extends CategoryTest {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    templateServiceHelper = new NGTemplateServiceHelper(filterService);
+    templateServiceHelper = new NGTemplateServiceHelper(filterService, templateRepository);
   }
 
   @Test

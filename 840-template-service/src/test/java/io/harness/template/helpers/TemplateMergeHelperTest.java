@@ -8,6 +8,7 @@
 package io.harness.template.helpers;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.rule.OwnerRule.ABHINAV_MITTAL;
 import static io.harness.rule.OwnerRule.INDER;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -80,6 +81,30 @@ public class TemplateMergeHelperTest extends TemplateServiceTestBase {
   }
 
   @Test
+  @Owner(developers = ABHINAV_MITTAL)
+  @Category(UnitTests.class)
+  public void testCreateTemplateInputsFromPipelineTemplateWithRuntimeInputs() {
+    String filename = "template-pipeline.yaml";
+    String yaml = readFile(filename);
+    String templateYaml = templateMergeHelper.createTemplateInputsFromTemplate(yaml);
+    assertThat(templateYaml).isNotNull();
+
+    String resFile = "template-pipeline-templateInputs.yaml";
+    String resTemplate = readFile(resFile);
+    assertThat(templateYaml).isEqualTo(resTemplate);
+  }
+
+  @Test
+  @Owner(developers = ABHINAV_MITTAL)
+  @Category(UnitTests.class)
+  public void testCreateTemplateInputsFromPipelineTemplateWithoutRuntimeInputs() {
+    String filename = "pipeline-template-without-runtime-inputs.yaml";
+    String yaml = readFile(filename);
+    String templateYaml = templateMergeHelper.createTemplateInputsFromTemplate(yaml);
+    assertThat(templateYaml).isNullOrEmpty();
+  }
+
+  @Test
   @Owner(developers = INDER)
   @Category(UnitTests.class)
   public void testMergeTemplateSpecToPipelineYaml_StepTemplateAtDiffScope() {
@@ -113,7 +138,7 @@ public class TemplateMergeHelperTest extends TemplateServiceTestBase {
     String pipelineYamlFile = "pipeline-with-template-step-diff-scope.yaml";
     String pipelineYaml = readFile(pipelineYamlFile);
     TemplateMergeResponseDTO pipelineMergeResponse =
-        templateMergeHelper.mergeTemplateSpecToPipelineYaml(ACCOUNT_ID, ORG_ID, PROJECT_ID, pipelineYaml);
+        templateMergeHelper.applyTemplatesToYaml(ACCOUNT_ID, ORG_ID, PROJECT_ID, pipelineYaml);
     String finalPipelineYaml = pipelineMergeResponse.getMergedPipelineYaml();
     assertThat(finalPipelineYaml).isNotNull();
     assertThat(pipelineMergeResponse.getTemplateReferenceSummaries()).isNotNull();
@@ -123,18 +148,21 @@ public class TemplateMergeHelperTest extends TemplateServiceTestBase {
                                          .versionLabel("1")
                                          .scope(Scope.ORG)
                                          .fqn("pipeline.stages.qaStage.spec.execution.steps.shellScriptStep11")
+                                         .stableTemplate(false)
                                          .build());
     templateReferenceSummaryList.add(TemplateReferenceSummary.builder()
                                          .templateIdentifier("template1")
                                          .versionLabel("1")
                                          .scope(Scope.PROJECT)
                                          .fqn("pipeline.stages.qaStage.spec.execution.steps.shellScriptStep12")
+                                         .stableTemplate(true)
                                          .build());
     templateReferenceSummaryList.add(TemplateReferenceSummary.builder()
                                          .templateIdentifier("template2")
                                          .versionLabel("1")
                                          .scope(Scope.ACCOUNT)
                                          .fqn("pipeline.stages.qaStage.spec.execution.steps.approval")
+                                         .stableTemplate(false)
                                          .build());
     assertThat(pipelineMergeResponse.getTemplateReferenceSummaries()).hasSize(3);
     assertThat(pipelineMergeResponse.getTemplateReferenceSummaries()).containsAll(templateReferenceSummaryList);
@@ -181,7 +209,7 @@ public class TemplateMergeHelperTest extends TemplateServiceTestBase {
     String pipelineYamlFile = "pipeline-with-template-step.yaml";
     String pipelineYaml = readFile(pipelineYamlFile);
     TemplateMergeResponseDTO pipelineMergeResponse =
-        templateMergeHelper.mergeTemplateSpecToPipelineYaml(ACCOUNT_ID, ORG_ID, PROJECT_ID, pipelineYaml);
+        templateMergeHelper.applyTemplatesToYaml(ACCOUNT_ID, ORG_ID, PROJECT_ID, pipelineYaml);
     String finalPipelineYaml = pipelineMergeResponse.getMergedPipelineYaml();
     assertThat(finalPipelineYaml).isNotNull();
     assertThat(pipelineMergeResponse.getTemplateReferenceSummaries()).isNotNull();
@@ -191,18 +219,21 @@ public class TemplateMergeHelperTest extends TemplateServiceTestBase {
                                          .versionLabel("1")
                                          .scope(Scope.PROJECT)
                                          .fqn("pipeline.stages.qaStage.spec.execution.steps.shellScriptStep11")
+                                         .stableTemplate(false)
                                          .build());
     templateReferenceSummaryList.add(TemplateReferenceSummary.builder()
                                          .templateIdentifier("template1")
                                          .versionLabel("1")
                                          .scope(Scope.PROJECT)
                                          .fqn("pipeline.stages.qaStage.spec.execution.steps.shellScriptStep12")
+                                         .stableTemplate(true)
                                          .build());
     templateReferenceSummaryList.add(TemplateReferenceSummary.builder()
                                          .templateIdentifier("template2")
                                          .versionLabel("1")
                                          .scope(Scope.PROJECT)
                                          .fqn("pipeline.stages.qaStage.spec.execution.steps.approval")
+                                         .stableTemplate(false)
                                          .build());
     assertThat(pipelineMergeResponse.getTemplateReferenceSummaries()).hasSize(3);
     assertThat(pipelineMergeResponse.getTemplateReferenceSummaries()).containsAll(templateReferenceSummaryList);
@@ -256,7 +287,7 @@ public class TemplateMergeHelperTest extends TemplateServiceTestBase {
     String pipelineYamlFile = "pipeline-with-stage-template.yaml";
     String pipelineYaml = readFile(pipelineYamlFile);
     TemplateMergeResponseDTO pipelineMergeResponse =
-        templateMergeHelper.mergeTemplateSpecToPipelineYaml(ACCOUNT_ID, ORG_ID, PROJECT_ID, pipelineYaml);
+        templateMergeHelper.applyTemplatesToYaml(ACCOUNT_ID, ORG_ID, PROJECT_ID, pipelineYaml);
     String finalPipelineYaml = pipelineMergeResponse.getMergedPipelineYaml();
     assertThat(finalPipelineYaml).isNotNull();
     assertThat(pipelineMergeResponse.getTemplateReferenceSummaries()).isNotNull().hasSize(1);
@@ -304,7 +335,7 @@ public class TemplateMergeHelperTest extends TemplateServiceTestBase {
     String pipelineYamlFile = "pipeline-with-invalid-template-steps.yaml";
     String pipelineYaml = readFile(pipelineYamlFile);
     try {
-      templateMergeHelper.mergeTemplateSpecToPipelineYaml(ACCOUNT_ID, ORG_ID, PROJECT_ID, pipelineYaml);
+      templateMergeHelper.applyTemplatesToYaml(ACCOUNT_ID, ORG_ID, PROJECT_ID, pipelineYaml);
     } catch (NGTemplateResolveException ngTemplateResolveException) {
       assertThat(ngTemplateResolveException.getErrorResponseDTO()).isNotNull();
       assertThat(ngTemplateResolveException.getErrorResponseDTO().getErrorMap()).hasSize(3);
@@ -333,7 +364,7 @@ public class TemplateMergeHelperTest extends TemplateServiceTestBase {
     String pipelineYamlFile = "pipeline-with-template-field.yaml";
     String pipelineYaml = readFile(pipelineYamlFile);
     TemplateMergeResponseDTO pipelineMergeResponse =
-        templateMergeHelper.mergeTemplateSpecToPipelineYaml(ACCOUNT_ID, ORG_ID, PROJECT_ID, pipelineYaml);
+        templateMergeHelper.applyTemplatesToYaml(ACCOUNT_ID, ORG_ID, PROJECT_ID, pipelineYaml);
     String finalPipelineYaml = pipelineMergeResponse.getMergedPipelineYaml();
     assertThat(finalPipelineYaml).isNotNull();
     assertThat(pipelineMergeResponse.getTemplateReferenceSummaries()).isNotNull();

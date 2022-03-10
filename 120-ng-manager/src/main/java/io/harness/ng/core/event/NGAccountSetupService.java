@@ -10,7 +10,8 @@ package io.harness.ng.core.event;
 import static io.harness.NGConstants.DEFAULT_ORG_IDENTIFIER;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.ng.core.invites.mapper.RoleBindingMapper.getDefaultResourceGroupIdentifier;
+import static io.harness.ng.core.invites.mapper.RoleBindingMapper.getDefaultResourceGroupIdentifierForAdmins;
+import static io.harness.ng.core.invites.mapper.RoleBindingMapper.getManagedAdminRole;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
@@ -29,6 +30,7 @@ import io.harness.ng.NextGenConfiguration;
 import io.harness.ng.accesscontrol.migrations.models.AccessControlMigration;
 import io.harness.ng.accesscontrol.migrations.services.AccessControlMigrationService;
 import io.harness.ng.core.AccountOrgProjectValidator;
+import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
 import io.harness.ng.core.dto.OrganizationDTO;
 import io.harness.ng.core.entities.Organization;
 import io.harness.ng.core.services.OrganizationService;
@@ -53,7 +55,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DuplicateKeyException;
 
 @OwnedBy(PL)
@@ -69,6 +70,7 @@ public class NGAccountSetupService {
   private final HarnessSMManager harnessSMManager;
   private final CIDefaultEntityManager ciDefaultEntityManager;
   private final boolean shouldAssignAdmins;
+  private final NGAccountSettingService accountSettingService;
 
   @Inject
   public NGAccountSetupService(OrganizationService organizationService,
@@ -76,7 +78,7 @@ public class NGAccountSetupService {
       @Named("PRIVILEGED") AccessControlAdminClient accessControlAdminClient, NgUserService ngUserService,
       UserClient userClient, AccessControlMigrationService accessControlMigrationService,
       HarnessSMManager harnessSMManager, CIDefaultEntityManager ciDefaultEntityManager,
-      NextGenConfiguration nextGenConfiguration) {
+      NextGenConfiguration nextGenConfiguration, NGAccountSettingService accountSettingService) {
     this.organizationService = organizationService;
     this.accountOrgProjectValidator = accountOrgProjectValidator;
     this.accessControlAdminClient = accessControlAdminClient;
@@ -88,6 +90,7 @@ public class NGAccountSetupService {
     this.shouldAssignAdmins =
         nextGenConfiguration.getAccessControlAdminClientConfiguration().getMockAccessControlService().equals(
             Boolean.FALSE);
+    this.accountSettingService = accountSettingService;
   }
 
   public void setupAccountForNG(String accountIdentifier) {
@@ -104,6 +107,7 @@ public class NGAccountSetupService {
     log.info("[NGAccountSetupService]: Global SM Created Successfully for account{}", accountIdentifier);
     harnessSMManager.createHarnessSecretManager(accountIdentifier, null, null);
     ciDefaultEntityManager.createCIDefaultEntities(accountIdentifier, null, null);
+    accountSettingService.setUpDefaultAccountSettings(accountIdentifier);
   }
 
   private Organization createDefaultOrg(String accountIdentifier) {
@@ -129,7 +133,7 @@ public class NGAccountSetupService {
     Scope accountScope = Scope.of(accountIdentifier, null, null);
     if (!hasAdmin(accountScope)) {
       cgUsers.forEach(user -> upsertUserMembership(accountScope, user.getUuid()));
-      assignAdminRoleToUsers(accountScope, cgAdmins, getManagedAdminRole(accountScope));
+      assignAdminRoleToUsers(accountScope, cgAdmins);
       if (shouldAssignAdmins && !hasAdmin(accountScope)) {
         throw new GeneralException(String.format("No Admin could be assigned in scope %s", accountScope));
       }
@@ -139,7 +143,7 @@ public class NGAccountSetupService {
     Scope orgScope = Scope.of(accountIdentifier, orgIdentifier, null);
     if (!hasAdmin(orgScope)) {
       cgAdmins.forEach(user -> upsertUserMembership(orgScope, user));
-      assignAdminRoleToUsers(orgScope, cgAdmins, getManagedAdminRole(orgScope));
+      assignAdminRoleToUsers(orgScope, cgAdmins);
       if (shouldAssignAdmins && !hasAdmin(orgScope)) {
         throw new GeneralException(String.format("No Admin could be assigned in scope %s", orgScope));
       }
@@ -152,18 +156,9 @@ public class NGAccountSetupService {
     return !isEmpty(ngUserService.listUsersHavingRole(scope, getManagedAdminRole(scope)));
   }
 
-  private static String getManagedAdminRole(Scope scope) {
-    if (!StringUtils.isEmpty(scope.getProjectIdentifier())) {
-      return "_project_admin";
-    } else if (!StringUtils.isEmpty(scope.getOrgIdentifier())) {
-      return "_organization_admin";
-    } else {
-      return "_account_admin";
-    }
-  }
-
-  private void assignAdminRoleToUsers(Scope scope, Collection<String> users, String roleIdentifier) {
-    createRoleAssignments(scope, buildRoleAssignments(users, roleIdentifier, getDefaultResourceGroupIdentifier(scope)));
+  private void assignAdminRoleToUsers(Scope scope, Collection<String> users) {
+    createRoleAssignments(scope,
+        buildRoleAssignments(users, getManagedAdminRole(scope), getDefaultResourceGroupIdentifierForAdmins(scope)));
   }
 
   private List<RoleAssignmentDTO> buildRoleAssignments(

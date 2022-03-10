@@ -8,12 +8,13 @@ package java
 import (
 	"context"
 	"fmt"
-	"github.com/wings-software/portal/commons/go/lib/exec"
-	"github.com/wings-software/portal/commons/go/lib/filesystem"
-	"github.com/wings-software/portal/product/ci/ti-service/types"
-	"go.uber.org/zap"
 	"strings"
 	"time"
+
+	"github.com/harness/harness-core/commons/go/lib/exec"
+	"github.com/harness/harness-core/commons/go/lib/filesystem"
+	"github.com/harness/harness-core/product/ci/ti-service/types"
+	"go.uber.org/zap"
 )
 
 var (
@@ -40,6 +41,7 @@ func (b *bazelRunner) AutoDetectPackages() ([]string, error) {
 
 func (b *bazelRunner) GetCmd(ctx context.Context, tests []types.RunnableTest, userArgs, agentConfigPath string, ignoreInstr, runAll bool) (string, error) {
 	if ignoreInstr {
+		b.log.Infow("ignoring instrumentation and not attaching Java agent")
 		return fmt.Sprintf("%s %s //...", bazelCmd, userArgs), nil
 	}
 

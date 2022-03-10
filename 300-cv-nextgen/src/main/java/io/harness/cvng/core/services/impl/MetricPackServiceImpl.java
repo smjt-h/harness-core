@@ -17,14 +17,12 @@ import static io.harness.persistence.HQuery.excludeAuthority;
 
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.MetricPackDTO;
-import io.harness.cvng.beans.TimeSeriesThresholdActionType;
-import io.harness.cvng.beans.TimeSeriesThresholdCriteria;
 import io.harness.cvng.core.entities.MetricPack;
 import io.harness.cvng.core.entities.MetricPack.MetricDefinition;
 import io.harness.cvng.core.entities.MetricPack.MetricPackKeys;
 import io.harness.cvng.core.entities.TimeSeriesThreshold;
-import io.harness.cvng.core.entities.TimeSeriesThreshold.TimeSeriesThresholdKeys;
 import io.harness.cvng.core.services.api.MetricPackService;
+import io.harness.cvng.core.services.api.TimeSeriesThresholdService;
 import io.harness.persistence.HPersistence;
 import io.harness.serializer.YamlUtils;
 
@@ -55,6 +53,9 @@ public class MetricPackServiceImpl implements MetricPackService {
   static final List<String> NEWRELIC_METRICPACK_FILES = Lists.newArrayList(
       "/newrelic/metric-packs/performance-pack.yml", "/newrelic/metric-packs/default-custom-pack.yml");
 
+  static final List<String> DYNATRACE_METRIC_FILES = Lists.newArrayList("/dynatrace/metric-packs/performance-pack.yml",
+      "/dynatrace/metric-packs/infrastructure-pack.yml", "/dynatrace/metric-packs/default-custom-pack.yml");
+
   static final List<String> STACKDRIVER_METRICPACK_FILES =
       Lists.newArrayList("/stackdriver/metric-packs/default-performance-pack.yaml",
           "/stackdriver/metric-packs/default-error-pack.yaml", "/stackdriver/metric-packs/default-infra-pack.yaml");
@@ -82,6 +83,10 @@ public class MetricPackServiceImpl implements MetricPackService {
   private static final URL APPDYNAMICS_CUSTOM_PACK_DSL_PATH =
       MetricPackServiceImpl.class.getResource("/appdynamics/dsl/custom-pack.datacollection");
   public static final String APPDYNAMICS_CUSTOM_PACK_DSL;
+
+  private static final URL DYNATRACE_METRIC_PACK_DSL_PATH =
+      MetricPackServiceImpl.class.getResource("/dynatrace/dsl/metric-pack.datacollection");
+  public static final String DYNATRACE_METRIC_PACK_DSL;
 
   private static final URL STACKDRIVER_DSL_PATH =
       MetricPackServiceImpl.class.getResource("/stackdriver/dsl/metric-collection.datacollection");
@@ -117,6 +122,7 @@ public class MetricPackServiceImpl implements MetricPackService {
     String prometheusDsl = null;
     String datadogDsl = null;
     String customHealthDsl = null;
+    String dynatraceMetricPackDsl = null;
     try {
       appDPeformancePackDsl = Resources.toString(APPDYNAMICS_PERFORMANCE_PACK_DSL_PATH, Charsets.UTF_8);
       appDqualityPackDsl = Resources.toString(APPDYNAMICS_QUALITY_PACK_DSL_PATH, Charsets.UTF_8);
@@ -128,6 +134,7 @@ public class MetricPackServiceImpl implements MetricPackService {
       prometheusDsl = Resources.toString(PROMETHEUS_DSL_PATH, Charsets.UTF_8);
       datadogDsl = Resources.toString(DATADOG_DSL_PATH, Charsets.UTF_8);
       customHealthDsl = Resources.toString(CUSTOM_HEALTH_DSL_PATH, Charsets.UTF_8);
+      dynatraceMetricPackDsl = Resources.toString(DYNATRACE_METRIC_PACK_DSL_PATH, Charsets.UTF_8);
     } catch (Exception e) {
       // TODO: this should throw an exception but we risk delegate not starting up. We can remove this log term and
       // throw and exception once things stabilize
@@ -137,6 +144,7 @@ public class MetricPackServiceImpl implements MetricPackService {
     APPDYNAMICS_QUALITY_PACK_DSL = appDqualityPackDsl;
     APPDYNAMICS_INFRASTRUCTURE_PACK_DSL = appDInfrastructurePackDsl;
     APPDYNAMICS_CUSTOM_PACK_DSL = appDCustomPackDsl;
+    DYNATRACE_METRIC_PACK_DSL = dynatraceMetricPackDsl;
     STACKDRIVER_DSL = stackDriverDsl;
     NEW_RELIC_DSL = newrelicDsl;
     NEWRELIC_CUSTOM_PACK_DSL = newrelicCustomDsl;
@@ -146,6 +154,7 @@ public class MetricPackServiceImpl implements MetricPackService {
   }
 
   @Inject private HPersistence hPersistence;
+  @Inject private TimeSeriesThresholdService timeSeriesThresholdService;
 
   @Override
   public List<MetricPackDTO> getMetricPacks(
@@ -161,7 +170,7 @@ public class MetricPackServiceImpl implements MetricPackService {
   }
 
   private List<DataSourceType> getDatasourcesToEliminateForCustom() {
-    return Arrays.asList(DataSourceType.APP_DYNAMICS, DataSourceType.NEW_RELIC);
+    return Arrays.asList(DataSourceType.APP_DYNAMICS, DataSourceType.NEW_RELIC, DataSourceType.DYNATRACE);
   }
 
   @Override
@@ -178,7 +187,13 @@ public class MetricPackServiceImpl implements MetricPackService {
       final Map<String, MetricPack> metricPackDefinitionsFromYaml =
           getMetricPackDefinitionsFromYaml(accountId, orgIdentifier, projectIdentifier, dataSourceType);
       final ArrayList<MetricPack> metricPacks = Lists.newArrayList(metricPackDefinitionsFromYaml.values());
+      log.info(String.format(
+          "Saving Metric packs for accountId %s, orgIdentifier %s, projectIdentifier %s for dataSourceType %s",
+          accountId, orgIdentifier, projectIdentifier, dataSourceType));
       hPersistence.save(metricPacks);
+      metricPacks.forEach(metricPack
+          -> timeSeriesThresholdService.createDefaultIgnoreThresholds(
+              accountId, orgIdentifier, projectIdentifier, dataSourceType, metricPack));
       return metricPacks;
     }
 
@@ -207,22 +222,8 @@ public class MetricPackServiceImpl implements MetricPackService {
   @Override
   public void createDefaultMetricPackAndThresholds(String accountId, String orgIdentifier, String projectIdentifier) {
     List<DataSourceType> dataSourceTypes = DataSourceType.getTimeSeriesTypes();
-    log.info(String.format("Adding Metric packs for accountId %s, orgIdentifier %s, projectIdentifier %s", accountId,
-        orgIdentifier, projectIdentifier));
     for (DataSourceType dataSourceType : dataSourceTypes) {
-      final Map<String, MetricPack> metricPackDefinitionsFromYaml =
-          getMetricPackDefinitionsFromYaml(accountId, orgIdentifier, projectIdentifier, dataSourceType);
-      final ArrayList<MetricPack> metricPacks = Lists.newArrayList(metricPackDefinitionsFromYaml.values());
-
-      if (isEmpty(getMetricPacks(accountId, orgIdentifier, projectIdentifier, dataSourceType))) {
-        log.info(String.format(
-            "Saving Metric packs for accountId %s, orgIdentifier %s, projectIdentifier %s for dataSourceType %s",
-            accountId, orgIdentifier, projectIdentifier, dataSourceType));
-        hPersistence.save(metricPacks);
-        metricPacks.forEach(metricPack
-            -> createDefaultIgnoreThresholds(
-                accountId, orgIdentifier, projectIdentifier, metricPack.getIdentifier(), dataSourceType));
-      }
+      getMetricPacks(accountId, orgIdentifier, projectIdentifier, dataSourceType);
     }
   }
 
@@ -248,6 +249,9 @@ public class MetricPackServiceImpl implements MetricPackService {
         break;
       case NEW_RELIC:
         yamlFileNames.addAll(NEWRELIC_METRICPACK_FILES);
+        break;
+      case DYNATRACE:
+        yamlFileNames.addAll(DYNATRACE_METRIC_FILES);
         break;
       case CUSTOM_HEALTH:
         yamlFileNames.addAll(CUSTOM_HEALTH_METRICPACK_FILES);
@@ -319,24 +323,6 @@ public class MetricPackServiceImpl implements MetricPackService {
   @Override
   public List<TimeSeriesThreshold> getMetricPackThresholds(String accountId, String orgIdentifier,
       String projectIdentifier, String metricPackIdentifier, DataSourceType dataSourceType) {
-    List<TimeSeriesThreshold> timeSeriesThresholds =
-        hPersistence.createQuery(TimeSeriesThreshold.class, excludeAuthority)
-            .filter(TimeSeriesThresholdKeys.accountId, accountId)
-            .filter(TimeSeriesThresholdKeys.orgIdentifier, orgIdentifier)
-            .filter(TimeSeriesThresholdKeys.projectIdentifier, projectIdentifier)
-            .filter(TimeSeriesThresholdKeys.metricPackIdentifier, metricPackIdentifier)
-            .filter(TimeSeriesThresholdKeys.dataSourceType, dataSourceType)
-            .asList();
-    if (isEmpty(timeSeriesThresholds)) {
-      return createDefaultIgnoreThresholds(
-          accountId, orgIdentifier, projectIdentifier, metricPackIdentifier, dataSourceType);
-    }
-
-    return timeSeriesThresholds;
-  }
-
-  private List<TimeSeriesThreshold> createDefaultIgnoreThresholds(String accountId, String orgIdentifier,
-      String projectIdentifier, String metricPackIdentifier, DataSourceType dataSourceType) {
     MetricPack metricPack = hPersistence.createQuery(MetricPack.class, excludeAuthority)
                                 .filter(MetricPackKeys.accountId, accountId)
                                 .filter(MetricPackKeys.orgIdentifier, orgIdentifier)
@@ -344,46 +330,10 @@ public class MetricPackServiceImpl implements MetricPackService {
                                 .filter(MetricPackKeys.identifier, metricPackIdentifier)
                                 .filter(MetricPackKeys.dataSourceType, dataSourceType)
                                 .get();
-
     Preconditions.checkNotNull(
         metricPack, "No metric pack found for project and pack ", projectIdentifier, metricPackIdentifier);
-
-    List<TimeSeriesThreshold> timeSeriesThresholds = new ArrayList<>();
-    metricPack.getMetrics().forEach(metricDefinition -> {
-      final List<TimeSeriesThresholdCriteria> thresholds = metricDefinition.getType().getThresholds();
-      thresholds.forEach(threshold
-          -> timeSeriesThresholds.add(TimeSeriesThreshold.builder()
-                                          .accountId(accountId)
-                                          .orgIdentifier(orgIdentifier)
-                                          .projectIdentifier(projectIdentifier)
-                                          .dataSourceType(dataSourceType)
-                                          .metricType(metricDefinition.getType())
-                                          .metricPackIdentifier(metricPackIdentifier)
-                                          .metricName(metricDefinition.getName())
-                                          .action(TimeSeriesThresholdActionType.IGNORE)
-                                          .criteria(threshold)
-                                          .build()));
-    });
-    saveMetricPackThreshold(accountId, orgIdentifier, projectIdentifier, dataSourceType, timeSeriesThresholds);
-    return timeSeriesThresholds;
-  }
-
-  @Override
-  public List<String> saveMetricPackThreshold(String accountId, String orgIdentifier, String projectIdentifier,
-      DataSourceType dataSourceType, List<TimeSeriesThreshold> timeSeriesThresholds) {
-    timeSeriesThresholds.forEach(timeSeriesThreshold -> {
-      timeSeriesThreshold.setAccountId(accountId);
-      timeSeriesThreshold.setOrgIdentifier(orgIdentifier);
-      timeSeriesThreshold.setProjectIdentifier(projectIdentifier);
-      timeSeriesThreshold.setDataSourceType(dataSourceType);
-    });
-    return hPersistence.save(timeSeriesThresholds);
-  }
-
-  @Override
-  public boolean deleteMetricPackThresholds(
-      String accountId, String orgIdentifier, String projectIdentifier, String thresholdId) {
-    return hPersistence.delete(TimeSeriesThreshold.class, thresholdId);
+    return timeSeriesThresholdService.getMetricPackThresholds(
+        accountId, orgIdentifier, projectIdentifier, metricPack, dataSourceType);
   }
 
   @Override
@@ -413,6 +363,7 @@ public class MetricPackServiceImpl implements MetricPackService {
       }
     });
   }
+
   @Override
   public void populateDataCollectionDsl(DataSourceType dataSourceType, MetricPack metricPack) {
     switch (dataSourceType) {
@@ -430,6 +381,9 @@ public class MetricPackServiceImpl implements MetricPackService {
         break;
       case NEW_RELIC:
         metricPack.setDataCollectionDsl(getNewRelicMetricPackDsl(metricPack));
+        break;
+      case DYNATRACE:
+        metricPack.setDataCollectionDsl(getDynatraceMetricPackDsl(metricPack));
         break;
       case CUSTOM_HEALTH:
         metricPack.setDataCollectionDsl(CUSTOM_HEALTH_DSL);
@@ -460,6 +414,17 @@ public class MetricPackServiceImpl implements MetricPackService {
         return NEW_RELIC_DSL;
       case CUSTOM_PACK_IDENTIFIER:
         return NEWRELIC_CUSTOM_PACK_DSL;
+      default:
+        throw new IllegalArgumentException("Invalid identifier " + metricPack.getIdentifier());
+    }
+  }
+
+  private String getDynatraceMetricPackDsl(MetricPack metricPack) {
+    switch (metricPack.getIdentifier()) {
+      case PERFORMANCE_PACK_IDENTIFIER:
+      case INFRASTRUCTURE_PACK_IDENTIFIER:
+      case CUSTOM_PACK_IDENTIFIER:
+        return DYNATRACE_METRIC_PACK_DSL;
       default:
         throw new IllegalArgumentException("Invalid identifier " + metricPack.getIdentifier());
     }

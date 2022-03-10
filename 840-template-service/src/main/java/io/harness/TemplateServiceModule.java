@@ -10,6 +10,7 @@ package io.harness;
 import static io.harness.AuthorizationServiceHeader.TEMPLATE_SERVICE;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.lock.DistributedLockImplementation.MONGO;
+import static io.harness.ng.core.template.TemplateEntityConstants.PIPELINE;
 import static io.harness.ng.core.template.TemplateEntityConstants.STAGE;
 import static io.harness.ng.core.template.TemplateEntityConstants.STEP;
 import static io.harness.outbox.OutboxSDKConstants.DEFAULT_OUTBOX_POLL_CONFIGURATION;
@@ -24,6 +25,7 @@ import io.harness.delegate.beans.DelegateAsyncTaskResponse;
 import io.harness.delegate.beans.DelegateSyncTaskResponse;
 import io.harness.delegate.beans.DelegateTaskProgressResponse;
 import io.harness.enforcement.client.EnforcementClientModule;
+import io.harness.entitysetupusageclient.EntitySetupUsageClientModule;
 import io.harness.exception.exceptionmanager.ExceptionModule;
 import io.harness.filter.FilterType;
 import io.harness.filter.FiltersModule;
@@ -123,6 +125,8 @@ public class TemplateServiceModule extends AbstractModule {
     install(new ProjectClientModule(this.templateServiceConfiguration.getNgManagerServiceHttpClientConfig(),
         this.templateServiceConfiguration.getNgManagerServiceSecret(), TEMPLATE_SERVICE.getServiceId()));
     install(new OrganizationClientModule(this.templateServiceConfiguration.getNgManagerServiceHttpClientConfig(),
+        this.templateServiceConfiguration.getNgManagerServiceSecret(), TEMPLATE_SERVICE.getServiceId()));
+    install(new EntitySetupUsageClientModule(this.templateServiceConfiguration.getNgManagerServiceHttpClientConfig(),
         this.templateServiceConfiguration.getNgManagerServiceSecret(), TEMPLATE_SERVICE.getServiceId()));
 
     install(new DelegateServiceDriverGrpcClientModule(templateServiceConfiguration.getManagerServiceSecret(),
@@ -233,6 +237,7 @@ public class TemplateServiceModule extends AbstractModule {
         new TemplateYamlConversionHandlerRegistry();
     templateYamlConversionHandlerRegistry.register(STEP, injector.getInstance(TemplateYamlConversionHandler.class));
     templateYamlConversionHandlerRegistry.register(STAGE, injector.getInstance(TemplateYamlConversionHandler.class));
+    templateYamlConversionHandlerRegistry.register(PIPELINE, injector.getInstance(TemplateYamlConversionHandler.class));
     return templateYamlConversionHandlerRegistry;
   }
 

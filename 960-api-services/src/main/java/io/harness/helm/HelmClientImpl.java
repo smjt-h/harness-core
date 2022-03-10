@@ -166,12 +166,13 @@ public class HelmClientImpl implements HelmClient {
                                 .replace("${FLAGS}", "--max 5")
                                 .replace("${RELEASE_NAME}", releaseName);
 
-    String commandFlags = helmCommandData.getCommandFlags();
+    releaseHistory = applyCommandFlags(releaseHistory, commandType, helmCommandData.getCommandFlags(),
+        helmCommandData.isHelmCmdFlagsNull(), helmCommandData.getValueMap(), helmCommandData.getHelmVersion());
+
     if (HelmVersion.V2.equals(helmCommandData.getHelmVersion())) {
-      StringUtils.replace(commandFlags, DEBUG_COMMAND_FLAG, EMPTY);
+      releaseHistory = StringUtils.replaceIgnoreCase(releaseHistory, DEBUG_COMMAND_FLAG, EMPTY);
     }
-    releaseHistory = applyCommandFlags(releaseHistory, commandType, commandFlags, helmCommandData.isHelmCmdFlagsNull(),
-        helmCommandData.getValueMap(), helmCommandData.getHelmVersion());
+
     logHelmCommandInExecutionLogs(releaseHistory, helmCommandData.getLogCallback());
     releaseHistory = applyKubeConfigToCommand(releaseHistory, kubeConfigLocation);
 
@@ -193,12 +194,13 @@ public class HelmClientImpl implements HelmClient {
     String listRelease = getHelmCommandTemplateWithHelmPath(commandType, helmCommandData.getHelmVersion())
                              .replace("${RELEASE_NAME}", helmCommandData.getReleaseName());
 
-    String commandFlags = helmCommandData.getCommandFlags();
+    listRelease = applyCommandFlags(listRelease, commandType, helmCommandData.getCommandFlags(),
+        helmCommandData.isHelmCmdFlagsNull(), helmCommandData.getValueMap(), helmCommandData.getHelmVersion());
+
     if (HelmVersion.V2.equals(helmCommandData.getHelmVersion())) {
-      StringUtils.replace(commandFlags, DEBUG_COMMAND_FLAG, EMPTY);
+      listRelease = StringUtils.replaceIgnoreCase(listRelease, DEBUG_COMMAND_FLAG, EMPTY);
     }
-    listRelease = applyCommandFlags(listRelease, commandType, commandFlags, helmCommandData.isHelmCmdFlagsNull(),
-        helmCommandData.getValueMap(), helmCommandData.getHelmVersion());
+
     logHelmCommandInExecutionLogs(listRelease, helmCommandData.getLogCallback());
     listRelease = applyKubeConfigToCommand(listRelease, kubeConfigLocation);
     String errorMessagePrefix = "Failed in list releases step. Executed command: ";
@@ -217,7 +219,7 @@ public class HelmClientImpl implements HelmClient {
       throws Exception {
     String kubeConfigLocation = helmCommandData.getKubeConfigLocation();
     HelmCliCommandType commandType = HelmCliCommandType.VERSION;
-    String command = getHelmCommandTemplateWithHelmPath(commandType, null);
+    String command = getHelmCommandTemplateWithHelmPath(commandType, HelmVersion.V2);
 
     command = applyCommandFlags(command, commandType, helmCommandData.getCommandFlags(),
         helmCommandData.isHelmCmdFlagsNull(), helmCommandData.getValueMap(), helmCommandData.getHelmVersion());
@@ -521,7 +523,10 @@ public class HelmClientImpl implements HelmClient {
 
   @Override
   public String getHelmPath(HelmVersion helmVersion) {
-    return helmVersion == HelmVersion.V3 ? k8sGlobalConfigService.getHelmPath(HelmVersion.V3) : "helm";
+    if (helmVersion == HelmVersion.V2 || helmVersion == null) {
+      return "helm";
+    }
+    return k8sGlobalConfigService.getHelmPath(helmVersion);
   }
 
   public HelmCliResponse fetchCliResponseWithExceptionHandling(String command, HelmCliCommandType commandType,

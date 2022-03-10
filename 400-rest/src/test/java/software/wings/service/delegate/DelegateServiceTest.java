@@ -96,7 +96,6 @@ import io.harness.capability.HttpConnectionParameters;
 import io.harness.capability.service.CapabilityService;
 import io.harness.category.element.UnitTests;
 import io.harness.configuration.DeployMode;
-import io.harness.delegate.NoEligibleDelegatesInAccountException;
 import io.harness.delegate.beans.ConnectionMode;
 import io.harness.delegate.beans.Delegate;
 import io.harness.delegate.beans.Delegate.DelegateBuilder;
@@ -129,7 +128,6 @@ import io.harness.delegate.beans.K8sPermissionType;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.TaskGroup;
 import io.harness.delegate.beans.executioncapability.CapabilityType;
-import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.HttpConnectionExecutionCapability;
 import io.harness.delegate.beans.executioncapability.SelectorCapability;
 import io.harness.delegate.service.intfc.DelegateRingService;
@@ -141,21 +139,16 @@ import io.harness.exception.WingsException;
 import io.harness.logstreaming.LogStreamingServiceConfig;
 import io.harness.network.LocalhostUtils;
 import io.harness.observer.Subject;
-import io.harness.outbox.api.OutboxService;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptedDataDetail;
-import io.harness.serializer.KryoSerializer;
 import io.harness.service.intfc.DelegateCache;
-import io.harness.service.intfc.DelegateInsightsService;
 import io.harness.service.intfc.DelegateProfileObserver;
-import io.harness.service.intfc.DelegateSyncService;
 import io.harness.service.intfc.DelegateTaskRetryObserver;
 import io.harness.service.intfc.DelegateTaskService;
 import io.harness.service.intfc.DelegateTokenService;
 import io.harness.version.VersionInfo;
 import io.harness.version.VersionInfoManager;
-import io.harness.waiter.WaitNotifyEngine;
 
 import software.wings.FeatureTestHelper;
 import software.wings.WingsBaseTest;
@@ -181,17 +174,14 @@ import software.wings.service.impl.AuditServiceHelper;
 import software.wings.service.impl.DelegateConnectionDao;
 import software.wings.service.impl.DelegateObserver;
 import software.wings.service.impl.DelegateServiceImpl;
-import software.wings.service.impl.DelegateTaskBroadcastHelper;
 import software.wings.service.impl.DelegateTaskServiceClassicImpl;
 import software.wings.service.impl.DelegateTaskStatusObserver;
 import software.wings.service.impl.EventEmitter;
 import software.wings.service.impl.EventEmitter.Channel;
 import software.wings.service.impl.infra.InfraDownloadService;
 import software.wings.service.intfc.AccountService;
-import software.wings.service.intfc.AlertService;
 import software.wings.service.intfc.AssignDelegateService;
 import software.wings.service.intfc.DelegateProfileService;
-import software.wings.service.intfc.DelegateSelectionLogsService;
 import software.wings.service.intfc.FileService;
 import software.wings.service.intfc.security.ManagerDecryptionService;
 import software.wings.service.intfc.security.SecretManager;
@@ -268,7 +258,6 @@ public class DelegateServiceTest extends WingsBaseTest {
   private static final String UNIQUE_DELEGATE_NAME_ERROR_MESSAGE =
       "Delegate with same name exists. Delegate name must be unique across account.";
 
-  @Mock private WaitNotifyEngine waitNotifyEngine;
   @Mock private AccountService accountService;
   @Mock private LicenseService licenseService;
   @Mock private EventEmitter eventEmitter;
@@ -281,7 +270,6 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Mock private SecretManager secretManager;
   @Mock private ManagerDecryptionService managerDecryptionService;
   @Mock private FileService fileService;
-  @Mock private AlertService alertService;
   @Mock private VersionInfoManager versionInfoManager;
   @Mock private SubdomainUrlHelperIntfc subdomainUrlHelper;
   @Mock private ConfigurationController configurationController;
@@ -289,23 +277,17 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Mock private DelegateGrpcConfig delegateGrpcConfig;
   @Mock private CapabilityService capabilityService;
   @Mock private DelegateRingService delegateRingService;
-  @Mock private DelegateSyncService delegateSyncService;
-  @Mock private DelegateSelectionLogsService delegateSelectionLogsService;
-  @Mock private DelegateInsightsService delegateInsightsService;
   @Mock private DelegateTokenService delegateTokenService;
   @Mock private Producer eventProducer;
-  @Mock private OutboxService outboxService;
 
   @Inject private FeatureTestHelper featureTestHelper;
   @Inject private DelegateConnectionDao delegateConnectionDao;
-  @Inject private KryoSerializer kryoSerializer;
 
   private final int port = LocalhostUtils.findFreePort();
   @Rule public WireMockRule wireMockRule = new WireMockRule(port);
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   @InjectMocks @Inject private DelegateCache delegateCache;
-  @InjectMocks @Inject private DelegateTaskBroadcastHelper delegateTaskBroadcastHelper;
   @InjectMocks @Inject private DelegateServiceImpl delegateService;
   @InjectMocks @Inject private DelegateTaskServiceClassicImpl delegateTaskServiceClassic;
   @InjectMocks @Inject private DelegateTaskService delegateTaskService;
@@ -333,7 +315,6 @@ public class DelegateServiceTest extends WingsBaseTest {
     when(subdomainUrlHelper.getDelegateMetadataUrl(any(), any(), any()))
         .thenReturn("http://localhost:" + port + "/delegateci.txt");
     when(mainConfiguration.getDeployMode()).thenReturn(DeployMode.KUBERNETES);
-    when(mainConfiguration.getKubectlVersion()).thenReturn("v1.12.2");
     when(mainConfiguration.getScmVersion()).thenReturn("542f4642");
     when(mainConfiguration.getOcVersion()).thenReturn("v4.2.16");
     when(mainConfiguration.getCdnConfig()).thenReturn(cdnConfig);
@@ -379,7 +360,6 @@ public class DelegateServiceTest extends WingsBaseTest {
 
     when(broadcasterFactory.lookup(anyString(), anyBoolean())).thenReturn(broadcaster);
     when(versionInfoManager.getVersionInfo()).thenReturn(VersionInfo.builder().version(VERSION).build());
-    //    when(delegatesFeature.getMaxUsageAllowedForAccount(ACCOUNT_ID)).thenReturn(Integer.MAX_VALUE);
 
     FieldUtils.writeField(delegateService, "delegateProfileSubject", delegateProfileSubject, true);
     FieldUtils.writeField(delegateService, "subject", subject, true);
@@ -2629,7 +2609,6 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Owner(developers = ANSHUL)
   @Category(UnitTests.class)
   public void testProcessDelegateTaskResponseWithDelegateMetaInfo() {
-    thrown.expect(NoEligibleDelegatesInAccountException.class);
     DelegateTask delegateTask = saveDelegateTask(true, emptySet(), QUEUED, false);
     DelegateMetaInfo delegateMetaInfo = DelegateMetaInfo.builder().id(DELEGATE_ID).hostName(HOST_NAME).build();
     JenkinsExecutionResponse jenkinsExecutionResponse =
@@ -3252,126 +3231,6 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Test
   @Owner(developers = MARKO)
   @Category(UnitTests.class)
-  public void testIsDelegateInCapabilityScope() {
-    String accountId = generateUuid();
-    String delegateId = generateUuid();
-
-    CapabilityTaskSelectionDetails taskSelectionDetails = buildCapabilityTaskSelectionDetails();
-
-    when(assignDelegateService.canAssign(eq(null), eq(delegateId), eq(accountId), eq("app1"), eq("env1"), eq("infra1"),
-             eq(taskSelectionDetails.getTaskGroup()), any(List.class),
-             eq(taskSelectionDetails.getTaskSetupAbstractions())))
-        .thenReturn(true);
-
-    // Test with all arguments
-    assertThat(delegateService.isDelegateInCapabilityScope(accountId, delegateId, taskSelectionDetails)).isTrue();
-
-    ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
-    verify(assignDelegateService)
-        .canAssign(eq(null), eq(delegateId), eq(accountId), eq("app1"), eq("env1"), eq("infra1"),
-            eq(taskSelectionDetails.getTaskGroup()), captor.capture(),
-            eq(taskSelectionDetails.getTaskSetupAbstractions()));
-
-    List<ExecutionCapability> selectorCapabilities = captor.getValue();
-    assertThat(selectorCapabilities).hasSize(2);
-
-    // Test with partial arguments
-    taskSelectionDetails.setTaskSelectors(null);
-    taskSelectionDetails.setTaskSetupAbstractions(null);
-    taskSelectionDetails.setTaskGroup(null);
-
-    delegateService.isDelegateInCapabilityScope(accountId, delegateId, taskSelectionDetails);
-
-    captor = ArgumentCaptor.forClass(List.class);
-    verify(assignDelegateService)
-        .canAssign(eq(null), eq(delegateId), eq(accountId), eq(null), eq(null), eq(null), eq(null), captor.capture(),
-            eq(null));
-
-    selectorCapabilities = captor.getValue();
-    assertThat(selectorCapabilities).isEmpty();
-  }
-
-  @Test
-  @Owner(developers = MARKO)
-  @Category(UnitTests.class)
-  public void testIsDelegateStillInScope() {
-    String accountId = generateUuid();
-    String delegateId = generateUuid();
-    String capabilityId = generateUuid();
-
-    // Test no task selection details case
-    when(capabilityService.getAllCapabilityTaskSelectionDetails(accountId, capabilityId)).thenReturn(null);
-    assertThat(delegateService.isDelegateStillInScope(accountId, delegateId, capabilityId)).isTrue();
-
-    // Test delegate in scope case
-    CapabilityTaskSelectionDetails taskSelectionDetails = buildCapabilityTaskSelectionDetails();
-    when(capabilityService.getAllCapabilityTaskSelectionDetails(accountId, capabilityId))
-        .thenReturn(Collections.singletonList(taskSelectionDetails));
-    when(assignDelegateService.canAssign(any(null), eq(delegateId), eq(accountId), eq("app1"), eq("env1"), eq("infra1"),
-             eq(taskSelectionDetails.getTaskGroup()), any(List.class),
-             eq(taskSelectionDetails.getTaskSetupAbstractions())))
-        .thenReturn(true);
-
-    assertThat(delegateService.isDelegateStillInScope(accountId, delegateId, capabilityId)).isTrue();
-
-    // Test delegate out of scope case
-    taskSelectionDetails.setAccountId(accountId);
-    taskSelectionDetails.setBlocked(false);
-    persistence.save(taskSelectionDetails);
-
-    when(assignDelegateService.canAssign(any(null), anyString(), eq(accountId), eq("app1"), eq("env1"), eq("infra1"),
-             eq(taskSelectionDetails.getTaskGroup()), any(List.class),
-             eq(taskSelectionDetails.getTaskSetupAbstractions())))
-        .thenReturn(false);
-    when(capabilityService.getNotDeniedCapabilityPermissions(accountId, capabilityId))
-        .thenReturn(Collections.singletonList(
-            buildCapabilitySubjectPermission(accountId, generateUuid(), capabilityId, PermissionResult.ALLOWED)));
-
-    assertThat(delegateService.isDelegateStillInScope(accountId, delegateId, capabilityId)).isFalse();
-
-    CapabilityTaskSelectionDetails updatedTaskSelectionDetails =
-        persistence.get(CapabilityTaskSelectionDetails.class, taskSelectionDetails.getUuid());
-    assertThat(updatedTaskSelectionDetails).isNotNull();
-    assertThat(updatedTaskSelectionDetails.isBlocked()).isTrue();
-  }
-
-  @Test
-  @Owner(developers = MARKO)
-  @Category(UnitTests.class)
-  public void testRegenerateCapabilityPermissions() {
-    String accountId = generateUuid();
-    String delegateId = generateUuid();
-
-    CapabilityRequirement capabilityRequirement1 = buildCapabilityRequirement();
-    capabilityRequirement1.setAccountId(accountId);
-    CapabilityRequirement capabilityRequirement2 = buildCapabilityRequirement();
-    capabilityRequirement2.setAccountId(accountId);
-
-    when(capabilityService.getAllCapabilityRequirements(accountId))
-        .thenReturn(Arrays.asList(capabilityRequirement1, capabilityRequirement2));
-
-    CapabilityTaskSelectionDetails taskSelectionDetails = buildCapabilityTaskSelectionDetails();
-    when(capabilityService.getAllCapabilityTaskSelectionDetails(accountId, capabilityRequirement2.getUuid()))
-        .thenReturn(Collections.singletonList(taskSelectionDetails));
-    when(assignDelegateService.canAssign(any(), any(), any(), any(), any(), any(), any(), any(), any()))
-        .thenReturn(false);
-    when(capabilityService.getNotDeniedCapabilityPermissions(accountId, capabilityRequirement2.getUuid()))
-        .thenReturn(Collections.emptyList());
-    when(capabilityService.getAllCapabilityPermissions(accountId, capabilityRequirement1.getUuid(), null))
-        .thenReturn(Collections.emptyList());
-
-    delegateService.regenerateCapabilityPermissions(accountId, delegateId);
-
-    verify(capabilityService)
-        .deleteCapabilitySubjectPermission(accountId, delegateId, capabilityRequirement2.getUuid());
-    verify(capabilityService)
-        .addCapabilityPermissions(
-            eq(capabilityRequirement1), any(List.class), eq(PermissionResult.UNCHECKED), eq(true));
-  }
-
-  @Test
-  @Owner(developers = MARKO)
-  @Category(UnitTests.class)
   public void testCreateCapabilityRequirementInstances() {
     String accountId = generateUuid();
 
@@ -3853,8 +3712,8 @@ public class DelegateServiceTest extends WingsBaseTest {
                                             .k8sConfigDetails(k8sConfigDetails)
                                             .build();
     assertThatThrownBy(()
-                           -> delegateService.generateKubernetesYamlNg(ACCOUNT_ID, setupDetails,
-                               "https://localhost:9090", "https://localhost:7070", MediaType.MULTIPART_FORM_DATA_TYPE))
+                           -> delegateService.generateKubernetesYaml(ACCOUNT_ID, setupDetails, "https://localhost:9090",
+                               "https://localhost:7070", MediaType.MULTIPART_FORM_DATA_TYPE))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage(UNIQUE_DELEGATE_NAME_ERROR_MESSAGE);
   }

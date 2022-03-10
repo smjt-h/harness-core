@@ -31,6 +31,7 @@ import io.harness.beans.PageResponse;
 import io.harness.beans.SortOrder;
 import io.harness.delegate.beans.TaskData;
 
+import software.wings.beans.Base;
 import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.appmanifest.HelmChart.HelmChartKeys;
@@ -43,6 +44,7 @@ import software.wings.service.intfc.applicationmanifest.HelmChartService;
 
 import com.google.inject.Inject;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -73,8 +75,8 @@ public class HelmChartServiceImpl implements HelmChartService {
   }
 
   @Override
-  public Map<String, List<HelmChart>> listHelmChartsForService(
-      String appId, String serviceId, String manifestSearchString, PageRequest<HelmChart> pageRequest) {
+  public Map<String, List<HelmChart>> listHelmChartsForService(String appId, String serviceId,
+      String manifestSearchString, PageRequest<HelmChart> pageRequest, boolean showHelmChartsForDisabledCollection) {
     if (isNotBlank(appId)) {
       pageRequest.addFilter(HelmChartKeys.appId, EQ, appId);
     }
@@ -86,10 +88,24 @@ public class HelmChartServiceImpl implements HelmChartService {
     }
     pageRequest.addOrder(HelmChartKeys.createdAt, SortOrder.OrderType.DESC);
     List<HelmChart> helmCharts = listHelmChartsForService(pageRequest);
-    Map<String, String> appManifestIdNameMap = applicationManifestService.getNamesForIds(
-        appId, helmCharts.stream().map(HelmChart::getApplicationManifestId).collect(Collectors.toSet()));
-    return helmCharts.stream().collect(
-        groupingBy(helmChart -> appManifestIdNameMap.get(helmChart.getApplicationManifestId())));
+    Set<String> appManifestIds =
+        helmCharts.stream().map(HelmChart::getApplicationManifestId).collect(Collectors.toSet());
+    Map<String, String> appManifestIdNameMap = new HashMap<>();
+    if (showHelmChartsForDisabledCollection) {
+      appManifestIdNameMap = applicationManifestService.getNamesForIds(appId, appManifestIds);
+    } else {
+      List<ApplicationManifest> applicationManifests =
+          applicationManifestService.getApplicationManifestByIds(appId, appManifestIds);
+      if (isNotEmpty(applicationManifests)) {
+        appManifestIdNameMap = applicationManifests.stream()
+                                   .filter(appManifest -> !Boolean.FALSE.equals(appManifest.getEnableCollection()))
+                                   .collect(Collectors.toMap(Base::getUuid, ApplicationManifest::getName));
+      }
+    }
+    Map<String, String> finalAppManifestIdNameMap = appManifestIdNameMap;
+    return helmCharts.stream()
+        .filter(helmChart -> finalAppManifestIdNameMap.containsKey(helmChart.getApplicationManifestId()))
+        .collect(groupingBy(helmChart -> finalAppManifestIdNameMap.get(helmChart.getApplicationManifestId())));
   }
 
   @Override
@@ -202,27 +218,29 @@ public class HelmChartServiceImpl implements HelmChartService {
 
   @Override
   public HelmChart fetchByChartVersion(
-      String accountId, String appId, String serviceId, String appManifestName, String chartVersion) {
-    ApplicationManifest applicationManifest =
-        applicationManifestService.getAppManifestByName(appId, null, serviceId, appManifestName);
-    notNullCheck("App manifest with name " + appManifestName + " doesn't belong to the given app and service",
-        applicationManifest);
-
+      String accountId, String appId, String serviceId, String appManifestId, String chartVersion) {
     HelmCollectChartResponse helmCollectChartResponse = getHelmCollectChartResponse(
-        accountId, appId, chartVersion, applicationManifest.getUuid(), HelmChartCollectionType.SPECIFIC_VERSION);
+        accountId, appId, chartVersion, appManifestId, HelmChartCollectionType.SPECIFIC_VERSION);
 
     HelmChart helmChart = helmCollectChartResponse == null || isEmpty(helmCollectChartResponse.getHelmCharts())
         ? null
         : helmCollectChartResponse.getHelmCharts().get(0);
 
     if (helmChart != null) {
-      addCollectedHelmCharts(accountId, applicationManifest.getUuid(), Collections.singletonList(helmChart));
+      addCollectedHelmCharts(accountId, appManifestId, Collections.singletonList(helmChart));
     }
     return helmChart;
   }
 
   @Override
-  public List<HelmChart> fetchChartsFromRepo(String accountId, String appId, String serviceId, String appManifestId) {
+  public List<HelmChart> fetchChartsFromRepo(
+      String accountId, String appId, String serviceId, String appManifestId, boolean collectUsingDelegate) {
+    if (!collectUsingDelegate) {
+      ApplicationManifest applicationManifest = applicationManifestService.getById(appId, appManifestId);
+      if (!Boolean.FALSE.equals(applicationManifest.getEnableCollection())) {
+        return listHelmChartsForAppManifest(accountId, appManifestId);
+      }
+    }
     HelmCollectChartResponse helmCollectChartResponse =
         getHelmCollectChartResponse(accountId, appId, null, appManifestId, HelmChartCollectionType.ALL);
 
@@ -230,6 +248,20 @@ public class HelmChartServiceImpl implements HelmChartService {
       return Collections.emptyList();
     }
     return helmCollectChartResponse.getHelmCharts();
+  }
+
+  @Override
+  public HelmChart createHelmChartWithVersionForAppManifest(ApplicationManifest appManifest, String versionNumber) {
+    HelmChart helmChart = HelmChart.builder()
+                              .appId(appManifest.getAppId())
+                              .accountId(appManifest.getAccountId())
+                              .applicationManifestId(appManifest.getUuid())
+                              .serviceId(appManifest.getServiceId())
+                              .name(appManifest.getHelmChartConfig().getChartName())
+                              .version(versionNumber)
+                              .displayName(appManifest.getHelmChartConfig().getChartName() + "-" + versionNumber)
+                              .build();
+    return create(helmChart);
   }
 
   private HelmCollectChartResponse getHelmCollectChartResponse(String accountId, String appId, String chartVersion,

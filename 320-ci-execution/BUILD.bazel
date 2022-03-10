@@ -5,8 +5,8 @@ load("//:tools/bazel/macros.bzl", "run_analysis")
 shared_dependencies = [
     "//330-ci-beans:module",
     "//440-connector-nextgen:module",
-    "//878-pipeline-service-utilities:module",
-    "//878-pms-coupling:module",
+    "//870-orchestration:module",
+    "//878-ng-common-utilities:module",
     "//879-pms-sdk:module",
     "//890-sm-core:module",
     "//930-ng-core-clients:module",
@@ -387,6 +387,7 @@ shared_dependencies = [
     "@maven//:org_slf4j_jul_to_slf4j",
     "@maven//:org_slf4j_log4j_over_slf4j",
     "@maven//:org_slf4j_slf4j_api",
+    "@maven//:de_skuzzle_semantic_version",
     "@maven//:org_springframework_data_spring_data_commons",
     "@maven//:org_springframework_data_spring_data_mongodb",
     "@maven//:org_springframework_guice_spring_guice",

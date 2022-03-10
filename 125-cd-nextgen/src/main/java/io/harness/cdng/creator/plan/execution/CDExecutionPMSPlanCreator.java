@@ -10,10 +10,9 @@ package io.harness.cdng.creator.plan.execution;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.cdng.creator.plan.CDPlanCreatorUtils;
 import io.harness.cdng.creator.plan.rollback.RollbackPlanCreator;
 import io.harness.data.structure.EmptyPredicate;
-import io.harness.plancreator.beans.OrchestrationConstants;
+import io.harness.plancreator.NGCommonUtilPlanCreationConstants;
 import io.harness.plancreator.execution.ExecutionElementConfig;
 import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
 import io.harness.pms.contracts.facilitators.FacilitatorType;
@@ -47,21 +46,17 @@ public class CDExecutionPMSPlanCreator extends ChildrenPlanCreator<ExecutionElem
       PlanCreationContext ctx, ExecutionElementConfig config) {
     LinkedHashMap<String, PlanCreationResponse> responseMap = new LinkedHashMap<>();
     List<YamlField> stepYamlFields = ctx.getStepYamlFields();
-    for (YamlField stepYamlField : stepYamlFields) {
-      Map<String, YamlField> stepYamlFieldMap = new HashMap<>();
-      stepYamlFieldMap.put(stepYamlField.getNode().getUuid(), stepYamlField);
-      responseMap.put(stepYamlField.getNode().getUuid(),
-          PlanCreationResponse.builder().dependencies(DependenciesUtils.toDependenciesProto(stepYamlFieldMap)).build());
-    }
 
-    // TODO: NEED TO CREATE A PLAN Creator for it
     // Add Steps Node
     if (EmptyPredicate.isNotEmpty(stepYamlFields)) {
       YamlField stepsField =
           Preconditions.checkNotNull(ctx.getCurrentField().getNode().getField(YAMLFieldNameConstants.STEPS));
-      PlanNode stepsNode = CDPlanCreatorUtils.getCdStepsNode(
-          stepsField.getNode().getUuid(), stepYamlFields.get(0).getNode().getUuid(), "Steps Element");
-      responseMap.put(stepsNode.getUuid(), PlanCreationResponse.builder().node(stepsNode.getUuid(), stepsNode).build());
+      Map<String, YamlField> stepsYamlFieldMap = new HashMap<>();
+      stepsYamlFieldMap.put(stepsField.getNode().getUuid(), stepsField);
+      responseMap.put(stepsField.getNode().getUuid(),
+          PlanCreationResponse.builder()
+              .dependencies(DependenciesUtils.toDependenciesProto(stepsYamlFieldMap))
+              .build());
     }
 
     // TODO: NEED TO CREATE A ROLLBACK PLAN CREATOR
@@ -87,10 +82,10 @@ public class CDExecutionPMSPlanCreator extends ChildrenPlanCreator<ExecutionElem
                                         .build();
     return PlanNode.builder()
         .uuid(ctx.getCurrentField().getNode().getUuid())
-        .identifier(OrchestrationConstants.EXECUTION_NODE_IDENTIFIER)
+        .identifier(NGCommonUtilPlanCreationConstants.EXECUTION_NODE_IDENTIFIER)
         .stepType(NGSectionStepWithRollbackInfo.STEP_TYPE)
         .group(StepOutcomeGroup.EXECUTION.name())
-        .name(OrchestrationConstants.EXECUTION_NODE_NAME)
+        .name(NGCommonUtilPlanCreationConstants.EXECUTION_NODE_NAME)
         .stepParameters(stepParameters)
         .facilitatorObtainment(
             FacilitatorObtainment.newBuilder()

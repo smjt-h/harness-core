@@ -8,6 +8,7 @@
 package io.harness.gitsync.common.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.DX;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.UNSYNCED;
 
 import io.harness.annotations.dev.OwnedBy;
@@ -16,6 +17,7 @@ import io.harness.common.EntityReference;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.helper.EncryptionHelper;
 import io.harness.connector.services.ConnectorService;
+import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
 import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
@@ -25,7 +27,6 @@ import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.ChangeType;
 import io.harness.gitsync.FileInfo;
-import io.harness.gitsync.Principal;
 import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.PushInfo;
 import io.harness.gitsync.RepoDetails;
@@ -33,6 +34,8 @@ import io.harness.gitsync.common.beans.BranchSyncStatus;
 import io.harness.gitsync.common.beans.GitBranch;
 import io.harness.gitsync.common.beans.GitSyncDirection;
 import io.harness.gitsync.common.beans.InfoForGitPush;
+import io.harness.gitsync.common.dtos.GitSyncEntityDTO;
+import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.helper.UserProfileHelper;
 import io.harness.gitsync.common.service.GitBranchService;
 import io.harness.gitsync.common.service.GitBranchSyncService;
@@ -42,6 +45,8 @@ import io.harness.gitsync.common.service.ScmOrchestratorService;
 import io.harness.gitsync.common.service.YamlGitConfigService;
 import io.harness.gitsync.core.beans.GitCommit.GitCommitProcessingStatus;
 import io.harness.gitsync.core.dtos.GitCommitDTO;
+import io.harness.gitsync.core.fullsync.entity.GitFullSyncJob;
+import io.harness.gitsync.core.fullsync.service.FullSyncJobService;
 import io.harness.gitsync.core.service.GitCommitService;
 import io.harness.gitsync.gitfileactivity.beans.GitFileProcessingSummary;
 import io.harness.gitsync.gitsyncerror.service.GitSyncErrorService;
@@ -52,6 +57,8 @@ import io.harness.ng.core.entitydetail.EntityDetailProtoToRestMapper;
 import io.harness.product.ci.scm.proto.CreateFileResponse;
 import io.harness.product.ci.scm.proto.DeleteFileResponse;
 import io.harness.product.ci.scm.proto.UpdateFileResponse;
+import io.harness.security.Principal;
+import io.harness.security.dto.UserPrincipal;
 import io.harness.tasks.DecryptGitApiAccessHelper;
 import io.harness.utils.IdentifierRefHelper;
 
@@ -81,6 +88,8 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
   private final GitCommitService gitCommitService;
   private final UserProfileHelper userProfileHelper;
   private final GitSyncErrorService gitSyncErrorService;
+  private final GitSyncConnectorHelper gitSyncConnectorHelper;
+  private final FullSyncJobService fullSyncJobService;
 
   @Inject
   public HarnessToGitHelperServiceImpl(@Named("connectorDecoratorService") ConnectorService connectorService,
@@ -88,7 +97,8 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
       YamlGitConfigService yamlGitConfigService, EntityDetailProtoToRestMapper entityDetailRestToProtoMapper,
       ExecutorService executorService, GitBranchService gitBranchService, EncryptionHelper encryptionHelper,
       ScmOrchestratorService scmOrchestratorService, GitBranchSyncService gitBranchSyncService,
-      GitCommitService gitCommitService, UserProfileHelper userProfileHelper, GitSyncErrorService gitSyncErrorService) {
+      GitCommitService gitCommitService, UserProfileHelper userProfileHelper, GitSyncErrorService gitSyncErrorService,
+      GitSyncConnectorHelper gitSyncConnectorHelper, FullSyncJobService fullSyncJobService) {
     this.connectorService = connectorService;
     this.decryptScmApiAccess = decryptScmApiAccess;
     this.gitEntityService = gitEntityService;
@@ -102,21 +112,28 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     this.gitCommitService = gitCommitService;
     this.userProfileHelper = userProfileHelper;
     this.gitSyncErrorService = gitSyncErrorService;
+    this.gitSyncConnectorHelper = gitSyncConnectorHelper;
+    this.fullSyncJobService = fullSyncJobService;
   }
 
   private Optional<ConnectorResponseDTO> getConnector(
       String accountId, YamlGitConfigDTO yamlGitConfig, Principal principal) {
     final String gitConnectorId = yamlGitConfig.getGitConnectorRef();
+    final String connectorRepo = yamlGitConfig.getGitConnectorsRepo();
+    final String connectorBranch = yamlGitConfig.getGitConnectorsBranch();
     final IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRef(gitConnectorId, accountId,
         yamlGitConfig.getOrganizationIdentifier(), yamlGitConfig.getProjectIdentifier(), null);
-    final Optional<ConnectorResponseDTO> connectorResponseDTO = connectorService.get(accountId,
-        identifierRef.getOrgIdentifier(), identifierRef.getProjectIdentifier(), identifierRef.getIdentifier());
+
+    final Optional<ConnectorResponseDTO> connectorResponseDTO =
+        gitSyncConnectorHelper.getConnectorFromDefaultBranchElseFromGitBranch(accountId,
+            identifierRef.getOrgIdentifier(), identifierRef.getProjectIdentifier(), identifierRef.getIdentifier(),
+            connectorRepo, connectorBranch);
     if (!connectorResponseDTO.isPresent()) {
       throw new InvalidRequestException(String.format("Ref Connector [{}] doesn't exist.", gitConnectorId));
     }
     final ConnectorResponseDTO connector = connectorResponseDTO.get();
     if (principal.hasUserPrincipal()) {
-      userProfileHelper.setConnectorDetailsFromUserProfile(yamlGitConfig, principal.getUserPrincipal(), connector);
+      userProfileHelper.setConnectorDetailsFromUserProfile(yamlGitConfig, connector);
     }
     setRepoUrlInConnector(yamlGitConfig, connector);
     return Optional.of(connector);
@@ -230,7 +247,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     final YamlGitConfigDTO yamlGitConfig = yamlGitConfigService.get(
         entityReference.getProjectIdentifier(), entityReference.getOrgIdentifier(), accountId, yamlGitConfigId);
 
-    final InfoForGitPush infoForGitPush = getInfoForGitPush(request, entityReference, accountId, yamlGitConfig);
+    final InfoForGitPush infoForGitPush = getInfoForGitPush(request, entityDetailDTO, accountId, yamlGitConfig);
 
     switch (changeType) {
       case MODIFY:
@@ -280,9 +297,27 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     }
   }
 
+  @Override
+  public UserPrincipal getFullSyncUser(FileInfo request) {
+    final EntityDetail entityDetailDTO = entityDetailRestToProtoMapper.createEntityDetailDTO(request.getEntityDetail());
+    final EntityReference entityReference = entityDetailDTO.getEntityRef();
+    Optional<GitFullSyncJob> gitFullSyncJob = fullSyncJobService.getRunningJob(
+        request.getAccountId(), entityReference.getOrgIdentifier(), entityReference.getProjectIdentifier());
+    if (!gitFullSyncJob.isPresent()) {
+      throw new InvalidRequestException(
+          String.format("There is no running full-sync job for account [%s], orgId [%s], projectId [%s]",
+              request.getAccountId(), entityReference.getOrgIdentifier(), entityReference.getProjectIdentifier()));
+    }
+    return gitFullSyncJob.get().getTriggeredBy();
+  }
+
   private InfoForGitPush getInfoForGitPush(
-      FileInfo request, EntityReference entityReference, String accountId, YamlGitConfigDTO yamlGitConfig) {
-    final Optional<ConnectorResponseDTO> connector = getConnector(accountId, yamlGitConfig, request.getPrincipal());
+      FileInfo request, EntityDetail entityDetailDTO, String accountId, YamlGitConfigDTO yamlGitConfig) {
+    Principal principal = request.getPrincipal();
+    if (request.getIsFullSyncFlow()) {
+      principal = Principal.newBuilder().setUserPrincipal(userProfileHelper.getUserPrincipal()).build();
+    }
+    final Optional<ConnectorResponseDTO> connector = getConnector(accountId, yamlGitConfig, principal);
     if (!connector.isPresent()) {
       throw new InvalidRequestException(
           String.format("Connector with identifier %s deleted", yamlGitConfig.getGitConnectorRef()));
@@ -290,10 +325,22 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     final ScmConnector connectorConfig = (ScmConnector) connector.get().getConnector().getConnectorConfig();
     connectorConfig.setUrl(yamlGitConfig.getRepo());
 
+    // Incoming commit id could be a conflict resolved commit id for an entity
+    String lastCommitIdForFile = request.getCommitId() == null ? "" : request.getCommitId();
+    // Currently putting this BITBUCKET check to avoid a bug on GITHUB UpdateFile use-case
+    // https://harness.slack.com/archives/C029SDS22FN/p1645792247538309
+    // Once properly handled, this should be removed
+    if (connectorConfig.getConnectorType().equals(ConnectorType.BITBUCKET) && isEmpty(lastCommitIdForFile)
+        && request.getChangeType() != ChangeType.ADD) {
+      GitSyncEntityDTO gitSyncEntityDTO =
+          gitEntityService.get(entityDetailDTO.getEntityRef(), entityDetailDTO.getType(), request.getBranch());
+      lastCommitIdForFile = gitSyncEntityDTO.getLastCommitId();
+    }
+
     return InfoForGitPush.builder()
         .accountId(accountId)
-        .orgIdentifier(entityReference.getOrgIdentifier())
-        .projectIdentifier(entityReference.getProjectIdentifier())
+        .orgIdentifier(entityDetailDTO.getEntityRef().getOrgIdentifier())
+        .projectIdentifier(entityDetailDTO.getEntityRef().getProjectIdentifier())
         .branch(request.getBranch())
         .baseBranch(StringValueUtils.getStringFromStringValue(request.getBaseBranch()))
         .isNewBranch(request.getIsNewBranch())
@@ -303,6 +350,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
         .oldFileSha(StringValueUtils.getStringFromStringValue(request.getOldFileSha()))
         .yaml(request.getYaml())
         .scmConnector(connectorConfig)
+        .commitId(lastCommitIdForFile)
         .build();
   }
 }

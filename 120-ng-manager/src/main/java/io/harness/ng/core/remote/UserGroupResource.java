@@ -23,10 +23,10 @@ import static io.harness.utils.PageUtils.getPageRequest;
 
 import io.harness.NGCommonEntityConstants;
 import io.harness.NGResourceFilterConstants;
-import io.harness.accesscontrol.AccessDeniedErrorDTO;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.Resource;
-import io.harness.accesscontrol.clients.ResourceScope;
+import io.harness.accesscontrol.commons.exceptions.AccessDeniedErrorDTO;
 import io.harness.accesscontrol.scopes.ScopeDTO;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
@@ -179,7 +179,7 @@ public class UserGroupResource {
            NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
       @Parameter(description = GROUP_IDENTIFIER_KEY, required = true) @QueryParam(
           NGCommonEntityConstants.GROUP_IDENTIFIER_KEY) String userGroupIdentifier,
-      @RequestBody(required = true) List<ScopeDTO> scopes) {
+      @RequestBody(description = "List of scopes", required = true) List<ScopeDTO> scopes) {
     accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, null, null),
         Resource.of(USERGROUP, userGroupIdentifier), MANAGE_USERGROUP_PERMISSION);
     return ResponseDTO.newResponse(userGroupService.copy(accountIdentifier, userGroupIdentifier, scopes));

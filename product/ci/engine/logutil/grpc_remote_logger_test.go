@@ -12,10 +12,10 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	grpcclient "github.com/harness/harness-core/product/ci/engine/grpc/client"
+	mclient "github.com/harness/harness-core/product/ci/engine/grpc/client/mocks"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"github.com/stretchr/testify/assert"
-	grpcclient "github.com/wings-software/portal/product/ci/engine/grpc/client"
-	mclient "github.com/wings-software/portal/product/ci/engine/grpc/client/mocks"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )

@@ -17,7 +17,6 @@ import io.harness.annotations.dev.BreakDependencyOn;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.ExecutionStatus;
-import io.harness.beans.FeatureName;
 import io.harness.context.ContextElementType;
 import io.harness.delegate.task.k8s.K8sTaskType;
 import io.harness.exception.ExceptionUtils;
@@ -30,6 +29,7 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.tasks.ResponseData;
 
 import software.wings.api.InstanceElementListParam;
+import software.wings.api.RancherClusterElement;
 import software.wings.api.k8s.K8sElement;
 import software.wings.api.k8s.K8sStateExecutionData;
 import software.wings.beans.Activity;
@@ -64,6 +64,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -104,6 +105,12 @@ public class K8sScale extends AbstractK8sState {
 
   @Override
   public ExecutionResponse execute(ExecutionContext context) {
+    if (k8sStateHelper.isRancherInfraMapping(context)
+        && !(Objects.nonNull(context.getContextElement())
+            && context.getContextElement() instanceof RancherClusterElement)) {
+      return k8sStateHelper.getInvalidInfraDefFailedResponse();
+    }
+
     try {
       ContainerInfrastructureMapping infraMapping = k8sStateHelper.fetchContainerInfrastructureMapping(context);
 
@@ -127,8 +134,7 @@ public class K8sScale extends AbstractK8sState {
               .maxInstances(maxInstances)
               .skipSteadyStateCheck(this.skipSteadyStateCheck)
               .timeoutIntervalInMin(stateTimeoutInMinutes)
-              .useVarSupportForKustomize(
-                  featureFlagService.isEnabled(FeatureName.VARIABLE_SUPPORT_FOR_KUSTOMIZE, context.getAccountId()))
+              .useLatestKustomizeVersion(isUseLatestKustomizeVersion(context.getAccountId()))
               .useNewKubectlVersion(featureFlagService.isEnabled(NEW_KUBECTL_VERSION, infraMapping.getAccountId()))
               .build();
 

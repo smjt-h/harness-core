@@ -165,11 +165,13 @@ import io.harness.service.impl.DelegateSyncServiceImpl;
 import io.harness.service.stats.statscollector.InstanceStatsIteratorHandler;
 import io.harness.springdata.HMongoTemplate;
 import io.harness.telemetry.NGTelemetryRecordsJob;
+import io.harness.telemetry.TelemetryReporter;
+import io.harness.telemetry.filter.APIAuthTelemetryFilter;
+import io.harness.telemetry.filter.APIAuthTelemetryResponseFilter;
 import io.harness.threading.ExecutorModule;
 import io.harness.threading.ThreadPool;
 import io.harness.token.remote.TokenClient;
 import io.harness.tracing.MongoRedisTracer;
-import io.harness.utils.NGObjectMapperHelper;
 import io.harness.waiter.NotifierScheduledExecutorService;
 import io.harness.waiter.NotifyEvent;
 import io.harness.waiter.NotifyQueuePublisherRegister;
@@ -204,6 +206,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import io.serializer.HObjectMapper;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.integration.SwaggerConfiguration;
@@ -283,7 +286,7 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
   }
 
   public static void configureObjectMapper(final ObjectMapper mapper) {
-    NGObjectMapperHelper.configureNGObjectMapper(mapper);
+    HObjectMapper.configureObjectMapperForNG(mapper);
     mapper.registerModule(new PmsBeansJacksonModule());
   }
 
@@ -385,6 +388,7 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
     registerEtagFilter(environment, injector);
     registerScheduleJobs(injector);
     registerWaitEnginePublishers(injector);
+    registerAPIAuthTelemetryFilters(appConfig, environment, injector);
     registerAuthFilters(appConfig, environment, injector);
     registerScopeAccessCheckFilter(appConfig, environment, injector);
     registerRequestContextFilter(environment);
@@ -791,6 +795,14 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
     }
   }
 
+  private void registerAPIAuthTelemetryFilters(
+      NextGenConfiguration configuration, Environment environment, Injector injector) {
+    if (configuration.getSegmentConfiguration() != null && configuration.getSegmentConfiguration().isEnabled()) {
+      registerAPIAuthTelemetryFilter(environment, injector);
+      registerAPIAuthTelemetryResponseFilter(environment, injector);
+    }
+  }
+
   private void registerScopeAccessCheckFilter(
       NextGenConfiguration configuration, Environment environment, Injector injector) {
     if (configuration.isScopeAccessCheckEnabled()) {
@@ -814,6 +826,16 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
     serviceToSecretMapping.put(DEFAULT.getServiceId(), configuration.getNextGenConfig().getNgManagerServiceSecret());
     environment.jersey().register(
         new NextGenAuthenticationFilter(predicate, null, serviceToSecretMapping, tokenClient));
+  }
+
+  private void registerAPIAuthTelemetryFilter(Environment environment, Injector injector) {
+    TelemetryReporter telemetryReporter = injector.getInstance(TelemetryReporter.class);
+    environment.jersey().register(new APIAuthTelemetryFilter(telemetryReporter));
+  }
+
+  private void registerAPIAuthTelemetryResponseFilter(Environment environment, Injector injector) {
+    TelemetryReporter telemetryReporter = injector.getInstance(TelemetryReporter.class);
+    environment.jersey().register(new APIAuthTelemetryResponseFilter(telemetryReporter));
   }
 
   private void registerInternalApiAuthFilter(NextGenConfiguration configuration, Environment environment) {

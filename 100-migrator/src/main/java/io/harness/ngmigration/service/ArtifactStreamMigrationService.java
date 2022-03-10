@@ -9,8 +9,14 @@ package io.harness.ngmigration.service;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.MigratedEntityMapping;
+import io.harness.ngmigration.beans.BaseEntityInput;
+import io.harness.ngmigration.beans.BaseInputDefinition;
 import io.harness.ngmigration.beans.MigrationInputDTO;
+import io.harness.ngmigration.beans.MigratorInputType;
 import io.harness.ngmigration.beans.NgEntityDetail;
+import io.harness.ngmigration.client.NGClient;
+import io.harness.ngmigration.client.PmsClient;
 
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.ngmigration.CgEntityId;
@@ -23,6 +29,7 @@ import software.wings.ngmigration.NGYamlFile;
 import software.wings.service.intfc.ArtifactStreamService;
 
 import com.google.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,8 +37,13 @@ import java.util.Map;
 import java.util.Set;
 
 @OwnedBy(HarnessTeam.CDC)
-public class ArtifactStreamMigrationService implements NgMigration {
+public class ArtifactStreamMigrationService implements NgMigrationService {
   @Inject private ArtifactStreamService artifactStreamService;
+
+  @Override
+  public MigratedEntityMapping generateMappingEntity(NGYamlFile yamlFile) {
+    throw new IllegalAccessError("Mapping not allowed for ArtifactStream Service");
+  }
 
   @Override
   public DiscoveryNode discover(NGMigrationEntity entity) {
@@ -62,12 +74,24 @@ public class ArtifactStreamMigrationService implements NgMigration {
   }
 
   @Override
-  public void migrate(
-      Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId) {}
+  public void migrate(String auth, NGClient ngClient, PmsClient pmsClient, MigrationInputDTO inputDTO,
+      NGYamlFile yamlFile) throws IOException {}
 
   @Override
   public List<NGYamlFile> getYamls(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,
       Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId, Map<CgEntityId, NgEntityDetail> migratedEntities) {
     return new ArrayList<>();
+  }
+
+  @Override
+  public BaseEntityInput generateInput(
+      Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId) {
+    ArtifactStream stream = (ArtifactStream) entities.get(entityId).getEntity();
+    return BaseEntityInput.builder()
+        .migrationStatus(MigratorInputType.CREATE_NEW)
+        .identifier(BaseInputDefinition.buildIdentifier(MigratorUtility.generateIdentifier(stream.getName())))
+        .name(BaseInputDefinition.buildName(stream.getName()))
+        .spec(null)
+        .build();
   }
 }

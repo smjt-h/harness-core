@@ -54,15 +54,15 @@ public class InstallUtils {
   private static final String harnessPywinrmBaseDir = "./client-tools/harness-pywinrm/";
 
   static final String helm3Version = "v3.1.2";
-
+  static final String helm3VersionNew = "v3.8.0";
   static final String helm2Version = "v2.13.1";
 
-  private static final List<String> helmVersions = Arrays.asList(helm2Version, helm3Version);
+  private static final List<String> helmVersions = Arrays.asList(helm2Version, helm3Version, helm3VersionNew);
 
   private static final String helmBaseDir = "./client-tools/helm/";
 
   private static final String chartMuseumVersionOld = "v0.8.2";
-  private static final String chartMuseumVersionNew = "v0.13.0"; // updated version from v0.8.2 to v0.13.0
+  private static final String chartMuseumVersionNew = "v0.12.0"; // updated version from v0.8.2 to v0.12.0
   // to enable IRSA for chartmuseum
   private static final List<String> chartMuseumVersions = Arrays.asList(chartMuseumVersionOld, chartMuseumVersionNew);
   private static final Map<String, String> chartMuseumPaths = new HashMap<>();
@@ -77,13 +77,13 @@ public class InstallUtils {
   private static final String ocBaseDir = "./client-tools/oc/";
 
   private static Map<String, String> kubectlPaths = new HashMap<>();
+  private static Map<String, String> kustomizePaths = new HashMap<>();
 
   private static String kustomizeBaseDir = "./client-tools/kustomize/";
   private static String kustomizeVersionOld = "v3.5.4";
   private static String kustomizeVersionNew = "v4.0.0";
-  private static String kustomizePath = "kustomize";
-  private static boolean isCustomKustomizePath;
-  private static String kustomizeBinaryName = "kustomize";
+  public static String kustomizePath = "kustomize";
+  public static boolean isCustomKustomizePath;
 
   private static final List<String> kustomizeVersions = Arrays.asList(kustomizeVersionOld, kustomizeVersionNew);
 
@@ -94,8 +94,11 @@ public class InstallUtils {
   static {
     helmPaths.put(helm2Version, "helm");
     helmPaths.put(helm3Version, "helm");
+    helmPaths.put(helm3VersionNew, "helm");
     kubectlPaths.put(defaultKubectlVersion, "kubectl");
     kubectlPaths.put(newKubectlVersion, "kubectl");
+    kustomizePaths.put(kustomizeVersionOld, "kustomize");
+    kustomizePaths.put(kustomizeVersionNew, "kustomize");
   }
 
   private static String chartMuseumPath = "chartmuseum";
@@ -112,7 +115,7 @@ public class InstallUtils {
 
   private static final String scmBaseDir = "./client-tools/scm/";
   private static final String scmBinary = "scm";
-  private static final String defaultScmVersion = "0e23b6f1";
+  private static final String defaultScmVersion = "e2904e7";
 
   private static final String KUBECTL_CDN_PATH = "public/shared/tools/kubectl/release/%s/bin/%s/amd64/kubectl";
   private static final String CHART_MUSEUM_CDN_PATH =
@@ -179,6 +182,10 @@ public class InstallUtils {
     return helmPaths.get(helm3Version);
   }
 
+  public static String getNewHelm3Path() {
+    return helmPaths.get(helm3VersionNew);
+  }
+
   public static String getChartMuseumPath(boolean useLastestVersion) {
     if (useLastestVersion) {
       return chartMuseumPaths.get(chartMuseumVersionNew);
@@ -190,19 +197,11 @@ public class InstallUtils {
     return ocPath;
   }
 
-  public static String getKustomizePath() {
-    return kustomizePath;
-  }
-
   public static String getKustomizePath(boolean useLatestVersion) {
     if (isCustomKustomizePath) {
       return kustomizePath;
     }
-    return Paths
-        .get(kustomizeBaseDir, useLatestVersion ? kustomizeVersionNew : kustomizeVersionOld, kustomizeBinaryName)
-        .toAbsolutePath()
-        .normalize()
-        .toString();
+    return useLatestVersion ? kustomizePaths.get(kustomizeVersionNew) : kustomizePaths.get(kustomizeVersionOld);
   }
 
   public static boolean installKubectl(DelegateConfiguration configuration) {
@@ -227,19 +226,12 @@ public class InstallUtils {
         return true;
       }
 
-      String version = System.getenv().get("KUBECTL_VERSION");
-
-      if (StringUtils.isEmpty(version)) {
-        version = kubectlVersion;
-        log.info("No version configured. Using kubectl version", version);
-      }
-
-      String kubectlDirectory = kubectlBaseDir + version;
+      String kubectlDirectory = kubectlBaseDir + kubectlVersion;
 
       if (validateKubectlExists(kubectlDirectory)) {
         String kubectlPath = Paths.get(kubectlDirectory + "/kubectl").toAbsolutePath().normalize().toString();
-        kubectlPaths.put(version, kubectlPath);
-        log.info("kubectl version {} already installed", version);
+        kubectlPaths.put(kubectlVersion, kubectlPath);
+        log.info("kubectl version {} already installed", kubectlVersion);
         return true;
       }
 
@@ -247,7 +239,7 @@ public class InstallUtils {
 
       createDirectoryIfDoesNotExist(kubectlDirectory);
 
-      String downloadUrl = getKubectlDownloadUrl(configuration, version);
+      String downloadUrl = getKubectlDownloadUrl(configuration, kubectlVersion);
 
       log.info("download Url is {}", downloadUrl);
 
@@ -264,7 +256,7 @@ public class InstallUtils {
 
       if (result.getExitValue() == 0) {
         String kubectlPath = Paths.get(kubectlDirectory + "/kubectl").toAbsolutePath().normalize().toString();
-        kubectlPaths.put(version, kubectlPath);
+        kubectlPaths.put(kubectlVersion, kubectlPath);
         log.info(result.outputUTF8());
         if (validateKubectlExists(kubectlDirectory)) {
           log.info("kubectl path: {}", kubectlPath);
@@ -891,7 +883,7 @@ public class InstallUtils {
       String downloadUrl = getScmDownloadUrl(configuration);
       log.info("Download Url is {}", downloadUrl);
 
-      String script = "curl $MANAGER_PROXY_CURL -LO " + downloadUrl + "\n"
+      String script = "curl $MANAGER_PROXY_CURL -kLO " + downloadUrl + "\n"
           + "chmod +x ./scm";
 
       ProcessExecutor processExecutor = new ProcessExecutor()
@@ -1081,6 +1073,7 @@ public class InstallUtils {
       if (StringUtils.isNotEmpty(configuration.getKustomizePath())) {
         isCustomKustomizePath = true;
         kustomizePath = configuration.getKustomizePath();
+        kustomizePaths.put(kustomizeVersion, kustomizePath);
         log.info("Found user configured kustomize at {}. Skipping Install.", kustomizePath);
         return true;
       }
@@ -1090,10 +1083,11 @@ public class InstallUtils {
         return true;
       }
 
-      String kustomizeDir = kustomizeBaseDir + kustomizeVersion;
+      String kustomizeDir = Paths.get(kustomizeBaseDir, kustomizeVersion).toAbsolutePath().normalize().toString();
 
       if (validateKustomizeExists(kustomizeDir)) {
-        kustomizePath = Paths.get(kustomizeDir + "/kustomize").toAbsolutePath().normalize().toString();
+        kustomizePath = Paths.get(kustomizeDir, "kustomize").toAbsolutePath().normalize().toString();
+        kustomizePaths.put(kustomizeVersion, kustomizePath);
         log.info("kustomize version {} already installed", kustomizeVersion);
         return true;
       }
@@ -1118,7 +1112,8 @@ public class InstallUtils {
       ProcessResult result = processExecutor.execute();
 
       if (result.getExitValue() == 0) {
-        kustomizePath = Paths.get(kustomizeDir + "/kustomize").toAbsolutePath().normalize().toString();
+        kustomizePath = Paths.get(kustomizeDir, "kustomize").toAbsolutePath().normalize().toString();
+        kustomizePaths.put(kustomizeVersion, kustomizePath);
         log.info(result.outputUTF8());
         if (validateKustomizeExists(kustomizeDir)) {
           log.info("kustomize path: {}", kustomizePath);
@@ -1174,7 +1169,7 @@ public class InstallUtils {
         log.info("Found user configured helm2 at {}. Skipping Install.", helmPath);
         return true;
       }
-    } else if (helm3Version.equals(helmVersion)) {
+    } else if (helm3Version.equals(helmVersion) || helm3VersionNew.equals(helmVersion)) {
       if (isNotEmpty(configuration.getHelm3Path())) {
         String helmPath = configuration.getHelm3Path();
         helmPaths.put(helmVersion, helmPath);
@@ -1213,6 +1208,27 @@ public class InstallUtils {
           .execute();
     } catch (Exception ex) {
       throw new ProcessExecutionException(format("Unable to execute bash command: %s", cmd), ex);
+    }
+  }
+
+  public static void setupDefaultPaths(DelegateConfiguration delegateConfiguration) {
+    if (isNotEmpty(delegateConfiguration.getKustomizePath())) {
+      kustomizePath = delegateConfiguration.getKustomizePath();
+      isCustomKustomizePath = true;
+    }
+    if (isNotEmpty(delegateConfiguration.getKubectlPath())) {
+      kubectlPaths.put(defaultKubectlVersion, delegateConfiguration.getKubectlPath());
+      kubectlPaths.put(newKubectlVersion, delegateConfiguration.getKubectlPath());
+    }
+    if (isNotEmpty(delegateConfiguration.getHelm3Path())) {
+      helmPaths.put(helm3Version, delegateConfiguration.getHelm3Path());
+      helmPaths.put(helm3VersionNew, delegateConfiguration.getHelm3Path());
+    }
+    if (isNotEmpty(delegateConfiguration.getHelmPath())) {
+      helmPaths.put(helm2Version, delegateConfiguration.getHelmPath());
+    }
+    if (isNotEmpty(delegateConfiguration.getOcPath())) {
+      ocPath = delegateConfiguration.getOcPath();
     }
   }
 }

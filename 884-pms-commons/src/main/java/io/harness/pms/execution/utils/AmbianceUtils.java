@@ -49,6 +49,16 @@ public class AmbianceUtils {
     return builder.addLevels(level).build();
   }
 
+  public static String getRuntimeIdForGivenCategory(@NonNull Ambiance ambiance, StepCategory category) {
+    Optional<Level> stageLevel = Optional.empty();
+    for (Level level : ambiance.getLevelsList()) {
+      if (level.getStepType().getStepCategory() == category) {
+        stageLevel = Optional.of(level);
+      }
+    }
+    return stageLevel.get().getRuntimeId();
+  }
+
   public static Ambiance cloneForChild(@NonNull Ambiance ambiance, @NonNull Level level) {
     Ambiance.Builder builder = cloneBuilder(ambiance, ambiance.getLevelsList().size());
     if (level.getStepType().getStepCategory() == StepCategory.STAGE) {
@@ -119,6 +129,9 @@ public class AmbianceUtils {
       logContext.put("setupId", level.getSetupId());
       logContext.put("stepType", level.getStepType().getType());
     }
+    if (ambiance.getMetadata() != null && ambiance.getMetadata().getPipelineIdentifier() != null) {
+      logContext.put("pipelineIdentifier", ambiance.getMetadata().getPipelineIdentifier());
+    }
     return logContext;
   }
 
@@ -173,5 +186,12 @@ public class AmbianceUtils {
   public static boolean isRetry(Ambiance ambiance) {
     Level level = Objects.requireNonNull(obtainCurrentLevel(ambiance));
     return level.getRetryIndex() != 0;
+  }
+
+  public static String obtainParentRuntimeId(Ambiance ambiance) {
+    if (ambiance.getLevelsCount() < 2) {
+      return null;
+    }
+    return ambiance.getLevels(ambiance.getLevelsCount() - 2).getRuntimeId();
   }
 }

@@ -217,7 +217,7 @@ public class NoOpSecretManagerImpl implements SecretManager, EncryptedSettingAtt
 
   @Override
   public boolean updateUsageRestrictionsForSecretOrFile(String accountId, String uuId,
-      UsageRestrictions usageRestrictions, boolean scopedToEntity, boolean inheritScopesFromSM) {
+      UsageRestrictions usageRestrictions, boolean scopedToAccount, boolean inheritScopesFromSM) {
     throw new UnsupportedOperationException();
   }
 
@@ -299,8 +299,8 @@ public class NoOpSecretManagerImpl implements SecretManager, EncryptedSettingAtt
   }
 
   @Override
-  public List<SecretMetadata> filterSecretIdsByReadPermission(
-      Set<String> secretIds, String accountId, String appIdFromRequest, String envIdFromRequest) {
+  public List<SecretMetadata> filterSecretIdsByReadPermission(Set<String> secretIds, String accountId,
+      String appIdFromRequest, String envIdFromRequest, boolean forUsageInNewApp) {
     throw new UnsupportedOperationException();
   }
 }

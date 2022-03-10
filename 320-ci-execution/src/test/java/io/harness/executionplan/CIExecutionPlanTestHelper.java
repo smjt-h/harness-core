@@ -109,6 +109,7 @@ import io.harness.k8s.model.ImageDetails;
 import io.harness.plancreator.execution.ExecutionElementConfig;
 import io.harness.plancreator.execution.ExecutionWrapperConfig;
 import io.harness.plancreator.stages.stage.StageElementConfig;
+import io.harness.pms.yaml.ParameterField;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.yaml.core.variables.NGVariable;
 import io.harness.yaml.core.variables.SecretNGVariable;
@@ -196,11 +197,14 @@ public class CIExecutionPlanTestHelper {
   }
 
   public CodeBase getCICodebase() {
-    return CodeBase.builder().connectorRef(GIT_CONNECTOR).build();
+    return CodeBase.builder().connectorRef(ParameterField.createValueField(GIT_CONNECTOR)).build();
   }
 
   public CodeBase getCICodebaseWithRepoName() {
-    return CodeBase.builder().connectorRef(GIT_CONNECTOR).repoName("portal").build();
+    return CodeBase.builder()
+        .connectorRef(ParameterField.createValueField(GIT_CONNECTOR))
+        .repoName(ParameterField.createValueField("portal"))
+        .build();
   }
 
   public ConnectorDetails getGitConnector() {
@@ -808,7 +812,10 @@ public class CIExecutionPlanTestHelper {
   public Infrastructure getInfrastructure() {
     return K8sDirectInfraYaml.builder()
         .type(Infrastructure.Type.KUBERNETES_DIRECT)
-        .spec(K8sDirectInfraYamlSpec.builder().connectorRef("testKubernetesCluster").namespace("testNamespace").build())
+        .spec(K8sDirectInfraYamlSpec.builder()
+                  .connectorRef(createValueField("testKubernetesCluster"))
+                  .namespace(createValueField("testNamespace"))
+                  .build())
         .build();
   }
 
@@ -1017,7 +1024,7 @@ public class CIExecutionPlanTestHelper {
                            .identifier("gitConnector")
                            .connectorType(ConnectorType.GIT)
                            .connectorConfig(GitConfigDTO.builder()
-                                                .url("https://github.com/wings-software/portal.git")
+                                                .url("https://github.com/harness/harness-core.git")
                                                 .branchName("master")
                                                 .gitAuthType(GitAuthType.HTTP)
                                                 .gitConnectionType(GitConnectionType.REPO)
@@ -1043,7 +1050,7 @@ public class CIExecutionPlanTestHelper {
                 .connectorType(ConnectorType.GITHUB)
                 .connectorConfig(
                     GithubConnectorDTO.builder()
-                        .url("https://github.com/wings-software/portal.git")
+                        .url("https://github.com/harness/harness-core.git")
                         .connectionType(GitConnectionType.REPO)
                         .authentication(
                             GithubAuthenticationDTO.builder()
@@ -1202,7 +1209,7 @@ public class CIExecutionPlanTestHelper {
         .execution(getExecutionElementConfig())
         .infrastructure(getInfrastructure())
         .sharedPaths(createValueField(newArrayList("share/")))
-        .serviceDependencies(Collections.singletonList(getServiceDependencyElement()))
+        .serviceDependencies(ParameterField.createValueField(Collections.singletonList(getServiceDependencyElement())))
         .build();
   }
 }

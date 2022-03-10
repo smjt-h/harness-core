@@ -22,6 +22,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class NGYamlFile {
+  private NGMigrationEntityType type;
   private String filename;
   private YamlDTO yaml;
+  private boolean exists;
+  private CgBasicInfo cgBasicInfo;
 }

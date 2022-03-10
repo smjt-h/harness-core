@@ -28,9 +28,9 @@ import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import io.harness.Team;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.Resource;
-import io.harness.accesscontrol.clients.ResourceScope;
 import io.harness.account.AccountClient;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
@@ -68,6 +68,8 @@ import io.harness.notification.notificationclient.NotificationClient;
 import io.harness.outbox.api.OutboxService;
 import io.harness.remote.client.RestClientUtils;
 import io.harness.repositories.invites.spring.InviteRepository;
+import io.harness.security.SecurityContextBuilder;
+import io.harness.security.dto.Principal;
 import io.harness.user.remote.UserClient;
 import io.harness.user.remote.UserFilterNG;
 import io.harness.utils.PageUtils;
@@ -599,6 +601,14 @@ public class InviteServiceImpl implements InviteService {
 
   private Optional<String> getInviteIdFromToken(String token) {
     Map<String, Claim> claims = jwtGeneratorUtils.verifyJWTToken(token, jwtPasswordSecret);
+    if (!claims.containsKey("exp")) {
+      log.warn(this.getClass().getName() + " verifies JWT Token without Expiry Date");
+      Principal principal = SecurityContextBuilder.getPrincipalFromClaims(claims);
+      if (principal != null) {
+        log.info(String.format(
+            "Principal type is %s and its name is %s", principal.getType().toString(), principal.getName()));
+      }
+    }
     if (!claims.containsKey(InviteKeys.id)) {
       return Optional.empty();
     }

@@ -12,9 +12,18 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.UUIDGenerator;
+import io.harness.network.Http;
 import io.harness.ng.core.utils.NGYamlUtils;
+import io.harness.ngmigration.beans.BaseEntityInput;
+import io.harness.ngmigration.beans.DiscoverEntityInput;
+import io.harness.ngmigration.beans.DiscoveryInput;
 import io.harness.ngmigration.beans.MigrationInputDTO;
+import io.harness.ngmigration.beans.MigrationInputResult;
 import io.harness.ngmigration.beans.NgEntityDetail;
+import io.harness.ngmigration.client.NGClient;
+import io.harness.ngmigration.client.PmsClient;
+import io.harness.remote.client.ServiceHttpClientConfig;
 
 import software.wings.ngmigration.CgEntityId;
 import software.wings.ngmigration.CgEntityNode;
@@ -26,16 +35,21 @@ import software.wings.ngmigration.NGYamlFile;
 
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import guru.nidi.graphviz.attribute.Label;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.model.Factory;
 import guru.nidi.graphviz.model.MutableGraph;
 import guru.nidi.graphviz.model.MutableNode;
+import io.serializer.HObjectMapper;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,13 +59,22 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.ws.rs.core.StreamingOutput;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
 import org.apache.commons.io.FileUtils;
+import retrofit2.Retrofit;
+import retrofit2.converter.jackson.JacksonConverterFactory;
 
 @Slf4j
 @OwnedBy(HarnessTeam.CDC)
 public class DiscoveryService {
+  private static final String DEFAULT_ZIP_DIRECTORY = "/tmp/zip-output";
+
   @Inject private NgMigrationFactory migrationFactory;
+  @Inject private MigratorMappingService migratorMappingService;
+  @Inject @Named("ngClientConfig") private ServiceHttpClientConfig ngClientConfig;
+  @Inject @Named("pipelineServiceClientConfig") private ServiceHttpClientConfig pipelineServiceClientConfig;
 
   private void travel(String accountId, String appId, Map<CgEntityId, CgEntityNode> entities,
       Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId parent, DiscoveryNode discoveryNode) {
@@ -73,50 +96,172 @@ public class DiscoveryService {
 
     // Discover the child nodes and add to graph
     if (isNotEmpty(chilldren)) {
+      // check if child already discovered, if yes, no need to rediscover. Just create a link in parent.
       chilldren.forEach(child -> {
-        NgMigration ngMigration = migrationFactory.getMethod(child.getType());
-        DiscoveryNode node = ngMigration.discover(accountId, appId, child.getId());
+        NgMigrationService ngMigrationService = migrationFactory.getMethod(child.getType());
+        DiscoveryNode node = ngMigrationService.discover(accountId, appId, child.getId());
         travel(accountId, appId, entities, graph, currentNode.getEntityId(), node);
       });
     }
   }
 
-  public DiscoveryResult discover(String accountId, String appId, String entityId, NGMigrationEntityType entityType) {
+  /*
+   * We individually discover provided entities & finally merge them to a dummy head
+   * */
+  public DiscoveryResult discoverMulti(String accountId, DiscoveryInput discoveryInput) {
+    Map<CgEntityId, CgEntityNode> entities = new HashMap<>();
+    Map<CgEntityId, Set<CgEntityId>> graph = new HashMap<>();
+    NgMigrationService ngMigrationService = migrationFactory.getMethod(NGMigrationEntityType.DUMMY_HEAD);
+    DiscoveryNode head = ngMigrationService.discover(accountId, null, null);
+    // Add the dummy head to the graph
+    entities.putIfAbsent(head.getEntityNode().getEntityId(), head.getEntityNode());
+    graph.putIfAbsent(head.getEntityNode().getEntityId(), new HashSet<>());
+    if (isNotEmpty(discoveryInput.getEntities())) {
+      for (DiscoverEntityInput child : discoveryInput.getEntities()) {
+        String appId = child.getAppId();
+        String entityId = child.getEntityId();
+        NGMigrationEntityType entityType = child.getType();
+        if (NGMigrationEntityType.APPLICATION.equals(entityType)) {
+          // ensure that appId & entityId are same if we are tying to migrate an app.
+          appId = entityId;
+        }
+        ngMigrationService = migrationFactory.getMethod(entityType);
+        DiscoveryNode node = ngMigrationService.discover(accountId, appId, entityId);
+        if (node == null) {
+          throw new IllegalStateException(
+              String.format("Entity not found! - Type: %s & ID: %s", child.getType(), entityId));
+        }
+        // We add the node the dummy head's children & to the graph
+        head.getChildren().add(node.getEntityNode().getEntityId());
+        graph.get(head.getEntityNode().getEntityId()).add(node.getEntityNode().getEntityId());
+        // Individually discover the child of every input
+        travel(accountId, appId, entities, graph, null, node);
+      }
+    }
+    if (discoveryInput.isExportImage()) {
+      exportImg(entities, graph);
+    }
+    return DiscoveryResult.builder().entities(entities).links(graph).root(head.getEntityNode().getEntityId()).build();
+  }
+
+  public DiscoveryResult discover(
+      String accountId, String appId, String entityId, NGMigrationEntityType entityType, boolean shouldExportImg) {
+    if (NGMigrationEntityType.APPLICATION.equals(entityType)) {
+      // ensure that appId & entityId are same if we are tying to migrate an app.
+      appId = entityId;
+    }
     Map<CgEntityId, CgEntityNode> entities = new HashMap<>();
     Map<CgEntityId, Set<CgEntityId>> graph = new HashMap<>();
 
-    NgMigration ngMigration = migrationFactory.getMethod(entityType);
-    DiscoveryNode node = ngMigration.discover(accountId, appId, entityId);
+    NgMigrationService ngMigrationService = migrationFactory.getMethod(entityType);
+    DiscoveryNode node = ngMigrationService.discover(accountId, appId, entityId);
     if (node == null) {
       throw new IllegalStateException("Root cannot be found!");
     }
     travel(accountId, appId, entities, graph, null, node);
+    if (shouldExportImg) {
+      exportImg(entities, graph);
+    }
+    return DiscoveryResult.builder().entities(entities).links(graph).root(node.getEntityNode().getEntityId()).build();
+  }
+
+  private void exportImg(Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph) {
     MutableGraph vizGraph = getGraphViz(entities, graph);
     try {
       Graphviz.fromGraph(vizGraph).render(Format.PNG).toFile(new File("/tmp/viz-output/viz.png"));
     } catch (IOException e) {
       log.warn("Unable to write visualization to file");
     }
-    return DiscoveryResult.builder().entities(entities).links(graph).root(node.getEntityNode().getEntityId()).build();
   }
 
-  public List<NGYamlFile> migrateEntity(MigrationInputDTO inputDTO, DiscoveryResult discoveryResult) {
-    Map<CgEntityId, CgEntityNode> entities = discoveryResult.getEntities();
-    Map<CgEntityId, Set<CgEntityId>> graph = discoveryResult.getLinks();
-    CgEntityId root = discoveryResult.getRoot();
+  public MigrationInputResult migrationInput(DiscoveryResult result) {
+    Collection<CgEntityNode> cgEntityNodes = result.getEntities().values();
+    Map<CgEntityId, BaseEntityInput> inputMap = new HashMap<>();
+    for (CgEntityNode node : cgEntityNodes) {
+      NgMigrationService ngMigration = migrationFactory.getMethod(node.getType());
+      BaseEntityInput generatedInputs =
+          ngMigration.generateInput(result.getEntities(), result.getLinks(), node.getEntityId());
+      if (generatedInputs != null) {
+        inputMap.put(node.getEntityId(), generatedInputs);
+      }
+    }
+    return MigrationInputResult.builder().inputs(inputMap).build();
+  }
+
+  public StreamingOutput exportYamlFilesAsZip(MigrationInputDTO inputDTO, DiscoveryResult discoveryResult) {
+    List<NGYamlFile> ngYamlFiles = migrateEntity(inputDTO, discoveryResult);
+    String folder = "/tmp/" + UUIDGenerator.generateUuid();
+    exportZip(ngYamlFiles, folder);
+    return output -> {
+      try {
+        byte[] data = Files.readAllBytes(Paths.get(folder + "/yamls.zip"));
+        output.write(data);
+        output.flush();
+      } catch (Exception e) {
+        throw new IllegalStateException("Could not export zip file");
+      }
+    };
+  }
+
+  private List<NGYamlFile> migrateEntity(MigrationInputDTO inputDTO, DiscoveryResult discoveryResult) {
     Map<CgEntityId, NgEntityDetail> migratedEntities = new HashMap<>();
+    Map<CgEntityId, Set<CgEntityId>> leafTracker = discoveryResult.getLinks().entrySet().stream().collect(
+        Collectors.toMap(Entry::getKey, e -> Sets.newHashSet(e.getValue())));
+    return getAllYamlFiles(inputDTO, discoveryResult.getEntities(), discoveryResult.getLinks(),
+        discoveryResult.getRoot(), migratedEntities, leafTracker);
+  }
 
-    Map<CgEntityId, Set<CgEntityId>> leafTracker =
-        graph.entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> Sets.newHashSet(e.getValue())));
-    List<NGYamlFile> ngYamlFiles = getAllYamlFiles(inputDTO, entities, graph, root, migratedEntities, leafTracker);
+  public List<NGYamlFile> migrateEntity(
+      String auth, MigrationInputDTO inputDTO, DiscoveryResult discoveryResult, boolean dryRun) {
+    List<NGYamlFile> ngYamlFiles = migrateEntity(inputDTO, discoveryResult);
+    exportZip(ngYamlFiles, DEFAULT_ZIP_DIRECTORY);
+    if (!dryRun) {
+      createEntities(auth, inputDTO, ngYamlFiles);
+    }
+    return ngYamlFiles;
+  }
 
+  private static <T> T getRestClient(ServiceHttpClientConfig ngClientConfig, Class<T> clazz) {
+    OkHttpClient okHttpClient = Http.getOkHttpClient(ngClientConfig.getBaseUrl(), false);
+    Retrofit retrofit = new Retrofit.Builder()
+                            .client(okHttpClient)
+                            .baseUrl(ngClientConfig.getBaseUrl())
+                            .addConverterFactory(JacksonConverterFactory.create(HObjectMapper.NG_DEFAULT_OBJECT_MAPPER))
+                            .build();
+    return retrofit.create(clazz);
+  }
+
+  private void createEntities(String auth, MigrationInputDTO inputDTO, List<NGYamlFile> ngYamlFiles) {
+    NGClient ngClient = getRestClient(ngClientConfig, NGClient.class);
+    PmsClient pmsClient = getRestClient(pipelineServiceClientConfig, PmsClient.class);
+    // Sort such that we create secrets first then connectors and so on.
+    MigratorUtility.sort(ngYamlFiles);
+    for (NGYamlFile file : ngYamlFiles) {
+      try {
+        NgMigrationService ngMigration = migrationFactory.getMethod(file.getType());
+        if (!file.isExists()) {
+          ngMigration.migrate(auth, ngClient, pmsClient, inputDTO, file);
+        } else {
+          log.info("Skipping creation of entity with basic info {}", file.getCgBasicInfo());
+        }
+        migratorMappingService.mapCgNgEntity(file);
+      } catch (IOException e) {
+        log.error("Unable to migrate entity", e);
+      }
+    }
+  }
+
+  private void exportZip(List<NGYamlFile> ngYamlFiles, String dirName) {
     // Write the files to ZIP folder
     try {
-      FileUtils.cleanDirectory(new File("/tmp/zip-output"));
+      File directory = new File(dirName);
+      if (directory.exists()) {
+        FileUtils.cleanDirectory(directory);
+      }
     } catch (IOException e) {
       log.warn("Failed to clean output directory");
     }
-    File zipFile = new File("/tmp/zip-output/yamls.zip");
+    File zipFile = new File(dirName + "/yamls.zip");
     zipFile.getParentFile().mkdirs();
     try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zipFile))) {
       for (NGYamlFile file : ngYamlFiles) {
@@ -129,7 +274,6 @@ public class DiscoveryService {
     } catch (IOException e) {
       log.warn("Unable to save zip file");
     }
-    return ngYamlFiles;
   }
 
   private List<CgEntityId> getLeafNodes(Map<CgEntityId, Set<CgEntityId>> graph) {
@@ -188,10 +332,10 @@ public class DiscoveryService {
 
     vizGraph.use((gr, ctx) -> {
       for (CgEntityId node : graph.keySet()) {
-        NGMigrationEntity entityNode = entities.get(node).getEntity();
+        CgEntityNode cgEntityNode = entities.get(node);
+        NGMigrationEntity entityNode = cgEntityNode.getEntity();
         MutableNode vizNode = Factory.mutNode(node.toString());
-        vizNode.setName(
-            Label.htmlLines(entityNode.getMigrationEntityName(), entityNode.getMigrationEntityType().name()));
+        vizNode.setName(Label.htmlLines(entityNode.getMigrationEntityName(), cgEntityNode.getType().name()));
         nodes.put(node, vizNode);
       }
       for (Map.Entry<CgEntityId, Set<CgEntityId>> entry : graph.entrySet()) {

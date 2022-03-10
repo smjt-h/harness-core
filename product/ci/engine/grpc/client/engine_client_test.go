@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/harness/harness-core/commons/go/lib/logs"
 	"github.com/stretchr/testify/assert"
-	"github.com/wings-software/portal/commons/go/lib/logs"
 	"go.uber.org/zap"
 )
 

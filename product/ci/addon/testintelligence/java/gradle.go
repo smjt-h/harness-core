@@ -9,12 +9,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/wings-software/portal/commons/go/lib/exec"
-	"github.com/wings-software/portal/commons/go/lib/filesystem"
-	"github.com/wings-software/portal/product/ci/ti-service/types"
-	"go.uber.org/zap"
 	"os"
 	"strings"
+
+	"github.com/harness/harness-core/commons/go/lib/exec"
+	"github.com/harness/harness-core/commons/go/lib/filesystem"
+	"github.com/harness/harness-core/product/ci/ti-service/types"
+	"go.uber.org/zap"
 )
 
 var (
@@ -71,6 +72,7 @@ func (g *gradleRunner) GetCmd(ctx context.Context, tests []types.RunnableTest, u
 
 	// If instrumentation needs to be ignored, we run all the tests without adding the agent config
 	if ignoreInstr {
+		g.log.Infow("ignoring instrumentation and not attaching Java agent")
 		return strings.TrimSpace(fmt.Sprintf("%s %s", gc, userArgs)), nil
 	}
 

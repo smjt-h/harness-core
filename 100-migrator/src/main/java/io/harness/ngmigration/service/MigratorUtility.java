@@ -7,8 +7,18 @@
 
 package io.harness.ngmigration.service;
 
+import io.harness.encryption.Scope;
+import io.harness.exception.InvalidArgumentsException;
+import io.harness.ngmigration.beans.InputDefaults;
+import io.harness.ngmigration.beans.NgEntityDetail;
 import io.harness.pms.yaml.ParameterField;
 
+import software.wings.ngmigration.NGMigrationEntityType;
+import software.wings.ngmigration.NGYamlFile;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 public class MigratorUtility {
@@ -21,5 +31,51 @@ public class MigratorUtility {
       return ParameterField.createValueField("");
     }
     return ParameterField.createValueField(value);
+  }
+
+  public static void sort(List<NGYamlFile> files) {
+    files.sort(Comparator.comparingInt(MigratorUtility::toInt));
+  }
+
+  // This is for sorting entities while creating
+  private static int toInt(NGYamlFile file) {
+    switch (file.getType()) {
+      case SECRET_MANAGER:
+        return 1;
+      case SECRET:
+        return 5;
+      case CONNECTOR:
+        return 10;
+      case SERVICE:
+        return 20;
+      case ENVIRONMENT:
+        return 25;
+      case PIPELINE:
+        return 50;
+      default:
+        throw new InvalidArgumentsException("Unknown type found: " + file.getType());
+    }
+  }
+
+  public static Scope getDefaultScope(Map<NGMigrationEntityType, InputDefaults> inputDefaultsMap,
+      NGMigrationEntityType entityType, Scope defaultScope) {
+    if (inputDefaultsMap == null || !inputDefaultsMap.containsKey(entityType)) {
+      return defaultScope;
+    }
+    return inputDefaultsMap.get(entityType).getScope() != null ? inputDefaultsMap.get(entityType).getScope()
+                                                               : defaultScope;
+  }
+
+  public static String getIdentifierWithScope(NgEntityDetail entityDetail) {
+    String orgId = entityDetail.getOrgIdentifier();
+    String projectId = entityDetail.getProjectIdentifier();
+    String identifier = entityDetail.getIdentifier();
+    if (StringUtils.isAllBlank(orgId, projectId)) {
+      return "account." + identifier;
+    }
+    if (StringUtils.isNotBlank(projectId)) {
+      return "project." + identifier;
+    }
+    return "org." + identifier;
   }
 }

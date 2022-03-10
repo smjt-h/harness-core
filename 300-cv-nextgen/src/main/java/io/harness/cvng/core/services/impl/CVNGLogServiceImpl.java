@@ -14,6 +14,7 @@ import static io.harness.cvng.CVConstants.TAG_UNRECORDED;
 import static io.harness.cvng.CVConstants.TAG_VERIFICATION_TYPE;
 import static io.harness.cvng.beans.cvnglog.TraceableType.ONBOARDING;
 import static io.harness.cvng.beans.cvnglog.TraceableType.VERIFICATION_TASK;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.persistence.HQuery.excludeAuthority;
 
 import io.harness.annotations.dev.HarnessTeam;
@@ -22,6 +23,7 @@ import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.cvnglog.CVNGLogDTO;
 import io.harness.cvng.beans.cvnglog.CVNGLogType;
 import io.harness.cvng.beans.cvnglog.TraceableType;
+import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.entities.CVNGLog;
 import io.harness.cvng.core.entities.CVNGLog.CVNGLogKeys;
 import io.harness.cvng.core.entities.VerificationTask;
@@ -30,6 +32,7 @@ import io.harness.cvng.core.entities.cvnglogs.CVNGLogRecord.CVNGLogRecordCompara
 import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.CVNGLogService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
+import io.harness.cvng.verificationjob.services.api.VerificationJobInstanceService;
 import io.harness.metrics.service.api.MetricService;
 import io.harness.ng.beans.PageResponse;
 import io.harness.persistence.HPersistence;
@@ -43,6 +46,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.mongodb.morphia.UpdateOptions;
@@ -55,7 +59,10 @@ public class CVNGLogServiceImpl implements CVNGLogService {
   @Inject private Clock clock;
   @Inject private CVConfigService cvConfigService;
   @Inject private VerificationTaskService verificationTaskService;
+  @Inject private VerificationJobInstanceService verificationJobInstanceService;
   @Inject private MetricService metricService;
+
+  public static final int ERROR_RESPONSE_CODE = 400;
 
   @Override
   public void save(List<CVNGLogDTO> callLogs) {
@@ -132,6 +139,56 @@ public class CVNGLogServiceImpl implements CVNGLogService {
       cvngLogDTOs.addAll(log.toCVNGLogDTOs());
     });
     return PageUtils.offsetAndLimit(cvngLogDTOs, offset, pageSize);
+  }
+
+  @Override
+  public List<CVNGLog> getCompleteCVNGLog(String accountId, String verificationTaskId, CVNGLogType cvngLogType) {
+    return hPersistence.createQuery(CVNGLog.class)
+        .filter(CVNGLogKeys.accountId, accountId)
+        .filter(CVNGLogKeys.traceableType, VERIFICATION_TASK)
+        .filter(CVNGLogKeys.traceableId, verificationTaskId)
+        .filter(CVNGLogKeys.logType, cvngLogType)
+        .asList();
+  }
+
+  @Override
+  public PageResponse<CVNGLogDTO> getCVNGLogs(String accountId, String verificationJobInstanceId, CVNGLogType logType,
+      List<String> healthSourceIdentifiers, boolean errorLogsOnly, PageParams pageParams) {
+    List<CVNGLog> cvngLogs = getCVNGLogs(accountId, verificationJobInstanceId, logType, healthSourceIdentifiers);
+    List<CVNGLogDTO> cvngLogDTOs = new ArrayList<>();
+    cvngLogs.forEach(cvngLog -> {
+      Collections.sort(cvngLog.getLogRecords(), new CVNGLogRecordComparator());
+      List<CVNGLogRecord> cvngLogRecords = cvngLog.getLogRecords()
+                                               .stream()
+                                               .filter(cvngLogRecord -> !errorLogsOnly || cvngLogRecord.isErrorLog())
+                                               .collect(Collectors.toList());
+      cvngLog.setLogRecords(cvngLogRecords);
+      cvngLogDTOs.addAll(cvngLog.toCVNGLogDTOs());
+    });
+
+    return PageUtils.offsetAndLimit(cvngLogDTOs, pageParams.getPage(), pageParams.getSize());
+  }
+
+  private List<CVNGLog> getCVNGLogs(
+      String accountId, String verificationJobInstanceId, CVNGLogType logType, List<String> healthSourceIdentifiers) {
+    Set<String> verificationTaskIds =
+        verificationTaskService.maybeGetVerificationTaskIds(accountId, verificationJobInstanceId);
+    if (isNotEmpty(healthSourceIdentifiers)) {
+      List<String> cvConfigIds = verificationJobInstanceService.getCVConfigIdsForVerificationJobInstance(
+          verificationJobInstanceId, healthSourceIdentifiers);
+      verificationTaskIds =
+          verificationTaskIds.stream()
+              .filter(
+                  verificationTaskId -> cvConfigIds.contains(verificationTaskService.getCVConfigId(verificationTaskId)))
+              .collect(Collectors.toSet());
+    }
+    return hPersistence.createQuery(CVNGLog.class, excludeAuthority)
+        .filter(CVNGLogKeys.accountId, accountId)
+        .filter(CVNGLogKeys.logType, logType)
+        .filter(CVNGLogKeys.traceableType, VERIFICATION_TASK)
+        .field(CVNGLogKeys.traceableId)
+        .in(verificationTaskIds)
+        .asList();
   }
 
   private List<String> cvConfigIds(String accountId, String orgIdentifier, String projectIdentifier,

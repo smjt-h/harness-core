@@ -29,6 +29,7 @@ import java.util.Set;
  * @author rktummala on 06/05/2018
  */
 public interface UsageRestrictionsService {
+  enum UsageRestrictionsClient { CONNECTORS, SECRETS_MANAGEMENT, ALL }
   /**
    *
    * @param appEnvRestrictions
@@ -52,16 +53,18 @@ public interface UsageRestrictionsService {
    * Access is determined from Usage restrictions, permissions and context.
    *
    * @param accountId account
-   *@param appIdFromRequest current app context
+   * @param appIdFromRequest current app context
    * @param envIdFromRequest current env context
+   * @param forUsageInNewApp
    * @param entityUsageRestrictions
    * @param restrictionsFromUserPermissions
-   * @param appIdEnvMap
    * @param appEnvMapFromPermissions       @return boolean if the user needs to be provided access or not
-   */
+   * @param appIdEnvMap
+   * */
   boolean hasAccess(String accountId, boolean isAccountAdmin, String appIdFromRequest, String envIdFromRequest,
-      UsageRestrictions entityUsageRestrictions, UsageRestrictions restrictionsFromUserPermissions,
-      Map<String, Set<String>> appEnvMapFromPermissions, Map<String, List<Base>> appIdEnvMap, boolean scopedToAccount);
+      boolean forUsageInNewApp, UsageRestrictions entityUsageRestrictions,
+      UsageRestrictions restrictionsFromUserPermissions, Map<String, Set<String>> appEnvMapFromPermissions,
+      Map<String, List<Base>> appIdEnvMap, boolean scopedToAccount);
 
   /**
    * Lists all the applications and environments that the user has update permissions on.
@@ -190,7 +193,7 @@ public interface UsageRestrictionsService {
   /**
    * Purge all the usage restriction references to application/environments that no longer exists.
    */
-  int purgeDanglingAppEnvReferences(String accountId);
+  int purgeDanglingAppEnvReferences(String accountId, UsageRestrictionsClient usageRestrictionsClient);
 
   /**
    * Remove all references to an application or an environment in the usage restrictions. This operation is usually

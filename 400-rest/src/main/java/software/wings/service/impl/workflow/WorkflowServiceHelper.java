@@ -277,6 +277,7 @@ public class WorkflowServiceHelper {
   public static final String VERIFY_STAGE_SERVICE = "Verify Stage Service";
   public static final String ROUTE_UPDATE = "Route Update";
   public static final String KUBERNETES_SWAP_SERVICES_PRIMARY_STAGE = "Swap Primary with Stage";
+  public static final String RANCHER_KUBERNETES_SWAP_SERVICES_PRIMARY_STAGE = "Rancher Swap Primary with Stage";
   public static final String INFRASTRUCTURE_NODE_NAME = "Prepare Infra";
   public static final String SELECT_NODE_NAME = "Select Nodes";
   public static final String ROLLBACK_AWS_LAMBDA = "Rollback AWS Lambda";
@@ -3289,17 +3290,28 @@ public class WorkflowServiceHelper {
     validateWaitInterval(orchestrationWorkflow.getRollbackWorkflowPhaseIdMap());
   }
 
+  private void validateWaitIntervalValue(Integer value) {
+    if (value != null) {
+      if (value < 0) {
+        throw new InvalidRequestException("Negative values for wait interval not allowed.");
+      }
+      // We use DelayEventHelper. Queueable.java has a FdTtlIndex limited to a day.
+      // Refer to CDC-16519
+      if (value > 24 * 60 * 60) {
+        throw new InvalidRequestException("Wait Interval cannot be more than one day.");
+      }
+    }
+  }
+
   private void validateWaitInterval(WorkflowPhase workflowPhase) {
-    if (workflowPhase != null && workflowPhase.getPhaseSteps() != null
-        && workflowPhase.getPhaseSteps().stream().anyMatch(
-            phaseStep -> phaseStep.getWaitInterval() != null && phaseStep.getWaitInterval() < 0)) {
-      throw new InvalidRequestException("Negative values for waitInterval not allowed.");
+    if (workflowPhase != null && workflowPhase.getPhaseSteps() != null) {
+      workflowPhase.getPhaseSteps().forEach(phaseStep -> validateWaitIntervalValue(phaseStep.getWaitInterval()));
     }
   }
 
   public void validateWaitInterval(PhaseStep phaseStep) {
-    if (phaseStep != null && phaseStep.getWaitInterval() != null && phaseStep.getWaitInterval() < 0) {
-      throw new InvalidRequestException("Negative values for wait interval not allowed.");
+    if (phaseStep != null) {
+      validateWaitIntervalValue(phaseStep.getWaitInterval());
     }
   }
 

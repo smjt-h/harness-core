@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/dchest/authcookie"
+	"github.com/harness/harness-core/product/log-service/config"
 	"github.com/stretchr/testify/assert"
-	"github.com/wings-software/portal/product/log-service/config"
 )
 
 type MockHandler struct{}

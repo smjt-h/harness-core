@@ -9,22 +9,28 @@ package io.harness.batch.processing.metrics;
 
 import io.harness.batch.processing.ccm.CCMJobConstants;
 import io.harness.batch.processing.config.BatchMainConfig;
+import io.harness.ccm.commons.beans.JobConstants;
 import io.harness.ccm.license.CeLicenseInfo;
 import io.harness.event.handler.segment.SegmentConfig;
+import io.harness.telemetry.Destination;
+import io.harness.telemetry.TelemetryOption;
+import io.harness.telemetry.TelemetryReporter;
 
 import software.wings.beans.Account;
 import software.wings.service.intfc.instance.CloudToHarnessMappingService;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Singleton;
 import com.segment.analytics.Analytics;
 import com.segment.analytics.messages.GroupMessage;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -38,22 +44,49 @@ public class CeProductMetricsTasklet implements Tasklet {
   @Autowired private ProductMetricsService productMetricsService;
   @Autowired private CloudToHarnessMappingService cloudToHarnessMappingService;
   @Autowired private CeCloudMetricsService ceCloudMetricsService;
-  private JobParameters parameters;
+  @Autowired private CENGTelemetryService cengTelemetryService;
+  @Autowired TelemetryReporter telemetryReporter;
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
     if (mainConfiguration.getSegmentConfig().isEnabled()) {
-      parameters = chunkContext.getStepContext().getStepExecution().getJobParameters();
-      String accountId = parameters.getString(CCMJobConstants.ACCOUNT_ID);
+      final JobConstants jobConstants = CCMJobConstants.fromContext(chunkContext);
+      String accountId = jobConstants.getAccountId();
 
-      Instant start = CCMJobConstants.getFieldValueFromJobParams(parameters, CCMJobConstants.JOB_START_DATE)
-                          .minus(3, ChronoUnit.DAYS);
-      Instant end = CCMJobConstants.getFieldValueFromJobParams(parameters, CCMJobConstants.JOB_END_DATE)
-                        .minus(3, ChronoUnit.DAYS);
+      Instant start = Instant.ofEpochMilli(jobConstants.getJobStartTime()).minus(3, ChronoUnit.DAYS);
+      Instant end = Instant.ofEpochMilli(jobConstants.getJobEndTime()).minus(3, ChronoUnit.DAYS);
       log.info("Sending CE account traits through Segment group call.");
       sendStatsToSegment(accountId, start, end);
+
+      log.info("Sending NG CCM Telemetry Stat for Account:{}", accountId);
+      nextGenInstrumentation(accountId);
     }
     return null;
+  }
+
+  @VisibleForTesting
+  void nextGenInstrumentation(String accountId) {
+    HashMap<String, Object> properties = new HashMap<>();
+    properties.put("group_type", "Account");
+    properties.put("group_id", accountId);
+
+    // Connector Telemetry
+    properties.putAll(cengTelemetryService.getNextGenConnectorsCountByType(accountId));
+
+    // Recommendations
+    properties.putAll(cengTelemetryService.getRecommendationMetrics(accountId));
+
+    // Perspectives
+    properties.putAll(cengTelemetryService.getPerspectivesMetrics(accountId));
+
+    // Reports
+    properties.putAll(cengTelemetryService.getReportMetrics(accountId));
+
+    // Budgets
+    properties.putAll(cengTelemetryService.getBudgetMetrics(accountId));
+
+    telemetryReporter.sendGroupEvent(accountId, null, properties, Collections.singletonMap(Destination.AMPLITUDE, true),
+        TelemetryOption.builder().sendForCommunity(false).build());
   }
 
   public void sendStatsToSegment(String accountId, Instant start, Instant end) {

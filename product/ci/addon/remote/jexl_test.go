@@ -11,13 +11,13 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	cengine "github.com/harness/harness-core/product/ci/engine/grpc/client"
 	"github.com/tj/assert"
-	cengine "github.com/wings-software/portal/product/ci/engine/grpc/client"
 	"google.golang.org/grpc"
 
-	"github.com/wings-software/portal/commons/go/lib/logs"
-	mgrpc "github.com/wings-software/portal/product/ci/engine/grpc/client/mocks"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
+	"github.com/harness/harness-core/commons/go/lib/logs"
+	mgrpc "github.com/harness/harness-core/product/ci/engine/grpc/client/mocks"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"go.uber.org/zap"
 )
 

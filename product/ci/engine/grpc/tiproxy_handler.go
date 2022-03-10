@@ -9,17 +9,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	fs "github.com/harness/harness-core/commons/go/lib/filesystem"
+	cgp "github.com/harness/harness-core/product/ci/addon/parser/cg"
+	"github.com/harness/harness-core/product/ci/common/avro"
 	"github.com/pkg/errors"
-	fs "github.com/wings-software/portal/commons/go/lib/filesystem"
-	cgp "github.com/wings-software/portal/product/ci/addon/parser/cg"
-	"github.com/wings-software/portal/product/ci/common/avro"
 	"io"
 	"path/filepath"
 	"strings"
 
-	"github.com/wings-software/portal/product/ci/common/external"
-	pb "github.com/wings-software/portal/product/ci/engine/proto"
-	"github.com/wings-software/portal/product/ci/ti-service/types"
+	"github.com/harness/harness-core/product/ci/common/external"
+	pb "github.com/harness/harness-core/product/ci/engine/proto"
+	"github.com/harness/harness-core/product/ci/ti-service/types"
 	"go.uber.org/zap"
 )
 

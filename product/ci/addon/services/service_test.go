@@ -14,9 +14,9 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	mexec "github.com/harness/harness-core/commons/go/lib/exec"
+	"github.com/harness/harness-core/commons/go/lib/logs"
 	"github.com/stretchr/testify/assert"
-	mexec "github.com/wings-software/portal/commons/go/lib/exec"
-	"github.com/wings-software/portal/commons/go/lib/logs"
 	"go.uber.org/zap"
 )
 

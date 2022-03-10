@@ -19,6 +19,8 @@ import io.harness.connector.ConnectorResourceClientModule;
 import io.harness.delegate.DelegateServiceResourceClient;
 import io.harness.delegate.DelegateServiceResourceClientModule;
 import io.harness.environment.EnvironmentResourceClientModule;
+import io.harness.gitops.GitopsResourceClientModule;
+import io.harness.gitops.remote.GitopsResourceClient;
 import io.harness.migration.NGMigrationSdkModule;
 import io.harness.organization.OrganizationClientModule;
 import io.harness.organization.remote.OrganizationClient;
@@ -30,12 +32,12 @@ import io.harness.project.ProjectClientModule;
 import io.harness.project.remote.ProjectClient;
 import io.harness.remote.client.ClientMode;
 import io.harness.remote.client.ServiceHttpClientConfig;
-import io.harness.resourcegroup.framework.service.Resource;
-import io.harness.resourcegroup.framework.service.ResourceGroupService;
-import io.harness.resourcegroup.framework.service.ResourceTypeService;
-import io.harness.resourcegroup.framework.service.impl.ResourceGroupEventHandler;
-import io.harness.resourcegroup.framework.service.impl.ResourceGroupServiceImpl;
-import io.harness.resourcegroup.framework.service.impl.ResourceTypeServiceImpl;
+import io.harness.resourcegroup.framework.v1.service.Resource;
+import io.harness.resourcegroup.framework.v1.service.ResourceTypeService;
+import io.harness.resourcegroup.framework.v1.service.impl.ResourceGroupEventHandler;
+import io.harness.resourcegroup.framework.v1.service.impl.ResourceTypeServiceImpl;
+import io.harness.resourcegroup.framework.v2.service.ResourceGroupService;
+import io.harness.resourcegroup.framework.v2.service.impl.ResourceGroupServiceImpl;
 import io.harness.resourcegroupclient.ResourceGroupClientModule;
 import io.harness.resourcegroupclient.remote.ResourceGroupClient;
 import io.harness.secrets.SecretNGManagerClientModule;
@@ -72,6 +74,8 @@ public class ResourceGroupModule extends AbstractModule {
   protected void configure() {
     install(new AccessControlAdminClientModule(
         resourceGroupServiceConfig.getAccessControlAdminClientConfiguration(), RESOUCE_GROUP_SERVICE.toString()));
+    bind(io.harness.resourcegroup.framework.v1.service.ResourceGroupService.class)
+        .to(io.harness.resourcegroup.framework.v1.service.impl.ResourceGroupServiceImpl.class);
     bind(ResourceGroupService.class).to(ResourceGroupServiceImpl.class);
     bind(ResourceTypeService.class).to(ResourceTypeServiceImpl.class);
     bind(String.class).annotatedWith(Names.named("serviceId")).toInstance(RESOUCE_GROUP_SERVICE.toString());
@@ -105,6 +109,7 @@ public class ResourceGroupModule extends AbstractModule {
     requireBinding(AccountClient.class);
     requireBinding(DelegateServiceResourceClient.class);
     requireBinding(TemplateResourceClient.class);
+    requireBinding(GitopsResourceClient.class);
   }
 
   private void installResourceValidators() {
@@ -141,5 +146,8 @@ public class ResourceGroupModule extends AbstractModule {
     install(new TemplateResourceClientModule(
         ServiceHttpClientConfig.builder().baseUrl(resourceClients.getTemplateService().getBaseUrl()).build(),
         resourceClients.getTemplateService().getSecret(), RESOUCE_GROUP_SERVICE.toString()));
+    install(new GitopsResourceClientModule(
+        ServiceHttpClientConfig.builder().baseUrl(resourceClients.getGitopsService().getBaseUrl()).build(),
+        resourceClients.getGitopsService().getSecret(), RESOUCE_GROUP_SERVICE.toString()));
   }
 }

@@ -12,11 +12,11 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	pb "github.com/harness/harness-core/910-delegate-task-grpc-service/src/main/proto/io/harness/task/service"
+	dclient "github.com/harness/harness-core/commons/go/lib/delegate-task-grpc-service/grpc"
+	"github.com/harness/harness-core/commons/go/lib/logs"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	pb "github.com/wings-software/portal/910-delegate-task-grpc-service/src/main/proto/io/harness/task/service"
-	dclient "github.com/wings-software/portal/commons/go/lib/delegate-task-grpc-service/grpc"
-	"github.com/wings-software/portal/commons/go/lib/logs"
 	"go.uber.org/zap"
 )
 

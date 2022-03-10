@@ -26,7 +26,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
 import io.harness.govern.Switch;
-import io.harness.plancreator.PipelineServiceUtilPlanCreationConstants;
+import io.harness.plancreator.NGCommonUtilPlanCreationConstants;
 import io.harness.plancreator.steps.AbstractStepPlanCreator;
 import io.harness.plancreator.steps.FailureStrategiesUtils;
 import io.harness.plancreator.steps.GenericPlanCreatorUtils;
@@ -116,7 +116,7 @@ public abstract class PMSStepPlanCreatorV2<T extends PmsAbstractStepNode> extend
                     .build())
             .skipUnresolvedExpressionsCheck(stepElement.getStepSpecType().skipUnresolvedExpressionsCheck())
             .build();
-    return PlanCreationResponse.builder().node(stepPlanNode.getUuid(), stepPlanNode).build();
+    return PlanCreationResponse.builder().planNode(stepPlanNode).build();
   }
 
   protected List<AdviserObtainment> getAdviserObtainmentFromMetaData(YamlField currentField) {
@@ -382,8 +382,8 @@ public abstract class PMSStepPlanCreatorV2<T extends PmsAbstractStepNode> extend
   protected Map<RollbackStrategy, String> getRollbackStrategyMap(YamlField currentField) {
     String stageNodeId = GenericPlanCreatorUtils.getStageNodeId(currentField);
     Map<RollbackStrategy, String> rollbackStrategyStringMap = new HashMap<>();
-    rollbackStrategyStringMap.put(RollbackStrategy.STAGE_ROLLBACK,
-        stageNodeId + PipelineServiceUtilPlanCreationConstants.COMBINED_ROLLBACK_ID_SUFFIX);
+    rollbackStrategyStringMap.put(
+        RollbackStrategy.STAGE_ROLLBACK, stageNodeId + NGCommonUtilPlanCreationConstants.COMBINED_ROLLBACK_ID_SUFFIX);
     rollbackStrategyStringMap.put(
         RollbackStrategy.STEP_GROUP_ROLLBACK, GenericPlanCreatorUtils.getStepGroupRollbackStepsNodeId(currentField));
     return rollbackStrategyStringMap;

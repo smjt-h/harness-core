@@ -11,7 +11,10 @@ import io.harness.annotations.ExposeInternalException;
 import io.harness.cvng.activity.beans.DeploymentActivitySummaryDTO;
 import io.harness.cvng.analysis.beans.LogAnalysisClusterChartDTO;
 import io.harness.cvng.analysis.beans.LogAnalysisClusterDTO;
+import io.harness.cvng.analysis.beans.LogAnalysisClusterWithCountDTO;
 import io.harness.cvng.analysis.beans.TransactionMetricInfoSummaryPageDTO;
+import io.harness.cvng.beans.cvnglog.CVNGLogDTO;
+import io.harness.cvng.beans.cvnglog.CVNGLogType;
 import io.harness.cvng.cdng.beans.InputSetTemplateRequest;
 import io.harness.cvng.cdng.beans.InputSetTemplateResponse;
 import io.harness.cvng.cdng.services.api.CVNGStepService;
@@ -20,6 +23,7 @@ import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.HealthSourceD
 import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.filterParams.DeploymentLogAnalysisFilter;
 import io.harness.cvng.core.beans.params.filterParams.DeploymentTimeSeriesAnalysisFilter;
+import io.harness.cvng.verificationjob.entities.VerificationJobInstance;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.rest.RestResponse;
@@ -30,7 +34,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import java.util.Arrays;
+import io.swagger.annotations.ApiParam;
 import java.util.List;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
@@ -84,10 +88,6 @@ public class CVNGStepResource {
       @NotEmpty @NotNull @PathParam("verifyStepExecutionId") String callBackId,
       @BeanParam DeploymentTimeSeriesAnalysisFilter deploymentTimeSeriesAnalysisFilter,
       @BeanParam PageParams pageParams) {
-    // TODO: below code is necessary for backward compatability and will be removed once we phase out hostName Filter
-    if (deploymentTimeSeriesAnalysisFilter.filterByHostName()) {
-      deploymentTimeSeriesAnalysisFilter.setHostNames(Arrays.asList(deploymentTimeSeriesAnalysisFilter.getHostName()));
-    }
     return new RestResponse(stepTaskService.getDeploymentActivityTimeSeriesData(
         accountId, callBackId, deploymentTimeSeriesAnalysisFilter, pageParams));
   }
@@ -129,6 +129,19 @@ public class CVNGStepResource {
         accountId, callBackId, label, deploymentLogAnalysisFilter, pageParams));
   }
 
+  @Path("/{verifyStepExecutionId}/deployment-log-analysis-data-v2")
+  @GET
+  @Timed
+  @ExceptionMetered
+  @ApiOperation(value = "get logs for given activity", nickname = "getVerifyStepDeploymentLogAnalysisResultV2")
+  public RestResponse<LogAnalysisClusterWithCountDTO> getDeploymentLogAnalysisResultV2(
+      @NotEmpty @NotNull @QueryParam("accountId") String accountId,
+      @PathParam("verifyStepExecutionId") String callBackId, @QueryParam("label") Integer label,
+      @BeanParam DeploymentLogAnalysisFilter deploymentLogAnalysisFilter, @BeanParam PageParams pageParams) {
+    return new RestResponse(stepTaskService.getDeploymentActivityLogAnalysisResultV2(
+        accountId, callBackId, label, deploymentLogAnalysisFilter, pageParams));
+  }
+
   @GET
   @Path("/{verifyStepExecutionId}/all-transaction-names")
   @Timed
@@ -147,5 +160,35 @@ public class CVNGStepResource {
   public RestResponse<List<String>> getNodeNames(@NotEmpty @NotNull @QueryParam("accountId") String accountId,
       @NotEmpty @NotNull @PathParam("verifyStepExecutionId") String callBackId) {
     return new RestResponse(stepTaskService.getNodeNames(accountId, callBackId));
+  }
+
+  @GET
+  @Path("/{verifyStepExecutionId}/logs")
+  @Timed
+  @ExceptionMetered
+  @ApiOperation(value = "get metrics for given activity", nickname = "getVerifyStepLogs")
+  public RestResponse<PageResponse<CVNGLogDTO>> getLogs(@NotEmpty @NotNull @QueryParam("accountId") String accountId,
+      @NotEmpty @NotNull @PathParam("verifyStepExecutionId") String callBackId,
+      @NotEmpty @NotNull @QueryParam("logType") String logType,
+      @QueryParam("healthSources") List<String> healthSourceIdentifiers,
+      @QueryParam("errorLogsOnly") @ApiParam(defaultValue = "false") boolean errorLogsOnly,
+      @BeanParam PageParams pageParams) {
+    CVNGLogType cvngLogType = CVNGLogType.toCVNGLogType(logType);
+    return new RestResponse(stepTaskService.getCVNGLogs(
+        accountId, callBackId, cvngLogType, healthSourceIdentifiers, errorLogsOnly, pageParams));
+  }
+
+  /**
+  This API is only for debugging. We have to have proper API once we show the logs in the UI.
+  */
+  @GET
+  @Path("/{verifyStepExecutionId}/execution-logs-debugging")
+  @Timed
+  @ExceptionMetered
+  @ApiOperation(value = "get execution logs debug", nickname = "getVerifyStepExecutionLogs")
+  public RestResponse<List<VerificationJobInstance.ProgressLog>> getVerifyStepExecutionLogs(
+      @NotEmpty @NotNull @QueryParam("accountId") String accountId,
+      @NotEmpty @NotNull @PathParam("verifyStepExecutionId") String callBackId) {
+    return new RestResponse(stepTaskService.getExecutionLogs(accountId, callBackId));
   }
 }

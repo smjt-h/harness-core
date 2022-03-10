@@ -16,6 +16,9 @@ import io.harness.annotation.HarnessEntity;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.EmbeddedUser;
+import io.harness.mongo.CollationLocale;
+import io.harness.mongo.CollationStrength;
+import io.harness.mongo.index.Collation;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.persistence.AccountAccess;
@@ -24,9 +27,11 @@ import io.harness.persistence.NameAccess;
 
 import software.wings.beans.entityinterface.KeywordsAware;
 import software.wings.beans.entityinterface.TagAware;
+import software.wings.ngmigration.NGMigrationEntity;
 import software.wings.yaml.BaseEntityYaml;
 import software.wings.yaml.gitSync.YamlGitConfig;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
@@ -56,7 +61,7 @@ import org.mongodb.morphia.annotations.Transient;
 @Entity(value = "applications", noClassnameStored = true)
 @HarnessEntity(exportable = true)
 @FieldNameConstants(innerTypeName = "ApplicationKeys")
-public class Application extends Base implements KeywordsAware, NameAccess, TagAware, AccountAccess {
+public class Application extends Base implements KeywordsAware, NameAccess, TagAware, AccountAccess, NGMigrationEntity {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -64,6 +69,8 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
                  .name("yaml")
                  .field(ApplicationKeys.accountId)
                  .field(ApplicationKeys.name)
+                 .collation(
+                     Collation.builder().locale(CollationLocale.ENGLISH).strength(CollationStrength.PRIMARY).build())
                  .build())
         .build();
   }
@@ -95,6 +102,7 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
   private boolean sample;
 
   @Getter @Setter private Boolean isManualTriggerAuthorized;
+  @Getter @Setter private Boolean areWebHookSecretsMandated;
 
   public boolean isSample() {
     return sample;
@@ -113,6 +121,12 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
   }
 
   @Getter @Setter private transient List<HarnessTagLink> tagLinks;
+
+  @JsonIgnore
+  @Override
+  public String getMigrationEntityName() {
+    return getName();
+  }
 
   /**
    * Gets name.
@@ -352,6 +366,7 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
     private YamlGitConfig yamlGitConfig;
     private boolean sample;
     private Boolean isManualTriggerAuthorized;
+    private Boolean areWebHookSecretsMandated;
 
     private Builder() {}
 
@@ -454,6 +469,11 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
       return this;
     }
 
+    public Builder areWebHookSecretsMandated(Boolean areWebHookSecretsMandated) {
+      this.areWebHookSecretsMandated = areWebHookSecretsMandated;
+      return this;
+    }
+
     public Builder but() {
       return anApplication()
           .name(name)
@@ -473,7 +493,8 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
           .lastUpdatedAt(lastUpdatedAt)
           .yamlGitConfig(yamlGitConfig)
           .sample(sample)
-          .isManualTriggerAuthorized(isManualTriggerAuthorized);
+          .isManualTriggerAuthorized(isManualTriggerAuthorized)
+          .areWebHookSecretsMandated(areWebHookSecretsMandated);
     }
 
     public Application build() {
@@ -497,6 +518,7 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
       application.setYamlGitConfig(yamlGitConfig);
       application.setSample(sample);
       application.setIsManualTriggerAuthorized(isManualTriggerAuthorized);
+      application.setAreWebHookSecretsMandated(areWebHookSecretsMandated);
       return application;
     }
   }
@@ -514,6 +536,7 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
   public static final class Yaml extends BaseEntityYaml {
     private String description;
     private Boolean isManualTriggerAuthorized;
+    private Boolean areWebHookSecretsMandated;
     private Boolean isGitSyncEnabled;
     private String gitConnector;
     private String branchName;

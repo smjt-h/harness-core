@@ -32,6 +32,7 @@ import io.harness.cf.CfClientConfig;
 import io.harness.cf.CfMigrationConfig;
 import io.harness.controller.PrimaryVersionChangeScheduler;
 import io.harness.cvng.core.services.api.VerificationServiceSecretManager;
+import io.harness.delegate.authenticator.DelegateTokenAuthenticatorImpl;
 import io.harness.delegate.beans.DelegateAsyncTaskResponse;
 import io.harness.delegate.beans.DelegateSyncTaskResponse;
 import io.harness.delegate.beans.DelegateTaskProgressResponse;
@@ -72,7 +73,7 @@ import io.harness.resource.VersionInfoResource;
 import io.harness.resources.LogVerificationResource;
 import io.harness.scheduler.ServiceGuardAccountPoller;
 import io.harness.scheduler.WorkflowVerificationTaskPoller;
-import io.harness.security.VerificationServiceAuthenticationFilter;
+import io.harness.security.DelegateTokenAuthenticator;
 import io.harness.serializer.JsonSubtypeResolver;
 import io.harness.serializer.KryoRegistrar;
 import io.harness.serializer.ManagerRegistrars;
@@ -98,12 +99,14 @@ import software.wings.service.impl.analysis.AnalysisContext.AnalysisContextKeys;
 import software.wings.service.impl.analysis.MLAnalysisType;
 
 import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.github.dirkraft.dropwizard.fileassets.FileAssetsBundle;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -197,6 +200,7 @@ public class VerificationServiceApplication extends Application<VerificationServ
         new JsonSubtypeResolver(bootstrap.getObjectMapper().getSubtypeResolver()));
     bootstrap.getObjectMapper().setConfig(
         bootstrap.getObjectMapper().getSerializationConfig().withView(JsonViews.Public.class));
+    bootstrap.getObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     bootstrap.setMetricRegistry(metricRegistry);
 
     log.info("bootstrapping done.");
@@ -306,6 +310,13 @@ public class VerificationServiceApplication extends Application<VerificationServ
         return configuration.getFeatureFlagConfig();
       }
     });
+    modules.add(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(DelegateTokenAuthenticator.class).to(DelegateTokenAuthenticatorImpl.class).in(Singleton.class);
+      }
+    });
+
     Injector injector = Guice.createInjector(modules);
 
     wingsPersistence = injector.getInstance(WingsPersistence.class);
@@ -394,7 +405,7 @@ public class VerificationServiceApplication extends Application<VerificationServ
   }
 
   private void registerAuthFilters(Environment environment, Injector injector) {
-    environment.jersey().register(injector.getInstance(VerificationServiceAuthenticationFilter.class));
+    environment.jersey().register(injector.getInstance(VerificationAuthFilter.class));
   }
 
   private void registerCharsetResponseFilter(Environment environment, Injector injector) {

@@ -78,6 +78,7 @@ import io.harness.exception.UrlNotProvidedException;
 import io.harness.exception.UrlNotReachableException;
 import io.harness.exception.WingsException;
 import io.harness.filesystem.FileIo;
+import io.harness.k8s.apiclient.KubernetesApiCall;
 import io.harness.k8s.kubectl.Kubectl;
 import io.harness.k8s.model.Kind;
 import io.harness.k8s.model.KubernetesClusterAuthType;
@@ -147,6 +148,7 @@ import io.fabric8.openshift.client.dsl.DeployableScalableResource;
 import io.github.resilience4j.retry.Retry;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.apis.AuthenticationV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.apis.VersionApi;
@@ -156,6 +158,7 @@ import io.kubernetes.client.openapi.auth.HttpBasicAuth;
 import io.kubernetes.client.openapi.auth.HttpBearerAuth;
 import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1ConfigMapBuilder;
+import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1ObjectMetaBuilder;
 import io.kubernetes.client.openapi.models.V1Pod;
@@ -463,6 +466,16 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
     if (!isHostConnectable) {
       throw new UrlNotReachableException("Could not connect to the master url: " + url);
     }
+  }
+
+  @Override
+  public void validateCredentials(KubernetesConfig kubernetesConfig) {
+    final Supplier<Void> versionApiCall = () -> {
+      ApiClient apiClient = kubernetesHelperService.getApiClient(kubernetesConfig);
+      KubernetesApiCall.call(apiClient, () -> new VersionApi(apiClient).getCodeCall(null));
+      return null;
+    };
+    retry.executeSupplier(versionApiCall);
   }
 
   @Override
@@ -2032,7 +2045,7 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
                                    .map(entry -> format(K8S_SELECTOR_FORMAT, entry.getKey(), entry.getValue()))
                                    .collect(Collectors.joining(K8S_SELECTOR_DELIMITER));
         V1PodList podList = new CoreV1Api(apiClient).listNamespacedPod(
-            namespace, null, null, null, null, labelSelector, null, null, null, null);
+            namespace, null, null, null, null, labelSelector, null, null, null, null, false);
         return podList.getItems()
             .stream()
             .filter(pod
@@ -2046,6 +2059,28 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
       }
     });
     return podSupplier.get();
+  }
+
+  @Override
+  public V1Deployment getDeployment(KubernetesConfig kubernetesConfig, String namespace, String name) {
+    if (kubernetesConfig == null || isBlank(name)) {
+      return null;
+    }
+    final Supplier<V1Deployment> decorateSupplier = Retry.decorateSupplier(retry, () -> {
+      try {
+        ApiClient apiClient = kubernetesHelperService.getApiClient(kubernetesConfig);
+
+        return new AppsV1Api(apiClient).readNamespacedDeployment(name, namespace, null, null, null);
+      } catch (ApiException exception) {
+        if (isResourceNotFoundException(exception.getCode())) {
+          return null;
+        }
+        String message = format("Unable to get %s/deployment/%s. Code: %s, message: %s", namespace, name,
+            exception.getCode(), exception.getResponseBody());
+        throw new InvalidRequestException(message, exception, USER);
+      }
+    });
+    return decorateSupplier.get();
   }
 
   @Override

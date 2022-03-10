@@ -16,6 +16,7 @@ import static io.harness.rule.OwnerRule.SRINIVAS;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.joor.Reflect.on;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
@@ -84,6 +85,7 @@ public class ArtifactoryServiceTest extends CategoryTest {
                             .password("dummy123!".toCharArray())
                             .build();
     artifactoryConfigAnonymous = ArtifactoryConfigRequest.builder().artifactoryUrl(url).build();
+    on(artifactoryService).set("artifactoryClient", new ArtifactoryClientImpl());
   }
 
   @Test
@@ -360,8 +362,7 @@ public class ArtifactoryServiceTest extends CategoryTest {
         .isInstanceOf(ExplanationException.class)
         .getCause()
         .isInstanceOf(ArtifactoryServerException.class)
-        .hasMessageContaining(
-            "Request to server failed with status code: 500 with message - Artifactory failed to initialize: check Artifactory logs for errors.");
+        .hasMessageContaining("Request to server failed with status code: 500");
   }
 
   @Test
@@ -381,8 +382,7 @@ public class ArtifactoryServiceTest extends CategoryTest {
         .isInstanceOf(ExplanationException.class)
         .getCause()
         .isInstanceOf(ArtifactoryServerException.class)
-        .hasMessageContaining(
-            "Request to server failed with status code: 500 with message - Artifactory failed to initialize: check Artifactory logs for errors.");
+        .hasMessageContaining("Request to server failed with status code: 500");
   }
 
   @Test

@@ -29,15 +29,17 @@ import io.harness.accesscontrol.NGAccessControlCheck;
 import io.harness.accesscontrol.OrgIdentifier;
 import io.harness.accesscontrol.ProjectIdentifier;
 import io.harness.accesscontrol.ResourceIdentifier;
+import io.harness.accesscontrol.acl.api.AccessControlDTO;
+import io.harness.accesscontrol.acl.api.PermissionCheckDTO;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.AccessControlDTO;
-import io.harness.accesscontrol.clients.PermissionCheckDTO;
-import io.harness.accesscontrol.clients.Resource;
-import io.harness.accesscontrol.clients.ResourceScope;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageResponse;
+import io.harness.ng.core.OrgAndProjectValidationHelper;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
@@ -45,10 +47,12 @@ import io.harness.ng.core.service.dto.ServiceRequestDTO;
 import io.harness.ng.core.service.dto.ServiceResponse;
 import io.harness.ng.core.service.entity.ServiceEntity;
 import io.harness.ng.core.service.entity.ServiceEntity.ServiceEntityKeys;
+import io.harness.ng.core.service.mappers.NGServiceEntityMapper;
 import io.harness.ng.core.service.mappers.ServiceElementMapper;
 import io.harness.ng.core.service.mappers.ServiceFilterHelper;
 import io.harness.ng.core.service.services.ServiceEntityManagementService;
 import io.harness.ng.core.service.services.ServiceEntityService;
+import io.harness.ng.core.service.yaml.NGServiceConfig;
 import io.harness.pms.rbac.NGResourceType;
 import io.harness.rbac.CDNGRbacUtility;
 import io.harness.security.annotations.NextGenManagerAuth;
@@ -126,6 +130,7 @@ public class ServiceResourceV2 {
   private final ServiceEntityService serviceEntityService;
   private final AccessControlClient accessControlClient;
   private final ServiceEntityManagementService serviceEntityManagementService;
+  private final OrgAndProjectValidationHelper orgAndProjectValidationHelper;
 
   public static final String SERVICE_PARAM_MESSAGE = "Service Identifier for the entity";
 
@@ -155,6 +160,10 @@ public class ServiceResourceV2 {
     String version = "0";
     if (serviceEntity.isPresent()) {
       version = serviceEntity.get().getVersion().toString();
+      if (EmptyPredicate.isEmpty(serviceEntity.get().getYaml())) {
+        NGServiceConfig ngServiceConfig = NGServiceEntityMapper.toNGServiceConfig(serviceEntity.get());
+        serviceEntity.get().setYaml(NGServiceEntityMapper.toYaml(ngServiceConfig));
+      }
     }
     return ResponseDTO.newResponse(version, serviceEntity.map(ServiceElementMapper::toResponseWrapper).orElse(null));
   }
@@ -176,6 +185,8 @@ public class ServiceResourceV2 {
         ResourceScope.of(accountId, serviceRequestDTO.getOrgIdentifier(), serviceRequestDTO.getProjectIdentifier()),
         Resource.of(NGResourceType.SERVICE, null), SERVICE_CREATE_PERMISSION);
     ServiceEntity serviceEntity = ServiceElementMapper.toServiceEntity(accountId, serviceRequestDTO);
+    orgAndProjectValidationHelper.checkThatTheOrganizationAndProjectExists(
+        serviceEntity.getOrgIdentifier(), serviceEntity.getProjectIdentifier(), serviceEntity.getAccountId());
     ServiceEntity createdService = serviceEntityService.create(serviceEntity);
     return ResponseDTO.newResponse(
         createdService.getVersion().toString(), ServiceElementMapper.toResponseWrapper(createdService));
@@ -205,6 +216,9 @@ public class ServiceResourceV2 {
         serviceRequestDTOs.stream()
             .map(serviceRequestDTO -> ServiceElementMapper.toServiceEntity(accountId, serviceRequestDTO))
             .collect(Collectors.toList());
+    serviceEntities.forEach(serviceEntity
+        -> orgAndProjectValidationHelper.checkThatTheOrganizationAndProjectExists(
+            serviceEntity.getOrgIdentifier(), serviceEntity.getProjectIdentifier(), serviceEntity.getAccountId()));
     Page<ServiceEntity> createdServices = serviceEntityService.bulkCreate(accountId, serviceEntities);
     return ResponseDTO.newResponse(getNGPageResponse(createdServices.map(ServiceElementMapper::toResponseWrapper)));
   }
@@ -277,9 +291,11 @@ public class ServiceResourceV2 {
         Resource.of(NGResourceType.SERVICE, serviceRequestDTO.getIdentifier()), SERVICE_UPDATE_PERMISSION);
     ServiceEntity requestService = ServiceElementMapper.toServiceEntity(accountId, serviceRequestDTO);
     requestService.setVersion(isNumeric(ifMatch) ? parseLong(ifMatch) : null);
-    ServiceEntity upsertedService = serviceEntityService.upsert(requestService);
+    orgAndProjectValidationHelper.checkThatTheOrganizationAndProjectExists(
+        requestService.getOrgIdentifier(), requestService.getProjectIdentifier(), requestService.getAccountId());
+    ServiceEntity upsertService = serviceEntityService.upsert(requestService);
     return ResponseDTO.newResponse(
-        upsertedService.getVersion().toString(), ServiceElementMapper.toResponseWrapper(upsertedService));
+        upsertService.getVersion().toString(), ServiceElementMapper.toResponseWrapper(upsertService));
   }
 
   @GET
@@ -322,9 +338,14 @@ public class ServiceResourceV2 {
     } else {
       pageRequest = PageUtils.getPageRequest(page, size, sort);
     }
-    Page<ServiceResponse> serviceList =
-        serviceEntityService.list(criteria, pageRequest).map(ServiceElementMapper::toResponseWrapper);
-    return ResponseDTO.newResponse(getNGPageResponse(serviceList));
+    Page<ServiceEntity> serviceEntities = serviceEntityService.list(criteria, pageRequest);
+    serviceEntities.forEach(serviceEntity -> {
+      if (EmptyPredicate.isEmpty(serviceEntity.getYaml())) {
+        NGServiceConfig ngServiceConfig = NGServiceEntityMapper.toNGServiceConfig(serviceEntity);
+        serviceEntity.setYaml(NGServiceEntityMapper.toYaml(ngServiceConfig));
+      }
+    });
+    return ResponseDTO.newResponse(getNGPageResponse(serviceEntities.map(ServiceElementMapper::toResponseWrapper)));
   }
 
   @GET
@@ -364,9 +385,8 @@ public class ServiceResourceV2 {
     }
     List<ServiceResponse> serviceList = serviceEntityService.listRunTimePermission(criteria)
                                             .stream()
-                                            .map(ServiceElementMapper::toResponseWrapper)
+                                            .map(ServiceElementMapper::toAccessListResponseWrapper)
                                             .collect(Collectors.toList());
-
     List<PermissionCheckDTO> permissionCheckDTOS =
         serviceList.stream().map(CDNGRbacUtility::serviceResponseToPermissionCheckDTO).collect(Collectors.toList());
     List<AccessControlDTO> accessControlList =

@@ -8,12 +8,13 @@ package java
 import (
 	"context"
 	"fmt"
-	"github.com/wings-software/portal/commons/go/lib/exec"
-	"github.com/wings-software/portal/commons/go/lib/filesystem"
-	"github.com/wings-software/portal/product/ci/ti-service/types"
-	"go.uber.org/zap"
 	"regexp"
 	"strings"
+
+	"github.com/harness/harness-core/commons/go/lib/exec"
+	"github.com/harness/harness-core/commons/go/lib/filesystem"
+	"github.com/harness/harness-core/product/ci/ti-service/types"
+	"go.uber.org/zap"
 )
 
 var (
@@ -41,6 +42,7 @@ func (b *mavenRunner) AutoDetectPackages() ([]string, error) {
 func (m *mavenRunner) GetCmd(ctx context.Context, tests []types.RunnableTest, userArgs, agentConfigPath string, ignoreInstr, runAll bool) (string, error) {
 	// If instrumentation needs to be ignored, we run all the tests without adding the agent config
 	if ignoreInstr {
+		m.log.Infow("ignoring instrumentation and not attaching Java agent")
 		return strings.TrimSpace(fmt.Sprintf("%s %s", mavenCmd, userArgs)), nil
 	}
 
@@ -55,7 +57,7 @@ func (m *mavenRunner) GetCmd(ctx context.Context, tests []types.RunnableTest, us
 	}
 	if runAll {
 		// Run all the tests
-		return strings.TrimSpace(fmt.Sprintf("%s -am -DargLine=%s %s", mavenCmd, instrArg, userArgs)), nil
+		return strings.TrimSpace(fmt.Sprintf("%s -am -DharnessArgLine=%s -DargLine=%s %s", mavenCmd, instrArg, instrArg, userArgs)), nil
 	}
 	if len(tests) == 0 {
 		return fmt.Sprintf("echo \"Skipping test run, received no tests to execute\""), nil
@@ -77,5 +79,5 @@ func (m *mavenRunner) GetCmd(ctx context.Context, tests []types.RunnableTest, us
 		}
 	}
 	testStr := strings.Join(ut, ",")
-	return strings.TrimSpace(fmt.Sprintf("%s -Dtest=%s -am -DargLine=%s %s", mavenCmd, testStr, instrArg, userArgs)), nil
+	return strings.TrimSpace(fmt.Sprintf("%s -Dtest=%s -am -DharnessArgLine=%s -DargLine=%s %s", mavenCmd, testStr, instrArg, instrArg, userArgs)), nil
 }

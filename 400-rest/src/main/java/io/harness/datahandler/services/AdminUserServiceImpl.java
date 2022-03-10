@@ -7,10 +7,15 @@
 
 package io.harness.datahandler.services;
 
-import static io.harness.NGConstants.DEFAULT_ACCOUNT_LEVEL_RESOURCE_GROUP_IDENTIFIER;
+import static io.harness.NGConstants.ACCOUNT_ADMIN_ROLE;
+import static io.harness.NGConstants.ACCOUNT_ADMIN_ROLE_NAME;
+import static io.harness.NGConstants.ALL_RESOURCES_INCLUDING_CHILD_SCOPES_RESOURCE_GROUP_IDENTIFIER;
+import static io.harness.NGConstants.ALL_RESOURCES_INCLUDING_CHILD_SCOPES_RESOURCE_GROUP_NAME;
+import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import static java.util.Collections.singletonList;
 
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.invites.remote.NgInviteClient;
 import io.harness.ng.core.invites.dto.RoleBinding;
 import io.harness.ng.core.user.AddUsersDTO;
@@ -23,10 +28,16 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import java.util.Objects;
 
+@OwnedBy(PL)
 public class AdminUserServiceImpl implements AdminUserService {
-  @Inject private UserService userService;
-  @Inject @Named("PRIVILEGED") private NgInviteClient ngInviteClient;
-  private static final String ACCOUNT_ADMIN = "_account_admin";
+  private UserService userService;
+  private NgInviteClient ngInviteClient;
+
+  @Inject
+  public AdminUserServiceImpl(UserService userService, @Named("PRIVILEGED") NgInviteClient ngInviteClient) {
+    this.userService = userService;
+    this.ngInviteClient = ngInviteClient;
+  }
 
   @Override
   public boolean enableOrDisableUser(String accountId, String userIdOrEmail, boolean enabled) {
@@ -50,10 +61,14 @@ public class AdminUserServiceImpl implements AdminUserService {
     AddUsersDTO addUsersDTO =
         AddUsersDTO.builder()
             .emails(singletonList(email))
-            .roleBindings(singletonList(RoleBinding.builder()
-                                            .roleIdentifier(ACCOUNT_ADMIN)
-                                            .resourceGroupIdentifier(DEFAULT_ACCOUNT_LEVEL_RESOURCE_GROUP_IDENTIFIER)
-                                            .build()))
+            .roleBindings(singletonList(
+                RoleBinding.builder()
+                    .roleIdentifier(ACCOUNT_ADMIN_ROLE)
+                    .roleName(ACCOUNT_ADMIN_ROLE_NAME)
+                    .resourceGroupIdentifier(ALL_RESOURCES_INCLUDING_CHILD_SCOPES_RESOURCE_GROUP_IDENTIFIER)
+                    .resourceGroupName(ALL_RESOURCES_INCLUDING_CHILD_SCOPES_RESOURCE_GROUP_NAME)
+                    .managedRole(true)
+                    .build()))
             .build();
     NGRestUtils.getResponse(ngInviteClient.addUsers(accountId, null, null, addUsersDTO));
     return true;

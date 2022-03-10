@@ -11,6 +11,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.sdk.core.steps.Step;
+import io.harness.registrar.NGCommonUtilStepsRegistrar;
 import io.harness.states.CISpecStep;
 import io.harness.states.CleanupStep;
 import io.harness.states.DockerStep;
@@ -25,6 +26,7 @@ import io.harness.states.RunStep;
 import io.harness.states.RunTestsStep;
 import io.harness.states.SaveCacheGCSStep;
 import io.harness.states.SaveCacheS3Step;
+import io.harness.states.SecurityStep;
 import io.harness.states.UploadToArtifactoryStep;
 import io.harness.states.UploadToGCSStep;
 import io.harness.states.UploadToS3Step;
@@ -45,6 +47,7 @@ public class ExecutionRegistrar {
     engineSteps.put(CleanupStep.STEP_TYPE, CleanupStep.class);
     engineSteps.put(RunStep.STEP_TYPE, RunStep.class);
     engineSteps.put(PluginStep.STEP_TYPE, PluginStep.class);
+    engineSteps.put(SecurityStep.STEP_TYPE, SecurityStep.class);
     engineSteps.put(ECRStep.STEP_TYPE, ECRStep.class);
     engineSteps.put(GCRStep.STEP_TYPE, GCRStep.class);
     engineSteps.put(DockerStep.STEP_TYPE, DockerStep.class);
@@ -60,7 +63,7 @@ public class ExecutionRegistrar {
     engineSteps.put(CodeBaseStep.STEP_TYPE, CodeBaseStep.class);
     engineSteps.put(CodeBaseTaskStep.STEP_TYPE, CodeBaseTaskStep.class);
     engineSteps.put(CISpecStep.STEP_TYPE, CISpecStep.class);
-    engineSteps.putAll(OrchestrationStepsModuleSdkStepRegistrar.getEngineSteps());
+    engineSteps.putAll(NGCommonUtilStepsRegistrar.getEngineSteps());
     return engineSteps;
   }
 }

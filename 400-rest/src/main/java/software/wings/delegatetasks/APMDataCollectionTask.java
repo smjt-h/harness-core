@@ -48,7 +48,6 @@ import software.wings.service.impl.apm.APMResponseParser;
 import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
 import software.wings.service.intfc.analysis.ClusterLevel;
 import software.wings.service.intfc.newrelic.NewRelicDelegateService;
-import software.wings.sm.StateType;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
@@ -76,6 +75,7 @@ import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.xerces.impl.dv.util.Base64;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import retrofit2.Call;
@@ -170,7 +170,7 @@ public class APMDataCollectionTask extends AbstractDelegateDataCollectionTask {
   }
 
   @Override
-  protected StateType getStateType() {
+  protected DelegateStateType getStateType() {
     return dataCollectionInfo.getStateType();
   }
 
@@ -292,10 +292,21 @@ public class APMDataCollectionTask extends AbstractDelegateDataCollectionTask {
         return output;
       }
       for (Map.Entry<String, String> entry : input.entrySet()) {
-        if (entry.getValue().startsWith("${")) {
-          output.put(entry.getKey(), decryptedFields.get(entry.getValue().substring(2, entry.getValue().length() - 1)));
+        String entryVal = entry.getValue();
+        int placeHolderIndex = entryVal.indexOf("${");
+        if (placeHolderIndex != -1) {
+          String stringToReplace = entryVal.substring(placeHolderIndex + 2, entryVal.indexOf('}', placeHolderIndex));
+          if (decryptedFields.get(stringToReplace) == null) {
+            continue;
+          }
+          String updatedValue =
+              entryVal.replace(String.format("${%s}", stringToReplace), decryptedFields.get(stringToReplace));
+          output.put(entry.getKey(), updatedValue);
+          if (dataCollectionInfo.isBase64EncodingRequired()) {
+            output.put(entry.getKey(), resolveBase64Reference(updatedValue));
+          }
         } else {
-          output.put(entry.getKey(), entry.getValue());
+          output.put(entry.getKey(), entryVal);
         }
       }
 
@@ -503,6 +514,21 @@ public class APMDataCollectionTask extends AbstractDelegateDataCollectionTask {
           .filter(Optional::isPresent)
           .forEach(response -> responses.add(response.get()));
       return responses;
+    }
+
+    private String resolveBase64Reference(Object entry) {
+      if (entry == null) {
+        return null;
+      }
+      String headerValue = (String) entry;
+      int placeholderIndex = headerValue.indexOf("encodeWithBase64(");
+      if (placeholderIndex != -1) {
+        String stringToEncode = headerValue.substring(
+            placeholderIndex + "encodeWithBase64(".length(), headerValue.indexOf(')', placeholderIndex));
+        return headerValue.replace(
+            String.format("encodeWithBase64(%s)", stringToEncode), Base64.encode(stringToEncode.getBytes()));
+      }
+      return headerValue;
     }
 
     /**

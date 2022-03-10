@@ -10,9 +10,12 @@ package software.wings.sm.states;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.beans.EnvironmentType.ALL;
 import static io.harness.beans.FeatureName.CUSTOM_MANIFEST;
+import static io.harness.beans.FeatureName.DELETE_HELM_REPO_CACHE_DIR;
 import static io.harness.beans.FeatureName.GIT_HOST_CONNECTIVITY;
+import static io.harness.beans.FeatureName.HELM_CHART_VERSION_STRICT_MATCH;
 import static io.harness.beans.FeatureName.OPTIMIZED_GIT_FETCH_FILES;
 import static io.harness.beans.FeatureName.OVERRIDE_VALUES_YAML_FROM_HELM_CHART;
+import static io.harness.beans.FeatureName.USE_HELM_REPO_FLAGS;
 import static io.harness.beans.FeatureName.USE_LATEST_CHARTMUSEUM_VERSION;
 import static io.harness.beans.OrchestrationWorkflowType.BUILD;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
@@ -150,6 +153,7 @@ import software.wings.service.intfc.ActivityService;
 import software.wings.service.intfc.AppService;
 import software.wings.service.intfc.ApplicationManifestService;
 import software.wings.service.intfc.DelegateService;
+import software.wings.service.intfc.EnvironmentService;
 import software.wings.service.intfc.InfrastructureMappingService;
 import software.wings.service.intfc.LogService;
 import software.wings.service.intfc.ServiceResourceService;
@@ -231,6 +235,7 @@ public class HelmDeployState extends State {
   @Inject protected FeatureFlagService featureFlagService;
   @Inject private LogService logService;
   @Inject private SweepingOutputService sweepingOutputService;
+  @Inject private EnvironmentService environmentService;
 
   @DefaultValue("10") private int steadyStateTimeout; // Minutes
 
@@ -557,6 +562,11 @@ public class HelmDeployState extends State {
                       .build())
             .accountId(app.getAccountId())
             .description("Helm Release History")
+            .setupAbstraction(Cd1SetupFields.ENV_ID_FIELD, containerInfraMapping.getEnvId())
+            .setupAbstraction(Cd1SetupFields.ENV_TYPE_FIELD,
+                environmentService.get(containerInfraMapping.getAppId(), containerInfraMapping.getEnvId())
+                    .getEnvironmentType()
+                    .name())
             .setupAbstraction(Cd1SetupFields.APP_ID_FIELD, app.getUuid())
             .setupAbstraction(Cd1SetupFields.SERVICE_ID_FIELD, containerInfraMapping.getServiceId())
             .setupAbstraction(Cd1SetupFields.INFRASTRUCTURE_MAPPING_ID_FIELD, containerInfraMapping.getUuid())
@@ -579,7 +589,7 @@ public class HelmDeployState extends State {
     } else {
       StringBuilder builder = new StringBuilder(256);
       builder.append("Failed to find the previous helm release version. ");
-      if (helmVersion == HelmVersion.V3) {
+      if (helmVersion == HelmVersion.V3 || helmVersion == HelmVersion.V380) {
         builder.append("Make sure Helm 3 is installed");
       } else {
         builder.append("Make sure that the helm client and tiller is installed");
@@ -1040,6 +1050,17 @@ public class HelmDeployState extends State {
                 helmChartConfigHelperService.getHelmChartConfigTaskParams(context, appManifest);
             helmChartConfigTaskParams.setUseLatestChartMuseumVersion(
                 featureFlagService.isEnabled(USE_LATEST_CHARTMUSEUM_VERSION, context.getAccountId()));
+
+            if (HelmVersion.V3.equals(helmVersion) || HelmVersion.V380.equals(helmVersion)) {
+              helmChartConfigTaskParams.setUseRepoFlags(
+                  featureFlagService.isEnabled(USE_HELM_REPO_FLAGS, context.getAccountId()));
+              helmChartConfigTaskParams.setDeleteRepoCacheDir(
+                  featureFlagService.isEnabled(DELETE_HELM_REPO_CACHE_DIR, context.getAccountId()));
+            }
+
+            helmChartConfigTaskParams.setCheckIncorrectChartVersion(
+                featureFlagService.isEnabled(HELM_CHART_VERSION_STRICT_MATCH, context.getAccountId()));
+
             manifestConfig = K8sDelegateManifestConfig.builder()
                                  .helmChartConfigParams(helmChartConfigTaskParams)
                                  .manifestStoreTypes(HelmChartRepo)

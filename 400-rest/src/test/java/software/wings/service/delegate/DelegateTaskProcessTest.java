@@ -815,7 +815,6 @@ public class DelegateTaskProcessTest extends WingsBaseTest {
     Delegate delegate = createNGProjectLevelDelegateWithOwner(accountId);
     when(accountDelegatesCache.get(accountId)).thenReturn(singletonList(delegate));
     when(delegateCache.get(accountId, delegate.getUuid(), false)).thenReturn(delegate);
-    thrown.expect(NoEligibleDelegatesInAccountException.class);
     BaseNGAccess ngAccess =
         BaseNGAccess.builder().projectIdentifier(PROJ_ID).orgIdentifier(ORG_ID).accountIdentifier(accountId).build();
     DockerArtifactDelegateRequest dockerArtifactDelegateRequest =
@@ -864,8 +863,8 @@ public class DelegateTaskProcessTest extends WingsBaseTest {
     Delegate delegate = createDelegate(accountId);
     when(accountDelegatesCache.get(accountId)).thenReturn(singletonList(delegate));
     when(delegateCache.get(accountId, delegate.getUuid(), false)).thenReturn(delegate);
-    AwsConfig awsConfig = new AwsConfig(
-        "ACCESS_KEY".toCharArray(), null, "", "", false, "aws-delegate", null, false, false, null, null, false, null);
+    AwsConfig awsConfig = new AwsConfig("ACCESS_KEY".toCharArray(), null, "", "", false, "aws-delegate", null, false,
+        false, null, null, null, false, null);
     AwsEc2ListInstancesRequest request = AwsEc2ListInstancesRequest.builder()
                                              .awsConfig(awsConfig)
                                              .encryptionDetails(new ArrayList<>())
@@ -1161,7 +1160,6 @@ public class DelegateTaskProcessTest extends WingsBaseTest {
     Delegate delegate = createDelegateWithScope(accountId);
     when(accountDelegatesCache.get(accountId)).thenReturn(singletonList(delegate));
     when(delegateCache.get(accountId, delegate.getUuid(), false)).thenReturn(delegate);
-    thrown.expect(NoEligibleDelegatesInAccountException.class);
     StackDriverDataCollectionInfo dataCollectionInfo =
         StackDriverDataCollectionInfo.builder()
             .collectionTime(10)

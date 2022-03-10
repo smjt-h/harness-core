@@ -20,7 +20,6 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.ExecutionStatus;
-import io.harness.beans.FeatureName;
 import io.harness.context.ContextElementType;
 import io.harness.data.validator.Trimmed;
 import io.harness.delegate.task.k8s.K8sTaskType;
@@ -33,6 +32,7 @@ import io.harness.k8s.model.IstioDestinationWeight;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.tasks.ResponseData;
 
+import software.wings.api.RancherClusterElement;
 import software.wings.api.k8s.K8sStateExecutionData;
 import software.wings.beans.Activity;
 import software.wings.beans.ContainerInfrastructureMapping;
@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -80,6 +81,12 @@ public class K8sTrafficSplitState extends AbstractK8sState {
   public ExecutionResponse execute(ExecutionContext context) {
     try {
       log.info("Executing K8sTrafficSplitState");
+      if (k8sStateHelper.isRancherInfraMapping(context)
+          && !(Objects.nonNull(context.getContextElement())
+              && context.getContextElement() instanceof RancherClusterElement)) {
+        return k8sStateHelper.getInvalidInfraDefFailedResponse();
+      }
+
       sanitizeStateParameters();
 
       ContainerInfrastructureMapping infraMapping = k8sStateHelper.fetchContainerInfrastructureMapping(context);
@@ -96,8 +103,7 @@ public class K8sTrafficSplitState extends AbstractK8sState {
               .timeoutIntervalInMin(10)
               .virtualServiceName(virtualServiceName)
               .istioDestinationWeights(istioDestinationWeights)
-              .useVarSupportForKustomize(
-                  featureFlagService.isEnabled(FeatureName.VARIABLE_SUPPORT_FOR_KUSTOMIZE, context.getAccountId()))
+              .useLatestKustomizeVersion(isUseLatestKustomizeVersion(context.getAccountId()))
               .useNewKubectlVersion(featureFlagService.isEnabled(NEW_KUBECTL_VERSION, infraMapping.getAccountId()))
               .build();
       return queueK8sDelegateTask(context, k8sTaskParameters, null);

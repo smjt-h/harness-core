@@ -31,6 +31,7 @@ import io.harness.ci.config.CIExecutionServiceConfig;
 import io.harness.ci.utils.QuantityUtils;
 import io.harness.delegate.beans.ci.pod.CIContainerType;
 import io.harness.delegate.beans.ci.pod.ContainerResourceParams;
+import io.harness.exception.ngexception.CIStageExecutionException;
 import io.harness.plancreator.stages.stage.StageElementConfig;
 import io.harness.stateutils.buildstate.providers.ServiceContainerUtils;
 import io.harness.util.PortFinder;
@@ -49,12 +50,13 @@ public class CIServiceBuilder {
       StageElementConfig stageElementConfig, PortFinder portFinder, CIExecutionServiceConfig ciExecutionServiceConfig) {
     List<ContainerDefinitionInfo> containerDefinitionInfos = new ArrayList<>();
     IntegrationStageConfig integrationStage = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
-    if (isEmpty(integrationStage.getServiceDependencies())) {
+    if (integrationStage.getServiceDependencies() == null
+        || isEmpty(integrationStage.getServiceDependencies().getValue())) {
       return containerDefinitionInfos;
     }
 
     int serviceIdx = 0;
-    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies()) {
+    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies().getValue()) {
       if (dependencyElement == null) {
         continue;
       }
@@ -95,6 +97,12 @@ public class CIServiceBuilder {
 
     Map<String, String> envVariables = RunTimeInputHandler.resolveMapParameter(
         "envVariables", "serviceDependency", identifier, service.getEnvVariables(), false);
+
+    Map<String, String> portBindings = RunTimeInputHandler.resolveMapParameter(
+        "portBindings", "serviceDependency", identifier, service.getPortBindings(), false);
+    if (isNotEmpty(portBindings)) {
+      throw new CIStageExecutionException("port bindings can't be set in k8s infrastructure");
+    }
 
     if (envVariables == null) {
       envVariables = new HashMap<>();
@@ -159,11 +167,11 @@ public class CIServiceBuilder {
     List<String> serviceIdList = new ArrayList<>();
     IntegrationStageConfig integrationStage = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
 
-    if (isEmpty(integrationStage.getServiceDependencies())) {
+    if (isEmpty(integrationStage.getServiceDependencies().getValue())) {
       return serviceIdList;
     }
 
-    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies()) {
+    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies().getValue()) {
       if (dependencyElement == null) {
         continue;
       }
@@ -179,11 +187,11 @@ public class CIServiceBuilder {
     List<Integer> grpcPortList = new ArrayList<>();
     IntegrationStageConfig integrationStage = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
 
-    if (isEmpty(integrationStage.getServiceDependencies())) {
+    if (isEmpty(integrationStage.getServiceDependencies().getValue())) {
       return grpcPortList;
     }
 
-    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies()) {
+    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies().getValue()) {
       if (dependencyElement == null) {
         continue;
       }

@@ -9,9 +9,7 @@ package io.harness.cvng.dashboard.services.impl;
 
 import static io.harness.cvng.beans.DataSourceType.APP_DYNAMICS;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
-import static io.harness.rule.OwnerRule.KAMAL;
 import static io.harness.rule.OwnerRule.KANHAIYA;
-import static io.harness.rule.OwnerRule.NEMANJA;
 import static io.harness.rule.OwnerRule.PRAVEEN;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,26 +21,24 @@ import static org.mockito.Mockito.when;
 
 import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
-import io.harness.cvng.activity.entities.Activity;
-import io.harness.cvng.activity.entities.DeploymentActivity;
-import io.harness.cvng.activity.services.api.ActivityService;
 import io.harness.cvng.analysis.beans.Risk;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.TimeSeriesMetricType;
+import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.beans.params.TimeRangeParams;
 import io.harness.cvng.core.beans.params.filterParams.TimeSeriesAnalysisFilter;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig;
+import io.harness.cvng.core.entities.MonitoredService;
 import io.harness.cvng.core.entities.TimeSeriesRecord;
 import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.TimeSeriesRecordService;
-import io.harness.cvng.core.services.api.VerificationTaskService;
+import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.dashboard.beans.TimeSeriesMetricDataDTO;
 import io.harness.cvng.dashboard.services.api.TimeSeriesDashboardService;
 import io.harness.ng.beans.PageResponse;
-import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.Sets;
@@ -57,13 +53,10 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -73,27 +66,28 @@ import org.mockito.MockitoAnnotations;
 
 public class TimeSeriesDashboardServiceImplTest extends CvNextGenTestBase {
   @Inject private TimeSeriesDashboardService timeSeriesDashboardService;
-  @Inject private HPersistence hPersistence;
 
+  private String accountId;
   private String projectIdentifier;
   private String orgIdentifier;
   private String serviceIdentifier;
   private String envIdentifier;
-  private String accountId;
+  private String monitoredServiceIdentifier;
   private ServiceEnvironmentParams serviceEnvironmentParams;
+  private MonitoredServiceParams monitoredServiceParams;
 
   @Mock private CVConfigService cvConfigService;
   @Mock private TimeSeriesRecordService timeSeriesRecordService;
-  @Mock private VerificationTaskService verificationTaskService;
-  @Mock private ActivityService activityService;
+  @Mock private MonitoredServiceService monitoredServiceService;
 
   @Before
   public void setUp() throws Exception {
+    accountId = generateUuid();
     projectIdentifier = generateUuid();
     orgIdentifier = generateUuid();
     serviceIdentifier = generateUuid();
     envIdentifier = generateUuid();
-    accountId = generateUuid();
+    monitoredServiceIdentifier = generateUuid();
     serviceEnvironmentParams = ServiceEnvironmentParams.builder()
                                    .accountIdentifier(accountId)
                                    .orgIdentifier(orgIdentifier)
@@ -101,12 +95,13 @@ public class TimeSeriesDashboardServiceImplTest extends CvNextGenTestBase {
                                    .serviceIdentifier(serviceIdentifier)
                                    .environmentIdentifier(envIdentifier)
                                    .build();
+    monitoredServiceParams = MonitoredServiceParams.builderWithServiceEnvParams(serviceEnvironmentParams)
+                                 .monitoredServiceIdentifier(monitoredServiceIdentifier)
+                                 .build();
 
     MockitoAnnotations.initMocks(this);
     FieldUtils.writeField(timeSeriesDashboardService, "cvConfigService", cvConfigService, true);
     FieldUtils.writeField(timeSeriesDashboardService, "timeSeriesRecordService", timeSeriesRecordService, true);
-    FieldUtils.writeField(timeSeriesDashboardService, "verificationTaskService", verificationTaskService, true);
-    FieldUtils.writeField(timeSeriesDashboardService, "activityService", activityService, true);
   }
 
   @Test
@@ -446,21 +441,20 @@ public class TimeSeriesDashboardServiceImplTest extends CvNextGenTestBase {
     List<String> healthSourceIdentifiers = Arrays.asList(cvConfig.getIdentifier());
     Map<String, DataSourceType> cvConfigToDataSourceTypeMap = new HashMap<>();
     cvConfigToDataSourceTypeMap.put(cvConfigId, APP_DYNAMICS);
-    when(cvConfigService.list(serviceEnvironmentParams, healthSourceIdentifiers)).thenReturn(Arrays.asList(cvConfig));
-    when(cvConfigService.getDataSourceTypeForCVConfigs(serviceEnvironmentParams, Arrays.asList(cvConfigId)))
-        .thenReturn(cvConfigToDataSourceTypeMap);
+    when(cvConfigService.list(monitoredServiceParams, healthSourceIdentifiers)).thenReturn(Arrays.asList(cvConfig));
+    when(cvConfigService.getDataSourceTypeForCVConfigs(monitoredServiceParams)).thenReturn(cvConfigToDataSourceTypeMap);
 
     TimeSeriesAnalysisFilter timeSeriesAnalysisFilter = TimeSeriesAnalysisFilter.builder()
                                                             .filter(null)
-                                                            .anomalous(true)
+                                                            .anomalousMetricsOnly(true)
                                                             .healthSourceIdentifiers(healthSourceIdentifiers)
                                                             .build();
 
     PageResponse<TimeSeriesMetricDataDTO> response = timeSeriesDashboardService.getTimeSeriesMetricData(
-        serviceEnvironmentParams, timeRangeParams, timeSeriesAnalysisFilter, pageParams);
+        monitoredServiceParams, timeRangeParams, timeSeriesAnalysisFilter, pageParams);
 
-    verify(cvConfigService).list(serviceEnvironmentParams, healthSourceIdentifiers);
-    verify(cvConfigService).getDataSourceTypeForCVConfigs(serviceEnvironmentParams, Arrays.asList(cvConfigId));
+    verify(cvConfigService).list(monitoredServiceParams, healthSourceIdentifiers);
+    verify(cvConfigService).getDataSourceTypeForCVConfigs(monitoredServiceParams);
     assertThat(response).isNotNull();
     assertThat(response.getContent()).isNotEmpty();
     assertThat(response.getContent().size()).isEqualTo(10);
@@ -471,12 +465,12 @@ public class TimeSeriesDashboardServiceImplTest extends CvNextGenTestBase {
 
     timeSeriesAnalysisFilter = TimeSeriesAnalysisFilter.builder()
                                    .filter(null)
-                                   .anomalous(true)
+                                   .anomalousMetricsOnly(true)
                                    .healthSourceIdentifiers(Arrays.asList("some-identifier"))
                                    .build();
 
     response = timeSeriesDashboardService.getTimeSeriesMetricData(
-        serviceEnvironmentParams, timeRangeParams, timeSeriesAnalysisFilter, pageParams);
+        monitoredServiceParams, timeRangeParams, timeSeriesAnalysisFilter, pageParams);
     assertThat(response).isNotNull();
     assertThat(response.getContent()).isEmpty();
   }
@@ -498,21 +492,20 @@ public class TimeSeriesDashboardServiceImplTest extends CvNextGenTestBase {
     List<String> healthSourceIdentifiers = Arrays.asList(cvConfig.getIdentifier());
     Map<String, DataSourceType> cvConfigToDataSourceTypeMap = new HashMap<>();
     cvConfigToDataSourceTypeMap.put(cvConfigId, APP_DYNAMICS);
-    when(cvConfigService.list(serviceEnvironmentParams, healthSourceIdentifiers)).thenReturn(Arrays.asList(cvConfig));
-    when(cvConfigService.getDataSourceTypeForCVConfigs(serviceEnvironmentParams, Arrays.asList(cvConfigId)))
-        .thenReturn(cvConfigToDataSourceTypeMap);
+    when(cvConfigService.list(monitoredServiceParams, healthSourceIdentifiers)).thenReturn(Arrays.asList(cvConfig));
+    when(cvConfigService.getDataSourceTypeForCVConfigs(monitoredServiceParams)).thenReturn(cvConfigToDataSourceTypeMap);
 
     TimeSeriesAnalysisFilter timeSeriesAnalysisFilter = TimeSeriesAnalysisFilter.builder()
                                                             .filter(null)
-                                                            .anomalous(true)
+                                                            .anomalousMetricsOnly(true)
                                                             .healthSourceIdentifiers(healthSourceIdentifiers)
                                                             .build();
 
     PageResponse<TimeSeriesMetricDataDTO> response = timeSeriesDashboardService.getTimeSeriesMetricData(
-        serviceEnvironmentParams, timeRangeParams, timeSeriesAnalysisFilter, pageParams);
+        monitoredServiceParams, timeRangeParams, timeSeriesAnalysisFilter, pageParams);
 
-    verify(cvConfigService).list(serviceEnvironmentParams, healthSourceIdentifiers);
-    verify(cvConfigService).getDataSourceTypeForCVConfigs(serviceEnvironmentParams, Arrays.asList(cvConfigId));
+    verify(cvConfigService).list(monitoredServiceParams, healthSourceIdentifiers);
+    verify(cvConfigService).getDataSourceTypeForCVConfigs(monitoredServiceParams);
     assertThat(response).isNotNull();
     assertThat(response.getContent()).isNotEmpty();
     assertThat(response.getContent().size()).isEqualTo(10);
@@ -574,10 +567,9 @@ public class TimeSeriesDashboardServiceImplTest extends CvNextGenTestBase {
         .thenReturn(timeSeriesRecords);
     AppDynamicsCVConfig cvConfig = new AppDynamicsCVConfig();
     cvConfig.setUuid(cvConfigId);
-    when(cvConfigService.list(any())).thenReturn(Arrays.asList(cvConfig));
-
+    when(cvConfigService.list((MonitoredServiceParams) any())).thenReturn(Arrays.asList(cvConfig));
     PageResponse<TimeSeriesMetricDataDTO> response = timeSeriesDashboardService.getTimeSeriesMetricData(
-        serviceEnvironmentParams, timeRangeParams, TimeSeriesAnalysisFilter.builder().build(), pageParams);
+        monitoredServiceParams, timeRangeParams, TimeSeriesAnalysisFilter.builder().build(), pageParams);
 
     List<TimeSeriesMetricDataDTO> timeSeriesMetricDTOs = response.getContent();
     assertThat(timeSeriesMetricDTOs.size()).isEqualTo(4);
@@ -744,70 +736,93 @@ public class TimeSeriesDashboardServiceImplTest extends CvNextGenTestBase {
   }
 
   @Test
-  @Owner(developers = NEMANJA)
+  @Owner(developers = KANHAIYA)
   @Category(UnitTests.class)
-  public void testGetActivityMetrics() throws Exception {
+  public void testGetTimeSeriesMetricDataTOCheckSortednessBetweenHealthyAndNoAnalysisState() throws Exception {
     Instant start = Instant.parse("2020-07-07T02:40:00.000Z");
     Instant end = start.plus(5, ChronoUnit.MINUTES);
-    String activityId = generateUuid();
     String cvConfigId = generateUuid();
-    String verificationJobInstanceId = generateUuid();
-    String taskId = generateUuid();
-    Activity activity = DeploymentActivity.builder().deploymentTag("Build23").build();
-    activity.setVerificationJobInstanceIds(Arrays.asList(verificationJobInstanceId));
-    when(activityService.get(activityId)).thenReturn(activity);
+    AppDynamicsCVConfig cvConfig = new AppDynamicsCVConfig();
+    cvConfig.setUuid(cvConfigId);
 
-    Set<String> verificationTaskIds = new HashSet<>();
-    verificationTaskIds.add(taskId);
-    when(verificationTaskService.maybeGetVerificationTaskIds(accountId, verificationJobInstanceId))
-        .thenReturn(verificationTaskIds);
-    when(verificationTaskService.getCVConfigId(taskId)).thenReturn(cvConfigId);
+    List<TimeSeriesRecord> timeSeriesRecords = new ArrayList<>();
+    timeSeriesRecords.add(TimeSeriesRecord.builder()
+                              .verificationTaskId(cvConfigId)
+                              .bucketStartTime(start)
+                              .metricName("m1")
+                              .metricType(TimeSeriesMetricType.THROUGHPUT)
+                              .timeSeriesGroupValues(Sets.newHashSet(TimeSeriesRecord.TimeSeriesGroupValue.builder()
+                                                                         .groupName("g1")
+                                                                         .metricValue(1.0)
+                                                                         .timeStamp(start)
+                                                                         .build()))
+                              .build());
+
+    timeSeriesRecords.add(TimeSeriesRecord.builder()
+                              .verificationTaskId(cvConfigId)
+                              .bucketStartTime(start)
+                              .metricName("m2")
+                              .metricType(TimeSeriesMetricType.ERROR)
+                              .timeSeriesGroupValues(Sets.newHashSet(TimeSeriesRecord.TimeSeriesGroupValue.builder()
+                                                                         .groupName("g1")
+                                                                         .metricValue(1.0)
+                                                                         .percentValue(2.0)
+                                                                         .riskScore(0)
+                                                                         .timeStamp(start)
+                                                                         .build()))
+                              .build());
+
     when(timeSeriesRecordService.getTimeSeriesRecordsForConfigs(any(), any(), any(), anyBoolean()))
-        .thenReturn(getTimeSeriesRecords(cvConfigId, true));
+        .thenReturn(timeSeriesRecords);
 
-    PageResponse<TimeSeriesMetricDataDTO> response =
-        timeSeriesDashboardService.getActivityMetrics(activityId, accountId, projectIdentifier, orgIdentifier,
-            envIdentifier, serviceIdentifier, start.toEpochMilli(), end.toEpochMilli(), false, 0, 10);
+    when(cvConfigService.list(monitoredServiceParams)).thenReturn(Arrays.asList(cvConfig));
+
+    PageResponse<TimeSeriesMetricDataDTO> response = timeSeriesDashboardService.getTimeSeriesMetricData(
+        monitoredServiceParams, TimeRangeParams.builder().startTime(start).endTime(end).build(),
+        TimeSeriesAnalysisFilter.builder().build(), PageParams.builder().page(0).size(10).build());
     assertThat(response).isNotNull();
-    assertThat(response.getContent()).isNotEmpty();
-    assertThat(response.getTotalPages()).isEqualTo(19);
-    assertThat(response.getContent().size()).isEqualTo(10);
-    response.getContent().forEach(timeSeriesMetricDataDTO -> {
-      assertThat(timeSeriesMetricDataDTO.getMetricDataList()).isNotEmpty();
-      assertThat(timeSeriesMetricDataDTO.getMetricType()).isNotNull();
-      timeSeriesMetricDataDTO.getMetricDataList().forEach(metricData -> {
-        assertThat(metricData.getRisk()).isNotEqualTo(Risk.HEALTHY);
-        if (TimeSeriesMetricType.ERROR.equals(timeSeriesMetricDataDTO.getMetricType())) {
-          assertThat(metricData.getValue()).isGreaterThan(0.0);
-        }
-      });
-    });
+    assertThat(response.getContent().get(0).getMetricDataList().first().getRisk().equals(Risk.HEALTHY));
   }
 
   @Test
-  @Owner(developers = KAMAL)
+  @Owner(developers = KANHAIYA)
   @Category(UnitTests.class)
-  public void testGetActivityMetrics_withNoVerificationTaskMapping() throws Exception {
+  public void testGetTimeSeriesMetricData_withMonitoredServiceIdentifierAsNULL() throws Exception {
     Instant start = Instant.parse("2020-07-07T02:40:00.000Z");
     Instant end = start.plus(5, ChronoUnit.MINUTES);
-    String activityId = generateUuid();
+    TimeRangeParams timeRangeParams = TimeRangeParams.builder().startTime(start).endTime(end).build();
+    PageParams pageParams = PageParams.builder().page(0).size(10).build();
+
     String cvConfigId = generateUuid();
-    String verificationJobInstanceId = generateUuid();
-    String taskId = generateUuid();
-    Activity activity = DeploymentActivity.builder().deploymentTag("Build23").build();
-    activity.setVerificationJobInstanceIds(Arrays.asList(verificationJobInstanceId));
-    when(activityService.get(activityId)).thenReturn(activity);
-    when(verificationTaskService.maybeGetVerificationTaskIds(accountId, verificationJobInstanceId))
-        .thenReturn(Collections.emptySet());
-    when(verificationTaskService.getCVConfigId(taskId)).thenReturn(cvConfigId);
     when(timeSeriesRecordService.getTimeSeriesRecordsForConfigs(any(), any(), any(), anyBoolean()))
         .thenReturn(getTimeSeriesRecords(cvConfigId, true));
+    AppDynamicsCVConfig cvConfig = new AppDynamicsCVConfig();
+    cvConfig.setUuid(cvConfigId);
+    List<String> healthSourceIdentifiers = Arrays.asList(cvConfig.getIdentifier());
+    Map<String, DataSourceType> cvConfigToDataSourceTypeMap = new HashMap<>();
+    cvConfigToDataSourceTypeMap.put(cvConfigId, APP_DYNAMICS);
+    monitoredServiceParams.setMonitoredServiceIdentifier(null);
+    when(cvConfigService.list(monitoredServiceParams, healthSourceIdentifiers)).thenReturn(Arrays.asList(cvConfig));
+    when(cvConfigService.getDataSourceTypeForCVConfigs(monitoredServiceParams)).thenReturn(cvConfigToDataSourceTypeMap);
+    when(monitoredServiceService.list(any(), any(), any()))
+        .thenReturn(Arrays.asList(MonitoredService.builder().identifier(monitoredServiceIdentifier).build()));
 
-    PageResponse<TimeSeriesMetricDataDTO> response =
-        timeSeriesDashboardService.getActivityMetrics(activityId, accountId, projectIdentifier, orgIdentifier,
-            envIdentifier, serviceIdentifier, start.toEpochMilli(), end.toEpochMilli(), false, 0, 10);
+    TimeSeriesAnalysisFilter timeSeriesAnalysisFilter = TimeSeriesAnalysisFilter.builder()
+                                                            .filter(null)
+                                                            .anomalousMetricsOnly(true)
+                                                            .healthSourceIdentifiers(healthSourceIdentifiers)
+                                                            .build();
+    PageResponse<TimeSeriesMetricDataDTO> response = timeSeriesDashboardService.getTimeSeriesMetricData(
+        monitoredServiceParams, timeRangeParams, timeSeriesAnalysisFilter, pageParams);
+
+    verify(cvConfigService).list(monitoredServiceParams, healthSourceIdentifiers);
+    verify(cvConfigService).getDataSourceTypeForCVConfigs(monitoredServiceParams);
     assertThat(response).isNotNull();
-    assertThat(response.getContent()).isEmpty();
+    assertThat(response.getContent()).isNotEmpty();
+    assertThat(response.getContent().size()).isEqualTo(10);
+    response.getContent().forEach(timeSeriesMetricDataDTO -> {
+      assertThat(timeSeriesMetricDataDTO.getDataSourceType()).isEqualTo(APP_DYNAMICS);
+    });
   }
 
   private List<TimeSeriesRecord> getTimeSeriesRecords(String cvConfigId, boolean anomalousOnly) throws Exception {

@@ -13,9 +13,9 @@ import static io.harness.ng.accesscontrol.PlatformPermissions.EDIT_AUTHSETTING_P
 import static io.harness.ng.accesscontrol.PlatformPermissions.VIEW_AUTHSETTING_PERMISSION;
 import static io.harness.ng.accesscontrol.PlatformResourceTypes.AUTHSETTING;
 
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.Resource;
-import io.harness.accesscontrol.clients.ResourceScope;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.GeneralException;
@@ -73,7 +73,7 @@ import retrofit2.http.Multipart;
 @Path("/authentication-settings")
 @Produces(MediaType.APPLICATION_JSON)
 @AllArgsConstructor(onConstructor = @__({ @Inject }))
-@Tag(name = "AuthenticationSettings",
+@Tag(name = "Authentication Settings",
     description = "This contains APIs related to Authentication settings as defined in Harness")
 @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request",
     content =

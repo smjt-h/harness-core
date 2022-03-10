@@ -109,7 +109,7 @@ public interface SecretManager extends OwnedByAccount {
   boolean deleteSecret(String accountId, String uuId, Map<String, String> runtimeParameters, boolean validateScopes);
 
   boolean updateUsageRestrictionsForSecretOrFile(String accountId, String uuId, UsageRestrictions usageRestrictions,
-      boolean scopedToEntity, boolean inheritScopesFromSM);
+      boolean scopedToAccount, boolean inheritScopesFromSM);
 
   File getFile(String accountId, String uuId, File readInto);
 
@@ -132,8 +132,8 @@ public interface SecretManager extends OwnedByAccount {
   boolean canUseSecretsInAppAndEnv(
       Set<String> secretIds, String accountId, String appIdFromRequest, String envIdFromRequest);
 
-  List<SecretMetadata> filterSecretIdsByReadPermission(
-      Set<String> secretIds, String accountId, String appIdFromRequest, String envIdFromRequest);
+  List<SecretMetadata> filterSecretIdsByReadPermission(Set<String> secretIds, String accountId, String appIdFromRequest,
+      String envIdFromRequest, boolean forUsageInNewApp);
 
   boolean hasUpdateAccessToSecrets(Set<String> secretIds, String accountId);
 

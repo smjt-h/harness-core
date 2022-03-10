@@ -12,13 +12,13 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	pb "github.com/harness/harness-core/960-expression-service/src/main/proto/io/harness/expression/service"
+	dclient "github.com/harness/harness-core/commons/go/lib/expression-service/grpc"
+	dmgrpc "github.com/harness/harness-core/commons/go/lib/expression-service/grpc/mocks"
+	"github.com/harness/harness-core/commons/go/lib/logs"
+	"github.com/harness/harness-core/product/ci/engine/output"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	pb "github.com/wings-software/portal/960-expression-service/src/main/proto/io/harness/expression/service"
-	dclient "github.com/wings-software/portal/commons/go/lib/expression-service/grpc"
-	dmgrpc "github.com/wings-software/portal/commons/go/lib/expression-service/grpc/mocks"
-	"github.com/wings-software/portal/commons/go/lib/logs"
-	"github.com/wings-software/portal/product/ci/engine/output"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )

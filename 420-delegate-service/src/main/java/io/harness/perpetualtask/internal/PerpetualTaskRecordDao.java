@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.mongodb.morphia.query.FindOptions;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.UpdateOperations;
 import org.mongodb.morphia.query.UpdateResults;
@@ -38,6 +39,7 @@ import org.mongodb.morphia.query.UpdateResults;
 public class PerpetualTaskRecordDao {
   private final HPersistence persistence;
   private static final int MAX_FIBONACCI_INDEX_FOR_TASK_ASSIGNMENT = 8;
+  private static final int BATCH_SIZE_FOR_PERPETUAL_TASK_TO_REBALANCE = 20;
 
   @Inject
   public PerpetualTaskRecordDao(HPersistence persistence) {
@@ -77,6 +79,18 @@ public class PerpetualTaskRecordDao {
                 System.currentTimeMillis()
                     + TimeUnit.MINUTES.toMillis(FibonacciBackOff.getFibonacciElement(
                         Math.min(MAX_FIBONACCI_INDEX_FOR_TASK_ASSIGNMENT, assignTryCount + 1))));
+    persistence.update(query, updateOperations);
+  }
+
+  public void setTaskUnassigned(String taskId) {
+    Query<PerpetualTaskRecord> query =
+        persistence.createQuery(PerpetualTaskRecord.class).filter(PerpetualTaskRecordKeys.uuid, taskId);
+
+    UpdateOperations<PerpetualTaskRecord> updateOperations =
+        persistence.createUpdateOperations(PerpetualTaskRecord.class)
+            .set(PerpetualTaskRecordKeys.state, TASK_UNASSIGNED)
+            .set(PerpetualTaskRecordKeys.delegateId, "");
+
     persistence.update(query, updateOperations);
   }
 
@@ -178,6 +192,14 @@ public class PerpetualTaskRecordDao {
     return perpetualTaskRecords;
   }
 
+  public List<PerpetualTaskRecord> listBatchOfPerpetualTasksToRebalanceForAccount(String accountId) {
+    Query<PerpetualTaskRecord> query = persistence.createQuery(PerpetualTaskRecord.class)
+                                           .filter(PerpetualTaskRecordKeys.accountId, accountId)
+                                           .filter(PerpetualTaskRecordKeys.state, PerpetualTaskState.TASK_TO_REBALANCE);
+
+    return query.asList(new FindOptions().limit(BATCH_SIZE_FOR_PERPETUAL_TASK_TO_REBALANCE));
+  }
+
   public PerpetualTaskRecord getTask(String taskId) {
     return persistence.createQuery(PerpetualTaskRecord.class).field(PerpetualTaskRecordKeys.uuid).equal(taskId).get();
   }
@@ -199,7 +221,7 @@ public class PerpetualTaskRecordDao {
     return Optional.ofNullable(perpetualTaskRecordQuery.get());
   }
 
-  public boolean saveHeartbeat(String taskId, long heartbeatMillis) {
+  public boolean saveHeartbeat(String taskId, long heartbeatMillis, long failedExecutionCount) {
     // TODO: make sure that the heartbeat is coming from the right assignment. There is a race
     //       that could register heartbeat comming from wrong assignment
     Query<PerpetualTaskRecord> query = persistence.createQuery(PerpetualTaskRecord.class)
@@ -208,7 +230,8 @@ public class PerpetualTaskRecordDao {
 
     UpdateOperations<PerpetualTaskRecord> taskUpdateOperations =
         persistence.createUpdateOperations(PerpetualTaskRecord.class)
-            .set(PerpetualTaskRecordKeys.lastHeartbeat, heartbeatMillis);
+            .set(PerpetualTaskRecordKeys.lastHeartbeat, heartbeatMillis)
+            .set(PerpetualTaskRecordKeys.failedExecutionCount, failedExecutionCount);
     UpdateResults update = persistence.update(query, taskUpdateOperations);
     return update.getUpdatedCount() > 0;
   }

@@ -11,19 +11,22 @@ import io.harness.DelegateInfoHelper;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.GraphVertex;
+import io.harness.beans.stepDetail.NodeExecutionDetailsInfo;
+import io.harness.beans.stepDetail.NodeExecutionsInfo;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.dto.GraphDelegateSelectionLogParams;
 import io.harness.execution.NodeExecution;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.data.PmsOutcome;
-import io.harness.pms.data.stepdetails.PmsStepDetails;
 import io.harness.pms.execution.utils.AmbianceUtils;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @OwnedBy(HarnessTeam.CDC)
 @Singleton
@@ -43,7 +46,7 @@ public class GraphVertexConverter {
         .ambiance(nodeExecution.getAmbiance())
         .planNodeId(level.getSetupId())
         .identifier(level.getIdentifier())
-        .name(nodeExecution.name())
+        .name(nodeExecution.getName())
         .startTs(nodeExecution.getStartTs())
         .endTs(nodeExecution.getEndTs())
         .lastUpdatedAt(nodeExecution.getLastUpdatedAt())
@@ -56,7 +59,7 @@ public class GraphVertexConverter {
         .executableResponses(CollectionUtils.emptyIfNull(nodeExecution.getExecutableResponses()))
         .interruptHistories(nodeExecution.getInterruptHistories())
         .retryIds(nodeExecution.getRetryIds())
-        .skipType(nodeExecution.skipGraphType())
+        .skipType(nodeExecution.getSkipGraphType())
         .unitProgresses(nodeExecution.getUnitProgresses())
         .progressData(nodeExecution.getPmsProgressData())
         .graphDelegateSelectionLogParams(graphDelegateSelectionLogParamsList)
@@ -64,7 +67,7 @@ public class GraphVertexConverter {
   }
 
   public GraphVertex convertFrom(
-      NodeExecution nodeExecution, Map<String, PmsOutcome> outcomes, Map<String, PmsStepDetails> stepDetails) {
+      NodeExecution nodeExecution, Map<String, PmsOutcome> outcomes, NodeExecutionsInfo nodeExecutionsInfo) {
     List<GraphDelegateSelectionLogParams> graphDelegateSelectionLogParamsList =
         delegateInfoHelper.getDelegateInformationForGivenTask(nodeExecution.getExecutableResponses(),
             nodeExecution.getMode(), AmbianceUtils.getAccountId(nodeExecution.getAmbiance()));
@@ -74,25 +77,29 @@ public class GraphVertexConverter {
         .ambiance(nodeExecution.getAmbiance())
         .planNodeId(level.getSetupId())
         .identifier(level.getIdentifier())
-        .name(nodeExecution.name())
+        .name(nodeExecution.getName())
         .startTs(nodeExecution.getStartTs())
         .endTs(nodeExecution.getEndTs())
         .lastUpdatedAt(nodeExecution.getLastUpdatedAt())
         .stepType(level.getStepType().getType())
         .status(nodeExecution.getStatus())
         .failureInfo(nodeExecution.getFailureInfo())
-        .stepParameters(nodeExecution.getPmsStepParameters())
+        .stepParameters(
+            nodeExecutionsInfo == null ? nodeExecution.getPmsStepParameters() : nodeExecutionsInfo.getResolvedInputs())
         .nodeRunInfo(nodeExecution.getNodeRunInfo())
         .mode(nodeExecution.getMode())
         .executableResponses(CollectionUtils.emptyIfNull(nodeExecution.getExecutableResponses()))
         .interruptHistories(nodeExecution.getInterruptHistories())
         .retryIds(nodeExecution.getRetryIds())
-        .skipType(nodeExecution.skipGraphType())
+        .skipType(nodeExecution.getSkipGraphType())
         .outcomeDocuments(outcomes)
         .unitProgresses(nodeExecution.getUnitProgresses())
         .progressData(nodeExecution.getPmsProgressData())
         .graphDelegateSelectionLogParams(graphDelegateSelectionLogParamsList)
-        .stepDetails(stepDetails)
+        .stepDetails(nodeExecutionsInfo == null
+                ? new HashMap<>()
+                : nodeExecutionsInfo.getNodeExecutionDetailsInfoList().stream().collect(
+                    Collectors.toMap(NodeExecutionDetailsInfo::getName, NodeExecutionDetailsInfo::getStepDetails)))
         .build();
   }
 }

@@ -13,11 +13,11 @@ import static io.harness.rule.OwnerRule.NAMAN;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -37,15 +37,13 @@ import io.harness.exception.UnexpectedException;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.sdk.EntityGitDetails;
 import io.harness.ng.core.EntityDetail;
-import io.harness.ng.core.template.TemplateMergeResponseDTO;
 import io.harness.plancreator.pipeline.PipelineConfig;
 import io.harness.pms.PmsFeatureFlagService;
+import io.harness.pms.contracts.governance.GovernanceMetadata;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineEntity.PipelineEntityKeys;
 import io.harness.pms.pipeline.mappers.PMSPipelineDtoMapper;
 import io.harness.pms.pipeline.service.PMSPipelineService;
-import io.harness.pms.pipeline.service.PMSPipelineTemplateHelper;
-import io.harness.pms.pipeline.service.PMSYamlSchemaService;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.rule.Owner;
 
@@ -62,8 +60,6 @@ import org.mockito.MockitoAnnotations;
 @OwnedBy(HarnessTeam.PIPELINE)
 public class PipelineEntityGitSyncHelperTest extends CategoryTest {
   @Mock private PMSPipelineService pipelineService;
-  @Mock private PMSPipelineTemplateHelper pipelineTemplateHelper;
-  @Mock private PMSYamlSchemaService pmsYamlSchemaService;
   @Mock private PmsFeatureFlagService pmsFeatureFlagService;
   @InjectMocks PipelineEntityGitSyncHelper pipelineEntityGitSyncHelper;
   static String accountId = "accountId";
@@ -71,57 +67,19 @@ public class PipelineEntityGitSyncHelperTest extends CategoryTest {
   static String projectId = "projectId";
   static String pipelineId = "pipelineId";
   static String name = "name";
-  static String identifier = "identifier";
   static String pipelineYaml = "pipeline:\n"
-      + "  identifier: p1\n"
-      + "  name: pipeline1\n"
+      + "  identifier: pipelineId\n"
+      + "  name: name\n"
       + "  projectIdentifier: projectId\n"
-      + "  orgIdentifier: orgId\n"
-      + "  stages:\n"
-      + "    - stage:\n"
-      + "        identifier: managerDeployment\n"
-      + "        type: deployment\n"
-      + "        name: managerDeployment\n"
-      + "        spec:\n"
-      + "          service:\n"
-      + "            identifier: manager\n"
-      + "            name: manager\n"
-      + "            serviceDefinition:\n"
-      + "              type: k8s\n"
-      + "              spec:\n"
-      + "                field11: value1\n"
-      + "                field12: value2\n"
-      + "          infrastructure:\n"
-      + "            environment:\n"
-      + "              identifier: stagingInfra\n"
-      + "              type: preProduction\n"
-      + "              name: staging\n"
-      + "            infrastructureDefinition:\n"
-      + "              type: k8sDirect\n"
-      + "              spec:\n"
-      + "                connectorRef: pEIkEiNPSgSUsbWDDyjNKw\n"
-      + "                namespace: harness\n"
-      + "                releaseName: testingqa\n"
-      + "          execution:\n"
-      + "            steps:\n"
-      + "              - step:\n"
-      + "                  identifier: managerCanary\n"
-      + "                  type: k8sCanary\n"
-      + "                  spec:\n"
-      + "                    field11: value1\n"
-      + "                    field12: value2\n"
-      + "              - step:\n"
-      + "                  identifier: managerVerify\n"
-      + "                  type: appdVerify\n"
-      + "                  spec:\n"
-      + "                    field21: value1\n"
-      + "                    field22: value2\n"
-      + "              - step:\n"
-      + "                  identifier: managerRolling\n"
-      + "                  type: k8sRolling\n"
-      + "                  spec:\n"
-      + "                    field31: value1\n"
-      + "                    field32: value2";
+      + "  orgIdentifier: orgId\n";
+
+  EntityReference entityReference = IdentifierRef.builder()
+                                        .identifier(pipelineId)
+                                        .accountIdentifier(accountId)
+                                        .orgIdentifier(orgId)
+                                        .projectIdentifier(projectId)
+                                        .build();
+
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
@@ -133,7 +91,7 @@ public class PipelineEntityGitSyncHelperTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testGetEntityDetail() {
     PipelineEntity pipelineEntity = PipelineEntity.builder()
-                                        .identifier(identifier)
+                                        .identifier(pipelineId)
                                         .name(name)
                                         .accountId(accountId)
                                         .orgIdentifier(orgId)
@@ -143,7 +101,7 @@ public class PipelineEntityGitSyncHelperTest extends CategoryTest {
     EntityDetail entityDetail = pipelineEntityGitSyncHelper.getEntityDetail(pipelineEntity);
     assertEquals(entityDetail.getName(), name);
     assertEquals(entityDetail.getType(), PIPELINES);
-    assertEquals(entityDetail.getEntityRef().getIdentifier(), identifier);
+    assertEquals(entityDetail.getEntityRef().getIdentifier(), pipelineId);
     assertEquals(entityDetail.getEntityRef().getOrgIdentifier(), orgId);
     assertEquals(entityDetail.getEntityRef().getAccountIdentifier(), accountId);
     assertEquals(entityDetail.getEntityRef().getProjectIdentifier(), projectId);
@@ -167,16 +125,30 @@ public class PipelineEntityGitSyncHelperTest extends CategoryTest {
   @Owner(developers = BRIJESH)
   @Category(UnitTests.class)
   public void testSave() throws IOException {
+    doReturn(GovernanceMetadata.newBuilder().setDeny(false).build())
+        .when(pipelineService)
+        .validatePipelineYamlAndSetTemplateRefIfAny(
+            PMSPipelineDtoMapper.toPipelineEntity(accountId, pipelineYaml), false);
     doReturn(PipelineEntity.builder().orgIdentifier(orgId).projectIdentifier(projectId).yaml(pipelineYaml).build())
         .when(pipelineService)
         .create(any());
-    TemplateMergeResponseDTO templateMergeResponseDTO =
-        TemplateMergeResponseDTO.builder().mergedPipelineYaml(pipelineYaml).build();
-    doReturn(templateMergeResponseDTO)
-        .when(pipelineTemplateHelper)
-        .resolveTemplateRefsInPipeline(PMSPipelineDtoMapper.toPipelineEntity(accountId, pipelineYaml));
-    doNothing().when(pmsYamlSchemaService).validateYamlSchema(accountId, orgId, projectId, pipelineYaml);
-    doNothing().when(pmsYamlSchemaService).validateUniqueFqn(pipelineYaml);
+    PipelineConfig pipelineConfig = pipelineEntityGitSyncHelper.save(accountId, pipelineYaml);
+    verify(pipelineService, times(1)).create(any());
+    assertEquals(pipelineConfig, YamlUtils.read(pipelineYaml, PipelineConfig.class));
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testSaveWithGovernance() throws IOException {
+    doReturn(PipelineEntity.builder().orgIdentifier(orgId).projectIdentifier(projectId).yaml(pipelineYaml).build())
+        .when(pipelineService)
+        .create(any());
+    doReturn(true).when(pmsFeatureFlagService).isEnabled(accountId, FeatureName.OPA_PIPELINE_GOVERNANCE);
+    doReturn(GovernanceMetadata.newBuilder().setDeny(false).build())
+        .when(pipelineService)
+        .validatePipelineYamlAndSetTemplateRefIfAny(
+            PMSPipelineDtoMapper.toPipelineEntity(accountId, pipelineYaml), true);
     PipelineConfig pipelineConfig = pipelineEntityGitSyncHelper.save(accountId, pipelineYaml);
     verify(pipelineService, times(1)).create(any());
     assertEquals(pipelineConfig, YamlUtils.read(pipelineYaml, PipelineConfig.class));
@@ -186,16 +158,13 @@ public class PipelineEntityGitSyncHelperTest extends CategoryTest {
   @Owner(developers = BRIJESH)
   @Category(UnitTests.class)
   public void testUpdate() throws IOException {
+    doReturn(GovernanceMetadata.newBuilder().setDeny(false).build())
+        .when(pipelineService)
+        .validatePipelineYamlAndSetTemplateRefIfAny(
+            PMSPipelineDtoMapper.toPipelineEntity(accountId, pipelineYaml), false);
     PipelineEntity pipelineEntity =
         PipelineEntity.builder().orgIdentifier(orgId).projectIdentifier(projectId).yaml(pipelineYaml).build();
     doReturn(pipelineEntity).when(pipelineService).updatePipelineYaml(any(), any());
-    TemplateMergeResponseDTO templateMergeResponseDTO =
-        TemplateMergeResponseDTO.builder().mergedPipelineYaml(pipelineYaml).build();
-    doReturn(templateMergeResponseDTO)
-        .when(pipelineTemplateHelper)
-        .resolveTemplateRefsInPipeline(PMSPipelineDtoMapper.toPipelineEntity(accountId, pipelineYaml));
-    doNothing().when(pmsYamlSchemaService).validateYamlSchema(accountId, orgId, projectId, pipelineYaml);
-    doNothing().when(pmsYamlSchemaService).validateUniqueFqn(pipelineYaml);
     PipelineConfig pipelineConfig = pipelineEntityGitSyncHelper.update(accountId, pipelineYaml, ChangeType.NONE);
     verify(pipelineService, times(1)).updatePipelineYaml(any(), any());
     assertEquals(pipelineConfig, YamlUtils.read(pipelineYaml, PipelineConfig.class));
@@ -205,13 +174,7 @@ public class PipelineEntityGitSyncHelperTest extends CategoryTest {
   @Owner(developers = BRIJESH)
   @Category(UnitTests.class)
   public void testDelete() {
-    EntityReference entityReference = IdentifierRef.builder()
-                                          .identifier(identifier)
-                                          .accountIdentifier(accountId)
-                                          .orgIdentifier(orgId)
-                                          .projectIdentifier(projectId)
-                                          .build();
-    doReturn(true).when(pipelineService).delete(accountId, orgId, projectId, identifier, null);
+    doReturn(true).when(pipelineService).delete(accountId, orgId, projectId, pipelineId, null);
     assertTrue(pipelineEntityGitSyncHelper.delete(entityReference));
   }
 
@@ -219,13 +182,7 @@ public class PipelineEntityGitSyncHelperTest extends CategoryTest {
   @Owner(developers = NAMAN)
   @Category(UnitTests.class)
   public void testDeleteWithException() {
-    EntityReference entityReference = IdentifierRef.builder()
-                                          .identifier(identifier)
-                                          .accountIdentifier(accountId)
-                                          .orgIdentifier(orgId)
-                                          .projectIdentifier(projectId)
-                                          .build();
-    when(pipelineService.delete(accountId, orgId, projectId, identifier, null))
+    when(pipelineService.delete(accountId, orgId, projectId, pipelineId, null))
         .thenThrow(new EventsFrameworkDownException("something wrong"));
     assertThatThrownBy(() -> pipelineEntityGitSyncHelper.delete(entityReference))
         .isInstanceOf(UnexpectedException.class)
@@ -262,5 +219,16 @@ public class PipelineEntityGitSyncHelperTest extends CategoryTest {
         .get(accountId, orgId, projectId, pipelineId, false);
     String yamlFromEntityRef = pipelineEntityGitSyncHelper.getYamlFromEntityRef(entityDetailProtoDTO);
     assertEquals(yamlFromEntityRef, pipelineYaml);
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testMarkEntityInvalid() {
+    String erroneousYaml = "pipeline: ";
+    doReturn(true).when(pipelineService).markEntityInvalid(accountId, orgId, projectId, pipelineId, erroneousYaml);
+    boolean marked = pipelineEntityGitSyncHelper.markEntityInvalid(accountId, entityReference, erroneousYaml);
+    assertThat(marked).isTrue();
+    verify(pipelineService, times(1)).markEntityInvalid(accountId, orgId, projectId, pipelineId, erroneousYaml);
   }
 }

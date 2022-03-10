@@ -26,6 +26,7 @@ import io.harness.batch.processing.connectors.ConnectorsHealthUpdateService;
 import io.harness.batch.processing.metrics.ProductMetricsService;
 import io.harness.batch.processing.reports.ScheduledReportServiceImpl;
 import io.harness.batch.processing.service.AccountExpiryCleanupService;
+import io.harness.batch.processing.service.AwsAccountTagsCollectionService;
 import io.harness.batch.processing.service.impl.BatchJobBucketLogContext;
 import io.harness.batch.processing.service.impl.BatchJobRunningModeContext;
 import io.harness.batch.processing.service.impl.BatchJobTypeLogContext;
@@ -33,6 +34,7 @@ import io.harness.batch.processing.service.impl.InstanceDataServiceImpl;
 import io.harness.batch.processing.service.intfc.BillingDataPipelineHealthStatusService;
 import io.harness.batch.processing.shard.AccountShardService;
 import io.harness.batch.processing.tasklet.support.HarnessServiceInfoFetcher;
+import io.harness.batch.processing.tasklet.support.K8SWorkloadService;
 import io.harness.batch.processing.tasklet.support.K8sLabelServiceInfoFetcher;
 import io.harness.batch.processing.view.CEMetaDataRecordUpdateService;
 import io.harness.batch.processing.view.ViewCostUpdateService;
@@ -87,6 +89,8 @@ public class EventJobScheduler {
   @Autowired private CfClient cfClient;
   @Autowired private FeatureFlagService featureFlagService;
   @Autowired private ConnectorsHealthUpdateService connectorsHealthUpdateService;
+  @Autowired private K8SWorkloadService k8SWorkloadService;
+  @Autowired private AwsAccountTagsCollectionService awsAccountTagsCollectionService;
 
   @PostConstruct
   public void orderJobs() {
@@ -294,12 +298,27 @@ public class EventJobScheduler {
     }
   }
 
+  @Scheduled(cron = "${scheduler-jobs-config.awsAccountTagsCollectionJobCron}") //  0 */10 * * * ? for testing
+  public void runAwsAccountTagsCollectionJob() {
+    try {
+      if (!batchMainConfig.getAwsAccountTagsCollectionJobConfig().isEnabled()) {
+        log.info("awsAccountTagsCollectionJobConfig is disabled in config");
+        return;
+      }
+      log.info("running aws account tags collection job");
+      awsAccountTagsCollectionService.update();
+    } catch (Exception ex) {
+      log.error("Exception while running runAwsAccountTagsCollectionJob", ex);
+    }
+  }
+
   // log hit/miss rate and size of the LoadingCache periodically for tuning
   @Scheduled(cron = "0 0 */7 ? * *")
   public void printCacheStats() throws IllegalAccessException {
     harnessServiceInfoFetcher.logCacheStats();
     instanceDataService.logCacheStats();
     k8sLabelServiceInfoFetcher.logCacheStats();
+    k8SWorkloadService.logCacheStats();
   }
 
   @Scheduled(cron = "0 0 6 * * ?")

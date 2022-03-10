@@ -22,7 +22,6 @@ import io.harness.cvng.activity.entities.PagerDutyActivity.PagerDutyActivityBuil
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.MonitoredServiceDataSourceType;
 import io.harness.cvng.beans.MonitoredServiceType;
-import io.harness.cvng.beans.TimeSeriesMetricType;
 import io.harness.cvng.beans.change.ChangeEventDTO;
 import io.harness.cvng.beans.change.ChangeEventDTO.ChangeEventDTOBuilder;
 import io.harness.cvng.beans.change.ChangeSourceType;
@@ -51,6 +50,7 @@ import io.harness.cvng.core.beans.monitoredService.changeSourceSpec.KubernetesCh
 import io.harness.cvng.core.beans.monitoredService.changeSourceSpec.PagerDutyChangeSourceSpec;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.AppDynamicsHealthSourceSpec;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.HealthSourceSpec;
+import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig;
@@ -60,6 +60,8 @@ import io.harness.cvng.core.entities.DatadogLogCVConfig;
 import io.harness.cvng.core.entities.DatadogLogCVConfig.DatadogLogCVConfigBuilder;
 import io.harness.cvng.core.entities.DatadogMetricCVConfig;
 import io.harness.cvng.core.entities.DatadogMetricCVConfig.DatadogMetricCVConfigBuilder;
+import io.harness.cvng.core.entities.DynatraceCVConfig;
+import io.harness.cvng.core.entities.DynatraceCVConfig.DynatraceCVConfigBuilder;
 import io.harness.cvng.core.entities.ErrorTrackingCVConfig;
 import io.harness.cvng.core.entities.ErrorTrackingCVConfig.ErrorTrackingCVConfigBuilder;
 import io.harness.cvng.core.entities.MetricPack;
@@ -89,6 +91,8 @@ import io.harness.cvng.dashboard.entities.HeatMap.HeatMapRisk;
 import io.harness.cvng.servicelevelobjective.beans.ErrorBudgetRisk;
 import io.harness.cvng.servicelevelobjective.beans.SLIMetricType;
 import io.harness.cvng.servicelevelobjective.beans.SLIMissingDataType;
+import io.harness.cvng.servicelevelobjective.beans.SLOErrorBudgetResetDTO;
+import io.harness.cvng.servicelevelobjective.beans.SLOErrorBudgetResetDTO.SLOErrorBudgetResetDTOBuilder;
 import io.harness.cvng.servicelevelobjective.beans.SLOTarget;
 import io.harness.cvng.servicelevelobjective.beans.SLOTargetType;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelIndicatorDTO;
@@ -192,7 +196,10 @@ public class BuilderFactory {
 
   public VerificationJobInstanceBuilder verificationJobInstanceBuilder() {
     CVConfig cvConfig = appDynamicsCVConfigBuilder().uuid(generateUuid()).build();
-    Map<String, CVConfig> cvConfigMap = Collections.singletonMap(cvConfig.getUuid(), cvConfig);
+    CVConfig cvConfig2 = errorTrackingCVConfigBuilder().uuid(generateUuid()).build();
+    Map<String, CVConfig> cvConfigMap = new HashMap<>();
+    cvConfigMap.put(cvConfig.getUuid(), cvConfig);
+    cvConfigMap.put(cvConfig2.getUuid(), cvConfig2);
     return VerificationJobInstance.builder()
         .accountId(context.getAccountId())
         .deploymentStartTime(clock.instant().minus(Duration.ofMinutes(2)))
@@ -209,13 +216,13 @@ public class BuilderFactory {
         .projectIdentifier(context.getProjectIdentifier())
         .errorBudgetRisk(ErrorBudgetRisk.EXHAUSTED)
         .errorBudgetRemainingPercentage(10)
-        .monitoredServiceIdentifier("monitoredServiceIdentifier")
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
         .serviceLevelObjectiveIdentifier("sloIdentifier");
   }
 
   public MonitoredServiceDTOBuilder monitoredServiceDTOBuilder() {
     return MonitoredServiceDTO.builder()
-        .identifier(context.serviceIdentifier + "_" + context.getEnvIdentifier())
+        .identifier(context.getMonitoredServiceIdentifier())
         .name("monitored service name")
         .orgIdentifier(context.getOrgIdentifier())
         .projectIdentifier(context.getProjectIdentifier())
@@ -258,8 +265,7 @@ public class BuilderFactory {
         .projectIdentifier(context.getProjectIdentifier())
         .orgIdentifier(context.getOrgIdentifier())
         .category(CVMonitoringCategory.ERRORS)
-        .serviceIdentifier(context.getServiceIdentifier())
-        .envIdentifier(context.getEnvIdentifier())
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
         .heatMapResolution(HeatMapResolution.THIRTY_MINUTES)
         .heatMapBucketStartTime(bucketStartTime)
         .heatMapBucketEndTime(bucketEndTime)
@@ -305,6 +311,7 @@ public class BuilderFactory {
         .projectIdentifier(context.getProjectIdentifier())
         .serviceIdentifier(context.getServiceIdentifier())
         .envIdentifier(context.getEnvIdentifier())
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
         .identifier(generateUuid())
         .monitoringSourceName(generateUuid())
         .metricPack(
@@ -323,6 +330,7 @@ public class BuilderFactory {
         .projectIdentifier(context.getProjectIdentifier())
         .serviceIdentifier(context.getServiceIdentifier())
         .envIdentifier(context.getEnvIdentifier())
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
         .queryName(randomAlphabetic(10))
         .query(randomAlphabetic(10))
         .messageIdentifier(randomAlphabetic(10))
@@ -341,6 +349,7 @@ public class BuilderFactory {
         .projectIdentifier(context.getProjectIdentifier())
         .serviceIdentifier(context.getServiceIdentifier())
         .envIdentifier(context.getEnvIdentifier())
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
         .queryName(randomAlphabetic(10))
         .query(randomAlphabetic(10))
         .serviceInstanceIdentifier(randomAlphabetic(10))
@@ -357,7 +366,19 @@ public class BuilderFactory {
         .orgIdentifier(context.getOrgIdentifier())
         .projectIdentifier(context.getProjectIdentifier())
         .serviceIdentifier(context.getServiceIdentifier())
-        .envIdentifier(context.getEnvIdentifier());
+        .envIdentifier(context.getEnvIdentifier())
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier());
+  }
+
+  public DynatraceCVConfigBuilder dynatraceCVConfigBuilder() {
+    return DynatraceCVConfig.builder()
+        .accountId(context.getAccountId())
+        .orgIdentifier(context.getOrgIdentifier())
+        .projectIdentifier(context.getProjectIdentifier())
+        .serviceIdentifier(context.getServiceIdentifier())
+        .connectorIdentifier("DynatraceConnector")
+        .envIdentifier(context.getEnvIdentifier())
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier());
   }
 
   public PrometheusCVConfigBuilder prometheusCVConfigBuilder() {
@@ -370,19 +391,6 @@ public class BuilderFactory {
         .connectorIdentifier("connectorRef")
         .category(CVMonitoringCategory.PERFORMANCE);
   }
-  public PrometheusCVConfig prometheusCVConfigWithMetricInfo() {
-    MetricPack metricPack = MetricPack.builder().dataCollectionDsl("metric-pack-dsl").build();
-    PrometheusCVConfig cvConfig = prometheusCVConfigBuilder().groupName("mygroupName").build();
-    cvConfig.setMetricPack(metricPack);
-    PrometheusCVConfig.MetricInfo metricInfo = PrometheusCVConfig.MetricInfo.builder()
-                                                   .metricName("myMetric")
-                                                   .metricType(TimeSeriesMetricType.RESP_TIME)
-                                                   .prometheusMetricName("cpu_usage_total")
-                                                   .build();
-
-    cvConfig.setMetricInfoList(Arrays.asList(metricInfo));
-    return cvConfig;
-  }
 
   public ErrorTrackingCVConfigBuilder errorTrackingCVConfigBuilder() {
     return ErrorTrackingCVConfig.builder()
@@ -391,6 +399,7 @@ public class BuilderFactory {
         .projectIdentifier(context.getProjectIdentifier())
         .serviceIdentifier(context.getServiceIdentifier())
         .envIdentifier(context.getEnvIdentifier())
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
         .queryName(randomAlphabetic(10))
         .query(randomAlphabetic(10))
         .identifier(generateUuid())
@@ -406,6 +415,7 @@ public class BuilderFactory {
         .orgIdentifier(context.getOrgIdentifier())
         .projectIdentifier(context.getProjectIdentifier())
         .serviceIdentifier(context.getServiceIdentifier())
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
         .envIdentifier(context.getEnvIdentifier())
         .connectorIdentifier("connectorRef")
         .dashboardName("dashboardName")
@@ -419,6 +429,7 @@ public class BuilderFactory {
         .projectIdentifier(context.getProjectIdentifier())
         .serviceIdentifier(context.getServiceIdentifier())
         .envIdentifier(context.getEnvIdentifier())
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
         .connectorIdentifier("connectorRef")
         .dashboardId("dashboardId")
         .dashboardName("dashboardName")
@@ -433,6 +444,7 @@ public class BuilderFactory {
         .serviceIdentifier(context.getServiceIdentifier())
         .serviceInstanceIdentifier(randomAlphabetic(10))
         .envIdentifier(context.getEnvIdentifier())
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
         .queryName(randomAlphabetic(10))
         .query(randomAlphabetic(10))
         .serviceInstanceIdentifier(randomAlphabetic(10))
@@ -528,6 +540,7 @@ public class BuilderFactory {
         .environmentIdentifier(context.getEnvIdentifier())
         .eventTime(clock.instant())
         .changeSourceIdentifier("changeSourceID")
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
         .type(ChangeSourceType.HARNESS_CD.getActivityType())
         .stageStepId("stageStepId")
         .verificationStartTime(clock.millis())
@@ -595,6 +608,7 @@ public class BuilderFactory {
         .relatedAppServices(Arrays.asList(ServiceEnvironment.builder()
                                               .environmentIdentifier(context.getEnvIdentifier())
                                               .serviceIdentifier(context.getServiceIdentifier())
+                                              .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
                                               .build()));
   }
 
@@ -649,7 +663,8 @@ public class BuilderFactory {
         .serviceIdentifier(context.getServiceIdentifier())
         .envIdentifier(context.getEnvIdentifier())
         .eventTime(Instant.EPOCH.getEpochSecond())
-        .changeSourceIdentifier("changeSourceID");
+        .changeSourceIdentifier("changeSourceID")
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier());
   }
 
   public DeploymentEventDTO.Builder getDeploymentEventDTOBuilder() {
@@ -704,8 +719,16 @@ public class BuilderFactory {
         .userJourneyRef("userJourney");
   }
 
+  public SLOErrorBudgetResetDTOBuilder getSLOErrorBudgetResetDTOBuilder() {
+    return SLOErrorBudgetResetDTO.builder()
+        .serviceLevelObjectiveIdentifier("slo")
+        .errorBudgetIncrementPercentage(10.0)
+        .reason("reason");
+  }
+
   public ServiceLevelObjectiveBuilder getServiceLevelObjectiveBuilder() {
     return ServiceLevelObjective.builder()
+        .accountId(context.getAccountId())
         .projectIdentifier(context.getProjectIdentifier())
         .orgIdentifier(context.getOrgIdentifier())
         .identifier("sloIdentifier")
@@ -714,7 +737,7 @@ public class BuilderFactory {
         .desc("slo description")
         .sloTarget(RollingSLOTarget.builder().periodLengthDays(30).build())
         .sloTargetPercentage(80.0)
-        .serviceLevelIndicators(Collections.singletonList("sloIdentifier"))
+        .serviceLevelIndicators(Collections.singletonList("sloIdentifier_metric1"))
         .healthSourceIdentifier("healthSourceIdentifier")
         .monitoredServiceIdentifier(context.serviceIdentifier + "_" + context.getEnvIdentifier())
         .userJourneyIdentifier("userJourney");
@@ -837,6 +860,10 @@ public class BuilderFactory {
     String serviceIdentifier;
     String envIdentifier;
 
+    private String getMonitoredServiceIdentifier() {
+      return serviceIdentifier + "_" + envIdentifier;
+    }
+
     public static Context defaultContext() {
       return Context.builder()
           .projectParams(ProjectParams.builder()
@@ -868,6 +895,17 @@ public class BuilderFactory {
           .projectIdentifier(projectParams.getProjectIdentifier())
           .serviceIdentifier(serviceIdentifier)
           .environmentIdentifier(envIdentifier)
+          .build();
+    }
+
+    public MonitoredServiceParams getMonitoredServiceParams() {
+      return MonitoredServiceParams.builder()
+          .accountIdentifier(projectParams.getAccountIdentifier())
+          .orgIdentifier(projectParams.getOrgIdentifier())
+          .projectIdentifier(projectParams.getProjectIdentifier())
+          .serviceIdentifier(serviceIdentifier)
+          .environmentIdentifier(envIdentifier)
+          .monitoredServiceIdentifier(getMonitoredServiceIdentifier())
           .build();
     }
   }

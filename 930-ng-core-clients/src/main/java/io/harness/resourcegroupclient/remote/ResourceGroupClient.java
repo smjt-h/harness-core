@@ -13,8 +13,8 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.ResponseDTO;
-import io.harness.resourcegroup.remote.dto.ResourceGroupFilterDTO;
-import io.harness.resourcegroupclient.ResourceGroupResponse;
+import io.harness.resourcegroup.v1.remote.dto.ResourceGroupFilterDTO;
+import io.harness.resourcegroupclient.remote.v1.ResourceGroupResponse;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -36,6 +36,8 @@ public interface ResourceGroupClient {
 
   @POST(RESOURCE_GROUP_API + "/filter")
   Call<ResponseDTO<PageResponse<ResourceGroupResponse>>> getFilteredResourceGroups(
-      @Body ResourceGroupFilterDTO resourceGroupFilter, @Query(value = NGResourceFilterConstants.PAGE_KEY) int page,
+      @Body ResourceGroupFilterDTO resourceGroupFilter,
+      @Query(value = NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
+      @Query(value = NGResourceFilterConstants.PAGE_KEY) int page,
       @Query(value = NGResourceFilterConstants.SIZE_KEY) int size);
 }

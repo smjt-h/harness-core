@@ -46,6 +46,7 @@ import io.harness.cvng.core.entities.DatadogLogCVConfig;
 import io.harness.cvng.core.entities.DatadogMetricCVConfig;
 import io.harness.cvng.core.entities.DeletedCVConfig;
 import io.harness.cvng.core.entities.DeploymentDataCollectionTask;
+import io.harness.cvng.core.entities.DynatraceCVConfig;
 import io.harness.cvng.core.entities.ErrorTrackingCVConfig;
 import io.harness.cvng.core.entities.HostRecord;
 import io.harness.cvng.core.entities.LogCVConfig;
@@ -67,6 +68,8 @@ import io.harness.cvng.core.entities.StackdriverLogCVConfig;
 import io.harness.cvng.core.entities.TimeSeriesRecord;
 import io.harness.cvng.core.entities.TimeSeriesThreshold;
 import io.harness.cvng.core.entities.VerificationTask;
+import io.harness.cvng.core.entities.VerificationTaskExecutionInstance;
+import io.harness.cvng.core.entities.VerificationTaskIdAware;
 import io.harness.cvng.core.entities.Webhook;
 import io.harness.cvng.core.entities.changeSource.ChangeSource;
 import io.harness.cvng.core.entities.changeSource.HarnessCDChangeSource;
@@ -80,6 +83,7 @@ import io.harness.cvng.dashboard.entities.HeatMap;
 import io.harness.cvng.migration.beans.CVNGSchema;
 import io.harness.cvng.servicelevelobjective.entities.RatioServiceLevelIndicator;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord;
+import io.harness.cvng.servicelevelobjective.entities.SLOErrorBudgetReset;
 import io.harness.cvng.servicelevelobjective.entities.SLOHealthIndicator;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective;
@@ -198,6 +202,10 @@ public class CVNextGenMorphiaRegister implements MorphiaRegistrar {
     set.add(ThresholdServiceLevelIndicator.class);
     set.add(SLIRecord.class);
     set.add(SideKick.class);
+    set.add(DynatraceCVConfig.class);
+    set.add(SLOErrorBudgetReset.class);
+    set.add(VerificationTaskExecutionInstance.class);
+    set.add(VerificationTaskIdAware.class);
   }
 
   @Override

@@ -465,19 +465,7 @@ public class ActivityServiceImpl implements ActivityService {
   }
 
   @Override
-  public List<DeploymentActivity> getDemoDeploymentActivity(
-      ServiceEnvironmentParams serviceEnvironmentParams, Instant startTime, Instant endTime) {
-    return (List<DeploymentActivity>) (List<?>) createQuery(serviceEnvironmentParams)
-        .filter(ActivityKeys.type, ActivityType.DEPLOYMENT)
-        .filter(DeploymentActivityKeys.isDemoActivity, true)
-        .field(ActivityKeys.activityStartTime)
-        .greaterThanOrEq(startTime)
-        .field(ActivityKeys.activityStartTime)
-        .lessThan(endTime)
-        .asList();
-  }
-  @Override
-  public Optional<Activity> getAnyDemoKubernetesEvent(
+  public Optional<Activity> getAnyKubernetesEvent(
       ServiceEnvironmentParams serviceEnvironmentParams, Instant startTime, Instant endTime) {
     return Optional.ofNullable(createQuery(serviceEnvironmentParams)
                                    .filter(ActivityKeys.type, ActivityType.KUBERNETES)
@@ -485,6 +473,20 @@ public class ActivityServiceImpl implements ActivityService {
                                    .greaterThanOrEq(startTime)
                                    .field(ActivityKeys.activityStartTime)
                                    .lessThan(endTime)
+                                   .get());
+  }
+
+  @Override
+  public Optional<Activity> getAnyDemoDeploymentEvent(ServiceEnvironmentParams serviceEnvironmentParams,
+      Instant startTime, Instant endTime, ActivityVerificationStatus verificationStatus) {
+    return Optional.ofNullable(createQuery(serviceEnvironmentParams)
+                                   .filter(ActivityKeys.type, ActivityType.DEPLOYMENT)
+                                   .field(ActivityKeys.activityStartTime)
+                                   .greaterThanOrEq(startTime)
+                                   .field(ActivityKeys.activityStartTime)
+                                   .lessThan(endTime)
+                                   .filter(DeploymentActivityKeys.isDemoActivity, true)
+                                   .filter(ActivityKeys.analysisStatus, verificationStatus)
                                    .get());
   }
 
@@ -560,16 +562,6 @@ public class ActivityServiceImpl implements ActivityService {
           activity.getAccountId(), activity.getProjectIdentifier(), activity.getOrgIdentifier());
       return activity.getUuid();
     }
-  }
-
-  @Override
-  public List<Activity> get(ServiceEnvironmentParams serviceEnvironmentParams, List<String> changeSourceIdentifiers,
-      Instant startTime, Instant endTime, List<ActivityType> activityTypes) {
-    Query<Activity> query = createQuery(serviceEnvironmentParams, changeSourceIdentifiers, startTime, endTime);
-    if (CollectionUtils.isNotEmpty(activityTypes)) {
-      query = query.field(ActivityKeys.type).in(activityTypes);
-    }
-    return query.asList();
   }
 
   @Override
