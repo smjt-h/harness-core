@@ -10,25 +10,7 @@ package io.harness.connector;
 import static io.harness.annotations.dev.HarnessTeam.DX;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.connector.heartbeat.ArtifactoryValidationParamsProvider;
-import io.harness.connector.heartbeat.AwsKmsConnectorValidationParamsProvider;
-import io.harness.connector.heartbeat.AwsSecretManagerValidationParamsProvider;
-import io.harness.connector.heartbeat.AwsValidationParamsProvider;
-import io.harness.connector.heartbeat.AzureKeyVaultConnectorValidationParamsProvider;
-import io.harness.connector.heartbeat.CEK8sConnectorValidationParamsProvider;
-import io.harness.connector.heartbeat.CVConnectorParamsProvider;
-import io.harness.connector.heartbeat.ConnectorValidationParamsProvider;
-import io.harness.connector.heartbeat.DockerConnectorValidationParamsProvider;
-import io.harness.connector.heartbeat.GcpKmsConnectorValidationParamsProvider;
-import io.harness.connector.heartbeat.GcpValidationParamsProvider;
-import io.harness.connector.heartbeat.HttpHelmConnectorValidationParamsProvider;
-import io.harness.connector.heartbeat.JiraValidationParamsProvider;
-import io.harness.connector.heartbeat.K8sConnectorValidationParamsProvider;
-import io.harness.connector.heartbeat.NexusValidationParamsProvider;
-import io.harness.connector.heartbeat.NoOpConnectorValidationParamsProvider;
-import io.harness.connector.heartbeat.ScmConnectorValidationParamsProvider;
-import io.harness.connector.heartbeat.ServiceNowValidationParamsProvider;
-import io.harness.connector.heartbeat.VaultConnectorValidationParamsProvider;
+import io.harness.connector.heartbeat.*;
 import io.harness.connector.mappers.ConnectorDTOToEntityMapper;
 import io.harness.connector.mappers.ConnectorEntityToDTOMapper;
 import io.harness.connector.mappers.appdynamicsmapper.AppDynamicsDTOToEntity;
@@ -81,18 +63,7 @@ import io.harness.connector.mappers.pagerduty.PagerDutyDTOToEntity;
 import io.harness.connector.mappers.pagerduty.PagerDutyEntityToDTO;
 import io.harness.connector.mappers.prometheusmapper.PrometheusDTOToEntity;
 import io.harness.connector.mappers.prometheusmapper.PrometheusEntityToDTO;
-import io.harness.connector.mappers.secretmanagermapper.AwsKmsDTOToEntity;
-import io.harness.connector.mappers.secretmanagermapper.AwsKmsEntityToDTO;
-import io.harness.connector.mappers.secretmanagermapper.AwsSecretManagerDTOToEntity;
-import io.harness.connector.mappers.secretmanagermapper.AwsSecretManagerEntityToDTO;
-import io.harness.connector.mappers.secretmanagermapper.AzureKeyVaultDTOToEntity;
-import io.harness.connector.mappers.secretmanagermapper.AzureKeyVaultEntityToDTO;
-import io.harness.connector.mappers.secretmanagermapper.GcpKmsDTOToEntity;
-import io.harness.connector.mappers.secretmanagermapper.GcpKmsEntityToDTO;
-import io.harness.connector.mappers.secretmanagermapper.LocalDTOToEntity;
-import io.harness.connector.mappers.secretmanagermapper.LocalEntityToDTO;
-import io.harness.connector.mappers.secretmanagermapper.VaultDTOToEntity;
-import io.harness.connector.mappers.secretmanagermapper.VaultEntityToDTO;
+import io.harness.connector.mappers.secretmanagermapper.*;
 import io.harness.connector.mappers.servicenow.ServiceNowDTOtoEntity;
 import io.harness.connector.mappers.servicenow.ServiceNowEntityToDTO;
 import io.harness.connector.mappers.splunkconnectormapper.SplunkDTOToEntity;
@@ -182,6 +153,10 @@ public class ConnectorRegistryFactory {
         new ConnectorRegistrar(ConnectorCategory.SECRET_MANAGER, SecretManagerConnectorValidator.class,
             AzureKeyVaultConnectorValidationParamsProvider.class, AzureKeyVaultDTOToEntity.class,
             AzureKeyVaultEntityToDTO.class, NotSupportedValidationHandler.class));
+    registrar.put(ConnectorType.AZURE_BLOB,
+        new ConnectorRegistrar(ConnectorCategory.SECRET_MANAGER, SecretManagerConnectorValidator.class,
+            AzureBlobConnectorValidationParamsProvider.class, AzureBlobDTOToEntity.class, AzureBlobEntityToDTO.class,
+            NotSupportedValidationHandler.class));
     registrar.put(ConnectorType.GCP_KMS,
         new ConnectorRegistrar(ConnectorCategory.SECRET_MANAGER, SecretManagerConnectorValidator.class,
             GcpKmsConnectorValidationParamsProvider.class, GcpKmsDTOToEntity.class, GcpKmsEntityToDTO.class,
