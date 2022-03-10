@@ -416,7 +416,9 @@ public class ServerlessStepHelper extends CDStepHelper {
     switch (serverlessCommandType) {
       case AWS_LAMBDA_DEPLOY:
         ServerlessAwsLambdaDeployConfig serverlessAwsLambdaDeployConfig =
-            ServerlessAwsLambdaDeployConfig.builder().commandOptions(Collections.emptyList()).build();
+            ServerlessAwsLambdaDeployConfig.builder()
+                .commandOptions(serverlessDeployStepParameters.getCommandOptions().getValue())
+                .build();
         // todo: need to change command options
         return serverlessAwsLambdaDeployConfig;
       default:
