@@ -108,7 +108,7 @@ public class SchemaValidationUtils {
       if (stageNode == null) {
         return null;
       }
-      return getNodeErrorInfoFromJsonNode(jsonNode, pathToStage);
+      return getNodeErrorInfoFromJsonNode(stageNode, pathToStage);
     } catch (IndexOutOfBoundsException e) {
       return null;
     }
@@ -127,7 +127,7 @@ public class SchemaValidationUtils {
       if (stepNode == null) {
         return null;
       }
-      return getNodeErrorInfoFromJsonNode(jsonNode, pathToStep);
+      return getNodeErrorInfoFromJsonNode(stepNode, pathToStep);
 
     } catch (IndexOutOfBoundsException e) {
       return null;
