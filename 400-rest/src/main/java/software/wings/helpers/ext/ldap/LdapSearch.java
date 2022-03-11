@@ -169,19 +169,10 @@ public class LdapSearch implements LdapValidator {
           ctx.setRequestControls(new Control[] {new PagedResultsControl(pageSize, cookie, Control.CRITICAL)});
         } while (cookie != null);
         ctx.close();
-        if (entries.isEmpty()) {
-          try (Connection connection = connectionFactory.getConnection()) {
-            log.info(
-                "Trying to query to LDAP server with old logic as entries not found with pagination with searchfilter {} and baseDN {}",
-                searchFilter, baseDN);
-            connection.open();
-            SearchOperation search = new SearchOperation(connection);
-            return search.execute(request).getResult();
-          } catch (Exception e) {
-            log.error("Error querying to LDAP server with old logic as entries not found with pagination  ", e);
-          }
+        if (!entries.isEmpty()) {
+          log.info("The paginated query gave zero results with searchFilter {}", searchFilter);
+          return new SearchResult(entries);
         }
-        return new SearchResult(entries);
       } catch (Exception e) {
         log.error("Error querying to ldap server with pagination", e);
       }
