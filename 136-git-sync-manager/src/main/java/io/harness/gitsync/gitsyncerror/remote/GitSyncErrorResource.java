@@ -30,6 +30,7 @@ import io.harness.gitsync.gitsyncerror.beans.GitSyncError.GitSyncErrorKeys;
 import io.harness.gitsync.gitsyncerror.dtos.GitSyncErrorAggregateByCommitDTO;
 import io.harness.gitsync.gitsyncerror.dtos.GitSyncErrorCountDTO;
 import io.harness.gitsync.gitsyncerror.dtos.GitSyncErrorDTO;
+import io.harness.gitsync.gitsyncerror.dtos.GitSyncErrorEntityInfoDTO;
 import io.harness.gitsync.gitsyncerror.service.GitSyncErrorService;
 import io.harness.gitsync.interceptor.GitEntityFindInfoDTO;
 import io.harness.gitsync.sdk.GitSyncApiConstants;
@@ -229,7 +230,7 @@ public class GitSyncErrorResource {
       @Parameter(description = GitSyncApiConstants.SEARCH_TERM_PARAM_MESSAGE) @QueryParam(
           NGResourceFilterConstants.SEARCH_TERM_KEY) String searchTerm,
       @RequestBody(description = "Details to find Git Entity including: Git Sync Config Id and Branch Name")
-      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+      @BeanParam GitSyncErrorEntityInfoDTO gitEntityBasicInfo) {
     return ResponseDTO.newResponse(gitSyncErrorService.getErrorCount(accountIdentifier, orgIdentifier,
         projectIdentifier, searchTerm, gitEntityBasicInfo.getYamlGitConfigId(), gitEntityBasicInfo.getBranch()));
   }
