@@ -7,11 +7,11 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.connector.HostValidationResult;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
-import io.harness.ng.validator.HostValidationService;
+import io.harness.ng.validator.dto.HostValidationDTO;
+import io.harness.ng.validator.service.api.HostValidationService;
 import io.harness.security.annotations.NextGenManagerAuth;
 
 import com.google.inject.Inject;
@@ -74,7 +74,7 @@ public class HostValidationResource {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(responseCode = "default", description = "Returns validation response")
       })
-  public ResponseDTO<List<HostValidationResult>>
+  public ResponseDTO<List<HostValidationDTO>>
   validateSshHost(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
                       NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,

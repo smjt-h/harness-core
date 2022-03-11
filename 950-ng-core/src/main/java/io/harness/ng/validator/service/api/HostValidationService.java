@@ -1,6 +1,6 @@
-package io.harness.ng.validator;
+package io.harness.ng.validator.service.api;
 
-import io.harness.connector.HostValidationResult;
+import io.harness.ng.validator.dto.HostValidationDTO;
 
 import java.util.List;
 import javax.annotation.Nullable;
@@ -17,7 +17,7 @@ public interface HostValidationService {
    * @param secretIdentifier the secret identifier
    * @return the list of host validation results
    */
-  List<HostValidationResult> validateSSHHosts(@NotNull List<String> hosts, String accountIdentifier,
+  List<HostValidationDTO> validateSSHHosts(@NotNull List<String> hosts, String accountIdentifier,
       @Nullable String orgIdentifier, @Nullable String projectIdentifier, @NotNull String secretIdentifier);
 
   /**
@@ -30,6 +30,6 @@ public interface HostValidationService {
    * @param secretIdentifier the secret identifier
    * @return host validation result
    */
-  HostValidationResult validateSSHHost(@NotNull String hostName, String accountIdentifier,
-      @Nullable String orgIdentifier, @Nullable String projectIdentifier, @NotNull String secretIdentifier);
+  HostValidationDTO validateSSHHost(@NotNull String hostName, String accountIdentifier, @Nullable String orgIdentifier,
+      @Nullable String projectIdentifier, @NotNull String secretIdentifier);
 }

@@ -1,4 +1,4 @@
-package io.harness.connector;
+package io.harness.ng.validator.dto;
 
 import io.harness.ng.core.dto.ErrorDetail;
 
@@ -9,7 +9,7 @@ import lombok.Data;
 @Data
 @Builder
 @Schema(description = "This has validation details for the host")
-public class HostValidationResult {
+public class HostValidationDTO {
   public enum HostValidationStatus {
     SUCCESS,
     FAILED;
