@@ -13,6 +13,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryArtifactBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryBuildDetailsDTO;
+import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryGenericBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryRepoDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryRequestDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryResponseDTO;
@@ -30,7 +31,10 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
@@ -71,6 +75,14 @@ public class ArtifactoryArtifactResource {
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
       @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+    if (repositoryFormat.equals("generic")) {
+      List<ArtifactoryBuildDetailsDTO> repositoriesMap = new ArrayList<>();
+      repositoriesMap.add(ArtifactoryGenericBuildDetailsDTO.builder().artifactPath("artifact.zip").build());
+      ArtifactoryResponseDTO genericArtifactDetails =
+          ArtifactoryResponseDTO.builder().buildDetailsList(repositoriesMap).build();
+      return ResponseDTO.newResponse(genericArtifactDetails);
+    }
+
     IdentifierRef connectorRef = IdentifierRefHelper.getIdentifierRef(
         artifactoryConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
     ArtifactoryResponseDTO buildDetails = artifactoryResourceService.getBuildDetails(connectorRef, repository,
@@ -93,6 +105,14 @@ public class ArtifactoryArtifactResource {
       @NotNull @QueryParam(NGCommonEntityConstants.PIPELINE_KEY) String pipelineIdentifier,
       @NotNull @QueryParam("fqnPath") String fqnPath, @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo,
       @NotNull String runtimeInputYaml) {
+    if (repositoryFormat.equals("generic")) {
+      List<ArtifactoryBuildDetailsDTO> repositoriesMap = new ArrayList<>();
+      repositoriesMap.add(ArtifactoryGenericBuildDetailsDTO.builder().artifactPath("artifact.zip").build());
+      ArtifactoryResponseDTO genericArtifactDetails =
+          ArtifactoryResponseDTO.builder().buildDetailsList(repositoriesMap).build();
+      return ResponseDTO.newResponse(genericArtifactDetails);
+    }
+
     IdentifierRef connectorRef = IdentifierRefHelper.getIdentifierRef(
         artifactoryConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
     artifactPath = ArtifactResourceUtils.getResolvedImagePath(pipelineServiceClient, accountId, orgIdentifier,
@@ -145,6 +165,14 @@ public class ArtifactoryArtifactResource {
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier) {
+    if (repositoryType.equals("generic")) {
+      Map<String, String> repositoriesMap = new HashMap<>();
+      repositoriesMap.put("repo", "repo");
+      ArtifactoryRepoDetailsDTO repoGenericDetailsDTO =
+          ArtifactoryRepoDetailsDTO.builder().repositories(repositoriesMap).build();
+      return ResponseDTO.newResponse(repoGenericDetailsDTO);
+    }
+
     IdentifierRef connectorRef = IdentifierRefHelper.getIdentifierRef(
         artifactoryConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
     ArtifactoryRepoDetailsDTO repoDetailsDTO =
