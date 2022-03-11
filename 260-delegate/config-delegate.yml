@@ -1,20 +1,39 @@
+#accountId: kmpySmUISimoRrJL6NL73w
+#accountSecret: 2f6b0988b6fb3370073c3d0505baee59
+#managerUrl: https://localhost:9090/api/
+#verificationServiceUrl: https://localhost:7070/verification/
+#cvNextGenUrl: https://localhost:6060/cv/api/
+#heartbeatIntervalMs: 60000
+#localDiskPath: /tmp
+#doUpgrade: false
+#pollForTasks: false
+#description: description here
+#managerTarget: localhost:9880
+#managerAuthority: localhost
+#queueFilePath: ../eventQueue
+#grpcServiceEnabled: true
+#grpcServiceConnectorPort: 8080
+#logStreamingServiceBaseUrl: http://localhost:8079
+#clientToolsDownloadDisabled: false
+#installClientToolsInBackground: true
 accountId: kmpySmUISimoRrJL6NL73w
 accountSecret: 2f6b0988b6fb3370073c3d0505baee59
-managerUrl: https://localhost:9090/api/
-verificationServiceUrl: https://localhost:7070/verification/
-cvNextGenUrl: https://localhost:6060/cv/api/
+dynamicHandlingOfRequestEnabled: false
+managerUrl: https://goku.delegate.pr.harness.io/api/
+verificationServiceUrl: https://pr.harness.io/johannes-delegate-mtls/verification/
+cvNextGenUrl: https://pr.harness.io/johannes-delegate-mtls/cv/api/
+watcherCheckLocation: https://qa.harness.io/public/pr/premium/watchers/current.version
 heartbeatIntervalMs: 60000
-localDiskPath: /tmp
 doUpgrade: false
+localDiskPath: /tmp
+maxCachedArtifacts: 2
 pollForTasks: false
-description: description here
-managerTarget: localhost:9880
-managerAuthority: localhost
-queueFilePath: ../eventQueue
-grpcServiceEnabled: true
-grpcServiceConnectorPort: 8080
-logStreamingServiceBaseUrl: http://localhost:8079
-clientToolsDownloadDisabled: false
-installClientToolsInBackground: true
-clientCertificateFilePath: /Users/johannesbatzill/Workspaces/Sandbox/Certs/CA/public.ca/certs/client1.wf.com/cert.crt
-clientCertificateKeyFilePath: /Users/johannesbatzill/Workspaces/Sandbox/Certs/CA/public.ca/certs/client1.wf.com/cert.key
+useCdn: true
+cdnUrl: https://qa.harness.io
+grpcServiceEnabled:
+grpcServiceConnectorPort:
+logStreamingServiceBaseUrl: https://pr.harness.io/johannes-delegate-mtls/log-service/
+clientToolsDownloadDisabled: true
+installClientToolsInBackground: false
+clientCertificateFilePath: /Users/johannesbatzill/Workspaces/Sandbox/Certs/CA/goku.ca/certs/client1.goku.io/cert.crt
+clientCertificateKeyFilePath: /Users/johannesbatzill/Workspaces/Sandbox/Certs/CA/goku.ca/certs/client1.goku.io/cert.key

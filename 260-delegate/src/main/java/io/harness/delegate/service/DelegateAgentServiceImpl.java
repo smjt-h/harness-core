@@ -792,7 +792,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       // Stream the request body
       RequestBuilder requestBuilder = client.newRequestBuilder().method(METHOD.GET).uri(uri.toString());
 
-      //      requestBuilder = requestBuilder.header("delegate-mtls-authority", "WEBSOCKET DelegateAgentServiceImpl");
+      requestBuilder = requestBuilder.header("delegate-mtls-authority", "WEBSOCKET DelegateAgentServiceImpl");
 
       requestBuilder
           .encoder(new Encoder<Delegate, Reader>() { // Do not change this, wasync doesn't like lambdas

@@ -54,7 +54,7 @@ public class DelegateAuthCallCredentials extends CallCredentials {
       Metadata headers = new Metadata();
       headers.put(ACCOUNT_ID_METADATA_KEY, accountId);
       headers.put(TOKEN_METADATA_KEY, token);
-      //      headers.put(DELEGATE_MTLS_AUTHORITY_METADATA_KEY, "grpc DelegateAuthCallCredentials");
+      headers.put(DELEGATE_MTLS_AUTHORITY_METADATA_KEY, "grpc DelegateAuthCallCredentials");
       applier.apply(headers);
     }
   }

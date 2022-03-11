@@ -611,13 +611,37 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
+import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.security.KeyFactory;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Clock;
+import java.util.Base64;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.*;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang.StringUtils;
 
 @TargetModule(HarnessModule._420_DELEGATE_AGENT)
 @OwnedBy(HarnessTeam.DEL)
@@ -886,6 +910,62 @@ public class DelegateModule extends AbstractModule {
                                                 .build());
   }
 
+  private KeyStore getTrustKeyStore()
+      throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
+    KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+    keyStore.load(null, null);
+
+    // Load self-signed certificate created only for the purpose of local development
+    try (
+        InputStream certInputStream = new FileInputStream(new File(
+            "/Users/johannesbatzill/Workspaces/Sandbox/Certs/CA/public.ca/public.ca.crt"))) { // getClass().getClassLoader().getResourceAsStream("localhost.pem"))
+                                                                                              // {
+      keyStore.setCertificateEntry(
+          "localhost", (X509Certificate) CertificateFactory.getInstance("X509").generateCertificate(certInputStream));
+    }
+
+    // Load all trusted issuers from default java trust store
+    TrustManagerFactory defaultTrustManagerFactory =
+        TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+    defaultTrustManagerFactory.init((KeyStore) null);
+    for (TrustManager trustManager : defaultTrustManagerFactory.getTrustManagers()) {
+      if (trustManager instanceof X509TrustManager) {
+        for (X509Certificate acceptedIssuer : ((X509TrustManager) trustManager).getAcceptedIssuers()) {
+          keyStore.setCertificateEntry(acceptedIssuer.getSubjectDN().getName(), acceptedIssuer);
+        }
+      }
+    }
+
+    return keyStore;
+  }
+
+  private KeyStore getClientKeyStore()
+      throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException, InvalidKeySpecException {
+    // Load Private Key
+    String privateKeyContent = new String(
+        Files.readAllBytes(Paths.get(configuration.getClientCertificateKeyFilePath())), Charset.defaultCharset())
+                                   .replace("-----BEGIN PRIVATE KEY-----", "")
+                                   .replaceAll(System.lineSeparator(), "")
+                                   .replace("-----END PRIVATE KEY-----", "");
+
+    byte[] privateKeyAsBytes = Base64.getDecoder().decode(privateKeyContent);
+    KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+    PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyAsBytes);
+
+    // Load Certificate (For PROD readiness should be able to read chain ...)
+    CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+    InputStream certificateChainAsInputStream =
+        Files.newInputStream(Paths.get(configuration.getClientCertificateFilePath()), StandardOpenOption.READ);
+    Certificate certificate = certificateFactory.generateCertificate(certificateChainAsInputStream);
+
+    KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+    keyStore.load(null, null);
+    keyStore.setKeyEntry(
+        "client", keyFactory.generatePrivate(keySpec), "somePassword42".toCharArray(), new Certificate[] {certificate});
+
+    return keyStore;
+  }
+
   @Override
   protected void configure() {
     bindDelegateTasks();
@@ -918,9 +998,36 @@ public class DelegateModule extends AbstractModule {
     bind(BambooBuildService.class).to(BambooBuildServiceImpl.class);
     bind(DockerBuildService.class).to(DockerBuildServiceImpl.class);
     bind(BambooService.class).to(BambooServiceImpl.class);
-    bind(AsyncHttpClient.class)
-        .toInstance(new AsyncHttpClient(
-            new AsyncHttpClientConfig.Builder().setUseProxyProperties(true).setAcceptAnyCertificate(true).build()));
+
+    TrustManager[] trustManagers = null;
+    KeyManager[] keyManagers = null;
+    try {
+      // Create Trust Manager (CA Certs used to verify server cert)
+      KeyStore trustKeyStore = this.getTrustKeyStore();
+      TrustManagerFactory trustManagerFactory =
+          TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+      trustManagerFactory.init(trustKeyStore);
+      trustManagers = trustManagerFactory.getTrustManagers();
+
+      // Create Key Manager (Client Cert used for mtls) - only if client certificate provided
+      if (StringUtils.isNotEmpty(configuration.getClientCertificateFilePath())
+          && StringUtils.isNotEmpty(configuration.getClientCertificateKeyFilePath())) {
+        KeyStore clientKeyStore = this.getClientKeyStore();
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        keyManagerFactory.init(clientKeyStore, "somePassword42".toCharArray());
+        keyManagers = keyManagerFactory.getKeyManagers();
+      }
+
+      SSLContext sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(keyManagers, trustManagers, null);
+
+      bind(AsyncHttpClient.class)
+          .toInstance(new AsyncHttpClient(
+              new AsyncHttpClientConfig.Builder().setUseProxyProperties(true).setSSLContext(sslContext).build()));
+    } catch (Exception ex) {
+      // ....
+    }
+
     bind(AwsClusterService.class).to(AwsClusterServiceImpl.class);
     bind(EcsContainerService.class).to(EcsContainerServiceImpl.class);
     bind(GkeClusterService.class).to(GkeClusterServiceImpl.class);

@@ -34,10 +34,9 @@ public class DelegateAuthInterceptor implements Interceptor {
     String token = tokenGenerator.getToken(scheme, host, port, HOST_NAME);
 
     Request request = chain.request();
-    return chain.proceed(
-        request.newBuilder()
-            .header("Authorization", "Delegate " + token)
-            //                          .header("delegate-mtls-authority", "REST DelegateAuthInterceptor")
-            .build());
+    return chain.proceed(request.newBuilder()
+                             .header("Authorization", "Delegate " + token)
+                             .header("delegate-mtls-authority", "REST DelegateAuthInterceptor")
+                             .build());
   }
 }

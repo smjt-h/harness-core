@@ -23,6 +23,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -139,7 +141,10 @@ public class DelegateAgentManagerClientFactory
     keyStore.load(null, null);
 
     // Load self-signed certificate created only for the purpose of local development
-    try (InputStream certInputStream = getClass().getClassLoader().getResourceAsStream("localhost.pem")) {
+    try (
+        InputStream certInputStream = new FileInputStream(new File(
+            "/Users/johannesbatzill/Workspaces/Sandbox/Certs/CA/public.ca/public.ca.crt"))) { // getClass().getClassLoader().getResourceAsStream("localhost.pem"))
+                                                                                              // {
       keyStore.setCertificateEntry(
           "localhost", (X509Certificate) CertificateFactory.getInstance("X509").generateCertificate(certInputStream));
     }
