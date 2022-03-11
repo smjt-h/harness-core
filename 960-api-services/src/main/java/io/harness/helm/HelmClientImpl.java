@@ -368,6 +368,7 @@ public class HelmClientImpl implements HelmClient {
   public static class HelmCliResponse {
     private CommandExecutionStatus commandExecutionStatus;
     private String output;
+    private String errorStreamOutput;
   }
 
   @Override
@@ -436,10 +437,10 @@ public class HelmClientImpl implements HelmClient {
     }
 
     String output = processResult.outputUTF8();
-
     return HelmCliResponse.builder()
         .commandExecutionStatus(status)
-        .output(isNotEmpty(streamOutput) ? streamOutput.concat(output) : output)
+        .output(output)
+        .errorStreamOutput(streamOutput)
         .build();
   }
 
@@ -537,12 +538,13 @@ public class HelmClientImpl implements HelmClient {
       if (helmCliResponse.getCommandExecutionStatus() != SUCCESS) {
         // if helm hist fails due to 'release not found' -- then we don't fail/ throw exception
         // (because for first time deployment, release history cmd fails with release not found)
+        String outputMessage = helmCliResponse.getErrorStreamOutput() + " " + helmCliResponse.getOutput();
         if (commandType == HelmCliCommandType.RELEASE_HISTORY
-            && (helmCliResponse.getOutput().contains("not found") && helmCliResponse.getOutput().contains("release"))) {
+            && (outputMessage.contains("not found") && outputMessage.contains("release"))) {
           return helmCliResponse;
         }
-        throw new HelmClientRuntimeException(new HelmClientException(
-            errorMessagePrefix + command + ". " + helmCliResponse.getOutput(), USER, commandType));
+        throw new HelmClientRuntimeException(
+            new HelmClientException(errorMessagePrefix + command + ". " + outputMessage, USER, commandType));
       }
       return helmCliResponse;
     } catch (InterruptedException e) {
