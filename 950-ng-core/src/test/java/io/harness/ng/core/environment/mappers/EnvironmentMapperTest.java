@@ -9,6 +9,7 @@ package io.harness.ng.core.environment.mappers;
 
 import static io.harness.rule.OwnerRule.ARCHIT;
 
+import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.CategoryTest;
@@ -18,6 +19,8 @@ import io.harness.ng.core.environment.beans.Environment;
 import io.harness.ng.core.environment.beans.EnvironmentType;
 import io.harness.ng.core.environment.dto.EnvironmentRequestDTO;
 import io.harness.ng.core.environment.dto.EnvironmentResponseDTO;
+import io.harness.ng.core.environment.yaml.NGEnvironmentConfig;
+import io.harness.ng.core.environment.yaml.NGEnvironmentInfoConfig;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.ImmutableMap;
@@ -32,10 +35,20 @@ public class EnvironmentMapperTest extends CategoryTest {
   EnvironmentResponseDTO environmentResponseDTO;
   Environment requestEnvironment;
   Environment responseEnvironment;
+  NGEnvironmentConfig ngEnvironmentConfig;
   List<NGTag> tags;
   @Before
   public void setUp() {
     tags = Arrays.asList(NGTag.builder().key("k1").value("v1").build(), NGTag.builder().key("k2").value("v2").build());
+    ngEnvironmentConfig = NGEnvironmentConfig.builder()
+                              .ngEnvironmentInfoConfig(NGEnvironmentInfoConfig.builder()
+                                                           .identifier("ENV")
+                                                           .orgIdentifier("ORG_ID")
+                                                           .projectIdentifier("PROJECT_ID")
+                                                           .tags(ImmutableMap.of("k1", "v1", "k2", "v2"))
+                                                           .type(EnvironmentType.PreProduction)
+                                                           .build())
+                              .build();
     environmentRequestDTO = EnvironmentRequestDTO.builder()
                                 .identifier("ENV")
                                 .orgIdentifier("ORG_ID")
@@ -65,6 +78,7 @@ public class EnvironmentMapperTest extends CategoryTest {
                              .type(EnvironmentType.PreProduction)
                              .deleted(false)
                              .tags(tags)
+                             .yaml(NGEnvironmentEntityMapper.toYaml(ngEnvironmentConfig))
                              .build();
 
     responseEnvironment = Environment.builder()
