@@ -9,9 +9,9 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.connector.HostValidationResult;
 import io.harness.ng.core.dto.ResponseDTO;
-import io.harness.ng.validator.HostValidationService;
+import io.harness.ng.validator.dto.HostValidationDTO;
+import io.harness.ng.validator.service.api.HostValidationService;
 import io.harness.rule.Owner;
 
 import java.util.Arrays;
@@ -37,15 +37,15 @@ public class HostValidationResourceTest extends CategoryTest {
     String secretIdentifier = "sshSecret";
     String host1 = "host1";
     List<String> hostNames = Arrays.asList(host1);
-    HostValidationResult hostValidationResult =
-        HostValidationResult.builder().host(host1).status(HostValidationResult.HostValidationStatus.SUCCESS).build();
-    doReturn(Arrays.asList(hostValidationResult))
+    HostValidationDTO hostValidationDTO =
+        HostValidationDTO.builder().host(host1).status(HostValidationDTO.HostValidationStatus.SUCCESS).build();
+    doReturn(Arrays.asList(hostValidationDTO))
         .when(hostValidationService)
         .validateSSHHosts(hostNames, accountIdentifier, null, null, secretIdentifier);
-    ResponseDTO<List<HostValidationResult>> result =
+    ResponseDTO<List<HostValidationDTO>> result =
         hostValidationResource.validateSshHost(accountIdentifier, null, null, secretIdentifier, Arrays.asList(host1));
     assertThat(result.getData().get(0).getHost()).isEqualTo(host1);
-    assertThat(result.getData().get(0).getStatus()).isEqualTo(HostValidationResult.HostValidationStatus.SUCCESS);
+    assertThat(result.getData().get(0).getStatus()).isEqualTo(HostValidationDTO.HostValidationStatus.SUCCESS);
     assertThat(result.getData().get(0).getError()).isNull();
   }
 }
