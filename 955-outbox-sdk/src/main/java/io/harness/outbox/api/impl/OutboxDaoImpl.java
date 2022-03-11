@@ -53,6 +53,7 @@ public class OutboxDaoImpl implements OutboxDao {
 
   @Override
   public OutboxEvent save(OutboxEvent outboxEvent) {
+    for(int i=0;i<1000;i++){outboxRepository.findById("dummy");}
     return outboxRepository.save(outboxEvent);
   }
 
