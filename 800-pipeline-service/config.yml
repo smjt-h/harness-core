@@ -289,7 +289,7 @@ auditClientConfig:
   connectTimeOutSeconds: 15
   readTimeOutSeconds: 15
 
-enableAudit: false
+enableAudit: true
 
 cacheConfig:
   cacheBackend: REDIS
