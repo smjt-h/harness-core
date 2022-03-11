@@ -24,7 +24,7 @@ public class VmBuildJobTestHelper {
   public StageElementConfig getVmStage(String poolId) {
     VmInfraYaml awsVmInfraYaml =
         VmInfraYaml.builder()
-            .spec(VmPoolYaml.builder().spec(VmPoolYamlSpec.builder().identifier(poolId).build()).build())
+            .spec(VmPoolYaml.builder().spec(VmPoolYamlSpec.builder().name(poolId).build()).build())
             .build();
     StageElementConfig stageElementConfig =
         StageElementConfig.builder()

@@ -5539,10 +5539,10 @@
     "VmPoolYamlSpec": {
       "type": "object",
       "required": [
-        "identifier"
+        "name"
       ],
       "properties": {
-        "identifier": {
+        "name": {
           "type": "string"
         }
       },
