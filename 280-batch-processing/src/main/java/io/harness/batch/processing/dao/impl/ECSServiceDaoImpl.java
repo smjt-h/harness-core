@@ -9,6 +9,7 @@ package io.harness.batch.processing.dao.impl;
 
 import io.harness.batch.processing.dao.intfc.ECSServiceDao;
 import io.harness.ccm.commons.entities.ecs.ECSService;
+import io.harness.ccm.commons.entities.ecs.ECSService.ECSServiceKeys;
 import io.harness.persistence.HPersistence;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -35,6 +36,22 @@ public class ECSServiceDaoImpl implements ECSServiceDao {
   @Override
   public void create(ECSService ecsService) {
     final CacheKey cacheKey = new CacheKey(ecsService.getClusterId(), ecsService.getServiceArn());
-    saved.get(cacheKey, key -> hPersistence.save(ecsService) != null);
+    saved.get(cacheKey, key -> (
+            hPersistence.upsert(hPersistence.createQuery(ECSService.class)
+                    .field(ECSServiceKeys.accountId)
+                    .equal(ecsService.getAccountId())
+                    .field(ECSServiceKeys.clusterId)
+                    .equal(ecsService.getClusterId())
+                    .field(ECSServiceKeys.serviceArn)
+                    .equal(ecsService.getServiceArn()),
+                hPersistence.createUpdateOperations(ECSService.class)
+                    .set(ECSServiceKeys.accountId, ecsService.getAccountId())
+                    .set(ECSServiceKeys.clusterId, ecsService.getClusterId())
+                    .set(ECSServiceKeys.serviceArn, ecsService.getServiceArn())
+                    .set(ECSServiceKeys.serviceName, ecsService.getServiceName())
+                    .set(ECSServiceKeys.resource, ecsService.getResource())
+                    .set(ECSServiceKeys.labels, ecsService.getLabels()),
+                HPersistence.upsertReturnNewOptions))
+            != null);
   }
 }

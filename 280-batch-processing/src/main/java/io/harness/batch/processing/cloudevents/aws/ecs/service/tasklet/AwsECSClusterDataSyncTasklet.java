@@ -378,19 +378,21 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
               harnessServiceInfo = getHarnessServiceInfo(accountId, clusterName, serviceName);
               // Fetch Service Tags and add to the Task Labels
               List<Tag> serviceTagList = serviceArnTagsMap.get(serviceArn);
+              Map<String, String> serviceLabels = new HashMap<>();
               if (isNotEmpty(serviceTagList)) {
-                labels.putAll(serviceTagList.stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
+                serviceLabels = serviceTagList.stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue));
+                labels.putAll(serviceLabels);
               }
+              ECSService ecsService = ECSService.builder()
+                  .accountId(accountId)
+                  .clusterId(clusterId)
+                  .serviceArn(metaData.get(InstanceMetaDataConstants.ECS_SERVICE_ARN))
+                  .serviceName(metaData.get(InstanceMetaDataConstants.ECS_SERVICE_NAME))
+                  .resource(resource)
+                  .labels(serviceLabels)
+                  .build();
+              ecsServiceDao.create(ecsService);
             }
-
-            ECSService ecsService = ECSService.builder()
-                                        .accountId(accountId)
-                                        .clusterId(clusterId)
-                                        .serviceArn(metaData.get(InstanceMetaDataConstants.ECS_SERVICE_ARN))
-                                        .serviceName(metaData.get(InstanceMetaDataConstants.ECS_SERVICE_NAME))
-                                        .resource(resource)
-                                        .labels(labels)
-                                        .build();
 
             Instant startInstant = task.getPullStartedAt().toInstant();
             InstanceData instanceData =
@@ -413,7 +415,6 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
 
             updateInstanceStopTimeForTask(instanceData, task);
             log.debug("Creating task {} ", taskId);
-            ecsServiceDao.create(ecsService);
             instanceDataService.create(instanceData);
           }
         });

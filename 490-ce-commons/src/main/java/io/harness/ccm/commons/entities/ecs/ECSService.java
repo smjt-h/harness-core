@@ -1,6 +1,9 @@
 package io.harness.ccm.commons.entities.ecs;
 
+import static io.harness.annotations.dev.HarnessTeam.CE;
+
 import io.harness.annotation.StoreIn;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.ccm.commons.beans.Resource;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.MongoIndex;
@@ -28,16 +31,16 @@ import org.mongodb.morphia.annotations.Id;
 @Entity(value = "ecsService", noClassnameStored = true)
 @FieldNameConstants(innerTypeName = "ECSServiceKeys")
 @StoreIn(DbAliases.CENG)
+@OwnedBy(CE)
 public final class ECSService implements PersistentEntity, UuidAware, CreatedAtAware, UpdatedAtAware, AccountAccess {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
-                 .name("accountId_clusterId_serviceArn_serviceName")
+                 .name("unique_accountId_clusterId_serviceArn")
                  .unique(true)
                  .field(ECSServiceKeys.accountId)
                  .field(ECSServiceKeys.clusterId)
                  .field(ECSServiceKeys.serviceArn)
-                 .field(ECSServiceKeys.serviceName)
                  .build())
         .build();
   }
