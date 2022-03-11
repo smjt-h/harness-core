@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
-import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryBuildDetailsDTO;
+import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryDockerBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryResponseDTO;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.response.ArtifactBuildDetailsNG;
@@ -39,6 +39,6 @@ public class ArtifactoryResourceMapperTest extends CategoryTest {
     assertThat(nexusResponseDTO).isNotNull();
     assertThat(nexusResponseDTO.getBuildDetailsList()).isNotEmpty();
     assertThat(nexusResponseDTO.getBuildDetailsList().get(0))
-        .isEqualTo(ArtifactoryBuildDetailsDTO.builder().imagePath("/").build());
+        .isEqualTo(ArtifactoryDockerBuildDetailsDTO.builder().imagePath("/").build());
   }
 }

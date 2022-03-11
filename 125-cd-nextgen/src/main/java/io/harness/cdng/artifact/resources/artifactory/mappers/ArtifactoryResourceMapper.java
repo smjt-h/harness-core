@@ -11,6 +11,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryArtifactBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryBuildDetailsDTO;
+import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryDockerBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryResponseDTO;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.response.ArtifactBuildDetailsNG;
@@ -39,14 +40,14 @@ public class ArtifactoryResourceMapper {
       List<ArtifactoryArtifactDelegateResponse> artifactoryArtifactDelegateResponseList) {
     List<ArtifactoryBuildDetailsDTO> detailsDTOList =
         artifactoryArtifactDelegateResponseList.stream()
-            .map(response -> toArtifactoryBuildDetailsDTO(response.getBuildDetails(), response.getArtifactPath()))
+            .map(response -> toArtifactoryDockerBuildDetailsDTO(response.getBuildDetails(), response.getArtifactPath()))
             .collect(Collectors.toList());
     return ArtifactoryResponseDTO.builder().buildDetailsList(detailsDTOList).build();
   }
 
-  public ArtifactoryBuildDetailsDTO toArtifactoryBuildDetailsDTO(
+  public ArtifactoryDockerBuildDetailsDTO toArtifactoryDockerBuildDetailsDTO(
       ArtifactBuildDetailsNG artifactBuildDetailsNG, String imagePath) {
-    return ArtifactoryBuildDetailsDTO.builder()
+    return ArtifactoryDockerBuildDetailsDTO.builder()
         .tag(artifactBuildDetailsNG.getNumber())
         .buildUrl(artifactBuildDetailsNG.getBuildUrl())
         .labels(artifactBuildDetailsNG.getLabelsMap())
