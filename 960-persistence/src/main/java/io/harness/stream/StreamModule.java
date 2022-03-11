@@ -13,7 +13,6 @@ import static io.harness.stream.AtmosphereBroadcaster.REDIS;
 
 import io.harness.hazelcast.HazelcastModule;
 import io.harness.redis.RedisConfig;
-import io.harness.stream.hazelcast.HazelcastBroadcaster;
 import io.harness.stream.redisson.RedissonBroadcaster;
 
 import com.google.inject.AbstractModule;
@@ -69,10 +68,7 @@ public class StreamModule extends AbstractModule {
         .addInitParameter(ApplicationConfig.ANNOTATION_PACKAGE, getClass().getPackage().getName());
 
     String broadcasterName;
-    if (atmosphereBroadcaster == HAZELCAST) {
-      broadcasterName = HazelcastBroadcaster.class.getName();
-      HazelcastBroadcaster.HAZELCAST_INSTANCE.set(hazelcastInstanceProvider.get());
-    } else if (atmosphereBroadcaster == REDIS) {
+    if (atmosphereBroadcaster == REDIS) {
       broadcasterName = RedissonBroadcaster.class.getName();
     } else {
       broadcasterName = DefaultBroadcaster.class.getName();
