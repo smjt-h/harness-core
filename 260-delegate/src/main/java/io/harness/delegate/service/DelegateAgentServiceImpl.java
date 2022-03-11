@@ -1120,6 +1120,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
                                             //.proxy(set to true if there is a system proxy)
                                             .pollingModeEnabled(delegateConfiguration.isPollForTasks())
                                             .ceEnabled(Boolean.parseBoolean(System.getenv("ENABLE_CE")))
+                                            .delegateName(DELEGATE_NAME)
                                             .build();
         restResponse = executeRestCall(delegateAgentManagerClient.registerDelegate(accountId, delegateParams));
       } catch (Exception e) {
