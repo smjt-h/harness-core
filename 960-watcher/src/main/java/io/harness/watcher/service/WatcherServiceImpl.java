@@ -769,10 +769,11 @@ public class WatcherServiceImpl implements WatcherService {
           }
 
           try {
-            log.info("New delegate process for version {} will be started", version);
+            log.info("New delegate process for version {} will be started ***gaurav ", version);
             downloadRunScripts(version, version, false);
             downloadDelegateJar(version);
             startDelegateProcess(version, version, emptyList(), "DelegateStartScriptVersioned", getProcessId());
+            log.info("New delegate process for version {} started ***gaurav ", version);
             break;
           } catch (IOException ioe) {
             if (ioe.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE_ERROR)) {
@@ -787,6 +788,7 @@ public class WatcherServiceImpl implements WatcherService {
           }
         }
 
+        log.info("done with for loop ***gaurav ");
         // Make sure no more than one of each running version is acquiring
         for (String version : runningVersions.keySet()) {
           List<String> acquiring = runningVersions.get(version)
@@ -797,6 +799,7 @@ public class WatcherServiceImpl implements WatcherService {
             drainDelegateProcess(acquiring.get(i));
           }
         }
+        log.info("finishing watch delegate method ***gaurav ");
       }
     } catch (Exception e) {
       log.error("Error processing delegate stream: {}", e.getMessage(), e);
@@ -1137,7 +1140,7 @@ public class WatcherServiceImpl implements WatcherService {
       working.set(false);
       return;
     }
-
+    log.info("goint to start new process ***gaurav ");
     executorService.submit(() -> {
       StartedProcess newDelegate = null;
       try {
@@ -1228,6 +1231,7 @@ public class WatcherServiceImpl implements WatcherService {
         working.set(false);
       }
     });
+    log.info("gave new process instruction to start ***gaurav ");
   }
 
   private void shutdownDelegate(String delegateProcess) {

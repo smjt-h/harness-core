@@ -253,6 +253,7 @@ public class MessageServiceImpl implements MessageService {
         while (message == null || !messageName.equals(message.getMessage())) {
           try {
             message = queue.take();
+            log.info("current messages {} and sending message {}", String.valueOf(queue), message);
           } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
           }
@@ -346,6 +347,9 @@ public class MessageServiceImpl implements MessageService {
       if (channel.exists()) {
         FileUtils.write(channel, "", UTF_8);
       }
+      log.info("done clearing channel ");
+      BlockingQueue<Message> queue = messageQueues.get(getMessageChannel(type, id));
+      log.info("Messages still in queue {}", String.valueOf(queue));
     } catch (Exception e) {
       log.error("Error clearing channel {} {}", type, id, e);
     }
