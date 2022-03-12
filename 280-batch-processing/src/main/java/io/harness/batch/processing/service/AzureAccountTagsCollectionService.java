@@ -13,6 +13,7 @@ import static java.lang.String.format;
 
 import io.harness.batch.processing.config.AzureStorageSyncConfig;
 import io.harness.batch.processing.config.BatchMainConfig;
+import io.harness.batch.processing.service.CloudProviderEntityTagsCollectionUtil;
 import io.harness.batch.processing.shard.AccountShardService;
 import io.harness.batch.processing.tasklet.dto.CloudProviderEntityTags;
 import io.harness.ccm.bigQuery.BigQueryService;
@@ -37,7 +38,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-
 @Service
 @Singleton
 @Slf4j
@@ -53,7 +53,7 @@ public class AzureAccountTagsCollectionService {
     for (Account account : accounts) {
       log.info("Fetching connectors for accountName {}, accountId {}", account.getAccountName(), account.getUuid());
       List<ConnectorResponseDTO> nextGenConnectorResponses =
-              cloudProviderEntityTagsCollectionUtil.getNextGenConnectorResponses(account.getUuid(), ConnectorType.CE_AZURE);
+          cloudProviderEntityTagsCollectionUtil.getNextGenConnectorResponses(account.getUuid(), ConnectorType.CE_AZURE);
       for (ConnectorResponseDTO connector : nextGenConnectorResponses) {
         ConnectorInfoDTO connectorInfo = connector.getConnector();
         CEAzureConnectorDTO ceAzureConnectorDTO = (CEAzureConnectorDTO) connectorInfo.getConnectorConfig();
@@ -68,10 +68,12 @@ public class AzureAccountTagsCollectionService {
   }
 
   public void processAndInsertTags(CEAzureConnectorDTO ceAzureConnectorDTO, Account account) {
-    String tableName = cloudProviderEntityTagsCollectionUtil.createBQTable(account); // This can be moved to connector creation part
+    String tableName =
+        cloudProviderEntityTagsCollectionUtil.createBQTable(account); // This can be moved to connector creation part
     AzureStorageSyncConfig azureStorageSyncConfig = mainConfig.getAzureStorageSyncConfig();
-    log.info("Processing tags for azureTenantID: {} azureSubscriptionId: {}, storage: {}", ceAzureConnectorDTO.getTenantId(),
-        ceAzureConnectorDTO.getSubscriptionId(), ceAzureConnectorDTO.getBillingExportSpec().getStorageAccountName());
+    log.info("Processing tags for azureTenantID: {} azureSubscriptionId: {}, storage: {}",
+        ceAzureConnectorDTO.getTenantId(), ceAzureConnectorDTO.getSubscriptionId(),
+        ceAzureConnectorDTO.getBillingExportSpec().getStorageAccountName());
     Map<String, String> azureTags = null;
     System.out.println(azureTags);
     List<CloudProviderEntityTags> cloudProviderEntityTags = new ArrayList<>();
