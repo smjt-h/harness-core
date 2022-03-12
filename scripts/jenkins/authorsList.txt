@@ -126,6 +126,7 @@ Piyush Patel piyush.patel@harness.io
 Pooja Singhal pooja.singhal@harness.io
 Prabu Rajendran prabu.rajendran@harness.io
 prabu-kr prabu.rajendran@harness.io
+Pranil Dasika pranil.dasika@harness.io
 Pranjal Kumar pranjal@harness.io
 Prashant Pal prashant.pal@harness.io
 Prashant Sharma prashant.sharma@harness.io
