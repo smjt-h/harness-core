@@ -37,28 +37,30 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+
 @Service
 @Singleton
 @Slf4j
-public class AzureAccountTagsCollectionService extends CloudProviderEntityTagsCollectionService {
+public class AzureAccountTagsCollectionService {
   @Autowired private BatchMainConfig mainConfig;
   @Autowired private AccountShardService accountShardService;
   @Autowired BigQueryService bigQueryService;
+  @Autowired CloudProviderEntityTagsCollectionUtil cloudProviderEntityTagsCollectionUtil;
 
   public void update() {
     List<Account> accounts = accountShardService.getCeEnabledAccounts();
-    log.info("accounts size: {}", accounts.size());
+    log.info("accounts {} size: {}", accounts, accounts.size());
     for (Account account : accounts) {
       log.info("Fetching connectors for accountName {}, accountId {}", account.getAccountName(), account.getUuid());
       List<ConnectorResponseDTO> nextGenConnectorResponses =
-          getNextGenConnectorResponses(account.getUuid(), ConnectorType.CE_AZURE);
+              cloudProviderEntityTagsCollectionUtil.getNextGenConnectorResponses(account.getUuid(), ConnectorType.CE_AZURE);
       for (ConnectorResponseDTO connector : nextGenConnectorResponses) {
         ConnectorInfoDTO connectorInfo = connector.getConnector();
         CEAzureConnectorDTO ceAzureConnectorDTO = (CEAzureConnectorDTO) connectorInfo.getConnectorConfig();
         try {
           processAndInsertTags(ceAzureConnectorDTO, account);
         } catch (Exception e) {
-          log.warn("Exception processing aws tags for connectorId: {} for CCM accountId: {}",
+          log.warn("Exception processing azure tags for connectorId: {} for CCM accountId: {}",
               connectorInfo.getIdentifier(), account.getUuid(), e);
         }
       }
@@ -66,9 +68,9 @@ public class AzureAccountTagsCollectionService extends CloudProviderEntityTagsCo
   }
 
   public void processAndInsertTags(CEAzureConnectorDTO ceAzureConnectorDTO, Account account) {
-    String tableName = createBQTable(account); // This can be moved to connector creation part
+    String tableName = cloudProviderEntityTagsCollectionUtil.createBQTable(account); // This can be moved to connector creation part
     AzureStorageSyncConfig azureStorageSyncConfig = mainConfig.getAzureStorageSyncConfig();
-    log.info("azureTenantID: {} azureSubscriptionId: {}, storage: {}", ceAzureConnectorDTO.getTenantId(),
+    log.info("Processing tags for azureTenantID: {} azureSubscriptionId: {}, storage: {}", ceAzureConnectorDTO.getTenantId(),
         ceAzureConnectorDTO.getSubscriptionId(), ceAzureConnectorDTO.getBillingExportSpec().getStorageAccountName());
     Map<String, String> azureTags = null;
     System.out.println(azureTags);
@@ -98,7 +100,7 @@ public class AzureAccountTagsCollectionService extends CloudProviderEntityTagsCo
             CloudProviderEntityTags.builder().key(entry.getKey()).value(entry.getValue()).build());
       }
     }
-    insertInBQ(
+    cloudProviderEntityTagsCollectionUtil.insertInBQ(
         tableName, "AZURE", ceAzureConnectorDTO.getSubscriptionId(), "subscription", "", cloudProviderEntityTags);
   }
 }

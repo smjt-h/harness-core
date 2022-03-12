@@ -324,7 +324,7 @@ public class EventJobScheduler {
       log.info("running azure account tags collection job");
       azureAccountTagsCollectionService.update();
     } catch (Exception ex) {
-      log.error("Exception while running runAwsAccountTagsCollectionJob", ex);
+      log.error("Exception while running runAzureAccountTagsCollectionJob", ex);
     }
   }
 
