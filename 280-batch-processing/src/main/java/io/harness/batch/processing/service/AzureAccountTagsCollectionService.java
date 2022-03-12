@@ -70,22 +70,28 @@ public class AzureAccountTagsCollectionService extends CloudProviderEntityTagsCo
     AzureStorageSyncConfig azureStorageSyncConfig = mainConfig.getAzureStorageSyncConfig();
     log.info("azureTenantID: {} azureSubscriptionId: {}, storage: {}", ceAzureConnectorDTO.getTenantId(),
         ceAzureConnectorDTO.getSubscriptionId(), ceAzureConnectorDTO.getBillingExportSpec().getStorageAccountName());
-
-    ClientSecretCredential clientSecretCredential = new ClientSecretCredentialBuilder()
-                                                        .clientId(azureStorageSyncConfig.getAzureAppClientId())
-                                                        .clientSecret(azureStorageSyncConfig.getAzureAppClientSecret())
-                                                        .tenantId(ceAzureConnectorDTO.getTenantId())
-                                                        .build();
-
-    AzureProfile profile = new AzureProfile(AzureEnvironment.AZURE);
-    AzureResourceManager azure = AzureResourceManager.authenticate(clientSecretCredential, profile)
-                                     .withSubscription(ceAzureConnectorDTO.getSubscriptionId());
-    TagsResourceInner tagsResourceInner =
-        azure.genericResources().manager().serviceClient().getTagOperations().getAtScope(
-            format("/subscriptions/%s/", ceAzureConnectorDTO.getSubscriptionId()));
-    Map<String, String> azureTags = tagsResourceInner.properties().tags();
+    Map<String, String> azureTags = null;
     System.out.println(azureTags);
     List<CloudProviderEntityTags> cloudProviderEntityTags = new ArrayList<>();
+    try {
+      ClientSecretCredential clientSecretCredential =
+          new ClientSecretCredentialBuilder()
+              .clientId(azureStorageSyncConfig.getAzureAppClientId())
+              .clientSecret(azureStorageSyncConfig.getAzureAppClientSecret())
+              .tenantId(ceAzureConnectorDTO.getTenantId())
+              .build();
+
+      AzureProfile profile = new AzureProfile(AzureEnvironment.AZURE);
+      AzureResourceManager azure = AzureResourceManager.authenticate(clientSecretCredential, profile)
+                                       .withSubscription(ceAzureConnectorDTO.getSubscriptionId());
+      TagsResourceInner tagsResourceInner =
+          azure.genericResources().manager().serviceClient().getTagOperations().getAtScope(
+              format("/subscriptions/%s/", ceAzureConnectorDTO.getSubscriptionId()));
+      azureTags = tagsResourceInner.properties().tags();
+    } catch (Exception ex) {
+      log.error("Error", ex);
+    }
+    System.out.println(azureTags);
     if (isNotEmpty(azureTags)) {
       for (Map.Entry<String, String> entry : azureTags.entrySet()) {
         cloudProviderEntityTags.add(

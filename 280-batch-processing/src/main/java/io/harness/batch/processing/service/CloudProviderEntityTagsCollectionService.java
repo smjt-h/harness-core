@@ -122,7 +122,8 @@ public class CloudProviderEntityTagsCollectionService {
         }
         page++;
       } while (response != null && isNotEmpty(response.getContent()));
-      log.info("Processing batch size of {}", nextGenConnectorResponses.size());
+      log.info("Processing batch size of {} for account {} and connectorType {}", nextGenConnectorResponses.size(),
+          accountId, connectorType);
       return nextGenConnectorResponses;
     } catch (Exception ex) {
       log.warn("Error", ex);
