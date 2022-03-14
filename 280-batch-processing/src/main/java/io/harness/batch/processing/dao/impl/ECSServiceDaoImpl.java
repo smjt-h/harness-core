@@ -35,6 +35,7 @@ public class ECSServiceDaoImpl implements ECSServiceDao {
 
   @Override
   public void create(ECSService ecsService) {
+    log.info("ECSService: {}", ecsService);
     final CacheKey cacheKey = new CacheKey(ecsService.getClusterId(), ecsService.getServiceArn());
     saved.get(cacheKey, key -> (
             hPersistence.upsert(hPersistence.createQuery(ECSService.class)
