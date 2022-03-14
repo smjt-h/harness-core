@@ -40,16 +40,7 @@ import io.harness.helpers.ext.vault.VaultAppRoleLoginResult;
 import io.harness.ng.core.entities.NGEncryptedData;
 import io.harness.serializer.KryoRegistrar;
 
-import software.wings.beans.AwsSecretsManagerConfig;
-import software.wings.beans.AzureVaultConfig;
-import software.wings.beans.BaseVaultConfig;
-import software.wings.beans.CyberArkConfig;
-import software.wings.beans.GcpKmsConfig;
-import software.wings.beans.GcpSecretsManagerConfig;
-import software.wings.beans.KmsConfig;
-import software.wings.beans.LocalEncryptionConfig;
-import software.wings.beans.SSHVaultConfig;
-import software.wings.beans.VaultConfig;
+import software.wings.beans.*;
 
 import com.amazonaws.services.secretsmanager.model.AWSSecretsManagerException;
 import com.esotericsoftware.kryo.Kryo;
@@ -97,5 +88,6 @@ public class SMCoreKryoRegistrar implements KryoRegistrar {
     kryo.register(NGVaultRenewalAppRoleTaskResponse.class, 150021);
     kryo.register(NGAzureKeyVaultFetchEngineTaskParameters.class, 150022);
     kryo.register(NGAzureKeyVaultFetchEngineResponse.class, 150023);
+    kryo.register(AzureBlobConfig.class, 150024);
   }
 }
