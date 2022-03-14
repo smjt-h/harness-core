@@ -32,11 +32,13 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.InvalidYamlException;
 import io.harness.exception.ScmException;
 import io.harness.git.model.ChangeType;
+import io.harness.gitsync.common.utils.GitEntityFilePath;
+import io.harness.gitsync.common.utils.GitSyncFilePathUtils;
 import io.harness.gitsync.helpers.GitContextHelper;
+import io.harness.gitsync.interceptor.GitEntityInfo;
+import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.scm.EntityObjectIdUtils;
-import io.harness.gitsync.utils.GitEntityFilePath;
-import io.harness.gitsync.utils.GitSyncSdkUtils;
 import io.harness.grpc.utils.StringValueUtils;
 import io.harness.ng.core.template.TemplateMergeResponseDTO;
 import io.harness.opaclient.model.OpaConstants;
@@ -379,6 +381,25 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
   @Override
   public GovernanceMetadata validatePipelineYamlAndSetTemplateRefIfAny(
       PipelineEntity pipelineEntity, boolean checkAgainstOPAPolicies) {
+    GitEntityInfo gitEntityInfo = GitContextHelper.getGitEntityInfo();
+    if (gitEntityInfo != null && gitEntityInfo.isNewBranch()) {
+      GitSyncBranchContext gitSyncBranchContext =
+          GitSyncBranchContext.builder()
+              .gitBranchInfo(GitEntityInfo.builder()
+                                 .branch(gitEntityInfo.getBaseBranch())
+                                 .yamlGitConfigId(gitEntityInfo.getYamlGitConfigId())
+                                 .build())
+              .build();
+      try (PmsGitSyncBranchContextGuard ignored = new PmsGitSyncBranchContextGuard(gitSyncBranchContext, true)) {
+        return validatePipelineYamlAndSetTemplateRefIfAnyInternal(pipelineEntity, checkAgainstOPAPolicies);
+      }
+    } else {
+      return validatePipelineYamlAndSetTemplateRefIfAnyInternal(pipelineEntity, checkAgainstOPAPolicies);
+    }
+  }
+
+  private GovernanceMetadata validatePipelineYamlAndSetTemplateRefIfAnyInternal(
+      PipelineEntity pipelineEntity, boolean checkAgainstOPAPolicies) {
     String accountId = pipelineEntity.getAccountId();
     String orgIdentifier = pipelineEntity.getOrgIdentifier();
     String projectIdentifier = pipelineEntity.getProjectIdentifier();
@@ -571,12 +592,16 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     if (!pmsFeatureFlagService.isEnabled(accountId, FeatureName.OPA_PIPELINE_GOVERNANCE)) {
       return pipelineYaml;
     }
+    long start = System.currentTimeMillis();
     ExpansionRequestMetadata expansionRequestMetadata = getRequestMetadata(accountId, orgIdentifier, projectIdentifier);
 
     Set<ExpansionRequest> expansionRequests = expansionRequestsExtractor.fetchExpansionRequests(pipelineYaml);
     Set<ExpansionResponseBatch> expansionResponseBatches =
         jsonExpander.fetchExpansionResponses(expansionRequests, expansionRequestMetadata);
-    return ExpansionsMerger.mergeExpansions(pipelineYaml, expansionResponseBatches);
+    String mergeExpansions = ExpansionsMerger.mergeExpansions(pipelineYaml, expansionResponseBatches);
+    log.info("[PMS_GOVERNANCE] Pipeline Json Expansion took {}ms for projectId {}, orgId {}, accountId {}",
+        System.currentTimeMillis() - start, projectIdentifier, orgIdentifier, accountId);
+    return mergeExpansions;
   }
 
   @Override
@@ -585,7 +610,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
         pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getIdentifier(), false,
         null);
 
-    GitEntityFilePath gitEntityFilePath = GitSyncSdkUtils.getRootFolderAndFilePath(newFilePath);
+    GitEntityFilePath gitEntityFilePath = GitSyncFilePathUtils.getRootFolderAndFilePath(newFilePath);
     Update update = new Update()
                         .set(PipelineEntityKeys.filePath, gitEntityFilePath.getFilePath())
                         .set(PipelineEntityKeys.rootFolder, gitEntityFilePath.getRootFolder());
