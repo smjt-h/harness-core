@@ -12,4 +12,6 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class SCMExceptionHints {
   public static final String INVALID_CREDENTIALS = "Please check your credentials.";
+
+  public static final String INVALID_BRANCH_NAME = "Please check if branch exists in git";
 }

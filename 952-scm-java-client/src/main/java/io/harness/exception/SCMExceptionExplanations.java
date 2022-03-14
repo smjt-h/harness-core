@@ -16,4 +16,8 @@ public class SCMExceptionExplanations {
       + "1. Missing permissions to push to the selected branch of the repo\n"
       + "2. Repo does not exist or has been deleted\n"
       + "3. Credentials have expired";
+
+  public static final String UNABLE_TO_PUSH_TO_REPO_WITH_INVALID_BRANCH_NAME =
+      "We could not perform a push to the git repository with the given branch name. Possible reasons can be:\n"
+      + "1. Branch doesn't exist or has been deleted/renamed\n";
 }

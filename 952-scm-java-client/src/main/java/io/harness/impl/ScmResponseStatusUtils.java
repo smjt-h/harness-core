@@ -36,7 +36,11 @@ public class ScmResponseStatusUtils {
       } else if (errorCode == ErrorCode.SCM_NOT_FOUND_ERROR) {
         throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.INVALID_CREDENTIALS,
             SCMExceptionExplanations.UNABLE_TO_PUSH_TO_REPO_WITH_USER_CREDENTIALS, new ScmException(errorCode));
+      } else if (errorCode == ErrorCode.SCM_UNPROCESSABLE_ENTITY) {
+        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.INVALID_BRANCH_NAME,
+            SCMExceptionExplanations.UNABLE_TO_PUSH_TO_REPO_WITH_INVALID_BRANCH_NAME, new ScmException(errorCode));
       }
+
       if (isNotEmpty(errorMsg)) {
         throw new ExplanationException(errorMsg, new ScmException(errorCode));
       } else {
