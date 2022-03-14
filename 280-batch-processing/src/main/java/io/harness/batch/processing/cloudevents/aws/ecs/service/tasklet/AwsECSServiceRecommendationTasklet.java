@@ -28,6 +28,7 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
+import software.wings.beans.infrastructure.instance.Instance;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -56,7 +57,7 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
     String accountId = jobConstants.getAccountId();
     Instant startTime = Instant.ofEpochMilli(jobConstants.getJobStartTime());
     Instant endTime = Instant.ofEpochMilli(jobConstants.getJobEndTime());
-    // 1. Get all clusters for current account
+    // Get all clusters for current account
     Map<String, String> ceClusters = ceClusterDao.getClusterIdNameMapping(accountId);
     if (CollectionUtils.isEmpty(ceClusters)) {
       return null;
@@ -64,17 +65,17 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
     List<String> clusterIds = new ArrayList<>(ceClusters.keySet());
 
     for (List<String> ceClustersPartition: Lists.partition(clusterIds, BATCH_SIZE)) {
-      // 2. Get utilization data for all clusters in this batch for a day
+      // Get utilization data for all clusters in this batch for a day
       Map<ClusterIdAndServiceArn, List<UtilizationDataWithTime>> utilMap =
           utilizationDataService.getUtilizationDataForECSClusters(accountId, ceClustersPartition,
               startTime.toString(), endTime.toString());
 
       for (ClusterIdAndServiceArn clusterIdAndServiceArn : utilMap.keySet()) {
-        // get service details cpuUnits and memoryMb
+        // Get service resource details cpuUnits and memoryMb
         int cpuUnits = 2048;
         int memoryMb = 7764;
         List<UtilizationDataWithTime> utilData = utilMap.get(clusterIdAndServiceArn);
-        Instant today = Instant.now();
+        Instant today = Instant.ofEpochMilli(jobConstants.getJobStartTime());
         String clusterId = clusterIdAndServiceArn.getClusterId();
         String clusterName = ceClusters.get(clusterId);
         String serviceArn = clusterIdAndServiceArn.getServiceArn();
@@ -105,20 +106,42 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
         // add today's histogram to the list
         partialHistograms.add(partialRecommendationHistogram);
 
+        // 5. Create ECSServiceRecommendation
         ECSServiceRecommendation ecsServiceRecommendation = ecsRecommendationDAO.fetchServiceRecommendation(accountId,
             clusterId, clusterName, serviceName, serviceArn);
         Histogram cpuHistogram = newCpuHistogramV2();
         Histogram memoryHistogram = newMemoryHistogramV2();
+        Instant firstSampleStart = Instant.now();
+        Instant lastSampleStart = Instant.EPOCH;
+        Instant windowEnd = Instant.EPOCH;
+        int totalSamplesCount = 0;
+        long memoryPeak = 0;
         for (ECSPartialRecommendationHistogram partialHistogram: partialHistograms) {
           cpuHistogram.merge(loadFromCheckpointV2(partialHistogram.getCpuHistogram()));
           Histogram partialMemoryHistogram = newMemoryHistogramV2();
           partialMemoryHistogram.loadFromCheckPoint(partialHistogram.getMemoryHistogram());
           memoryHistogram.merge(partialMemoryHistogram);
+          if (partialHistogram.getFirstSampleStart().isBefore(firstSampleStart))
+            firstSampleStart = partialHistogram.getFirstSampleStart();
+          if (partialHistogram.getLastSampleStart().isAfter(lastSampleStart))
+            lastSampleStart = partialHistogram.getLastSampleStart();
+          if (partialHistogram.getWindowEnd().isAfter(windowEnd))
+            windowEnd = partialHistogram.getWindowEnd();
+          totalSamplesCount += partialHistogram.getTotalSamplesCount();
+          memoryPeak = Math.max(partialHistogram.getMemoryPeak(), memoryPeak);
         }
         ecsServiceRecommendation.setCpuHistogram(cpuHistogram.saveToCheckpoint());
         ecsServiceRecommendation.setMemoryHistogram(memoryHistogram.saveToCheckpoint());
         ecsServiceRecommendation.setCurrentResourceRequirements(
             convertToReadableForm(makeResourceMap(cpuUnits, (long) memoryMb * 1024 * 1024)));
+        ecsServiceRecommendation.setFirstSampleStart(firstSampleStart);
+        ecsServiceRecommendation.setLastSampleStart(lastSampleStart);
+        ecsServiceRecommendation.setWindowEnd(windowEnd);
+        ecsServiceRecommendation.setTotalSamplesCount(totalSamplesCount);
+        ecsServiceRecommendation.setMemoryPeak(memoryPeak);
+        ecsServiceRecommendation.setLastReceivedUtilDataAt(lastSampleStart);
+        ecsServiceRecommendation.setLastComputedRecommendationAt(today);
+        ecsServiceRecommendation.setNumDays(partialHistograms.size());
 
         Map<String, Map<String, String>> computedPercentiles = new HashMap<>();
         for (Integer percentile : requiredPercentiles) {
