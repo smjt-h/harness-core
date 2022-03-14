@@ -31,26 +31,31 @@ import lombok.extern.slf4j.Slf4j;
 @UtilityClass
 @Slf4j
 public class ExpansionsMerger {
-  public String mergeExpansions(String pipelineYaml, Set<ExpansionResponseBatch> responseBatches) {
+  public String mergeExpansions(
+      String pipelineYaml, Set<ExpansionResponseBatch> responseBatches, Map<String, Set<String>> uuidToFqnSet) {
     Map<String, String> fqnToUpdateMap = new HashMap<>();
     List<String> toBeRemovedFQNs = new ArrayList<>();
     for (ExpansionResponseBatch expansionResponseBatch : responseBatches) {
       List<ExpansionResponseProto> expansionResponseProtoList = expansionResponseBatch.getExpansionResponseProtoList();
       for (ExpansionResponseProto response : expansionResponseProtoList) {
         if (!response.getSuccess()) {
-          log.warn("Failed to get expansion for: " + response.getFqn() + ". Error: " + response.getErrorMessage());
+          log.warn("Failed to get expansion. Error: " + response.getErrorMessage());
           continue;
         }
         String key = response.getKey();
         if (EmptyPredicate.isEmpty(key)) {
-          log.warn("No key provided for expansion for: " + response.getFqn());
+          log.warn("No key provided for expansion for: " + response);
           continue;
         }
-        String newFQN = getNewFQN(response.getFqn(), key, response.getPlacement());
-        String value = response.getValue();
-        fqnToUpdateMap.put(newFQN, value);
-        if (response.getPlacement().equals(ExpansionPlacementStrategy.REPLACE)) {
-          toBeRemovedFQNs.add(response.getFqn());
+        String uuid = response.getUuid();
+        Set<String> fqnSetForResponse = uuidToFqnSet.get(uuid);
+        for (String fqn : fqnSetForResponse) {
+          String newFQN = getNewFQN(fqn, key, response.getPlacement());
+          String value = response.getValue();
+          fqnToUpdateMap.put(newFQN, value);
+          if (response.getPlacement().equals(ExpansionPlacementStrategy.REPLACE)) {
+            toBeRemovedFQNs.add(fqn);
+          }
         }
       }
     }

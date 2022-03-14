@@ -19,9 +19,10 @@ message ExpansionRequestBatch {
 }
 
 message ExpansionRequestProto {
-  string fqn = 1;
+  string fqn = 1 [deprecated = true];
   bytes value = 2;
   string key = 3;
+  string uuid = 4;
 }
 
 message ExpansionResponseBatch {
@@ -29,12 +30,13 @@ message ExpansionResponseBatch {
 }
 
 message ExpansionResponseProto {
-  string fqn = 1;
+  string fqn = 1 [deprecated = true];
   string key = 2;
   string value = 3;
   ExpansionPlacementStrategy placement = 4;
   bool success = 5;
   string errorMessage = 6;
+  string uuid = 7;
 }
 
 enum ExpansionPlacementStrategy {

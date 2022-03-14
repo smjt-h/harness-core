@@ -50,6 +50,8 @@ import io.harness.pms.contracts.steps.StepInfo;
 import io.harness.pms.gitsync.PmsGitSyncBranchContextGuard;
 import io.harness.pms.gitsync.PmsGitSyncHelper;
 import io.harness.pms.governance.ExpansionRequest;
+import io.harness.pms.governance.ExpansionRequestBatchHelper;
+import io.harness.pms.governance.ExpansionRequestData;
 import io.harness.pms.governance.ExpansionRequestsExtractor;
 import io.harness.pms.governance.ExpansionsMerger;
 import io.harness.pms.governance.JsonExpander;
@@ -595,9 +597,12 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     ExpansionRequestMetadata expansionRequestMetadata = getRequestMetadata(accountId, orgIdentifier, projectIdentifier);
 
     Set<ExpansionRequest> expansionRequests = expansionRequestsExtractor.fetchExpansionRequests(pipelineYaml);
+    ExpansionRequestData expansionRequestData =
+        ExpansionRequestBatchHelper.getBatchesByModule(expansionRequests, expansionRequestMetadata);
     Set<ExpansionResponseBatch> expansionResponseBatches =
-        jsonExpander.fetchExpansionResponses(expansionRequests, expansionRequestMetadata);
-    return ExpansionsMerger.mergeExpansions(pipelineYaml, expansionResponseBatches);
+        jsonExpander.fetchExpansionResponses(expansionRequestData.getModuleToRequestBatch());
+    return ExpansionsMerger.mergeExpansions(
+        pipelineYaml, expansionResponseBatches, expansionRequestData.getUuidToFqnSet());
   }
 
   @Override

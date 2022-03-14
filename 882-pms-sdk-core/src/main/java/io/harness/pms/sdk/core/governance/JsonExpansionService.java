@@ -43,15 +43,14 @@ public class JsonExpansionService extends JsonExpansionServiceImplBase {
 
     List<ExpansionRequestProto> expansionRequests = requestsBatch.getExpansionRequestProtoList();
     for (ExpansionRequestProto request : expansionRequests) {
-      String fqn = request.getFqn();
+      String requestUuid = request.getUuid();
       try {
         String key = request.getKey();
         JsonExpansionHandler jsonExpansionHandler = expansionHandlerRegistry.obtain(key);
         JsonNode value = getValueJsonNode(request);
         ExpansionResponse expansionResponse = jsonExpansionHandler.expand(value, requestsBatch.getRequestMetadata());
-        ExpansionResponseProto expansionResponseProto = convertToResponseProto(expansionResponse, fqn);
+        ExpansionResponseProto expansionResponseProto = convertToResponseProto(expansionResponse, requestUuid);
         expansionResponseBatchBuilder.addExpansionResponseProto(expansionResponseProto);
-
       } catch (Exception ex) {
         log.error(ExceptionUtils.getMessage(ex), ex);
         WingsException processedException = exceptionManager.processException(ex);
@@ -59,7 +58,7 @@ public class JsonExpansionService extends JsonExpansionServiceImplBase {
             ExpansionResponseProto.newBuilder()
                 .setSuccess(false)
                 .setErrorMessage(ExceptionUtils.getMessage(processedException))
-                .setFqn(fqn)
+                .setUuid(requestUuid)
                 .build());
       }
     }
@@ -76,11 +75,11 @@ public class JsonExpansionService extends JsonExpansionServiceImplBase {
     }
   }
 
-  ExpansionResponseProto convertToResponseProto(ExpansionResponse expansionResponse, String fqn) {
+  ExpansionResponseProto convertToResponseProto(ExpansionResponse expansionResponse, String uuid) {
     if (expansionResponse.isSuccess()) {
       return ExpansionResponseProto.newBuilder()
           .setSuccess(expansionResponse.isSuccess())
-          .setFqn(fqn)
+          .setUuid(uuid)
           .setKey(expansionResponse.getKey())
           .setValue(expansionResponse.getValue().toJson())
           .setPlacement(expansionResponse.getPlacement())
@@ -89,7 +88,7 @@ public class JsonExpansionService extends JsonExpansionServiceImplBase {
       return ExpansionResponseProto.newBuilder()
           .setSuccess(expansionResponse.isSuccess())
           .setErrorMessage(expansionResponse.getErrorMessage())
-          .setFqn(fqn)
+          .setUuid(uuid)
           .build();
     }
   }
