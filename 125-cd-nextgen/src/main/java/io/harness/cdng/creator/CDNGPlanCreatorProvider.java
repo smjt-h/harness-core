@@ -26,6 +26,7 @@ import io.harness.cdng.creator.plan.steps.CDPMSStepFilterJsonCreator;
 import io.harness.cdng.creator.plan.steps.CDPMSStepFilterJsonCreatorV2;
 import io.harness.cdng.creator.plan.steps.CDPMSStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.CloudformationCreateStackStepPlanCreator;
+import io.harness.cdng.creator.plan.steps.CloudformationDeleteStackStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.HelmDeployStepPlanCreatorV2;
 import io.harness.cdng.creator.plan.steps.HelmRollbackStepPlanCreatorV2;
 import io.harness.cdng.creator.plan.steps.K8sApplyStepPlanCreator;
@@ -67,6 +68,7 @@ import java.util.List;
 @Singleton
 public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
   private static final String TERRAFORM_STEP_METADATA = "Terraform";
+  private static final String CLOUDFORMATION_STEP_METADATA = "Cloudformation";
   private static final List<String> TERRAFORM_CATEGORY = Arrays.asList("Kubernetes", "Provisioner");
 
   @Inject InjectorUtils injectorUtils;
@@ -102,6 +104,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     planCreators.add(new IndividualManifestPlanCreator());
     planCreators.add(new CDStepsPlanCreator());
     planCreators.add(new CloudformationCreateStackStepPlanCreator());
+    planCreators.add(new CloudformationDeleteStackStepPlanCreator());
     injectorUtils.injectMembers(planCreators);
     return planCreators;
   }
@@ -260,14 +263,25 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
             .setFeatureFlag(FeatureName.NG_NATIVE_HELM.name())
             .build();
 
-    StepInfo cloudformation =
-        StepInfo.newBuilder()
-            .setName("Cloudformation create stack")
-            .setType(StepSpecTypeConstants.CLOUDFORMATION_CREATE_STACK)
-            .setFeatureRestrictionName(FeatureRestrictionName.CREATE_STACK.name())
-            .setStepMetaData(
-                StepMetaData.newBuilder().addCategory("Cloudformation").addFolderPaths("Cloudformation").build())
-            .build();
+    StepInfo createStack = StepInfo.newBuilder()
+                               .setName("Cloudformation create stack")
+                               .setType(StepSpecTypeConstants.CLOUDFORMATION_CREATE_STACK)
+                               .setFeatureRestrictionName(FeatureRestrictionName.CREATE_STACK.name())
+                               .setStepMetaData(StepMetaData.newBuilder()
+                                                    .addCategory(CLOUDFORMATION_STEP_METADATA)
+                                                    .addFolderPaths(CLOUDFORMATION_STEP_METADATA)
+                                                    .build())
+                               .build();
+
+    StepInfo deleteStack = StepInfo.newBuilder()
+                               .setName("Cloudformation delete stack")
+                               .setType(StepSpecTypeConstants.CLOUDFORMATION_DELETE_STACK)
+                               .setFeatureRestrictionName(FeatureRestrictionName.DELETE_STACK.name())
+                               .setStepMetaData(StepMetaData.newBuilder()
+                                                    .addCategory(CLOUDFORMATION_STEP_METADATA)
+                                                    .addFolderPaths(CLOUDFORMATION_STEP_METADATA)
+                                                    .build())
+                               .build();
 
     List<StepInfo> stepInfos = new ArrayList<>();
 
@@ -286,7 +300,8 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     stepInfos.add(terraformDestroy);
     stepInfos.add(helmDeploy);
     stepInfos.add(helmRollback);
-    stepInfos.add(cloudformation);
+    stepInfos.add(createStack);
+    stepInfos.add(deleteStack);
     return stepInfos;
   }
 }

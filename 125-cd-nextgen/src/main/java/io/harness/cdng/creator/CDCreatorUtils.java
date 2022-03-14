@@ -30,6 +30,6 @@ public class CDCreatorUtils {
         StepSpecTypeConstants.TERRAFORM_APPLY, StepSpecTypeConstants.TERRAFORM_PLAN,
         StepSpecTypeConstants.TERRAFORM_DESTROY, StepSpecTypeConstants.TERRAFORM_ROLLBACK,
         StepSpecTypeConstants.HELM_DEPLOY, StepSpecTypeConstants.HELM_ROLLBACK,
-        StepSpecTypeConstants.CLOUDFORMATION_CREATE_STACK);
+        StepSpecTypeConstants.CLOUDFORMATION_CREATE_STACK, StepSpecTypeConstants.CLOUDFORMATION_DELETE_STACK);
   }
 }

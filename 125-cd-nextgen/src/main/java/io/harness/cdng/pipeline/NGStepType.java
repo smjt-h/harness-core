@@ -9,6 +9,7 @@ package io.harness.cdng.pipeline;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.executions.steps.StepSpecTypeConstants.CLOUDFORMATION_CREATE_STACK;
+import static io.harness.executions.steps.StepSpecTypeConstants.CLOUDFORMATION_DELETE_STACK;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.service.beans.ServiceDefinitionType;
@@ -76,9 +77,9 @@ public enum NGStepType {
   @JsonProperty(CLOUDFORMATION_CREATE_STACK)
   CREATE_STACK("Create Stack", Arrays.asList(ServiceDefinitionType.values()),
       "Infrastructure Provisioners/Cloudformation", CLOUDFORMATION_CREATE_STACK),
-  @JsonProperty("DELETE_STACK")
+  @JsonProperty(CLOUDFORMATION_DELETE_STACK)
   DELETE_STACK("Delete Stack", Arrays.asList(ServiceDefinitionType.values()),
-      "Infrastructure Provisioners/Cloudformation", StepSpecTypeConstants.PLACEHOLDER),
+      "Infrastructure Provisioners/Cloudformation", CLOUDFORMATION_DELETE_STACK),
   @JsonProperty("SHELL_SCRIPT_PROVISIONER")
   SHELL_SCRIPT_PROVISIONER("Shell Script Provisioner", Arrays.asList(ServiceDefinitionType.values()),
       "Infrastructure Provisioners/Shell Script Provisioner", StepSpecTypeConstants.PLACEHOLDER),

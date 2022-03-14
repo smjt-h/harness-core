@@ -64,6 +64,7 @@ public enum FeatureRestrictionName {
   TERRAFORM_ROLLBACK,
   INTEGRATED_APPROVALS_WITH_SERVICE_NOW,
   CREATE_STACK,
+  DELETE_STACK,
 
   // STO Features
   SECURITY,

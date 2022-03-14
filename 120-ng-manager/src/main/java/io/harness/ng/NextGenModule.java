@@ -70,6 +70,7 @@ import io.harness.cdng.k8s.K8sRollingRollbackStepNode;
 import io.harness.cdng.k8s.K8sRollingStepNode;
 import io.harness.cdng.k8s.K8sScaleStepNode;
 import io.harness.cdng.provision.cloudformation.CloudformationCreateStackStepNode;
+import io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepNode;
 import io.harness.cdng.provision.terraform.TerraformApplyStepNode;
 import io.harness.cdng.provision.terraform.TerraformDestroyStepNode;
 import io.harness.cdng.provision.terraform.TerraformPlanStepNode;
@@ -316,6 +317,7 @@ public class NextGenModule extends AbstractModule {
       add(HelmDeployStepNode.class);
       add(HelmRollbackStepNode.class);
       add(CloudformationCreateStackStepNode.class);
+      add(CloudformationDeleteStackStepNode.class);
     }
   };
   private final NextGenConfiguration appConfig;

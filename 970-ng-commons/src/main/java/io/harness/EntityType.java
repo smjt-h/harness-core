@@ -210,7 +210,10 @@ public enum EntityType {
       EntityYamlRootNames.BUILD_AND_PUSH_DOCKER_REGISTRY),
   @JsonProperty(EntityTypeConstants.CLOUDFORMATION_CREATE_STACK_STEP)
   CLOUDFORMATION_CREATE_STACK_STEP(ModuleType.CD, EntityTypeConstants.CLOUDFORMATION_CREATE_STACK_STEP,
-      IdentifierRef.class, EntityYamlRootNames.CLOUDFORMATION_CREATE_STACK_STEP);
+      IdentifierRef.class, EntityYamlRootNames.CLOUDFORMATION_CREATE_STACK_STEP),
+  @JsonProperty(EntityTypeConstants.CLOUDFORMATION_DELETE_STACK_STEP)
+  CLOUDFORMATION_DELETE_STACK_STEP(ModuleType.CD, EntityTypeConstants.CLOUDFORMATION_DELETE_STACK_STEP,
+      IdentifierRef.class, EntityYamlRootNames.CLOUDFORMATION_DELETE_STACK_STEP);
 
   private final ModuleType moduleType;
   String yamlName;

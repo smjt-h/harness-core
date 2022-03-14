@@ -282,9 +282,11 @@ io.harness.ng.core.envGroup.beans.EnvironmentGroupConfig
 io.harness.cdng.provision.cloudformation.CreateStackStepInfo
 io.harness.cdng.provision.cloudformation.CloudformationCreateStackStepNode
 io.harness.cdng.provision.cloudformation.CloudformationCreateStackStepParameters
-io.harness.cdng.provision.cloudformation.AwsCloudProvider
-io.harness.cdng.provision.cloudformation.AwsRegions
 io.harness.cdng.provision.cloudformation.AwsRoleARN
 io.harness.cdng.provision.cloudformation.TemplateFilesWrapper
 io.harness.cdng.provision.cloudformation.CreateStackStepConfiguration
 io.harness.cdng.provision.cloudformation.ParametersFilesWrapper
+io.harness.cdng.provision.cloudformation.DeleteStackStepConfiguration
+io.harness.cdng.provision.cloudformation.DeleteStackBaseStepInfo
+io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepNode
+io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepParameters

@@ -84,6 +84,7 @@ public class YamlSchemaTransientHelper {
       add(EntityType.SERVICENOW_CREATE_STEP);
       add(EntityType.SERVICENOW_UPDATE_STEP);
       add(EntityType.CLOUDFORMATION_CREATE_STACK_STEP);
+      add(EntityType.CLOUDFORMATION_DELETE_STACK_STEP);
     }
   };
 

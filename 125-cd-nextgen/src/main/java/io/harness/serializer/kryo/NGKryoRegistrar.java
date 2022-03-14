@@ -86,6 +86,7 @@ import io.harness.cdng.pipeline.beans.RollbackNode;
 import io.harness.cdng.pipeline.beans.RollbackOptionalChildChainStepParameters;
 import io.harness.cdng.pipeline.executions.CDAccountExecutionMetadata;
 import io.harness.cdng.provision.cloudformation.CloudformationCreateStackStepInfo;
+import io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepInfo;
 import io.harness.cdng.provision.terraform.TerraformApplyStepInfo;
 import io.harness.cdng.provision.terraform.TerraformPlanStepInfo;
 import io.harness.cdng.service.beans.KubernetesServiceSpec;
@@ -217,5 +218,6 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(NGVariableOverrideSets.class, 12560);
     kryo.register(SshServiceSpec.class, 12561);
     kryo.register(CloudformationCreateStackStepInfo.class, 12562);
+    kryo.register(CloudformationDeleteStackStepInfo.class, 12563);
   }
 }

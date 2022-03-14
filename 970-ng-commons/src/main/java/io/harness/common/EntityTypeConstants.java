@@ -82,4 +82,5 @@ public interface EntityTypeConstants {
   String SERVICENOW_CREATE = "ServiceNowCreate";
   String SERVICENOW_UPDATE = "ServiceNowUpdate";
   String CLOUDFORMATION_CREATE_STACK_STEP = "CreateStack";
+  String CLOUDFORMATION_DELETE_STACK_STEP = "DeleteStack";
 }
