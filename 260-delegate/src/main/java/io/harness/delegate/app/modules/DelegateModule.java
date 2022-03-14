@@ -220,6 +220,7 @@ import io.harness.delegate.task.scm.ScmPushTask;
 import io.harness.delegate.task.servicenow.ServiceNowTaskNG;
 import io.harness.delegate.task.servicenow.ServiceNowValidationHandler;
 import io.harness.delegate.task.servicenow.connection.ServiceNowTestConnectionTaskNG;
+import io.harness.delegate.task.shell.CommandTaskNG;
 import io.harness.delegate.task.shell.ShellScriptTaskNG;
 import io.harness.delegate.task.stepstatus.StepStatusTask;
 import io.harness.delegate.task.terraform.TFTaskType;
@@ -1540,6 +1541,7 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.SERVICENOW_CONNECTIVITY_TASK_NG).toInstance(ServiceNowTestConnectionTaskNG.class);
     mapBinder.addBinding(TaskType.SERVICENOW_TASK_NG).toInstance(ServiceNowTaskNG.class);
     mapBinder.addBinding(TaskType.CLOUDFORMATION_TASK_NG).toInstance(CloudformationTaskNG.class);
+    mapBinder.addBinding(TaskType.COMMAND_TASK_NG).toInstance(CommandTaskNG.class);
   }
 
   private void registerSecretManagementBindings() {

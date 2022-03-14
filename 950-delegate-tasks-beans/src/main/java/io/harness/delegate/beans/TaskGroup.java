@@ -95,5 +95,6 @@ public enum TaskGroup {
   CE,
   SERVICENOW_NG,
   CLOUDFORMATION_NG,
-  AZURE
+  AZURE,
+  COMMAND_TASK_NG
 }

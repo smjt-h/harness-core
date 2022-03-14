@@ -343,7 +343,8 @@ public enum TaskType {
   SERVICENOW_TASK_NG(TaskGroup.SERVICENOW_NG, "ServiceNow Task"),
   RANCHER_RESOLVE_CLUSTERS(TaskGroup.K8S, "Rancher Resolve Clusters"),
   NG_AZURE_TASK(TaskGroup.AZURE_RESOURCE),
-  CLOUDFORMATION_TASK_NG(TaskGroup.CLOUDFORMATION_NG, "Cloudformation Task");
+  CLOUDFORMATION_TASK_NG(TaskGroup.CLOUDFORMATION_NG, "Cloudformation Task"),
+  COMMAND_TASK_NG(TaskGroup.COMMAND_TASK_NG, "Command Task");
 
   private final TaskGroup taskGroup;
   private final String displayName;
