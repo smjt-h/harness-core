@@ -12,15 +12,19 @@ import io.harness.yaml.validator.NodeErrorInfo;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.networknt.schema.ValidationMessage;
+import com.networknt.schema.ValidatorTypeCode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class SchemaValidationUtils {
+  public static final String ENUM_SCHEMA_ERROR_CODE = ValidatorTypeCode.ENUM.getErrorCode();
   public String[] removeParenthesisFromArguments(String[] arguments) {
     List<String> cleanArguments = new ArrayList<>();
     int length = arguments.length;
@@ -141,5 +145,49 @@ public class SchemaValidationUtils {
         .type(JsonNodeUtils.getString(jsonNode, "type"))
         .fqn(fqn)
         .build();
+  }
+
+  // If more specific error is present then we can ignore an error message.
+  public Set<ValidationMessage> filterErrorsIfMoreSpecificErrorIsPresent(
+      Collection<ValidationMessage> validationMessages) {
+    Set<String> errorLocations =
+        validationMessages.stream().map(ValidationMessage::getPath).collect(Collectors.toSet());
+    return validationMessages.stream()
+        .filter(message -> !checkIfMoreSpecificErrorIsPresent(errorLocations, message))
+        .collect(Collectors.toSet());
+  }
+
+  private boolean checkIfMoreSpecificErrorIsPresent(Collection<String> errorLocations, ValidationMessage message) {
+    if (message.getCode().equals(ENUM_SCHEMA_ERROR_CODE)) {
+      String path = message.getPath();
+      // Currently, filtering the ".type" errors only. Will keep adding more cases here.
+      if (path.endsWith(".type")) {
+        String pathTillNode = path.substring(0, path.length() - 5);
+        if (checkIfNodePathIsPresentInAllPaths(errorLocations, pathTillNode)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private boolean checkIfNodePathIsPresentInAllPaths(Collection<String> allPaths, String pathTillNode) {
+    for (String path : allPaths) {
+      // Checking if pathTillNode's children is present in errors.
+      String pathTillPreviousNode = getPathTillPreviousNode(path);
+      if (path.startsWith(pathTillNode) && !pathTillNode.startsWith(pathTillPreviousNode)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private String getPathTillPreviousNode(String path) {
+    String[] pathComponents = path.split("\\.");
+    if (pathComponents.length <= 1) {
+      return "";
+    }
+    int lastElementLength = pathComponents[pathComponents.length - 1].length();
+    return path.substring(0, path.length() - lastElementLength - 1);
   }
 }
