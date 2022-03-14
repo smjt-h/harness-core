@@ -3240,6 +3240,9 @@
     },
     "HostDTO": {
       "type": "object",
+      "required": [
+        "hostname"
+      ],
       "properties": {
         "hostAttributes": {
           "type": "array",
