@@ -84,6 +84,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -292,7 +294,9 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
 
   private void saveWebhook(YamlGitConfigDTO gitSyncConfigDTO) {
     if (isNewRepoInProject(gitSyncConfigDTO)) {
-      UpsertWebhookResponseDTO upsertWebhookResponseDTO = registerWebhook(gitSyncConfigDTO);
+      final RetryPolicy<Object> retryPolicy = getWebhookRegistrationRetryPolicy(
+          "[Retrying] attempt: {} for failure case of save webhook call", "Failed to save webhook after {} attempts");
+      Failsafe.with(retryPolicy).get(() -> registerWebhook(gitSyncConfigDTO));
     }
   }
 
@@ -642,13 +646,11 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
     }
   }
 
-  //  private RetryPolicy<Object> getWebhookRegistrationRetryPolicy(String failedAttemptMessage, String failureMessage)
-  //  {
-  //    return new RetryPolicy<>()
-  //        .handle(Exception.class)
-  //        .withBackoff(5, 60, ChronoUnit.SECONDS)
-  //        .withMaxAttempts(MAX_ATTEMPTS)
-  //        .onFailedAttempt(event -> log.info(failedAttemptMessage, event.getAttemptCount(), event.getLastFailure()))
-  //        .onFailure(event -> log.error(failureMessage, event.getAttemptCount(), event.getFailure()));
-  //  }
+  private RetryPolicy<Object> getWebhookRegistrationRetryPolicy(String failedAttemptMessage, String failureMessage) {
+    return new RetryPolicy<>()
+        .handle(Exception.class)
+        .withMaxAttempts(2)
+        .onFailedAttempt(event -> log.info(failedAttemptMessage, event.getAttemptCount(), event.getLastFailure()))
+        .onFailure(event -> log.error(failureMessage, event.getAttemptCount(), event.getFailure()));
+  }
 }
