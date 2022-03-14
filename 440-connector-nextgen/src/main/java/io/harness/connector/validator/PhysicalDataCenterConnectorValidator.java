@@ -26,10 +26,10 @@ public class PhysicalDataCenterConnectorValidator implements ConnectionValidator
   public ConnectorValidationResult validate(PhysicalDataCenterConnectorDTO connectorDTO, String accountIdentifier,
       String orgIdentifier, String projectIdentifier, String identifier) {
     long startTestingAt = System.currentTimeMillis();
-    List<HostValidationDTO> hostValidationDTOS = hostValidationService.validateSSHHosts(getHostNames(connectorDTO),
+    List<HostValidationDTO> hostValidationDTOs = hostValidationService.validateSSHHosts(getHostNames(connectorDTO),
         accountIdentifier, orgIdentifier, projectIdentifier, connectorDTO.getSshKeyRef().getIdentifier());
 
-    return buildConnectorValidationResult(hostValidationDTOS, startTestingAt);
+    return buildConnectorValidationResult(hostValidationDTOs, startTestingAt);
   }
 
   @Override
@@ -44,14 +44,14 @@ public class PhysicalDataCenterConnectorValidator implements ConnectionValidator
   }
 
   private ConnectorValidationResult buildConnectorValidationResult(
-      List<HostValidationDTO> hostValidationDTOS, long startTestingAt) {
-    ConnectivityStatus connectivityStatus = hostValidationDTOS.stream().anyMatch(isHostValidationStatusFailed())
+      List<HostValidationDTO> hostValidationDTOs, long startTestingAt) {
+    ConnectivityStatus connectivityStatus = hostValidationDTOs.stream().anyMatch(isHostValidationStatusFailed())
         ? ConnectivityStatus.FAILURE
         : ConnectivityStatus.SUCCESS;
 
     return connectivityStatus == ConnectivityStatus.SUCCESS
-        ? buildConnectorValidationResultSuccess(hostValidationDTOS, startTestingAt)
-        : buildConnectorValidationResultFailure(hostValidationDTOS, startTestingAt);
+        ? buildConnectorValidationResultSuccess(hostValidationDTOs, startTestingAt)
+        : buildConnectorValidationResultFailure(hostValidationDTOs, startTestingAt);
   }
 
   private ConnectorValidationResult buildConnectorValidationResultSuccess(
