@@ -38,7 +38,6 @@ import io.grpc.BindableService;
 import io.grpc.Channel;
 import io.grpc.ServerInterceptor;
 import io.grpc.inprocess.InProcessChannelBuilder;
-import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
@@ -124,16 +123,13 @@ public class PipelineServiceGrpcModule extends AbstractModule {
     return map;
   }
 
-  private static boolean isValidAuthority(String authority) {
-    try {
-      GrpcUtil.checkAuthority(authority);
-    } catch (Exception ignore) {
-      log.error("Exception occurred when checking for valid authority", ignore);
-      return false;
-    }
-    return true;
-  }
-
+  /**
+   * keepAliveWithoutCalls - allow keepAlive pings when there's no gRPC calls, default is false
+   * keepAliveTime - send keepAlive ping every given interval (in minutes), default value (INT_MAX for client, 2 hours
+   * for server) keepAliveTimeout - keepAlive ping time out after given time interval (in seconds), default is 20
+   * seconds
+   * @param clientConfig
+   */
   private Channel getChannel(GrpcClientConfig clientConfig) throws SSLException {
     String authorityToUse = clientConfig.getAuthority();
     Channel channel;
