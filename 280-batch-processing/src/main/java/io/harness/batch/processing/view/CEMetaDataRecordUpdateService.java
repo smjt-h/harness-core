@@ -10,7 +10,6 @@ package io.harness.batch.processing.view;
 import static io.harness.batch.processing.billing.tasklet.BillingDataGeneratedMailTasklet.ACCOUNT_ID;
 import static io.harness.batch.processing.billing.tasklet.BillingDataGeneratedMailTasklet.CCM_DATA_GENERATED;
 import static io.harness.batch.processing.billing.tasklet.BillingDataGeneratedMailTasklet.DATA_GENERATED;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.telemetry.Destination.AMPLITUDE;
 import static io.harness.utils.RestCallToNGManagerClientUtils.execute;
 
@@ -124,7 +123,7 @@ public class CEMetaDataRecordUpdateService {
         properties.put(DATA_GENERATED, "CLOUD");
         telemetryReporter.sendTrackEvent(
             CCM_DATA_GENERATED, properties, Collections.singletonMap(AMPLITUDE, true), Category.GLOBAL);
-        ceMetadataRecordBuilder.isSegmentDataReadyEventSent(true);
+        ceMetadataRecordBuilder.segmentDataReadyEventSent(true);
       }
 
       CEMetadataRecord ceMetadataRecord = ceMetadataRecordBuilder.awsConnectorConfigured(isAwsConnectorPresent)
