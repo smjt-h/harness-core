@@ -119,7 +119,6 @@ import io.harness.delegate.beans.FileMetadata;
 import io.harness.delegate.beans.K8sConfigDetails;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.events.DelegateGroupDeleteEvent;
-import io.harness.delegate.events.DelegateGroupUpsertEvent;
 import io.harness.delegate.service.intfc.DelegateNgTokenService;
 import io.harness.delegate.service.intfc.DelegateRingService;
 import io.harness.delegate.task.DelegateLogContext;
@@ -714,7 +713,7 @@ public class DelegateServiceImpl implements DelegateService {
 
     return DelegateStatus.builder()
         .publishedVersions(delegateConfiguration.getDelegateVersions())
-        .delegates(buildInnerDelegates(delegates, perDelegateConnections, false))
+        .delegates(buildInnerDelegates(accountId, delegates, perDelegateConnections, false))
         .build();
   }
 
@@ -734,7 +733,7 @@ public class DelegateServiceImpl implements DelegateService {
                 ? Lists.newArrayList()
                 : delegateVersionListWithoutPatch(delegateConfiguration.getDelegateVersions()))
         .scalingGroups(scalingGroups)
-        .delegates(buildInnerDelegates(delegatesWithoutScalingGroup, activeDelegateConnections, false))
+        .delegates(buildInnerDelegates(accountId, delegatesWithoutScalingGroup, activeDelegateConnections, false))
         .build();
   }
 
@@ -763,7 +762,7 @@ public class DelegateServiceImpl implements DelegateService {
         .map(entry
             -> DelegateScalingGroup.builder()
                    .groupName(entry.getKey())
-                   .delegates(buildInnerDelegates(entry.getValue(), activeDelegateConnections, true))
+                   .delegates(buildInnerDelegates(accountId, entry.getValue(), activeDelegateConnections, true))
                    .build())
         .collect(toList());
   }
@@ -783,8 +782,16 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   @NotNull
-  private List<DelegateStatus.DelegateInner> buildInnerDelegates(List<Delegate> delegates,
+  private List<DelegateStatus.DelegateInner> buildInnerDelegates(String accountId, List<Delegate> delegates,
       Map<String, List<DelegateConnectionDetails>> perDelegateConnections, boolean filterInactiveDelegates) {
+    List<String> delegateTokensNameList = new ArrayList<>();
+    delegates.stream()
+        .filter(delegate -> !filterInactiveDelegates || perDelegateConnections.containsKey(delegate.getUuid()))
+        .forEach(delegate -> delegateTokensNameList.add(delegate.getDelegateTokenName()));
+    // TODO: Arpit fetch the tokenStatus from cache instead of db.
+    Map<String, Boolean> delegateTokenStatusMap =
+        delegateNgTokenService.isDelegateTokenActive(accountId, delegateTokensNameList);
+
     return delegates.stream()
         .filter(delegate -> !filterInactiveDelegates || perDelegateConnections.containsKey(delegate.getUuid()))
         .map(delegate -> {
@@ -814,6 +821,8 @@ public class DelegateServiceImpl implements DelegateService {
               .implicitSelectors(delegateSetupService.retrieveDelegateImplicitSelectors(delegate))
               .sampleDelegate(delegate.isSampleDelegate())
               .connections(connections)
+              .tokenActive(delegate.getDelegateTokenName() == null
+                  || delegateTokenStatusMap.get(delegate.getDelegateTokenName()))
               .build();
         })
         .collect(toList());
@@ -2052,6 +2061,7 @@ public class DelegateServiceImpl implements DelegateService {
                                     .project(DelegateKeys.ip, true)
                                     .project(DelegateKeys.hostName, true)
                                     .project(DelegateKeys.owner, true)
+                                    .project(DelegateKeys.delegateGroupName, true)
                                     .get();
 
     if (existingDelegate != null) {
@@ -2059,12 +2069,21 @@ public class DelegateServiceImpl implements DelegateService {
         throw new InvalidRequestException(format("Unable to delete delegate. Delegate %s is connected", delegateId));
       }
       // before deleting delegate, check if any alert is open for delegate, if yes, close it.
-      alertService.closeAlert(accountId, GLOBAL_APP_ID, AlertType.DelegatesDown,
-          DelegatesDownAlert.builder()
-              .accountId(accountId)
-              .obfuscatedIpAddress(obfuscate(existingDelegate.getIp()))
-              .hostName(existingDelegate.getHostName())
-              .build());
+      if (isEmpty(existingDelegate.getDelegateGroupName())) {
+        alertService.closeAlert(accountId, GLOBAL_APP_ID, AlertType.DelegatesDown,
+            DelegatesDownAlert.builder()
+                .accountId(accountId)
+                .obfuscatedIpAddress(obfuscate(existingDelegate.getIp()))
+                .hostName(existingDelegate.getHostName())
+                .build());
+      } else {
+        alertService.closeAlert(accountId, GLOBAL_APP_ID, AlertType.DelegatesDown,
+            DelegatesDownAlert.builder()
+                .accountId(accountId)
+                .delegateGroupName(existingDelegate.getDelegateGroupName())
+                .build());
+      }
+
     } else {
       throw new InvalidRequestException("Unable to fetch delegate with delegate id " + delegateId);
     }
@@ -2853,20 +2872,7 @@ public class DelegateServiceImpl implements DelegateService {
     if (sizeDetails != null) {
       setUnset(updateOperations, DelegateGroupKeys.sizeDetails, sizeDetails);
     }
-
-    DelegateGroup delegateGroup = persistence.upsert(query, updateOperations, HPersistence.upsertReturnNewOptions);
-    outboxService.save(
-        DelegateGroupUpsertEvent.builder()
-            .accountIdentifier(accountId)
-            .orgIdentifier(delegateSetupDetails != null ? delegateSetupDetails.getOrgIdentifier() : null)
-            .projectIdentifier(delegateSetupDetails != null ? delegateSetupDetails.getProjectIdentifier() : null)
-            .delegateGroupId(delegateGroup.getUuid())
-            .delegateSetupDetails(delegateSetupDetails)
-            .build());
-    if (delegateSetupDetails != null) {
-      delegateCache.invalidateDelegateGroupCache(accountId, delegateGroup.getUuid());
-    }
-    return delegateGroup;
+    return persistence.upsert(query, updateOperations, HPersistence.upsertReturnNewOptions);
   }
 
   @Override
@@ -2948,16 +2954,18 @@ public class DelegateServiceImpl implements DelegateService {
         UUID currentUUID = convertFromBase64(heartbeat.getDelegateConnectionId());
         UUID existingUUID = convertFromBase64(existingConnection.getUuid());
         if (existingUUID.timestamp() > currentUUID.timestamp()) {
-          boolean notSameLocationForShellScriptDelegate = DelegateType.SHELL_SCRIPT.equals(delegate.getDelegateType())
-              && (isNotEmpty(heartbeat.getLocation()) && isNotEmpty(existingConnection.getLocation())
-                  && !heartbeat.getLocation().equals(existingConnection.getLocation()));
-          if (notSameLocationForShellScriptDelegate) {
-            log.error(
-                "Newer delegate connection found for the delegate id! Will initiate self destruct sequence for the current delegate.");
-            destroyTheCurrentDelegate(accountId, delegateId, heartbeat.getDelegateConnectionId(), connectionMode);
-            delegateConnectionDao.replaceWithNewerConnection(heartbeat.getDelegateConnectionId(), existingConnection);
-          } else {
-            log.error("Two delegates with the same identity");
+          if (DelegateType.SHELL_SCRIPT.equals(delegate.getDelegateType())) {
+            boolean notSameLocationForShellScriptDelegate = isNotEmpty(heartbeat.getLocation())
+                && isNotEmpty(existingConnection.getLocation())
+                && !heartbeat.getLocation().equals(existingConnection.getLocation());
+            if (notSameLocationForShellScriptDelegate) {
+              log.error(
+                  "Newer delegate connection found for the delegate id! Will initiate self destruct sequence for the current delegate.");
+              destroyTheCurrentDelegate(accountId, delegateId, heartbeat.getDelegateConnectionId(), connectionMode);
+              delegateConnectionDao.replaceWithNewerConnection(heartbeat.getDelegateConnectionId(), existingConnection);
+            } else {
+              log.error("Two delegates with the same identity");
+            }
           }
         } else {
           delegateMetricsService.recordDelegateMetrics(delegate, DELEGATE_RESTARTED);

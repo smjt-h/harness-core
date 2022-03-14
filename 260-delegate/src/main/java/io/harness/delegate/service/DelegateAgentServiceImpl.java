@@ -1621,7 +1621,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private void watcherUpgrade(boolean heartbeatTimedOut) {
     String watcherVersion = messageService.getData(WATCHER_DATA, WATCHER_VERSION, String.class);
     String expectedVersion = findExpectedWatcherVersion();
-    if (StringUtils.equals(expectedVersion, watcherVersion)) {
+    if (expectedVersion == null || StringUtils.equals(expectedVersion, watcherVersion)) {
       watcherVersionMatchedAt = clock.millis();
     }
     boolean versionMatchTimedOut = clock.millis() - watcherVersionMatchedAt > WATCHER_VERSION_MATCH_TIMEOUT;
@@ -2442,10 +2442,12 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private String getVersionWithPatch() {
+    String version = getVersion();
     if (multiVersion) {
-      return versionInfoManager.getFullVersion();
+      // Appending '000' as delegate does not support patch version.
+      return version + "-000";
     }
-    return getVersion();
+    return version;
   }
 
   private void initiateSelfDestruct() {

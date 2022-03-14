@@ -266,6 +266,7 @@ public class PipelineServiceModule extends AbstractModule {
             .accountServiceSecret(configuration.getManagerServiceSecret())
             .useFeatureFlagService(true)
             .orchestrationRedisEventsConfig(configuration.getOrchestrationRedisEventsConfig())
+            .orchestrationLogConfiguration(configuration.getOrchestrationLogConfiguration())
             .build()));
     install(OrchestrationStepsModule.getInstance(configuration.getOrchestrationStepConfig()));
     install(OrchestrationVisualizationModule.getInstance(configuration.getEventsFrameworkConfiguration(),
@@ -653,5 +654,12 @@ public class PipelineServiceModule extends AbstractModule {
   @Named("allowedParallelStages")
   public Integer getAllowedParallelStages() {
     return configuration.getAllowedParallelStages();
+  }
+
+  @Provides
+  @Singleton
+  @Named("planCreatorMergeServiceDependencyBatch")
+  public Integer getPlanCreatorMergeServiceDependencyBatch() {
+    return configuration.getPlanCreatorMergeServiceDependencyBatch();
   }
 }

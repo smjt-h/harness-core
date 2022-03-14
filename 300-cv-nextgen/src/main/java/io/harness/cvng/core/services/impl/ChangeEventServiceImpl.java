@@ -32,7 +32,6 @@ import io.harness.cvng.core.beans.change.ChangeTimeline.TimeRangeDetail;
 import io.harness.cvng.core.beans.monitoredService.DurationDTO;
 import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
-import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.entities.changeSource.ChangeSource;
 import io.harness.cvng.core.services.CVNextGenConstants;
 import io.harness.cvng.core.services.api.ChangeEventService;
@@ -81,15 +80,15 @@ public class ChangeEventServiceImpl implements ChangeEventService {
 
   @Override
   public Boolean register(ChangeEventDTO changeEventDTO) {
-    ServiceEnvironmentParams serviceEnvironmentParams = ServiceEnvironmentParams.builder()
-                                                            .accountIdentifier(changeEventDTO.getAccountId())
-                                                            .orgIdentifier(changeEventDTO.getOrgIdentifier())
-                                                            .projectIdentifier(changeEventDTO.getProjectIdentifier())
-                                                            .serviceIdentifier(changeEventDTO.getServiceIdentifier())
-                                                            .environmentIdentifier(changeEventDTO.getEnvIdentifier())
-                                                            .build();
+    MonitoredServiceParams monitoredServiceParams =
+        MonitoredServiceParams.builder()
+            .accountIdentifier(changeEventDTO.getAccountId())
+            .orgIdentifier(changeEventDTO.getOrgIdentifier())
+            .projectIdentifier(changeEventDTO.getProjectIdentifier())
+            .monitoredServiceIdentifier(changeEventDTO.getMonitoredServiceIdentifier())
+            .build();
     Optional<ChangeSource> changeSourceOptional =
-        changeSourceService.getEntityByType(serviceEnvironmentParams, changeEventDTO.getType())
+        changeSourceService.getEntityByType(monitoredServiceParams, changeEventDTO.getType())
             .stream()
             .filter(source -> source.isEnabled())
             .findAny();
@@ -112,10 +111,10 @@ public class ChangeEventServiceImpl implements ChangeEventService {
   }
 
   @Override
-  public ChangeSummaryDTO getChangeSummary(ServiceEnvironmentParams serviceEnvironmentParams,
+  public ChangeSummaryDTO getChangeSummary(MonitoredServiceParams monitoredServiceParams,
       List<String> changeSourceIdentifiers, Instant startTime, Instant endTime) {
-    return getChangeSummary(serviceEnvironmentParams, Arrays.asList(serviceEnvironmentParams.getServiceIdentifier()),
-        Arrays.asList(serviceEnvironmentParams.getEnvironmentIdentifier()), null, null, startTime, endTime);
+    return getChangeSummary(monitoredServiceParams,
+        Arrays.asList(monitoredServiceParams.getMonitoredServiceIdentifier()), null, null, startTime, endTime);
   }
 
   @Override
@@ -217,21 +216,7 @@ public class ChangeEventServiceImpl implements ChangeEventService {
     HeatMapResolution resolution = HeatMapResolution.resolutionForDurationDTO(duration);
     Instant trendEndTime = resolution.getNextResolutionEndTime(endTime);
     Instant trendStartTime = trendEndTime.minus(duration.getDuration());
-    String monitoredServiceIdentifier;
-    if (monitoredServiceParams.getMonitoredServiceIdentifier() == null
-        && monitoredServiceParams.getServiceIdentifier() != null
-        && monitoredServiceParams.getEnvironmentIdentifier() != null) {
-      // TODO: remove this once UI start sending monitoredServiceIdentifier.
-      monitoredServiceIdentifier =
-          monitoredServiceService
-              .getMonitoredServiceDTO(ServiceEnvironmentParams.builderWithProjectParams(monitoredServiceParams)
-                                          .serviceIdentifier(monitoredServiceParams.getServiceIdentifier())
-                                          .environmentIdentifier(monitoredServiceParams.getEnvironmentIdentifier())
-                                          .build())
-              .getIdentifier();
-    } else {
-      monitoredServiceIdentifier = monitoredServiceParams.getMonitoredServiceIdentifier();
-    }
+    String monitoredServiceIdentifier = monitoredServiceParams.getMonitoredServiceIdentifier();
     Preconditions.checkNotNull(monitoredServiceIdentifier, "monitoredServiceIdentifier can not be null");
     return getTimeline(monitoredServiceParams, Arrays.asList(monitoredServiceIdentifier), searchText, null,
         changeSourceTypes, trendStartTime, trendEndTime, CVNextGenConstants.CVNG_TIMELINE_BUCKET_COUNT);
