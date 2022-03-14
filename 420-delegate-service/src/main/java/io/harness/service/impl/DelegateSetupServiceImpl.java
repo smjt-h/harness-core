@@ -418,7 +418,7 @@ public class DelegateSetupServiceImpl implements DelegateSetupService {
               String delegateTokenName = delegate.getDelegateTokenName();
               // TODO: Arpit, fetch the tokenStatus from cache instead of db
               boolean isTokenActive = true;
-              if (delegateTokenName != null) {
+              if (delegateTokenName != null && delegateTokenStatusMap.containsKey(delegateTokenName)) {
                 isTokenActive = delegateTokenStatusMap.get(delegateTokenName);
               }
               // if delegate token is not active, then token at group level will not be active
