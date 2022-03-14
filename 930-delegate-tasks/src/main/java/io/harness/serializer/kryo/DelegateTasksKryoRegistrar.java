@@ -21,6 +21,7 @@ import io.harness.serializer.KryoRegistrar;
 import software.wings.api.DeploymentType;
 import software.wings.beans.AppDynamicsConfig;
 import software.wings.beans.AwsSecretsManagerConfig;
+import software.wings.beans.AzureBlobConfig;
 import software.wings.beans.AzureConfig;
 import software.wings.beans.AzureVaultConfig;
 import software.wings.beans.BambooConfig;
@@ -187,6 +188,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(GitFetchFilesFromMultipleRepoResult.class, 5615);
     kryo.register(AwsSecretsManagerConfig.class, 7178);
     kryo.register(LocalEncryptionConfig.class, 7180);
+    kryo.register(AzureBlobConfig.class, 7503);
     kryo.register(AzureVaultConfig.class, 7205);
     kryo.register(CyberArkConfig.class, 7228);
     kryo.register(AppManifestKind.class, 7243);

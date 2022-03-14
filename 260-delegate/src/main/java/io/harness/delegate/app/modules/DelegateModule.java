@@ -248,15 +248,7 @@ import io.harness.encryptors.CustomEncryptor;
 import io.harness.encryptors.Encryptors;
 import io.harness.encryptors.KmsEncryptor;
 import io.harness.encryptors.VaultEncryptor;
-import io.harness.encryptors.clients.AwsKmsEncryptor;
-import io.harness.encryptors.clients.AwsSecretsManagerEncryptor;
-import io.harness.encryptors.clients.AzureVaultEncryptor;
-import io.harness.encryptors.clients.CustomSecretsManagerEncryptor;
-import io.harness.encryptors.clients.CyberArkVaultEncryptor;
-import io.harness.encryptors.clients.GcpKmsEncryptor;
-import io.harness.encryptors.clients.GcpSecretsManagerEncryptor;
-import io.harness.encryptors.clients.HashicorpVaultEncryptor;
-import io.harness.encryptors.clients.LocalEncryptor;
+import io.harness.encryptors.clients.*;
 import io.harness.exception.DelegateServiceDriverExceptionHandler;
 import io.harness.exception.ExplanationException;
 import io.harness.exception.exceptionmanager.ExceptionModule;
@@ -1584,6 +1576,11 @@ public class DelegateModule extends AbstractModule {
         .bind(VaultEncryptor.class)
         .annotatedWith(Names.named(Encryptors.AZURE_VAULT_ENCRYPTOR.getName()))
         .to(AzureVaultEncryptor.class);
+
+    binder()
+        .bind(VaultEncryptor.class)
+        .annotatedWith(Names.named(Encryptors.AZURE_BLOB_ENCRYPTOR.getName()))
+        .to(AzureBlobEncryptor.class);
 
     binder()
         .bind(VaultEncryptor.class)
