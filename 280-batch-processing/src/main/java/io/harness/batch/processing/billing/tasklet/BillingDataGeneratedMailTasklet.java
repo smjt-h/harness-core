@@ -123,7 +123,7 @@ public class BillingDataGeneratedMailTasklet implements Tasklet {
                                                               .applicationDataPresent(isApplicationDataPresent)
                                                               .clusterDataConfigured(true)
                                                               .clusterConnectorConfigured(true)
-                                                              .isSegmentDataReadyEventSent(true)
+                                                              .segmentDataReadyEventSent(true)
                                                               .build());
       boolean notificationSend = notificationDao.isMailSent(accountId);
       if (!notificationSend) {
