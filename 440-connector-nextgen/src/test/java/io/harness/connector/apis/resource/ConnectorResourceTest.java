@@ -33,6 +33,8 @@ import io.harness.connector.ConnectorValidationResult;
 import io.harness.connector.helper.CatalogueHelper;
 import io.harness.connector.helper.ConnectorRbacHelper;
 import io.harness.connector.services.ConnectorService;
+import io.harness.connector.utils.ConnectorAllowedFieldValues;
+import io.harness.connector.utils.FieldValues;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.k8Connector.KubernetesClusterConfigDTO;
 import io.harness.delegate.beans.connector.k8Connector.KubernetesCredentialDTO;
@@ -207,5 +209,15 @@ public class ConnectorResourceTest extends CategoryTest {
         catalogue.stream().map(item -> item.getConnectors().size()).mapToInt(Integer::intValue).sum();
     assertThat(totalConnectorsWithinAllCategories).isEqualTo(ConnectorType.values().length);
     Mockito.verify(connectorService, times(1)).getConnectorCatalogue();
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.BOOPESH)
+  @Category(UnitTests.class)
+  public void getAllowedFieldValuesTest() {
+    String connectorType = "NewRelic";
+    ResponseDTO<FieldValues> responseDTO =
+        ResponseDTO.newResponse(ConnectorAllowedFieldValues.TYPE_TO_FIELDS.get(connectorType));
+    assertThat(responseDTO.getStatus().toString()).isEqualTo("SUCCESS");
   }
 }
