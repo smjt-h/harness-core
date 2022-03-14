@@ -25,5 +25,11 @@ public enum ServerlessCommandUnitConstants {
     public String toString() {
       return "Deploy";
     }
+  },
+  rollback {
+    @Override
+    public String toString() {
+      return "Rollback";
+    }
   }
 }

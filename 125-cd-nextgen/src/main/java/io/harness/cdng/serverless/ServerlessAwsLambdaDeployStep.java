@@ -59,7 +59,7 @@ public class ServerlessAwsLambdaDeployStep
                                                .setType(ExecutionNodeType.SERVERLESS_AWS_LAMBDA_DEPLOY.getYamlType())
                                                .setStepCategory(StepCategory.STEP)
                                                .build();
-  private final String SERVERLESS_DEPLOY_COMMAND_NAME = "Deploy";
+  private final String SERVERLESS_AWS_LAMBDA_DEPLOY_COMMAND_NAME = "ServerlessAwsLambdaDeploy";
   @Inject private ServerlessStepHelper serverlessStepHelper;
   @Inject private ExecutionSweepingOutputService executionSweepingOutputService;
   @Inject private InstanceInfoService instanceInfoService;
@@ -96,7 +96,7 @@ public class ServerlessAwsLambdaDeployStep
         manifestFilePathContent, manifestFileOverrideContent, serverlessManifestOutcome, ambiance);
     ServerlessDeployRequest serverlessDeployRequest =
         ServerlessDeployRequest.builder()
-            .commandName(SERVERLESS_DEPLOY_COMMAND_NAME)
+            .commandName(SERVERLESS_AWS_LAMBDA_DEPLOY_COMMAND_NAME)
             .accountId(accountId)
             .serverlessCommandType(serverlessDeployCommandType)
             .serverlessInfraConfig(serverlessInfraConfig)

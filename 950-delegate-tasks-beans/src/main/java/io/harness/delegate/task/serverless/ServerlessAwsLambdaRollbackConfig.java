@@ -17,6 +17,6 @@ import lombok.Value;
 @OwnedBy(CDP)
 @Value
 @Builder
-public class ServerlessAwsLambdaDeployConfig implements ServerlessDeployConfig {
-  String commandOptions;
+public class ServerlessAwsLambdaRollbackConfig implements ServerlessRollbackConfig {
+  String previousVersionTimeStamp;
 }

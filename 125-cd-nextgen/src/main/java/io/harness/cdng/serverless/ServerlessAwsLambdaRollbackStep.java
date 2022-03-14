@@ -30,8 +30,13 @@ public class ServerlessAwsLambdaRollbackStep extends TaskExecutableWithRollbackA
                                                .setType(ExecutionNodeType.SERVERLESS_AWS_LAMBDA_ROLLBACK.getYamlType())
                                                .setStepCategory(StepCategory.STEP)
                                                .build();
+
+  public static final String SERVERLESS_AWS_LAMBDA_ROLLBACK_COMMAND_NAME = "ServerlessAwsLambdaRollback";
+
   @Override
-  public void validateResources(Ambiance ambiance, StepElementParameters stepParameters) {}
+  public void validateResources(Ambiance ambiance, StepElementParameters stepParameters) {
+    // Nothing to validate
+  }
 
   @Override
   public StepResponse handleTaskResultWithSecurityContext(Ambiance ambiance, StepElementParameters stepParameters,
@@ -47,6 +52,6 @@ public class ServerlessAwsLambdaRollbackStep extends TaskExecutableWithRollbackA
 
   @Override
   public Class<StepElementParameters> getStepParametersClass() {
-    return null;
+    return StepElementParameters.class;
   }
 }

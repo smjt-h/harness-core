@@ -5,9 +5,6 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.serverless;
+package io.harness.delegate.beans.serverless;
 
-import io.harness.annotations.dev.HarnessTeam;
-import io.harness.annotations.dev.OwnedBy;
-
-@OwnedBy(HarnessTeam.CDP) public enum Option { stage, region, provider, key, secret, name, timestamp }
+public interface ServerlessRollbackResult {}

@@ -42,6 +42,10 @@ public class ServerlessClient {
     return new DeployListCommand(this);
   }
 
+  public RollbackCommand rollback() {
+    return new RollbackCommand(this);
+  }
+
   public String command() {
     StringBuilder command = new StringBuilder(256);
     if (StringUtils.isNotBlank(homeDirectoryPath)) {

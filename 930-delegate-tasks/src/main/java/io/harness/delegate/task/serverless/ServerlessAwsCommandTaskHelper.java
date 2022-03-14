@@ -86,6 +86,16 @@ public class ServerlessAwsCommandTaskHelper {
         command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true, timeoutInMillis);
   }
 
+  public ServerlessCliResponse rollback(ServerlessClient serverlessClient,
+      ServerlessDelegateTaskParams serverlessDelegateTaskParams, LogCallback executionLogCallback,
+      ServerlessAwsLambdaRollbackConfig serverlessAwsLambdaRollbackConfig,
+      ServerlessAwsLambdaInfraConfig serverlessAwsLambdaInfraConfig, long timeoutInMillis) throws Exception {
+    RollbackCommand command =
+        serverlessClient.rollback().timeStamp(serverlessAwsLambdaRollbackConfig.getPreviousVersionTimeStamp());
+    return ServerlessCommandTaskHelper.executeCommand(
+        command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true, timeoutInMillis);
+  }
+
   public ServerlessAwsLambdaManifestSchema parseServerlessManifest(
       ServerlessAwsLambdaManifestConfig serverlessManifestConfig) throws IOException {
     String manifestContent = serverlessManifestConfig.getManifestContent();
