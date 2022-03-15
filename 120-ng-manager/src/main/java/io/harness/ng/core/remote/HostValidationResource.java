@@ -82,8 +82,8 @@ public class HostValidationResource {
           NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
       @Parameter(description = "Secret Identifier") @QueryParam(
           NGCommonEntityConstants.IDENTIFIER_KEY) @NotNull String secretIdentifier,
-      @RequestBody(required = true, description = "List of host names to validate") @NotNull List<String> hostNames) {
+      @RequestBody(required = true, description = "List of SSH hosts to validate") @NotNull List<String> hosts) {
     return ResponseDTO.newResponse(hostValidationService.validateSSHHosts(
-        hostNames, accountIdentifier, orgIdentifier, projectIdentifier, secretIdentifier));
+        hosts, accountIdentifier, orgIdentifier, projectIdentifier, secretIdentifier));
   }
 }
