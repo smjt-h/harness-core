@@ -110,7 +110,6 @@ import io.fabric8.kubernetes.api.model.ContainerStateWaiting;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -133,12 +132,9 @@ import io.fabric8.kubernetes.api.model.extensions.ReplicaSet;
 import io.fabric8.kubernetes.api.model.extensions.ReplicaSetList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
-import io.fabric8.kubernetes.client.NamespacedKubernetesClient;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
-import io.fabric8.kubernetes.client.dsl.ScalableResource;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.api.model.DeploymentConfig;
 import io.fabric8.openshift.api.model.DeploymentConfigList;
 import io.fabric8.openshift.client.dsl.DeployableScalableResource;
@@ -196,13 +192,14 @@ import javax.validation.constraints.NotNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import me.snowdrop.istio.api.IstioResource;
-import me.snowdrop.istio.api.internal.IstioSpecRegistry;
 import me.snowdrop.istio.api.internal.IstioSpecRegistry.CRDInfo;
 import me.snowdrop.istio.api.networking.v1alpha3.DestinationRule;
 import me.snowdrop.istio.api.networking.v1alpha3.DestinationRuleBuilder;
+import me.snowdrop.istio.api.networking.v1alpha3.DestinationRuleList;
 import me.snowdrop.istio.api.networking.v1alpha3.HTTPRouteDestination;
 import me.snowdrop.istio.api.networking.v1alpha3.VirtualService;
 import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceBuilder;
+import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceList;
 import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceSpec;
 import me.snowdrop.istio.client.IstioClient;
 import org.apache.commons.lang3.StringUtils;
@@ -1377,15 +1374,34 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
   }
 
   @Override
+  public io.fabric8.istio.api.networking.v1alpha3.VirtualService createOrReplaceFabric8IstioResource(
+      KubernetesConfig kubernetesConfig, IstioResource definition) {
+    String name = definition.getMetadata().getName();
+    String kind = definition.getKind();
+    log.info("Registering {} [{}]", kind, name);
+    io.fabric8.istio.client.IstioClient fabric8IstioClient =
+        kubernetesHelperService.getFabric8IstioClient(kubernetesConfig);
+    return fabric8IstioClient.v1alpha3().virtualServices().createOrReplace();
+  }
+
+  @Override
   public VirtualService getIstioVirtualService(KubernetesConfig kubernetesConfig, String name) {
     KubernetesClient kubernetesClient = kubernetesHelperService.getKubernetesClient(kubernetesConfig);
     try {
       VirtualService virtualService = new VirtualServiceBuilder().build();
 
-      return kubernetesClient.resources(VirtualService.class, KubernetesResourceList.class)
+      return kubernetesClient.resources(VirtualService.class, VirtualServiceList.class)
           .inNamespace(kubernetesConfig.getNamespace())
           .withName(name)
           .get();
+
+      //            return kubernetesClient
+      //                .customResources(fromCrd(getCustomResourceDefinition(kubernetesClient, new
+      //                VirtualServiceBuilder().build())),
+      //                    VirtualService.class, VirtualServiceList.class)
+      //                .inNamespace(kubernetesConfig.getNamespace())
+      //                .withName(name)
+      //                .get();
     } catch (Exception e) {
       log.error("Failed to get istio VirtualService/{}", name, e);
       return null;
@@ -1397,7 +1413,13 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
     KubernetesClient kubernetesClient = kubernetesHelperService.getKubernetesClient(kubernetesConfig);
     try {
       DestinationRule destinationRule = new DestinationRuleBuilder().build();
-      return kubernetesClient.resources(DestinationRule.class, KubernetesResourceList.class)
+      //            return kubernetesClient
+      //                .customResources(fromCrd(getCustomResourceDefinition(kubernetesClient, destinationRule)),
+      //                    DestinationRule.class, DestinationRuleList.class)
+      //                .inNamespace(kubernetesConfig.getNamespace())
+      //                .withName(name)
+      //                .get();
+      return kubernetesClient.resources(DestinationRule.class, DestinationRuleList.class)
           .inNamespace(kubernetesConfig.getNamespace())
           .withName(name)
           .get();
@@ -1424,6 +1446,7 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
   @Override
   public CustomResourceDefinition getCustomResourceDefinition(KubernetesClient client, IstioResource resource) {
     final String crdName = getCRDNameFor(resource.getKind(), resource.getApiVersion());
+
     final CustomResourceDefinition customResourceDefinition =
         client.apiextensions().v1().customResourceDefinitions().withName(crdName).get();
     if (customResourceDefinition == null) {

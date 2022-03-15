@@ -42,7 +42,6 @@ import software.wings.service.intfc.security.EncryptionService;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.inject.Inject;
 import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.fabric8.kubernetes.api.model.HorizontalPodAutoscaler;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;

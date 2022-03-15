@@ -203,6 +203,8 @@ public class K8sTrafficSplitTaskHandler extends K8sTaskHandler {
       if (virtualService != null) {
         executionLogCallback.saveExecutionLog("\n" + toYaml(virtualService));
       }
+      io.fabric8.istio.api.networking.v1alpha3.VirtualService virtualService1 =
+          kubernetesContainerService.createOrReplaceFabric8IstioResource(kubernetesConfig, virtualService);
 
       virtualService =
           (VirtualService) kubernetesContainerService.createOrReplaceIstioResource(kubernetesConfig, virtualService);

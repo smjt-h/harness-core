@@ -129,6 +129,9 @@ public interface KubernetesContainerService {
 
   IstioResource createOrReplaceIstioResource(KubernetesConfig kubernetesConfig, IstioResource definition);
 
+  io.fabric8.istio.api.networking.v1alpha3.VirtualService createOrReplaceFabric8IstioResource(
+      KubernetesConfig kubernetesConfig, IstioResource definition);
+
   void deleteIstioDestinationRule(KubernetesConfig kubernetesConfig, String name);
 
   int getTrafficPercent(KubernetesConfig kubernetesConfig, String controllerName);

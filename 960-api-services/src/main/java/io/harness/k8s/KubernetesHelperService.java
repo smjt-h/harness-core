@@ -22,6 +22,7 @@ import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.WRITE_
 import static io.fabric8.kubernetes.client.Config.KUBERNETES_KUBECONFIG_FILE;
 import static io.fabric8.kubernetes.client.Config.KUBERNETES_SERVICE_ACCOUNT_CA_CRT_PATH;
 import static io.fabric8.kubernetes.client.Config.KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH;
+import static io.fabric8.kubernetes.client.utils.HttpClientUtils.createHttpClient;
 import static io.fabric8.kubernetes.client.utils.Utils.isNotNullOrEmpty;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -29,6 +30,7 @@ import static okhttp3.ConnectionSpec.CLEARTEXT;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
+import io.fabric8.istio.client.NamespacedIstioClient;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidArgumentsException;
@@ -63,8 +65,8 @@ import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.http.TlsVersion;
 import io.fabric8.kubernetes.client.internal.SSLUtils;
+import io.fabric8.kubernetes.client.okhttp.OkHttpClientImpl;
 import io.fabric8.kubernetes.client.utils.Utils;
 import io.fabric8.openshift.client.DefaultOpenShiftClient;
 import io.fabric8.openshift.client.OpenShiftClient;
@@ -85,11 +87,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -170,7 +171,12 @@ public class KubernetesHelperService {
       namespace = config.getNamespace();
     }
 
-    OkHttpClient okHttpClient = createHttpClientWithProxySetting(config);
+    Consumer<OkHttpClient.Builder> httpClientBuilder =
+        builder -> builder.proxy(Http.checkAndGetNonProxyIfApplicable(config.getMasterUrl()));
+    OkHttpClientImpl okHttpClient = createHttpClient(config, httpClientBuilder);
+    //    OkHttpClient.Builder httpClientBuilder = getOkHttpClientBuilder();
+    //    httpClientBuilder.proxy(Http.checkAndGetNonProxyIfApplicable(config.getMasterUrl()));
+
     try (DefaultKubernetesClient client = new DefaultKubernetesClient(okHttpClient, config)) {
       return client.inNamespace(namespace);
     }
@@ -248,6 +254,19 @@ public class KubernetesHelperService {
     OkHttpClient okHttpClient = createHttpClientWithProxySetting(config);
     try (DefaultIstioClient client = new DefaultIstioClient(okHttpClient, config)) {
       return client.inNamespace(namespace);
+    }
+  }
+
+  public io.fabric8.istio.client.IstioClient getFabric8IstioClient(KubernetesConfig kubernetesConfig){
+    Config config = getConfig(kubernetesConfig, StringUtils.EMPTY);
+
+    String namespace = "default";
+    if (isNotBlank(config.getNamespace())) {
+      namespace = config.getNamespace();
+    }
+
+    try(io.fabric8.istio.client.DefaultIstioClient istioClient = new io.fabric8.istio.client.DefaultIstioClient(config)) {
+      return istioClient.inNamespace(namespace);
     }
   }
 
@@ -394,10 +413,9 @@ public class KubernetesHelperService {
         int tlsVersionsSize = config.getTlsVersions().length;
         String[] tlsVersions = new String[tlsVersionsSize];
         for (int i = 0; i < tlsVersionsSize; i++) {
-          tlsVersions[i] = config.getTlsVersions()[i].toString();
+          tlsVersions[i] = config.getTlsVersions()[i].javaName();
         }
-        ConnectionSpec spec =
-            new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).tlsVersions(Arrays.toString(tlsVersions)).build();
+        ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).tlsVersions(tlsVersions).build();
         httpClientBuilder.connectionSpecs(asList(spec, CLEARTEXT));
       }
 

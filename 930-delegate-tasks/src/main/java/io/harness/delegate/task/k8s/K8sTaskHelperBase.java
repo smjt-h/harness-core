@@ -217,6 +217,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.snowdrop.istio.api.networking.v1alpha3.Destination;
 import me.snowdrop.istio.api.networking.v1alpha3.DestinationRule;
 import me.snowdrop.istio.api.networking.v1alpha3.DestinationRuleBuilder;
+import me.snowdrop.istio.api.networking.v1alpha3.DestinationRuleList;
 import me.snowdrop.istio.api.networking.v1alpha3.HTTPRoute;
 import me.snowdrop.istio.api.networking.v1alpha3.HTTPRouteDestination;
 import me.snowdrop.istio.api.networking.v1alpha3.PortSelector;
@@ -225,6 +226,7 @@ import me.snowdrop.istio.api.networking.v1alpha3.TCPRoute;
 import me.snowdrop.istio.api.networking.v1alpha3.TLSRoute;
 import me.snowdrop.istio.api.networking.v1alpha3.VirtualService;
 import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceBuilder;
+import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceList;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -730,10 +732,10 @@ public class K8sTaskHelperBase {
     }
 
     KubernetesClient kubernetesClient = kubernetesHelperService.getKubernetesClient(kubernetesConfig);
-    kubernetesClient.customResources(fromCrd(kubernetesContainerService.getCustomResourceDefinition(
-                                         kubernetesClient, new VirtualServiceBuilder().build())),
-        VirtualService.class, KubernetesResourceList.class);
-
+//        kubernetesClient.customResources(fromCrd(kubernetesContainerService.getCustomResourceDefinition(
+//                                             kubernetesClient, new VirtualServiceBuilder().build())),
+//            VirtualService.class, VirtualServiceList.class);
+    kubernetesClient.resources(VirtualService.class, VirtualServiceList.class);
     KubernetesResource kubernetesResource = virtualServiceResources.get(0);
     InputStream inputStream = IOUtils.toInputStream(kubernetesResource.getSpec(), UTF_8);
     VirtualService virtualService = (VirtualService) kubernetesClient.load(inputStream).get().get(0);
@@ -777,9 +779,10 @@ public class K8sTaskHelperBase {
     }
 
     KubernetesClient kubernetesClient = kubernetesHelperService.getKubernetesClient(kubernetesConfig);
-    kubernetesClient.customResources(fromCrd(kubernetesContainerService.getCustomResourceDefinition(
-                                         kubernetesClient, new DestinationRuleBuilder().build())),
-        DestinationRule.class, KubernetesResourceList.class);
+//        kubernetesClient.customResources(fromCrd(kubernetesContainerService.getCustomResourceDefinition(
+//                                             kubernetesClient, new DestinationRuleBuilder().build())),
+//            DestinationRule.class, DestinationRuleList.class);
+    kubernetesClient.resources(DestinationRule.class, DestinationRuleList.class);
 
     KubernetesResource kubernetesResource = destinationRuleResources.get(0);
     InputStream inputStream = IOUtils.toInputStream(kubernetesResource.getSpec(), UTF_8);
