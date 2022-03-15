@@ -12,6 +12,7 @@ import static io.harness.OrchestrationEventsFrameworkConstants.INITIATE_NODE_EVE
 import static io.harness.OrchestrationEventsFrameworkConstants.INITIATE_NODE_EVENT_PRODUCER;
 import static io.harness.OrchestrationEventsFrameworkConstants.PARTIAL_PLAN_EVENT_CONSUMER;
 import static io.harness.OrchestrationEventsFrameworkConstants.SDK_RESPONSE_EVENT_CONSUMER;
+import static io.harness.OrchestrationEventsFrameworkConstants.TIMESCALE_REDIS_EVENT_CONSUMER;
 import static io.harness.eventsframework.EventsFrameworkConstants.INITIATE_NODE_EVENT_BATCH_SIZE;
 import static io.harness.eventsframework.EventsFrameworkConstants.INITIATE_NODE_EVENT_MAX_TOPIC_SIZE;
 import static io.harness.eventsframework.EventsFrameworkConstants.INITIATE_NODE_EVENT_TOPIC;
@@ -97,6 +98,11 @@ public class OrchestrationEventsFrameworkModule extends AbstractModule {
           .annotatedWith(Names.named(ORCHESTRATION_LOG))
           .toInstance(RedisProducer.of(ORCHESTRATION_LOG, redissonClient, ORCHESTRATION_LOG_MAX_TOPIC_SIZE,
               PIPELINE_SERVICE.getServiceId(), redisConfig.getEnvNamespace()));
+
+      bind(Consumer.class)
+          .annotatedWith(Names.named(TIMESCALE_REDIS_EVENT_CONSUMER))
+          .toInstance(RedisConsumer.of("pms-harness_db.pms-harness.planExecutionsSummary", "test9", redissonClient,
+              Duration.ofSeconds(MAX_PROCESSING_TIME_SECONDS), 100, redisConfig.getEnvNamespace()));
     }
   }
 }

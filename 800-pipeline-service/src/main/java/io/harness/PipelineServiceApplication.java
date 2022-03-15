@@ -102,7 +102,8 @@ import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineEntityCrudObserver;
 import io.harness.pms.pipeline.PipelineSetupUsageHelper;
 import io.harness.pms.pipeline.gitsync.PipelineEntityGitSyncHelper;
-import io.harness.pms.pipeline.handlers.PipelineExecutionSummaryHandler;
+import io.harness.pms.pipeline.handlers.TimescaleHandler;
+import io.harness.pms.pipeline.handlers.TimescaleRedisEventConsumer;
 import io.harness.pms.plan.creation.PipelineServiceFilterCreationResponseMerger;
 import io.harness.pms.plan.creation.PipelineServiceInternalInfoProvider;
 import io.harness.pms.plan.execution.PmsExecutionServiceInfoProvider;
@@ -320,6 +321,7 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
       });
     }
 
+    TimescaleHandler.objectMapper = environment.getObjectMapper();
     // Pipeline Service Modules
     PmsSdkConfiguration pmsSdkConfiguration = getPmsSdkConfiguration(appConfig);
     modules.add(PmsSdkModule.getInstance(pmsSdkConfiguration));
@@ -375,11 +377,6 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     }
 
     MaintenanceController.forceMaintenance(false);
-
-    if (appConfig.getDebeziumConfig() != null && appConfig.getDebeziumConfig().isEnabled()) {
-      new DebeziumEngineStarter().startDebeziumEngine(
-          appConfig.getDebeziumConfig(), new PipelineExecutionSummaryHandler(environment.getObjectMapper()));
-    }
   }
 
   private void intializeSdkInstanceCacheSync(Injector injector) {
@@ -685,6 +682,8 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     pipelineEventConsumerController.register(injector.getInstance(PmsNotifyEventConsumerRedis.class),
         pipelineServiceConsumersConfig.getPmsNotify().getThreads());
     pipelineEventConsumerController.register(injector.getInstance(InitiateNodeEventRedisConsumer.class),
+        pipelineServiceConsumersConfig.getInitiateNode().getThreads());
+    pipelineEventConsumerController.register(injector.getInstance(TimescaleRedisEventConsumer.class),
         pipelineServiceConsumersConfig.getInitiateNode().getThreads());
   }
 

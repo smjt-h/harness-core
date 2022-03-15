@@ -40,6 +40,7 @@ java_binary(
         "//950-ng-project-n-orgs:module",
         "//950-opa-client:module",
         "//950-telemetry:module",
+        "//952-debezium-engine:module",
         "//953-events-api:module",
         "//955-alert-beans:module",
         "//955-delegate-beans:module",

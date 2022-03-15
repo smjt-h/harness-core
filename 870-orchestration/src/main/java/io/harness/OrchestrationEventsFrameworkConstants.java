@@ -22,4 +22,6 @@ public class OrchestrationEventsFrameworkConstants {
   public static final String INITIATE_NODE_EVENT_CONSUMER = "INITIATE_NODE_EVENT_CONSUMER";
 
   public static final String INITIATE_NODE_EVENT_PRODUCER = "TRIGGER_NODE_EVENT_PRODUCER";
+
+  public static final String TIMESCALE_REDIS_EVENT_CONSUMER = "TIMESCALE_REDIS_EVENT_CONSUMER";
 }
