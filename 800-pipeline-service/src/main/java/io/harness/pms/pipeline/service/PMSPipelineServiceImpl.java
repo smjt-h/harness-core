@@ -594,6 +594,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     if (!pmsFeatureFlagService.isEnabled(accountId, FeatureName.OPA_PIPELINE_GOVERNANCE)) {
       return pipelineYaml;
     }
+    long start = System.currentTimeMillis();
     ExpansionRequestMetadata expansionRequestMetadata = getRequestMetadata(accountId, orgIdentifier, projectIdentifier);
 
     Set<ExpansionRequest> expansionRequests = expansionRequestsExtractor.fetchExpansionRequests(pipelineYaml);
