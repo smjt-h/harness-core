@@ -52,9 +52,7 @@ public class ExpansionRequestBatchHelper {
     return ExpansionRequestData.builder().moduleToRequestBatch(moduleToRequestBatch).uuidToFqnSet(uuidToFqnSet).build();
   }
 
-  /**
-   * @param expansionRequests: all requests should have the same module
-   */
+  // expansionRequests: all requests should have the same module
   RequestBatchWithUuidMap buildRequestBatchForModule(
       Set<ExpansionRequest> expansionRequests, ExpansionRequestMetadata expansionRequestMetadata) {
     // separate all requests by key so that each key's requests are handled independently
@@ -85,9 +83,7 @@ public class ExpansionRequestBatchHelper {
     return RequestBatchWithUuidMap.builder().batch(expansionRequestBatch).uuidToFqnSet(uuidToFqnSet).build();
   }
 
-  /**
-   * @param expansionRequests: all requests should have the same module and same key
-   */
+  // expansionRequests: all requests should have the same module and same key
   RequestBatchWithUuidMap buildRequestBatchForModuleAndKey(
       Set<ExpansionRequest> expansionRequests, String key, ExpansionRequestMetadata expansionRequestMetadata) {
     // separate all requests by value so that each value's requests are mapped to one common request

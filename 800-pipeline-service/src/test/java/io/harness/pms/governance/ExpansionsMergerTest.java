@@ -28,7 +28,10 @@ import io.harness.rule.Owner;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -55,35 +58,40 @@ public class ExpansionsMergerTest extends CategoryTest {
         + "                  expandAndRemove: e2\n"
         + "                  expandAndMoveUp: e3\n"
         + "                timeout: 1d\n";
-    ExpansionResponseProto resp0 =
-        ExpansionResponseProto.newBuilder()
-            .setFqn("pipeline/stages/[0]/stage/spec/execution/steps/[0]/step/spec/expandThis")
-            .setKey("et1")
-            .setValue("{\"strategy\": \"parallel\"}")
-            .setSuccess(true)
-            .setPlacement(PARALLEL)
-            .build();
-    ExpansionResponseProto resp1 =
-        ExpansionResponseProto.newBuilder()
-            .setFqn("pipeline/stages/[0]/stage/spec/execution/steps/[0]/step/spec/expandAndRemove")
-            .setKey("et2")
-            .setValue("{\"strategy\": \"replace\"}")
-            .setSuccess(true)
-            .setPlacement(REPLACE)
-            .build();
-    ExpansionResponseProto resp2 =
-        ExpansionResponseProto.newBuilder()
-            .setFqn("pipeline/stages/[0]/stage/spec/execution/steps/[0]/step/spec/expandAndMoveUp")
-            .setKey("et3")
-            .setValue("{\"strategy\": \"moveUp\"}")
-            .setSuccess(true)
-            .setPlacement(MOVE_UP)
-            .build();
+    ExpansionResponseProto resp0 = ExpansionResponseProto.newBuilder()
+                                       .setUuid("uuid1")
+                                       .setKey("et1")
+                                       .setValue("{\"strategy\": \"parallel\"}")
+                                       .setSuccess(true)
+                                       .setPlacement(PARALLEL)
+                                       .build();
+    ExpansionResponseProto resp1 = ExpansionResponseProto.newBuilder()
+                                       .setUuid("uuid2")
+                                       .setKey("et2")
+                                       .setValue("{\"strategy\": \"replace\"}")
+                                       .setSuccess(true)
+                                       .setPlacement(REPLACE)
+                                       .build();
+    ExpansionResponseProto resp2 = ExpansionResponseProto.newBuilder()
+                                       .setUuid("uuid3")
+                                       .setKey("et3")
+                                       .setValue("{\"strategy\": \"moveUp\"}")
+                                       .setSuccess(true)
+                                       .setPlacement(MOVE_UP)
+                                       .build();
     List<ExpansionResponseProto> expansionResponseProtoList = Arrays.asList(resp0, resp1, resp2);
     ExpansionResponseBatch expansionResponseBatch =
         ExpansionResponseBatch.newBuilder().addAllExpansionResponseProto(expansionResponseProtoList).build();
+    Map<String, Set<String>> uuidToFqnSet = new HashMap<>();
+    uuidToFqnSet.put(
+        "uuid1", Collections.singleton("pipeline/stages/[0]/stage/spec/execution/steps/[0]/step/spec/expandThis"));
+    uuidToFqnSet.put(
+        "uuid2", Collections.singleton("pipeline/stages/[0]/stage/spec/execution/steps/[0]/step/spec/expandAndRemove"));
+    uuidToFqnSet.put(
+        "uuid3", Collections.singleton("pipeline/stages/[0]/stage/spec/execution/steps/[0]/step/spec/expandAndMoveUp"));
+
     String expandedPipeline =
-        ExpansionsMerger.mergeExpansions(simplePipeline, Collections.singleton(expansionResponseBatch));
+        ExpansionsMerger.mergeExpansions(simplePipeline, Collections.singleton(expansionResponseBatch), uuidToFqnSet);
     assertThat(expandedPipeline).isNotNull();
     YamlNode yamlNode = YamlUtils.readTree(expandedPipeline).getNode();
     assertThat(yamlNode.gotoPath("pipeline/stages/[0]/stage/spec/execution/steps/[0]/step/spec/expandThis"))

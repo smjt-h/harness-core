@@ -18,10 +18,12 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.joor.Reflect.on;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyMap;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import io.harness.ModuleType;
 import io.harness.PipelineServiceTestBase;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
@@ -55,6 +57,7 @@ import io.harness.repositories.pipeline.PMSPipelineRepositoryCustomImpl;
 import io.harness.rule.Owner;
 import io.harness.telemetry.TelemetryReporter;
 
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.io.Resources;
 import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
@@ -358,7 +361,12 @@ public class PMSPipelineServiceImplTest extends PipelineServiceTestBase {
                                                             .setProjectId(PROJ_IDENTIFIER)
                                                             .setGitSyncBranchContext(randomByteString)
                                                             .build();
-    ExpansionRequest dummyRequest = ExpansionRequest.builder().fqn("fqn").build();
+    ExpansionRequest dummyRequest = ExpansionRequest.builder()
+                                        .fqn("fqn")
+                                        .module(ModuleType.CD)
+                                        .key("connectorRef")
+                                        .fieldValue(new TextNode("k8sConn"))
+                                        .build();
     Set<ExpansionRequest> dummyRequestSet = Collections.singleton(dummyRequest);
     doReturn(randomByteString).when(gitSyncHelper).getGitSyncBranchContextBytesThreadLocal();
     doReturn(dummyRequestSet).when(expansionRequestsExtractor).fetchExpansionRequests(dummyYaml);
@@ -367,12 +375,11 @@ public class PMSPipelineServiceImplTest extends PipelineServiceTestBase {
     ExpansionResponseBatch dummyResponseBatch =
         ExpansionResponseBatch.newBuilder().addExpansionResponseProto(dummyResponse).build();
     Set<ExpansionResponseBatch> dummyResponseSet = Collections.singleton(dummyResponseBatch);
-    doReturn(dummyResponseSet).when(jsonExpander).fetchExpansionResponses(dummyRequestSet, expansionRequestMetadata);
+    doReturn(dummyResponseSet).when(jsonExpander).fetchExpansionResponses(any());
     pmsPipelineService.fetchExpandedPipelineJSONFromYaml(accountId, ORG_IDENTIFIER, PROJ_IDENTIFIER, dummyYaml);
     verify(pmsFeatureFlagService, times(1)).isEnabled(accountId, FeatureName.OPA_PIPELINE_GOVERNANCE);
     verify(gitSyncHelper, times(1)).getGitSyncBranchContextBytesThreadLocal();
     verify(expansionRequestsExtractor, times(1)).fetchExpansionRequests(dummyYaml);
-    verify(jsonExpander, times(1)).fetchExpansionResponses(dummyRequestSet, expansionRequestMetadata);
 
     doReturn(false).when(pmsFeatureFlagService).isEnabled(accountId, FeatureName.OPA_PIPELINE_GOVERNANCE);
     String noExp =
@@ -381,6 +388,5 @@ public class PMSPipelineServiceImplTest extends PipelineServiceTestBase {
     verify(pmsFeatureFlagService, times(2)).isEnabled(accountId, FeatureName.OPA_PIPELINE_GOVERNANCE);
     verify(gitSyncHelper, times(1)).getGitSyncBranchContextBytesThreadLocal();
     verify(expansionRequestsExtractor, times(1)).fetchExpansionRequests(dummyYaml);
-    verify(jsonExpander, times(1)).fetchExpansionResponses(dummyRequestSet, expansionRequestMetadata);
   }
 }
