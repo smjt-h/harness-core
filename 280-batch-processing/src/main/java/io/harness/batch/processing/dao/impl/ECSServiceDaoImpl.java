@@ -35,24 +35,27 @@ public class ECSServiceDaoImpl implements ECSServiceDao {
 
   @Override
   public void create(ECSService ecsService) {
-    log.info("ECSService: {}", ecsService);
+    if (ecsService == null) {
+      return;
+    }
     final CacheKey cacheKey = new CacheKey(ecsService.getClusterId(), ecsService.getServiceArn());
-    saved.get(cacheKey, key -> (
-            hPersistence.upsert(hPersistence.createQuery(ECSService.class)
-                    .field(ECSServiceKeys.accountId)
-                    .equal(ecsService.getAccountId())
-                    .field(ECSServiceKeys.clusterId)
-                    .equal(ecsService.getClusterId())
-                    .field(ECSServiceKeys.serviceArn)
-                    .equal(ecsService.getServiceArn()),
-                hPersistence.createUpdateOperations(ECSService.class)
-                    .set(ECSServiceKeys.accountId, ecsService.getAccountId())
-                    .set(ECSServiceKeys.clusterId, ecsService.getClusterId())
-                    .set(ECSServiceKeys.serviceArn, ecsService.getServiceArn())
-                    .set(ECSServiceKeys.serviceName, ecsService.getServiceName())
-                    .set(ECSServiceKeys.resource, ecsService.getResource())
-                    .set(ECSServiceKeys.labels, ecsService.getLabels()),
-                HPersistence.upsertReturnNewOptions))
+    saved.get(cacheKey,
+        key
+        -> (hPersistence.upsert(hPersistence.createQuery(ECSService.class)
+                                    .field(ECSServiceKeys.accountId)
+                                    .equal(ecsService.getAccountId())
+                                    .field(ECSServiceKeys.clusterId)
+                                    .equal(ecsService.getClusterId())
+                                    .field(ECSServiceKeys.serviceArn)
+                                    .equal(ecsService.getServiceArn()),
+               hPersistence.createUpdateOperations(ECSService.class)
+                   .set(ECSServiceKeys.accountId, ecsService.getAccountId())
+                   .set(ECSServiceKeys.clusterId, ecsService.getClusterId())
+                   .set(ECSServiceKeys.serviceArn, ecsService.getServiceArn())
+                   .set(ECSServiceKeys.serviceName, ecsService.getServiceName())
+                   .set(ECSServiceKeys.resource, ecsService.getResource())
+                   .set(ECSServiceKeys.labels, ecsService.getLabels()),
+               HPersistence.upsertReturnNewOptions))
             != null);
   }
 }
