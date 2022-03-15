@@ -1196,12 +1196,16 @@ public class WatcherServiceImpl implements WatcherService {
             messageService.logAllMessages(DELEGATE, newDelegateProcess);
             messageService.clearChannel(DELEGATE, newDelegateProcess);
           }
+          log.info("before destroy **gaurav");
           newDelegate.getProcess().destroy();
+          log.info("after destroy **gaurav");
           newDelegate.getProcess().waitFor();
+          log.info("after wait **gaurav");
           oldDelegateProcesses.forEach(oldDelegateProcess -> {
             log.info("Sending old delegate process {} resume message", oldDelegateProcess);
             messageService.writeMessageToChannel(DELEGATE, oldDelegateProcess, DELEGATE_RESUME);
           });
+          log.info("done executign error **gaurav");
         }
       } catch (Exception e) {
         log.error("Exception while upgrading", e);
@@ -1230,6 +1234,7 @@ public class WatcherServiceImpl implements WatcherService {
           }
         }
       } finally {
+        log.info("in finally of start delegate **gaurav");
         working.set(false);
       }
     });
