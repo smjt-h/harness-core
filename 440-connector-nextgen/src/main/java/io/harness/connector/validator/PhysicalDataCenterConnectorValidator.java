@@ -1,7 +1,6 @@
 package io.harness.connector.validator;
 
-import static java.lang.String.format;
-
+import com.google.inject.Inject;
 import io.harness.connector.ConnectivityStatus;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.ConnectorValidationResult;
@@ -11,13 +10,14 @@ import io.harness.delegate.beans.connector.pdcconnector.PhysicalDataCenterConnec
 import io.harness.ng.core.dto.ErrorDetail;
 import io.harness.ng.validator.dto.HostValidationDTO;
 import io.harness.ng.validator.service.api.HostValidationService;
+import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 
-import com.google.inject.Inject;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
+
+import static java.lang.String.format;
 
 public class PhysicalDataCenterConnectorValidator implements ConnectionValidator<PhysicalDataCenterConnectorDTO> {
   @Inject private HostValidationService hostValidationService;
@@ -27,7 +27,7 @@ public class PhysicalDataCenterConnectorValidator implements ConnectionValidator
       String orgIdentifier, String projectIdentifier, String identifier) {
     long startTestingAt = System.currentTimeMillis();
     List<HostValidationDTO> hostValidationDTOs = hostValidationService.validateSSHHosts(getHostNames(connectorDTO),
-        accountIdentifier, orgIdentifier, projectIdentifier, connectorDTO.getSshKeyRef().getIdentifier());
+        accountIdentifier, orgIdentifier, projectIdentifier, connectorDTO.getSshKeyRef().toSecretRefStringValue());
 
     return buildConnectorValidationResult(hostValidationDTOs, startTestingAt);
   }

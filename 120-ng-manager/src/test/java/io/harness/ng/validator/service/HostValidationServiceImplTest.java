@@ -5,7 +5,7 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.ng.core.service.services;
+package io.harness.ng.validator.service;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessTeam;
@@ -49,7 +49,8 @@ public class HostValidationServiceImplTest extends CategoryTest {
   @Mock private SshKeySpecDTOHelper sshKeySpecDTOHelper;
   @Mock private TaskSetupAbstractionHelper taskSetupAbstractionHelper;
   @Mock private DelegateGrpcClientWrapper delegateGrpcClientWrapper;
-  @InjectMocks HostValidationServiceImpl hostValidationService;
+  @InjectMocks
+  HostValidationServiceImpl hostValidationService;
 
   private static final String ACCOUNT_IDENTIFIER = "accountIdentifier";
   private static final String ORG_IDENTIFIER = "orgIdentifier";
@@ -85,37 +86,5 @@ public class HostValidationServiceImplTest extends CategoryTest {
     assertThat(result.getHost()).isEqualTo(host);
     assertThat(result.getStatus()).isEqualTo(HostValidationDTO.HostValidationStatus.SUCCESS);
     assertThat(result.getError()).isEqualTo(ErrorDetail.builder().build());
-  }
-
-  @Test
-  @Owner(developers = VLAD)
-  @Category(UnitTests.class)
-  public void shouldExtractPortFromEmptyHost() {
-    Optional<Integer> result = hostValidationService.extractPortFromHost("");
-    assertThat(result.isPresent()).isFalse();
-  }
-
-  @Test
-  @Owner(developers = VLAD)
-  @Category(UnitTests.class)
-  public void shouldExtractPortFromHost() {
-    Optional<Integer> result = hostValidationService.extractPortFromHost("localhost:8080");
-    assertThat(result.get()).isEqualTo(8080);
-  }
-
-  @Test
-  @Owner(developers = VLAD)
-  @Category(UnitTests.class)
-  public void shouldExtractPortFromHostDoubleColumn() {
-    Optional<Integer> result = hostValidationService.extractPortFromHost("local:host:8080");
-    assertThat(result.get()).isEqualTo(8080);
-  }
-
-  @Test
-  @Owner(developers = VLAD)
-  @Category(UnitTests.class)
-  public void shouldExtractPortFromHostNotANumber() {
-    Optional<Integer> result = hostValidationService.extractPortFromHost("local:host");
-    assertThat(result.isPresent()).isFalse();
   }
 }
