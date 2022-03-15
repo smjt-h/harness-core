@@ -112,11 +112,16 @@ type ExecutionConnection {
 }
 
 type Manifest {
+  #manifest UUID
   id: String
+  #manifest name
   name: String
   description: String
+  #Date Time when manifest was created
   createdAt: Long
+  #Versioon
   version: String
+  # Manifest Source Id
   applicationManifestId: String
 }
 
