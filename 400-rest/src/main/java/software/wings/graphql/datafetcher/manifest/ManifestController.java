@@ -1,10 +1,7 @@
 package software.wings.graphql.datafetcher.manifest;
 
 import software.wings.beans.appmanifest.HelmChart;
-import software.wings.graphql.schema.type.manifest.QLManifest;
 import software.wings.graphql.schema.type.manifest.QLManifest.QLManifestBuilder;
-
-import java.util.jar.Manifest;
 
 public class ManifestController {
   public static void populateManifest(HelmChart helmChart, QLManifestBuilder qlManifestBuilder) {
