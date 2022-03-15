@@ -14,6 +14,7 @@ import static io.harness.delegate.beans.storeconfig.StoreDelegateConfigType.GIT;
 import static io.harness.delegate.beans.storeconfig.StoreDelegateConfigType.HTTP_HELM;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.filesystem.FileIo.getFilesUnderPath;
+import static io.harness.filesystem.FileIo.getFilesUnderPathMatchesFirstLine;
 import static io.harness.helm.HelmConstants.HELM_PATH_PLACEHOLDER;
 import static io.harness.helm.HelmConstants.HELM_RELEASE_LABEL;
 import static io.harness.k8s.K8sConstants.KUBERNETES_CHANGE_CAUSE_ANNOTATION;
@@ -1647,37 +1648,23 @@ public class K8sTaskHelperBase {
 
   public void deleteSkippedManifestFiles(String manifestFilesDirectory, LogCallback executionLogCallback)
       throws Exception {
-    List<FileData> files;
+    List<Path> skippedFilesList;
     Path directory = Paths.get(manifestFilesDirectory);
 
     try {
-      files = getFilesUnderPath(directory.toString());
+      skippedFilesList = getFilesUnderPathMatchesFirstLine(
+          directory.toString(), line -> line.contains(SKIP_FILE_FOR_DEPLOY_PLACEHOLDER_TEXT));
     } catch (Exception ex) {
       log.info(ExceptionUtils.getMessage(ex));
       throw new WingsException("Failed to get files. Error: " + ExceptionUtils.getMessage(ex));
     }
 
-    List<String> skippedFilesList = new ArrayList<>();
-
-    for (FileData fileData : files) {
-      try {
-        String fileContent = new String(fileData.getFileBytes(), UTF_8);
-
-        if (isNotBlank(fileContent)
-            && fileContent.split("\\r?\\n")[0].contains(SKIP_FILE_FOR_DEPLOY_PLACEHOLDER_TEXT)) {
-          skippedFilesList.add(fileData.getFilePath());
-        }
-      } catch (Exception ex) {
-        log.info("Could not convert to string for file" + fileData.getFilePath(), ex);
-      }
-    }
-
     if (isNotEmpty(skippedFilesList)) {
       executionLogCallback.saveExecutionLog("Following manifest files are skipped for applying");
-      for (String file : skippedFilesList) {
-        executionLogCallback.saveExecutionLog(color(file, Yellow, Bold));
+      for (Path path : skippedFilesList) {
+        executionLogCallback.saveExecutionLog(color(path.toString(), Yellow, Bold));
 
-        String filePath = Paths.get(manifestFilesDirectory, file).toString();
+        String filePath = Paths.get(manifestFilesDirectory, path.toString()).toString();
         FileIo.deleteFileIfExists(filePath);
       }
 
@@ -1886,15 +1873,8 @@ public class K8sTaskHelperBase {
       return manifestFiles;
     }
 
-    String valuesFileOptions = null;
-    try {
-      valuesFileOptions = writeValuesToFile(k8sDelegateTaskParams.getWorkingDirectory(), valuesFiles);
-    } catch (KubernetesValuesException kvexception) {
-      String message = kvexception.getParams().get("reason").toString();
-      executionLogCallback.saveExecutionLog(message, ERROR);
-      throw new KubernetesValuesException(message, kvexception.getCause());
-    }
-
+    String valuesFileOptions =
+        createValuesFileOptions(k8sDelegateTaskParams.getWorkingDirectory(), valuesFiles, executionLogCallback);
     log.info("Values file options: " + valuesFileOptions);
 
     List<FileData> result = new ArrayList<>();
@@ -1911,17 +1891,20 @@ public class K8sTaskHelperBase {
       FileIo.writeUtf8StringToFile(
           k8sDelegateTaskParams.getWorkingDirectory() + "/template.yaml", manifestFile.getFileContent());
 
-      try (LogOutputStream logErrorStream = getExecutionLogOutputStream(executionLogCallback, ERROR)) {
+      try (ByteArrayOutputStream errorCaptureStream = new ByteArrayOutputStream(1024);
+           LogOutputStream logErrorStream =
+               getExecutionLogOutputStream(executionLogCallback, ERROR, errorCaptureStream)) {
         String goTemplateCommand = encloseWithQuotesIfNeeded(k8sDelegateTaskParams.getGoTemplateClientPath())
             + " -t template.yaml " + valuesFileOptions;
         ProcessResult processResult = executeShellCommand(
             k8sDelegateTaskParams.getWorkingDirectory(), goTemplateCommand, logErrorStream, timeoutInMillis);
 
         if (processResult.getExitValue() != 0) {
-          throw new InvalidRequestException(
-              getErrorMessageIfProcessFailed(
-                  format("Failed to render template for %s.", manifestFile.getFileName()), processResult),
-              USER);
+          throw NestedExceptionUtils.hintWithExplanationException(
+              KubernetesExceptionHints.MANIFEST_RENDER_ERROR_GO_TEMPLATE,
+              format(KubernetesExceptionExplanation.MANIFEST_RENDER_ERROR_GO_TEMPLATE, errorCaptureStream.toString()),
+              new KubernetesTaskException(getErrorMessageIfProcessFailed(
+                  format("Failed to render template for %s.", manifestFile.getFileName()), processResult)));
         }
 
         String fileContent = processResult.outputUTF8();
@@ -2712,13 +2695,15 @@ public class K8sTaskHelperBase {
   public List<FileData> renderTemplateForHelm(String helmPath, String manifestFilesDirectory, List<String> valuesFiles,
       String releaseName, String namespace, LogCallback executionLogCallback, HelmVersion helmVersion,
       long timeoutInMillis, HelmCommandFlag helmCommandFlag) throws Exception {
-    String valuesFileOptions = writeValuesToFile(manifestFilesDirectory, valuesFiles);
+    String valuesFileOptions = createValuesFileOptions(manifestFilesDirectory, valuesFiles, executionLogCallback);
     log.info("Values file options: " + valuesFileOptions);
 
     printHelmPath(executionLogCallback, helmPath);
 
     List<FileData> result = new ArrayList<>();
-    try (LogOutputStream logErrorStream = K8sTaskHelperBase.getExecutionLogOutputStream(executionLogCallback, ERROR)) {
+    try (ByteArrayOutputStream errorCaptureStream = new ByteArrayOutputStream(1024);
+         LogOutputStream logErrorStream =
+             K8sTaskHelperBase.getExecutionLogOutputStream(executionLogCallback, ERROR, errorCaptureStream)) {
       String helmTemplateCommand = getHelmCommandForRender(
           helmPath, manifestFilesDirectory, releaseName, namespace, valuesFileOptions, helmVersion, helmCommandFlag);
       printHelmTemplateCommand(executionLogCallback, helmTemplateCommand);
@@ -2726,13 +2711,29 @@ public class K8sTaskHelperBase {
       ProcessResult processResult =
           executeShellCommand(manifestFilesDirectory, helmTemplateCommand, logErrorStream, timeoutInMillis);
       if (processResult.getExitValue() != 0) {
-        throw new InvalidRequestException(
-            getErrorMessageIfProcessFailed("Failed to render helm chart.", processResult), USER);
+        throw NestedExceptionUtils.hintWithExplanationException(KubernetesExceptionHints.MANIFEST_RENDER_ERROR_HELM,
+            format(KubernetesExceptionExplanation.MANIFEST_RENDER_ERROR_HELM, errorCaptureStream.toString(),
+                helmTemplateCommand),
+            new HelmClientException(getErrorMessageIfProcessFailed("Failed to render template. ", processResult), USER,
+                HelmCliCommandType.RENDER_CHART));
       }
       result.add(FileData.builder().fileName("manifest.yaml").fileContent(processResult.outputUTF8()).build());
     }
 
     return result;
+  }
+
+  private String createValuesFileOptions(String workingDirectory, List<String> valuesFiles, LogCallback logCallback)
+      throws Exception {
+    try {
+      return writeValuesToFile(workingDirectory, valuesFiles);
+    } catch (KubernetesValuesException exception) {
+      String message = exception.getParams().get("reason").toString();
+      logCallback.saveExecutionLog(message, ERROR);
+      throw NestedExceptionUtils.hintWithExplanationException(KubernetesExceptionHints.INVALID_VALUES_YAML,
+          KubernetesExceptionExplanation.INVALID_VALUES_YAML,
+          new KubernetesValuesException(message, exception.getCause()));
+    }
   }
 
   @VisibleForTesting
@@ -2748,7 +2749,7 @@ public class K8sTaskHelperBase {
       List<String> chartFiles, List<String> valuesFiles, String releaseName, String namespace,
       LogCallback executionLogCallback, HelmVersion helmVersion, long timeoutInMillis, HelmCommandFlag helmCommandFlag)
       throws Exception {
-    String valuesFileOptions = writeValuesToFile(manifestFilesDirectory, valuesFiles);
+    String valuesFileOptions = createValuesFileOptions(manifestFilesDirectory, valuesFiles, executionLogCallback);
     log.info("Values file options: " + valuesFileOptions);
 
     printHelmPath(executionLogCallback, helmPath);
@@ -2757,8 +2758,9 @@ public class K8sTaskHelperBase {
 
     for (String chartFile : chartFiles) {
       if (K8sTaskHelperBase.isValidManifestFile(chartFile)) {
-        try (LogOutputStream logErrorStream =
-                 K8sTaskHelperBase.getExecutionLogOutputStream(executionLogCallback, ERROR)) {
+        try (ByteArrayOutputStream errorCaptureStream = new ByteArrayOutputStream(1024);
+             LogOutputStream logErrorStream =
+                 K8sTaskHelperBase.getExecutionLogOutputStream(executionLogCallback, ERROR, errorCaptureStream)) {
           String helmTemplateCommand = getHelmCommandForRender(helmPath, manifestFilesDirectory, releaseName, namespace,
               valuesFileOptions, chartFile, helmVersion, helmCommandFlag);
           printHelmTemplateCommand(executionLogCallback, helmTemplateCommand);
@@ -2766,7 +2768,12 @@ public class K8sTaskHelperBase {
           ProcessResult processResult =
               executeShellCommand(manifestFilesDirectory, helmTemplateCommand, logErrorStream, timeoutInMillis);
           if (processResult.getExitValue() != 0) {
-            throw new WingsException(format("Failed to render chart file [%s]", chartFile));
+            throw NestedExceptionUtils.hintWithExplanationException(KubernetesExceptionHints.MANIFEST_RENDER_ERROR_HELM,
+                format(KubernetesExceptionExplanation.MANIFEST_RENDER_ERROR_HELM, errorCaptureStream.toString(),
+                    helmTemplateCommand),
+                new HelmClientException(getErrorMessageIfProcessFailed(
+                                            format("Failed to render chart file [%s]", chartFile), processResult),
+                    USER, HelmCliCommandType.RENDER_CHART));
           }
 
           result.add(FileData.builder().fileName(chartFile).fileContent(processResult.outputUTF8()).build());

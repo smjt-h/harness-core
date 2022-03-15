@@ -125,6 +125,7 @@ public class PMSYamlSchemaServiceImpl implements PMSYamlSchemaService {
 
   private void validateYamlSchemaInternal(String accountIdentifier, String orgId, String projectId, String yaml) {
     try {
+      long start = System.currentTimeMillis();
       JsonNode schema = getPipelineYamlSchema(accountIdentifier, projectId, orgId, Scope.PROJECT);
       String schemaString = JsonPipelineUtils.writeJsonString(schema);
       Set<String> errors = yamlSchemaValidator.validate(yaml, schemaString,
@@ -133,6 +134,7 @@ public class PMSYamlSchemaServiceImpl implements PMSYamlSchemaService {
       if (!errors.isEmpty()) {
         throw new JsonSchemaValidationException(String.join("\n", errors));
       }
+      log.info("[PMS_SCHEMA] Schema validation took total time {}ms", System.currentTimeMillis() - start);
     } catch (Exception ex) {
       log.error(ex.getMessage(), ex);
       throw new JsonSchemaValidationException(ex.getMessage(), ex);
@@ -249,9 +251,7 @@ public class PMSYamlSchemaServiceImpl implements PMSYamlSchemaService {
     for (YamlSchemaWithDetails yamlSchemaWithDetails : allYamlSchemaWithDetails) {
       if (yamlSchemaWithDetails.getYamlSchemaMetadata() != null
           && yamlSchemaWithDetails.getYamlSchemaMetadata().getModulesSupported() != null
-          && yamlSchemaWithDetails.getYamlSchemaMetadata().getModulesSupported().contains(moduleType)
-          // Don't send step to its owner module.
-          && yamlSchemaWithDetails.getModuleType() != moduleType) {
+          && yamlSchemaWithDetails.getYamlSchemaMetadata().getModulesSupported().contains(moduleType)) {
         moduleYamlSchemaDetails.add(yamlSchemaWithDetails);
       }
     }

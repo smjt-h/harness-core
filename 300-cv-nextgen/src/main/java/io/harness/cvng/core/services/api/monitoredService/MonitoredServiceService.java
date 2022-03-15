@@ -45,10 +45,11 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
   PageResponse<MonitoredServiceResponse> getList(ProjectParams projectParams, List<String> environmentIdentifiers,
       Integer offset, Integer pageSize, String filter);
   List<MonitoredServiceWithHealthSources> getAllWithTimeSeriesHealthSources(ProjectParams projectParams);
-
-  MonitoredServiceDTO getMonitoredServiceDTO(ServiceEnvironmentParams serviceEnvironmentParams);
+  MonitoredServiceDTO getApplicationMonitoredServiceDTO(ServiceEnvironmentParams serviceEnvironmentParams);
 
   MonitoredService getMonitoredService(ProjectParams projectParams, String identifier);
+
+  MonitoredService getApplicationMonitoredService(ServiceEnvironmentParams serviceEnvironmentParams);
 
   List<MonitoredService> list(
       @NonNull ProjectParams projectParams, @Nullable String serviceIdentifier, @Nullable String environmentIdentifier);
@@ -73,8 +74,6 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
 
   HealthScoreDTO getCurrentAndDependentServicesScore(MonitoredServiceParams monitoredServiceParams);
 
-  HealthScoreDTO getCurrentAndDependentServicesScore(ServiceEnvironmentParams serviceEnvironmentParams);
-
   String getYamlTemplate(ProjectParams projectParams, MonitoredServiceType type);
 
   List<HealthSourceDTO> getHealthSources(ProjectParams projectParams, String monitoredServiceIdentifier);
@@ -89,6 +88,8 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
 
   List<MetricDTO> getSloMetrics(
       ProjectParams projectParams, String monitoredServiceIdentifier, String healthSourceIdentifier);
+
+  MonitoredServiceListItemDTO getMonitoredServiceDetails(MonitoredServiceParams monitoredServiceParams);
 
   MonitoredServiceListItemDTO getMonitoredServiceDetails(ServiceEnvironmentParams serviceEnvironmentParams);
 
