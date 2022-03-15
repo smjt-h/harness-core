@@ -57,6 +57,7 @@ public interface SecretNGManagerClient {
   @KryoRequest
   @KryoResponse
   Call<ResponseDTO<List<EncryptedDataDetail>>> getEncryptionDetails(
+      @Query(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
       @Body NGAccessWithEncryptionConsumer ngAccessWithEncryptionConsumer);
 
   // get secret manager
