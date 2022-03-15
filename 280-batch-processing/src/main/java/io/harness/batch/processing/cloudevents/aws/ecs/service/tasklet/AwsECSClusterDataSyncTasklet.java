@@ -323,10 +323,10 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
             boolean updated = updateInstanceStopTimeForTask(instanceData, task);
             boolean updatedLabels = false;
             // Labels will only be updated once in a day - If we don't have this updating labels every hour is costly
-            if (startTime.atZone(ZoneOffset.UTC).getHour() == 1) { // TODO: change this for testing
-              updatedLabels =
-                  updateLabels(instanceData, ecsService, task, ceCluster, serviceArnTagsMap, deploymentIdServiceMap);
-            }
+//            if (startTime.atZone(ZoneOffset.UTC).getHour() == 1) { // TODO: change this for testing
+            updatedLabels =
+                updateLabels(instanceData, ecsService, task, ceCluster, serviceArnTagsMap, deploymentIdServiceMap);
+//            }
             if (updated || updatedLabels) {
               instanceDataDao.create(instanceData);
               ecsServiceDao.create(ecsService);
