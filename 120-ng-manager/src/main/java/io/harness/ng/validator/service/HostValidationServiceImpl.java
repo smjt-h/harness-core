@@ -1,16 +1,19 @@
-package io.harness.ng.core.service.services;
+package io.harness.ng.validator.service;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.harness.beans.DelegateTaskRequest;
+import io.harness.beans.IdentifierRef;
 import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.ErrorNotifyResponseData;
 import io.harness.delegate.beans.RemoteMethodReturnValueData;
 import io.harness.delegate.beans.SSHTaskParams;
 import io.harness.delegate.beans.secrets.SSHConfigValidationTaskResponse;
 import io.harness.delegate.task.utils.PhysicalDataCenterConstants;
+import io.harness.delegate.task.utils.PhysicalDataCenterUtils;
 import io.harness.delegate.utils.TaskSetupAbstractionHelper;
+import io.harness.encryption.SecretRefData;
+import io.harness.encryption.SecretRefHelper;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.manage.ManagedExecutorService;
@@ -26,6 +29,7 @@ import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.services.SshKeySpecDTOHelper;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.service.DelegateGrpcClientWrapper;
+import io.harness.utils.IdentifierRefHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import software.wings.beans.TaskType;
@@ -128,10 +132,10 @@ public class HostValidationServiceImpl implements HostValidationService {
         sshKeySpecDTOHelper.getSSHKeyEncryptionDetails(secretSpecDTO, baseNGAccess);
 
     String host = hostName;
-    Optional<Integer> portFromHost = extractPortFromHost(hostName);
+    Optional<Integer> portFromHost = PhysicalDataCenterUtils.extractPortFromHost(hostName);
     if(portFromHost.isPresent()) {
       secretSpecDTO.setPort(portFromHost.get());
-      host = hostName.substring(0, hostName.lastIndexOf(":"));
+      host = PhysicalDataCenterUtils.extractHostnameFromHost(hostName).orElse("");
     }
     DelegateTaskRequest delegateTaskRequest =
         DelegateTaskRequest.builder()
@@ -152,14 +156,14 @@ public class HostValidationServiceImpl implements HostValidationService {
     if (delegateResponseData instanceof SSHConfigValidationTaskResponse) {
       SSHConfigValidationTaskResponse responseData = (SSHConfigValidationTaskResponse) delegateResponseData;
       return HostValidationDTO.builder()
-          .host(host + (portFromHost.isPresent() ? ":" + portFromHost.get() : ""))
+          .host(hostName)
           .status(HostValidationDTO.HostValidationStatus.fromBoolean(responseData.isConnectionSuccessful()))
           .error(responseData.isConnectionSuccessful() ? buildEmptyErrorDetails() : buildErrorDetailsWithMsg(responseData.getErrorMessage(), hostName))
           .build();
     }
 
     return HostValidationDTO.builder()
-        .host(host + (portFromHost.isPresent() ? ":" + portFromHost.get() : ""))
+        .host(hostName)
         .status(FAILED)
         .error(buildErrorDetailsWithMsg(getErrorMessageFromDelegateResponseData(delegateResponseData), hostName))
         .build();
@@ -214,32 +218,16 @@ public class HostValidationServiceImpl implements HostValidationService {
     return ErrorDetail.builder().build();
   }
 
-  @VisibleForTesting
-  protected Optional<Integer> extractPortFromHost(String hostname) {
-    String[] parts = hostname.split(":");
-    if(parts.length < 2) {
-      return Optional.empty();
-    }
-    String portS = parts[parts.length - 1];
-    try {
-      return Optional.ofNullable(Integer.parseInt(portS));
-    } catch (NumberFormatException nfe) {
-      return Optional.empty();
-    }
-  }
-
   private Optional<Secret> findSecret(String accountIdentifier,
                                       String orgIdentifier, String projectIdentifier, String secretIdentifier) {
-    Optional<Secret> result =
-            ngSecretServiceV2.get(accountIdentifier, orgIdentifier, projectIdentifier, secretIdentifier);
-    if(!result.isPresent() && projectIdentifier != null) {
-      result =
-              ngSecretServiceV2.get(accountIdentifier, orgIdentifier, null, secretIdentifier);
-    }
-    if(!result.isPresent() && orgIdentifier != null) {
-      result =
-              ngSecretServiceV2.get(accountIdentifier, null, null, secretIdentifier);
-    }
-    return result;
+
+    SecretRefData secretRefData = SecretRefHelper.createSecretRef(secretIdentifier);
+    IdentifierRef secretIdentifiers = IdentifierRefHelper.getIdentifierRef(secretIdentifier,
+            accountIdentifier, orgIdentifier, projectIdentifier);
+    return ngSecretServiceV2.get(
+                    secretIdentifiers.getAccountIdentifier(),
+                    secretIdentifiers.getOrgIdentifier(),
+                    secretIdentifiers.getProjectIdentifier(),
+            secretRefData.getIdentifier());
   }
 }
