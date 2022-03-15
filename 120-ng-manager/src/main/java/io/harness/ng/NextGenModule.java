@@ -55,8 +55,6 @@ import io.harness.callback.DelegateCallbackToken;
 import io.harness.callback.MongoDatabase;
 import io.harness.ccm.license.remote.CeLicenseClientModule;
 import io.harness.cdng.NGModule;
-import io.harness.cdng.envGroup.services.EnvironmentGroupService;
-import io.harness.cdng.envGroup.services.EnvironmentGroupServiceImpl;
 import io.harness.cdng.expressions.CDExpressionEvaluatorProvider;
 import io.harness.cdng.fileservice.FileServiceClient;
 import io.harness.cdng.fileservice.FileServiceClientFactory;
@@ -667,7 +665,6 @@ public class NextGenModule extends AbstractModule {
     bind(TokenService.class).to(TokenServiceImpl.class);
     bind(FeedbackService.class).to(FeedbackServiceImpl.class);
     bind(PollingService.class).to(PollingServiceImpl.class);
-    bind(EnvironmentGroupService.class).to(EnvironmentGroupServiceImpl.class);
     bind(PollingPerpetualTaskService.class).to(PollingPerpetualTaskServiceImpl.class);
     bind(ScheduledExecutorService.class)
         .annotatedWith(Names.named("ngTelemetryPublisherExecutor"))
