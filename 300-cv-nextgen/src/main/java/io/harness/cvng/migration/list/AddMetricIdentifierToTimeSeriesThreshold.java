@@ -48,13 +48,6 @@ public class AddMetricIdentifierToTimeSeriesThreshold implements CVNGMigration {
             timeSeriesThreshold.getUuid());
       }
     }
-
-    hPersistence.createQuery(TimeSeriesThreshold.class)
-        .asList()
-        .forEach(timeSeriesThreshold
-            -> {
-
-            });
   }
 
   @Override
