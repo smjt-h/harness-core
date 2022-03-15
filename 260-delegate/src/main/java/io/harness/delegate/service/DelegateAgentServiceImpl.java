@@ -1722,8 +1722,13 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
               .build();
 
       try {
+
+
         HTimeLimiter.callInterruptible21(
-            timeLimiter, Duration.ofSeconds(15), () -> socket.fire(JsonUtils.asJson(delegateParams)));
+            timeLimiter, Duration.ofSeconds(15), () -> {
+              log.info("sending gaurav heartbeat");
+             return socket.fire(JsonUtils.asJson(delegateParams));
+            });
         lastHeartbeatSentAt.set(clock.millis());
         sentFirstHeartbeat.set(true);
       } catch (UncheckedTimeoutException ex) {
