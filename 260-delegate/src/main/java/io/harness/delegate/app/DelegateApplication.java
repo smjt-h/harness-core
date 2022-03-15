@@ -19,6 +19,8 @@ import static io.harness.delegate.message.MessengerType.WATCHER;
 import static io.harness.logging.LoggingInitializer.initializeLogging;
 
 import static com.google.common.base.Charsets.UTF_8;
+import static io.harness.threading.Morpheus.sleep;
+import static java.time.Duration.ofSeconds;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.annotations.dev.BreakDependencyOn;
@@ -122,6 +124,8 @@ public class DelegateApplication {
     boolean watched = watcherProcess != null;
     if (watched) {
       log.info("Sending watcher {} new delegate process ID: {}", watcherProcess, processId);
+      log.info("sleeping for 3 mins");
+      sleep(ofSeconds(180));
       messageService.writeMessageToChannel(WATCHER, watcherProcess, NEW_DELEGATE, processId);
       Map<String, Object> watcherData = new HashMap<>();
       watcherData.put(WATCHER_HEARTBEAT, System.currentTimeMillis());
