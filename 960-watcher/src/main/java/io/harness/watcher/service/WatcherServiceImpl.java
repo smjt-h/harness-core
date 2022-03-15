@@ -502,7 +502,9 @@ public class WatcherServiceImpl implements WatcherService {
 
   private void syncWatchDelegate() {
     synchronized (this) {
+      log.info("calling sync watch delegate method **gaurav");
       if (!working.get()) {
+        log.info("finally calling watch delegate method **gaurav");
         watchDelegate();
       }
     }
