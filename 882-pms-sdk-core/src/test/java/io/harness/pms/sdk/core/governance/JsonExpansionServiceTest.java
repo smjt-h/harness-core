@@ -61,17 +61,17 @@ public class JsonExpansionServiceTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testExpand() {
     ExpansionRequestProto req1 = ExpansionRequestProto.newBuilder()
-                                     .setFqn("fqn/connectorRef")
+                                     .setUuid("uuid1")
                                      .setKey("connectorRef")
                                      .setValue(ByteString.copyFromUtf8("value1"))
                                      .build();
     ExpansionRequestProto req2 = ExpansionRequestProto.newBuilder()
-                                     .setFqn("fqn/connectorRef")
+                                     .setUuid("uuid2")
                                      .setKey("connectorRef")
                                      .setValue(ByteString.copyFromUtf8("value2"))
                                      .build();
     ExpansionRequestProto req3 = ExpansionRequestProto.newBuilder()
-                                     .setFqn("fqn/stage/spec")
+                                     .setUuid("uuid3")
                                      .setKey("stage/spec")
                                      .setValue(ByteString.copyFromUtf8("value2"))
                                      .build();
@@ -92,7 +92,7 @@ public class JsonExpansionServiceTest extends CategoryTest {
     assertThat(responseProtoList.get(2).getSuccess()).isTrue();
 
     ExpansionRequestProto req4 = ExpansionRequestProto.newBuilder()
-                                     .setFqn("connectorRef/fqn")
+                                     .setUuid("uuid4")
                                      .setKey("fqn")
                                      .setValue(ByteString.copyFromUtf8("value3"))
                                      .build();
@@ -106,7 +106,7 @@ public class JsonExpansionServiceTest extends CategoryTest {
     assertThat(responseProtoList2).hasSize(2);
     assertThat(responseProtoList2.get(0).getSuccess()).isFalse();
     assertThat(responseProtoList2.get(0).getErrorMessage()).isEqualTo("INVALID_REQUEST");
-    assertThat(responseProtoList2.get(0).getFqn()).isEqualTo("connectorRef/fqn");
+    assertThat(responseProtoList2.get(0).getUuid()).isEqualTo("uuid4");
     assertThat(responseProtoList2.get(1).getSuccess()).isTrue();
   }
 
@@ -114,7 +114,7 @@ public class JsonExpansionServiceTest extends CategoryTest {
   @Owner(developers = NAMAN)
   @Category(UnitTests.class)
   public void testConvertToProto() {
-    String fqn = "fqn";
+    String uuid = "uuid";
     ExpansionResponse fullResponse = ExpansionResponse.builder()
                                          .success(true)
                                          .errorMessage("")
@@ -122,8 +122,8 @@ public class JsonExpansionServiceTest extends CategoryTest {
                                          .value(StringExpandedValue.builder().value("val").build())
                                          .placement(ExpansionPlacementStrategy.PARALLEL)
                                          .build();
-    ExpansionResponseProto proto1 = jsonExpansionService.convertToResponseProto(fullResponse, fqn);
-    assertThat(proto1.getFqn()).isEqualTo(fqn);
+    ExpansionResponseProto proto1 = jsonExpansionService.convertToResponseProto(fullResponse, uuid);
+    assertThat(proto1.getUuid()).isEqualTo(uuid);
     assertThat(proto1.getSuccess()).isEqualTo(true);
     assertThat(proto1.getErrorMessage()).isEmpty();
     assertThat(proto1.getKey()).isEqualTo("key");
