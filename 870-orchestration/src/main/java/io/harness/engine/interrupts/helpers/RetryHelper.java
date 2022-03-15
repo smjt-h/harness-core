@@ -12,14 +12,14 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.engine.ExecutionEngineDispatcher;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
+import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.interrupts.InterruptEffect;
-import io.harness.plan.PlanNode;
+import io.harness.plan.Node;
 import io.harness.pms.contracts.advisers.InterventionWaitAdvise;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
@@ -28,7 +28,6 @@ import io.harness.pms.contracts.interrupts.InterruptConfig;
 import io.harness.pms.contracts.interrupts.InterruptType;
 import io.harness.pms.contracts.interrupts.RetryInterruptConfig;
 import io.harness.pms.execution.utils.AmbianceUtils;
-import io.harness.pms.sdk.core.steps.io.StepParameters;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -44,15 +43,14 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(CDC)
 @Slf4j
 public class RetryHelper {
+  @Inject private PlanService planService;
   @Inject private NodeExecutionService nodeExecutionService;
   @Inject private OrchestrationEngine engine;
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
 
-  // Just ignoring step parameters for now as this is not supported will revisit this when we need to support it
-  public void retryNodeExecution(
-      String nodeExecutionId, StepParameters parameters, String interruptId, InterruptConfig interruptConfig) {
+  public void retryNodeExecution(String nodeExecutionId, String interruptId, InterruptConfig interruptConfig) {
     NodeExecution nodeExecution = Preconditions.checkNotNull(nodeExecutionService.get(nodeExecutionId));
-    PlanNode node = nodeExecution.getNode();
+    Node node = planService.fetchNode(nodeExecution.getPlanId(), nodeExecution.getNodeId());
     String newUuid = generateUuid();
 
     Ambiance oldAmbiance = nodeExecution.getAmbiance();
@@ -61,13 +59,15 @@ public class RetryHelper {
     Level currentLevel = AmbianceUtils.obtainCurrentLevel(oldAmbiance);
     Ambiance ambiance = AmbianceUtils.cloneForFinish(oldAmbiance);
     int newRetryIndex = currentLevel != null ? currentLevel.getRetryIndex() + 1 : 0;
-    ambiance = ambiance.toBuilder().addLevels(PmsLevelUtils.buildLevelFromNode(newUuid, newRetryIndex, node)).build();
-    NodeExecution newNodeExecution = cloneForRetry(updatedRetriedNode, newUuid, ambiance, interruptConfig, interruptId);
+    Ambiance finalAmbiance =
+        ambiance.toBuilder().addLevels(PmsLevelUtils.buildLevelFromNode(newUuid, newRetryIndex, node)).build();
+    NodeExecution newNodeExecution =
+        cloneForRetry(updatedRetriedNode, newUuid, finalAmbiance, interruptConfig, interruptId);
     NodeExecution savedNodeExecution = nodeExecutionService.save(newNodeExecution);
 
     nodeExecutionService.updateRelationShipsForRetryNode(updatedRetriedNode.getUuid(), savedNodeExecution.getUuid());
     nodeExecutionService.markRetried(updatedRetriedNode.getUuid());
-    executorService.submit(ExecutionEngineDispatcher.builder().ambiance(ambiance).orchestrationEngine(engine).build());
+    executorService.submit(() -> engine.startNodeExecution(finalAmbiance));
   }
 
   private NodeExecution updateRetriedNodeMetadata(NodeExecution nodeExecution) {
@@ -143,12 +143,14 @@ public class RetryHelper {
         .retryIds(retryIds)
         .oldRetry(false)
         .originalNodeExecutionId(nodeExecution.getOriginalNodeExecutionId())
-        .module(nodeExecution.module())
-        .name(nodeExecution.name())
-        .skipGraphType(nodeExecution.skipGraphType())
-        .identifier(nodeExecution.identifier())
-        .stepType(nodeExecution.stepType())
-        .nodeId(nodeExecution.nodeId())
+        .module(nodeExecution.getModule())
+        .name(nodeExecution.getName())
+        .skipGraphType(nodeExecution.getSkipGraphType())
+        .identifier(nodeExecution.getIdentifier())
+        .stepType(nodeExecution.getStepType())
+        .nodeId(nodeExecution.getNodeId())
+        .stageFqn(nodeExecution.getStageFqn())
+        .group(nodeExecution.getGroup())
         .build();
   }
 }

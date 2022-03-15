@@ -37,8 +37,10 @@ import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.pms.annotations.PipelineServiceAuth;
 import io.harness.pms.inputset.InputSetErrorWrapperDTOPMS;
+import io.harness.pms.inputset.InputSetSchemaConstants;
 import io.harness.pms.inputset.MergeInputSetResponseDTOPMS;
 import io.harness.pms.inputset.MergeInputSetTemplateRequestDTO;
+import io.harness.pms.inputset.OverlayInputSetErrorWrapperDTOPMS;
 import io.harness.pms.ngpipeline.inputset.beans.entity.InputSetEntity;
 import io.harness.pms.ngpipeline.inputset.beans.entity.InputSetEntity.InputSetEntityKeys;
 import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetListTypePMS;
@@ -47,6 +49,8 @@ import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetSummaryResponse
 import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetTemplateRequestDTO;
 import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetTemplateResponseDTOPMS;
 import io.harness.pms.ngpipeline.inputset.beans.resource.MergeInputSetRequestDTOPMS;
+import io.harness.pms.ngpipeline.inputset.exceptions.InvalidInputSetException;
+import io.harness.pms.ngpipeline.inputset.exceptions.InvalidOverlayInputSetException;
 import io.harness.pms.ngpipeline.inputset.helpers.ValidateAndMergeHelper;
 import io.harness.pms.ngpipeline.inputset.mappers.PMSInputSetElementMapper;
 import io.harness.pms.ngpipeline.inputset.mappers.PMSInputSetFilterHelper;
@@ -134,9 +138,8 @@ public class InputSetResourcePMS {
       summary = "Gets Input Set for a given identifier. Throws error if no Input Set exists for the given identifier.",
       responses =
       {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
-            description =
-                "Gets an Input Set if it exists for the identifier in the path. Throws an error if no Input Set exists for this identifier.")
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(responseCode = "default", description = "Returns Input Set if exists for the given Identifier.")
       })
   public ResponseDTO<InputSetResponseDTOPMS>
   getInputSet(@PathParam(NGCommonEntityConstants.INPUT_SET_IDENTIFIER_KEY) @Parameter(
@@ -147,10 +150,8 @@ public class InputSetResourcePMS {
           description = PipelineResourceConstants.ORG_PARAM_MESSAGE) String orgIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier @Parameter(
           description = PipelineResourceConstants.PROJECT_PARAM_MESSAGE) String projectIdentifier,
-      @Parameter(
-          description =
-              "Pipeline ID for the Input Set. The Input Set will work only for the Pipeline corresponding to this identifier.")
-      @NotNull @QueryParam(NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineIdentifier,
+      @Parameter(description = InputSetSchemaConstants.PIPELINE_ID_FOR_INPUT_SET_PARAM_MESSAGE) @NotNull @QueryParam(
+          NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineIdentifier,
       @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
     log.info(String.format("Retrieving input set with identifier %s for pipeline %s in project %s, org %s, account %s",
         inputSetIdentifier, pipelineIdentifier, projectIdentifier, orgIdentifier, accountId));
@@ -177,8 +178,7 @@ public class InputSetResourcePMS {
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
-            description =
-                "Fetches the Overlay Input Set corresponding to the Overlay Input Set Id provided in the API URL.")
+            description = "The Overlay Input Set that corresponds to the given Overlay Input Set Identifier")
       })
   public ResponseDTO<OverlayInputSetResponseDTOPMS>
   getOverlayInputSet(
@@ -190,10 +190,8 @@ public class InputSetResourcePMS {
           NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgIdentifier,
       @Parameter(description = PipelineResourceConstants.PROJECT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectIdentifier,
-      @Parameter(
-          description =
-              "This is the Pipeline Id specific to the Overlay Input Set. Overlay Input Set corresponding to the Pipeline with this Id would be fetched")
-      @NotNull @QueryParam(NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineIdentifier,
+      @Parameter(description = InputSetSchemaConstants.PIPELINE_ID_FOR_INPUT_SET_PARAM_MESSAGE) @NotNull @QueryParam(
+          NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineIdentifier,
       @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
     log.info(String.format(
         "Retrieving overlay input set with identifier %s for pipeline %s in project %s, org %s, account %s",
@@ -231,10 +229,8 @@ public class InputSetResourcePMS {
           description = PipelineResourceConstants.ORG_PARAM_MESSAGE) String orgIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier @Parameter(
           description = PipelineResourceConstants.PROJECT_PARAM_MESSAGE) String projectIdentifier,
-      @Parameter(
-          description =
-              "Pipeline identifier for the input set. The input set will work only for the pipeline corresponding to this identifier.")
-      @NotNull @QueryParam(NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineIdentifier,
+      @Parameter(description = InputSetSchemaConstants.PIPELINE_ID_FOR_INPUT_SET_PARAM_MESSAGE) @NotNull @QueryParam(
+          NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineIdentifier,
       @QueryParam("pipelineBranch") @Parameter(
           description = "Github branch of the Pipeline for which the Input Set is to be created") String pipelineBranch,
       @QueryParam("pipelineRepoID")
@@ -242,7 +238,7 @@ public class InputSetResourcePMS {
       String pipelineRepoID, @BeanParam GitEntityCreateInfoDTO gitEntityCreateInfo,
       @RequestBody(required = true,
           description =
-              "Input set YAML to be created. The account, org, project, and pipeline identifiers inside the YAML should match the query parameters")
+              "Input set YAML to be created. The Account, Org, Project, and Pipeline identifiers inside the YAML should match the query parameters.")
       @NotNull String yaml) {
     yaml = removeRuntimeInputFromYaml(yaml);
     InputSetEntity entity = PMSInputSetElementMapper.toInputSetEntity(
@@ -253,8 +249,7 @@ public class InputSetResourcePMS {
     InputSetErrorWrapperDTOPMS errorWrapperDTO = validateAndMergeHelper.validateInputSet(
         accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, yaml, pipelineBranch, pipelineRepoID);
     if (errorWrapperDTO != null) {
-      return ResponseDTO.newResponse(PMSInputSetElementMapper.toInputSetResponseDTOPMS(
-          accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, yaml, errorWrapperDTO));
+      throw new InvalidInputSetException("Exception in creating the Input Set", errorWrapperDTO);
     }
 
     InputSetEntity createdEntity = pmsInputSetService.create(entity);
@@ -281,10 +276,8 @@ public class InputSetResourcePMS {
           description = PipelineResourceConstants.ORG_PARAM_MESSAGE) @OrgIdentifier String orgIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @Parameter(
           description = PipelineResourceConstants.PROJECT_PARAM_MESSAGE) @ProjectIdentifier String projectIdentifier,
-      @Parameter(
-          description =
-              "Pipeline identifier for the overlay input set. The Overlay Input Set will work only for the Pipeline corresponding to this identifier.")
-      @NotNull @QueryParam(NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineIdentifier,
+      @Parameter(description = InputSetSchemaConstants.PIPELINE_ID_FOR_INPUT_SET_PARAM_MESSAGE) @NotNull @QueryParam(
+          NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineIdentifier,
       @BeanParam GitEntityCreateInfoDTO gitEntityCreateInfo,
       @RequestBody(required = true,
           description =
@@ -299,8 +292,11 @@ public class InputSetResourcePMS {
     Map<String, String> invalidReferences = validateAndMergeHelper.validateOverlayInputSet(
         accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, yaml);
     if (!invalidReferences.isEmpty()) {
-      return ResponseDTO.newResponse(
-          PMSInputSetElementMapper.toOverlayInputSetResponseDTOPMS(entity, true, invalidReferences));
+      OverlayInputSetErrorWrapperDTOPMS overlayInputSetErrorWrapperDTOPMS =
+          OverlayInputSetErrorWrapperDTOPMS.builder().invalidReferences(invalidReferences).build();
+
+      throw new InvalidOverlayInputSetException(
+          "Exception in creating the Overlay Input Set", overlayInputSetErrorWrapperDTOPMS);
     }
 
     InputSetEntity createdEntity = pmsInputSetService.create(entity);
@@ -332,10 +328,8 @@ public class InputSetResourcePMS {
           NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgIdentifier,
       @Parameter(description = PipelineResourceConstants.PROJECT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectIdentifier,
-      @Parameter(
-          description =
-              "Pipeline Id for the Input Set. The Input Set will work only for the Pipeline corresponding to this Id.")
-      @NotNull @QueryParam(NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineIdentifier,
+      @Parameter(description = InputSetSchemaConstants.PIPELINE_ID_FOR_INPUT_SET_PARAM_MESSAGE) @NotNull @QueryParam(
+          NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineIdentifier,
       @QueryParam("pipelineBranch") @Parameter(
           description = "Github branch of the Pipeline for which the Input Set is to be created") String pipelineBranch,
       @QueryParam("pipelineRepoID")
@@ -343,7 +337,7 @@ public class InputSetResourcePMS {
       String pipelineRepoID, @BeanParam GitEntityUpdateInfoDTO gitEntityInfo,
       @RequestBody(required = true,
           description =
-              "Input set YAML to be updated. The Account, Org, Project, and Pipeline Ids inside the YAML should match the query parameters")
+              "Input set YAML to be updated. The query parameters should match the Account, Org, Project, and Pipeline Ids in the YAML.")
       @NotNull String yaml) {
     log.info(String.format("Updating input set with identifier %s for pipeline %s in project %s, org %s, account %s",
         inputSetIdentifier, pipelineIdentifier, projectIdentifier, orgIdentifier, accountId));
@@ -352,8 +346,7 @@ public class InputSetResourcePMS {
     InputSetErrorWrapperDTOPMS errorWrapperDTO = validateAndMergeHelper.validateInputSet(
         accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, yaml, pipelineBranch, pipelineRepoID);
     if (errorWrapperDTO != null) {
-      return ResponseDTO.newResponse(PMSInputSetElementMapper.toInputSetResponseDTOPMS(
-          accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, yaml, errorWrapperDTO));
+      throw new InvalidInputSetException("Exception in updating the Input Set", errorWrapperDTO);
     }
 
     InputSetEntity entity = PMSInputSetElementMapper.toInputSetEntity(
@@ -378,20 +371,16 @@ public class InputSetResourcePMS {
   public ResponseDTO<OverlayInputSetResponseDTOPMS>
   updateOverlayInputSet(
       @Parameter(description = PipelineResourceConstants.IF_MATCH_PARAM_MESSAGE) @HeaderParam(IF_MATCH) String ifMatch,
-      @Parameter(
-          description =
-              "Identifier for the Overlay Input Set that needs to be updated. An Overlay Input Set corresponding to this identifier should already exist.")
-      @PathParam(NGCommonEntityConstants.INPUT_SET_IDENTIFIER_KEY) String inputSetIdentifier,
+      @Parameter(description = "Identifier for the Overlay Input Set that needs to be updated.") @PathParam(
+          NGCommonEntityConstants.INPUT_SET_IDENTIFIER_KEY) String inputSetIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @Parameter(
           description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE) @AccountIdentifier String accountId,
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) @Parameter(
           description = PipelineResourceConstants.ORG_PARAM_MESSAGE) @OrgIdentifier String orgIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @Parameter(
           description = PipelineResourceConstants.PROJECT_PARAM_MESSAGE) @ProjectIdentifier String projectIdentifier,
-      @Parameter(
-          description =
-              "Pipeline identifier for the Overlay Input Set. The Overlay Input Set will work only for the Pipeline corresponding to this identifier.")
-      @NotNull @QueryParam(NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineIdentifier,
+      @Parameter(description = InputSetSchemaConstants.PIPELINE_ID_FOR_INPUT_SET_PARAM_MESSAGE) @NotNull @QueryParam(
+          NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineIdentifier,
       @BeanParam GitEntityUpdateInfoDTO gitEntityInfo,
       @RequestBody(required = true,
           description =
@@ -407,8 +396,11 @@ public class InputSetResourcePMS {
     Map<String, String> invalidReferences = validateAndMergeHelper.validateOverlayInputSet(
         accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, yaml);
     if (!invalidReferences.isEmpty()) {
-      return ResponseDTO.newResponse(
-          PMSInputSetElementMapper.toOverlayInputSetResponseDTOPMS(entityWithVersion, true, invalidReferences));
+      OverlayInputSetErrorWrapperDTOPMS overlayInputSetErrorWrapperDTOPMS =
+          OverlayInputSetErrorWrapperDTOPMS.builder().invalidReferences(invalidReferences).build();
+
+      throw new InvalidOverlayInputSetException(
+          "Exception in updating the Overlay Input Set", overlayInputSetErrorWrapperDTOPMS);
     }
 
     InputSetEntity updatedEntity = pmsInputSetService.update(entityWithVersion, ChangeType.MODIFY);
@@ -429,20 +421,16 @@ public class InputSetResourcePMS {
   public ResponseDTO<Boolean>
   delete(
       @Parameter(description = PipelineResourceConstants.IF_MATCH_PARAM_MESSAGE) @HeaderParam(IF_MATCH) String ifMatch,
-      @Parameter(
-          description =
-              "This is the Id of the Input Set that needs to be deleted. An error is thrown if no Input Set exists for this Id.")
-      @PathParam(NGCommonEntityConstants.INPUT_SET_IDENTIFIER_KEY) String inputSetIdentifier,
+      @Parameter(description = "Identifier of the Input Set that should be deleted.") @PathParam(
+          NGCommonEntityConstants.INPUT_SET_IDENTIFIER_KEY) String inputSetIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @Parameter(
           description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE) String accountId,
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) @OrgIdentifier @Parameter(
           description = PipelineResourceConstants.ORG_PARAM_MESSAGE) String orgIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier @Parameter(
           description = PipelineResourceConstants.PROJECT_PARAM_MESSAGE) String projectIdentifier,
-      @Parameter(
-          description =
-              "Pipeline identifier for the Input Set. Input Set will be deleted for the Pipeline corresponding to this Identifier")
-      @NotNull @QueryParam(NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineIdentifier,
+      @Parameter(description = InputSetSchemaConstants.PIPELINE_ID_FOR_INPUT_SET_PARAM_MESSAGE) @NotNull @QueryParam(
+          NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineIdentifier,
       @BeanParam GitEntityDeleteInfoDTO entityDeleteInfo) {
     log.info(String.format("Deleting input set with identifier %s for pipeline %s in project %s, org %s, account %s",
         inputSetIdentifier, pipelineIdentifier, projectIdentifier, orgIdentifier, accountId));
@@ -457,8 +445,7 @@ public class InputSetResourcePMS {
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
-            description =
-                "Fetch all the Input Sets for a Pipeline, including Overlay Input Sets. The response is paginated")
+            description = "Fetch all the Input Sets for a Pipeline, including Overlay Input Sets.")
       })
   public ResponseDTO<PageResponse<InputSetSummaryResponseDTOPMS>>
   listInputSetsForPipeline(@QueryParam(NGResourceFilterConstants.PAGE_KEY) @DefaultValue("0") @Parameter(
@@ -473,10 +460,8 @@ public class InputSetResourcePMS {
           description = PipelineResourceConstants.PROJECT_PARAM_MESSAGE) @ProjectIdentifier String projectIdentifier,
       @Parameter(description = "Pipeline identifier for which we need the Input Sets list.") @NotNull @QueryParam(
           NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineIdentifier,
-      @Parameter(
-          description =
-              "Type of Input Set needed: \"INPUT_SET\", or \"OVERLAY_INPUT_SET\", or \"ALL\". If nothing is sent, ALL is considered.")
-      @QueryParam("inputSetType") @DefaultValue("ALL") InputSetListTypePMS inputSetListType,
+      @Parameter(description = InputSetSchemaConstants.INPUT_SET_TYPE_MESSAGE) @QueryParam(
+          "inputSetType") @DefaultValue("ALL") InputSetListTypePMS inputSetListType,
       @QueryParam(NGResourceFilterConstants.SEARCH_TERM_KEY) @Parameter(
           description = PipelineResourceConstants.INPUT_SET_SEARCH_TERM_PARAM_MESSAGE) String searchTerm,
       @QueryParam(NGResourceFilterConstants.SORT_KEY) @Parameter(
@@ -561,7 +546,7 @@ public class InputSetResourcePMS {
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @Parameter(
           description = PipelineResourceConstants.PROJECT_PARAM_MESSAGE) @ProjectIdentifier String projectIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier @Parameter(
-          description = "Identifier of the Pipeline to which the Input Sets belong") String pipelineIdentifier,
+          description = InputSetSchemaConstants.PIPELINE_ID_FOR_INPUT_SET_PARAM_MESSAGE) String pipelineIdentifier,
       @Parameter(description = "Github branch of the Pipeline to which the Input Sets belong") @QueryParam(
           "pipelineBranch") String pipelineBranch,
       @Parameter(description = "Github Repo identifier of the Pipeline to which the Input Sets belong")
@@ -607,7 +592,7 @@ public class InputSetResourcePMS {
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier @Parameter(
           description = PipelineResourceConstants.PROJECT_PARAM_MESSAGE) String projectIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier @Parameter(
-          description = "Identifier of the Pipeline to which the Input Sets belong") String pipelineIdentifier,
+          description = InputSetSchemaConstants.PIPELINE_ID_FOR_INPUT_SET_PARAM_MESSAGE) String pipelineIdentifier,
       @QueryParam("pipelineBranch") @Parameter(
           description = "Github branch of the Pipeline to which the Input Sets belong") String pipelineBranch,
       @QueryParam("pipelineRepoID") @Parameter(

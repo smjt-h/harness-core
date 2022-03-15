@@ -25,6 +25,7 @@ public class KubernetesExceptionExplanation {
   public final String K8S_API_UNAUTHORIZED_EXCEPTION = "Unable to authenticate using provided Kubernetes credentials";
   public final String K8S_API_VALIDATION_ERROR =
       "Some of the provided values in Kubernetes configuration missing or invalid (i.e. namespace, release name)";
+  public final String K8S_API_SSL_VALIDATOR = "Failed to establish SSL connection with Kubernetes API server";
 
   public final String APPLY_NO_FILEPATH_SPECIFIED = "No file specified in the state";
   public final String WAIT_FOR_STEADY_STATE_FAILED = "Resources failed to reach steady state.\n";
@@ -58,13 +59,29 @@ public class KubernetesExceptionExplanation {
   public final String INVALID_RESOURCE_KIND_NAME_FORMAT =
       "Resource name '%s' doesn't match kind/name or namespace/kind/name format";
 
-  public final String K8S_CHARACTER_ERROR = "The resource [%s] is breaching the naming constraints.\n";
+  public final String K8S_CHARACTER_ERROR = "The following resource(s) are breaching the naming constraints:\n%s";
   public final String FAILED_COMMAND_WITH_EXITCODE_AND_OUTPUT =
       "Command executed: [%s] %nExit Code: [%s] %nOutput: [%s] %nkubectl binary path: [%s]";
   public final String FAILED_COMMAND_WITH_EXITCODE =
       "Command executed: [%s] %nExit Code: [%s] %nkubectl binary path: [%s]";
-  public final String VALIDATION_FAILED_UNKNOWN_FIELD = "Unknown field [%s].\n";
+  public final String VALIDATION_FAILED_UNKNOWN_FIELD = "The manifest contains the following unknown fields: \n%s";
   public final String VALIDATION_FAILED_INVALID_TYPE = "Invalid type value for [%s].\n";
   public final String K8S_API_FORBIDDEN_ERROR =
       "The user [%s] does not have adequate permissions in the namespace [%s]. {Resource: [%s], API Group: [%s]}";
+  public final String UNRESOLVED_MANIFEST_FIELD =
+      "The provided values.yaml file(s) may contain a field with missing/null value or refer an expression which is not being resolved.";
+
+  public final String API_CLIENT_CREATE_FAILED = "Failed to create Kubernetes API client with given credentials";
+  public final String API_CLIENT_CA_CERT_INVALID_FORMAT = "Failed to parse CA certificate";
+  public final String API_CLIENT_CA_CERT_INCOMPLETE = "Invalid or corrupted CA certificate";
+  public final String MANIFEST_RENDER_ERROR_GO_TEMPLATE = "Failed to render manifests. %n%s";
+  public final String MANIFEST_RENDER_ERROR_HELM =
+      "Failed to render manifests with error: %n%s %n%nCommand Executed: %n%s";
+  public final String IMMUTABLE_FIELD = "An update was attempted to some immutable field(s).";
+  public final String MISSING_RESOURCE = "Manifests may contain references to some missing resource(s).";
+  public final String UNSUPPORTED_VALUE = "Manifests may contain some unsupported value(s).";
+  public final String FORBIDDEN_MESSAGE = "User might be missing roles/permissions to create/update resources.";
+  public final String MISSING_REQUIRED_FIELD = "Some required field(s) is/are missing from the manifest.";
+  public final String MISSING_OBJECT_ERROR = "The resource may be deleted from the server.";
+  public final String INVALID_VALUES_YAML = "Values yaml file(s) are not valid.";
 }

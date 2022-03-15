@@ -27,6 +27,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.execution.PlanExecution;
 import io.harness.execution.PlanExecution.PlanExecutionKeys;
 import io.harness.execution.PlanExecutionMetadata;
+import io.harness.logging.AutoLogContext;
 import io.harness.observer.Subject;
 import io.harness.opaclient.model.OpaConstants;
 import io.harness.plan.Node;
@@ -46,8 +47,8 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import java.util.concurrent.ExecutorService;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
 @Slf4j
 @Singleton
@@ -66,39 +67,45 @@ public class PlanExecutionStrategy implements NodeExecutionStrategy<Plan, PlanEx
   @Getter private final Subject<OrchestrationEndObserver> orchestrationEndSubject = new Subject<>();
 
   @Override
-  public PlanExecution triggerNode(@NotNull Ambiance ambiance, @NotNull Plan plan, PlanExecutionMetadata metadata) {
-    String accountId = ambiance.getSetupAbstractionsMap().get(SetupAbstractionKeys.accountId);
-    String orgIdentifier = ambiance.getSetupAbstractionsMap().get(SetupAbstractionKeys.orgIdentifier);
-    String projectIdentifier = ambiance.getSetupAbstractionsMap().get(SetupAbstractionKeys.projectIdentifier);
-    String expandedPipelineJson = metadata.getExpandedPipelineJson();
-    GovernanceMetadata governanceMetadata =
-        governanceService.evaluateGovernancePolicies(expandedPipelineJson, accountId, orgIdentifier, projectIdentifier,
-            OpaConstants.OPA_EVALUATION_ACTION_PIPELINE_RUN, ambiance.getPlanExecutionId());
-    PlanExecution planExecution = createPlanExecution(ambiance, metadata, governanceMetadata);
-    eventEmitter.emitEvent(
-        OrchestrationEvent.newBuilder()
-            .setAmbiance(ambiance)
-            .setEventType(OrchestrationEventType.ORCHESTRATION_START)
-            .setTriggerPayload(metadata.getTriggerPayload() != null ? metadata.getTriggerPayload()
-                                                                    : TriggerPayload.newBuilder().build())
-            .build());
+  public PlanExecution runNode(@NonNull Ambiance ambiance, @NonNull Plan plan, PlanExecutionMetadata metadata) {
+    long startTs = System.currentTimeMillis();
+    try (AutoLogContext ignore = AmbianceUtils.autoLogContext(ambiance)) {
+      String accountId = ambiance.getSetupAbstractionsMap().get(SetupAbstractionKeys.accountId);
+      String orgIdentifier = ambiance.getSetupAbstractionsMap().get(SetupAbstractionKeys.orgIdentifier);
+      String projectIdentifier = ambiance.getSetupAbstractionsMap().get(SetupAbstractionKeys.projectIdentifier);
+      String expandedPipelineJson = metadata.getExpandedPipelineJson();
+      GovernanceMetadata governanceMetadata =
+          governanceService.evaluateGovernancePolicies(expandedPipelineJson, accountId, orgIdentifier,
+              projectIdentifier, OpaConstants.OPA_EVALUATION_ACTION_PIPELINE_RUN, ambiance.getPlanExecutionId());
+      PlanExecution planExecution = createPlanExecution(ambiance, metadata, governanceMetadata);
+      eventEmitter.emitEvent(
+          OrchestrationEvent.newBuilder()
+              .setAmbiance(ambiance)
+              .setEventType(OrchestrationEventType.ORCHESTRATION_START)
+              .setTriggerPayload(metadata.getTriggerPayload() != null ? metadata.getTriggerPayload()
+                                                                      : TriggerPayload.newBuilder().build())
+              .build());
 
-    Node planNode = planService.fetchNode(plan.getUuid(), plan.getStartingNodeId());
-    if (planNode == null) {
-      throw new InvalidRequestException("Starting node for plan cannot be null");
-    }
+      Node planNode = planService.fetchNode(plan.getUuid(), plan.getStartingNodeId());
+      if (planNode == null) {
+        throw new InvalidRequestException("Starting node for plan cannot be null");
+      }
 
-    orchestrationStartSubject.fireInform(OrchestrationStartObserver::onStart,
-        OrchestrationStartInfo.builder().ambiance(ambiance).planExecutionMetadata(metadata).build());
+      orchestrationStartSubject.fireInform(OrchestrationStartObserver::onStart,
+          OrchestrationStartInfo.builder().ambiance(ambiance).planExecutionMetadata(metadata).build());
 
-    if (governanceMetadata.getDeny()) {
-      return planExecutionService.updateStatus(
-          ambiance.getPlanExecutionId(), ERRORED, ops -> ops.set(PlanExecutionKeys.endTs, System.currentTimeMillis()));
-    } else {
-      Ambiance cloned =
-          AmbianceUtils.cloneForChild(ambiance, PmsLevelUtils.buildLevelFromNode(generateUuid(), planNode));
-      executorService.submit(() -> orchestrationEngine.triggerNode(cloned, planNode, null));
-      return planExecution;
+      if (governanceMetadata.getDeny()) {
+        return planExecutionService.updateStatus(ambiance.getPlanExecutionId(), ERRORED,
+            ops -> ops.set(PlanExecutionKeys.endTs, System.currentTimeMillis()));
+      } else {
+        Ambiance cloned =
+            AmbianceUtils.cloneForChild(ambiance, PmsLevelUtils.buildLevelFromNode(generateUuid(), planNode));
+        executorService.submit(() -> orchestrationEngine.runNode(cloned, planNode, null));
+        return planExecution;
+      }
+    } finally {
+      log.info("[PMS_PlanExecution] Time taken to runNode plan in PlanExecutionStrategy: {} ",
+          System.currentTimeMillis() - startTs);
     }
   }
 

@@ -10,20 +10,29 @@ package io.harness.service.impl;
 import static io.harness.data.encoding.EncodingUtils.decodeBase64ToString;
 import static io.harness.data.encoding.EncodingUtils.encodeBase64;
 
+import static java.lang.String.format;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.UUIDGenerator;
+import io.harness.delegate.beans.Delegate;
+import io.harness.delegate.beans.Delegate.DelegateKeys;
 import io.harness.delegate.beans.DelegateEntityOwner;
 import io.harness.delegate.beans.DelegateToken;
 import io.harness.delegate.beans.DelegateToken.DelegateTokenKeys;
 import io.harness.delegate.beans.DelegateTokenDetails;
 import io.harness.delegate.beans.DelegateTokenDetails.DelegateTokenDetailsBuilder;
 import io.harness.delegate.beans.DelegateTokenStatus;
+import io.harness.delegate.dto.DelegateNgTokenDTO;
+import io.harness.delegate.events.DelegateNgTokenCreateEvent;
+import io.harness.delegate.events.DelegateNgTokenRevokeEvent;
 import io.harness.delegate.service.intfc.DelegateNgTokenService;
 import io.harness.delegate.utils.DelegateEntityOwnerHelper;
 import io.harness.exception.InvalidRequestException;
 import io.harness.outbox.api.OutboxService;
 import io.harness.persistence.HPersistence;
+import io.harness.security.SourcePrincipalContextBuilder;
+import io.harness.service.intfc.DelegateCache;
 import io.harness.utils.Misc;
 
 import software.wings.beans.Account;
@@ -31,9 +40,12 @@ import software.wings.service.intfc.account.AccountCrudObserver;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.mongodb.DuplicateKeyException;
 import java.time.OffsetDateTime;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.validation.executable.ValidateOnExecution;
@@ -51,30 +63,35 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
   private static final String DEFAULT_TOKEN_NAME = "default_token";
   private final HPersistence persistence;
   private final OutboxService outboxService;
+  private final DelegateCache delegateCache;
 
   @Inject
-  public DelegateNgTokenServiceImpl(HPersistence persistence, OutboxService outboxService) {
+  public DelegateNgTokenServiceImpl(
+      HPersistence persistence, OutboxService outboxService, DelegateCache delegateCache) {
     this.persistence = persistence;
     this.outboxService = outboxService;
+    this.delegateCache = delegateCache;
   }
 
   @Override
   public DelegateTokenDetails createToken(String accountId, DelegateEntityOwner owner, String name) {
-    if (!matchNameTokenQuery(accountId, name).asList().isEmpty()) {
-      throw new InvalidRequestException("Token with given name already exists for given account.");
-    }
-
     DelegateToken delegateToken = DelegateToken.builder()
                                       .accountId(accountId)
                                       .owner(owner)
-                                      .name(name)
+                                      .name(name.trim())
                                       .isNg(true)
                                       .status(DelegateTokenStatus.ACTIVE)
                                       .value(encodeBase64(Misc.generateSecretKey()))
+                                      .createdByNgUser(SourcePrincipalContextBuilder.getSourcePrincipal())
                                       .build();
 
-    persistence.save(delegateToken);
-    // publishCreateTokenAuditEvent(delegateToken);
+    try {
+      persistence.save(delegateToken);
+    } catch (DuplicateKeyException e) {
+      throw new InvalidRequestException(format("Token with given name %s already exists for given account.", name));
+    }
+
+    publishCreateTokenAuditEvent(delegateToken);
     return getDelegateTokenDetails(delegateToken, true);
   }
 
@@ -89,7 +106,8 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
                 Date.from(OffsetDateTime.now().plusDays(DelegateToken.TTL.toDays()).toInstant()));
     DelegateToken updatedDelegateToken =
         persistence.findAndModify(filterQuery, updateOperations, new FindAndModifyOptions());
-    // publishRevokeTokenAuditEvent(updatedDelegateToken);
+    invalidateDelegateGroupCache(accountId, tokenName);
+    publishRevokeTokenAuditEvent(updatedDelegateToken);
     return getDelegateTokenDetails(updatedDelegateToken, false);
   }
 
@@ -108,12 +126,11 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
 
   @Override
   public DelegateTokenDetails getDelegateToken(String accountId, String name) {
-    return matchNameTokenQuery(accountId, name)
-        .asList()
-        .stream()
-        .map(token -> getDelegateTokenDetails(token, false))
-        .findFirst()
-        .orElse(null);
+    DelegateToken delegateToken = matchNameTokenQuery(accountId, name).get();
+    if (delegateToken != null) {
+      return getDelegateTokenDetails(delegateToken, false);
+    }
+    return null;
   }
 
   @Override
@@ -211,7 +228,7 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
                                                                   .accountId(delegateToken.getAccountId())
                                                                   .name(delegateToken.getName())
                                                                   .createdAt(delegateToken.getCreatedAt())
-                                                                  .createdBy(delegateToken.getCreatedBy())
+                                                                  .createdByNgUser(delegateToken.getCreatedByNgUser())
                                                                   .status(delegateToken.getStatus());
 
     if (includeTokenValue) {
@@ -225,15 +242,15 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
     return delegateTokenDetailsBuilder.build();
   }
 
-  //  private OutboxEvent publishCreateTokenAuditEvent(DelegateToken delegateToken) {
-  //    DelegateNgTokenDTO token = convert(delegateToken);
-  //    return outboxService.save(DelegateNgTokenCreateEvent.builder().token(token).build());
-  //  }
+  private void publishCreateTokenAuditEvent(DelegateToken delegateToken) {
+    DelegateNgTokenDTO token = convert(delegateToken);
+    outboxService.save(DelegateNgTokenCreateEvent.builder().token(token).build());
+  }
 
-  //  private OutboxEvent publishRevokeTokenAuditEvent(DelegateNgToken delegateToken) {
-  //    DelegateNgTokenDTO token = convert(delegateToken);
-  //    return outboxService.save(DelegateNgTokenRevokeEvent.builder().token(token).build());
-  //  }
+  private void publishRevokeTokenAuditEvent(DelegateToken delegateToken) {
+    DelegateNgTokenDTO token = convert(delegateToken);
+    outboxService.save(DelegateNgTokenRevokeEvent.builder().token(token).build());
+  }
 
   private void validateTokenToBeRevoked(DelegateToken delegateToken) {
     if (delegateToken == null) {
@@ -252,5 +269,44 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
   private String extractProject(DelegateEntityOwner owner) {
     return owner != null ? DelegateEntityOwnerHelper.extractProjectIdFromOwnerIdentifier(owner.getIdentifier())
                          : StringUtils.EMPTY;
+  }
+
+  private DelegateNgTokenDTO convert(DelegateToken delegateToken) {
+    return DelegateNgTokenDTO.builder()
+        .accountIdentifier(delegateToken.getAccountId())
+        .orgIdentifier(DelegateEntityOwnerHelper.extractOrgIdFromOwnerIdentifier(
+            delegateToken.getOwner() != null ? delegateToken.getOwner().getIdentifier() : null))
+        .projectIdentifier(DelegateEntityOwnerHelper.extractProjectIdFromOwnerIdentifier(
+            delegateToken.getOwner() != null ? delegateToken.getOwner().getIdentifier() : null))
+        .name(delegateToken.getName())
+        .identifier(delegateToken.getUuid())
+        .build();
+  }
+
+  private void invalidateDelegateGroupCache(String accountId, String tokenName) {
+    List<Delegate> delegates = persistence.createQuery(Delegate.class)
+                                   .filter(DelegateKeys.accountId, accountId)
+                                   .filter(DelegateKeys.delegateTokenName, tokenName)
+                                   .asList();
+    delegates.stream()
+        .map(Delegate::getUuid)
+        .distinct()
+        .forEach(delegateGroupId -> delegateCache.invalidateDelegateGroupCache(accountId, delegateGroupId));
+  }
+
+  @Override
+  public Map<String, Boolean> isDelegateTokenActive(String accountId, List<String> tokensNameList) {
+    Map<String, Boolean> delegateTokenStatusMap = new HashMap<>();
+    List<DelegateToken> delegateTokens = persistence.createQuery(DelegateToken.class)
+                                             .filter(DelegateTokenKeys.accountId, accountId)
+                                             .field(DelegateTokenKeys.name)
+                                             .in(tokensNameList)
+                                             .project(DelegateTokenKeys.name, true)
+                                             .project(DelegateTokenKeys.status, true)
+                                             .asList();
+    delegateTokens.forEach(delegateToken
+        -> delegateTokenStatusMap.put(
+            delegateToken.getName(), DelegateTokenStatus.ACTIVE.equals(delegateToken.getStatus())));
+    return delegateTokenStatusMap;
   }
 }

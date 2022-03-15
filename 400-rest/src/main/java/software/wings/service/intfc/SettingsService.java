@@ -45,21 +45,22 @@ public interface SettingsService extends OwnedByAccount, OwnedBySettingAttribute
    * @param req the req
    * @param appIdFromRequest
    * @param envIdFromRequest
+   * @param forUsageInNewApp
    * @return the page response
    */
   PageResponse<SettingAttribute> list(
-      PageRequest<SettingAttribute> req, String appIdFromRequest, String envIdFromRequest);
+      PageRequest<SettingAttribute> req, String appIdFromRequest, String envIdFromRequest, boolean forUsageInNewApp);
 
   PageResponse<SettingAttribute> list(PageRequest<SettingAttribute> req, String appIdFromRequest,
       String envIdFromRequest, String accountId, boolean gitSshConfigOnly, boolean withArtifactStreamCount,
-      String artifactStreamSearchString, int maxArtifactStreams, ArtifactType artifactType);
+      String artifactStreamSearchString, int maxArtifactStreams, ArtifactType artifactType, boolean forUsageInNewApp);
 
   List<SettingAttribute> listAllSettingAttributesByType(String accountId, String type);
 
   List<SettingAttribute> list(String accountId, SettingAttribute.SettingCategory category);
 
-  List<SettingAttribute> getFilteredSettingAttributes(
-      List<SettingAttribute> inputSettingAttributes, String appIdFromRequest, String envIdFromRequest);
+  List<SettingAttribute> getFilteredSettingAttributes(List<SettingAttribute> inputSettingAttributes,
+      String appIdFromRequest, String envIdFromRequest, boolean forUsageInNewApp);
 
   @ValidationGroups(Create.class) SettingAttribute save(@Valid SettingAttribute settingAttribute);
 
@@ -75,6 +76,8 @@ public interface SettingsService extends OwnedByAccount, OwnedBySettingAttribute
   SettingAttribute get(String appId, String envId, String varId);
 
   SettingAttribute get(String varId);
+
+  SettingAttribute getWithRbac(String id);
 
   SettingAttribute getByAccount(String accountId, String varId);
 
@@ -177,4 +180,6 @@ public interface SettingsService extends OwnedByAccount, OwnedBySettingAttribute
   boolean hasDelegateSelectorProperty(SettingAttribute settingAttribute);
 
   List<String> getDelegateSelectors(SettingAttribute settingAttribute);
+
+  List<SettingAttribute> getSettingAttributeByReferencedConnector(String accountId, String settingAttributeUuid);
 }

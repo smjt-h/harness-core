@@ -24,7 +24,6 @@ import static org.mockito.Mockito.when;
 import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
 import io.harness.cvng.BuilderFactory;
-import io.harness.cvng.beans.change.ChangeEventDTO;
 import io.harness.cvng.beans.change.ChangeSourceType;
 import io.harness.cvng.client.VerificationManagerService;
 import io.harness.cvng.core.beans.change.ChangeSummaryDTO;
@@ -47,7 +46,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Before;
@@ -173,28 +171,14 @@ public class ChangeSourceServiceImplTest extends CvNextGenTestBase {
   @Test
   @Owner(developers = ABHIJITH)
   @Category(UnitTests.class)
-  public void testGetChangeEvents() {
-    List<ChangeEventDTO> changeEventDTOS = Arrays.asList(builderFactory.getHarnessCDChangeEventDTOBuilder().build());
-    when(changeEventService.get(eq(builderFactory.getContext().getServiceEnvironmentParams()), eq(new ArrayList<>()),
-             eq(Instant.ofEpochSecond(100)), eq(Instant.ofEpochSecond(100)), eq(new ArrayList<>())))
-        .thenReturn(changeEventDTOS);
-    List<ChangeEventDTO> result =
-        changeSourceService.getChangeEvents(builderFactory.getContext().getServiceEnvironmentParams(),
-            new ArrayList<>(), Instant.ofEpochSecond(100), Instant.ofEpochSecond(100), new ArrayList<>());
-    assertThat(result).isEqualTo(changeEventDTOS);
-  }
-
-  @Test
-  @Owner(developers = ABHIJITH)
-  @Category(UnitTests.class)
   public void testgetChangeSummary() {
     ChangeSummaryDTO changeSummaryDTO = ChangeSummaryDTO.builder().build();
-    when(changeEventService.getChangeSummary(eq(builderFactory.getContext().getServiceEnvironmentParams()),
+    when(changeEventService.getChangeSummary(eq(builderFactory.getContext().getMonitoredServiceParams()),
              eq(new ArrayList<>()), eq(Instant.ofEpochSecond(100)), eq(Instant.ofEpochSecond(100))))
         .thenReturn(changeSummaryDTO);
     ChangeSummaryDTO result =
-        changeSourceService.getChangeSummary(builderFactory.getContext().getServiceEnvironmentParams(),
-            new ArrayList<>(), Instant.ofEpochSecond(100), Instant.ofEpochSecond(100));
+        changeSourceService.getChangeSummary(builderFactory.getContext().getMonitoredServiceParams(), new ArrayList<>(),
+            Instant.ofEpochSecond(100), Instant.ofEpochSecond(100));
     assertThat(result).isEqualTo(changeSummaryDTO);
   }
 
@@ -209,19 +193,19 @@ public class ChangeSourceServiceImplTest extends CvNextGenTestBase {
     String identifier = randomAlphanumeric(20);
     String name = randomAlphanumeric(20);
 
-    KubernetesChangeSource kubeChangeSource = KubernetesChangeSource.builder()
-                                                  .connectorIdentifier(kubeConnectorIdentifier)
-                                                  .dataCollectionRequired(true)
-                                                  .identifier(identifier)
-                                                  .name(name)
-                                                  .type(ChangeSourceType.KUBERNETES)
-                                                  .orgIdentifier(builderFactory.getContext().getOrgIdentifier())
-                                                  .projectIdentifier(builderFactory.getContext().getProjectIdentifier())
-                                                  .serviceIdentifier(builderFactory.getContext().getServiceIdentifier())
-                                                  .accountId(builderFactory.getContext().getAccountId())
-                                                  .envIdentifier(builderFactory.getContext().getEnvIdentifier())
-                                                  .serviceIdentifier(builderFactory.getContext().getServiceIdentifier())
-                                                  .build();
+    KubernetesChangeSource kubeChangeSource =
+        KubernetesChangeSource.builder()
+            .connectorIdentifier(kubeConnectorIdentifier)
+            .dataCollectionRequired(true)
+            .identifier(identifier)
+            .name(name)
+            .type(ChangeSourceType.KUBERNETES)
+            .orgIdentifier(builderFactory.getContext().getOrgIdentifier())
+            .projectIdentifier(builderFactory.getContext().getProjectIdentifier())
+            .monitoredServiceIdentifier(
+                builderFactory.getContext().getMonitoredServiceParams().getMonitoredServiceIdentifier())
+            .accountId(builderFactory.getContext().getAccountId())
+            .build();
 
     HashSet<ChangeSourceDTO> changeSourceDTOS = new HashSet<>();
     changeSourceDTOS.add(ChangeSourceDTO.builder()

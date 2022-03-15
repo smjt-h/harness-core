@@ -9,6 +9,7 @@ package software.wings.scheduler;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.exception.WingsException.ExecutionContext.MANAGER;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 import static io.harness.mongo.MongoUtils.setUnset;
@@ -150,14 +151,28 @@ public class LdapGroupSyncJobHelper {
     if (isEmpty(userGroup.getMembers())) {
       return;
     }
+    Set<User> removedUsers;
+    if (featureFlagService.isEnabled(FeatureName.LDAP_SYNC_WITH_USERID, userGroup.getAccountId())) {
+      Set<String> expectedMemberIds = expectedMembers.stream()
+                                          .map(LdapUserResponse::getUserId)
+                                          .filter(Objects::nonNull)
+                                          .collect(Collectors.toSet());
 
-    Set<String> expectedMemberEmails =
-        expectedMembers.stream().map(LdapUserResponse::getEmail).filter(Objects::nonNull).collect(Collectors.toSet());
+      removedUsers = userGroup.getMembers()
+                         .stream()
+                         .filter(member -> !expectedMemberIds.contains(member.getExternalUserId()))
+                         .collect(Collectors.toSet());
+      log.info("LDAPIterator: Removing users {} as part of sync with user IDs for usergroup {} in accountId {}",
+          removedUsers, userGroup.getUuid(), userGroup.getAccountId());
+    } else {
+      Set<String> expectedMemberEmails =
+          expectedMembers.stream().map(LdapUserResponse::getEmail).filter(Objects::nonNull).collect(Collectors.toSet());
 
-    Set<User> removedUsers = userGroup.getMembers()
-                                 .stream()
-                                 .filter(member -> !expectedMemberEmails.contains(member.getEmail()))
-                                 .collect(Collectors.toSet());
+      removedUsers = userGroup.getMembers()
+                         .stream()
+                         .filter(member -> !expectedMemberEmails.contains(member.getEmail()))
+                         .collect(Collectors.toSet());
+    }
 
     if (!removedGroupMembers.containsKey(userGroup)) {
       removedGroupMembers.put(userGroup, Sets.newHashSet());
@@ -169,21 +184,43 @@ public class LdapGroupSyncJobHelper {
 
   private void updateAddedGroupMembers(UserGroup userGroup, Collection<LdapUserResponse> expectedMembers,
       Map<LdapUserResponse, Set<UserGroup>> addedGroupMembers) {
-    Set<String> existingUserEmails;
-    if (isEmpty(userGroup.getMembers())) {
-      existingUserEmails = Sets.newHashSet();
-    } else {
-      existingUserEmails = userGroup.getMembers().stream().map(User::getEmail).collect(Collectors.toSet());
-    }
+    if (featureFlagService.isEnabled(FeatureName.LDAP_SYNC_WITH_USERID, userGroup.getAccountId())) {
+      Set<String> existingUserIds;
+      if (isEmpty(userGroup.getMembers())) {
+        existingUserIds = Sets.newHashSet();
+      } else {
+        existingUserIds = userGroup.getMembers().stream().map(User::getExternalUserId).collect(Collectors.toSet());
+      }
 
-    expectedMembers.stream()
-        .filter(member -> member.getEmail() != null && !existingUserEmails.contains(member.getEmail()))
-        .forEach(member -> {
-          if (!addedGroupMembers.containsKey(member)) {
-            addedGroupMembers.put(member, Sets.newHashSet());
-          }
-          addedGroupMembers.get(member).add(userGroup);
-        });
+      expectedMembers.stream()
+          .filter(member -> member.getUserId() != null && !existingUserIds.contains(member.getUserId()))
+          .forEach(member -> {
+            if (!addedGroupMembers.containsKey(member)) {
+              addedGroupMembers.put(member, Sets.newHashSet());
+            }
+            addedGroupMembers.get(member).add(userGroup);
+          });
+      log.info("LDAPIterator: Adding user members {} as part of LDAP sync with User Ids for group {} in accountId {}",
+          addedGroupMembers, userGroup.getUuid(), userGroup.getAccountId());
+    } else {
+      Set<String> existingUserEmails;
+      if (isEmpty(userGroup.getMembers())) {
+        existingUserEmails = Sets.newHashSet();
+      } else {
+        existingUserEmails = userGroup.getMembers().stream().map(User::getEmail).collect(Collectors.toSet());
+      }
+
+      expectedMembers.stream()
+          .filter(member -> member.getEmail() != null && !existingUserEmails.contains(member.getEmail()))
+          .forEach(member -> {
+            if (!addedGroupMembers.containsKey(member)) {
+              addedGroupMembers.put(member, Sets.newHashSet());
+            }
+            addedGroupMembers.get(member).add(userGroup);
+          });
+    }
+    log.info("LDAPIterator: Adding user members {} as part of LDAP sync for group {} in accountId {}",
+        addedGroupMembers, userGroup.getUuid(), userGroup.getAccountId());
   }
 
   @VisibleForTesting
@@ -197,28 +234,54 @@ public class LdapGroupSyncJobHelper {
     return wingsPersistence.findAndModify(query, updateOperations, new FindAndModifyOptions());
   }
 
-  private void syncUserGroupMembers(String accountId, Map<UserGroup, Set<User>> removedGroupMembers,
+  @VisibleForTesting
+  public void syncUserGroupMembers(String accountId, Map<UserGroup, Set<User>> removedGroupMembers,
       Map<LdapUserResponse, Set<UserGroup>> addedGroupMembers) {
-    removedGroupMembers.forEach((userGroup, users) -> userGroupService.removeMembers(userGroup, users, false, true));
+    if (isNotEmpty(removedGroupMembers)) {
+      log.info("LDAPIterator: users to be removed {}", removedGroupMembers);
+      removedGroupMembers.forEach((userGroup, users) -> userGroupService.removeMembers(userGroup, users, false, true));
+    }
+    if (isNotEmpty(addedGroupMembers)) {
+      for (Map.Entry<LdapUserResponse, Set<UserGroup>> entry : addedGroupMembers.entrySet()) {
+        LdapUserResponse ldapUserResponse = entry.getKey();
+        Set<UserGroup> userGroups = entry.getValue();
 
-    for (Map.Entry<LdapUserResponse, Set<UserGroup>> entry : addedGroupMembers.entrySet()) {
-      LdapUserResponse ldapUserResponse = entry.getKey();
-      Set<UserGroup> userGroups = entry.getValue();
+        try {
+          User user = userService.getUserByEmail(ldapUserResponse.getEmail());
+          log.info("LDAPIterator: user found from by email Id {} is {}", ldapUserResponse.getEmail(), user);
 
-      User user = userService.getUserByEmail(ldapUserResponse.getEmail());
-      if (user != null && userService.isUserAssignedToAccount(user, accountId)) {
-        log.info("LDAPIterator: user already assigned to account {}", accountId);
-        userService.addUserToUserGroups(accountId, user, Lists.newArrayList(userGroups), true, true);
-      } else {
-        log.info("LDAPIterator: creating user invite for account {}", accountId);
-        UserInvite userInvite = anUserInvite()
-                                    .withAccountId(accountId)
-                                    .withEmail(ldapUserResponse.getEmail())
-                                    .withName(ldapUserResponse.getName())
-                                    .withUserGroups(Lists.newArrayList(userGroups))
-                                    .withUserId(ldapUserResponse.getUserId())
-                                    .build();
-        userService.inviteUser(userInvite, false, true);
+          if (featureFlagService.isEnabled(FeatureName.LDAP_SYNC_WITH_USERID, accountId)) {
+            user = userService.getUserByUserId(ldapUserResponse.getUserId());
+            log.info("LDAPIterator: Fetching user with user Id {}", ldapUserResponse.getUserId());
+          }
+          log.info("LDAPIterator: user found from system is {}", user);
+
+          if (user != null && userService.isUserAssignedToAccount(user, accountId)) {
+            log.info("LDAPIterator: user {} already assigned to account {}", user.getEmail(), accountId);
+            userService.addUserToUserGroups(accountId, user, Lists.newArrayList(userGroups), true, true);
+            log.info("LDAPIterator: adding user {} to groups {}  in accountId {}", user.getUuid(),
+                Lists.newArrayList(userGroups), accountId);
+          } else {
+            UserInvite userInvite = anUserInvite()
+                                        .withAccountId(accountId)
+                                        .withEmail(ldapUserResponse.getEmail())
+                                        .withName(ldapUserResponse.getName())
+                                        .withUserGroups(Lists.newArrayList(userGroups))
+                                        .withUserId(ldapUserResponse.getUserId())
+                                        .build();
+            log.info(
+                "LDAPIterator: creating user invite for account {} and user Invite {} and user Groups {} and externalUserId {}",
+                accountId, userInvite.getEmail(), Lists.newArrayList(userGroups), ldapUserResponse.getUserId());
+            userService.inviteUser(userInvite, false, true);
+          }
+        } catch (Exception e) {
+          if (ldapUserResponse != null && isNotEmpty(ldapUserResponse.getEmail())) {
+            log.error("LDAPIterator: could not sync user {} of account {} with error", ldapUserResponse.getEmail(),
+                accountId, e);
+          } else {
+            log.error("LDAPIterator: could not sync for account {} as email was not found ", accountId, e);
+          }
+        }
       }
     }
   }
@@ -298,7 +361,7 @@ public class LdapGroupSyncJobHelper {
               LdapConstants.USER_GROUP_SYNC_NOT_ELIGIBLE, userGroup.getName(), groupResponse.getMessage());
           throw new UnsupportedOperationException(message);
         }
-        log.info("LDAPIterator: Fetched  LdapGroupResponse {} of group {} accountId {}", groupResponse.toString(),
+        log.info("LDAPIterator: Fetched  LdapGroupResponse {} of group {} accountId {}", groupResponse,
             userGroup.getUuid(), accountId);
         syncUserGroupMetadata(userGroup, groupResponse);
         if (featureFlagService.isEnabled(FeatureName.LDAP_USER_ID_SYNC, accountId)) {

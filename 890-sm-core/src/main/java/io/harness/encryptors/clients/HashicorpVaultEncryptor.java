@@ -13,6 +13,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.eraro.ErrorCode.VAULT_OPERATION_ERROR;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.helpers.NGVaultTaskHelper.getVaultAwmIamAuthLoginResult;
+import static io.harness.helpers.NGVaultTaskHelper.getVaultK8sAuthLoginResult;
 import static io.harness.helpers.ext.vault.VaultRestClientFactory.getFullPath;
 import static io.harness.threading.Morpheus.sleep;
 
@@ -24,6 +25,7 @@ import io.harness.encryptors.VaultEncryptor;
 import io.harness.exception.SecretManagementDelegateException;
 import io.harness.exception.runtime.HashiCorpVaultRuntimeException;
 import io.harness.helpers.ext.vault.VaultAppRoleLoginResult;
+import io.harness.helpers.ext.vault.VaultK8sLoginResult;
 import io.harness.helpers.ext.vault.VaultRestClientFactory;
 import io.harness.security.encryption.EncryptedRecord;
 import io.harness.security.encryption.EncryptedRecordData;
@@ -63,7 +65,7 @@ public class HashicorpVaultEncryptor implements VaultEncryptor {
     while (true) {
       try {
         return HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofSeconds(15),
-            () -> upsertSecretInternal(name, plaintext, accountId, null, vaultConfig));
+            () -> upsertSecretInternal(name, plaintext, accountId, null, vaultConfig, false));
       } catch (Exception e) {
         failedAttempts++;
         log.warn("encryption failed. trial num: {}", failedAttempts, e);
@@ -88,13 +90,17 @@ public class HashicorpVaultEncryptor implements VaultEncryptor {
     while (true) {
       try {
         return HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofSeconds(5),
-            () -> upsertSecretInternal(name, plaintext, accountId, existingRecord, vaultConfig));
+            () -> upsertSecretInternal(name, plaintext, accountId, existingRecord, vaultConfig, false));
       } catch (Exception e) {
         failedAttempts++;
         log.warn("encryption failed. trial num: {}", failedAttempts, e);
         if (failedAttempts == NUM_OF_RETRIES) {
-          String message = "After " + NUM_OF_RETRIES + " tries, encryption for vault secret " + name + " failed.";
-          throw new SecretManagementDelegateException(VAULT_OPERATION_ERROR, message, e, USER);
+          if (e instanceof HashiCorpVaultRuntimeException) {
+            throw new HashiCorpVaultRuntimeException(e.getMessage());
+          } else {
+            String message = "After " + NUM_OF_RETRIES + " tries, encryption for vault secret " + name + " failed.";
+            throw new SecretManagementDelegateException(VAULT_OPERATION_ERROR, message, e, USER);
+          }
         }
         sleep(ofMillis(1000));
       }
@@ -138,12 +144,12 @@ public class HashicorpVaultEncryptor implements VaultEncryptor {
   }
 
   private EncryptedRecord upsertSecretInternal(String keyUrl, String value, String accountId,
-      EncryptedRecord existingRecord, VaultConfig vaultConfig) throws IOException {
+      EncryptedRecord existingRecord, VaultConfig vaultConfig, boolean deleteRequired) throws IOException {
     log.info("Saving secret {} into Vault {}", keyUrl, vaultConfig.getBasePath());
 
     // With existing encrypted value. Need to delete it first and rewrite with new value.
     String fullPath = getFullPath(vaultConfig.getBasePath(), keyUrl);
-    deleteSecret(accountId, EncryptedRecordData.builder().encryptionKey(keyUrl).build(), vaultConfig);
+
     String vaultToken = getToken(vaultConfig);
     boolean isSuccessful = VaultRestClientFactory.create(vaultConfig)
                                .writeSecret(String.valueOf(vaultToken), vaultConfig.getNamespace(),
@@ -154,7 +160,9 @@ public class HashicorpVaultEncryptor implements VaultEncryptor {
       if (existingRecord != null) {
         String oldFullPath = getFullPath(vaultConfig.getBasePath(), existingRecord.getEncryptionKey());
         if (!oldFullPath.equals(fullPath)) {
-          deleteSecret(accountId, existingRecord, vaultConfig);
+          if (deleteRequired) {
+            deleteSecret(accountId, existingRecord, vaultConfig);
+          }
         }
       }
       return EncryptedRecordData.builder().encryptionKey(keyUrl).encryptedValue(keyUrl.toCharArray()).build();
@@ -168,7 +176,7 @@ public class HashicorpVaultEncryptor implements VaultEncryptor {
   private EncryptedRecord renameSecretInternal(
       String keyUrl, String accountId, EncryptedRecord existingRecord, VaultConfig vaultConfig) throws IOException {
     char[] value = fetchSecretInternal(existingRecord, vaultConfig);
-    return upsertSecretInternal(keyUrl, new String(value), accountId, existingRecord, vaultConfig);
+    return upsertSecretInternal(keyUrl, new String(value), accountId, existingRecord, vaultConfig, true);
   }
 
   @Override
@@ -234,6 +242,9 @@ public class HashicorpVaultEncryptor implements VaultEncryptor {
     } else if (vaultConfig.isUseAwsIam()) {
       VaultAppRoleLoginResult vaultAwmIamAuthLoginResult = getVaultAwmIamAuthLoginResult(vaultConfig);
       vaultConfig.setAuthToken(vaultAwmIamAuthLoginResult.getClientToken());
+    } else if (vaultConfig.isUseK8sAuth()) {
+      VaultK8sLoginResult vaultK8sLoginResult = getVaultK8sAuthLoginResult(vaultConfig);
+      vaultConfig.setAuthToken(vaultK8sLoginResult.getClientToken());
     }
     return vaultConfig.getAuthToken();
   }

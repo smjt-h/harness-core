@@ -9,10 +9,10 @@ package io.harness.pms.rbac.validator;
 
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
-import io.harness.accesscontrol.clients.AccessCheckResponseDTO;
+import io.harness.accesscontrol.acl.api.AccessCheckResponseDTO;
+import io.harness.accesscontrol.acl.api.AccessControlDTO;
+import io.harness.accesscontrol.acl.api.PermissionCheckDTO;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.AccessControlDTO;
-import io.harness.accesscontrol.clients.PermissionCheckDTO;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.core.EntityDetail;
@@ -35,10 +35,13 @@ public class PipelineRbacServiceImpl implements PipelineRbacService {
 
   public void extractAndValidateStaticallyReferredEntities(String accountIdentifier, String orgIdentifier,
       String projectIdentifier, String pipelineId, String pipelineYaml) {
+    long start = System.currentTimeMillis();
     List<EntityDetail> entityDetails = pipelineSetupUsageHelper.getReferencesOfPipeline(
         accountIdentifier, orgIdentifier, projectIdentifier, pipelineId, pipelineYaml, null);
     validateStaticallyReferredEntities(
         accountIdentifier, orgIdentifier, projectIdentifier, pipelineId, pipelineYaml, entityDetails);
+    log.info("[PMS_RBAC] Rbac validation for referred entities for size {} took {}ms", entityDetails.size(),
+        System.currentTimeMillis() - start);
   }
 
   public void validateStaticallyReferredEntities(String accountIdentifier, String orgIdentifier,

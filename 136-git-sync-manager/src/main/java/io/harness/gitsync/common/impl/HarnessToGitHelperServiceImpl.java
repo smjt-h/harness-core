@@ -8,6 +8,7 @@
 package io.harness.gitsync.common.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.DX;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.UNSYNCED;
 
 import io.harness.annotations.dev.OwnedBy;
@@ -25,7 +26,6 @@ import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.ChangeType;
 import io.harness.gitsync.FileInfo;
-import io.harness.gitsync.Principal;
 import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.PushInfo;
 import io.harness.gitsync.RepoDetails;
@@ -33,6 +33,7 @@ import io.harness.gitsync.common.beans.BranchSyncStatus;
 import io.harness.gitsync.common.beans.GitBranch;
 import io.harness.gitsync.common.beans.GitSyncDirection;
 import io.harness.gitsync.common.beans.InfoForGitPush;
+import io.harness.gitsync.common.dtos.GitSyncEntityDTO;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.helper.UserProfileHelper;
 import io.harness.gitsync.common.service.GitBranchService;
@@ -55,10 +56,12 @@ import io.harness.ng.core.entitydetail.EntityDetailProtoToRestMapper;
 import io.harness.product.ci.scm.proto.CreateFileResponse;
 import io.harness.product.ci.scm.proto.DeleteFileResponse;
 import io.harness.product.ci.scm.proto.UpdateFileResponse;
+import io.harness.security.Principal;
 import io.harness.security.dto.UserPrincipal;
 import io.harness.tasks.DecryptGitApiAccessHelper;
 import io.harness.utils.IdentifierRefHelper;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -130,7 +133,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     }
     final ConnectorResponseDTO connector = connectorResponseDTO.get();
     if (principal.hasUserPrincipal()) {
-      userProfileHelper.setConnectorDetailsFromUserProfile(yamlGitConfig, principal.getUserPrincipal(), connector);
+      userProfileHelper.setConnectorDetailsFromUserProfile(yamlGitConfig, connector);
     }
     setRepoUrlInConnector(yamlGitConfig, connector);
     return Optional.of(connector);
@@ -244,7 +247,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     final YamlGitConfigDTO yamlGitConfig = yamlGitConfigService.get(
         entityReference.getProjectIdentifier(), entityReference.getOrgIdentifier(), accountId, yamlGitConfigId);
 
-    final InfoForGitPush infoForGitPush = getInfoForGitPush(request, entityReference, accountId, yamlGitConfig);
+    final InfoForGitPush infoForGitPush = getInfoForGitPush(request, entityDetailDTO, accountId, yamlGitConfig);
 
     switch (changeType) {
       case MODIFY:
@@ -309,7 +312,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
   }
 
   private InfoForGitPush getInfoForGitPush(
-      FileInfo request, EntityReference entityReference, String accountId, YamlGitConfigDTO yamlGitConfig) {
+      FileInfo request, EntityDetail entityDetailDTO, String accountId, YamlGitConfigDTO yamlGitConfig) {
     Principal principal = request.getPrincipal();
     if (request.getIsFullSyncFlow()) {
       principal = Principal.newBuilder().setUserPrincipal(userProfileHelper.getUserPrincipal()).build();
@@ -324,8 +327,8 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
 
     return InfoForGitPush.builder()
         .accountId(accountId)
-        .orgIdentifier(entityReference.getOrgIdentifier())
-        .projectIdentifier(entityReference.getProjectIdentifier())
+        .orgIdentifier(entityDetailDTO.getEntityRef().getOrgIdentifier())
+        .projectIdentifier(entityDetailDTO.getEntityRef().getProjectIdentifier())
         .branch(request.getBranch())
         .baseBranch(StringValueUtils.getStringFromStringValue(request.getBaseBranch()))
         .isNewBranch(request.getIsNewBranch())
@@ -335,6 +338,21 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
         .oldFileSha(StringValueUtils.getStringFromStringValue(request.getOldFileSha()))
         .yaml(request.getYaml())
         .scmConnector(connectorConfig)
+        .commitId(fetchLastCommitIdForFile(request, entityDetailDTO))
         .build();
+  }
+
+  @VisibleForTesting
+  protected String fetchLastCommitIdForFile(FileInfo request, EntityDetail entityDetailDTO) {
+    // Incoming commit id could be a conflict resolved commit id for an entity
+    String lastCommitIdForFile = request.getCommitId() == null ? "" : request.getCommitId();
+    if (isEmpty(lastCommitIdForFile) && request.getChangeType() != ChangeType.ADD) {
+      // If its saveToNewBranch use-case, then we choose base branch for existing entity commit
+      String branch = request.getIsNewBranch() ? request.getBaseBranch().getValue() : request.getBranch();
+      GitSyncEntityDTO gitSyncEntityDTO =
+          gitEntityService.get(entityDetailDTO.getEntityRef(), entityDetailDTO.getType(), branch);
+      lastCommitIdForFile = gitSyncEntityDTO.getLastCommitId();
+    }
+    return lastCommitIdForFile;
   }
 }

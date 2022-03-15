@@ -65,6 +65,8 @@ import io.harness.k8s.model.ReleaseHistory;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.delegatetasks.k8s.K8sTaskHelper;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
@@ -122,11 +124,14 @@ public class K8sRollingDeployTaskHandler extends K8sTaskHandler {
         return getFailureResponse();
       }
     } else {
+      ExecutionLogCallback executionLogCallback =
+          k8sTaskHelper.getExecutionLogCallback(k8sRollingDeployTaskParameters, FetchFiles);
+      executionLogCallback.saveExecutionLog(
+          color("\nStarting Kubernetes Rolling Deployment", LogColor.White, LogWeight.Bold));
+
       success = k8sTaskHelper.fetchManifestFilesAndWriteToDirectory(
           k8sRollingDeployTaskParameters.getK8sDelegateManifestConfig(),
-          k8sRollingHandlerConfig.getManifestFilesDirectory(),
-          k8sTaskHelper.getExecutionLogCallback(k8sRollingDeployTaskParameters, FetchFiles),
-          steadyStateTimeoutInMillis);
+          k8sRollingHandlerConfig.getManifestFilesDirectory(), executionLogCallback, steadyStateTimeoutInMillis);
 
       if (!success) {
         return getFailureResponse();
@@ -153,7 +158,8 @@ public class K8sRollingDeployTaskHandler extends K8sTaskHandler {
     success = prepareForRolling(k8sDelegateTaskParams, prepareLogCallback,
         k8sRollingDeployTaskParameters.isInCanaryWorkflow(),
         k8sRollingDeployTaskParameters.getSkipVersioningForAllK8sObjects(),
-        k8sRollingDeployTaskParameters.isPruningEnabled());
+        k8sRollingDeployTaskParameters.isPruningEnabled(),
+        k8sRollingDeployTaskParameters.isSkipAddingTrackSelectorToDeployment());
     if (!success) {
       return getFailureResponse();
     }
@@ -363,7 +369,8 @@ public class K8sRollingDeployTaskHandler extends K8sTaskHandler {
   }
 
   private boolean prepareForRolling(K8sDelegateTaskParams k8sDelegateTaskParams, LogCallback executionLogCallback,
-      boolean inCanaryWorkflow, Boolean skipVersioningForAllK8sObjects, boolean isPruningEnabled) {
+      boolean inCanaryWorkflow, Boolean skipVersioningForAllK8sObjects, boolean isPruningEnabled,
+      boolean skipAddingTrackSelectorToDeployment) {
     try {
       String releaseHistoryData = k8sTaskHelperBase.getReleaseHistoryData(
           k8sRollingHandlerConfig.getKubernetesConfig(), k8sRollingHandlerConfig.getReleaseName());
@@ -409,9 +416,10 @@ public class K8sRollingDeployTaskHandler extends K8sTaskHandler {
           addRevisionNumber(k8sRollingHandlerConfig.getResources(), k8sRollingHandlerConfig.getRelease().getNumber());
         }
 
+        k8sRollingBaseHandler.addLabelsInDeploymentSelectorForCanary(inCanaryWorkflow,
+            skipAddingTrackSelectorToDeployment, managedWorkloads, k8sRollingHandlerConfig.getKubernetesConfig());
         k8sRollingBaseHandler.addLabelsInManagedWorkloadPodSpec(
             inCanaryWorkflow, managedWorkloads, k8sRollingHandlerConfig.getReleaseName());
-        k8sRollingBaseHandler.addLabelsInDeploymentSelectorForCanary(inCanaryWorkflow, managedWorkloads);
       }
     } catch (Exception e) {
       log.error("Exception:", e);

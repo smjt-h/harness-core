@@ -12,18 +12,24 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.NGBeanModule;
 import io.harness.WalkTreeModule;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.artifact.resources.artifactory.service.ArtifactoryResourceService;
+import io.harness.cdng.artifact.resources.artifactory.service.ArtifactoryResourceServiceImpl;
 import io.harness.cdng.artifact.resources.docker.service.DockerResourceService;
 import io.harness.cdng.artifact.resources.docker.service.DockerResourceServiceImpl;
 import io.harness.cdng.artifact.resources.ecr.service.EcrResourceService;
 import io.harness.cdng.artifact.resources.ecr.service.EcrResourceServiceImpl;
 import io.harness.cdng.artifact.resources.gcr.service.GcrResourceService;
 import io.harness.cdng.artifact.resources.gcr.service.GcrResourceServiceImpl;
+import io.harness.cdng.artifact.resources.nexus.service.NexusResourceService;
+import io.harness.cdng.artifact.resources.nexus.service.NexusResourceServiceImpl;
 import io.harness.cdng.artifact.service.ArtifactSourceService;
 import io.harness.cdng.artifact.service.impl.ArtifactSourceServiceImpl;
 import io.harness.cdng.buckets.resources.s3.S3ResourceService;
 import io.harness.cdng.buckets.resources.s3.S3ResourceServiceImpl;
 import io.harness.cdng.buckets.resources.service.GcsResourceService;
 import io.harness.cdng.buckets.resources.service.GcsResourceServiceImpl;
+import io.harness.cdng.envGroup.services.EnvironmentGroupService;
+import io.harness.cdng.envGroup.services.EnvironmentGroupServiceImpl;
 import io.harness.cdng.instance.info.InstanceInfoService;
 import io.harness.cdng.instance.info.InstanceInfoServiceImpl;
 import io.harness.cdng.jira.resources.service.JiraResourceService;
@@ -66,6 +72,8 @@ public class NGModule extends AbstractModule {
 
     bind(ArtifactSourceService.class).to(ArtifactSourceServiceImpl.class);
     bind(DockerResourceService.class).to(DockerResourceServiceImpl.class);
+    bind(NexusResourceService.class).to(NexusResourceServiceImpl.class);
+    bind(ArtifactoryResourceService.class).to(ArtifactoryResourceServiceImpl.class);
     bind(GcrResourceService.class).to(GcrResourceServiceImpl.class);
     bind(EcrResourceService.class).to(EcrResourceServiceImpl.class);
     bind(JiraResourceService.class).to(JiraResourceServiceImpl.class);
@@ -78,5 +86,7 @@ public class NGModule extends AbstractModule {
     bind(InstanceService.class).to(InstanceServiceImpl.class);
     bind(ServiceEntityService.class).to(ServiceEntityServiceImpl.class);
     bind(ServiceNowResourceService.class).to(ServiceNowResourceServiceImpl.class);
+    bind(ArtifactoryResourceService.class).to(ArtifactoryResourceServiceImpl.class);
+    bind(EnvironmentGroupService.class).to(EnvironmentGroupServiceImpl.class);
   }
 }

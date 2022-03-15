@@ -18,6 +18,7 @@ import io.harness.morphia.MorphiaRegistrar;
 import io.harness.plancreator.pipeline.PipelineConfig;
 import io.harness.plancreator.steps.barrier.BarrierStepNode;
 import io.harness.plancreator.steps.http.HttpStepNode;
+import io.harness.plancreator.steps.internal.FlagConfigurationStepNode;
 import io.harness.plancreator.steps.internal.PMSStepInfo;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.serializer.kryo.CommonEntitiesKryoRegistrar;
@@ -34,6 +35,8 @@ import io.harness.steps.approval.step.servicenow.ServiceNowApprovalStepNode;
 import io.harness.steps.jira.create.JiraCreateStepNode;
 import io.harness.steps.jira.update.JiraUpdateStepNode;
 import io.harness.steps.policy.PolicyStepNode;
+import io.harness.steps.servicenow.create.ServiceNowCreateStepNode;
+import io.harness.steps.servicenow.update.ServiceNowUpdateStepNode;
 import io.harness.steps.shellscript.ShellScriptStepNode;
 import io.harness.steps.template.TemplateStepNode;
 import io.harness.yaml.schema.beans.SchemaNamespaceConstants;
@@ -56,7 +59,6 @@ public class OrchestrationStepsModuleRegistrars {
       ImmutableSet.<Class<? extends KryoRegistrar>>builder()
           .addAll(OrchestrationRegistrars.kryoRegistrars)
           .add(OrchestrationStepsKryoRegistrar.class)
-          .add(PipelineServiceUtilKryoRegistrar.class)
           .add(YamlKryoRegistrar.class)
           .add(NGCoreBeansKryoRegistrar.class)
           .add(DelegateServiceBeansKryoRegistrar.class)
@@ -67,6 +69,7 @@ public class OrchestrationStepsModuleRegistrars {
           .addAll(RbacCoreRegistrars.kryoRegistrars)
           .addAll(NGCoreClientRegistrars.kryoRegistrars)
           .addAll(DelegateTaskRegistrars.kryoRegistrars)
+          .addAll(NGCommonModuleRegistrars.kryoRegistrars)
           .build();
 
   public static final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =
@@ -78,6 +81,7 @@ public class OrchestrationStepsModuleRegistrars {
           .addAll(RbacCoreRegistrars.morphiaRegistrars)
           .addAll(NGCoreClientRegistrars.morphiaRegistrars)
           .addAll(DelegateTaskRegistrars.morphiaRegistrars)
+          .addAll(NGCommonModuleRegistrars.morphiaRegistrars)
           .build();
 
   public static final ImmutableSet<Class<? extends TypeConverter>> morphiaConverters =
@@ -88,6 +92,7 @@ public class OrchestrationStepsModuleRegistrars {
   public static final ImmutableList<Class<? extends Converter<?, ?>>> springConverters =
       ImmutableList.<Class<? extends Converter<?, ?>>>builder()
           .addAll(OrchestrationRegistrars.springConverters)
+          .addAll(NGCommonModuleRegistrars.springConverters)
           .build();
 
   public static final ImmutableList<YamlSchemaRootClass> yamlSchemaRegistrars =
@@ -240,6 +245,42 @@ public class OrchestrationStepsModuleRegistrars {
                                            .build())
                    .build())
           .add(YamlSchemaRootClass.builder()
+                   .entityType(EntityType.SERVICENOW_CREATE_STEP)
+                   .availableAtProjectLevel(true)
+                   .availableAtOrgLevel(false)
+                   .availableAtAccountLevel(false)
+                   .clazz(ServiceNowCreateStepNode.class)
+                   .yamlSchemaMetadata(YamlSchemaMetadata.builder()
+                                           .namespace(SchemaNamespaceConstants.PMS)
+                                           .modulesSupported(Arrays.asList(ModuleType.CD, ModuleType.PMS))
+                                           .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
+                                           .build())
+                   .build())
+          .add(YamlSchemaRootClass.builder()
+                   .entityType(EntityType.SERVICENOW_UPDATE_STEP)
+                   .availableAtProjectLevel(true)
+                   .availableAtOrgLevel(false)
+                   .availableAtAccountLevel(false)
+                   .clazz(ServiceNowUpdateStepNode.class)
+                   .yamlSchemaMetadata(YamlSchemaMetadata.builder()
+                                           .namespace(SchemaNamespaceConstants.PMS)
+                                           .modulesSupported(Arrays.asList(ModuleType.CD, ModuleType.PMS))
+                                           .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
+                                           .build())
+                   .build())
+          .add(YamlSchemaRootClass.builder()
+                   .entityType(EntityType.FLAG_CONFIGURATION)
+                   .availableAtProjectLevel(true)
+                   .availableAtOrgLevel(false)
+                   .availableAtAccountLevel(false)
+                   .clazz(FlagConfigurationStepNode.class)
+                   .yamlSchemaMetadata(YamlSchemaMetadata.builder()
+                                           .namespace(SchemaNamespaceConstants.CF)
+                                           .modulesSupported(Arrays.asList(ModuleType.CF, ModuleType.PMS))
+                                           .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
+                                           .build())
+                   .build())
+          .add(YamlSchemaRootClass.builder()
                    .entityType(EntityType.POLICY_STEP)
                    .availableAtProjectLevel(true)
                    .availableAtOrgLevel(false)
@@ -247,6 +288,7 @@ public class OrchestrationStepsModuleRegistrars {
                    .clazz(PolicyStepNode.class)
                    .yamlSchemaMetadata(
                        YamlSchemaMetadata.builder()
+                           .namespace(SchemaNamespaceConstants.PMS)
                            .modulesSupported(Arrays.asList(ModuleType.values()))
                            .featureFlags(Collections.singletonList(FeatureName.CUSTOM_POLICY_STEP.name()))
                            .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
