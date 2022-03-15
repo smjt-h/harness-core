@@ -101,15 +101,17 @@ public class YamlSchemaValidator {
         if (validationMessage.getCode().equals(ValidatorTypeCode.ADDITIONAL_PROPERTIES.getErrorCode())) {
           continue;
         }
-        errorDTOS.add(YamlSchemaErrorDTO.builder()
-                          .message(removeFqnFromErrorMessage(validationMessage.getMessage()))
-                          .stageInfo(SchemaValidationUtils.getStageErrorInfo(validationMessage.getPath(), jsonNode))
-                          .stepInfo(SchemaValidationUtils.getStepErrorInfo(validationMessage.getPath(), jsonNode))
-                          .fqn(validationMessage.getPath())
-                          .build());
+        errorDTOS.add(
+            YamlSchemaErrorDTO
+                .builder()
+                //                          .message(removeFqnFromErrorMessage(validationMessage.getMessage()))
+                .message(validationMessage.getMessage())
+                .stageInfo(SchemaValidationUtils.getStageErrorInfo(validationMessage.getPath(), jsonNode))
+                .stepInfo(SchemaValidationUtils.getStepErrorInfo(validationMessage.getPath(), jsonNode))
+                .fqn(validationMessage.getPath())
+                .build());
       }
-      YamlSchemaErrorWrapperDTO errorWrapperDTO = YamlSchemaErrorWrapperDTO.builder().schemaErrors(errorDTOS).build();
-      throw new InvalidYamlException("Invalid Yaml", errorWrapperDTO);
+      return errorDTOS.stream().map(YamlSchemaErrorDTO::getMessage).collect(Collectors.toSet());
     }
     return Collections.emptySet();
   }

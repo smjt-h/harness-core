@@ -61,6 +61,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -127,12 +128,13 @@ public class PMSYamlSchemaServiceImpl implements PMSYamlSchemaService {
     try {
       JsonNode schema = getPipelineYamlSchema(accountIdentifier, projectId, orgId, Scope.PROJECT);
       String schemaString = JsonPipelineUtils.writeJsonString(schema);
-      yamlSchemaValidator.validate(yaml, schemaString,
+      Set<String> errors = yamlSchemaValidator.validate(yaml, schemaString,
           pmsYamlSchemaHelper.isFeatureFlagEnabled(FeatureName.DONT_RESTRICT_PARALLEL_STAGE_COUNT, accountIdentifier),
           allowedParallelStages);
-    } catch (io.harness.yaml.validator.InvalidYamlException e) {
       log.info("[PMS_SCHEMA] Schema validation took total time {}ms", System.currentTimeMillis() - start);
-      throw e;
+      if (!errors.isEmpty()) {
+        throw new JsonSchemaValidationException(String.join("\n", errors));
+      }
     } catch (Exception ex) {
       log.error(ex.getMessage(), ex);
       throw new JsonSchemaValidationException(ex.getMessage(), ex);
