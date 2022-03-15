@@ -56,10 +56,10 @@ public class CeProductMetricsTasklet implements Tasklet {
       Instant start = Instant.ofEpochMilli(jobConstants.getJobStartTime()).minus(3, ChronoUnit.DAYS);
       Instant end = Instant.ofEpochMilli(jobConstants.getJobEndTime()).minus(3, ChronoUnit.DAYS);
       log.info("Sending CE account traits through Segment group call.");
-      sendStatsToSegment(accountId, start, end);
+      //      sendStatsToSegment(accountId, start, end);
 
       log.info("Sending NG CCM Telemetry Stat for Account:{}", accountId);
-      nextGenInstrumentation(accountId);
+      //      nextGenInstrumentation(accountId);
     }
     return null;
   }
