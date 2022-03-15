@@ -440,8 +440,6 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
     }
     instanceData.setLabels(labels);
     ecsService.setLabels(serviceLabels);
-    log.info("clusterId: {}, serviceArn: {}, taskId: {}", ecsService.getClusterId(), ecsService.getServiceArn(), getIdFromArn(task.getTaskArn()));
-    log.info("clusterId: {}, serviceArn: {}, taskId: {}, serviceTagList is not empty, serviceLabels: {}", ecsService.getClusterId(), ecsService.getServiceArn(), getIdFromArn(task.getTaskArn()), serviceLabels);
     return true;
   }
 
