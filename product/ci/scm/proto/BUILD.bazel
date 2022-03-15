@@ -6,7 +6,7 @@ load("//:tools/bazel/protos/harness_grpc_library.bzl", "harness_grpc_library")
 proto_library(
     name = "ciscmpb_proto",
     srcs = ["scm.proto"],
-    visibility = ["//visibility:public"],
+    visibility = ["//:__pkg__"],
     deps = ["@com_google_protobuf//:timestamp_proto"],
 )
 
@@ -15,14 +15,14 @@ go_proto_library(
     compilers = ["@io_bazel_rules_go//proto:go_grpc"],
     importpath = "github.com/harness/harness-core/product/ci/scm/proto",
     proto = ":ciscmpb_proto",
-    visibility = ["//visibility:public"],
+    visibility = ["//:__pkg__"],
 )
 
 go_library(
     name = "proto",
     embed = [":ciscmpb_go_proto"],
     importpath = "github.com/harness/harness-core/product/ci/scm/proto",
-    visibility = ["//visibility:public"],
+    visibility = ["//:__pkg__"],
 )
 
 harness_grpc_library(
