@@ -1196,10 +1196,19 @@ public class WatcherServiceImpl implements WatcherService {
             messageService.logAllMessages(DELEGATE, newDelegateProcess);
             messageService.clearChannel(DELEGATE, newDelegateProcess);
           }
-          log.info("before destroy **gaurav");
+          log.info("before destroy **gaurav {}", newDelegate.toString());
           newDelegate.getProcess().destroy();
           log.info("after destroy **gaurav");
-          newDelegate.getProcess().waitFor();
+          if (newDelegate.getProcess().isAlive()) {
+            log.info("Process is still alive **gaurav ");
+          }
+          log.info("before forceful destroy **gaurav");
+          newDelegate.getProcess().destroyForcibly();
+          log.info("after destroying forcefully **gaurav");
+          if (newDelegate.getProcess().isAlive()) {
+            log.info("Process is still alive **gaurav ");
+          }
+
           log.info("after wait **gaurav");
           oldDelegateProcesses.forEach(oldDelegateProcess -> {
             log.info("Sending old delegate process {} resume message", oldDelegateProcess);
