@@ -83,6 +83,7 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -316,23 +317,13 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
         .filter(task -> null != task.getPullStartedAt() && listTaskDesiredStatus().contains(task.getDesiredStatus()))
         .forEach(task -> {
           String taskId = getIdFromArn(task.getTaskArn());
-          double memory = Integer.parseInt(task.getMemory());
-          double cpu = Integer.parseInt(task.getCpu());
-          Resource resource = Resource.builder().cpuUnits(cpu).memoryMb(memory).build();
           if (null != activeInstanceDataMap.get(taskId)) {
             InstanceData instanceData = activeInstanceDataMap.get(taskId);
-            ECSService ecsService =
-                ECSService.builder()
-                    .accountId(accountId)
-                    .clusterId(clusterId)
-                    .serviceArn(instanceData.getMetaData().get(InstanceMetaDataConstants.ECS_SERVICE_ARN))
-                    .serviceName(instanceData.getMetaData().get(InstanceMetaDataConstants.ECS_SERVICE_NAME))
-                    .resource(resource)
-                    .build();
+            ECSService ecsService = getECSService(accountId, clusterId, task, deploymentIdServiceMap);
             boolean updated = updateInstanceStopTimeForTask(instanceData, task);
             boolean updatedLabels = false;
             // Labels will only be updated once in a day - If we don't have this updating labels every hour is costly
-            if (startTime.atZone(ZoneOffset.UTC).getHour() == 1) {
+            if (startTime.atZone(ZoneOffset.UTC).getHour() == 1) { // TODO: change this for testing
               updatedLabels =
                   updateLabels(instanceData, ecsService, task, ceCluster, serviceArnTagsMap, deploymentIdServiceMap);
             }
@@ -343,6 +334,9 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
           } else {
             String clusterName = getIdFromArn(task.getClusterArn());
             InstanceType instanceType = getInstanceType(task);
+            double memory = Integer.parseInt(task.getMemory());
+            double cpu = Integer.parseInt(task.getCpu());
+            Resource resource = Resource.builder().cpuUnits(cpu).memoryMb(memory).build();
             Map<String, String> metaData = new HashMap<>();
             InstanceData containerInstantData = null;
             if (null != task.getContainerInstanceArn()) {
@@ -375,7 +369,7 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
             metaData.put(InstanceMetaDataConstants.LAUNCH_TYPE, task.getLaunchType());
 
             HarnessServiceInfo harnessServiceInfo = null;
-            if (null != task.getStartedBy() && null != deploymentIdServiceMap.get(task.getStartedBy())) {
+            if (serviceExistsForTask(task, deploymentIdServiceMap)) {
               String serviceArn = deploymentIdServiceMap.get(task.getStartedBy());
               String serviceName = getIdFromArn(serviceArn);
               metaData.put(InstanceMetaDataConstants.ECS_SERVICE_NAME, serviceName);
@@ -400,22 +394,13 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
                     .metaData(metaData)
                     .harnessServiceInfo(harnessServiceInfo)
                     .build();
-
-            ECSService ecsService = ECSService.builder()
-                                        .accountId(accountId)
-                                        .clusterId(clusterId)
-                                        .serviceArn(metaData.get(InstanceMetaDataConstants.ECS_SERVICE_ARN))
-                                        .serviceName(metaData.get(InstanceMetaDataConstants.ECS_SERVICE_NAME))
-                                        .resource(resource)
-                                        .build();
+            ECSService ecsService = getECSService(accountId, clusterId, task, deploymentIdServiceMap);
 
             updateInstanceStopTimeForTask(instanceData, task);
             updateLabels(instanceData, ecsService, task, ceCluster, serviceArnTagsMap, deploymentIdServiceMap);
             log.debug("Creating task {} ", taskId);
             instanceDataService.create(instanceData);
-            if (null != task.getStartedBy() && null != deploymentIdServiceMap.get(task.getStartedBy())) {
-              ecsServiceDao.create(ecsService);
-            }
+            ecsServiceDao.create(ecsService);
           }
         });
   }
@@ -430,8 +415,8 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
     // Add Task Level Tags
     labels.putAll(task.getTags().stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
 
-    Map<String, String> serviceLabels = null;
-    if (null != task.getStartedBy() && null != deploymentIdServiceMap.get(task.getStartedBy())) {
+    Map<String, String> serviceLabels = Collections.emptyMap();
+    if (serviceExistsForTask(task, deploymentIdServiceMap)) {
       String serviceArn = deploymentIdServiceMap.get(task.getStartedBy());
       // Fetch Service Tags and add to the Task Labels
       List<Tag> serviceTagList = serviceArnTagsMap.get(serviceArn);
@@ -441,7 +426,11 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
       }
     }
     instanceData.setLabels(labels);
-    ecsService.setLabels(serviceLabels);
+    if (null != ecsService) {
+      ecsService.setLabels(serviceLabels);
+      log.info("clusterId: {}, serviceArn: {}, taskId: {}", ecsService.getClusterId(), ecsService.getServiceArn(), getIdFromArn(task.getTaskArn()));
+      log.info("clusterId: {}, serviceArn: {}, taskId: {}, serviceTagList is not empty, serviceLabels: {}", ecsService.getClusterId(), ecsService.getServiceArn(), getIdFromArn(task.getTaskArn()), serviceLabels);
+    }
     return true;
   }
 
@@ -458,6 +447,25 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
     return false;
   }
 
+  ECSService getECSService(String accountId, String clusterId, Task task, Map<String, String> deploymentIdServiceMap) {
+    if (!serviceExistsForTask(task, deploymentIdServiceMap)) {
+      return null;
+    }
+    String serviceArn = deploymentIdServiceMap.get(task.getStartedBy());
+    String serviceName = getIdFromArn(serviceArn);
+    double memory = Integer.parseInt(task.getMemory());
+    double cpu = Integer.parseInt(task.getCpu());
+    Resource resource = Resource.builder().cpuUnits(cpu).memoryMb(memory).build();
+    return ECSService.builder()
+        .accountId(accountId)
+        .clusterId(clusterId)
+        .serviceArn(serviceArn)
+        .serviceName(serviceName)
+        .resource(resource)
+        .labels(Collections.emptyMap())
+        .build();
+  }
+
   @VisibleForTesting
   HarnessServiceInfo getHarnessServiceInfo(String accountId, String clusterName, String serviceName) {
     ContainerDeploymentKey containerDeploymentKey =
@@ -472,6 +480,10 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
     Optional<HarnessServiceInfo> harnessServiceInfo =
         cloudToHarnessMappingService.getHarnessServiceInfo(deploymentSummary);
     return harnessServiceInfo.orElse(null);
+  }
+
+  private boolean serviceExistsForTask(Task task, Map<String, String> deploymentIdServiceMap) {
+    return null != task.getStartedBy() && null != deploymentIdServiceMap.get(task.getStartedBy());
   }
 
   private Map<String, InstanceData> getInstanceDataMap(Set<String> instanceIds) {
