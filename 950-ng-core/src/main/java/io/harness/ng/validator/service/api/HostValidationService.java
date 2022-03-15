@@ -10,26 +10,26 @@ public interface HostValidationService {
   /**
    * Validate SSH hosts credentials and connectivity.
    *
-   * @param hosts the host names
+   * @param hosts the hosts (the host is host name and port number, or only host name)
    * @param accountIdentifier the account identifier
    * @param orgIdentifier the account identifier
    * @param projectIdentifier the project identifier
-   * @param secretIdentifier the secret identifier
+   * @param secretIdentifierWithScope the secret identifier with scope
    * @return the list of host validation results
    */
   List<HostValidationDTO> validateSSHHosts(@NotNull List<String> hosts, String accountIdentifier,
-      @Nullable String orgIdentifier, @Nullable String projectIdentifier, @NotNull String secretIdentifier);
+      @Nullable String orgIdentifier, @Nullable String projectIdentifier, @NotNull String secretIdentifierWithScope);
 
   /**
    * Validate SSH host credentials and connectivity.
    *
-   * @param hostName the host name
+   * @param host the host is host name and port number, or only host name
    * @param accountIdentifier the account identifier
    * @param orgIdentifier the account identifier
    * @param projectIdentifier the project identifier
-   * @param secretIdentifier the secret identifier
+   * @param secretIdentifierWithScope the secret identifier with scope
    * @return host validation result
    */
-  HostValidationDTO validateSSHHost(@NotNull String hostName, String accountIdentifier, @Nullable String orgIdentifier,
-      @Nullable String projectIdentifier, @NotNull String secretIdentifier);
+  HostValidationDTO validateSSHHost(@NotNull String host, String accountIdentifier, @Nullable String orgIdentifier,
+      @Nullable String projectIdentifier, @NotNull String secretIdentifierWithScope);
 }

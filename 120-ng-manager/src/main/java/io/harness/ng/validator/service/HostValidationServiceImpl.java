@@ -1,7 +1,20 @@
 package io.harness.ng.validator.service;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.delegate.beans.NgSetupFields.NG;
+import static io.harness.delegate.beans.NgSetupFields.OWNER;
+import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.DEFAULT_HOST_VALIDATION_FAILED_MSG;
+import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.HOSTS_NUMBER_VALIDATION_LIMIT;
+import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.TRUE_STR;
+import static io.harness.delegate.task.utils.PhysicalDataCenterUtils.extractHostnameFromHost;
+import static io.harness.delegate.task.utils.PhysicalDataCenterUtils.extractPortFromHost;
+import static io.harness.exception.WingsException.USER;
+import static io.harness.exception.WingsException.USER_SRE;
+import static io.harness.ng.validator.dto.HostValidationDTO.HostValidationStatus.FAILED;
+
+import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 import io.harness.beans.DelegateTaskRequest;
 import io.harness.beans.IdentifierRef;
 import io.harness.delegate.beans.DelegateResponseData;
@@ -10,7 +23,6 @@ import io.harness.delegate.beans.RemoteMethodReturnValueData;
 import io.harness.delegate.beans.SSHTaskParams;
 import io.harness.delegate.beans.secrets.SSHConfigValidationTaskResponse;
 import io.harness.delegate.task.utils.PhysicalDataCenterConstants;
-import io.harness.delegate.task.utils.PhysicalDataCenterUtils;
 import io.harness.delegate.utils.TaskSetupAbstractionHelper;
 import io.harness.encryption.SecretRefData;
 import io.harness.encryption.SecretRefHelper;
@@ -30,12 +42,11 @@ import io.harness.secretmanagerclient.services.SshKeySpecDTOHelper;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.service.DelegateGrpcClientWrapper;
 import io.harness.utils.IdentifierRefHelper;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+
 import software.wings.beans.TaskType;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,18 +58,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.delegate.beans.NgSetupFields.NG;
-import static io.harness.delegate.beans.NgSetupFields.OWNER;
-import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.DEFAULT_HOST_VALIDATION_FAILED_MSG;
-import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.HOSTS_NUMBER_VALIDATION_LIMIT;
-import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.TRUE_STR;
-import static io.harness.exception.WingsException.USER;
-import static io.harness.exception.WingsException.USER_SRE;
-import static io.harness.ng.validator.dto.HostValidationDTO.HostValidationStatus.FAILED;
-import static java.lang.String.format;
-import static org.apache.commons.lang3.StringUtils.isBlank;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 @Singleton
 @Slf4j
@@ -70,21 +73,21 @@ public class HostValidationServiceImpl implements HostValidationService {
   private final Executor executor = new ManagedExecutorService(Executors.newFixedThreadPool(4));
 
   @Override
-  public List<HostValidationDTO> validateSSHHosts(@NotNull List<String> hostNames, @Nullable String accountIdentifier,
-      @Nullable String orgIdentifier, @Nullable String projectIdentifier, @NotNull String secretIdentifier) {
-    if (hostNames.isEmpty()) {
+  public List<HostValidationDTO> validateSSHHosts(@NotNull List<String> hosts, @Nullable String accountIdentifier,
+      @Nullable String orgIdentifier, @Nullable String projectIdentifier, @NotNull String secretIdentifierWithScope) {
+    if (hosts.isEmpty()) {
       return Collections.emptyList();
     }
-    if (isBlank(secretIdentifier)) {
+    if (isBlank(secretIdentifierWithScope)) {
       throw new InvalidArgumentsException("Secret identifier cannot be null or empty", USER_SRE);
     }
 
-    log.info("Start validation hosts: {}", StringUtils.join(hostNames));
+    log.info("Start validation hosts: {}", StringUtils.join(hosts));
     CompletableFutures<HostValidationDTO> validateHostTasks = new CompletableFutures<>(executor);
-    for (String hostName : limitHosts(hostNames)) {
-      validateHostTasks.supplyAsyncExceptionally(
-          ()
-              -> validateSSHHost(hostName, accountIdentifier, orgIdentifier, projectIdentifier, secretIdentifier),
+    for (String hostName : limitHosts(hosts)) {
+      validateHostTasks.supplyAsyncExceptionally(()
+                                                     -> validateSSHHost(hostName, accountIdentifier, orgIdentifier,
+                                                         projectIdentifier, secretIdentifierWithScope),
           ex
           -> HostValidationDTO.builder()
                  .host(hostName)
@@ -105,44 +108,47 @@ public class HostValidationServiceImpl implements HostValidationService {
   }
 
   @Override
-  public HostValidationDTO validateSSHHost(@NotNull String hostName, String accountIdentifier,
-      @Nullable String orgIdentifier, @Nullable String projectIdentifier, @NotNull String secretIdentifier) {
-    if (isBlank(hostName)) {
-      throw new InvalidArgumentsException("SSH host name cannot be null or empty", USER_SRE);
+  public HostValidationDTO validateSSHHost(@NotNull String host, String accountIdentifier,
+      @Nullable String orgIdentifier, @Nullable String projectIdentifier, @NotNull String secretIdentifierWithScope) {
+    if (isBlank(host)) {
+      throw new InvalidArgumentsException("SSH host cannot be null or empty", USER_SRE);
     }
-    if (isBlank(secretIdentifier)) {
+    if (isBlank(secretIdentifierWithScope)) {
       throw new InvalidArgumentsException("Secret identifier cannot be null or empty", USER_SRE);
     }
 
-    Optional<Secret> secretOptional = findSecret(accountIdentifier, orgIdentifier, projectIdentifier, secretIdentifier);
-
-
+    Optional<Secret> secretOptional =
+        findSecret(accountIdentifier, orgIdentifier, projectIdentifier, secretIdentifierWithScope);
     if (!secretOptional.isPresent()) {
       throw new InvalidArgumentsException(
-          format("Not found secret for host validation, secret identifier: %s", secretIdentifier), USER_SRE);
+          format("Not found secret for host validation, secret identifier: %s", secretIdentifierWithScope), USER_SRE);
     }
     if (SecretType.SSHKey != secretOptional.get().getType()) {
       throw new InvalidArgumentsException(
-          format("Secret is not SSH type, secret identifier: %s", secretIdentifier), USER_SRE);
+          format("Secret is not SSH type, secret identifier: %s", secretIdentifierWithScope), USER_SRE);
     }
 
     SSHKeySpecDTO secretSpecDTO = (SSHKeySpecDTO) secretOptional.get().getSecretSpec().toDTO();
-    BaseNGAccess baseNGAccess = getBaseNGAccess(accountIdentifier, orgIdentifier, projectIdentifier);
-    List<EncryptedDataDetail> encryptionDetails =
-        sshKeySpecDTOHelper.getSSHKeyEncryptionDetails(secretSpecDTO, baseNGAccess);
+    List<EncryptedDataDetail> encryptionDetails = sshKeySpecDTOHelper.getSSHKeyEncryptionDetails(
+        secretSpecDTO, getBaseNGAccess(accountIdentifier, orgIdentifier, projectIdentifier));
+    Optional<Integer> portFromHost = extractPortFromHost(host);
+    // if port from host exists it takes precedence over the port from SSH key
+    // host is host name and port number
+    portFromHost.ifPresent(secretSpecDTO::setPort);
 
-    String host = hostName;
-    Optional<Integer> portFromHost = PhysicalDataCenterUtils.extractPortFromHost(hostName);
-    if(portFromHost.isPresent()) {
-      secretSpecDTO.setPort(portFromHost.get());
-      host = PhysicalDataCenterUtils.extractHostnameFromHost(hostName).orElse("");
-    }
+    String hostName = portFromHost.isPresent()
+        ? extractHostnameFromHost(host).orElseThrow(
+            ()
+                -> new InvalidArgumentsException(
+                    format("Not found hostName, host: %s, extracted port: %s", host, portFromHost.get()), USER_SRE))
+        : host;
+
     DelegateTaskRequest delegateTaskRequest =
         DelegateTaskRequest.builder()
             .accountId(accountIdentifier)
             .taskType(TaskType.NG_SSH_VALIDATION.name())
             .taskParameters(SSHTaskParams.builder()
-                                .host(host)
+                                .host(hostName)
                                 .encryptionDetails(encryptionDetails)
                                 .sshKeySpec(secretSpecDTO)
                                 .build())
@@ -150,7 +156,8 @@ public class HostValidationServiceImpl implements HostValidationService {
             .executionTimeout(Duration.ofSeconds(PhysicalDataCenterConstants.EXECUTION_TIMEOUT_IN_SECONDS))
             .build();
 
-    log.info("Start validation host: {}, secret identifier: {}", host, secretIdentifier);
+    log.info(
+        "Start validation host: {}, hostName: {}, secret identifier: {}", host, hostName, secretIdentifierWithScope);
     DelegateResponseData delegateResponseData = this.delegateGrpcClientWrapper.executeSyncTask(delegateTaskRequest);
 
     if (delegateResponseData instanceof SSHConfigValidationTaskResponse) {
@@ -158,7 +165,9 @@ public class HostValidationServiceImpl implements HostValidationService {
       return HostValidationDTO.builder()
           .host(hostName)
           .status(HostValidationDTO.HostValidationStatus.fromBoolean(responseData.isConnectionSuccessful()))
-          .error(responseData.isConnectionSuccessful() ? buildEmptyErrorDetails() : buildErrorDetailsWithMsg(responseData.getErrorMessage(), hostName))
+          .error(responseData.isConnectionSuccessful()
+                  ? buildEmptyErrorDetails()
+                  : buildErrorDetailsWithMsg(responseData.getErrorMessage(), hostName))
           .build();
     }
 
@@ -218,16 +227,12 @@ public class HostValidationServiceImpl implements HostValidationService {
     return ErrorDetail.builder().build();
   }
 
-  private Optional<Secret> findSecret(String accountIdentifier,
-                                      String orgIdentifier, String projectIdentifier, String secretIdentifier) {
-
-    SecretRefData secretRefData = SecretRefHelper.createSecretRef(secretIdentifier);
-    IdentifierRef secretIdentifiers = IdentifierRefHelper.getIdentifierRef(secretIdentifier,
-            accountIdentifier, orgIdentifier, projectIdentifier);
-    return ngSecretServiceV2.get(
-                    secretIdentifiers.getAccountIdentifier(),
-                    secretIdentifiers.getOrgIdentifier(),
-                    secretIdentifiers.getProjectIdentifier(),
-            secretRefData.getIdentifier());
+  private Optional<Secret> findSecret(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String secretIdentifierWithScope) {
+    SecretRefData secretRefData = SecretRefHelper.createSecretRef(secretIdentifierWithScope);
+    IdentifierRef secretIdentifiers = IdentifierRefHelper.getIdentifierRef(
+        secretIdentifierWithScope, accountIdentifier, orgIdentifier, projectIdentifier);
+    return ngSecretServiceV2.get(secretIdentifiers.getAccountIdentifier(), secretIdentifiers.getOrgIdentifier(),
+        secretIdentifiers.getProjectIdentifier(), secretRefData.getIdentifier());
   }
 }
