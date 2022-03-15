@@ -13,10 +13,8 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.connect.runtime.WorkerConfig;
 import org.apache.kafka.connect.storage.MemoryOffsetBackingStore;
-import org.redisson.Redisson;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
-import org.redisson.config.Config;
 
 @Slf4j
 public class RedisOffsetBackingStore extends MemoryOffsetBackingStore {
@@ -25,12 +23,6 @@ public class RedisOffsetBackingStore extends MemoryOffsetBackingStore {
   private RedissonClient redisson;
 
   public RedisOffsetBackingStore() {}
-
-  public void connect() {
-    Config config = new Config();
-    config.useSingleServer().setAddress(address);
-    redisson = Redisson.create(config);
-  }
 
   @Override
   public void configure(WorkerConfig config) {
@@ -43,7 +35,7 @@ public class RedisOffsetBackingStore extends MemoryOffsetBackingStore {
   public synchronized void start() {
     super.start();
     log.info("Starting RedisOffsetBackingStore");
-    this.connect();
+    this.redisson = RedissonClientCreator.getRedissonClient(address);
     this.load();
   }
 

@@ -5,6 +5,10 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
+/**
+ * This class manages the lifecycle of Debezium Controller threads.
+ */
+
 package io.harness.debezium;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -15,8 +19,8 @@ import java.util.concurrent.Executors;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class DebeziumEngineStarter {
-  public static void startDebeziumEngine(
+public class DebeziumControllerStarter {
+  public static void startDebeziumController(
       DebeziumConfig debeziumConfig, DebeziumEngine.ChangeConsumer<ChangeEvent<String, String>> changeConsumer) {
     ExecutorService debeziumExecutorService =
         Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("debezium-controller").build());

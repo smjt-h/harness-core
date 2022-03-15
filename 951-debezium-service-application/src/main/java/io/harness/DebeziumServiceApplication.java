@@ -1,6 +1,6 @@
 package io.harness;
 
-import io.harness.debezium.DebeziumEngineStarter;
+import io.harness.debezium.DebeziumControllerStarter;
 import io.harness.debezium.RedisStreamChangeConsumer;
 import io.harness.maintenance.MaintenanceController;
 
@@ -22,7 +22,7 @@ public class DebeziumServiceApplication extends Application<io.harness.DebeziumS
   @Override
   public void run(io.harness.DebeziumServiceConfiguration appConfig, Environment environment) throws Exception {
     if (appConfig.getDebeziumConfig() != null && appConfig.getDebeziumConfig().isEnabled()) {
-      DebeziumEngineStarter.startDebeziumEngine(appConfig.getDebeziumConfig(),
+      DebeziumControllerStarter.startDebeziumController(appConfig.getDebeziumConfig(),
           new RedisStreamChangeConsumer(appConfig.getDebeziumConfig().getCollectionIncludeList(),
               appConfig.getDebeziumConfig().getOffsetStorageFileName(),
               appConfig.getDebeziumConfig().getMongodbName()));

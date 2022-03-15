@@ -14,7 +14,6 @@ import io.debezium.embedded.EmbeddedEngineChangeEvent;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.DebeziumEngine.RecordCommitter;
-import io.debezium.util.DelayStrategy;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,28 +22,18 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.connect.source.SourceRecord;
-import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
-import org.redisson.config.Config;
 
 @Slf4j
 public class RedisStreamChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEvent<String, String>> {
   private static final String OP_FIELD = "__op";
   int batchSize = 500;
-  int initialRetryDelay = 300;
-  int maxRetryDelay = 10000;
   String nullKey = "default";
   String nullValue = "default";
   Map<String, RedisProducer> destinationToProducerMap = new HashMap<>();
 
-  public static RedissonClient getRedissonClient(String redisAddress) {
-    Config config = new Config();
-    config.useSingleServer().setAddress(redisAddress);
-    return Redisson.create(config);
-  }
-
   public RedisStreamChangeConsumer(String collectionList, String redisAddress, String mongoDbName) {
-    RedissonClient redisson = getRedissonClient(redisAddress);
+    RedissonClient redisson = RedissonClientCreator.getRedissonClient(redisAddress);
     String collections[] = collectionList.split(",");
     for (String collection : collections) {
       String destination = mongoDbName + "." + collection;
@@ -70,8 +59,6 @@ public class RedisStreamChangeConsumer implements DebeziumEngine.ChangeConsumer<
   @Override
   public void handleBatch(List<ChangeEvent<String, String>> records,
       RecordCommitter<ChangeEvent<String, String>> committer) throws InterruptedException {
-    DelayStrategy delayStrategy = DelayStrategy.exponential(initialRetryDelay, maxRetryDelay);
-
     log.trace("Handling a batch of {} records", records.size());
     batches(records, batchSize).forEach(batch -> {
       boolean completedSuccessfully = false;
@@ -102,8 +89,6 @@ public class RedisStreamChangeConsumer implements DebeziumEngine.ChangeConsumer<
           }
         }
         completedSuccessfully = true;
-
-        delayStrategy.sleepWhen(!completedSuccessfully);
       }
     });
 
