@@ -648,7 +648,7 @@ public class DelegateModule extends AbstractModule {
   @Named("healthMonitorExecutor")
   public ScheduledExecutorService healthMonitorExecutor() {
     return new ScheduledThreadPoolExecutor(
-        1, new ThreadFactoryBuilder().setNameFormat("healthMonitor-%d").setPriority(Thread.MAX_PRIORITY).build());
+        10, new ThreadFactoryBuilder().setNameFormat("healthMonitor-%d").setPriority(Thread.MAX_PRIORITY).build());
   }
 
   /*
@@ -696,7 +696,7 @@ public class DelegateModule extends AbstractModule {
   @Named("profileExecutor")
   public ScheduledExecutorService profileExecutor() {
     return new ScheduledThreadPoolExecutor(
-        1, new ThreadFactoryBuilder().setNameFormat("profile-%d").setPriority(Thread.NORM_PRIORITY).build());
+        10, new ThreadFactoryBuilder().setNameFormat("profile-%d").setPriority(Thread.NORM_PRIORITY).build());
   }
 
   @Provides
@@ -734,7 +734,7 @@ public class DelegateModule extends AbstractModule {
   @Singleton
   @Named("watcherUpgradeExecutor")
   public ExecutorService watcherUpgradeExecutor() {
-    return ThreadPool.create(1, 1, 5, TimeUnit.SECONDS,
+    return ThreadPool.create(5, 5, 5, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("watcherUpgrade-%d").setPriority(Thread.MAX_PRIORITY).build());
   }
 
@@ -796,14 +796,6 @@ public class DelegateModule extends AbstractModule {
   public ExecutorService asyncExecutor() {
     return ThreadPool.create(10, 400, 1, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("async-%d").setPriority(Thread.MIN_PRIORITY).build());
-  }
-
-  @Provides
-  @Singleton
-  @Named("syncExecutor")
-  public ExecutorService syncExecutor() {
-    return ThreadPool.create(10, 40, 1, TimeUnit.SECONDS,
-        new ThreadFactoryBuilder().setNameFormat("sync-task-%d").setPriority(Thread.NORM_PRIORITY).build());
   }
 
   @Provides
