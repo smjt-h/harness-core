@@ -13,6 +13,7 @@ import io.harness.debezium.DebeziumChangeEvent;
 import io.harness.pms.plan.execution.beans.PipelineExecutionSummaryEntity;
 import io.harness.pms.sdk.execution.events.PmsCommonsBaseEventHandler;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import java.util.Map;
@@ -32,10 +33,16 @@ public class TimescaleHandler implements PmsCommonsBaseEventHandler<DebeziumChan
   }
 
   @SneakyThrows
+  String getId(String key) {
+    JsonNode node = objectMapper.readTree(key);
+    return node.get("id").asText();
+  }
+
+  @SneakyThrows
   @Override
   public void handleEvent(DebeziumChangeEvent event, Map<String, String> metadataMap, long timestamp) {
     String optype = event.getOptype();
-    String id = objectMapper.readValue(event.getKey(), String.class);
+    String id = getId(event.getKey());
     PipelineExecutionSummaryEntity pipelineExecutionSummaryEntity = deserialize(event.getValue());
     switch (optype) {
       case "SNAPSHOT":
@@ -54,12 +61,8 @@ public class TimescaleHandler implements PmsCommonsBaseEventHandler<DebeziumChan
   }
 
   public void handleUpdateEvent(String id, PipelineExecutionSummaryEntity pipelineExecutionSummaryEntity) {
-    if (pipelineExecutionSummaryEntity.getModuleInfo().containsKey("ci")) {
-      pipelineExecutionSummaryHandlerCi.update(id, pipelineExecutionSummaryEntity);
-    }
-    if (pipelineExecutionSummaryEntity.getModuleInfo().containsKey("cd")) {
-      pipelineExecutionSummaryHandlerCd.update(id, pipelineExecutionSummaryEntity);
-    }
+    pipelineExecutionSummaryHandlerCi.update(id, pipelineExecutionSummaryEntity);
+    pipelineExecutionSummaryHandlerCd.update(id, pipelineExecutionSummaryEntity);
   }
 
   public void handleDeleteEvent(String id) {
@@ -68,10 +71,12 @@ public class TimescaleHandler implements PmsCommonsBaseEventHandler<DebeziumChan
   }
 
   public void handleCreateEvent(String id, PipelineExecutionSummaryEntity pipelineExecutionSummaryEntity) {
-    if (pipelineExecutionSummaryEntity.getModuleInfo().containsKey("ci")) {
+    if (pipelineExecutionSummaryEntity.getModuleInfo() != null
+        && pipelineExecutionSummaryEntity.getModuleInfo().get("ci") != null) {
       pipelineExecutionSummaryHandlerCi.insert(id, pipelineExecutionSummaryEntity);
     }
-    if (pipelineExecutionSummaryEntity.getModuleInfo().containsKey("cd")) {
+    if (pipelineExecutionSummaryEntity.getModuleInfo() != null
+        && pipelineExecutionSummaryEntity.getModuleInfo().get("cd") != null) {
       pipelineExecutionSummaryHandlerCd.insert(id, pipelineExecutionSummaryEntity);
     }
   }

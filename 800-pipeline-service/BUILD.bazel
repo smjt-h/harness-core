@@ -137,6 +137,7 @@ java_library(
         "//950-ng-project-n-orgs:module",
         "//950-opa-client:module",
         "//950-telemetry:module",
+        "//952-debezium-engine:module",
         "//953-events-api:module",
         "//955-filters-sdk:module",
         "//955-outbox-sdk:module",
