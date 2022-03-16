@@ -20,7 +20,7 @@ import io.harness.timescaledb.tables.records.AnomaliesRecord;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.sun.istack.internal.Nullable;
+import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.util.List;
 import lombok.NonNull;
