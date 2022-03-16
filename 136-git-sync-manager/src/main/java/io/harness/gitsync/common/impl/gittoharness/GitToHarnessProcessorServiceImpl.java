@@ -23,6 +23,8 @@ import io.harness.Microservice;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
+import io.harness.exception.InvalidAccessRequestException;
+import io.harness.exception.UnexpectedException;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.ChangeSet;
 import io.harness.gitsync.ChangeSets;
@@ -67,6 +69,7 @@ import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.entitydetail.EntityDetailRestToProtoMapper;
 import io.harness.ng.core.event.EventProtoToEntityHelper;
 
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.StringValue;
@@ -407,6 +410,7 @@ public class GitToHarnessProcessorServiceImpl implements GitToHarnessProcessorSe
 
   private void updateCommit(String commitId, String accountId, String branchName, String repoUrl,
       List<GitToHarnessProcessingResponse> gitToHarnessProcessingResponses, List<ChangeSet> invalidChangeSets) {
+    Preconditions.checkNotNull(commitId);
     GitToHarnessProcessingStepStatus status = getStatus(gitToHarnessProcessingResponses);
     if (status == DONE) {
       GitCommitDTO gitCommitDTO = GitCommitDTO.builder()
