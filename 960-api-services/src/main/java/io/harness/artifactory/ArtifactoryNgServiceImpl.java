@@ -8,6 +8,7 @@
 package io.harness.artifactory;
 
 import static org.jfrog.artifactory.client.model.impl.PackageTypeImpl.docker;
+import static org.jfrog.artifactory.client.model.impl.PackageTypeImpl.generic;
 import static org.jfrog.artifactory.client.model.impl.PackageTypeImpl.maven;
 
 import io.harness.annotations.dev.HarnessTeam;
@@ -46,6 +47,8 @@ public class ArtifactoryNgServiceImpl implements ArtifactoryNgService {
         return artifactoryClient.getRepositories(artifactoryConfig, Arrays.asList(docker));
       case maven:
         return artifactoryClient.getRepositories(artifactoryConfig, Arrays.asList(maven));
+      case generic:
+        return artifactoryClient.getRepositoriesByRepoType(artifactoryConfig, generic);
       case any:
       default:
         return artifactoryClient.getRepositories(artifactoryConfig, new ArrayList<>());

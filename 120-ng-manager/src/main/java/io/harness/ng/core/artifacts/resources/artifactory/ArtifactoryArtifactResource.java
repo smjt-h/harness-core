@@ -168,14 +168,6 @@ public class ArtifactoryArtifactResource {
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier) {
-    if (repositoryFormat.equals(generic.name())) {
-      Map<String, String> repositoriesMap = new HashMap<>();
-      repositoriesMap.put("repo", "repo");
-      ArtifactoryRepoDetailsDTO repoGenericDetailsDTO =
-          ArtifactoryRepoDetailsDTO.builder().repositories(repositoriesMap).build();
-      return ResponseDTO.newResponse(repoGenericDetailsDTO);
-    }
-
     IdentifierRef connectorRef = IdentifierRefHelper.getIdentifierRef(
         artifactoryConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
     ArtifactoryRepoDetailsDTO repoDetailsDTO =
