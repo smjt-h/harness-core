@@ -96,7 +96,7 @@ public class HandleNullCommitIdInDB implements NGMigration {
   }
 
   private void updateTheBranchToUnSynced(String repoUrl, String branch) {
-    log.info("Deleting the branch {} in repo {}", branch, repoUrl);
+    log.info("Updating the branch {} in repo {}", branch, repoUrl);
     Update update = update(GitBranchKeys.branchSyncStatus, UNSYNCED);
     Criteria criteria = Criteria.where(GitBranchKeys.repoURL).is(repoUrl).and(GitBranchKeys.branchName).is(branch);
     UpdateResult updateResult = mongoTemplate.updateMulti(query(criteria), update, GitBranch.class);
