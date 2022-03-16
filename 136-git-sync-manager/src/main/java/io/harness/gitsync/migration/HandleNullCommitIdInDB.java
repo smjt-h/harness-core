@@ -1,3 +1,10 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.gitsync.migration;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
@@ -86,24 +93,16 @@ public class HandleNullCommitIdInDB implements NGMigration {
 
   private void deleteTheGitCommitRecord(GitCommit gitCommit) {
     log.info("Deleting the gitCommit with the uuid {}", gitCommit.getUuid());
-    try {
-      Criteria criteria = Criteria.where(uuid).is(gitCommit.getUuid());
-      DeleteResult removeResult = mongoTemplate.remove(query(criteria), GitCommit.class);
-      log.info("Removed {} record for the commitId {}", removeResult.getDeletedCount(), gitCommit.getUuid());
-    } catch (Exception ex) {
-      log.info("Exception while deleting the commitId with the uuid {}", gitCommit.getUuid(), ex);
-    }
+    Criteria criteria = Criteria.where(uuid).is(gitCommit.getUuid());
+    DeleteResult removeResult = mongoTemplate.remove(query(criteria), GitCommit.class);
+    log.info("Removed {} record for the commitId {}", removeResult.getDeletedCount(), gitCommit.getUuid());
   }
 
   private void updateTheBranchToUnSynced(String repoUrl, String branch) {
     log.info("Deleting the branch {} in repo {}", branch, repoUrl);
-    try {
-      Update update = update(branchSyncStatus, UNSYNCED);
-      Criteria criteria = Criteria.where(repoURL).is(repoUrl).and(branchName).is(branch);
-      UpdateResult updateResult = mongoTemplate.updateMulti(query(criteria), update, GitBranch.class);
-      log.info("Updated {} record for the repo {} and branch {}", updateResult.getModifiedCount(), repoUrl, branch);
-    } catch (Exception ex) {
-      log.info("Exception while updating the record for the repo {} and branch {}", repoUrl, branch, ex);
-    }
+    Update update = update(branchSyncStatus, UNSYNCED);
+    Criteria criteria = Criteria.where(repoURL).is(repoUrl).and(branchName).is(branch);
+    UpdateResult updateResult = mongoTemplate.updateMulti(query(criteria), update, GitBranch.class);
+    log.info("Updated {} record for the repo {} and branch {}", updateResult.getModifiedCount(), repoUrl, branch);
   }
 }
