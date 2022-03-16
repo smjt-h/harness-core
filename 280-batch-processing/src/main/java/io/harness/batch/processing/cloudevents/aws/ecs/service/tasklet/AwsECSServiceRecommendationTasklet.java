@@ -10,6 +10,7 @@ package io.harness.batch.processing.cloudevents.aws.ecs.service.tasklet;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.inject.Singleton;
+import io.harness.batch.processing.billing.timeseries.service.impl.BillingDataServiceImpl;
 import io.harness.batch.processing.billing.timeseries.service.impl.UtilizationDataServiceImpl;
 import io.harness.batch.processing.ccm.CCMJobConstants;
 import io.harness.batch.processing.cloudevents.aws.ecs.service.CEClusterDao;
@@ -21,6 +22,7 @@ import io.harness.ccm.commons.entities.ecs.recommendation.ECSPartialRecommendati
 import io.harness.ccm.commons.entities.ecs.recommendation.ECSServiceRecommendation;
 import io.harness.histogram.Histogram;
 import io.harness.histogram.HistogramCheckpoint;
+import io.kubernetes.client.custom.Quantity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -28,15 +30,20 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
-import software.wings.beans.infrastructure.instance.Instance;
+import software.wings.graphql.datafetcher.ce.recommendation.entity.Cost;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
 import static io.harness.batch.processing.config.k8s.recommendation.estimators.ResourceAmountUtils.convertToReadableForm;
 import static io.harness.batch.processing.config.k8s.recommendation.estimators.ResourceAmountUtils.makeResourceMap;
+import static java.math.RoundingMode.HALF_UP;
+import static java.util.Optional.ofNullable;
 import static software.wings.graphql.datafetcher.ce.recommendation.entity.RecommenderUtils.*;
+import static software.wings.graphql.datafetcher.ce.recommendation.entity.ResourceRequirement.CPU;
+import static software.wings.graphql.datafetcher.ce.recommendation.entity.ResourceRequirement.MEMORY;
 
 @Slf4j
 @Singleton
@@ -44,6 +51,7 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
   @Autowired private CEClusterDao ceClusterDao;
   @Autowired private UtilizationDataServiceImpl utilizationDataService;
   @Autowired private ECSRecommendationDAO ecsRecommendationDAO;
+  @Autowired private BillingDataServiceImpl billingDataService;
 
   private static final int BATCH_SIZE = 20;
   private static final int AVG_UTILIZATION_WEIGHT = 2;
@@ -107,8 +115,8 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
         partialHistograms.add(partialRecommendationHistogram);
 
         // 5. Create ECSServiceRecommendation
-        ECSServiceRecommendation ecsServiceRecommendation = ecsRecommendationDAO.fetchServiceRecommendation(accountId,
-            clusterId, clusterName, serviceName, serviceArn);
+        ECSServiceRecommendation recommendation =
+            ecsRecommendationDAO.fetchServiceRecommendation(accountId, clusterId, clusterName, serviceName, serviceArn);
         Histogram cpuHistogram = newCpuHistogramV2();
         Histogram memoryHistogram = newMemoryHistogramV2();
         Instant firstSampleStart = Instant.now();
@@ -130,18 +138,18 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
           totalSamplesCount += partialHistogram.getTotalSamplesCount();
           memoryPeak = Math.max(partialHistogram.getMemoryPeak(), memoryPeak);
         }
-        ecsServiceRecommendation.setCpuHistogram(cpuHistogram.saveToCheckpoint());
-        ecsServiceRecommendation.setMemoryHistogram(memoryHistogram.saveToCheckpoint());
-        ecsServiceRecommendation.setCurrentResourceRequirements(
+        recommendation.setCpuHistogram(cpuHistogram.saveToCheckpoint());
+        recommendation.setMemoryHistogram(memoryHistogram.saveToCheckpoint());
+        recommendation.setCurrentResourceRequirements(
             convertToReadableForm(makeResourceMap(cpuUnits, (long) memoryMb * 1024 * 1024)));
-        ecsServiceRecommendation.setFirstSampleStart(firstSampleStart);
-        ecsServiceRecommendation.setLastSampleStart(lastSampleStart);
-        ecsServiceRecommendation.setWindowEnd(windowEnd);
-        ecsServiceRecommendation.setTotalSamplesCount(totalSamplesCount);
-        ecsServiceRecommendation.setMemoryPeak(memoryPeak);
-        ecsServiceRecommendation.setLastReceivedUtilDataAt(lastSampleStart);
-        ecsServiceRecommendation.setLastComputedRecommendationAt(today);
-        ecsServiceRecommendation.setNumDays(partialHistograms.size());
+        recommendation.setFirstSampleStart(firstSampleStart);
+        recommendation.setLastSampleStart(lastSampleStart);
+        recommendation.setWindowEnd(windowEnd);
+        recommendation.setTotalSamplesCount(totalSamplesCount);
+        recommendation.setMemoryPeak(memoryPeak);
+        recommendation.setLastReceivedUtilDataAt(lastSampleStart);
+        recommendation.setLastComputedRecommendationAt(today);
+        recommendation.setNumDays(partialHistograms.size());
 
         Map<String, Map<String, String>> computedPercentiles = new HashMap<>();
         for (Integer percentile : requiredPercentiles) {
@@ -150,20 +158,66 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
               convertToReadableForm(makeResourceMap((long) cpuHistogram.getPercentile(percentile),
                       (long) (memoryHistogram.getPercentile(percentile * (double) 1024 * (double) 1024)))));
         }
-        ecsServiceRecommendation.setPercentileBasedResourceRecommendation(computedPercentiles);
+        recommendation.setPercentileBasedResourceRecommendation(computedPercentiles);
 
-        ecsRecommendationDAO.saveRecommendation(ecsServiceRecommendation);
+        Cost lastDayCost = billingDataService.getECSServiceLastAvailableDayCost(accountId, clusterId, serviceName,
+            today.minus(Duration.ofDays(RECOMMENDATION_FOR_DAYS + 1)));
+        if (lastDayCost != null) {
+          recommendation.setLastDayCost(lastDayCost);
+          recommendation.setLastDayCostAvailable(true);
+          BigDecimal monthlySavings = estimateMonthlySavings(recommendation.getCurrentResourceRequirements(),
+              recommendation.getPercentileBasedResourceRecommendation().get(String.format(PERCENTILE_KEY, 90)),
+              lastDayCost);
+          recommendation.setEstimatedSavings(monthlySavings);
+        } else {
+          recommendation.setLastDayCostAvailable(false);
+          log.debug("Unable to get lastDayCost for serviceArn: {}", serviceArn);
+        }
+
+        ecsRecommendationDAO.saveRecommendation(recommendation);
       }
     }
 
-    // generate recommendation
-    // (done) 1. get partial recommendations for this cluster for the last 7 days
-    // (done) 2. merge
-    // (done) 3. create percentile recommendations
-    // (small) 4. calculate benefits
-    // (done) 4. save
-
     return null;
+  }
+
+  BigDecimal estimateMonthlySavings(Map<String, String> current, Map<String, String> recommendation, Cost lastDayCost) {
+    BigDecimal cpuChangePercent = resourceChangePercent(current, recommendation, CPU);
+    BigDecimal memoryChangePercent = resourceChangePercent(current, recommendation, MEMORY);
+    return getMonthlySavings(lastDayCost, cpuChangePercent, memoryChangePercent);
+  }
+
+  public static BigDecimal getMonthlySavings(Cost lastDayCost, BigDecimal cpuChangePercent, BigDecimal memoryChangePercent) {
+    BigDecimal monthlySavings = null;
+    if (cpuChangePercent != null || memoryChangePercent != null) {
+      BigDecimal costChangeForDay = BigDecimal.ZERO;
+      if (cpuChangePercent != null && lastDayCost.getCpu() != null) {
+        costChangeForDay = costChangeForDay.add(cpuChangePercent.multiply(lastDayCost.getCpu()));
+      }
+      if (memoryChangePercent != null && lastDayCost.getMemory() != null) {
+        costChangeForDay = costChangeForDay.add(memoryChangePercent.multiply(lastDayCost.getMemory()));
+      }
+      monthlySavings = costChangeForDay.multiply(BigDecimal.valueOf(-30)).setScale(2, HALF_UP);
+    }
+    return monthlySavings;
+  }
+
+  static BigDecimal resourceChangePercent(Map<String, String> current,  Map<String, String> recommendation, String resource) {
+    BigDecimal currentValue = getResourceValue(current, resource, BigDecimal.ZERO);
+    BigDecimal recommendedValue = getResourceValue(recommendation, resource, BigDecimal.ZERO);
+    if (currentValue.compareTo(BigDecimal.ZERO) != 0) {
+      BigDecimal change = recommendedValue.subtract(currentValue);
+      return change.setScale(3, HALF_UP).divide(currentValue, HALF_UP);
+    }
+    return null;
+  }
+
+  static BigDecimal getResourceValue(Map<String, String> resourceRequirement, String resource, BigDecimal defaultValue) {
+    return ofNullable(resourceRequirement)
+        .map(r -> r.get(resource))
+        .map(Quantity::fromString)
+        .map(Quantity::getNumber)
+        .orElse(defaultValue);
   }
 
   private HistogramCheckpoint cpuHistogramCheckpointFromUtilData
