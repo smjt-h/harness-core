@@ -116,9 +116,8 @@ public class CEMetaDataRecordUpdateService {
       }
 
       CEMetadataRecord currentCEMetadataRecord = metadataRecordDao.getByAccountId(accountId);
-      boolean isSegmentDataReadyEventSent = currentCEMetadataRecord.getSegmentDataReadyEventSent();
-
-      if (!isSegmentDataReadyEventSent) {
+      Boolean isSegmentDataReadyEventSent = currentCEMetadataRecord.getSegmentDataReadyEventSent();
+      if (isSegmentDataReadyEventSent == null || !isSegmentDataReadyEventSent) {
         HashMap<String, Object> properties = new HashMap<>();
         properties.put(ACCOUNT_ID, accountId);
         properties.put(DATA_GENERATED, "CLOUD");

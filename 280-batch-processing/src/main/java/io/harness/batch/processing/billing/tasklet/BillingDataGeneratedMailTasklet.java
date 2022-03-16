@@ -109,8 +109,8 @@ public class BillingDataGeneratedMailTasklet implements Tasklet {
           }
         }
       }
-      boolean isSegmentDataReadyEventSent = ceMetadataRecord.getSegmentDataReadyEventSent();
-      if (!isSegmentDataReadyEventSent) {
+      Boolean isSegmentDataReadyEventSent = ceMetadataRecord.getSegmentDataReadyEventSent();
+      if (isSegmentDataReadyEventSent == null || !isSegmentDataReadyEventSent) {
         HashMap<String, Object> properties = new HashMap<>();
         properties.put(ACCOUNT_ID, accountId);
         properties.put(DATA_GENERATED, "CLUSTER");
