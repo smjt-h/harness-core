@@ -339,7 +339,6 @@ build_bazel_module 940-resource-group-beans
 build_bazel_module 940-secret-manager-client
 build_bazel_module 945-ng-audit-client
 build_bazel_module 947-scim-core
-build_bazel_module 948-access-control-admin-client
 build_bazel_module 948-access-control-sdk
 build_bazel_module 950-command-library-common
 build_bazel_module 959-common-entities
