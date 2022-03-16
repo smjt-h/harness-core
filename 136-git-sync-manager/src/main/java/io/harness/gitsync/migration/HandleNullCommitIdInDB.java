@@ -11,7 +11,6 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.UNSYNCED;
 import static io.harness.gitsync.common.beans.GitBranch.GitBranchKeys;
 import static io.harness.gitsync.core.beans.GitCommit.GitCommitKeys;
-import static io.harness.gitsync.core.beans.GitCommit.GitCommitKeys.uuid;
 
 import static org.springframework.data.mongodb.core.query.Query.query;
 import static org.springframework.data.mongodb.core.query.Update.update;
@@ -91,7 +90,7 @@ public class HandleNullCommitIdInDB implements NGMigration {
 
   private void deleteTheGitCommitRecord(GitCommit gitCommit) {
     log.info("Deleting the gitCommit with the uuid {}", gitCommit.getUuid());
-    Criteria criteria = Criteria.where(uuid).is(gitCommit.getUuid());
+    Criteria criteria = Criteria.where(GitCommitKeys.uuid).is(gitCommit.getUuid());
     DeleteResult removeResult = mongoTemplate.remove(query(criteria), GitCommit.class);
     log.info("Removed {} record for the commitId {}", removeResult.getDeletedCount(), gitCommit.getUuid());
   }
