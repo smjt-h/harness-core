@@ -9,8 +9,6 @@ package io.harness.gitsync.migration;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.UNSYNCED;
-import static io.harness.gitsync.common.beans.GitBranch.GitBranchKeys;
-import static io.harness.gitsync.core.beans.GitCommit.GitCommitKeys;
 
 import static org.springframework.data.mongodb.core.query.Query.query;
 import static org.springframework.data.mongodb.core.query.Update.update;
@@ -18,9 +16,11 @@ import static org.springframework.data.mongodb.core.query.Update.update;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
 import io.harness.gitsync.common.beans.GitBranch;
+import io.harness.gitsync.common.beans.GitBranch.GitBranchKeys;
 import io.harness.gitsync.common.service.GitBranchSyncService;
 import io.harness.gitsync.common.service.YamlGitConfigService;
 import io.harness.gitsync.core.beans.GitCommit;
+import io.harness.gitsync.core.beans.GitCommit.GitCommitKeys;
 import io.harness.migration.NGMigration;
 
 import com.google.inject.Inject;
