@@ -21,7 +21,6 @@ import io.harness.filters.ConnectorRefExtractorHelper;
 import io.harness.filters.WithConnectorRef;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
-import io.harness.validation.OneOfField;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
 
@@ -51,7 +50,6 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonTypeName(ARTIFACTORY_REGISTRY_NAME)
 @SimpleVisitorHelper(helperClass = ConnectorRefExtractorHelper.class)
 @TypeAlias("artifactoryRegistryArtifactConfig")
-@OneOfField(fields = {"tag", "tagRegex"})
 @RecasterAlias("io.harness.cdng.artifact.bean.yaml.ArtifactoryRegistryArtifactConfig")
 public class ArtifactoryRegistryArtifactConfig implements ArtifactConfig, Visitable, WithConnectorRef {
   /**
