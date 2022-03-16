@@ -19,8 +19,8 @@ import lombok.Value;
 @OwnedBy(HarnessTeam.CDP)
 @Value
 @Builder
-@RecasterAlias("io.harness.cdng.serverless.beans.ServerlessGitFetchResponsePassThroughData")
-public class ServerlessGitFetchResponsePassThroughData implements PassThroughData {
+@RecasterAlias("io.harness.cdng.serverless.beans.ServerlessGitFetchExceptionPassThroughData")
+public class ServerlessGitFetchFailurePassThroughData implements PassThroughData {
   String errorMsg;
   UnitProgressData unitProgressData;
 }

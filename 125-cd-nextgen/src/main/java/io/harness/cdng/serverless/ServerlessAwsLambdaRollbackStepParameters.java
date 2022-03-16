@@ -12,8 +12,12 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.serverless.ServerlessCommandUnitConstants;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.Arrays;
 import java.util.List;
+import javax.annotation.Nonnull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -27,9 +31,18 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("serverlessAwsLambdaRollbackStepParameters")
 @RecasterAlias("io.harness.cdng.serverless.ServerlessAwsLambdaRollbackStepParameters")
 public class ServerlessAwsLambdaRollbackStepParameters
-    extends ServerlessAwsLambdaRollbackBaseStepInfo implements ServerlessAwsLambdaSpecParameters {
+    extends ServerlessAwsLambdaRollbackBaseStepInfo implements ServerlessSpecParameters {
   @Builder(builderMethodName = "infoBuilder")
-  public ServerlessAwsLambdaRollbackStepParameters(ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
-    super(delegateSelectors);
+  public ServerlessAwsLambdaRollbackStepParameters(
+      ParameterField<List<TaskSelectorYaml>> delegateSelectors, String serverlessAwsLambdaRollbackFnq) {
+    super(delegateSelectors, serverlessAwsLambdaRollbackFnq);
+  }
+
+  @Nonnull
+  @Override
+  @JsonIgnore
+  public List<String> getCommandUnits() {
+    return Arrays.asList(
+        ServerlessCommandUnitConstants.init.toString(), ServerlessCommandUnitConstants.rollback.toString());
   }
 }

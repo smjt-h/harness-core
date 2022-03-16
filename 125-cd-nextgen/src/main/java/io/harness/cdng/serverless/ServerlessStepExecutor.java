@@ -9,6 +9,7 @@ package io.harness.cdng.serverless;
 
 import io.harness.cdng.manifest.yaml.ManifestOutcome;
 import io.harness.cdng.serverless.beans.ServerlessExecutionPassThroughData;
+import io.harness.cdng.serverless.beans.ServerlessStepExecutorParams;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -16,9 +17,8 @@ import io.harness.pms.sdk.core.steps.executables.TaskChainResponse;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-public interface ServerlessAwsLambdaStepExecutor {
+public interface ServerlessStepExecutor {
   TaskChainResponse executeServerlessTask(ManifestOutcome serverlessManifestOutcome, Ambiance ambiance,
-      StepElementParameters stepParameters, Pair<String, String> manifestFilePathContent,
-      ServerlessExecutionPassThroughData executionPassThroughData, boolean shouldOpenFetchFilesLogStream,
-      UnitProgressData unitProgressData);
+      StepElementParameters stepParameters, ServerlessExecutionPassThroughData executionPassThroughData,
+      UnitProgressData unitProgressData, ServerlessStepExecutorParams serverlessStepExecutorParams);
 }

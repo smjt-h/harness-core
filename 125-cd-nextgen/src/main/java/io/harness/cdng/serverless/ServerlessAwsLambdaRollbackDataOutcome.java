@@ -21,10 +21,9 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(HarnessTeam.CDP)
 @Value
 @Builder
-@TypeAlias("serverlessRollbackDataOutcome")
-@JsonTypeName("serverlessRollbackDataOutcome")
-@RecasterAlias("io.harness.cdng.serverless.ServerlessRollbackDataOutcome")
-public class ServerlessRollbackDataOutcome implements Outcome, ExecutionSweepingOutput {
-  String serviceName;
+@TypeAlias("serverlessAwsLambdaRollbackDataOutcome")
+@JsonTypeName("serverlessAwsLambdaRollbackDataOutcome")
+@RecasterAlias("io.harness.cdng.serverless.ServerlessAwsLambdaRollbackDataOutcome")
+public class ServerlessAwsLambdaRollbackDataOutcome implements Outcome, ExecutionSweepingOutput {
   String previousVersionTimeStamp;
 }
