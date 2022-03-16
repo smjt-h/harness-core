@@ -193,7 +193,6 @@ BAZEL_MODULES="\
   //990-commons-test:module \
   //999-annotations:module \
   //access-control/service:module \
-  //access-control/libraries/80-aggregator:module \
   //access-control/libraries/90-core:module \
   //access-control/contracts:module \
   //product/ci/engine/proto:all \
