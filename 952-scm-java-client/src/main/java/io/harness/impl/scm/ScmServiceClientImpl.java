@@ -591,7 +591,10 @@ public class ScmServiceClientImpl implements ScmServiceClient {
     Provider gitProvider = scmGitProviderMapper.mapToSCMGitProvider(scmConnector);
     CreateWebhookRequest createWebhookRequest =
         getCreateWebhookRequest(slug, gitProvider, gitWebhookDetails, scmConnector, null);
-    return scmBlockingStub.createWebhook(createWebhookRequest);
+    CreateWebhookResponse createWebhookResponse = scmBlockingStub.createWebhook(createWebhookRequest);
+    ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
+        createWebhookResponse.getStatus(), createWebhookResponse.getError());
+    return createWebhookResponse;
   }
 
   public CreateWebhookResponse createWebhook(ScmConnector scmConnector, GitWebhookDetails gitWebhookDetails,
@@ -603,8 +606,9 @@ public class ScmServiceClientImpl implements ScmServiceClient {
     return scmBlockingStub.createWebhook(createWebhookRequest);
   }
 
-  private CreateWebhookRequest getCreateWebhookRequest(String slug, Provider gitProvider,
-      GitWebhookDetails gitWebhookDetails, ScmConnector scmConnector, WebhookResponse identicalTarget) {
+  @VisibleForTesting
+  CreateWebhookRequest getCreateWebhookRequest(String slug, Provider gitProvider, GitWebhookDetails gitWebhookDetails,
+      ScmConnector scmConnector, WebhookResponse identicalTarget) {
     final CreateWebhookRequest.Builder createWebhookRequestBuilder = CreateWebhookRequest.newBuilder()
                                                                          .setSlug(slug)
                                                                          .setProvider(gitProvider)
