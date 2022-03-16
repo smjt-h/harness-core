@@ -1148,7 +1148,7 @@ public class WatcherServiceImpl implements WatcherService {
       try {
         newDelegate =
             new ProcessExecutor()
-                .command("nohup", versionFolder + File.separator + DELEGATE_SCRIPT, watcherProcess, versionFolder)
+                .command(versionFolder + File.separator + DELEGATE_SCRIPT, watcherProcess, versionFolder)
                 .redirectError(Slf4jStream.of(scriptName).asError())
                 .setMessageLogger((log, format, arguments) -> log.info(format, arguments))
                 .start();
@@ -1209,6 +1209,7 @@ public class WatcherServiceImpl implements WatcherService {
             log.info("Process is still alive **gaurav ");
           }
 
+          newDelegate.getProcess().waitFor();
           log.info("after wait **gaurav");
           oldDelegateProcesses.forEach(oldDelegateProcess -> {
             log.info("Sending old delegate process {} resume message", oldDelegateProcess);
