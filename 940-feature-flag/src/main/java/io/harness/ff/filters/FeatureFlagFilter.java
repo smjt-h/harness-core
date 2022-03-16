@@ -7,10 +7,14 @@
 
 package io.harness.ff.filters;
 
+import static io.harness.annotations.dev.HarnessTeam.CDP;
+
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
 
 import java.util.function.Predicate;
 
+@OwnedBy(CDP)
 public interface FeatureFlagFilter<E> {
   Predicate<? super E> filter(String accountId, FeatureName featureName);
 }

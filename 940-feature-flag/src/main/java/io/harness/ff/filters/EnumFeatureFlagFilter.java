@@ -7,11 +7,15 @@
 
 package io.harness.ff.filters;
 
+import static io.harness.annotations.dev.HarnessTeam.CDP;
+
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
 
 import java.util.EnumMap;
 import java.util.Set;
 
+@OwnedBy(CDP)
 public class EnumFeatureFlagFilter extends AbstractFeatureFlagFilter<Enum<?>> {
   private final EnumMap<FeatureName, Set<Enum<?>>> enumTypeFeatureFlagMap = new EnumMap<>(FeatureName.class);
 

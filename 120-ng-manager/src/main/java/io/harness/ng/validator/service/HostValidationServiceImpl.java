@@ -1,3 +1,10 @@
+/*
+ * Copyright 2020 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.ng.validator.service;
 
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -61,7 +68,6 @@ import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 
 @Singleton
 @Slf4j
@@ -82,7 +88,6 @@ public class HostValidationServiceImpl implements HostValidationService {
       throw new InvalidArgumentsException("Secret identifier cannot be null or empty", USER_SRE);
     }
 
-    log.info("Start validation hosts: {}", StringUtils.join(hosts));
     CompletableFutures<HostValidationDTO> validateHostTasks = new CompletableFutures<>(executor);
     for (String hostName : limitHosts(hosts)) {
       validateHostTasks.supplyAsyncExceptionally(()
@@ -156,8 +161,8 @@ public class HostValidationServiceImpl implements HostValidationService {
             .executionTimeout(Duration.ofSeconds(PhysicalDataCenterConstants.EXECUTION_TIMEOUT_IN_SECONDS))
             .build();
 
-    log.info(
-        "Start validation host: {}, hostName: {}, secret identifier: {}", host, hostName, secretIdentifierWithScope);
+    log.info("Start validation host:{}, hostName:{}, secretIdent:{}, accountIdent:{}, orgIdent:{}, projIdent:{},", host,
+        hostName, secretIdentifierWithScope, accountIdentifier, orgIdentifier, projectIdentifier);
     DelegateResponseData delegateResponseData = this.delegateGrpcClientWrapper.executeSyncTask(delegateTaskRequest);
 
     if (delegateResponseData instanceof SSHConfigValidationTaskResponse) {

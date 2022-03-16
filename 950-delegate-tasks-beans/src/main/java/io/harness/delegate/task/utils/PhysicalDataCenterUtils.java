@@ -37,7 +37,7 @@ public class PhysicalDataCenterUtils {
 
     String[] hostParts = host.split(":");
     if (hostParts.length == 2) {
-      return Optional.of(hostParts[0]);
+      return isBlank(hostParts[0]) ? Optional.empty() : Optional.of(hostParts[0]);
     }
 
     return Optional.empty();

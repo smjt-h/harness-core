@@ -7,6 +7,8 @@
 
 package io.harness.cdng.featureFlag;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
 import io.harness.cdng.service.beans.ServiceDefinitionType;
 import io.harness.ff.filters.EnumFeatureFlagFilter;
@@ -14,6 +16,7 @@ import io.harness.ff.filters.EnumFeatureFlagFilter;
 import com.google.common.collect.Sets;
 import com.google.inject.Singleton;
 
+@OwnedBy(HarnessTeam.CDP)
 @Singleton
 public class CdEnumFilter extends EnumFeatureFlagFilter {
   public CdEnumFilter() {

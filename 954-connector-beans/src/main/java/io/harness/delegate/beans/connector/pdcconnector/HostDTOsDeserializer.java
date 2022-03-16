@@ -1,7 +1,17 @@
+/*
+ * Copyright 2021 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Shield 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
+ */
+
 package io.harness.delegate.beans.connector.pdcconnector;
+
+import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -20,6 +30,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
+@OwnedBy(CDP)
 public class HostDTOsDeserializer extends StdDeserializer<List<HostDTO>> {
   public HostDTOsDeserializer() {
     super(List.class);

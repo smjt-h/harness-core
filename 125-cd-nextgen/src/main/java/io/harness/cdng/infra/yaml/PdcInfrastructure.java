@@ -7,7 +7,7 @@
 
 package io.harness.cdng.infra.yaml;
 
-import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
 
 import io.harness.annotation.RecasterAlias;
@@ -40,7 +40,7 @@ import lombok.experimental.Wither;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.data.annotation.TypeAlias;
 
-@OwnedBy(CDC)
+@OwnedBy(CDP)
 @Value
 @Builder
 @JsonTypeName(InfrastructureKind.PDC)

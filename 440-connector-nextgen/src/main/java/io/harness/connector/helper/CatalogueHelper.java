@@ -7,6 +7,9 @@
 
 package io.harness.connector.helper;
 
+import static io.harness.annotations.dev.HarnessTeam.CDP;
+
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
 import io.harness.connector.ConnectorCatalogueItem;
 import io.harness.connector.ConnectorCategory;
@@ -22,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@OwnedBy(CDP)
 @Singleton
 public class CatalogueHelper {
   @Inject ConnectorEnumFilter enumFilter;

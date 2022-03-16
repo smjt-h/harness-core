@@ -7,7 +7,7 @@
 
 package io.harness.cdng.infra.beans;
 
-import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
@@ -23,7 +23,7 @@ import org.springframework.data.annotation.TypeAlias;
 @Builder
 @TypeAlias("PdcInfraMapping")
 @JsonTypeName("PdcInfraMapping")
-@OwnedBy(CDC)
+@OwnedBy(CDP)
 @RecasterAlias("io.harness.cdng.infra.beans.PdcInfraMapping")
 public class PdcInfraMapping implements InfraMapping {
   @Id private String uuid;
