@@ -1,3 +1,10 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.ng.core.remote;
 
 import static io.harness.exception.WingsException.USER;
@@ -52,18 +59,18 @@ public class HostValidationResourceTest extends CategoryTest {
   public void shouldValidateSshHosts() {
     String accountIdentifier = "account1";
     String host1 = "host1";
-    List<String> hosts = Arrays.asList(host1);
+    List<String> hosts = Collections.singletonList(host1);
     HostValidationDTO hostValidationDTO =
         HostValidationDTO.builder().host(host1).status(HostValidationDTO.HostValidationStatus.SUCCESS).build();
     doNothing()
         .when(accessControlClient)
         .checkForAccessOrThrow(any(ResourceScope.class), any(Resource.class), eq(VIEW_USERGROUP_PERMISSION));
-    doReturn(Arrays.asList(hostValidationDTO))
+    doReturn(Collections.singletonList(hostValidationDTO))
         .when(hostValidationService)
         .validateSSHHosts(hosts, accountIdentifier, null, null, SECRET_IDENTIFIER);
 
-    ResponseDTO<List<HostValidationDTO>> result =
-        hostValidationResource.validateSshHost(accountIdentifier, null, null, SECRET_IDENTIFIER, Arrays.asList(host1));
+    ResponseDTO<List<HostValidationDTO>> result = hostValidationResource.validateSshHost(
+        accountIdentifier, null, null, SECRET_IDENTIFIER, Collections.singletonList(host1));
 
     assertThat(result.getData().get(0).getHost()).isEqualTo(host1);
     assertThat(result.getData().get(0).getStatus()).isEqualTo(HostValidationDTO.HostValidationStatus.SUCCESS);
