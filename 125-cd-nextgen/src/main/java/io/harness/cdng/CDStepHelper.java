@@ -52,6 +52,7 @@ import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.helper.GitApiAccessDecryptionHelper;
 import io.harness.connector.services.ConnectorService;
 import io.harness.connector.validator.scmValidators.GitConfigAuthenticationInfoHelper;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.beans.connector.helm.HttpHelmConnectorDTO;
@@ -90,6 +91,7 @@ import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.executions.steps.StepConstants;
 import io.harness.expression.EngineExpressionEvaluator;
+import io.harness.k8s.model.HelmVersion;
 import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
 import io.harness.logging.UnitProgress;
@@ -129,7 +131,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 public class CDStepHelper {
   @Inject private GitConfigAuthenticationInfoHelper gitConfigAuthenticationInfoHelper;
   @Named("PRIVILEGED") @Inject private SecretManagerClientService secretManagerClientService;
-  @Inject private CDFeatureFlagHelper cdFeatureFlagHelper;
+  @Inject protected CDFeatureFlagHelper cdFeatureFlagHelper;
   @Inject private EngineExpressionService engineExpressionService;
   @Named(DEFAULT_CONNECTOR_SERVICE) @Inject private ConnectorService connectorService;
   @Inject private K8sEntityHelper k8sEntityHelper;
@@ -141,6 +143,14 @@ public class CDStepHelper {
       "[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*";
 
   public static final Pattern releaseNamePattern = Pattern.compile(RELEASE_NAME_VALIDATION_REGEX);
+
+  public HelmVersion getHelmVersionBasedOnFF(HelmVersion helmVersion, String accountId) {
+    if (helmVersion == HelmVersion.V2) {
+      return helmVersion;
+    }
+    return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.HELM_VERSION_3_8_0) == true ? HelmVersion.V380
+                                                                                            : HelmVersion.V3;
+  }
 
   // Optimised (SCM based) file fetch methods:
   public boolean isGitlabTokenAuth(ScmConnector scmConnector) {
@@ -445,6 +455,12 @@ public class CDStepHelper {
               format("Invalid connector selected in %s. Select Amazon Web Services connector", message));
         }
         break;
+      case ManifestStoreType.ARTIFACTORY:
+        if (!((connectorInfoDTO.getConnectorConfig()) instanceof ArtifactoryConnectorDTO)) {
+          throw new InvalidRequestException(
+              format("Invalid connector selected in %s. Select Artifactory connector", message));
+        }
+        break;
 
       case ManifestStoreType.GCS:
         if (!(connectorInfoDTO.getConnectorConfig() instanceof GcpConnectorDTO)) {
@@ -557,9 +573,13 @@ public class CDStepHelper {
     return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.NEW_KUBECTL_VERSION);
   }
 
+  public boolean isSkipAddingTrackSelectorToDeployment(String accountId) {
+    return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.SKIP_ADDING_TRACK_LABEL_SELECTOR_IN_ROLLING);
+  }
+
   public List<String> getValuesFileContents(Ambiance ambiance, List<String> valuesFileContents) {
     return valuesFileContents.stream()
-        .map(valuesFileContent -> engineExpressionService.renderExpression(ambiance, valuesFileContent))
+        .map(valuesFileContent -> engineExpressionService.renderExpression(ambiance, valuesFileContent, false))
         .collect(Collectors.toList());
   }
 

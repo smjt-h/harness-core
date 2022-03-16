@@ -11,7 +11,6 @@ import static io.harness.cvng.core.utils.FeatureFlagNames.CVNG_MONITORED_SERVICE
 
 import io.harness.cvng.beans.DataCollectionConnectorBundle;
 import io.harness.cvng.beans.DataCollectionType;
-import io.harness.cvng.beans.change.ChangeCategory;
 import io.harness.cvng.beans.change.ChangeEventDTO;
 import io.harness.cvng.beans.change.ChangeSourceType;
 import io.harness.cvng.beans.change.HarnessCDCurrentGenEventMetadata;
@@ -19,7 +18,6 @@ import io.harness.cvng.client.VerificationManagerService;
 import io.harness.cvng.core.beans.change.ChangeSummaryDTO;
 import io.harness.cvng.core.beans.monitoredService.ChangeSourceDTO;
 import io.harness.cvng.core.beans.params.MonitoredServiceParams;
-import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.entities.changeSource.ChangeSource;
 import io.harness.cvng.core.entities.changeSource.ChangeSource.ChangeSourceKeys;
 import io.harness.cvng.core.entities.changeSource.HarnessCDCurrentGenChangeSource;
@@ -88,12 +86,11 @@ public class ChangeSourceServiceImpl implements ChangeSourceService {
   }
 
   @Override
-  public Set<ChangeSourceDTO> get(
-      @NonNull ServiceEnvironmentParams environmentParams, @NonNull List<String> identifiers) {
+  public Set<ChangeSourceDTO> get(MonitoredServiceParams monitoredServiceParams, List<String> identifiers) {
     if (CollectionUtils.isEmpty(identifiers)) {
       return Collections.emptySet();
     }
-    return createQuery(environmentParams)
+    return createQuery(monitoredServiceParams)
         .field(ChangeSourceKeys.identifier)
         .in(identifiers)
         .asList()
@@ -103,30 +100,20 @@ public class ChangeSourceServiceImpl implements ChangeSourceService {
   }
 
   @Override
-  public ChangeSource get(ServiceEnvironmentParams serviceEnvironmentParams, String identifier) {
-    return createQuery(serviceEnvironmentParams).filter(ChangeSourceKeys.identifier, identifier).get();
-  }
-
-  @Override
-  public Set<ChangeSourceDTO> getByType(ServiceEnvironmentParams environmentParams, ChangeSourceType changeSourceType) {
-    return createQuery(environmentParams)
-        .filter(ChangeSourceKeys.type, changeSourceType)
-        .asList()
-        .stream()
-        .map(changeSourceTransformer::getDto)
-        .collect(Collectors.toSet());
+  public ChangeSource get(MonitoredServiceParams monitoredServiceParams, String identifier) {
+    return createQuery(monitoredServiceParams).filter(ChangeSourceKeys.identifier, identifier).get();
   }
 
   @Override
   public List<ChangeSource> getEntityByType(
-      ServiceEnvironmentParams environmentParams, ChangeSourceType changeSourceType) {
-    return createQuery(environmentParams).filter(ChangeSourceKeys.type, changeSourceType).asList();
+      MonitoredServiceParams monitoredServiceParams, ChangeSourceType changeSourceType) {
+    return createQuery(monitoredServiceParams).filter(ChangeSourceKeys.type, changeSourceType).asList();
   }
 
   @Override
-  public void delete(@NonNull ServiceEnvironmentParams environmentParams, @NonNull List<String> identifiers) {
+  public void delete(@NonNull MonitoredServiceParams monitoredServiceParams, @NonNull List<String> identifiers) {
     List<ChangeSource> changeSources =
-        createQuery(environmentParams).field(ChangeSourceKeys.identifier).in(identifiers).asList();
+        createQuery(monitoredServiceParams).field(ChangeSourceKeys.identifier).in(identifiers).asList();
     changeSources.forEach(changeSource -> {
       hPersistence.delete(changeSource);
       if (changeSourceUpdateHandlerMap.containsKey(changeSource.getType())) {
@@ -189,8 +176,7 @@ public class ChangeSourceServiceImpl implements ChangeSourceService {
             .dataCollectionWorkerId(changeSource.getUuid())
             .projectIdentifier(changeSource.getProjectIdentifier())
             .orgIdentifier(changeSource.getOrgIdentifier())
-            .envIdentifier(changeSource.getEnvIdentifier())
-            .serviceIdentifier(changeSource.getServiceIdentifier())
+            .monitoredServiceIdentifier(changeSource.getMonitoredServiceIdentifier())
             .build();
 
     String dataCollectionTaskId = verificationManagerService.createDataCollectionTask(changeSource.getAccountId(),
@@ -205,16 +191,9 @@ public class ChangeSourceServiceImpl implements ChangeSourceService {
   }
 
   @Override
-  public List<ChangeEventDTO> getChangeEvents(ServiceEnvironmentParams serviceEnvironmentParams,
-      List<String> changeSourceIdentifiers, Instant startTime, Instant endTime, List<ChangeCategory> changeCategories) {
-    return changeEventService.get(
-        serviceEnvironmentParams, changeSourceIdentifiers, startTime, endTime, changeCategories);
-  }
-
-  @Override
-  public ChangeSummaryDTO getChangeSummary(ServiceEnvironmentParams serviceEnvironmentParams,
+  public ChangeSummaryDTO getChangeSummary(MonitoredServiceParams monitoredServiceParams,
       List<String> changeSourceIdentifiers, Instant startTime, Instant endTime) {
-    return changeEventService.getChangeSummary(serviceEnvironmentParams, changeSourceIdentifiers, startTime, endTime);
+    return changeEventService.getChangeSummary(monitoredServiceParams, changeSourceIdentifiers, startTime, endTime);
   }
 
   private void validate(Set<ChangeSourceDTO> changeSourceDTOs) {
@@ -233,18 +212,17 @@ public class ChangeSourceServiceImpl implements ChangeSourceService {
     }
   }
 
-  private Query<ChangeSource> createQuery(ServiceEnvironmentParams environmentParams) {
+  private Query<ChangeSource> createQuery(MonitoredServiceParams monitoredServiceParams) {
     return hPersistence.createQuery(ChangeSource.class)
-        .filter(ChangeSourceKeys.accountId, environmentParams.getAccountIdentifier())
-        .filter(ChangeSourceKeys.orgIdentifier, environmentParams.getOrgIdentifier())
-        .filter(ChangeSourceKeys.projectIdentifier, environmentParams.getProjectIdentifier())
-        .filter(ChangeSourceKeys.serviceIdentifier, environmentParams.getServiceIdentifier())
-        .filter(ChangeSourceKeys.envIdentifier, environmentParams.getEnvironmentIdentifier());
+        .filter(ChangeSourceKeys.accountId, monitoredServiceParams.getAccountIdentifier())
+        .filter(ChangeSourceKeys.orgIdentifier, monitoredServiceParams.getOrgIdentifier())
+        .filter(ChangeSourceKeys.projectIdentifier, monitoredServiceParams.getProjectIdentifier())
+        .filter(ChangeSourceKeys.monitoredServiceIdentifier, monitoredServiceParams.getMonitoredServiceIdentifier());
   }
 
   private void validateChangeSourcesDoesntExist(
-      ServiceEnvironmentParams environmentParams, Set<ChangeSourceDTO> changeSourceDTOs) {
-    Set<ChangeSourceDTO> changeSourceDTOS = get(environmentParams,
+      MonitoredServiceParams monitoredServiceParams, Set<ChangeSourceDTO> changeSourceDTOs) {
+    Set<ChangeSourceDTO> changeSourceDTOS = get(monitoredServiceParams,
         changeSourceDTOs.stream().map(changeSourceDTO -> changeSourceDTO.getIdentifier()).collect(Collectors.toList()));
 
     if (CollectionUtils.isNotEmpty(changeSourceDTOS)) {
@@ -270,8 +248,7 @@ public class ChangeSourceServiceImpl implements ChangeSourceService {
                                           .orgIdentifier(changeSource.getOrgIdentifier())
                                           .projectIdentifier(changeSource.getProjectIdentifier())
                                           .changeSourceIdentifier(changeSource.getIdentifier())
-                                          .envIdentifier(changeSource.getEnvIdentifier())
-                                          .serviceIdentifier(changeSource.getServiceIdentifier())
+                                          .monitoredServiceIdentifier(changeSource.getMonitoredServiceIdentifier())
                                           .type(ChangeSourceType.HARNESS_CD_CURRENT_GEN)
                                           .eventTime(event.getWorkflowStartTime())
                                           .metadata(event)

@@ -14,25 +14,30 @@ import static io.harness.pms.contracts.execution.Status.SUCCEEDED;
 import static io.harness.rule.OwnerRule.ALEXEI;
 import static io.harness.rule.OwnerRule.PRASHANT;
 import static io.harness.rule.OwnerRule.PRASHANTSHARMA;
+import static io.harness.rule.OwnerRule.SAHIL;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import io.harness.OrchestrationTestBase;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.engine.utils.PmsLevelUtils;
+import io.harness.event.OrchestrationLogConfiguration;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.NodeExecution;
+import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.plan.Node;
 import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.contracts.execution.Status;
+import io.harness.pms.contracts.execution.failure.FailureInfo;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.rule.Owner;
@@ -48,9 +53,12 @@ import java.util.Optional;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.springframework.data.mongodb.core.query.Update;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
+  @Mock OrchestrationLogConfiguration orchestrationLogConfiguration;
   @Inject @InjectMocks private NodeExecutionService nodeExecutionService;
 
   @Test
@@ -62,13 +70,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
         NodeExecution.builder()
             .uuid(nodeExecutionId)
             .ambiance(AmbianceTestUtils.buildAmbiance())
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .name("name")
-                          .identifier("dummy")
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .nodeId(generateUuid())
+            .name("name")
+            .identifier("dummy")
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .status(Status.QUEUED)
             .build();
@@ -86,13 +92,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
         NodeExecution.builder()
             .uuid(nodeExecutionId1)
             .ambiance(AmbianceTestUtils.buildAmbiance())
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .name("name")
-                          .identifier("dummy")
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .nodeId(generateUuid())
+            .name("name")
+            .identifier("dummy")
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .status(Status.RUNNING)
             .build();
@@ -100,13 +104,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
         NodeExecution.builder()
             .uuid(nodeExecutionId2)
             .ambiance(AmbianceTestUtils.buildAmbiance())
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .name("name")
-                          .identifier("dummy")
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .nodeId(generateUuid())
+            .name("name")
+            .identifier("dummy")
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .status(Status.SUCCEEDED)
             .build();
@@ -137,13 +139,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
             .uuid(nodeExecutionId1)
             .ambiance(AmbianceTestUtils.buildAmbiance())
             .mode(ExecutionMode.SYNC)
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .name("name")
-                          .identifier("dummy")
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .nodeId(generateUuid())
+            .name("name")
+            .identifier("dummy")
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .parentId(parentId1)
             .status(Status.RUNNING)
@@ -153,13 +153,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
             .uuid(nodeExecutionId2)
             .ambiance(AmbianceTestUtils.buildAmbiance())
             .mode(ExecutionMode.CHILD)
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .name("name")
-                          .identifier("dummy")
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .nodeId(generateUuid())
+            .name("name")
+            .identifier("dummy")
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .parentId(parentId2)
             .status(Status.SUCCEEDED)
@@ -226,7 +224,7 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
 
     doReturn(Arrays.asList(pipelineNode, stageNode, forkNode, child1, child2, child3))
         .when(service)
-        .fetchNodeExecutionsWithoutOldRetriesAndStatusIn(any(), any());
+        .fetchNodeExecutionsWithoutOldRetriesAndStatusIn(any(), any(), eq(false), any());
 
     List<NodeExecution> stageChildList = service.findAllChildrenWithStatusIn(
         ambiance.getPlanExecutionId(), stageNode.getUuid(), EnumSet.of(Status.RUNNING), true);
@@ -267,14 +265,12 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
         NodeExecution.builder()
             .uuid(nodeExecutionId)
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(planExecutionUuid).build())
-            .planNode(PlanNode.builder()
-                          .uuid(planNodeUuid)
-                          .name("name")
-                          .identifier("dummy")
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
             .startTs(System.currentTimeMillis())
+            .nodeId(planNodeUuid)
+            .name("name")
+            .identifier("dummy")
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .status(Status.SUCCEEDED)
             .build();
     nodeExecutionService.save(nodeExecution);
@@ -297,13 +293,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
         NodeExecution.builder()
             .uuid(nodeExecutionId)
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(planExecutionUuid).build())
-            .planNode(PlanNode.builder()
-                          .uuid(planNodeUuid)
-                          .name("name")
-                          .identifier(planNodeIdentifier)
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .nodeId(planNodeUuid)
+            .name("name")
+            .identifier(planNodeIdentifier)
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .status(Status.SUCCEEDED)
             .build();
@@ -326,13 +320,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
             .uuid(generateUuid())
             .parentId(parentId)
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(planExecutionUuid).build())
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .name("name")
-                          .identifier(generateUuid())
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .uuid(generateUuid())
+            .name("name")
+            .identifier(generateUuid())
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .status(Status.SUCCEEDED)
             .build();
@@ -341,13 +333,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
             .uuid(generateUuid())
             .parentId(parentId)
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(planExecutionUuid).build())
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .name("name")
-                          .identifier(generateUuid())
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .uuid(generateUuid())
+            .name("name")
+            .identifier(generateUuid())
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .status(Status.SUCCEEDED)
             .build();
@@ -374,13 +364,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
             .uuid(generateUuid())
             .parentId(parentId)
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(planExecutionUuid).build())
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .name("name")
-                          .identifier(generateUuid())
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .uuid(generateUuid())
+            .name("name")
+            .identifier(generateUuid())
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .status(Status.RUNNING)
             .build();
@@ -389,13 +377,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
             .uuid(generateUuid())
             .parentId(parentId)
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(planExecutionUuid).build())
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .name("name")
-                          .identifier(generateUuid())
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .uuid(generateUuid())
+            .name("name")
+            .identifier(generateUuid())
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .status(Status.RUNNING)
             .build();
@@ -423,13 +409,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
             .uuid(generateUuid())
             .parentId(parentId)
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(planExecutionUuid).build())
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .name("name")
-                          .identifier(generateUuid())
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .uuid(generateUuid())
+            .name("name")
+            .identifier(generateUuid())
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .status(Status.RUNNING)
             .build();
@@ -438,13 +422,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
             .uuid(generateUuid())
             .parentId(parentId)
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(planExecutionUuid).build())
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .name("name")
-                          .identifier(generateUuid())
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .uuid(generateUuid())
+            .name("name")
+            .identifier(generateUuid())
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .status(Status.RUNNING)
             .build();
@@ -468,13 +450,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
             .parentId(parentId)
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(planExecutionUuid).build())
             .mode(ExecutionMode.SYNC)
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .name("name")
-                          .identifier(generateUuid())
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .uuid(generateUuid())
+            .name("name")
+            .identifier(generateUuid())
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .status(Status.RUNNING)
             .build();
@@ -484,13 +464,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
             .parentId(parentId)
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(planExecutionUuid).build())
             .mode(ExecutionMode.SYNC)
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .name("name")
-                          .identifier(generateUuid())
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .uuid(generateUuid())
+            .name("name")
+            .identifier(generateUuid())
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .status(Status.RUNNING)
             .build();
@@ -513,13 +491,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
             .parentId(parentId)
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(planExecutionUuid).build())
             .mode(ExecutionMode.SYNC)
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .name("name")
-                          .identifier(generateUuid())
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .uuid(generateUuid())
+            .name("name")
+            .identifier(generateUuid())
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .status(Status.RUNNING)
             .build();
@@ -529,13 +505,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
             .parentId(parentId)
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(planExecutionUuid).build())
             .mode(ExecutionMode.SYNC)
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .name("name")
-                          .identifier(generateUuid())
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .uuid(generateUuid())
+            .name("name")
+            .identifier(generateUuid())
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .status(Status.RUNNING)
             .build();
@@ -563,13 +537,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
             .parentId(parentId)
             .ambiance(Ambiance.newBuilder().setPlanExecutionId(planExecutionUuid).build())
             .mode(ExecutionMode.SYNC)
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .name("name")
-                          .identifier(generateUuid())
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .uuid(generateUuid())
+            .name("name")
+            .identifier(generateUuid())
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .startTs(System.currentTimeMillis())
             .status(Status.RUNNING)
             .timeoutInstanceIds(ImmutableList.of(generateUuid(), generateUuid()))
@@ -581,90 +553,6 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
 
     NodeExecution updated = nodeExecutionService.get(nodeExecution.getUuid());
     assertThat(updated.getTimeoutInstanceIds()).isEmpty();
-  }
-
-  @Test
-  @Owner(developers = PRASHANTSHARMA)
-  @Category(UnitTests.class)
-  public void testMapNodeExecutionUuidWithPlanNodeUuid() {
-    String planExecutionUuid = generateUuid();
-    String parentId = generateUuid();
-    String nodeUuid = generateUuid();
-    String nodeExecutionUuid = generateUuid();
-    PlanNode planNode1 =
-        PlanNode.builder()
-            .uuid(nodeUuid)
-            .name("name")
-            .identifier(generateUuid())
-            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-            .serviceName("CD")
-            .build();
-    NodeExecution nodeExecution1 =
-        NodeExecution.builder()
-            .uuid(nodeExecutionUuid)
-            .parentId(parentId)
-            .ambiance(Ambiance.newBuilder()
-                          .setPlanExecutionId(planExecutionUuid)
-                          .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionUuid, planNode1))
-                          .build())
-            .planNode(planNode1)
-            .status(Status.RUNNING)
-            .build();
-
-    String nodeUuid2 = generateUuid();
-    String nodeExecutionUuid2 = generateUuid();
-    PlanNode planNode2 =
-        PlanNode.builder()
-            .uuid(nodeUuid2)
-            .name("name")
-            .identifier(generateUuid())
-            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-            .serviceName("CD")
-            .build();
-    NodeExecution nodeExecution2 = NodeExecution.builder()
-                                       .uuid(nodeExecutionUuid2)
-                                       .parentId(parentId)
-                                       .ambiance(Ambiance.newBuilder()
-                                                     .setPlanExecutionId(planExecutionUuid)
-                                                     .addLevels(PmsLevelUtils.buildLevelFromNode(nodeUuid2, planNode2))
-                                                     .build())
-                                       .planNode(planNode2)
-                                       .status(Status.RUNNING)
-                                       .build();
-
-    String nodeUuid3 = generateUuid();
-    String nodeExecutionUuid3 = generateUuid();
-    PlanNode planNode3 =
-        PlanNode.builder()
-            .uuid(nodeUuid3)
-            .name("name")
-            .identifier(generateUuid())
-            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-            .serviceName("CD")
-            .build();
-    NodeExecution nodeExecution3 = NodeExecution.builder()
-                                       .uuid(nodeExecutionUuid3)
-                                       .parentId(parentId)
-                                       .ambiance(Ambiance.newBuilder()
-                                                     .setPlanExecutionId(planExecutionUuid)
-                                                     .addLevels(PmsLevelUtils.buildLevelFromNode(nodeUuid3, planNode3))
-                                                     .build())
-                                       .planNode(planNode3)
-                                       .status(Status.RUNNING)
-                                       .build();
-    nodeExecutionService.save(nodeExecution1);
-    nodeExecutionService.save(nodeExecution2);
-    nodeExecutionService.save(nodeExecution3);
-
-    Map<String, String> mapperNodeUuidToNodeExecutionUuid =
-        nodeExecutionService.fetchNodeExecutionFromNodeUuidsAndPlanExecutionId(
-            Arrays.asList(nodeUuid, nodeUuid2), planExecutionUuid);
-    assertThat(mapperNodeUuidToNodeExecutionUuid.size()).isEqualTo(2);
-    assertThat(mapperNodeUuidToNodeExecutionUuid.containsKey(nodeUuid)).isEqualTo(true);
-    assertThat(mapperNodeUuidToNodeExecutionUuid.containsKey(nodeUuid2)).isEqualTo(true);
-    assertThat(mapperNodeUuidToNodeExecutionUuid.containsKey(nodeUuid3)).isEqualTo(false);
-    assertThat(mapperNodeUuidToNodeExecutionUuid.get(nodeUuid)).isEqualTo(nodeExecutionUuid);
-    assertThat(mapperNodeUuidToNodeExecutionUuid.get(nodeUuid2)).isEqualTo(nodeExecutionUuid2);
   }
 
   @Test
@@ -696,6 +584,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
                           .serviceName("CD")
                           .build())
             .status(Status.RUNNING)
+            .nodeId(nodeUuid)
+            .name("name")
+            .identifier("stage1")
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .build();
     String nodeUuid2 = generateUuid();
     String nodeExecutionUuid2 = generateUuid();
@@ -714,6 +607,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
                           .serviceName("CD")
                           .build())
             .status(Status.RUNNING)
+            .nodeId(nodeUuid2)
+            .name("name")
+            .identifier("stage2")
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STAGE).build())
+            .module("CD")
             .build();
 
     String nodeUuid3 = generateUuid();
@@ -733,6 +631,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
                           .serviceName("CD")
                           .build())
             .status(Status.RUNNING)
+            .nodeId(nodeUuid3)
+            .name("name")
+            .identifier("stage3")
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STAGE).build())
+            .module("CD")
             .build();
 
     // saving nodeExecution
@@ -776,6 +679,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
                           .serviceName("CD")
                           .build())
             .status(Status.RUNNING)
+            .nodeId(nodeUuid)
+            .name("name")
+            .identifier("stage1")
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+            .module("CD")
             .build();
     String nodeUuid2 = generateUuid();
     String nodeExecutionUuid2 = generateUuid();
@@ -794,6 +702,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
                           .serviceName("CD")
                           .build())
             .status(Status.RUNNING)
+            .nodeId(nodeUuid2)
+            .name("name")
+            .identifier("stage2")
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STAGE).build())
+            .module("CD")
             .build();
 
     String nodeUuid3 = generateUuid();
@@ -813,6 +726,11 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
                           .serviceName("CD")
                           .build())
             .status(Status.RUNNING)
+            .nodeId(nodeUuid3)
+            .name("name")
+            .identifier("stage3")
+            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STAGE).build())
+            .module("CD")
             .build();
 
     // saving nodeExecution
@@ -832,5 +750,26 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
 
     assertThat(uuidNodeMap.containsKey(nodeExecutionUuid3)).isEqualTo(true);
     assertThat(uuidNodeMap.get(nodeExecutionUuid3).getIdentifier()).isEqualTo("stage3");
+  }
+
+  @Test
+  @Owner(developers = SAHIL)
+  @Category(UnitTests.class)
+  public void testShouldLog() {
+    when(orchestrationLogConfiguration.isReduceOrchestrationLog()).thenReturn(true);
+    Update update = new Update();
+    update.addToSet(NodeExecutionKeys.executableResponses, null);
+    update.set(NodeExecutionKeys.failureInfo, FailureInfo.newBuilder().build());
+    assertThat(nodeExecutionService.shouldLog(update)).isTrue();
+  }
+
+  @Test
+  @Owner(developers = SAHIL)
+  @Category(UnitTests.class)
+  public void testShouldNotLog() {
+    Update update = new Update();
+    when(orchestrationLogConfiguration.isReduceOrchestrationLog()).thenReturn(true);
+    update.set(NodeExecutionKeys.nodeId, "test");
+    assertThat(nodeExecutionService.shouldLog(update)).isFalse();
   }
 }

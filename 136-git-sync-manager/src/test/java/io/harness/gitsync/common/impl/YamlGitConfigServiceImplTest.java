@@ -11,28 +11,35 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.gitsync.common.remote.YamlGitConfigMapper.toSetupGitSyncDTO;
 import static io.harness.gitsync.common.remote.YamlGitConfigMapper.toYamlGitConfigDTO;
 import static io.harness.rule.OwnerRule.ABHINAV;
+import static io.harness.rule.OwnerRule.BHAVYA;
 import static io.harness.rule.OwnerRule.DEEPAK;
+import static io.harness.rule.OwnerRule.MEET;
+import static io.harness.rule.OwnerRule.SATYAM_GOEL;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.harness.account.AccountClient;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.connector.ConnectivityStatus;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
+import io.harness.connector.ConnectorValidationResult;
 import io.harness.connector.services.ConnectorService;
 import io.harness.delegate.beans.connector.scm.github.GithubApiAccessDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
+import io.harness.eraro.ErrorCode;
 import io.harness.eventsframework.api.Producer;
 import io.harness.eventsframework.producer.Message;
+import io.harness.eventsframework.protohelper.IdentifierRefProtoDTOHelper;
 import io.harness.eventsframework.schemas.entity.EntityScopeInfo;
+import io.harness.eventsframework.schemas.entity.IdentifierRefProtoDTO;
+import io.harness.exception.DuplicateEntityException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.GitSyncTestBase;
 import io.harness.gitsync.common.dtos.GitSyncConfigDTO;
@@ -41,8 +48,9 @@ import io.harness.gitsync.common.events.GitSyncConfigChangeEventConstants;
 import io.harness.gitsync.common.events.GitSyncConfigChangeEventType;
 import io.harness.gitsync.common.events.GitSyncConfigSwitchType;
 import io.harness.gitsync.common.helper.UserProfileHelper;
-import io.harness.rest.RestResponse;
+import io.harness.gitsync.common.service.ScmFacilitatorService;
 import io.harness.rule.Owner;
+import io.harness.utils.IdentifierRefHelper;
 
 import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
@@ -55,20 +63,28 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import retrofit2.Call;
-import retrofit2.Response;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 @OwnedBy(DX)
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({IdentifierRefProtoDTOHelper.class, IdentifierRefHelper.class})
 public class YamlGitConfigServiceImplTest extends GitSyncTestBase {
   @Mock ConnectorService defaultConnectorService;
   @Inject YamlGitConfigServiceImpl yamlGitConfigService;
   @Mock Producer gitSyncConfigEventProducer;
   @Mock UserProfileHelper userProfileHelper;
-  @Mock AccountClient accountClient;
+  @Mock ScmFacilitatorService scmFacilitatorService;
+  @Mock IdentifierRefProtoDTOHelper identifierRefProtoDTOHelper;
+  @Mock IdentifierRefHelper identifierRefHelper;
+  @Mock Producer setupUsageEventProducer;
+  private IdentifierRefProtoDTO yamlGitConfigReference;
   private final String ACCOUNT_ID = "ACCOUNT_ID";
+  private final String ACCOUNT_ID_1 = "ACCOUNT_ID_1";
   private final String ORG_ID = "ORG_ID";
   private final String PROJECT_ID = "PROJECT_ID";
   private final String IDENTIFIER = "ID";
@@ -81,6 +97,8 @@ public class YamlGitConfigServiceImplTest extends GitSyncTestBase {
   private final String ROOT_FOLDER_ID = "ROOT_FOLDER_ID";
   private final String ROOT_FOLDER_1 = "ROOT_FOLDER_1";
   private final String ROOT_FOLDER_ID_1 = "ROOT_FOLDER_ID_1/.harness/";
+  private final String ERROR = "error";
+  private final String GIT_CONNECTOR_REF = "gitConnectorRef";
 
   @Before
   public void setup() throws Exception {
@@ -91,16 +109,15 @@ public class YamlGitConfigServiceImplTest extends GitSyncTestBase {
     when(defaultConnectorService.get(any(), any(), any(), any()))
         .thenReturn(Optional.of(ConnectorResponseDTO.builder().connector(connectorInfo).build()));
     when(userProfileHelper.validateIfScmUserProfileIsSet(ACCOUNT_ID)).thenReturn(true);
-
-    final Call<RestResponse<Boolean>> featureFlagRestMock = mock(Call.class);
-    when(featureFlagRestMock.clone()).thenReturn(featureFlagRestMock);
-    when(featureFlagRestMock.execute()).thenReturn(Response.success(new RestResponse<>(false)));
-    when(accountClient.isFeatureFlagEnabled(any(), any())).thenReturn(featureFlagRestMock);
-
+    when(defaultConnectorService.testGitRepoConnection(any(), any(), any(), any(), any()))
+        .thenReturn(ConnectorValidationResult.builder().status(ConnectivityStatus.SUCCESS).build());
+    when(scmFacilitatorService.listBranchesUsingConnector(any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(Arrays.asList(BRANCH));
     FieldUtils.writeField(yamlGitConfigService, "connectorService", defaultConnectorService, true);
     FieldUtils.writeField(yamlGitConfigService, "gitSyncConfigEventProducer", gitSyncConfigEventProducer, true);
     FieldUtils.writeField(yamlGitConfigService, "userProfileHelper", userProfileHelper, true);
-    FieldUtils.writeField(yamlGitConfigService, "accountClient", accountClient, true);
+    FieldUtils.writeField(yamlGitConfigService, "scmFacilitatorService", scmFacilitatorService, true);
+    FieldUtils.writeField(yamlGitConfigService, "setupUsageEventProducer", setupUsageEventProducer, true);
   }
 
   @Test
@@ -213,6 +230,72 @@ public class YamlGitConfigServiceImplTest extends GitSyncTestBase {
           () -> yamlGitConfigService.validateThatHarnessStringShouldNotComeMoreThanOnce(yamlGitConfigDTO))
           .isInstanceOf(InvalidRequestException.class);
     });
+  }
+
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void test_DuplicateSave() {
+    GitSyncFolderConfigDTO rootFolder =
+        GitSyncFolderConfigDTO.builder().isDefault(true).rootFolder(ROOT_FOLDER).build();
+    GitSyncConfigDTO gitSyncConfigDTO =
+        buildGitSyncDTO(Collections.singletonList(rootFolder), CONNECTOR_ID, REPO, BRANCH, IDENTIFIER);
+    yamlGitConfigService.save(toYamlGitConfigDTO(gitSyncConfigDTO, ACCOUNT_ID));
+    try {
+      yamlGitConfigService.save(toYamlGitConfigDTO(gitSyncConfigDTO, ACCOUNT_ID));
+    } catch (DuplicateEntityException ex) {
+      assertThat(ex.getCode()).isEqualTo(ErrorCode.RESOURCE_ALREADY_EXISTS);
+    }
+  }
+
+  @Test(expected = InvalidRequestException.class)
+  @Owner(developers = SATYAM_GOEL)
+  @Category(UnitTests.class)
+  public void test_checkIfBranchExists_shouldThrowExceptionIfBranchNotEists() {
+    GitSyncFolderConfigDTO rootFolder =
+        GitSyncFolderConfigDTO.builder().isDefault(true).rootFolder(ROOT_FOLDER).build();
+    GitSyncConfigDTO gitSyncConfigDTO =
+        buildGitSyncDTO(Collections.singletonList(rootFolder), CONNECTOR_ID, REPO, BRANCH, IDENTIFIER);
+    when(scmFacilitatorService.listBranchesUsingConnector(any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(Arrays.asList("branch1"));
+    toSetupGitSyncDTO(yamlGitConfigService.save(toYamlGitConfigDTO(gitSyncConfigDTO, ACCOUNT_ID)));
+  }
+
+  @Test(expected = InvalidRequestException.class)
+  @Owner(developers = SATYAM_GOEL)
+  @Category(UnitTests.class)
+  public void test_checkIfBranchExists_shouldThrowExceptionIfRepoUrlIsIncorrect() {
+    GitSyncFolderConfigDTO rootFolder =
+        GitSyncFolderConfigDTO.builder().isDefault(true).rootFolder(ROOT_FOLDER).build();
+    GitSyncConfigDTO gitSyncConfigDTO =
+        buildGitSyncDTO(Collections.singletonList(rootFolder), CONNECTOR_ID, REPO, BRANCH, IDENTIFIER);
+    when(scmFacilitatorService.listBranchesUsingConnector(any(), any(), any(), any(), any(), any(), any()))
+        .thenThrow(new InvalidRequestException("repo doesn't exists"));
+    toSetupGitSyncDTO(yamlGitConfigService.save(toYamlGitConfigDTO(gitSyncConfigDTO, ACCOUNT_ID)));
+  }
+
+  @Test
+  @Owner(developers = MEET)
+  @Category(UnitTests.class)
+  public void testDeleteAllEntities() {
+    GitSyncFolderConfigDTO rootFolder =
+        GitSyncFolderConfigDTO.builder().isDefault(true).rootFolder(ROOT_FOLDER).build();
+    GitSyncConfigDTO gitSyncConfigDTO = GitSyncConfigDTO.builder()
+                                            .branch(BRANCH)
+                                            .orgIdentifier(ORG_ID)
+                                            .projectIdentifier(PROJECT_ID)
+                                            .repo(REPO)
+                                            .identifier(IDENTIFIER)
+                                            .gitSyncFolderConfigDTOs(Collections.singletonList(rootFolder))
+                                            .gitConnectorRef(CONNECTOR_ID)
+                                            .name(REPO)
+                                            .build();
+    yamlGitConfigService.save(toYamlGitConfigDTO(gitSyncConfigDTO, ACCOUNT_ID_1));
+
+    when(identifierRefProtoDTOHelper.createIdentifierRefProtoDTO(any(), any(), any(), any()))
+        .thenReturn(yamlGitConfigReference);
+    yamlGitConfigService.deleteAllEntities(ACCOUNT_ID_1, ORG_ID, PROJECT_ID);
+    assertThat(yamlGitConfigService.list(PROJECT_ID, ORG_ID, ACCOUNT_ID_1)).hasSize(0);
   }
 
   private YamlGitConfigDTO.RootFolder getRootFolder(String folderPath) {

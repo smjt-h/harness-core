@@ -35,6 +35,7 @@ import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -285,6 +286,7 @@ public class K8sRollingDeployTaskHandlerTest extends WingsBaseTest {
                                     .k8sDelegateManifestConfig(K8sDelegateManifestConfig.builder().build())
                                     .releaseName("releaseName")
                                     .isInCanaryWorkflow(false)
+                                    .skipAddingSelectorToDeployment(false)
                                     .build(),
         K8sDelegateTaskParams.builder().build());
 
@@ -300,6 +302,8 @@ public class K8sRollingDeployTaskHandlerTest extends WingsBaseTest {
     verify(k8sTaskHelperBase, times(1))
         .applyManifests(any(Kubectl.class), anyList(), any(K8sDelegateTaskParams.class),
             any(ExecutionLogCallback.class), anyBoolean());
+    verify(k8sRollingBaseHandler, times(1))
+        .addLabelsInDeploymentSelectorForCanary(eq(false), eq(false), anyList(), any(KubernetesConfig.class));
   }
 
   @Test
@@ -333,6 +337,7 @@ public class K8sRollingDeployTaskHandlerTest extends WingsBaseTest {
                                     .k8sDelegateManifestConfig(K8sDelegateManifestConfig.builder().build())
                                     .releaseName("releaseName")
                                     .isInCanaryWorkflow(true)
+                                    .skipAddingSelectorToDeployment(true)
                                     .build(),
         K8sDelegateTaskParams.builder().build());
 
@@ -348,6 +353,8 @@ public class K8sRollingDeployTaskHandlerTest extends WingsBaseTest {
         .applyManifests(any(Kubectl.class), anyList(), any(K8sDelegateTaskParams.class),
             any(ExecutionLogCallback.class), anyBoolean());
     verify(handler, never()).prune(any(), any(), any());
+    verify(k8sRollingBaseHandler, times(1))
+        .addLabelsInDeploymentSelectorForCanary(eq(true), eq(true), anyList(), any(KubernetesConfig.class));
   }
 
   @Test

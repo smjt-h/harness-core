@@ -7,6 +7,7 @@ package git
 
 import (
 	"context"
+	"net/url"
 	"strings"
 	"time"
 
@@ -200,12 +201,17 @@ func GetLatestCommit(ctx context.Context, request *pb.GetLatestCommitRequest, lo
 		return nil, err
 	}
 
-	ref, err := gitclient.GetValidRef(*request.Provider, request.GetRef(), request.GetBranch())
+	branch := request.GetBranch()
+	if client.Driver == scm.DriverGitlab {
+		branch = url.QueryEscape(branch)
+	}
+
+	ref, err := gitclient.GetValidRef(*request.Provider, request.GetRef(), branch)
 	if err != nil {
 		log.Errorw("GetLatestCommit failure, bad ref/branch", "provider", gitclient.GetProvider(*request.GetProvider()), "slug", request.GetSlug(), "ref", ref, "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
 		return nil, err
 	}
-	if request.GetBranch() != "" && strings.Contains(ref, "/") {
+	if branch != "" && strings.Contains(ref, "/") {
 		switch client.Driver {
 		case scm.DriverBitbucket,
 			scm.DriverStash:
@@ -340,11 +346,13 @@ func ListCommits(ctx context.Context, request *pb.ListCommitsRequest, log *zap.S
 		return nil, err
 	}
 
-	commits, response, err := client.Git.ListCommits(ctx, request.GetSlug(), scm.CommitListOptions{Ref: ref, Page: int(request.GetPagination().GetPage())})
+	commits, response, err := client.Git.ListCommits(ctx, request.GetSlug(), scm.CommitListOptions{Ref: ref, Page: int(request.GetPagination().GetPage()), Path: request.FilePath})
+
 	if err != nil {
 		log.Errorw("ListCommits failure", "provider", gitclient.GetProvider(*request.GetProvider()), "slug", request.GetSlug(), "ref", ref, "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
 		return nil, err
 	}
+
 	log.Infow("ListCommits success", "slug", request.GetSlug(), "ref", ref, "elapsed_time_ms", utils.TimeSince(start))
 	var commitIDs []string
 	for _, v := range commits {
@@ -445,6 +453,27 @@ func GetUserRepos(ctx context.Context, request *pb.GetUserReposRequest, log *zap
 		},
 	}
 	return out, nil
+}
+
+func GetLatestCommitOnFile(ctx context.Context, request *pb.GetLatestCommitOnFileRequest, log *zap.SugaredLogger) (out *pb.GetLatestCommitOnFileResponse, err error) {
+	// For Bitbucket, we also get commits for a non-existent file if it had been created before (deleted now)
+	response, err := ListCommits(ctx, &pb.ListCommitsRequest{Provider: request.Provider, Slug: request.Slug, Type: &pb.ListCommitsRequest_Branch{Branch: request.Branch}, FilePath: request.FilePath}, log)
+	if err != nil {
+		return &pb.GetLatestCommitOnFileResponse{
+			CommitId: "",
+			Error:    err.Error(),
+		}, err
+	}
+
+	if response.CommitIds != nil && len(response.CommitIds) != 0 {
+		return &pb.GetLatestCommitOnFileResponse{
+			CommitId: response.CommitIds[0],
+		}, nil
+	}
+	// TODO Return an error saying no commit found for the given file
+	return &pb.GetLatestCommitOnFileResponse{
+		CommitId: "",
+	}, nil
 }
 
 func convertChangesList(from []*scm.Change) (to []*pb.PRFile) {

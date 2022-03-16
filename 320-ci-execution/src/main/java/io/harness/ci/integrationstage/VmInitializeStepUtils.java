@@ -20,6 +20,7 @@ import static java.lang.String.format;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
+import io.harness.beans.dependencies.DependencyElement;
 import io.harness.beans.environment.BuildJobEnvInfo;
 import io.harness.beans.environment.VmBuildJobInfo;
 import io.harness.beans.executionargs.CIExecutionArgs;
@@ -29,6 +30,7 @@ import io.harness.beans.steps.CIStepInfo;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
 import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
+import io.harness.ci.utils.ValidationUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.ngexception.CIStageExecutionException;
 import io.harness.ff.CIFeatureFlagService;
@@ -85,6 +87,12 @@ public class VmInitializeStepUtils {
     }
     IntegrationStageConfig integrationStageConfig = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
     validateStageConfig(integrationStageConfig, accountId);
+    List<DependencyElement> serviceDependencies = null;
+    if (integrationStageConfig.getServiceDependencies() != null
+        && integrationStageConfig.getServiceDependencies().getValue() != null) {
+      serviceDependencies = integrationStageConfig.getServiceDependencies().getValue();
+      ValidationUtils.validateVmInfraDependencies(serviceDependencies);
+    }
 
     Map<String, String> volumeToMountPath = getVolumeToMountPath(integrationStageConfig.getSharedPaths());
     return VmBuildJobInfo.builder()
@@ -93,7 +101,7 @@ public class VmInitializeStepUtils {
         .connectorRefs(connectorIdentifiers)
         .stageVars(stageElementConfig.getVariables())
         .volToMountPath(volumeToMountPath)
-        .serviceDependencies(integrationStageConfig.getServiceDependencies())
+        .serviceDependencies(serviceDependencies)
         .build();
   }
 
@@ -156,6 +164,7 @@ public class VmInitializeStepUtils {
         case RESTORE_CACHE_S3:
         case RESTORE_CACHE_GCS:
         case SAVE_CACHE_GCS:
+        case SECURITY:
         case UPLOAD_ARTIFACTORY:
         case UPLOAD_S3:
         case UPLOAD_GCS:

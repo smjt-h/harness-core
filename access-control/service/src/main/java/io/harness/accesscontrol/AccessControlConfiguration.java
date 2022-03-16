@@ -28,7 +28,9 @@ import io.harness.lock.DistributedLockImplementation;
 import io.harness.mongo.MongoConfig;
 import io.harness.outbox.OutboxPollConfiguration;
 import io.harness.redis.RedisConfig;
+import io.harness.reflection.HarnessReflections;
 import io.harness.remote.client.ServiceHttpClientConfig;
+import io.harness.telemetry.segment.SegmentConfiguration;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.Level;
@@ -43,11 +45,12 @@ import io.dropwizard.request.logging.RequestLogFactory;
 import io.dropwizard.server.DefaultServerFactory;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.ws.rs.Path;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import org.reflections.Reflections;
+import org.apache.commons.lang3.StringUtils;
 
 @OwnedBy(PL)
 @Getter
@@ -91,6 +94,9 @@ public class AccessControlConfiguration extends Configuration {
   @JsonProperty("enforcementClientConfiguration") private EnforcementClientConfiguration enforcementClientConfiguration;
   @JsonProperty("hostname") private String hostname;
   @JsonProperty("basePathPrefix") private String basePathPrefix;
+  @JsonProperty("segmentConfiguration") private SegmentConfiguration segmentConfiguration;
+
+  public static final Collection<Class<?>> ALL_ACCESS_CONTROL_RESOURCES = getResourceClasses();
 
   public boolean isAuthEnabled() {
     return this.enableAuth;
@@ -103,10 +109,15 @@ public class AccessControlConfiguration extends Configuration {
     super.setServerFactory(defaultServerFactory);
   }
 
-  public static Collection<Class<?>> getResourceClasses() {
-    Reflections reflections = new Reflections(PERMISSION_PACKAGE, ROLES_PACKAGE, ROLE_ASSIGNMENTS_PACKAGE, ACL_PACKAGE,
-        ACCESSCONTROL_PREFERENCE_PACKAGE, AGGREGATOR_PACKAGE, HEALTH_PACKAGE, ENFORCEMENT_PACKAGE);
-    return reflections.getTypesAnnotatedWith(Path.class);
+  private static Collection<Class<?>> getResourceClasses() {
+    return HarnessReflections.get()
+        .getTypesAnnotatedWith(Path.class)
+        .stream()
+        .filter(clazz
+            -> StringUtils.startsWithAny(clazz.getPackage().getName(), PERMISSION_PACKAGE, ROLES_PACKAGE,
+                ROLE_ASSIGNMENTS_PACKAGE, ACL_PACKAGE, ACCESSCONTROL_PREFERENCE_PACKAGE, AGGREGATOR_PACKAGE,
+                HEALTH_PACKAGE, ENFORCEMENT_PACKAGE))
+        .collect(Collectors.toSet());
   }
 
   private RequestLogFactory getDefaultlogbackAccessRequestLogFactory() {

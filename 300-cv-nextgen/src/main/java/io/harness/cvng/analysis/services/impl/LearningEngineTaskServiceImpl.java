@@ -22,6 +22,8 @@ import io.harness.cvng.analysis.entities.LearningEngineTask.LearningEngineTaskTy
 import io.harness.cvng.analysis.services.api.LearningEngineTaskService;
 import io.harness.cvng.core.entities.VerificationTask;
 import io.harness.cvng.core.entities.VerificationTask.TaskType;
+import io.harness.cvng.core.jobs.StateMachineEventPublisherService;
+import io.harness.cvng.core.services.api.ExecutionLogService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.metrics.CVNGMetricsUtils;
 import io.harness.cvng.metrics.beans.AccountMetricContext;
@@ -56,6 +58,8 @@ public class LearningEngineTaskServiceImpl implements LearningEngineTaskService 
   @Inject private VerificationTaskService verificationTaskService;
   @Inject private Clock clock;
   @Inject private MetricContextBuilder metricContextBuilder;
+  @Inject private StateMachineEventPublisherService stateMachineEventPublisherService;
+  @Inject private ExecutionLogService executionLogService;
 
   @Override
   public LearningEngineTask getNextAnalysisTask() {
@@ -77,7 +81,13 @@ public class LearningEngineTaskServiceImpl implements LearningEngineTaskService 
         hPersistence.createUpdateOperations(LearningEngineTask.class);
     updateOperations.set(LearningEngineTaskKeys.taskStatus, ExecutionStatus.RUNNING)
         .set(LearningEngineTaskKeys.pickedAt, clock.instant());
-    return hPersistence.findAndModify(learningEngineTaskQuery, updateOperations, new FindAndModifyOptions());
+    LearningEngineTask learningEngineTask =
+        hPersistence.findAndModify(learningEngineTaskQuery, updateOperations, new FindAndModifyOptions());
+    if (learningEngineTask != null) {
+      executionLogService.getLogger(learningEngineTask)
+          .log(learningEngineTask.getLogLevel(), "Learning engine task status: " + learningEngineTask.getTaskStatus());
+    }
+    return learningEngineTask;
   }
 
   @Override
@@ -95,6 +105,8 @@ public class LearningEngineTaskServiceImpl implements LearningEngineTaskService 
     if (verificationTask.getTaskInfo().getTaskType() == TaskType.DEPLOYMENT) {
       learningEngineTask.setTaskPriority(P0.getValue());
     }
+    executionLogService.getLogger(learningEngineTask)
+        .log(learningEngineTask.getLogLevel(), "Learning engine task status: " + learningEngineTask.getTaskStatus());
     return hPersistence.save(learningEngineTask);
   }
 
@@ -116,6 +128,8 @@ public class LearningEngineTaskServiceImpl implements LearningEngineTaskService 
                 task.getVerificationTaskId());
             incTaskStatusMetric(task.getAccountId(), ExecutionStatus.TIMEOUT);
             task.setTaskStatus(ExecutionStatus.TIMEOUT);
+            executionLogService.getLogger(task).log(
+                task.getLogLevel(), "Learning engine task status: " + task.getTaskStatus());
             timedOutTaskIds.add(task.getUuid());
           }
           taskStatuses.put(task.getUuid(), task.getTaskStatus());
@@ -180,6 +194,8 @@ public class LearningEngineTaskServiceImpl implements LearningEngineTaskService 
     LearningEngineTask task = get(taskId);
     incTaskStatusMetric(task.getAccountId(), ExecutionStatus.SUCCESS);
     addTimeToFinishMetrics(task);
+    stateMachineEventPublisherService.registerTaskComplete(task.getAccountId(), task.getVerificationTaskId());
+    executionLogService.getLogger(task).log(task.getLogLevel(), "Learning engine task status: " + task.getTaskStatus());
   }
 
   @Override
@@ -196,7 +212,10 @@ public class LearningEngineTaskServiceImpl implements LearningEngineTaskService 
     }
     hPersistence.update(hPersistence.createQuery(LearningEngineTask.class).filter(LearningEngineTaskKeys.uuid, taskId),
         updateOperations);
-    incTaskStatusMetric(get(taskId).getAccountId(), ExecutionStatus.FAILED);
+    LearningEngineTask learningEngineTask = get(taskId);
+    incTaskStatusMetric(learningEngineTask.getAccountId(), ExecutionStatus.FAILED);
+    executionLogService.getLogger(learningEngineTask)
+        .log(learningEngineTask.getLogLevel(), "Learning engine task status: " + learningEngineTask.getTaskStatus());
   }
 
   private boolean hasTaskTimedOut(LearningEngineTask task) {

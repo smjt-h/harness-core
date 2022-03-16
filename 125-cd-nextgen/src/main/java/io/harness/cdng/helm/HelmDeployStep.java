@@ -142,6 +142,7 @@ public class HelmDeployStep extends TaskChainExecutableWithRollbackAndRbac imple
         (HelmInstallCmdResponseNG) helmCmdExecResponseNG.getHelmCommandResponse();
     nativeHelmDeployOutcomeBuilder.prevReleaseVersion(helmInstallCmdResponseNG.getPrevReleaseVersion());
     nativeHelmDeployOutcomeBuilder.newReleaseVersion(helmInstallCmdResponseNG.getPrevReleaseVersion() + 1);
+    nativeHelmDeployOutcomeBuilder.hasInstallUpgradeStarted(true);
 
     StepResponseBuilder stepResponseBuilder =
         StepResponse.builder().unitProgressList(helmCmdExecResponseNG.getCommandUnitsProgress().getUnitProgresses());
@@ -192,7 +193,8 @@ public class HelmDeployStep extends TaskChainExecutableWithRollbackAndRbac imple
             .manifestDelegateConfig(nativeHelmStepHelper.getManifestDelegateConfig(manifestOutcome, ambiance))
             .commandUnitsProgress(UnitProgressDataMapper.toCommandUnitsProgress(unitProgressData))
             .releaseName(releaseName)
-            .helmVersion(helmChartManifestOutcome.getHelmVersion())
+            .helmVersion(nativeHelmStepHelper.getHelmVersionBasedOnFF(
+                helmChartManifestOutcome.getHelmVersion(), AmbianceUtils.getAccountId(ambiance)))
             .namespace(nativeHelmStepHelper.getK8sInfraDelegateConfig(infrastructure, ambiance).getNamespace())
             .k8SteadyStateCheckEnabled(cdFeatureFlagHelper.isEnabled(
                 AmbianceUtils.getAccountId(ambiance), FeatureName.HELM_STEADY_STATE_CHECK_1_16))

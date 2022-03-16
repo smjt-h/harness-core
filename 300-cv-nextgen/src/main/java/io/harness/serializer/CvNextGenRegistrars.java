@@ -9,12 +9,10 @@ package io.harness.serializer;
 
 import io.harness.EntityType;
 import io.harness.ModuleType;
-import io.harness.accesscontrol.serializer.AccessControlClientRegistrars;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.core.beans.CVVerifyStepNode;
 import io.harness.morphia.MorphiaRegistrar;
-import io.harness.plancreator.steps.StepElementConfig;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.serializer.kryo.PmsContractsKryoRegistrar;
 import io.harness.serializer.kryo.CVNGKryoRegistrar;
@@ -39,13 +37,13 @@ public class CvNextGenRegistrars {
           .addAll(CvNextGenCommonsRegistrars.kryoRegistrars)
           .addAll(ConnectorNextGenRegistrars.kryoRegistrars)
           .add(CVNGKryoRegistrar.class)
-          .add(PipelineServiceUtilKryoRegistrar.class)
           .add(PmsContractsKryoRegistrar.class)
           .addAll(NotificationClientRegistrars.kryoRegistrars)
           .addAll(OrchestrationBeansRegistrars.kryoRegistrars)
           .addAll(OrchestrationStepsModuleRegistrars.kryoRegistrars)
           .addAll(AccessControlClientRegistrars.kryoRegistrars)
           .addAll(DelegateTaskRegistrars.kryoRegistrars)
+          .addAll(NGCommonModuleRegistrars.kryoRegistrars)
           .build();
 
   public static final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =
@@ -58,6 +56,7 @@ public class CvNextGenRegistrars {
           .addAll(OrchestrationStepsModuleRegistrars.morphiaRegistrars)
           .addAll(PrimaryVersionManagerRegistrars.morphiaRegistrars)
           .addAll(DelegateTaskRegistrars.morphiaRegistrars)
+          .addAll(NGCommonModuleRegistrars.morphiaRegistrars)
           .build();
 
   public static final ImmutableSet<Class<? extends TypeConverter>> morphiaConverters =
@@ -67,13 +66,6 @@ public class CvNextGenRegistrars {
           .build();
   public static final ImmutableList<YamlSchemaRootClass> yamlSchemaRegistrars =
       ImmutableList.<YamlSchemaRootClass>builder()
-          .add(YamlSchemaRootClass.builder()
-                   .entityType(EntityType.DEPLOYMENT_STEPS)
-                   .availableAtProjectLevel(true)
-                   .availableAtOrgLevel(false)
-                   .availableAtAccountLevel(false)
-                   .clazz(StepElementConfig.class)
-                   .build())
           .add(YamlSchemaRootClass.builder()
                    .entityType(EntityType.VERIFY_STEP)
                    .availableAtProjectLevel(true)

@@ -1,7 +1,36 @@
 <#import "upgrader-role.ftl" as upgraderRole>
-<#macro cronjob fullDelegateName=delegateName>
+<#macro cronjob base64Secret fullDelegateName=delegateName>
 <#assign upgraderSaName = "upgrader-cronjob-sa">
 <@upgraderRole.cronJobRole upgraderSaName />
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${fullDelegateName}-upgrader-token
+  namespace: ${delegateNamespace}
+type: Opaque
+data:
+  UPGRADER_TOKEN: "${base64Secret}"
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${fullDelegateName}-upgrader-config
+  namespace: ${delegateNamespace}
+data:
+  config.yaml: |
+    mode: Delegate
+    dryRun: false
+    workloadName: ${fullDelegateName}
+    namespace: ${delegateNamespace}
+    containerName: delegate
+    delegateConfig:
+      accountId: ${accountId}
+      managerHost: ${managerHostAndPort}
 
 ---
 
@@ -21,22 +50,19 @@ spec:
       template:
         spec:
           serviceAccountName: ${upgraderSaName}
+          restartPolicy: Never
           containers:
           - image: ${upgraderDockerImage}
             name: upgrader
             imagePullPolicy: Always
-            env:
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: ACCOUNT_ID
-              value: ${accountId}
-            - name: ACCOUNT_SECRET
-              value: ${accountSecret}
-            - name: MANAGER_HOST_AND_PORT
-              value: ${managerHostAndPort}
-            - name: DELEGATE_NAME
-              value: ${fullDelegateName}
-          restartPolicy: Never
+            envFrom:
+            - secretRef:
+                name: ${fullDelegateName}-upgrader-token
+            volumeMounts:
+              - name: config-volume
+                mountPath: /etc/config
+          volumes:
+            - name: config-volume
+              configMap:
+                name: ${fullDelegateName}-upgrader-config
 </#macro>

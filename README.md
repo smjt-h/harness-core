@@ -12,10 +12,10 @@ harness-core Project Dev environment setup instructions
 
 
 2. Download and Install Java 8
-dd
-NOTE: Brew will download and install latest version of OpenJDK/JRE, its recommended to install OpenJDK/JRE_1.8.0_242 to be in sync with version everyone is using in the team. 
 
-Download OpenJDK 1.8-242 (jdk8u242-b08) JRE Installer from [Java archive downloads](https://adoptopenjdk.net/archive.html), unzip it, then set `JAVA_HOME` and `PATH` accordingly.
+   *Note: Brew will download and install the latest version of OpenJDK/JRE, its recommended to install OpenJDK/JRE_1.8.0_242 to be in sync with the version everyone is using in the team.*
+
+   To setup the recommended version, download the OpenJDK 1.8-242 (jdk8u242-b08) JRE .pkg from [AdoptOpenJDK](https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/tag/jdk8u242-b08) and install it. Make sure to update `JAVA_HOME` and `PATH` accordingly (see step 5).
 
 3. Install bazel:
 ```
@@ -30,13 +30,10 @@ brew install npm
 
 5. Set up JAVA_HOME: create or add this to your bash profile `~/.bashrc` or `~/.zshrc` file and add following line:
 ```
-ulimit -u 8192
 export JAVA_HOME=$(/usr/libexec/java_home -v1.8)
 ```
 
-Do not add the first line on MacOS Catalina
-
-If bash used, the better option migh be specifying full path to jdk, e.g:
+If bash used, the better option might be specifying full path to jdk, e.g:
 
 ```
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
@@ -49,7 +46,7 @@ export JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/H
 ```
 
 7. Download and install `buf`
-Complete this step only if you actively working with the protocol buffer files.
+Complete this step only if you are actively working with the protocol buffer files.
 ```
 brew tap bufbuild/buf
 brew install buf
@@ -59,6 +56,13 @@ To check if your protobuf files are according to the coding standards execute in
 ```
 buf lint
 ```
+
+8. Install Docker
+
+Official steps to install docker on mac: [docker.com](https://docs.docker.com/desktop/mac/install/).
+
+9. If you are on MacOS make sure you have Xcode installed
+
 
 ### Git setup
 
@@ -94,13 +98,7 @@ buf lint
 
    (Optional) Follow https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/
    to setup your SSH keys. You can then use SSH to interact with git
-
-3. Bazel install
-
-    Create a file `.bazelrc` in your harness-core repo root with the following content
-    ```
-    import bazelrc.local
-    ```
+   
     NOTE: If you have regular bazel installed, please uninstall bazel and install bazelisk. It allows us to use the git repo to synchronize everyone's installation of bazel.
 
 4. Setup the build purpose
@@ -118,14 +116,16 @@ buf lint
    
 4. Go to `harness-core` directory and run
 
-    `scripts/bazel/generate_credentials.sh`
-    `bazel build //...` or `bazel build :all`
+    ```
+    scripts/bazel/generate_credentials.sh
+    bazel build //... or bazel build :all
+    ```
 
 5. If Global Search is not required:
 
     Install and start MongoDB Docker Image (v4.2):
     ```
-    $ docker run -p 127.0.0.1:27017:27017 -v ~/_mongodb_data:/data/db --name mongoContainer -d --rm mongo:4.2
+    docker run -p 127.0.0.1:27017:27017 -v ~/_mongodb_data:/data/db --name mongoContainer -d --rm mongo:4.2
     ```
     Verify the container is running using `docker ps`
 
@@ -135,7 +135,7 @@ buf lint
 
     Install and start Elasticsearch Docker Image for Search(v7.3):
     ```
-    $ docker run -p 9200:9200 -p 9300:9300 -v ~/_elasticsearch_data:/usr/share/elasticsearch/data -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:7.3.0
+    docker run -p 9200:9200 -p 9300:9300 -v ~/_elasticsearch_data:/usr/share/elasticsearch/data -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:7.3.0
     ```
 
     In harness-core/360-cg-manager/config.yml set `searchEnabled` to `true`.
@@ -143,7 +143,7 @@ buf lint
     Run mongo in replica set:
 
     ```
-    $ docker-compose -f <Directory to harness-core>/harness-core/docker-files/mongo-replicaset/docker-compose.yml up -d
+    docker-compose -f <Directory to harness-core>/harness-core/docker-files/mongo-replicaset/docker-compose.yml up -d
     ```
 
     Add this to /etc/hosts:
@@ -238,6 +238,10 @@ alias runui='run_ui'
 ### Editing setup
 
 1. Install [clang-format](https://clang.llvm.org/docs/ClangFormat.html) (11.0.0)
+If on MacOS you can download this via brew `brew install clang-format@11`
+
+else
+
 Download the clang 11.0.0 tar from [this page](https://releases.llvm.org/download.html)
 Untar the downloaded file and add it to your PATH in `~/.bashrc` or `~/.zshrc`
 
@@ -260,13 +264,20 @@ helper shell scripts:
 ### IntelliJ Setup
 
 1. Install IntelliJ
-   
-   **NOTE** Bazel plugin usually doesn't support the latest IntelliJ versions, so install the [last supported version](https://github.com/bazelbuild/intellij/blob/master/intellij_platform_sdk/build_defs.bzl#L11).
-2. Import `harness-core` as a Bazel project
+  
+   NOTE: Download IntelliJ as per your macOS architecture i.e. x86_64 (intel) or arm64 (Apple silicon). You can check your architecture by command “uname -m“.
+  
+   It's recommended to install the latest version of IntelliJ that's supported by the Bazel Plugin. To find the latest supported version, please refer to the [bazel github project](https://github.com/bazelbuild/intellij/blob/master/intellij_platform_sdk/build_defs.bzl#L11).
+
+   After identifying the desired version of IntelliJ, you can download it from [jetbrains.com](https://www.jetbrains.com/idea/download/other.html).
+
+2. Install bazel project plugin from the IntelliJ marketplace
+
+3. Import `harness-core` as a Bazel project
    1. Open `File > Import Bazel Project...`
    1. Enter `/path/to/repo/harness-core` for Workspace, click Next
    1. Select `Import project view file` and enter `project/bazelproject` as the Project view
-3. Install ClangFormatIJ Plugin: https://plugins.jetbrains.com/plugin/8396-clangformatij
+4. Install ClangFormatIJ Plugin: https://plugins.jetbrains.com/plugin/8396-clangformatij
    (use `Ctrl/Cmd-Alt-K` to format current statement or the selection)
 
    **WARNING:** For unclear reason in some environments the plugin causes IntelliJ to hang. If you are unlucky
@@ -279,17 +290,24 @@ helper shell scripts:
    Then follow these instructions https://www.jetbrains.com/help/idea/configuring-keyboard-shortcuts.html to
    assign whatever key combination you would like it to be triggered on.
 
-4. Install Lombok Plugin: https://projectlombok.org/setup/intellij
-5. Install SonarLint plugin:
+5. Install Lombok Plugin: https://projectlombok.org/setup/intellij
+   
+   *Not required for IntelliJ 2020.3 and later versions - the Lombok Plugin comes pre-bundled with IntelliJ*
+
+6. Install SonarLint plugin:
    - This plugin is really helpful to analyze your code for issues as you code.
    - Go to `Preferences -> Plugins` ->  type SonarLint -> Install plugin. (Will need to restart Intellij)
-   - Go to `Preferences -> Tools -> SonarLint`. Check "Automatically trigger analysis". Add a connection to `https://sonar.harness.io`. You'll need to create a custom token.
+   - Go to `Preferences -> Tools -> SonarLint`.
+   
+      Check "Automatically trigger analysis".
+   
+      Add a SonarQube connection to `https://sonar.harness.io` (requires VPN connection). As part of the connection-setup you'll be directed to sonar.harness.io to create a custom security token.
    - Go to `Preferences -> Tools -> SonarLint -> Project Settings`. Check "Bind project to sonarqube", and select the connection, and set project as `portal_bazel`. This is so that we use the same rules locally instead of the default rules.
     ![config image](img/sonar-config.png).
    - Go to `Preferences -> Editor -> Colorscheme -> Sonarlint`. For Blocker, Critical & Major, untick "Inherit values from" checkbox and configure a different highlighting style. These violations are treated as release blockers and this configuration is to highlight them differently from regular warnings.
     ![config image](img/sonar-highlight-config.png).
    - Just right click on file in intellij and "Analyze with SonarLint" or enable autoscan.
-6. Install the [Checkstyle-Idea Plugin](https://plugins.jetbrains.com/plugin/1065-checkstyle-idea).
+7. Install the [Checkstyle-Idea Plugin](https://plugins.jetbrains.com/plugin/1065-checkstyle-idea).
 
    1. Run Maven build of the tools directory
       ```
@@ -299,13 +317,11 @@ helper shell scripts:
    1. Setup Checkstyle plugin. In `Preferences -> Tools -> Checkstyle` add `tools/config/target/config-0.0.1-SNAPSHOT-jar-with-dependencies.jar` and `tools/checkstyle/target/checkstyle-0.0.1-SNAPSHOT.jar` jars in the repo to the 3rd party checks classpath. Add configuration file `harness_checks.xml` (Choose the option to resolve the file from the 3rd party checks classpath - it's within the config jar) and choose it as the default active. Set scan scope to  `java sources including tests`. In case Intellij complains about missing Harness rule files add following jar to Third-Party Checks `tools/checkstyle/target/checkstyle-0.0.1-SNAPSHOT.jar`. Additionally, check version of Checkstyle plugin to be 8.20 `Preferences > Tools > Checkstyle > Checkstyle Version:`
    *  ![config image](img/checkstyle-config-pre.png).
    *  ![config image](img/checkstyle-config.png).
-7. Change settings to mark injected fields as assigned. (Preferences -> Editor -> Inspections -> Java -> Declaration Redundancy -> Unused Declarations -> Entry Points ->
+8. Change settings to mark injected fields as assigned. (Preferences -> Editor -> Inspections -> Java -> Declaration Redundancy -> Unused Declarations -> Entry Points ->
    Annotations -> Mark field as implicitly written if annotated by) Click add, then search for "Inject". Add both google and javax annotations.
    *  ![config image](img/annotation_config.png).
 
-8. Increase Build Process Heap Size (Preferences > Build, Execution, Development > Compiler, search for "Build Process Heap Size" and set it to 2048 or higher if you still see an out of memory exception in future)
-
-9. Install bazel project plugin from the IntelliJ marketplace
+9. Increase Build Process Heap Size (Preferences > Build, Execution, Development > Compiler, search for "Build Process Heap Size" and set it to 2048 or higher if you still see an out of memory exception in future)
 
 10. If facing build issues make sure you have enabled "Always update snapshots" in IntelliJ (Preferences > Build, Execution, Deployment > Build Tools > Maven)
 
@@ -563,7 +579,7 @@ git clone git@github.com:bazelbuild/bazel-gazelle.git
 cd bazel-gazelle
 git reset origin/release-0.21 --hard
 cd cmd/gazelle
-baselisk build gazelle
+bazelisk build gazelle
 $(bazelisk info bazel-bin)/cmd/gazelle/gazelle_/gazelle
 # it expands out to something like below, giving the 0.21 binary
 /home/tp/.cache/bazel/_bazel_tp/46ccc68b31f8c833946cfcd24410eb45/execroot/bazel_gazelle/bazel-out/k8-fastbuild/bin/cmd/gazelle/gazelle_/gazelle

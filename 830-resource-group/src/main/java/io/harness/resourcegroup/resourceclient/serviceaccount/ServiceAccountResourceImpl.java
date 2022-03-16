@@ -21,8 +21,8 @@ import io.harness.eventsframework.EventsFrameworkMetadataConstants;
 import io.harness.eventsframework.consumer.Message;
 import io.harness.eventsframework.entity_crud.EntityChangeDTO;
 import io.harness.resourcegroup.beans.ValidatorType;
-import io.harness.resourcegroup.framework.service.Resource;
-import io.harness.resourcegroup.framework.service.ResourceInfo;
+import io.harness.resourcegroup.framework.v1.service.Resource;
+import io.harness.resourcegroup.framework.v1.service.ResourceInfo;
 import io.harness.serviceaccount.ServiceAccountDTO;
 import io.harness.serviceaccount.remote.ServiceAccountClient;
 
@@ -65,7 +65,10 @@ public class ServiceAccountResourceImpl implements Resource {
   @Override
   public Map<ScopeLevel, EnumSet<ValidatorType>> getSelectorKind() {
     return ImmutableMap.of(ScopeLevel.ACCOUNT,
-        EnumSet.of(BY_RESOURCE_IDENTIFIER, BY_RESOURCE_TYPE, BY_RESOURCE_TYPE_INCLUDING_CHILD_SCOPES));
+        EnumSet.of(BY_RESOURCE_IDENTIFIER, BY_RESOURCE_TYPE, BY_RESOURCE_TYPE_INCLUDING_CHILD_SCOPES),
+        ScopeLevel.ORGANIZATION,
+        EnumSet.of(BY_RESOURCE_IDENTIFIER, BY_RESOURCE_TYPE, BY_RESOURCE_TYPE_INCLUDING_CHILD_SCOPES),
+        ScopeLevel.PROJECT, EnumSet.of(BY_RESOURCE_IDENTIFIER, BY_RESOURCE_TYPE));
   }
 
   @Override
@@ -75,7 +78,7 @@ public class ServiceAccountResourceImpl implements Resource {
 
   @Override
   public Set<ScopeLevel> getValidScopeLevels() {
-    return EnumSet.of(ScopeLevel.ACCOUNT);
+    return EnumSet.of(ScopeLevel.ACCOUNT, ScopeLevel.ORGANIZATION, ScopeLevel.PROJECT);
   }
 
   @Override

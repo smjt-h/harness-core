@@ -2089,15 +2089,35 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareNewPodsHelm() throws Exception {
     List<Instance> instancesInDb =
-        Arrays.asList(createKubernetesContainerInstance("instance1", "releaseX", "namespaceX"),
-            createKubernetesContainerInstance("instance2", "releaseX", "namespaceX"),
-            createKubernetesContainerInstance("instance3", "releaseX", "namespaceY"),
-            createKubernetesContainerInstance("instance4", "releaseY", "namespaceX"),
-            createKubernetesContainerInstance("instance5", "releaseY", "namespaceY"));
+        Arrays.asList(createKubernetesContainerInstance("instance1", "releaseX", "namespaceX", "controller1"),
+            createKubernetesContainerInstance("instance2", "releaseX", "namespaceX", "controller1"),
+            createKubernetesContainerInstance("instance3", "releaseX", "namespaceY", "controller1"),
+            createKubernetesContainerInstance("instance4", "releaseY", "namespaceX", "controller1"),
+            createKubernetesContainerInstance("instance5", "releaseY", "namespaceY", "controller1"));
 
     ContainerSyncResponse instanceSyncResponse =
-        createContainerSyncResponseWith("releaseX", "namespaceX", "instance1", "instance2", "instance6");
+        createContainerSyncResponseWith("releaseX", "namespaceX", "controller1", "instance1", "instance2", "instance6");
 
+    assertSavedAndDeletedInstances(instancesInDb, instanceSyncResponse, singletonList("instance6"), emptyList());
+  }
+
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(UnitTests.class)
+  public void shouldUpdateInstancesFromPerpetualTaskResponseControllerNameIsEmpty() throws Exception {
+    List<Instance> instancesInDb =
+        Arrays.asList(createKubernetesContainerInstance("instance1", "releaseX", "namespaceX", null),
+            createKubernetesContainerInstance("instance2", "releaseX", "namespaceX", null),
+            createKubernetesContainerInstance("instance3", "releaseX", "namespaceY", null),
+            createKubernetesContainerInstance("instance4", "releaseY", "namespaceX", null),
+            createKubernetesContainerInstance("instance5", "releaseY", "namespaceY", null));
+
+    doReturn(true).when(featureFlagService).isEnabled(FeatureName.KEEP_PT_AFTER_K8S_DOWNSCALE, ACCOUNT_ID);
+
+    // Ref: ContainerInstanceSyncPerpetualTaskClient#getPerpetualTaskData at 207, controllerName will be always empty
+    // string when the actual value is null
+    ContainerSyncResponse instanceSyncResponse =
+        createContainerSyncResponseWith("releaseX", "namespaceX", "", "instance1", "instance2", "instance6");
     assertSavedAndDeletedInstances(instancesInDb, instanceSyncResponse, singletonList("instance6"), emptyList());
   }
 
@@ -2122,14 +2142,15 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareNoNewPodsHelm() throws Exception {
     List<Instance> instancesInDb =
-        Arrays.asList(createKubernetesContainerInstance("instance1", "releaseX", "namespaceX"),
-            createKubernetesContainerInstance("instance2", "releaseX", "namespaceX"),
-            createKubernetesContainerInstance("instance3", "releaseX", "namespaceY"),
-            createKubernetesContainerInstance("instance4", "releaseY", "namespaceX"),
-            createKubernetesContainerInstance("instance5", "releaseY", "namespaceY"));
+        Arrays.asList(createKubernetesContainerInstance("instance1", "releaseX", "namespaceX", "controller1"),
+            createKubernetesContainerInstance("instance2", "releaseX", "namespaceX", "controller1"),
+            createKubernetesContainerInstance("instance3", "releaseX", "namespaceX", "controller2"),
+            createKubernetesContainerInstance("instance4", "releaseX", "namespaceY", "controller1"),
+            createKubernetesContainerInstance("instance5", "releaseY", "namespaceX", "controller2"),
+            createKubernetesContainerInstance("instance6", "releaseY", "namespaceY", "controller3"));
 
     ContainerSyncResponse instanceSyncResponse =
-        createContainerSyncResponseWith("releaseX", "namespaceX", "instance1", "instance2");
+        createContainerSyncResponseWith("releaseX", "namespaceX", "controller1", "instance1", "instance2");
 
     assertSavedAndDeletedInstances(instancesInDb, instanceSyncResponse, emptyList(), emptyList());
   }
@@ -2155,14 +2176,15 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldUpdateInstancesFromPerpetualTaskResponseReleaseAndNamespaceAwareDeletedPodsHelm() throws Exception {
     List<Instance> instancesInDb =
-        Arrays.asList(createKubernetesContainerInstance("instance1", "releaseX", "namespaceX"),
-            createKubernetesContainerInstance("instance2", "releaseX", "namespaceX"),
-            createKubernetesContainerInstance("instance3", "releaseX", "namespaceX"),
-            createKubernetesContainerInstance("instance4", "releaseX", "namespaceY"),
-            createKubernetesContainerInstance("instance5", "releaseY", "namespaceX"),
-            createKubernetesContainerInstance("instance6", "releaseY", "namespaceY"));
+        Arrays.asList(createKubernetesContainerInstance("instance1", "releaseX", "namespaceX", "controller1"),
+            createKubernetesContainerInstance("instance2", "releaseX", "namespaceX", "controller1"),
+            createKubernetesContainerInstance("instance3", "releaseX", "namespaceX", "controller1"),
+            createKubernetesContainerInstance("instance4", "releaseX", "namespaceY", "controller2"),
+            createKubernetesContainerInstance("instance5", "releaseY", "namespaceX", "controller2"),
+            createKubernetesContainerInstance("instance6", "releaseY", "namespaceY", "controller3"));
 
-    ContainerSyncResponse instanceSyncResponse = createContainerSyncResponseWith("releaseX", "namespaceX", "instance2");
+    ContainerSyncResponse instanceSyncResponse =
+        createContainerSyncResponseWith("releaseX", "namespaceX", "controller1", "instance2");
 
     assertSavedAndDeletedInstances(instancesInDb, instanceSyncResponse, emptyList(), asList("instance1", "instance3"));
   }
@@ -2199,8 +2221,8 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
             createKubernetesContainerInstance("instance6", "releaseY", "namespaceX"),
             createKubernetesContainerInstance("instance7", "releaseY", "namespaceY"));
 
-    ContainerSyncResponse instanceSyncResponse =
-        createContainerSyncResponseWith("releaseX", "namespaceX", "instance2", "instance3", "instance8", "instance9");
+    ContainerSyncResponse instanceSyncResponse = createContainerSyncResponseWith(
+        "releaseX", "namespaceX", null, "instance2", "instance3", "instance8", "instance9");
 
     assertSavedAndDeletedInstances(
         instancesInDb, instanceSyncResponse, asList("instance8", "instance9"), asList("instance1", "instance4"));
@@ -2270,7 +2292,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void shouldThrowNoInstancesExceptionForKubernetesContainerDeploymentNoInstancesInDb() {
-    ContainerSyncResponse syncResponse = createContainerSyncResponseWith("release-name", "default");
+    ContainerSyncResponse syncResponse = createContainerSyncResponseWith("release-name", "default", "controller");
     doReturn(true).when(featureFlagService).isEnabled(FeatureName.KEEP_PT_AFTER_K8S_DOWNSCALE, ACCOUNT_ID);
 
     assertThatThrownBy(() -> assertSavedAndDeletedInstances(emptyList(), syncResponse, emptyList(), emptyList()))
@@ -2282,7 +2304,8 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldAddInstancesFromContainerSyncEvenNoInstancesInDb() {
     ContainerSyncResponse syncResponse =
-        createContainerSyncResponseWith("release-name", "default", "instance-1", "instance-2");
+        createContainerSyncResponseWith("release-name", "default", "controller", "instance-1", "instance-2");
+    doReturn(true).when(featureFlagService).isEnabled(FeatureName.KEEP_PT_AFTER_K8S_DOWNSCALE, ACCOUNT_ID);
 
     assertSavedAndDeletedInstances(emptyList(), syncResponse, asList("instance-1", "instance-2"), emptyList());
   }
@@ -2378,6 +2401,11 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   }
 
   private Instance createKubernetesContainerInstance(String id, String releaseName, String namespace) {
+    return createKubernetesContainerInstance(id, releaseName, namespace, null);
+  }
+
+  private Instance createKubernetesContainerInstance(
+      String id, String releaseName, String namespace, String controllerName) {
     return Instance.builder()
         .uuid(id)
         .instanceType(KUBERNETES_CONTAINER_INSTANCE)
@@ -2387,6 +2415,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
                           .podName(id)
                           .namespace(namespace)
                           .releaseName(releaseName)
+                          .controllerName(controllerName)
                           .build())
         .lastWorkflowExecutionId("1")
         .build();
@@ -2402,7 +2431,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
   }
 
   private ContainerSyncResponse createContainerSyncResponseWith(
-      String releaseName, String namespace, String... podIds) {
+      String releaseName, String namespace, String controllerName, String... podIds) {
     return ContainerSyncResponse.builder()
         .namespace(namespace)
         .releaseName(releaseName)
@@ -2415,6 +2444,7 @@ public class ContainerInstanceHandlerTest extends WingsBaseTest {
                                           .podName(id)
                                           .build())
                                .collect(Collectors.toList()))
+        .controllerName(controllerName)
         .build();
   }
 

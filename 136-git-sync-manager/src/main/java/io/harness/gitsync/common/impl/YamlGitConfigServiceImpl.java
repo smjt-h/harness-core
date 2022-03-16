@@ -10,6 +10,7 @@ package io.harness.gitsync.common.impl;
 import static io.harness.NGConstants.ENTITY_REFERENCE_LOG_PREFIX;
 import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.data.structure.CollectionUtils.emptyIfNull;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.HarnessStringUtils.nullIfEmpty;
 import static io.harness.encryption.ScopeHelper.getScope;
@@ -17,10 +18,9 @@ import static io.harness.gitsync.common.YamlConstants.HARNESS_FOLDER_EXTENSION;
 import static io.harness.gitsync.common.YamlConstants.PATH_DELIMITER;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.SYNCED;
 import static io.harness.gitsync.common.remote.YamlGitConfigMapper.toYamlGitConfig;
+import static io.harness.ng.core.utils.URLDecoderUtility.getDecodedString;
 
-import io.harness.account.AccountClient;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.FeatureName;
 import io.harness.beans.HookEventType;
 import io.harness.beans.IdentifierRef;
 import io.harness.connector.ConnectorInfoDTO;
@@ -40,6 +40,7 @@ import io.harness.eventsframework.schemas.entity.EntityScopeInfo;
 import io.harness.eventsframework.schemas.entity.EntityTypeProtoEnum;
 import io.harness.eventsframework.schemas.entity.IdentifierRefProtoDTO;
 import io.harness.eventsframework.schemas.entitysetupusage.EntitySetupUsageCreateV2DTO;
+import io.harness.exception.DuplicateEntityException;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.common.beans.YamlGitConfig;
@@ -52,13 +53,13 @@ import io.harness.gitsync.common.helper.UserProfileHelper;
 import io.harness.gitsync.common.remote.YamlGitConfigMapper;
 import io.harness.gitsync.common.service.GitBranchService;
 import io.harness.gitsync.common.service.GitSyncSettingsService;
+import io.harness.gitsync.common.service.ScmFacilitatorService;
 import io.harness.gitsync.common.service.YamlGitConfigService;
 import io.harness.lock.AcquiredLock;
 import io.harness.lock.PersistentLocker;
 import io.harness.ng.webhook.UpsertWebhookRequestDTO;
 import io.harness.ng.webhook.UpsertWebhookResponseDTO;
 import io.harness.ng.webhook.services.api.WebhookEventService;
-import io.harness.remote.client.RestClientUtils;
 import io.harness.repositories.repositories.yamlGitConfig.YamlGitConfigRepository;
 import io.harness.utils.IdentifierRefHelper;
 
@@ -83,6 +84,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -105,7 +108,7 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
   private final Producer setupUsageEventProducer;
   private final GitSyncSettingsService gitSyncSettingsService;
   private final UserProfileHelper userProfileHelper;
-  private final AccountClient accountClient;
+  private final ScmFacilitatorService scmFacilitatorService;
 
   @Inject
   public YamlGitConfigServiceImpl(YamlGitConfigRepository yamlGitConfigRepository,
@@ -115,7 +118,8 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
       WebhookEventService webhookEventService, PersistentLocker persistentLocker,
       IdentifierRefProtoDTOHelper identifierRefProtoDTOHelper,
       @Named(EventsFrameworkConstants.SETUP_USAGE) Producer setupUsageEventProducer,
-      GitSyncSettingsService gitSyncSettingsService, UserProfileHelper userProfileHelper, AccountClient accountClient) {
+      GitSyncSettingsService gitSyncSettingsService, UserProfileHelper userProfileHelper,
+      ScmFacilitatorService scmFacilitatorService) {
     this.yamlGitConfigRepository = yamlGitConfigRepository;
     this.connectorService = connectorService;
     this.gitSyncConfigEventProducer = gitSyncConfigEventProducer;
@@ -128,7 +132,7 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
     this.setupUsageEventProducer = setupUsageEventProducer;
     this.gitSyncSettingsService = gitSyncSettingsService;
     this.userProfileHelper = userProfileHelper;
-    this.accountClient = accountClient;
+    this.scmFacilitatorService = scmFacilitatorService;
   }
 
   @Override
@@ -198,20 +202,12 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
 
   @Override
   public YamlGitConfigDTO save(YamlGitConfigDTO ygs) {
-    if (isFullSyncEnabled(ygs.getAccountIdentifier())) {
-      userProfileHelper.validateIfScmUserProfileIsSet(ygs.getAccountIdentifier());
-    }
-    return saveInternal(ygs, ygs.getAccountIdentifier());
-  }
+    userProfileHelper.validateIfScmUserProfileIsSet(ygs.getAccountIdentifier());
 
-  private boolean isFullSyncEnabled(String accountIdentifier) {
-    try {
-      return RestClientUtils.getResponse(
-          accountClient.isFeatureFlagEnabled(FeatureName.NG_GIT_FULL_SYNC.name(), accountIdentifier));
-    } catch (Exception ex) {
-      log.error("Exception occurred while checking Full-Sync Feature Flag enablement", ex);
-      return false;
-    }
+    // before saving the git config, check if branch exists
+    // otherwise we end-up saving invalid git configs
+    checkIfBranchExists(ygs);
+    return saveInternal(ygs, ygs.getAccountIdentifier());
   }
 
   void validatePresenceOfRequiredFields(Object... fields) {
@@ -277,9 +273,8 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
     } catch (DuplicateKeyException ex) {
       log.error("A git sync config with this identifier or repo %s and branch %s already exists",
           gitSyncConfigDTO.getRepo(), gitSyncConfigDTO.getBranch());
-      throw new InvalidRequestException(
-          String.format("A git sync config with this identifier or repo %s and branch %s already exists",
-              gitSyncConfigDTO.getRepo(), gitSyncConfigDTO.getBranch()));
+      throw new DuplicateEntityException(String.format(
+          "A git sync config with this identifier or repo %s already exists", gitSyncConfigDTO.getRepo()));
     }
 
     executorService.submit(() -> {
@@ -299,8 +294,9 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
 
   private void saveWebhook(YamlGitConfigDTO gitSyncConfigDTO) {
     if (isNewRepoInProject(gitSyncConfigDTO)) {
-      UpsertWebhookResponseDTO upsertWebhookResponseDTO = registerWebhook(gitSyncConfigDTO);
-      log.info("Response of Upsert Webhook {}", upsertWebhookResponseDTO);
+      final RetryPolicy<Object> retryPolicy = getWebhookRegistrationRetryPolicy(
+          "[Retrying] attempt: {} for failure case of save webhook call", "Failed to save webhook after {} attempts");
+      Failsafe.with(retryPolicy).get(() -> registerWebhook(gitSyncConfigDTO));
     }
   }
 
@@ -440,6 +436,14 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
     final UpdateResult status = yamlGitConfigRepository.update(query, update);
     log.info("Updated the repo and branch of YamlGitConfig [{}] with modified count [{}]", yamlGitConfigIdentifier,
         status.getModifiedCount());
+  }
+
+  @Override
+  public void deleteAllEntities(String accountIdentifier, String orgIdentifier, String projectIdentifier) {
+    List<YamlGitConfigDTO> yamlGitConfigDTOS = list(projectIdentifier, orgIdentifier, accountIdentifier);
+    deleteExistingSetupUsages(yamlGitConfigDTOS);
+    yamlGitConfigRepository.deleteByAccountIdAndOrgIdentifierAndProjectIdentifier(
+        accountIdentifier, orgIdentifier, projectIdentifier);
   }
 
   public Optional<ConnectorInfoDTO> getGitConnector(IdentifierRef identifierRef) {
@@ -635,5 +639,26 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
         gitBranchService.deleteAll(gitSyncConfigDTO.getAccountIdentifier(), gitSyncConfigDTO.getRepo());
       }
     }
+  }
+
+  private void checkIfBranchExists(YamlGitConfigDTO ygs) {
+    IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRef(ygs.getGitConnectorRef(),
+        ygs.getAccountIdentifier(), ygs.getOrganizationIdentifier(), ygs.getProjectIdentifier());
+    // listBranchesUsingConnector will throw error if repo url doesn't exists
+    List<String> branches = scmFacilitatorService.listBranchesUsingConnector(identifierRef.getAccountIdentifier(),
+        ygs.getOrganizationIdentifier(), ygs.getProjectIdentifier(), ygs.getGitConnectorRef(),
+        getDecodedString(ygs.getRepo()), null, null);
+
+    if (isEmpty(branches) || !branches.contains(ygs.getBranch())) {
+      throw new InvalidRequestException(String.format("Error while checking the branch. Branch doesn't exists."));
+    }
+  }
+
+  private RetryPolicy<Object> getWebhookRegistrationRetryPolicy(String failedAttemptMessage, String failureMessage) {
+    return new RetryPolicy<>()
+        .handle(Exception.class)
+        .withMaxAttempts(2)
+        .onFailedAttempt(event -> log.info(failedAttemptMessage, event.getAttemptCount(), event.getLastFailure()))
+        .onFailure(event -> log.error(failureMessage, event.getAttemptCount(), event.getFailure()));
   }
 }

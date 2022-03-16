@@ -11,7 +11,10 @@ import io.harness.annotations.ExposeInternalException;
 import io.harness.cvng.activity.beans.DeploymentActivitySummaryDTO;
 import io.harness.cvng.analysis.beans.LogAnalysisClusterChartDTO;
 import io.harness.cvng.analysis.beans.LogAnalysisClusterDTO;
+import io.harness.cvng.analysis.beans.LogAnalysisClusterWithCountDTO;
 import io.harness.cvng.analysis.beans.TransactionMetricInfoSummaryPageDTO;
+import io.harness.cvng.beans.cvnglog.CVNGLogDTO;
+import io.harness.cvng.beans.cvnglog.CVNGLogType;
 import io.harness.cvng.cdng.beans.InputSetTemplateRequest;
 import io.harness.cvng.cdng.beans.InputSetTemplateResponse;
 import io.harness.cvng.cdng.services.api.CVNGStepService;
@@ -31,6 +34,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import java.util.List;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
@@ -125,6 +129,19 @@ public class CVNGStepResource {
         accountId, callBackId, label, deploymentLogAnalysisFilter, pageParams));
   }
 
+  @Path("/{verifyStepExecutionId}/deployment-log-analysis-data-v2")
+  @GET
+  @Timed
+  @ExceptionMetered
+  @ApiOperation(value = "get logs for given activity", nickname = "getVerifyStepDeploymentLogAnalysisResultV2")
+  public RestResponse<LogAnalysisClusterWithCountDTO> getDeploymentLogAnalysisResultV2(
+      @NotEmpty @NotNull @QueryParam("accountId") String accountId,
+      @PathParam("verifyStepExecutionId") String callBackId, @QueryParam("label") Integer label,
+      @BeanParam DeploymentLogAnalysisFilter deploymentLogAnalysisFilter, @BeanParam PageParams pageParams) {
+    return new RestResponse(stepTaskService.getDeploymentActivityLogAnalysisResultV2(
+        accountId, callBackId, label, deploymentLogAnalysisFilter, pageParams));
+  }
+
   @GET
   @Path("/{verifyStepExecutionId}/all-transaction-names")
   @Timed
@@ -143,6 +160,22 @@ public class CVNGStepResource {
   public RestResponse<List<String>> getNodeNames(@NotEmpty @NotNull @QueryParam("accountId") String accountId,
       @NotEmpty @NotNull @PathParam("verifyStepExecutionId") String callBackId) {
     return new RestResponse(stepTaskService.getNodeNames(accountId, callBackId));
+  }
+
+  @GET
+  @Path("/{verifyStepExecutionId}/logs")
+  @Timed
+  @ExceptionMetered
+  @ApiOperation(value = "get verify step logs", nickname = "getVerifyStepLogs")
+  public RestResponse<PageResponse<CVNGLogDTO>> getLogs(@NotEmpty @NotNull @QueryParam("accountId") String accountId,
+      @NotEmpty @NotNull @PathParam("verifyStepExecutionId") String callBackId,
+      @NotEmpty @NotNull @QueryParam("logType") String logType,
+      @QueryParam("healthSources") List<String> healthSourceIdentifiers,
+      @QueryParam("errorLogsOnly") @ApiParam(defaultValue = "false") boolean errorLogsOnly,
+      @BeanParam PageParams pageParams) {
+    CVNGLogType cvngLogType = CVNGLogType.toCVNGLogType(logType);
+    return new RestResponse(stepTaskService.getCVNGLogs(
+        accountId, callBackId, cvngLogType, healthSourceIdentifiers, errorLogsOnly, pageParams));
   }
 
   /**

@@ -47,7 +47,7 @@ public class KubernetesClusterActivity extends Activity {
   String reason;
   String message;
   String resourceVersion;
-  List<ServiceEnvironment> relatedAppServices;
+  List<RelatedAppMonitoredService> relatedAppServices;
 
   @Override
   public ActivityType getType() {
@@ -127,8 +127,7 @@ public class KubernetesClusterActivity extends Activity {
   @FieldNameConstants(innerTypeName = "ServiceEnvironmentKeys")
   @Value
   @Builder
-  public static class ServiceEnvironment {
-    String serviceIdentifier;
-    String environmentIdentifier;
+  public static class RelatedAppMonitoredService {
+    String monitoredServiceIdentifier;
   }
 }

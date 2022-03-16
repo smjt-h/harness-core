@@ -31,6 +31,7 @@ import static io.harness.helm.HelmConstants.REPO_URL;
 import static io.harness.helm.HelmConstants.USERNAME;
 import static io.harness.helm.HelmConstants.V3Commands.HELM_CACHE_HOME;
 import static io.harness.helm.HelmConstants.V3Commands.HELM_CACHE_HOME_PATH;
+import static io.harness.helm.HelmConstants.V3Commands.HELM_REPO_ADD_FORCE_UPDATE;
 import static io.harness.helm.HelmConstants.V3Commands.HELM_REPO_FLAGS;
 import static io.harness.helm.HelmConstants.VALUES_YAML;
 import static io.harness.helm.HelmConstants.WORKING_DIR_BASE;
@@ -76,6 +77,8 @@ import io.harness.logging.LogCallback;
 import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.utils.FieldWithPlainTextOrSecretValueHelper;
 
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
 import com.esotericsoftware.yamlbeans.YamlException;
@@ -94,6 +97,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -102,6 +106,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.zeroturnaround.exec.ProcessExecutor;
@@ -118,6 +124,7 @@ public class HelmTaskHelperBase {
   @Inject private K8sGlobalConfigService k8sGlobalConfigService;
   @Inject private NGChartMuseumService ngChartMuseumService;
   @Inject private SecretDecryptionService decryptionService;
+  private String randPrefix;
 
   public void initHelm(String workingDirectory, HelmVersion helmVersion, long timeoutInMillis) throws IOException {
     String helmHomePath = getHelmHomePath(workingDirectory);
@@ -156,8 +163,8 @@ public class HelmTaskHelperBase {
     log.info(repoAddCommandForLogging);
     log.info(ADD_COMMAND_FOR_REPOSITORY + repoDisplayName);
 
-    ProcessResult processResult = executeCommand(environment, repoAddCommand, chartDirectory,
-        "add helm repo. Executed command" + repoAddCommandForLogging, timeoutInMillis, HelmCliCommandType.REPO_ADD);
+    ProcessResult processResult = executeAddRepo(
+        repoAddCommand, environment, chartDirectory, timeoutInMillis, repoAddCommandForLogging, helmVersion);
     if (processResult.getExitValue() != 0) {
       throw new HelmClientException("Failed to add helm repo. Executed command " + repoAddCommandForLogging + ". "
               + processResult.getOutput().getUTF8(),
@@ -166,16 +173,47 @@ public class HelmTaskHelperBase {
   }
 
   public void addRepo(String repoName, String repoDisplayName, String chartRepoUrl, String username, char[] password,
-      String chartDirectory, HelmVersion helmVersion, long timeoutInMillis, boolean useRepoFlags) {
+      String chartDirectory, HelmVersion helmVersion, long timeoutInMillis, boolean useRepoFlags,
+      boolean deleteRepoCacheDir) {
     if (!useRepoFlags) {
       addRepo(repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory, helmVersion, timeoutInMillis,
           EMPTY);
       return;
     }
-    String dir = Paths.get(RESOURCE_DIR_BASE, repoName, "cache").toAbsolutePath().normalize().toString();
+
+    String dir;
+    if (deleteRepoCacheDir) {
+      randPrefix = RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT);
+      dir = Paths.get(RESOURCE_DIR_BASE, repoName, randPrefix, "cache").toAbsolutePath().normalize().toString();
+    } else {
+      dir = Paths.get(RESOURCE_DIR_BASE, repoName, "cache").toAbsolutePath().normalize().toString();
+    }
+
     addRepo(
         repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory, helmVersion, timeoutInMillis, dir);
     updateRepo(repoName, chartDirectory, helmVersion, timeoutInMillis, dir);
+  }
+
+  private ProcessResult executeAddRepo(String addCommand, Map<String, String> env, String chartDirectory,
+      long timeoutInMillis, String addCommandLogging, HelmVersion helmVersion) {
+    ProcessResult processResult = executeCommand(env, addCommand, chartDirectory,
+        "add helm repo. Executed command" + addCommandLogging, timeoutInMillis, HelmCliCommandType.REPO_ADD);
+    if (HelmVersion.V3.equals(helmVersion) && processResult.getExitValue() != 0) {
+      String output = processResult.hasOutput() ? processResult.getOutput().getUTF8() : null;
+      // Starting from helm 3.3.4, when --force-update not enabled and there is an update in repo configuration
+      // (for example, password is updated) helm repo add will fail with: repository name (repo-name) already exists,
+      // please specify a different name. For this case will try again with --force-update
+      if (isNotEmpty(output) && output.contains("already exists")) {
+        String forceAddRepoCommand = addCommand + HELM_REPO_ADD_FORCE_UPDATE;
+        String forceAddCommandLogging = addCommandLogging + HELM_REPO_ADD_FORCE_UPDATE;
+        log.info("Detected repository configuration change after executing: {}. Try again using: {}", addCommandLogging,
+            forceAddCommandLogging);
+        return executeCommand(env, forceAddRepoCommand, chartDirectory,
+            "add helm repo. Executed command" + forceAddCommandLogging, timeoutInMillis, HelmCliCommandType.REPO_ADD);
+      }
+    }
+
+    return processResult;
   }
 
   private String getHttpRepoAddCommand(String repoName, String chartRepoUrl, String username, char[] password,
@@ -352,7 +390,7 @@ public class HelmTaskHelperBase {
 
   public void fetchChartFromRepo(String repoName, String repoDisplayName, String chartName, String chartVersion,
       String chartDirectory, HelmVersion helmVersion, HelmCommandFlag helmCommandFlag, long timeoutInMillis,
-      boolean useRepoFlags, boolean checkIncorrectChartVersion) {
+      boolean useRepoFlags, boolean checkIncorrectChartVersion, boolean deleteRepoCacheDir) {
     String helmFetchCommand =
         getHelmFetchCommand(chartName, chartVersion, repoName, chartDirectory, helmVersion, helmCommandFlag);
     if (!useRepoFlags) {
@@ -360,9 +398,27 @@ public class HelmTaskHelperBase {
           chartVersion, checkIncorrectChartVersion);
       return;
     }
-    String dir = Paths.get(RESOURCE_DIR_BASE, repoName, "cache").toAbsolutePath().normalize().toString();
-    executeFetchChartFromRepoUseRepoFlag(chartName, chartDirectory, repoDisplayName, helmFetchCommand, timeoutInMillis,
-        repoName, dir, chartVersion, checkIncorrectChartVersion);
+
+    String dir;
+    if (deleteRepoCacheDir) {
+      dir = Paths.get(RESOURCE_DIR_BASE, repoName, randPrefix, "cache").toAbsolutePath().normalize().toString();
+    } else {
+      dir = Paths.get(RESOURCE_DIR_BASE, repoName, "cache").toAbsolutePath().normalize().toString();
+    }
+
+    try {
+      executeFetchChartFromRepoUseRepoFlag(chartName, chartDirectory, repoDisplayName, helmFetchCommand,
+          timeoutInMillis, repoName, dir, chartVersion, checkIncorrectChartVersion);
+    } finally {
+      if (deleteRepoCacheDir) {
+        try {
+          FileUtils.forceDelete(new File(dir));
+        } catch (IOException ie) {
+          log.error("Deletion of charts folder failed due to : {}",
+              ExceptionMessageSanitizer.sanitizeException(ie).getMessage());
+        }
+      }
+    }
   }
 
   public void executeFetchChartFromRepoUseRepoFlag(String chartName, String chartDirectory, String repoDisplayName,
@@ -428,6 +484,9 @@ public class HelmTaskHelperBase {
   }
 
   private boolean checkChartVersion(String chartVersion, String chartDirectory, String chartName) {
+    if (isEmpty(chartVersion)) {
+      return true;
+    }
     String chart = "";
     try {
       chart = new String(Files.readAllBytes(Paths.get(chartDirectory, chartName, "Chart.yaml")));
@@ -458,10 +517,11 @@ public class HelmTaskHelperBase {
     char[] password = getHttpHelmPassword(httpHelmConnector);
     addRepo(storeDelegateConfig.getRepoName(), storeDelegateConfig.getRepoDisplayName(),
         httpHelmConnector.getHelmRepoUrl(), username, password, destinationDirectory, manifest.getHelmVersion(),
-        timeoutInMillis, false);
+        timeoutInMillis, manifest.isUseRepoFlags(), manifest.isDeleteRepoCacheDir());
     fetchChartFromRepo(storeDelegateConfig.getRepoName(), storeDelegateConfig.getRepoDisplayName(),
         manifest.getChartName(), manifest.getChartVersion(), destinationDirectory, manifest.getHelmVersion(),
-        manifest.getHelmCommandFlag(), timeoutInMillis, false, false);
+        manifest.getHelmCommandFlag(), timeoutInMillis, manifest.isUseRepoFlags(),
+        manifest.isCheckIncorrectChartVersion(), manifest.isDeleteRepoCacheDir());
   }
 
   public void downloadChartFilesUsingChartMuseum(
@@ -489,7 +549,7 @@ public class HelmTaskHelperBase {
       addChartMuseumRepo(repoName, repoDisplayName, chartMuseumServer.getPort(), destinationDirectory,
           manifest.getHelmVersion(), timeoutInMillis);
       fetchChartFromRepo(repoName, repoDisplayName, manifest.getChartName(), manifest.getChartVersion(),
-          destinationDirectory, manifest.getHelmVersion(), manifest.getHelmCommandFlag(), timeoutInMillis, false,
+          destinationDirectory, manifest.getHelmVersion(), manifest.getHelmCommandFlag(), timeoutInMillis, false, false,
           false);
 
     } finally {
@@ -643,6 +703,7 @@ public class HelmTaskHelperBase {
 
   public String fetchValuesYamlFromChart(HelmChartManifestDelegateConfig helmChartManifestDelegateConfig,
       long timeoutInMillis, LogCallback logCallback) throws Exception {
+    logCallback.saveExecutionLog(color("\nStarting fetching Helm values", LogColor.White, LogWeight.Bold));
     String workingDirectory = createNewDirectoryAtPath(Paths.get(WORKING_DIR_BASE).toString());
     logCallback.saveExecutionLog(color("\nFetching values.yaml from helm chart repo", White, Bold));
 
@@ -782,7 +843,7 @@ public class HelmTaskHelperBase {
     char[] password = getHttpHelmPassword(httpHelmConnector);
     addRepo(storeDelegateConfig.getRepoName(), storeDelegateConfig.getRepoDisplayName(),
         httpHelmConnector.getHelmRepoUrl(), username, password, destinationDirectory, manifest.getHelmVersion(),
-        timeoutInMillis, false);
+        timeoutInMillis, false, false);
     updateRepo(
         storeDelegateConfig.getRepoName(), destinationDirectory, manifest.getHelmVersion(), timeoutInMillis, EMPTY);
 

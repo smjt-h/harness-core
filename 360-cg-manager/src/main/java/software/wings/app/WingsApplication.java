@@ -88,6 +88,8 @@ import io.harness.health.HealthMonitor;
 import io.harness.health.HealthService;
 import io.harness.insights.DelegateInsightsSummaryJob;
 import io.harness.iterator.DelegateTaskExpiryCheckIterator;
+import io.harness.iterator.DelegateTaskRebroadcastIterator;
+import io.harness.iterator.FailDelegateTaskIterator;
 import io.harness.lock.AcquiredLock;
 import io.harness.lock.DistributedLockImplementation;
 import io.harness.lock.PersistentLocker;
@@ -127,6 +129,7 @@ import io.harness.perpetualtask.instancesync.AzureVMSSInstanceSyncPerpetualTaskC
 import io.harness.perpetualtask.instancesync.AzureWebAppInstanceSyncPerpetualTaskClient;
 import io.harness.perpetualtask.instancesync.ContainerInstanceSyncPerpetualTaskClient;
 import io.harness.perpetualtask.instancesync.PcfInstanceSyncPerpetualTaskClient;
+import io.harness.perpetualtask.instancesync.PdcPerpetualTaskServiceClient;
 import io.harness.perpetualtask.instancesync.SpotinstAmiInstanceSyncPerpetualTaskClient;
 import io.harness.perpetualtask.internal.PerpetualTaskRecordHandler;
 import io.harness.perpetualtask.k8s.watch.K8sWatchPerpetualTaskServiceClient;
@@ -233,6 +236,7 @@ import software.wings.security.authentication.totp.TotpModule;
 import software.wings.security.encryption.migration.EncryptedDataLocalToGcpKmsMigrationHandler;
 import software.wings.security.encryption.migration.SettingAttributesSecretsMigrationHandler;
 import software.wings.service.impl.AccountServiceImpl;
+import software.wings.service.impl.AppManifestCloudProviderPTaskManager;
 import software.wings.service.impl.ApplicationManifestServiceImpl;
 import software.wings.service.impl.ArtifactStreamServiceImpl;
 import software.wings.service.impl.AuditServiceHelper;
@@ -249,6 +253,7 @@ import software.wings.service.impl.InfrastructureMappingServiceImpl;
 import software.wings.service.impl.SettingAttributeObserver;
 import software.wings.service.impl.SettingsServiceImpl;
 import software.wings.service.impl.WorkflowExecutionServiceImpl;
+import software.wings.service.impl.applicationmanifest.AppManifestSettingAttributePTaskManager;
 import software.wings.service.impl.applicationmanifest.ManifestPerpetualTaskManger;
 import software.wings.service.impl.artifact.ArtifactStreamPTaskManager;
 import software.wings.service.impl.artifact.ArtifactStreamPTaskMigrationJob;
@@ -290,6 +295,7 @@ import software.wings.yaml.gitSync.GitChangeSetRunnable;
 import software.wings.yaml.gitSync.GitSyncEntitiesExpiryHandler;
 
 import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.Annotated;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
@@ -427,6 +433,7 @@ public class WingsApplication extends Application<MainConfiguration> {
   }
 
   public static void configureObjectMapper(final ObjectMapper mapper) {
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     mapper.addMixIn(AssetsConfiguration.class, AssetsConfigurationMixin.class);
     final AnnotationAwareJsonSubtypeResolver subtypeResolver =
         AnnotationAwareJsonSubtypeResolver.newInstance(mapper.getSubtypeResolver());
@@ -494,11 +501,17 @@ public class WingsApplication extends Application<MainConfiguration> {
                                     .subjectCLass(SettingsServiceImpl.class)
                                     .observerClass(CloudProviderObserver.class)
                                     .observer(ClusterRecordHandler.class)
+                                    .observer(AppManifestCloudProviderPTaskManager.class)
                                     .build());
             remoteObservers.add(RemoteObserver.builder()
                                     .subjectCLass(SettingsServiceImpl.class)
                                     .observerClass(SettingAttributeObserver.class)
                                     .observer(ArtifactStreamSettingAttributePTaskManager.class)
+                                    .build());
+            remoteObservers.add(RemoteObserver.builder()
+                                    .subjectCLass(SettingsServiceImpl.class)
+                                    .observerClass(SettingAttributeObserver.class)
+                                    .observer(AppManifestSettingAttributePTaskManager.class)
                                     .build());
             remoteObservers.add(RemoteObserver.builder()
                                     .subjectCLass(InfrastructureDefinitionServiceImpl.class)
@@ -999,6 +1012,8 @@ public class WingsApplication extends Application<MainConfiguration> {
     clientRegistry.registerClient(
         PerpetualTaskType.AWS_SSH_INSTANCE_SYNC, injector.getInstance(AwsSshPerpetualTaskServiceClient.class));
     clientRegistry.registerClient(
+        PerpetualTaskType.PDC_INSTANCE_SYNC, injector.getInstance(PdcPerpetualTaskServiceClient.class));
+    clientRegistry.registerClient(
         PerpetualTaskType.AWS_AMI_INSTANCE_SYNC, injector.getInstance(AwsAmiInstanceSyncPerpetualTaskClient.class));
     clientRegistry.registerClient(PerpetualTaskType.AWS_CODE_DEPLOY_INSTANCE_SYNC,
         injector.getInstance(AwsCodeDeployInstanceSyncPerpetualTaskClient.class));
@@ -1258,7 +1273,6 @@ public class WingsApplication extends Application<MainConfiguration> {
     // delegate task broadcasting schedule job
     injector.getInstance(Key.get(ScheduledExecutorService.class, Names.named("delegateTaskNotifier")))
         .scheduleWithFixedDelay(injector.getInstance(DelegateQueueTask.class), random.nextInt(5), 5L, TimeUnit.SECONDS);
-
     delegateExecutor.scheduleWithFixedDelay(new Schedulable("Failed while monitoring task progress updates",
                                                 injector.getInstance(ProgressUpdateService.class)),
         0L, 5L, TimeUnit.SECONDS);
@@ -1362,10 +1376,15 @@ public class WingsApplication extends Application<MainConfiguration> {
     yamlPushService.getEntityCrudSubject().register(auditService);
 
     ClusterRecordHandler clusterRecordHandler = injector.getInstance(Key.get(ClusterRecordHandler.class));
+    AppManifestCloudProviderPTaskManager appManifestCloudProviderPTaskManager =
+        injector.getInstance(Key.get(AppManifestCloudProviderPTaskManager.class));
     SettingsServiceImpl settingsService = (SettingsServiceImpl) injector.getInstance(Key.get(SettingsService.class));
     settingsService.getSubject().register(clusterRecordHandler);
+    settingsService.getSubject().register(appManifestCloudProviderPTaskManager);
     settingsService.getArtifactStreamSubject().register(
         injector.getInstance(Key.get(ArtifactStreamSettingAttributePTaskManager.class)));
+    settingsService.getAppManifestSubject().register(
+        injector.getInstance(Key.get(AppManifestSettingAttributePTaskManager.class)));
 
     InfrastructureDefinitionServiceImpl infrastructureDefinitionService =
         (InfrastructureDefinitionServiceImpl) injector.getInstance(Key.get(InfrastructureDefinitionService.class));
@@ -1407,6 +1426,10 @@ public class WingsApplication extends Application<MainConfiguration> {
             iteratorsConfig.getPerpetualTaskRebalanceIteratorConfig().getThreadPoolSize());
     injector.getInstance(DelegateTaskExpiryCheckIterator.class)
         .registerIterators(iteratorsConfig.getDelegateTaskExpiryCheckIteratorConfig().getThreadPoolSize());
+    injector.getInstance(DelegateTaskRebroadcastIterator.class)
+        .registerIterators(iteratorsConfig.getDelegateTaskRebroadcastIteratorConfig().getThreadPoolSize());
+    injector.getInstance(FailDelegateTaskIterator.class)
+        .registerIterators(iteratorsConfig.getFailDelegateTaskIteratorConfig().getThreadPoolSize());
     injector.getInstance(DelegateTelemetryPublisher.class).registerIterators();
   }
 

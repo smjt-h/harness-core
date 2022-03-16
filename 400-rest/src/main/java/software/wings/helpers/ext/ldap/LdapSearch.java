@@ -7,6 +7,8 @@
 
 package software.wings.helpers.ext.ldap;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
@@ -58,7 +60,7 @@ public class LdapSearch implements LdapValidator {
   @NotBlank String bindCredential;
 
   private static final int pageSize = 1000;
-  private static final String SAM_ACCOUNT_NAME = "samAccountName";
+  private static final String SAM_ACCOUNT_NAME = "sAMAccountName";
 
   /**
    * This is required in case of Oracle Directory services
@@ -169,7 +171,9 @@ public class LdapSearch implements LdapValidator {
           ctx.setRequestControls(new Control[] {new PagedResultsControl(pageSize, cookie, Control.CRITICAL)});
         } while (cookie != null);
         ctx.close();
-        return new SearchResult(entries);
+        if (isNotEmpty(entries)) {
+          return new SearchResult(entries);
+        }
       } catch (Exception e) {
         log.error("Error querying to ldap server with pagination", e);
       }

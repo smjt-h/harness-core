@@ -8,6 +8,7 @@
 package software.wings.service.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.DEL;
+import static io.harness.beans.FeatureName.DELEGATE_ENABLE_DYNAMIC_HANDLING_OF_REQUEST;
 import static io.harness.beans.FeatureName.USE_IMMUTABLE_DELEGATE;
 import static io.harness.configuration.DeployVariant.DEPLOY_VERSION;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
@@ -75,7 +76,6 @@ import io.harness.annotations.dev.BreakDependencyOn;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
-import io.harness.beans.Cd1SetupFields;
 import io.harness.beans.DelegateTask;
 import io.harness.beans.EmbeddedUser;
 import io.harness.beans.PageRequest;
@@ -83,10 +83,6 @@ import io.harness.beans.PageRequest.PageRequestBuilder;
 import io.harness.beans.PageResponse;
 import io.harness.beans.SearchFilter.Operator;
 import io.harness.capability.CapabilityRequirement;
-import io.harness.capability.CapabilitySubjectPermission;
-import io.harness.capability.CapabilitySubjectPermission.PermissionResult;
-import io.harness.capability.CapabilityTaskSelectionDetails;
-import io.harness.capability.CapabilityTaskSelectionDetails.CapabilityTaskSelectionDetailsKeys;
 import io.harness.capability.service.CapabilityService;
 import io.harness.configuration.DeployMode;
 import io.harness.configuration.DeployVariant;
@@ -121,11 +117,8 @@ import io.harness.delegate.beans.DuplicateDelegateException;
 import io.harness.delegate.beans.FileBucket;
 import io.harness.delegate.beans.FileMetadata;
 import io.harness.delegate.beans.K8sConfigDetails;
-import io.harness.delegate.beans.executioncapability.CapabilityType;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
-import io.harness.delegate.beans.executioncapability.SelectorCapability;
 import io.harness.delegate.events.DelegateGroupDeleteEvent;
-import io.harness.delegate.events.DelegateGroupUpsertEvent;
 import io.harness.delegate.service.intfc.DelegateNgTokenService;
 import io.harness.delegate.service.intfc.DelegateRingService;
 import io.harness.delegate.task.DelegateLogContext;
@@ -231,7 +224,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
-import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.protobuf.StringValue;
@@ -249,13 +241,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -340,12 +335,6 @@ public class DelegateServiceImpl implements DelegateService {
     templateConfiguration.setTemplateLoader(new ClassTemplateLoader(DelegateServiceImpl.class, "/delegatetemplates"));
   }
 
-  private static final int DELEGATE_RAM_PER_REPLICA = 2048;
-  private static final int WATCHER_RAM_IN_MB = 192;
-  // Calculated as ~ 30% of total RAM for delegate + watcher, in LAPTOP delegate which was 942 (192 watcher + 250
-  // base delegate memory + 250 to handle 50 tasks + 250 for ramp down for old version delegate during release)
-  private static final int POD_BASE_RAM_IN_MB = 320;
-
   @Inject private HPersistence persistence;
   @Inject private WaitNotifyEngine waitNotifyEngine;
   @Inject private AccountService accountService;
@@ -357,7 +346,6 @@ public class DelegateServiceImpl implements DelegateService {
   @Inject private AlertService alertService;
   @Inject private Clock clock;
   @Inject private VersionInfoManager versionInfoManager;
-  @Inject private Injector injector;
   @Inject private FeatureFlagService featureFlagService;
   @Inject private InfraDownloadService infraDownloadService;
   @Inject private DelegateProfileService delegateProfileService;
@@ -394,7 +382,7 @@ public class DelegateServiceImpl implements DelegateService {
 
   @Inject @Named(DelegatesFeature.FEATURE_NAME) private UsageLimitedFeature delegatesFeature;
   @Inject @Getter private Subject<DelegateObserver> subject = new Subject<>();
-  @Getter private Subject<DelegateProfileObserver> delegateProfileSubject = new Subject<>();
+  @Getter private final Subject<DelegateProfileObserver> delegateProfileSubject = new Subject<>();
   @Inject
   @Getter(onMethod = @__(@SuppressValidation))
   private Subject<DelegateTaskStatusObserver> delegateTaskStatusObserverSubject;
@@ -406,15 +394,16 @@ public class DelegateServiceImpl implements DelegateService {
   @Inject private DelegateMetricsService delegateMetricsService;
   @Inject private DelegateRingService delegateRingService;
 
-  private LoadingCache<String, String> delegateVersionCache = CacheBuilder.newBuilder()
-                                                                  .maximumSize(10000)
-                                                                  .expireAfterWrite(1, TimeUnit.MINUTES)
-                                                                  .build(new CacheLoader<String, String>() {
-                                                                    @Override
-                                                                    public String load(String accountId) {
-                                                                      return fetchDelegateMetadataFromStorage();
-                                                                    }
-                                                                  });
+  private final LoadingCache<String, String> delegateVersionCache =
+      CacheBuilder.newBuilder()
+          .maximumSize(10000)
+          .expireAfterWrite(1, TimeUnit.MINUTES)
+          .build(new CacheLoader<String, String>() {
+            @Override
+            public String load(@NotNull String accountId) {
+              return fetchDelegateMetadataFromStorage();
+            }
+          });
 
   @Override
   public List<Integer> getCountOfDelegatesForAccounts(List<String> accountIds) {
@@ -591,7 +580,7 @@ public class DelegateServiceImpl implements DelegateService {
 
     long target = delegateConnectionDao.numberOfActiveDelegateConnectionsPerVersion(targetVersion);
 
-    return (double) target / (double) primary;
+    return BigDecimal.valueOf((double) target / (double) primary).setScale(3, RoundingMode.HALF_UP).doubleValue();
   }
 
   @Override
@@ -630,7 +619,7 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   private String getCgK8SDelegateTemplate(final String accountId, final boolean isCeEnabled) {
-    if (featureFlagService.isEnabled(USE_IMMUTABLE_DELEGATE, accountId)) {
+    if (isImmutableDelegate(accountId, KUBERNETES)) {
       return IMMUTABLE_CG_DELEGATE_YAML;
     }
 
@@ -641,7 +630,7 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   private String obtainK8sTemplateNameFromConfig(final K8sConfigDetails k8sConfigDetails, final String accountId) {
-    if (featureFlagService.isEnabled(USE_IMMUTABLE_DELEGATE, accountId)) {
+    if (isImmutableDelegate(accountId, KUBERNETES)) {
       return IMMUTABLE_DELEGATE_YAML;
     }
 
@@ -717,7 +706,7 @@ public class DelegateServiceImpl implements DelegateService {
 
     return DelegateStatus.builder()
         .publishedVersions(delegateConfiguration.getDelegateVersions())
-        .delegates(buildInnerDelegates(delegates, perDelegateConnections, false))
+        .delegates(buildInnerDelegates(accountId, delegates, perDelegateConnections, false))
         .build();
   }
 
@@ -737,7 +726,7 @@ public class DelegateServiceImpl implements DelegateService {
                 ? Lists.newArrayList()
                 : delegateVersionListWithoutPatch(delegateConfiguration.getDelegateVersions()))
         .scalingGroups(scalingGroups)
-        .delegates(buildInnerDelegates(delegatesWithoutScalingGroup, activeDelegateConnections, false))
+        .delegates(buildInnerDelegates(accountId, delegatesWithoutScalingGroup, activeDelegateConnections, false))
         .build();
   }
 
@@ -766,7 +755,7 @@ public class DelegateServiceImpl implements DelegateService {
         .map(entry
             -> DelegateScalingGroup.builder()
                    .groupName(entry.getKey())
-                   .delegates(buildInnerDelegates(entry.getValue(), activeDelegateConnections, true))
+                   .delegates(buildInnerDelegates(accountId, entry.getValue(), activeDelegateConnections, true))
                    .build())
         .collect(toList());
   }
@@ -786,8 +775,16 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   @NotNull
-  private List<DelegateStatus.DelegateInner> buildInnerDelegates(List<Delegate> delegates,
+  private List<DelegateStatus.DelegateInner> buildInnerDelegates(String accountId, List<Delegate> delegates,
       Map<String, List<DelegateConnectionDetails>> perDelegateConnections, boolean filterInactiveDelegates) {
+    List<String> delegateTokensNameList = new ArrayList<>();
+    delegates.stream()
+        .filter(delegate -> !filterInactiveDelegates || perDelegateConnections.containsKey(delegate.getUuid()))
+        .forEach(delegate -> delegateTokensNameList.add(delegate.getDelegateTokenName()));
+    // TODO: Arpit fetch the tokenStatus from cache instead of db.
+    Map<String, Boolean> delegateTokenStatusMap =
+        delegateNgTokenService.isDelegateTokenActive(accountId, delegateTokensNameList);
+
     return delegates.stream()
         .filter(delegate -> !filterInactiveDelegates || perDelegateConnections.containsKey(delegate.getUuid()))
         .map(delegate -> {
@@ -817,6 +814,8 @@ public class DelegateServiceImpl implements DelegateService {
               .implicitSelectors(delegateSetupService.retrieveDelegateImplicitSelectors(delegate))
               .sampleDelegate(delegate.isSampleDelegate())
               .connections(connections)
+              .tokenActive(delegate.getDelegateTokenName() == null
+                  || delegateTokenStatusMap.get(delegate.getDelegateTokenName()))
               .build();
         })
         .collect(toList());
@@ -825,7 +824,7 @@ public class DelegateServiceImpl implements DelegateService {
   @Override
   public Delegate update(final Delegate delegate) {
     final Delegate originalDelegate = delegateCache.get(delegate.getAccountId(), delegate.getUuid(), false);
-    final boolean newProfileApplied = originalDelegate != null
+    final boolean newProfileApplied = originalDelegate != null && !delegate.isNg()
         && compare(originalDelegate.getDelegateProfileId(), delegate.getDelegateProfileId()) != 0;
 
     final Delegate updatedDelegate;
@@ -838,6 +837,7 @@ public class DelegateServiceImpl implements DelegateService {
     }
 
     if (newProfileApplied) {
+      log.info("New profile applied for delegate {}", delegate.getUuid());
       delegateProfileSubject.fireInform(DelegateProfileObserver::onProfileApplied, delegate.getAccountId(),
           delegate.getUuid(), delegate.getDelegateProfileId());
       remoteObserverInformer.sendEvent(ReflectionUtils.getMethod(DelegateProfileObserver.class, "onProfileApplied",
@@ -854,9 +854,9 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   private Delegate updateEcsDelegate(Delegate delegate, boolean updateEntireEcsCluster) {
-    UpdateOperations<Delegate> updateOperations = getDelegateUpdateOperations(delegate);
+    final UpdateOperations<Delegate> updateOperations = getDelegateUpdateOperations(delegate);
     if (updateEntireEcsCluster) {
-      return updateAllDelegatesIfECSType(delegate, updateOperations, "ALL");
+      return updateAllCgDelegatesInGroup(delegate, updateOperations, "ALL");
     } else {
       log.info("Updating ECS delegate : {}", delegate.getUuid());
       if (isDelegateWithoutPollingEnabled(delegate)) {
@@ -889,7 +889,10 @@ public class DelegateServiceImpl implements DelegateService {
     setUnset(updateOperations, DelegateKeys.proxy, delegate.isProxy());
     setUnset(updateOperations, DelegateKeys.ceEnabled, delegate.isCeEnabled());
     setUnset(updateOperations, DelegateKeys.supportedTaskTypes, delegate.getSupportedTaskTypes());
-    setUnset(updateOperations, DelegateKeys.delegateTokenName, delegate.getDelegateTokenName());
+    String delegateTokenName = getDelegateTokenNameFromGlobalContext();
+    if (delegateTokenName != null) {
+      setUnset(updateOperations, DelegateKeys.delegateTokenName, delegateTokenName);
+    }
     return updateOperations;
   }
 
@@ -996,8 +999,9 @@ public class DelegateServiceImpl implements DelegateService {
     log.info("Auditing updation of Tags for delegate={} in account={}", delegate.getUuid(), delegate.getAccountId());
 
     Delegate updatedDelegate = null;
-    if (ECS.equals(delegate.getDelegateType())) {
-      updatedDelegate = updateAllDelegatesIfECSType(delegate, updateOperations, "TAGS");
+    if (isGroupedCgDelegate(delegate)) {
+      log.info("Updating tags for all delegates in a group {}", delegate.getDelegateGroupName());
+      updatedDelegate = updateAllCgDelegatesInGroup(delegate, updateOperations, "TAGS");
     } else {
       updatedDelegate = updateDelegate(delegate, updateOperations);
     }
@@ -1015,12 +1019,12 @@ public class DelegateServiceImpl implements DelegateService {
         delegate.getIncludeScopes(), delegate.getExcludeScopes());
 
     auditServiceHelper.reportForAuditingUsingAccountId(delegate.getAccountId(), null, delegate, Type.UPDATE_SCOPE);
-    log.info(
-        "Auditing updation of scope for delegateId={} in accountId={}", delegate.getUuid(), delegate.getAccountId());
+    log.info("Auditing update of scope for delegateId={} in accountId={}", delegate.getUuid(), delegate.getAccountId());
 
     Delegate updatedDelegate = null;
-    if (ECS.equals(delegate.getDelegateType())) {
-      updatedDelegate = updateAllDelegatesIfECSType(delegate, updateOperations, "SCOPES");
+    if (isGroupedCgDelegate(delegate)) {
+      log.info("Updating scopes for all delegates in a group {}", delegate.getDelegateGroupName());
+      updatedDelegate = updateAllCgDelegatesInGroup(delegate, updateOperations, "SCOPES");
     } else {
       updatedDelegate = updateDelegate(delegate, updateOperations);
     }
@@ -1077,6 +1081,7 @@ public class DelegateServiceImpl implements DelegateService {
             .verificationHost(verificationHost)
             .logStreamingServiceBaseUrl(mainConfiguration.getLogStreamingServiceConfig().getBaseUrl())
             .delegateXmx(getDelegateXmx(delegateType))
+            .delegateTokenName(getDelegateTokenNameFromGlobalContext())
             .build(),
         true);
 
@@ -1092,7 +1097,6 @@ public class DelegateServiceImpl implements DelegateService {
       }
       delegateScripts.setDoUpgrade(doUpgrade);
       delegateScripts.setVersion(upgradeToVersion);
-
       delegateScripts.setStartScript(processTemplate(scriptParams, "start.sh.ftl"));
       delegateScripts.setDelegateScript(processTemplate(scriptParams, "delegate.sh.ftl"));
       delegateScripts.setStopScript(processTemplate(scriptParams, "stop.sh.ftl"));
@@ -1104,15 +1108,6 @@ public class DelegateServiceImpl implements DelegateService {
   @Override
   public DelegateScripts getDelegateScripts(String accountId, String version, String managerHost,
       String verificationHost, String delegateName) throws IOException {
-    String delegateTokenName = EMPTY;
-    DelegateTokenGlobalContextData delegateTokenGlobalContextData =
-        GlobalContextManager.get(DelegateTokenGlobalContextData.TOKEN_NAME);
-    if (delegateTokenGlobalContextData != null) {
-      delegateTokenName = delegateTokenGlobalContextData.getTokenName();
-    } else {
-      log.warn("DelegateTokenGlobalContextData was found null in GlobalContextManager");
-    }
-
     ImmutableMap<String, String> scriptParams = getJarAndScriptRunTimeParamMap(
         TemplateParameters.builder()
             .accountId(accountId)
@@ -1120,7 +1115,7 @@ public class DelegateServiceImpl implements DelegateService {
             .managerHost(managerHost)
             .verificationHost(verificationHost)
             .logStreamingServiceBaseUrl(mainConfiguration.getLogStreamingServiceConfig().getBaseUrl())
-            .delegateTokenName(delegateTokenName)
+            .delegateTokenName(getDelegateTokenNameFromGlobalContext())
             .delegateName(StringUtils.defaultString(delegateName))
             .build(),
         false);
@@ -1137,13 +1132,21 @@ public class DelegateServiceImpl implements DelegateService {
       }
       delegateScripts.setDoUpgrade(doUpgrade);
       delegateScripts.setVersion(upgradeToVersion);
-
       delegateScripts.setStartScript(processTemplate(scriptParams, "start.sh.ftl"));
       delegateScripts.setDelegateScript(processTemplate(scriptParams, "delegate.sh.ftl"));
       delegateScripts.setStopScript(processTemplate(scriptParams, "stop.sh.ftl"));
       delegateScripts.setSetupProxyScript(processTemplate(scriptParams, "setup-proxy.sh.ftl"));
     }
     return delegateScripts;
+  }
+
+  private String getDelegateTokenNameFromGlobalContext() {
+    DelegateTokenGlobalContextData delegateTokenGlobalContextData =
+        GlobalContextManager.get(DelegateTokenGlobalContextData.TOKEN_NAME);
+    if (delegateTokenGlobalContextData != null) {
+      return delegateTokenGlobalContextData.getTokenName();
+    }
+    return null;
   }
 
   @Override
@@ -1222,12 +1225,17 @@ public class DelegateServiceImpl implements DelegateService {
                                 .replaceFirst("^0+(?!$)", "");
 
       final boolean isCiEnabled = isCiEnabled(templateParameters);
+      final String accountSecret = getAccountSecret(templateParameters, isNgDelegate);
+      final String base64Secret = Base64.getEncoder().encodeToString(accountSecret.getBytes());
       ImmutableMap.Builder<String, String> params =
           ImmutableMap.<String, String>builder()
-              .put("delegateDockerImage", getDelegateDockerImage(templateParameters.getAccountId()))
-              .put("upgraderDockerImage", getUpgraderDockerImage(templateParameters.getAccountId()))
+              .put("delegateDockerImage",
+                  getDelegateDockerImage(templateParameters.getAccountId(), templateParameters.getDelegateType()))
+              .put("upgraderDockerImage",
+                  getUpgraderDockerImage(templateParameters.getAccountId(), templateParameters.getDelegateType()))
               .put("accountId", templateParameters.getAccountId())
-              .put("accountSecret", getAccountSecret(templateParameters, isNgDelegate))
+              .put("accountSecret", accountSecret)
+              .put("base64Secret", base64Secret)
               .put("hexkey", hexkey)
               .put(UPGRADE_VERSION, latestVersion)
               .put("managerHostAndPort", templateParameters.getManagerHost())
@@ -1241,7 +1249,10 @@ public class DelegateServiceImpl implements DelegateService {
               .put("ciEnabled", String.valueOf(isCiEnabled))
               .put("scmVersion", mainConfiguration.getScmVersion())
               .put("delegateGrpcServicePort", String.valueOf(delegateGrpcConfig.getPort()))
-              .put("kubernetesAccountLabel", getAccountIdentifier(templateParameters.getAccountId()));
+              .put("kubernetesAccountLabel", getAccountIdentifier(templateParameters.getAccountId()))
+              .put("dynamicHandlingOfRequestEnabled",
+                  String.valueOf(featureFlagService.isEnabled(
+                      DELEGATE_ENABLE_DYNAMIC_HANDLING_OF_REQUEST, templateParameters.getAccountId())));
 
       if (mainConfiguration.getDeployMode() == DeployMode.KUBERNETES_ONPREM) {
         params.put("managerTarget", mainConfiguration.getGrpcOnpremDelegateClientConfig().getTarget());
@@ -1349,6 +1360,12 @@ public class DelegateServiceImpl implements DelegateService {
         params.put("delegateGroupId", "");
       }
 
+      if (isNotBlank(templateParameters.getDelegateGroupName())) {
+        params.put("delegateGroupName", templateParameters.getDelegateGroupName());
+      } else {
+        params.put("delegateGroupName", "");
+      }
+
       params.put("delegateNamespace", getDelegateNamespace(templateParameters.getDelegateNamespace(), isNgDelegate));
 
       if (templateParameters.getK8sPermissionsType() != null) {
@@ -1360,7 +1377,7 @@ public class DelegateServiceImpl implements DelegateService {
       }
 
       params.put("isImmutable",
-          String.valueOf(featureFlagService.isEnabled(USE_IMMUTABLE_DELEGATE, templateParameters.getAccountId())));
+          String.valueOf(isImmutableDelegate(templateParameters.getAccountId(), templateParameters.getDelegateType())));
 
       return params.build();
     }
@@ -1408,9 +1425,9 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   @VisibleForTesting
-  protected String getDelegateDockerImage(String accountId) {
+  protected String getDelegateDockerImage(final String accountId, final String delegateType) {
     final String ringImage = delegateRingService.getDelegateImageTag(accountId);
-    if (featureFlagService.isEnabled(USE_IMMUTABLE_DELEGATE, accountId) && isNotBlank(ringImage)) {
+    if (isImmutableDelegate(accountId, delegateType) && isNotBlank(ringImage)) {
       return ringImage;
     }
     if (isNotBlank(mainConfiguration.getPortal().getDelegateDockerImage())) {
@@ -1420,9 +1437,9 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   @VisibleForTesting
-  protected String getUpgraderDockerImage(String accountId) {
+  protected String getUpgraderDockerImage(final String accountId, final String delegateType) {
     final String ringImage = delegateRingService.getUpgraderImageTag(accountId);
-    if (featureFlagService.isEnabled(USE_IMMUTABLE_DELEGATE, accountId) && isNotBlank(ringImage)) {
+    if (isImmutableDelegate(accountId, delegateType) && isNotBlank(ringImage)) {
       return ringImage;
     }
     if (isNotBlank(mainConfiguration.getPortal().getUpgraderDockerImage())) {
@@ -1743,6 +1760,7 @@ public class DelegateServiceImpl implements DelegateService {
               .managerHost(managerHost)
               .verificationHost(verificationUrl)
               .delegateName(delegateName)
+              .delegateGroupName(delegateName)
               .delegateNamespace(HARNESS_DELEGATE)
               .delegateProfile(delegateProfile == null ? "" : delegateProfile)
               .delegateType(KUBERNETES)
@@ -1890,10 +1908,11 @@ public class DelegateServiceImpl implements DelegateService {
               .delegateGroupId(delegateGroup.getUuid())
               .logStreamingServiceBaseUrl(mainConfiguration.getLogStreamingServiceConfig().getBaseUrl())
               .delegateTokenName(tokenName)
+              .delegateGroupName(delegateGroupName)
               .build(),
           false);
 
-      scriptParams = updateMapForEcsDelegate(awsVpcMode, hostname, delegateGroupName, scriptParams);
+      scriptParams = updateMapForEcsDelegate(awsVpcMode, hostname, scriptParams);
 
       // Add Task Spec Json file
       File yaml = File.createTempFile("ecs-spec", ".json");
@@ -1941,8 +1960,8 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   private ImmutableMap<String, String> updateMapForEcsDelegate(
-      boolean awsVpcMode, String hostname, String delegateGroupName, Map<String, String> scriptParams) {
-    Map<String, String> map = new HashMap<>(scriptParams);
+      final boolean awsVpcMode, String hostname, final Map<String, String> scriptParams) {
+    final Map<String, String> map = new HashMap<>(scriptParams);
     // AWSVPC mode, hostname must be null
     if (awsVpcMode) {
       map.put("networkModeForTask", "\"networkMode\": \"awsvpc\",");
@@ -1955,8 +1974,6 @@ public class DelegateServiceImpl implements DelegateService {
       }
       map.put("hostnameForDelegate", "\"hostname\": \"" + hostname + "\",");
     }
-
-    map.put("delegateGroupName", delegateGroupName);
 
     return ImmutableMap.copyOf(map);
   }
@@ -2044,6 +2061,7 @@ public class DelegateServiceImpl implements DelegateService {
                                     .project(DelegateKeys.ip, true)
                                     .project(DelegateKeys.hostName, true)
                                     .project(DelegateKeys.owner, true)
+                                    .project(DelegateKeys.delegateGroupName, true)
                                     .get();
 
     if (existingDelegate != null) {
@@ -2051,12 +2069,21 @@ public class DelegateServiceImpl implements DelegateService {
         throw new InvalidRequestException(format("Unable to delete delegate. Delegate %s is connected", delegateId));
       }
       // before deleting delegate, check if any alert is open for delegate, if yes, close it.
-      alertService.closeAlert(accountId, GLOBAL_APP_ID, AlertType.DelegatesDown,
-          DelegatesDownAlert.builder()
-              .accountId(accountId)
-              .obfuscatedIpAddress(obfuscate(existingDelegate.getIp()))
-              .hostName(existingDelegate.getHostName())
-              .build());
+      if (isEmpty(existingDelegate.getDelegateGroupName())) {
+        alertService.closeAlert(accountId, GLOBAL_APP_ID, AlertType.DelegatesDown,
+            DelegatesDownAlert.builder()
+                .accountId(accountId)
+                .obfuscatedIpAddress(obfuscate(existingDelegate.getIp()))
+                .hostName(existingDelegate.getHostName())
+                .build());
+      } else {
+        alertService.closeAlert(accountId, GLOBAL_APP_ID, AlertType.DelegatesDown,
+            DelegatesDownAlert.builder()
+                .accountId(accountId)
+                .delegateGroupName(existingDelegate.getDelegateGroupName())
+                .build());
+      }
+
     } else {
       throw new InvalidRequestException("Unable to fetch delegate with delegate id " + delegateId);
     }
@@ -2277,8 +2304,12 @@ public class DelegateServiceImpl implements DelegateService {
       delegateMetricsService.recordDelegateMetrics(delegate, DELEGATE_REGISTRATION_FAILED);
       return DelegateRegisterResponse.builder().action(DelegateRegisterResponse.Action.SELF_DESTRUCT).build();
     }
-
-    log.info("Registering delegate for Hostname: {} IP: {}", delegate.getHostName(), delegate.getIp());
+    if (existingDelegate != null) {
+      log.info("Delegate {} already registered for Hostname with : {} IP: {}", delegate.getUuid(),
+          delegate.getHostName(), delegate.getIp());
+    } else {
+      log.info("Registering delegate for Hostname: {} IP: {}", delegate.getHostName(), delegate.getIp());
+    }
 
     if (ECS.equals(delegate.getDelegateType())) {
       return registerResponseFromDelegate(handleEcsDelegateRequest(delegate));
@@ -2376,24 +2407,6 @@ public class DelegateServiceImpl implements DelegateService {
       log.warn("No delegate configuration (profile) with id {} exists: {}", delegateProfileId, e);
     }
 
-    String delegateTokenName = delegateParams.getDelegateTokenName();
-    if (!isBlank(delegateTokenName)) {
-      try {
-        validateDelegateToken(delegateParams.getAccountId(),
-            DelegateSetupDetails.builder()
-                .orgIdentifier(delegateParams.getOrgIdentifier())
-                .projectIdentifier(delegateParams.getProjectIdentifier())
-                .tokenName(delegateParams.getDelegateTokenName())
-                .build());
-      } catch (InvalidRequestException e) {
-        log.warn(
-            "Delegate Token with name {} can not be found, or is revoked, for accountId {}, orgId {} and projectId {}",
-            delegateParams.getDelegateTokenName(), delegateParams.getAccountId(), delegateParams.getOrgIdentifier(),
-            delegateParams.getProjectIdentifier());
-        delegateTokenName = EMPTY;
-      }
-    }
-
     final Delegate delegate = Delegate.builder()
                                   .uuid(delegateParams.getDelegateId())
                                   .accountId(delegateParams.getAccountId())
@@ -2419,7 +2432,7 @@ public class DelegateServiceImpl implements DelegateService {
                                   .sampleDelegate(delegateParams.isSampleDelegate())
                                   .currentlyExecutingDelegateTasks(delegateParams.getCurrentlyExecutingDelegateTasks())
                                   .ceEnabled(delegateParams.isCeEnabled())
-                                  .delegateTokenName(delegateTokenName)
+                                  .delegateTokenName(getDelegateTokenNameFromGlobalContext())
                                   .build();
 
     if (ECS.equals(delegateParams.getDelegateType())) {
@@ -2477,6 +2490,11 @@ public class DelegateServiceImpl implements DelegateService {
     }
     delegate.setLastHeartBeat(now);
     delegate.setValidUntil(Date.from(OffsetDateTime.now().plusDays(Delegate.TTL.toDays()).toInstant()));
+
+    if (isGroupedCgDelegate(delegate)) {
+      updateDelegateWithConfigFromGroup(delegate);
+    }
+
     Delegate registeredDelegate;
     if (existingDelegate == null) {
       log.info("No existing delegate, adding for account {}: Hostname: {} IP: {}", delegate.getAccountId(),
@@ -2511,6 +2529,10 @@ public class DelegateServiceImpl implements DelegateService {
     }
 
     return registeredDelegate;
+  }
+
+  private boolean isGroupedCgDelegate(final Delegate delegate) {
+    return !delegate.isNg() && isNotBlank(delegate.getDelegateGroupName());
   }
 
   private AuditHeader createAuditHeaderForDelegateRegistration(String delegateHostName) {
@@ -2727,102 +2749,6 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   @Override
-  public void regenerateCapabilityPermissions(String accountId, String delegateId) {
-    List<CapabilityRequirement> capabilityRequirements = capabilityService.getAllCapabilityRequirements(accountId);
-
-    for (CapabilityRequirement capabilityRequirement : capabilityRequirements) {
-      if (!isDelegateStillInScope(accountId, delegateId, capabilityRequirement.getUuid())) {
-        capabilityService.deleteCapabilitySubjectPermission(accountId, delegateId, capabilityRequirement.getUuid());
-        continue;
-      }
-
-      // If delegate is in scope, we need to add permission record only if it is not already there
-      List<String> existingPermissionDelegateIds =
-          capabilityService
-              .getAllCapabilityPermissions(capabilityRequirement.getAccountId(), capabilityRequirement.getUuid(), null)
-              .stream()
-              .map(CapabilitySubjectPermission::getDelegateId)
-              .collect(toList());
-
-      if (!existingPermissionDelegateIds.contains(delegateId)) {
-        capabilityService.addCapabilityPermissions(
-            capabilityRequirement, Arrays.asList(delegateId), PermissionResult.UNCHECKED, true);
-      }
-    }
-  }
-
-  @VisibleForTesting
-  public boolean isDelegateStillInScope(String accountId, String delegateId, String capabilityId) {
-    List<CapabilityTaskSelectionDetails> taskSelectionDetailsList =
-        capabilityService.getAllCapabilityTaskSelectionDetails(accountId, capabilityId);
-
-    if (isEmpty(taskSelectionDetailsList)) {
-      return true;
-    }
-
-    for (CapabilityTaskSelectionDetails taskSelectionDetails : taskSelectionDetailsList) {
-      if (isDelegateInCapabilityScope(accountId, delegateId, taskSelectionDetails)) {
-        return true;
-      }
-    }
-
-    // Since the delegate is not in scope for given capability, we need to mark capability task selection details as
-    // blocked, if no other delegates are in scope
-    List<String> notDeniedDelegates = capabilityService.getNotDeniedCapabilityPermissions(accountId, capabilityId)
-                                          .stream()
-                                          .map(CapabilitySubjectPermission::getDelegateId)
-                                          .collect(toList());
-
-    for (CapabilityTaskSelectionDetails taskSelectionDetails : taskSelectionDetailsList) {
-      if (!notDeniedDelegates.stream().anyMatch(
-              delegateIdentifier -> isDelegateInCapabilityScope(accountId, delegateIdentifier, taskSelectionDetails))) {
-        // Update task selection details record and mark it as blocked
-        Query<CapabilityTaskSelectionDetails> selectionDetailsQuery =
-            persistence.createQuery(CapabilityTaskSelectionDetails.class)
-                .filter(CapabilityTaskSelectionDetailsKeys.accountId, accountId)
-                .filter(CapabilityTaskSelectionDetailsKeys.uuid, taskSelectionDetails.getUuid());
-
-        UpdateOperations<CapabilityTaskSelectionDetails> selectionDetailsUpdateOperations =
-            persistence.createUpdateOperations(CapabilityTaskSelectionDetails.class);
-        setUnset(selectionDetailsUpdateOperations, CapabilityTaskSelectionDetailsKeys.blocked, true);
-
-        persistence.findAndModify(
-            selectionDetailsQuery, selectionDetailsUpdateOperations, HPersistence.returnNewOptions);
-      }
-    }
-
-    return false;
-  }
-
-  @VisibleForTesting
-  public boolean isDelegateInCapabilityScope(
-      String accountId, String delegateId, CapabilityTaskSelectionDetails taskSelectionDetails) {
-    List<ExecutionCapability> selectorCapabilities = new ArrayList<>();
-    if (isNotEmpty(taskSelectionDetails.getTaskSelectors())) {
-      taskSelectionDetails.getTaskSelectors().forEach(
-          (origin, selectors)
-              -> selectorCapabilities.add(SelectorCapability.builder()
-                                              .capabilityType(CapabilityType.SELECTORS)
-                                              .selectorOrigin(origin)
-                                              .selectors(selectors)
-                                              .build()));
-    }
-
-    String appId = null;
-    String envId = null;
-    String infraMappingId = null;
-    if (isNotEmpty(taskSelectionDetails.getTaskSetupAbstractions())) {
-      appId = taskSelectionDetails.getTaskSetupAbstractions().get(Cd1SetupFields.APP_ID_FIELD);
-      envId = taskSelectionDetails.getTaskSetupAbstractions().get(Cd1SetupFields.ENV_ID_FIELD);
-      infraMappingId =
-          taskSelectionDetails.getTaskSetupAbstractions().get(Cd1SetupFields.INFRASTRUCTURE_MAPPING_ID_FIELD);
-    }
-
-    return assignDelegateService.canAssign(null, delegateId, accountId, appId, envId, infraMappingId,
-        taskSelectionDetails.getTaskGroup(), selectorCapabilities, taskSelectionDetails.getTaskSetupAbstractions());
-  }
-
-  @Override
   public List<DelegateInitializationDetails> obtainDelegateInitializationDetails(
       String accountId, List<String> delegateIds) {
     List<DelegateInitializationDetails> delegateInitializationDetails = new ArrayList<>();
@@ -2919,11 +2845,18 @@ public class DelegateServiceImpl implements DelegateService {
     Query<DelegateGroup> query = this.persistence.createQuery(DelegateGroup.class)
                                      .filter(DelegateGroupKeys.accountId, accountId)
                                      .filter(DelegateGroupKeys.ng, isNg)
-                                     .filter(DelegateGroupKeys.owner, owner)
                                      .filter(DelegateGroupKeys.name, name);
 
-    // this statement is here because of identifier migration where we used normalized uuid for existing groups
     DelegateGroup existingEntity = query.get();
+
+    if (existingEntity != null && !matchOwners(existingEntity.getOwner(), owner)) {
+      log.error(
+          "Unable to create delegate group. Delegate with same name exists. Delegate name must be unique across account.");
+      throw new InvalidRequestException(
+          "Unable to create delegate group. Delegate with same name exists. Delegate name must be unique across account.");
+    }
+
+    // this statement is here because of identifier migration where we used normalized uuid for existing groups
     if (existingEntity != null && uuidToIdentifier(existingEntity.getUuid()).equals(existingEntity.getIdentifier())) {
       delegateGroupIdentifier = existingEntity.getIdentifier();
     }
@@ -2948,20 +2881,7 @@ public class DelegateServiceImpl implements DelegateService {
     if (sizeDetails != null) {
       setUnset(updateOperations, DelegateGroupKeys.sizeDetails, sizeDetails);
     }
-
-    DelegateGroup delegateGroup = persistence.upsert(query, updateOperations, HPersistence.upsertReturnNewOptions);
-    outboxService.save(
-        DelegateGroupUpsertEvent.builder()
-            .accountIdentifier(accountId)
-            .orgIdentifier(delegateSetupDetails != null ? delegateSetupDetails.getOrgIdentifier() : null)
-            .projectIdentifier(delegateSetupDetails != null ? delegateSetupDetails.getProjectIdentifier() : null)
-            .delegateGroupId(delegateGroup.getUuid())
-            .delegateSetupDetails(delegateSetupDetails)
-            .build());
-    if (delegateSetupDetails != null) {
-      delegateCache.invalidateDelegateGroupCache(accountId, delegateGroup.getUuid());
-    }
-    return delegateGroup;
+    return persistence.upsert(query, updateOperations, HPersistence.upsertReturnNewOptions);
   }
 
   @Override
@@ -2984,9 +2904,9 @@ public class DelegateServiceImpl implements DelegateService {
         .count();
   }
 
-  private boolean hasVersionCheckDisabled(String accountId) {
-    return accountService.getAccountPrimaryDelegateVersion(accountId) != null
-        || featureFlagService.isEnabled(USE_IMMUTABLE_DELEGATE, accountId);
+  private boolean isImmutableDelegate(final String accountId, final String delegateType) {
+    return featureFlagService.isEnabled(USE_IMMUTABLE_DELEGATE, accountId)
+        && (KUBERNETES.equals(delegateType) || CE_KUBERNETES.equals(delegateType));
   }
 
   @Override
@@ -3043,16 +2963,18 @@ public class DelegateServiceImpl implements DelegateService {
         UUID currentUUID = convertFromBase64(heartbeat.getDelegateConnectionId());
         UUID existingUUID = convertFromBase64(existingConnection.getUuid());
         if (existingUUID.timestamp() > currentUUID.timestamp()) {
-          boolean notSameLocationForShellScriptDelegate = DelegateType.SHELL_SCRIPT.equals(delegate.getDelegateType())
-              && (isNotEmpty(heartbeat.getLocation()) && isNotEmpty(existingConnection.getLocation())
-                  && !heartbeat.getLocation().equals(existingConnection.getLocation()));
-          if (notSameLocationForShellScriptDelegate) {
-            log.error(
-                "Newer delegate connection found for the delegate id! Will initiate self destruct sequence for the current delegate.");
-            destroyTheCurrentDelegate(accountId, delegateId, heartbeat.getDelegateConnectionId(), connectionMode);
-            delegateConnectionDao.replaceWithNewerConnection(heartbeat.getDelegateConnectionId(), existingConnection);
-          } else {
-            log.error("Two delegates with the same identity");
+          if (DelegateType.SHELL_SCRIPT.equals(delegate.getDelegateType())) {
+            boolean notSameLocationForShellScriptDelegate = isNotEmpty(heartbeat.getLocation())
+                && isNotEmpty(existingConnection.getLocation())
+                && !heartbeat.getLocation().equals(existingConnection.getLocation());
+            if (notSameLocationForShellScriptDelegate) {
+              log.error(
+                  "Newer delegate connection found for the delegate id! Will initiate self destruct sequence for the current delegate.");
+              destroyTheCurrentDelegate(accountId, delegateId, heartbeat.getDelegateConnectionId(), connectionMode);
+              delegateConnectionDao.replaceWithNewerConnection(heartbeat.getDelegateConnectionId(), existingConnection);
+            } else {
+              log.error("Two delegates with the same identity");
+            }
           }
         } else {
           delegateMetricsService.recordDelegateMetrics(delegate, DELEGATE_RESTARTED);
@@ -3185,7 +3107,7 @@ public class DelegateServiceImpl implements DelegateService {
         delegate.setHostName(hostNameWithSeqNum);
 
         // Init this delegate with {TAG/SCOPE/PROFILE} config reading from similar delegate
-        initDelegateWithConfigFromExistingDelegate(delegate);
+        updateDelegateWithConfigFromGroup(delegate);
 
         return upsertDelegateOperation(null, delegate);
       } catch (DuplicateKeyException e) {
@@ -3228,10 +3150,10 @@ public class DelegateServiceImpl implements DelegateService {
    * Copy {SCOPE/PROFILE/TAG/KEYWORDS/DESCRIPTION} config into new delegate being registered
    */
   @VisibleForTesting
-  void initDelegateWithConfigFromExistingDelegate(Delegate delegate) {
-    List<Delegate> existingDelegates = getAllDelegatesMatchingGroupName(delegate);
+  void updateDelegateWithConfigFromGroup(final Delegate delegate) {
+    final List<Delegate> existingDelegates = getAllDelegatesMatchingGroupName(delegate);
     if (isNotEmpty(existingDelegates)) {
-      initNewDelegateWithExistingDelegate(delegate, existingDelegates.get(0));
+      updateNewDelegateWithExistingDelegate(delegate, existingDelegates.get(0));
     }
   }
 
@@ -3285,7 +3207,7 @@ public class DelegateServiceImpl implements DelegateService {
         delegate.setHostName(hostNameWithSeqNum);
 
         // Init this delegate with TAG/SCOPE/PROFILE/KEYWORDS/DESCRIPTION config reading from similar delegate
-        initDelegateWithConfigFromExistingDelegate(delegate);
+        updateDelegateWithConfigFromGroup(delegate);
 
         return upsertDelegateOperation(null, delegate);
       } catch (Exception e) {
@@ -3367,7 +3289,7 @@ public class DelegateServiceImpl implements DelegateService {
         if (existingInactiveDelegate != null) {
           // Before deleting existing one, copy {TAG/PROFILE/SCOPE} config into new delegate being registered
           // This needs to be done here as this may be the only delegate in db.
-          initNewDelegateWithExistingDelegate(delegate, existingInactiveDelegate);
+          updateNewDelegateWithExistingDelegate(delegate, existingInactiveDelegate);
           delete(existingInactiveDelegate.getAccountId(), existingInactiveDelegate.getUuid());
         }
 
@@ -3384,7 +3306,7 @@ public class DelegateServiceImpl implements DelegateService {
         delegate.setHostName(hostNameWithSeqNum);
 
         if (existingInactiveDelegate == null) {
-          initDelegateWithConfigFromExistingDelegate(delegate);
+          updateDelegateWithConfigFromGroup(delegate);
         }
         return config;
       }
@@ -3421,7 +3343,7 @@ public class DelegateServiceImpl implements DelegateService {
   /**
    * Copy {SCOPE/TAG/PROFILE/KEYWORDS/DESCRIPTION } into new delegate
    */
-  private void initNewDelegateWithExistingDelegate(Delegate delegate, Delegate existingInactiveDelegate) {
+  private void updateNewDelegateWithExistingDelegate(final Delegate delegate, final Delegate existingInactiveDelegate) {
     delegate.setExcludeScopes(existingInactiveDelegate.getExcludeScopes());
     delegate.setIncludeScopes(existingInactiveDelegate.getIncludeScopes());
     delegate.setDelegateProfileId(existingInactiveDelegate.getDelegateProfileId());
@@ -3430,10 +3352,10 @@ public class DelegateServiceImpl implements DelegateService {
     delegate.setDescription(existingInactiveDelegate.getDescription());
   }
 
-  private Delegate updateAllDelegatesIfECSType(
+  private Delegate updateAllCgDelegatesInGroup(
       Delegate delegate, UpdateOperations<Delegate> updateOperations, String fieldBeingUpdate) {
     List<Delegate> retVal = new ArrayList<>();
-    List<Delegate> delegates = getAllDelegatesMatchingGroupName(delegate);
+    final List<Delegate> delegates = getAllDelegatesMatchingGroupName(delegate);
 
     if (isEmpty(delegates)) {
       return null;
@@ -3447,7 +3369,7 @@ public class DelegateServiceImpl implements DelegateService {
         } else if ("TAGS".equals(fieldBeingUpdate)) {
           log.info("Updating delegate tags : tags:{}", delegate.getTags());
         } else {
-          log.info("Updating ECS delegate");
+          log.info("Updating grouped CG delegate {}", delegate.getDelegateName());
         }
 
         Delegate updatedDelegate = updateDelegate(delegateToBeUpdated, updateOperations);
@@ -3467,9 +3389,10 @@ public class DelegateServiceImpl implements DelegateService {
   /**
    * All delegates matching {AccId, HostName Prefix, Type = ECS}
    */
-  private List<Delegate> getAllDelegatesMatchingGroupName(Delegate delegate) {
+  private List<Delegate> getAllDelegatesMatchingGroupName(final Delegate delegate) {
     return persistence.createQuery(Delegate.class, excludeAuthority)
         .filter(DelegateKeys.accountId, delegate.getAccountId())
+        .filter(DelegateKeys.ng, false)
         .filter(DelegateKeys.delegateType, delegate.getDelegateType())
         .filter(DelegateKeys.delegateGroupName, delegate.getDelegateGroupName())
         .asList();
@@ -3801,7 +3724,7 @@ public class DelegateServiceImpl implements DelegateService {
     File composeYaml = File.createTempFile(HARNESS_NG_DELEGATE + "-docker-compose", YAML);
 
     ImmutableMap<String, String> scriptParams = getScriptParametersForTemplate(
-        managerHost, verificationServiceUrl, accountId, delegateSetupDetails.getName(), delegateSetupDetails, true);
+        managerHost, verificationServiceUrl, accountId, delegateSetupDetails.getName(), delegateSetupDetails);
 
     saveProcessedTemplate(scriptParams, composeYaml, HARNESS_NG_DELEGATE + "-docker-compose.yaml.ftl");
     sendTelemetryTrackEvents(accountId, DOCKER, true, DELEGATE_CREATED_EVENT);
@@ -3904,7 +3827,7 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   private ImmutableMap<String, String> getScriptParametersForTemplate(String managerHost, String verificationServiceUrl,
-      String accountId, String delegateName, DelegateSetupDetails delegateSetupDetails, boolean useNgToken) {
+      String accountId, String delegateName, DelegateSetupDetails delegateSetupDetails) {
     String version;
     if (mainConfiguration.getDeployMode() == DeployMode.KUBERNETES) {
       List<String> delegateVersions = accountService.getDelegateConfiguration(accountId).getDelegateVersions();
@@ -3988,5 +3911,14 @@ public class DelegateServiceImpl implements DelegateService {
     properties.put("Type", delegateType);
     telemetryReporter.sendTrackEvent(eventName, accountId, accountId, properties, null, Category.GLOBAL,
         TelemetryOption.builder().sendForCommunity(false).build());
+  }
+
+  private boolean matchOwners(DelegateEntityOwner existingOwner, DelegateEntityOwner owner) {
+    if ((existingOwner == null && owner != null) || (existingOwner != null && owner == null)) {
+      return false;
+    } else if (existingOwner == null && owner == null) {
+      return true;
+    }
+    return existingOwner.getIdentifier().equals(owner.getIdentifier());
   }
 }

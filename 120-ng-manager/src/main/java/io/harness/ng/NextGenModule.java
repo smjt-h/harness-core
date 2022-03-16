@@ -58,7 +58,6 @@ import io.harness.cdng.NGModule;
 import io.harness.cdng.expressions.CDExpressionEvaluatorProvider;
 import io.harness.cdng.fileservice.FileServiceClient;
 import io.harness.cdng.fileservice.FileServiceClientFactory;
-import io.harness.cdng.k8s.K8sCanaryStepNode;
 import io.harness.connector.ConnectorModule;
 import io.harness.connector.ConnectorResourceClientModule;
 import io.harness.connector.events.ConnectorEventHandler;
@@ -84,7 +83,7 @@ import io.harness.file.NGFileServiceModule;
 import io.harness.gitsync.GitSyncConfigClientModule;
 import io.harness.gitsync.GitSyncModule;
 import io.harness.gitsync.common.events.FullSyncMessageListener;
-import io.harness.gitsync.core.runnable.HarnessToGitPushMessageListener;
+import io.harness.gitsync.common.events.GitSyncProjectCleanup;
 import io.harness.gitsync.core.webhook.createbranchevent.GitBranchHookEventStreamListener;
 import io.harness.gitsync.core.webhook.pushevent.GitPushEventStreamListener;
 import io.harness.govern.ProviderModule;
@@ -124,6 +123,8 @@ import io.harness.ng.core.api.impl.NGModulesServiceImpl;
 import io.harness.ng.core.api.impl.NGSecretServiceV2Impl;
 import io.harness.ng.core.api.impl.TokenServiceImpl;
 import io.harness.ng.core.api.impl.UserGroupServiceImpl;
+import io.harness.ng.core.delegate.client.DelegateConfigNgClientModule;
+import io.harness.ng.core.delegate.client.DelegateTokenNgClientModule;
 import io.harness.ng.core.encryptors.NGManagerKmsEncryptor;
 import io.harness.ng.core.encryptors.NGManagerVaultEncryptor;
 import io.harness.ng.core.entityactivity.event.EntityActivityCrudEventMessageListener;
@@ -162,7 +163,9 @@ import io.harness.ng.core.services.ProjectService;
 import io.harness.ng.core.smtp.NgSMTPSettingsHttpClientModule;
 import io.harness.ng.core.smtp.SmtpNgService;
 import io.harness.ng.core.smtp.SmtpNgServiceImpl;
+import io.harness.ng.core.user.service.LastAdminCheckService;
 import io.harness.ng.core.user.service.NgUserService;
+import io.harness.ng.core.user.service.impl.LastAdminCheckServiceImpl;
 import io.harness.ng.core.user.service.impl.NgUserServiceImpl;
 import io.harness.ng.core.user.service.impl.UserEntityCrudStreamListener;
 import io.harness.ng.eventsframework.EventsFrameworkModule;
@@ -198,7 +201,6 @@ import io.harness.outbox.TransactionOutboxModule;
 import io.harness.outbox.api.OutboxEventHandler;
 import io.harness.persistence.UserProvider;
 import io.harness.pipeline.PipelineRemoteClientModule;
-import io.harness.plancreator.steps.http.PmsAbstractStepNode;
 import io.harness.pms.listener.NgOrchestrationNotifyEventListener;
 import io.harness.polling.service.impl.PollingPerpetualTaskServiceImpl;
 import io.harness.polling.service.impl.PollingServiceImpl;
@@ -280,9 +282,6 @@ import ru.vyarus.guice.validator.ValidationModule;
 public class NextGenModule extends AbstractModule {
   public static final String SECRET_MANAGER_CONNECTOR_SERVICE = "secretManagerConnectorService";
   public static final String CONNECTOR_DECORATOR_SERVICE = "connectorDecoratorService";
-  public static Set<Class<?>> cdStepsMovedToNewSchema = new HashSet() {
-    { add(K8sCanaryStepNode.class); }
-  };
   private final NextGenConfiguration appConfig;
   public NextGenModule(NextGenConfiguration appConfig) {
     this.appConfig = appConfig;
@@ -382,13 +381,6 @@ public class NextGenModule extends AbstractModule {
         HarnessReflections.get().getSubTypesOf(StepSpecType.class);
     Set<Class<?>> set = new HashSet<>(subTypesOfStepSpecType);
     return ImmutableMap.of(StepSpecType.class, set);
-  }
-
-  @Provides
-  @Named("new-yaml-schema-subtypes-cd")
-  @Singleton
-  public Map<Class<?>, Set<Class<?>>> newCdYamlSchemaSubtypes() {
-    return ImmutableMap.of(PmsAbstractStepNode.class, cdStepsMovedToNewSchema);
   }
 
   @Provides
@@ -549,6 +541,10 @@ public class NextGenModule extends AbstractModule {
     install(ConnectorModule.getInstance(appConfig.getNextGenConfig(), appConfig.getCeNextGenClientConfig()));
     install(new NgConnectorManagerClientModule(
         appConfig.getManagerClientConfig(), appConfig.getNextGenConfig().getManagerServiceSecret()));
+    install(new DelegateTokenNgClientModule(appConfig.getManagerClientConfig(),
+        appConfig.getNextGenConfig().getManagerServiceSecret(), NG_MANAGER.getServiceId()));
+    install(new DelegateConfigNgClientModule(appConfig.getManagerClientConfig(),
+        appConfig.getNextGenConfig().getManagerServiceSecret(), NG_MANAGER.getServiceId()));
     bind(NgGlobalKmsService.class).to(NgGlobalKmsServiceImpl.class);
     install(new ProviderModule() {
       @Provides
@@ -644,6 +640,7 @@ public class NextGenModule extends AbstractModule {
     bind(ConnectorService.class)
         .annotatedWith(Names.named(SECRET_MANAGER_CONNECTOR_SERVICE))
         .to(SecretManagerConnectorServiceImpl.class);
+    bind(LastAdminCheckService.class).to(LastAdminCheckServiceImpl.class);
     bind(NgUserService.class).to(NgUserServiceImpl.class);
     bind(UserGroupService.class).to(UserGroupServiceImpl.class);
     bind(YamlBaseUrlService.class).to(YamlBaseUrlServiceImpl.class);
@@ -777,10 +774,6 @@ public class NextGenModule extends AbstractModule {
     bind(MessageListener.class)
         .annotatedWith(Names.named(EventsFrameworkConstants.ENTITY_ACTIVITY))
         .to(EntityActivityCrudEventMessageListener.class);
-    // todo(abhinav): Move to git sync msvc if it breaks out.
-    bind(MessageListener.class)
-        .annotatedWith(Names.named(EventsFrameworkConstants.HARNESS_TO_GIT_PUSH))
-        .to(HarnessToGitPushMessageListener.class);
     bind(MessageListener.class)
         .annotatedWith(Names.named(EventsFrameworkConstants.GIT_PUSH_EVENT_STREAM))
         .to(GitPushEventStreamListener.class);
@@ -790,6 +783,9 @@ public class NextGenModule extends AbstractModule {
     bind(MessageListener.class)
         .annotatedWith(Names.named(EventsFrameworkConstants.GIT_FULL_SYNC_STREAM))
         .to(FullSyncMessageListener.class);
+    bind(MessageListener.class)
+        .annotatedWith(Names.named(EventsFrameworkConstants.GIT_SYNC_ENTITY_STREAM + ENTITY_CRUD))
+        .to(GitSyncProjectCleanup.class);
     bind(ServiceAccountService.class).to(ServiceAccountServiceImpl.class);
   }
 

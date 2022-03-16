@@ -22,6 +22,7 @@ import static io.harness.delegate.k8s.K8sTestHelper.DEPLOYMENT_CONFIG;
 import static io.harness.filesystem.FileIo.deleteDirectoryAndItsContentIfExists;
 import static io.harness.helm.HelmConstants.HELM_RELEASE_LABEL;
 import static io.harness.helm.HelmSubCommandType.TEMPLATE;
+import static io.harness.k8s.K8sConstants.SKIP_FILE_FOR_DEPLOY_PLACEHOLDER_TEXT;
 import static io.harness.k8s.KubernetesConvention.ReleaseHistoryKeyName;
 import static io.harness.k8s.manifest.ManifestHelper.processYaml;
 import static io.harness.k8s.manifest.ManifestHelper.values_filename;
@@ -178,6 +179,7 @@ import io.harness.shell.SshSessionConfig;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.TimeLimiter;
 import com.google.common.util.concurrent.UncheckedTimeoutException;
@@ -193,6 +195,9 @@ import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1ContainerStatus;
 import io.kubernetes.client.openapi.models.V1ContainerStatusBuilder;
+import io.kubernetes.client.openapi.models.V1Deployment;
+import io.kubernetes.client.openapi.models.V1DeploymentSpec;
+import io.kubernetes.client.openapi.models.V1LabelSelector;
 import io.kubernetes.client.openapi.models.V1LoadBalancerIngress;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1ObjectMetaBuilder;
@@ -206,14 +211,18 @@ import io.kubernetes.client.openapi.models.V1ServiceBuilder;
 import io.kubernetes.client.openapi.models.V1ServicePortBuilder;
 import io.kubernetes.client.openapi.models.V1TokenReviewStatus;
 import io.kubernetes.client.openapi.models.V1TokenReviewStatusBuilder;
-import io.kubernetes.client.openapi.models.VersionInfo;
 import io.kubernetes.client.util.Yaml;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -240,6 +249,9 @@ import me.snowdrop.istio.api.networking.v1alpha3.VirtualService;
 import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceBuilder;
 import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceSpec;
 import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceSpecBuilder;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.junit.Before;
 import org.junit.Rule;
@@ -3039,7 +3051,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
   @Test
   @Owner(developers = TATHAGAT)
   @Category(UnitTests.class)
-  public void testexecuteDeleteHandlingPartialExecution() throws Exception {
+  public void testExecuteDeleteHandlingPartialExecution() throws Exception {
     K8sTaskHelperBase spyK8sHelperBase = spy(k8sTaskHelperBase);
     K8sDelegateTaskParams k8sDelegateTaskParams = K8sDelegateTaskParams.builder().build();
     List<KubernetesResourceId> resourceIds = new ArrayList<>();
@@ -3110,16 +3122,10 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
         .when(mockK8sYamlToDelegateDTOMapper)
         .createKubernetesConfigFromClusterConfig(clusterConfigDTO);
 
-    doThrow(InvalidRequestException.builder().message("Unable to retrieve k8s version. Code: 401").build())
-        .when(mockKubernetesContainerService)
-        .getVersion(kubernetesConfig);
-    try {
-      k8sTaskHelperBase.validate(clusterConfigDTO, emptyList());
-    } catch (HintException he) {
-      assertThat(he.getMessage()).contains(K8sExceptionConstants.KUBERNETES_CLUSTER_CONNECTION_VALIDATION_FAILED);
-      assertThat(he.getCause()).isInstanceOf(ExplanationException.class);
-      assertThat(he.getCause().getMessage()).contains("Unable to retrieve k8s version. Code: 401");
-    }
+    InvalidRequestException exception = new InvalidRequestException("Unable to retrieve k8s version. Code: 401");
+
+    doThrow(exception).when(mockKubernetesContainerService).validateCredentials(kubernetesConfig);
+    assertThatThrownBy(() -> k8sTaskHelperBase.validate(clusterConfigDTO, emptyList())).isSameAs(exception);
   }
 
   @Test
@@ -3142,7 +3148,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
         .when(mockK8sYamlToDelegateDTOMapper)
         .createKubernetesConfigFromClusterConfig(clusterConfigDTO);
 
-    doReturn(new VersionInfo()).when(mockKubernetesContainerService).getVersion(kubernetesConfig);
+    doNothing().when(mockKubernetesContainerService).validateCredentials(kubernetesConfig);
 
     ConnectorValidationResult connectorValidationResult = k8sTaskHelperBase.validate(clusterConfigDTO, emptyList());
 
@@ -3285,5 +3291,130 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
         k8sTaskHelperBase.validateCEKubernetesCluster(connector, DEFAULT, emptyList(), emptyList());
 
     assertThat(result.getStatus()).isEqualTo(ConnectivityStatus.SUCCESS);
+  }
+
+  @Test
+  @Owner(developers = TATHAGAT)
+  @Category(UnitTests.class)
+  public void testGetDeploymentContainingTrackStableSelector() {
+    List<V1Deployment> deployments = getV1DeploymentTestData();
+    when(mockKubernetesContainerService.getDeployment(any(KubernetesConfig.class), anyString(), anyString()))
+        .thenReturn(deployments.get(0))
+        .thenReturn(deployments.get(1))
+        .thenReturn(deployments.get(2))
+        .thenReturn(deployments.get(3));
+    k8sTaskHelperBase.getDeploymentContainingTrackStableSelector(KubernetesConfig.builder().build(),
+        generateInputWorkloadTestResource(), Maps.immutableEntry("harness.io/track", "stable"));
+  }
+
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(UnitTests.class)
+  public void testDeleteSkippedManifestFiles() throws Exception {
+    String manifestDir = Files.createTempDirectory("testDeleteSkippedManifestFiles").toString();
+    try {
+      prepareTestRandomByteManifestFile(
+          Paths.get(manifestDir, "test1.yaml").toString(), SKIP_FILE_FOR_DEPLOY_PLACEHOLDER_TEXT);
+      prepareTestRandomByteManifestFile(Paths.get(manifestDir, "test2").toString(), null);
+      prepareTestRandomByteManifestFile(Paths.get(manifestDir, "test3").toString(), null);
+      prepareTestRandomByteManifestFile(
+          Paths.get(manifestDir, "test5.yaml").toString(), SKIP_FILE_FOR_DEPLOY_PLACEHOLDER_TEXT);
+      prepareTestRandomByteManifestFile(
+          Paths.get(manifestDir, "sub/test1.yaml").toString(), SKIP_FILE_FOR_DEPLOY_PLACEHOLDER_TEXT);
+      prepareTestRandomByteManifestFile(
+          Paths.get(manifestDir, "sub/path/test2.yaml").toString(), SKIP_FILE_FOR_DEPLOY_PLACEHOLDER_TEXT);
+      prepareTestRandomByteManifestFile(Paths.get(manifestDir, "sub/path/test3").toString(), null);
+      Collection<File> filesBefore =
+          FileUtils.listFiles(new File(manifestDir), TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
+      assertThat(filesBefore.stream().map(File::getPath).map(path -> path.substring(manifestDir.length())))
+          .containsExactlyInAnyOrder("/test1.yaml", "/test2", "/test3", "/test5.yaml", "/sub/test1.yaml",
+              "/sub/path/test2.yaml", "/sub/path/test3");
+
+      k8sTaskHelperBase.deleteSkippedManifestFiles(manifestDir, executionLogCallback);
+      Collection<File> filesAfter =
+          FileUtils.listFiles(new File(manifestDir), TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
+      assertThat(filesAfter.stream().map(File::getPath).map(path -> path.substring(manifestDir.length())))
+          .containsExactlyInAnyOrder("/test2", "/test3", "/sub/path/test3");
+    } finally {
+      FileUtils.deleteQuietly(new File(manifestDir));
+    }
+
+    assertThat(new File(manifestDir).exists())
+        .withFailMessage("Temporary directory is not deleted after test, please check")
+        .isFalse();
+  }
+
+  @NotNull
+  private List<V1Deployment> getV1DeploymentTestData() {
+    V1Deployment v1Deployment1 = new V1Deployment()
+                                     .metadata(new V1ObjectMeta().name("d1"))
+                                     .kind("Deployment")
+                                     .apiVersion("apps/v1")
+                                     .spec(new V1DeploymentSpec().selector(new V1LabelSelector().matchLabels(
+                                         Collections.singletonMap("harness.io/track", "stable"))));
+    V1Deployment v1Deployment2 = new V1Deployment()
+                                     .metadata(new V1ObjectMeta().name("d2"))
+                                     .kind("Deployment")
+                                     .apiVersion("apps/v1")
+                                     .spec(new V1DeploymentSpec().selector(
+                                         new V1LabelSelector().matchLabels(Collections.singletonMap("app", "nginx"))));
+
+    V1Deployment v1Deployment3 =
+        new V1Deployment().metadata(new V1ObjectMeta().name("d3")).kind("Deployment").apiVersion("apps/v1");
+
+    V1Deployment v1Deployment4 = new V1Deployment()
+                                     .metadata(new V1ObjectMeta().name("d4"))
+                                     .kind("Deployment")
+                                     .apiVersion("apps/v1")
+                                     .spec(new V1DeploymentSpec().selector(new V1LabelSelector()));
+
+    V1Deployment v1Deployment5 = new V1Deployment()
+                                     .metadata(new V1ObjectMeta().name("d5"))
+                                     .kind("Deployment")
+                                     .apiVersion("apps/v1")
+                                     .spec(new V1DeploymentSpec());
+    return Arrays.asList(v1Deployment1, v1Deployment2, v1Deployment3, v1Deployment4, v1Deployment5);
+  }
+
+  private List<KubernetesResource> generateInputWorkloadTestResource() {
+    List<KubernetesResource> resources = new ArrayList<>();
+    resources.add(KubernetesResource.builder()
+                      .resourceId(KubernetesResourceId.builder().name("d1").kind("Deployment").namespace("ns1").build())
+                      .build());
+    resources.add(KubernetesResource.builder()
+                      .resourceId(KubernetesResourceId.builder().name("d2").kind("Deployment").namespace("ns2").build())
+                      .build());
+    resources.add(KubernetesResource.builder()
+                      .resourceId(KubernetesResourceId.builder().name("d3").kind("Deployment").namespace("ns3").build())
+                      .build());
+
+    resources.add(KubernetesResource.builder()
+                      .resourceId(KubernetesResourceId.builder().name("d4").kind("Deployment").namespace("ns4").build())
+                      .build());
+    return resources;
+  }
+
+  private List<KubernetesResourceId> generateServerWorkloadTestResource() {
+    List<KubernetesResourceId> resources = new ArrayList<>();
+    resources.add(KubernetesResourceId.builder().name("d1").kind("Deployment").namespace("ns1").build());
+    resources.add(KubernetesResourceId.builder().name("d2").kind("Deployment").namespace("ns-diff").build());
+    resources.add(KubernetesResourceId.builder().name("d3").kind("Service").namespace("ns3").build());
+    resources.add(KubernetesResourceId.builder().name("d4").kind("Deployment").namespace("ns4").build());
+    return resources;
+  }
+
+  private void prepareTestRandomByteManifestFile(String filePath, String header) throws IOException {
+    Random random = new Random();
+    byte[] randomBytes = new byte[2048];
+    random.nextBytes(randomBytes);
+
+    StringBuilder fileContent = new StringBuilder();
+    if (header != null) {
+      fileContent.append(header);
+      fileContent.append("\n");
+    }
+    fileContent.append(new String(randomBytes));
+
+    FileUtils.writeStringToFile(new File(filePath), fileContent.toString(), StandardCharsets.UTF_8);
   }
 }

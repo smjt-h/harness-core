@@ -185,7 +185,7 @@ public class ExecutionResource {
     pageRequest.setOptions(options);
     // We will ask for one more than limit, and if its not exactly one more, we know we are at the end of the list.
     pageRequest.setLimit(Integer.toString(Integer.parseInt(pageRequest.getLimit()) + 1));
-
+    pageRequest.addFieldsExcluded(WorkflowExecutionKeys.stateMachine);
     PageResponse<WorkflowExecution> workflowExecutions =
         workflowExecutionService.listExecutions(pageRequest, includeGraph, true, true, false, true);
 
@@ -377,7 +377,9 @@ public class ExecutionResource {
       @PathParam("workflowExecutionId") String workflowExecutionId, ExecutionInterrupt executionInterrupt) {
     executionInterrupt.setAppId(appId);
     executionInterrupt.setExecutionUuid(workflowExecutionId);
-    if (ExecutionInterruptType.ROLLBACK.equals(executionInterrupt.getExecutionInterruptType())) {
+    if (ExecutionInterruptType.ROLLBACK.equals(executionInterrupt.getExecutionInterruptType())
+        || ExecutionInterruptType.ROLLBACK_PROVISIONER_AFTER_PHASES.equals(
+            executionInterrupt.getExecutionInterruptType())) {
       deploymentAuthHandler.authorizeRollback(appId, workflowExecutionId);
     } else {
       deploymentAuthHandler.authorize(appId, workflowExecutionId);
