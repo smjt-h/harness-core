@@ -27,7 +27,7 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("serverlessAwsLambdaDeployStepParameters")
 @RecasterAlias("io.harness.cdng.serverless.ServerlessAwsLambdaDeployStepParameters")
 public class ServerlessAwsLambdaDeployStepParameters
-    extends ServerlessAwsLambdaDeployBaseStepInfo implements ServerlessAwsLambdaSpecParameters {
+    extends ServerlessAwsLambdaDeployBaseStepInfo implements ServerlessSpecParameters {
   @Builder(builderMethodName = "infoBuilder")
   public ServerlessAwsLambdaDeployStepParameters(
       ParameterField<List<TaskSelectorYaml>> delegateSelectors, ParameterField<String> commandOptions) {
