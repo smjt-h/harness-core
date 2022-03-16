@@ -8,6 +8,7 @@
 package io.harness.cvng.core.services.api.monitoredService;
 
 import io.harness.cvng.beans.MonitoredServiceType;
+import io.harness.cvng.beans.cvnglog.CVNGLogDTO;
 import io.harness.cvng.core.beans.HealthMonitoringFlagResponse;
 import io.harness.cvng.core.beans.monitoredService.AnomaliesSummaryDTO;
 import io.harness.cvng.core.beans.monitoredService.CountServiceDTO;
@@ -21,9 +22,11 @@ import io.harness.cvng.core.beans.monitoredService.MonitoredServiceResponse;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceWithHealthSources;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.HealthSourceDTO;
 import io.harness.cvng.core.beans.params.MonitoredServiceParams;
+import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.beans.params.TimeRangeParams;
+import io.harness.cvng.core.beans.params.logsFilterParams.LiveMonitoringLogsFilter;
 import io.harness.cvng.core.entities.MonitoredService;
 import io.harness.cvng.core.services.api.DeleteEntityByHandler;
 import io.harness.ng.beans.PageResponse;
@@ -45,10 +48,13 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
   PageResponse<MonitoredServiceResponse> getList(ProjectParams projectParams, List<String> environmentIdentifiers,
       Integer offset, Integer pageSize, String filter);
   List<MonitoredServiceWithHealthSources> getAllWithTimeSeriesHealthSources(ProjectParams projectParams);
+  MonitoredServiceDTO getApplicationMonitoredServiceDTO(ServiceEnvironmentParams serviceEnvironmentParams);
+  MonitoredServiceDTO getMonitoredServiceDTO(MonitoredServiceParams monitoredServiceParams);
+  // use with MonitoredServiceParams instead
+  @Deprecated MonitoredService getMonitoredService(ProjectParams projectParams, String identifier);
+  MonitoredService getMonitoredService(MonitoredServiceParams monitoredServiceParams);
 
-  MonitoredServiceDTO getMonitoredServiceDTO(ServiceEnvironmentParams serviceEnvironmentParams);
-
-  MonitoredService getMonitoredService(ProjectParams projectParams, String identifier);
+  MonitoredService getApplicationMonitoredService(ServiceEnvironmentParams serviceEnvironmentParams);
 
   List<MonitoredService> list(
       @NonNull ProjectParams projectParams, @Nullable String serviceIdentifier, @Nullable String environmentIdentifier);
@@ -73,8 +79,6 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
 
   HealthScoreDTO getCurrentAndDependentServicesScore(MonitoredServiceParams monitoredServiceParams);
 
-  HealthScoreDTO getCurrentAndDependentServicesScore(ServiceEnvironmentParams serviceEnvironmentParams);
-
   String getYamlTemplate(ProjectParams projectParams, MonitoredServiceType type);
 
   List<HealthSourceDTO> getHealthSources(ProjectParams projectParams, String monitoredServiceIdentifier);
@@ -90,8 +94,12 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
   List<MetricDTO> getSloMetrics(
       ProjectParams projectParams, String monitoredServiceIdentifier, String healthSourceIdentifier);
 
+  MonitoredServiceListItemDTO getMonitoredServiceDetails(MonitoredServiceParams monitoredServiceParams);
+
   MonitoredServiceListItemDTO getMonitoredServiceDetails(ServiceEnvironmentParams serviceEnvironmentParams);
 
   List<String> getMonitoredServiceIdentifiers(
       ProjectParams projectParams, List<String> services, List<String> environments);
+  PageResponse<CVNGLogDTO> getCVNGLogs(MonitoredServiceParams monitoredServiceParams,
+      LiveMonitoringLogsFilter liveMonitoringLogsFilter, PageParams pageParams);
 }

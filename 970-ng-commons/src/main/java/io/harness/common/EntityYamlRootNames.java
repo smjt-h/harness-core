@@ -22,6 +22,7 @@ import io.harness.annotations.dev.OwnedBy;
  */
 @OwnedBy(PL)
 public class EntityYamlRootNames {
+  public static String ENVIRONMENT_GROUP = "environmentGroup";
   public static String PROJECT = "project";
   public static String PIPELINE = "pipeline";
   public static String PIPELINE_STEP = "pipelineStep";
@@ -67,6 +68,8 @@ public class EntityYamlRootNames {
   public static String TERRAFORM_ROLLBACK = "TerraformRollback";
   public static String HELM_DEPLOY = "HelmDeploy";
   public static String HELM_ROLLBACK = "HelmRollback";
+  public static String SERVICENOW_CREATE = "ServiceNowCreate";
+  public static String SERVICENOW_UPDATE = "ServiceNowUpdate";
   public static String SERVICENOW_APPROVAL = "ServiceNowApproval";
   public static String JIRA_APPROVAL = "JiraApproval";
   public static String HARNESS_APPROVAL = "HarnessApproval";

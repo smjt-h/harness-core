@@ -10,9 +10,6 @@ package io.harness.engine;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.algorithm.HashGenerator;
-import io.harness.engine.events.OrchestrationEventEmitter;
-import io.harness.engine.executions.plan.PlanExecutionMetadataService;
-import io.harness.engine.executions.plan.PlanExecutionService;
 import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.interrupts.InterruptManager;
 import io.harness.engine.interrupts.InterruptPackage;
@@ -22,7 +19,6 @@ import io.harness.interrupts.Interrupt;
 import io.harness.plan.Plan;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.plan.ExecutionMetadata;
-import io.harness.springdata.TransactionHelper;
 
 import com.google.inject.Inject;
 import java.util.Map;
@@ -33,17 +29,15 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OrchestrationServiceImpl implements OrchestrationService {
   @Inject private OrchestrationEngine orchestrationEngine;
-  @Inject private PlanExecutionService planExecutionService;
-  @Inject private OrchestrationEventEmitter eventEmitter;
   @Inject private InterruptManager interruptManager;
   @Inject private PlanService planService;
-  @Inject private PlanExecutionMetadataService planExecutionMetadataService;
-  @Inject private TransactionHelper transactionHelper;
 
   @Override
   public PlanExecution startExecution(@Valid Plan plan, Map<String, String> setupAbstractions,
       ExecutionMetadata metadata, PlanExecutionMetadata planExecutionMetadata) {
+    long start = System.currentTimeMillis();
     Plan savedPlan = planService.save(plan);
+    log.info("[PMS_EXECUTE] PlanService plan save time {}ms", System.currentTimeMillis() - start);
     return executePlan(savedPlan, setupAbstractions, metadata, planExecutionMetadata);
   }
 

@@ -270,6 +270,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.mindrot.jbcrypt.BCrypt;
+import org.mongodb.morphia.FindAndModifyOptions;
 import org.mongodb.morphia.query.CriteriaContainer;
 import org.mongodb.morphia.query.FindOptions;
 import org.mongodb.morphia.query.Query;
@@ -1272,7 +1273,7 @@ public class UserServiceImpl implements UserService {
 
     for (String email : userInvite.getEmails()) {
       UserInvite userInviteClone = kryoSerializer.clone(userInvite);
-      userInviteClone.setEmail(email.trim());
+      userInviteClone.setEmail(email.trim().toLowerCase());
       inviteOperationResponses.add(
           inviteUser(userInviteClone, !autoInviteAcceptanceEnabled, autoInviteAcceptanceEnabled));
     }
@@ -1297,11 +1298,24 @@ public class UserServiceImpl implements UserService {
     }
   }
 
+  private void updateEmailOfUser(User user, String newEmail) {
+    if (user != null && isNotEmpty(user.getUuid())) {
+      UpdateOperations<User> updateOperations = wingsPersistence.createUpdateOperations(User.class);
+      setUnset(updateOperations, UserKeys.email, newEmail);
+      Query<User> query = wingsPersistence.createQuery(User.class).filter("_id", user.getUuid());
+      wingsPersistence.findAndModify(query, updateOperations, new FindAndModifyOptions());
+    }
+  }
+
   @Override
   public InviteOperationResponse inviteUser(
       UserInvite userInvite, boolean isInviteAcceptanceRequired, boolean markEmailVerified) {
+    log.info("Inviting user {} with isInviteAcceptanceRequired {} and markEmailVerified {}", userInvite.getEmail(),
+        isInviteAcceptanceRequired, markEmailVerified);
+
     signupService.checkIfEmailIsValid(userInvite.getEmail());
 
+    log.info("LDAPIterator: email {} of account {} is valid", userInvite.getEmail(), userInvite.getAccountId());
     String accountId = userInvite.getAccountId();
     limitCheck(accountId, userInvite.getEmail());
 
@@ -1315,6 +1329,16 @@ public class UserServiceImpl implements UserService {
     boolean createNewUser = user == null;
     if (createNewUser) {
       user = anUser().build();
+    }
+
+    String incomingEmail = userInvite.getEmail();
+    if (featureFlagService.isEnabled(FeatureName.LDAP_USER_ID_SYNC, accountId) && isNotEmpty(incomingEmail)
+        && isNotEmpty(user.getEmail()) && !incomingEmail.equals(user.getEmail())) {
+      String incomingEmailInLower = incomingEmail.trim().toLowerCase();
+      log.info("Updating email Id for user {} with current mail {} and new email {}", user.getUuid(), user.getEmail(),
+          incomingEmailInLower);
+      updateEmailOfUser(user, incomingEmailInLower);
+      user.setEmail(incomingEmailInLower);
     }
 
     List<UserGroup> userGroups = userGroupService.getUserGroupsFromUserInvite(userInvite);
@@ -3661,6 +3685,7 @@ public class UserServiceImpl implements UserService {
     } else {
       query = getListUserQuery(accountId, includeUsersPendingInviteAcceptance);
     }
+    query.criteria(UserKeys.disabled).notEqual(true);
     applySortFilter(pageRequest, query);
     FindOptions findOptions = new FindOptions().skip(offset).limit(pageSize);
     List<User> userList = query.asList(findOptions);

@@ -1257,6 +1257,15 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     return workflowExecution;
   }
 
+  @Override
+  public String getPipelineExecutionId(String appId, String workflowExecutionId) {
+    return wingsPersistence.createQuery(WorkflowExecution.class)
+        .filter("_id", workflowExecutionId)
+        .project(WorkflowExecutionKeys.pipelineExecutionId, true)
+        .get()
+        .getPipelineExecutionId();
+  }
+
   private void populateNodeHierarchy(
       WorkflowExecution workflowExecution, boolean includeGraph, boolean includeStatus, boolean upToDate) {
     if (includeGraph) {
@@ -4639,7 +4648,8 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
             instanceStatusSummaries.addAll(kubernetesSteadyStateCheckExecutionData.getNewInstanceStatusSummaries());
           }
         } else if (nextStateType == StateType.K8S_DEPLOYMENT_ROLLING || nextStateType == StateType.K8S_CANARY_DEPLOY
-            || nextStateType == StateType.K8S_BLUE_GREEN_DEPLOY || nextStateType == StateType.K8S_SCALE) {
+            || nextStateType == StateType.K8S_BLUE_GREEN_DEPLOY || nextStateType == StateType.K8S_SCALE
+            || nextStateType == StateType.K8S_DEPLOYMENT_ROLLING_ROLLBACK) {
           StateExecutionData stateExecutionData = next.fetchStateExecutionData();
           if (stateExecutionData instanceof K8sStateExecutionData) {
             K8sStateExecutionData k8sStateExecutionData = (K8sStateExecutionData) stateExecutionData;
