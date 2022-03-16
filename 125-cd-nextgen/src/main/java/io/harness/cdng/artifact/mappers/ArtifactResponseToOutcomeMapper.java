@@ -9,6 +9,9 @@ package io.harness.cdng.artifact.mappers;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
+import static software.wings.utils.RepositoryFormat.docker;
+import static software.wings.utils.RepositoryFormat.generic;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifact.ArtifactMetadataKeys;
 import io.harness.cdng.artifact.bean.ArtifactConfig;
@@ -19,6 +22,7 @@ import io.harness.cdng.artifact.bean.yaml.GcrArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.NexusRegistryArtifactConfig;
 import io.harness.cdng.artifact.outcome.ArtifactOutcome;
 import io.harness.cdng.artifact.outcome.ArtifactoryArtifactOutcome;
+import io.harness.cdng.artifact.outcome.ArtifactoryGenericArtifactOutcome;
 import io.harness.cdng.artifact.outcome.DockerArtifactOutcome;
 import io.harness.cdng.artifact.outcome.EcrArtifactOutcome;
 import io.harness.cdng.artifact.outcome.GcrArtifactOutcome;
@@ -26,7 +30,8 @@ import io.harness.cdng.artifact.outcome.NexusArtifactOutcome;
 import io.harness.cdng.artifact.utils.ArtifactUtils;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.ecr.EcrArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactDelegateResponse;
@@ -64,10 +69,18 @@ public class ArtifactResponseToOutcomeMapper {
       case ARTIFACTORY_REGISTRY:
         ArtifactoryRegistryArtifactConfig artifactoryRegistryArtifactConfig =
             (ArtifactoryRegistryArtifactConfig) artifactConfig;
-        ArtifactoryArtifactDelegateResponse artifactoryDelegateResponse =
-            (ArtifactoryArtifactDelegateResponse) artifactDelegateResponse;
-        return getArtifactoryArtifactOutcome(
-            artifactoryRegistryArtifactConfig, artifactoryDelegateResponse, useDelegateResponse);
+        if (artifactoryRegistryArtifactConfig.getRepositoryFormat().toString().equals(docker.name())) {
+          ArtifactoryDockerArtifactDelegateResponse artifactoryDelegateResponse =
+              (ArtifactoryDockerArtifactDelegateResponse) artifactDelegateResponse;
+          return getArtifactoryArtifactOutcome(
+              artifactoryRegistryArtifactConfig, artifactoryDelegateResponse, useDelegateResponse);
+        }
+        if (artifactoryRegistryArtifactConfig.getRepositoryFormat().toString().equals(generic.name())) {
+          ArtifactoryGenericArtifactDelegateResponse artifactoryGenericDelegateResponse =
+              (ArtifactoryGenericArtifactDelegateResponse) artifactDelegateResponse;
+          return getArtifactoryGenericArtifactOutcome(
+              artifactoryRegistryArtifactConfig, artifactoryGenericDelegateResponse, useDelegateResponse);
+        }
       default:
         throw new UnsupportedOperationException(
             String.format("Unknown Artifact Config type: [%s]", artifactConfig.getSourceType()));
@@ -143,7 +156,7 @@ public class ArtifactResponseToOutcomeMapper {
   }
 
   private ArtifactoryArtifactOutcome getArtifactoryArtifactOutcome(ArtifactoryRegistryArtifactConfig artifactConfig,
-      ArtifactoryArtifactDelegateResponse artifactDelegateResponse, boolean useDelegateResponse) {
+      ArtifactoryDockerArtifactDelegateResponse artifactDelegateResponse, boolean useDelegateResponse) {
     return ArtifactoryArtifactOutcome.builder()
         .repositoryName(artifactConfig.getRepository().getValue())
         .image(getImageValue(artifactDelegateResponse))
@@ -157,6 +170,25 @@ public class ArtifactResponseToOutcomeMapper {
         .type(ArtifactSourceType.ARTIFACTORY_REGISTRY.getDisplayName())
         .primaryArtifact(artifactConfig.isPrimaryArtifact())
         .imagePullSecret(IMAGE_PULL_SECRET + ArtifactUtils.getArtifactKey(artifactConfig) + ">")
+        .build();
+  }
+
+  private ArtifactoryGenericArtifactOutcome getArtifactoryGenericArtifactOutcome(
+      ArtifactoryRegistryArtifactConfig artifactConfig,
+      ArtifactoryGenericArtifactDelegateResponse artifactDelegateResponse, boolean useDelegateResponse) {
+    return ArtifactoryGenericArtifactOutcome.builder()
+        .repositoryName(artifactConfig.getRepository().getValue())
+        .connectorRef(artifactConfig.getConnectorRef().getValue())
+        .artifactDirectory(artifactConfig.getArtifactDirectory().getValue())
+        .repositoryFormat(artifactConfig.getRepositoryFormat().getValue())
+        .artifactPath(useDelegateResponse
+                ? artifactDelegateResponse.getArtifactPath()
+                : (artifactConfig.getArtifactPath() != null ? artifactConfig.getArtifactPath().getValue() : null))
+        .artifactPathFilter(
+            artifactConfig.getArtifactPathFilter() != null ? artifactConfig.getArtifactPathFilter().getValue() : null)
+        .identifier(artifactConfig.getIdentifier())
+        .type(ArtifactSourceType.ARTIFACTORY_REGISTRY.getDisplayName())
+        .primaryArtifact(artifactConfig.isPrimaryArtifact())
         .build();
   }
 

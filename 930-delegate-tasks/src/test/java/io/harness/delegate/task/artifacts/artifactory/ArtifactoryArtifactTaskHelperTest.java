@@ -50,8 +50,8 @@ public class ArtifactoryArtifactTaskHelperTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testGetArtifactCollectResponseGetLastSuccessfulBuild() {
     doNothing().when(artifactoryArtifactTaskHandler).decryptRequestDTOs(any());
-    ArtifactoryArtifactDelegateRequest artifactoryArtifactDelegateRequest =
-        ArtifactoryArtifactDelegateRequest.builder()
+    ArtifactoryDockerArtifactDelegateRequest artifactoryArtifactDelegateRequest =
+        ArtifactoryDockerArtifactDelegateRequest.builder()
             .artifactoryConnectorDTO(
                 ArtifactoryConnectorDTO.builder().auth(ArtifactoryAuthenticationDTO.builder().build()).build())
             .build();
@@ -77,8 +77,8 @@ public class ArtifactoryArtifactTaskHelperTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testGetArtifactCollectResponseGetBuilds() {
     doNothing().when(artifactoryArtifactTaskHandler).decryptRequestDTOs(any());
-    ArtifactoryArtifactDelegateRequest artifactoryArtifactDelegateRequest =
-        ArtifactoryArtifactDelegateRequest.builder()
+    ArtifactoryDockerArtifactDelegateRequest artifactoryArtifactDelegateRequest =
+        ArtifactoryDockerArtifactDelegateRequest.builder()
             .artifactoryConnectorDTO(
                 ArtifactoryConnectorDTO.builder().auth(ArtifactoryAuthenticationDTO.builder().build()).build())
             .build();
@@ -104,8 +104,8 @@ public class ArtifactoryArtifactTaskHelperTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testGetArtifactCollectResponseValidateArtifactServers() {
     doNothing().when(artifactoryArtifactTaskHandler).decryptRequestDTOs(any());
-    ArtifactoryArtifactDelegateRequest artifactoryArtifactDelegateRequest =
-        ArtifactoryArtifactDelegateRequest.builder()
+    ArtifactoryDockerArtifactDelegateRequest artifactoryArtifactDelegateRequest =
+        ArtifactoryDockerArtifactDelegateRequest.builder()
             .artifactoryConnectorDTO(
                 ArtifactoryConnectorDTO.builder().auth(ArtifactoryAuthenticationDTO.builder().build()).build())
             .build();

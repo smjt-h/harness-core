@@ -30,12 +30,14 @@ import lombok.AllArgsConstructor;
 @Singleton
 @AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__({ @Inject }))
 @OwnedBy(HarnessTeam.CDP)
-public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<ArtifactoryArtifactDelegateRequest> {
+public class ArtifactoryArtifactTaskHandler
+    extends DelegateArtifactTaskHandler<ArtifactoryDockerArtifactDelegateRequest> {
   private final ArtifactoryRegistryService artifactoryRegistryService;
   private final SecretDecryptionService secretDecryptionService;
 
   @Override
-  public ArtifactTaskExecutionResponse getLastSuccessfulBuild(ArtifactoryArtifactDelegateRequest attributesRequest) {
+  public ArtifactTaskExecutionResponse getLastSuccessfulBuild(
+      ArtifactoryDockerArtifactDelegateRequest attributesRequest) {
     BuildDetailsInternal lastSuccessfulBuild;
     ArtifactoryConfigRequest artifactoryConfig =
         ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest);
@@ -52,35 +54,36 @@ public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<
 
     artifactoryRegistryService.verifyArtifactManifestUrl(lastSuccessfulBuild, artifactoryConfig);
 
-    ArtifactoryArtifactDelegateResponse artifactoryArtifactDelegateResponse =
-        ArtifactoryRequestResponseMapper.toArtifactoryResponse(lastSuccessfulBuild, attributesRequest);
+    ArtifactoryDockerArtifactDelegateResponse artifactoryDockerArtifactDelegateResponse =
+        ArtifactoryRequestResponseMapper.toArtifactoryDockerResponse(lastSuccessfulBuild, attributesRequest);
 
-    return getSuccessTaskExecutionResponse(Collections.singletonList(artifactoryArtifactDelegateResponse));
+    return getSuccessTaskExecutionResponse(Collections.singletonList(artifactoryDockerArtifactDelegateResponse));
   }
 
   @Override
-  public ArtifactTaskExecutionResponse getBuilds(ArtifactoryArtifactDelegateRequest attributesRequest) {
+  public ArtifactTaskExecutionResponse getBuilds(ArtifactoryDockerArtifactDelegateRequest attributesRequest) {
     List<BuildDetailsInternal> builds = artifactoryRegistryService.getBuilds(
         ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest),
         attributesRequest.getRepositoryName(), attributesRequest.getArtifactPath(),
         attributesRequest.getRepositoryFormat(), ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT);
-    List<ArtifactoryArtifactDelegateResponse> artifactoryArtifactDelegateResponseList =
+    List<ArtifactoryDockerArtifactDelegateResponse> artifactoryDockerArtifactDelegateResponseList =
         builds.stream()
             .sorted(new BuildDetailsInternalComparatorDescending())
-            .map(build -> ArtifactoryRequestResponseMapper.toArtifactoryResponse(build, attributesRequest))
+            .map(build -> ArtifactoryRequestResponseMapper.toArtifactoryDockerResponse(build, attributesRequest))
             .collect(Collectors.toList());
-    return getSuccessTaskExecutionResponse(artifactoryArtifactDelegateResponseList);
+    return getSuccessTaskExecutionResponse(artifactoryDockerArtifactDelegateResponseList);
   }
 
   @Override
-  public ArtifactTaskExecutionResponse validateArtifactServer(ArtifactoryArtifactDelegateRequest attributesRequest) {
+  public ArtifactTaskExecutionResponse validateArtifactServer(
+      ArtifactoryDockerArtifactDelegateRequest attributesRequest) {
     boolean isServerValidated = artifactoryRegistryService.validateCredentials(
         ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest));
     return ArtifactTaskExecutionResponse.builder().isArtifactServerValid(isServerValidated).build();
   }
 
   private ArtifactTaskExecutionResponse getSuccessTaskExecutionResponse(
-      List<ArtifactoryArtifactDelegateResponse> responseList) {
+      List<ArtifactoryDockerArtifactDelegateResponse> responseList) {
     return ArtifactTaskExecutionResponse.builder()
         .artifactDelegateResponses(responseList)
         .isArtifactSourceValid(true)
@@ -88,11 +91,11 @@ public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<
         .build();
   }
 
-  boolean isRegex(ArtifactoryArtifactDelegateRequest artifactDelegateRequest) {
+  boolean isRegex(ArtifactoryDockerArtifactDelegateRequest artifactDelegateRequest) {
     return EmptyPredicate.isNotEmpty(artifactDelegateRequest.getTagRegex());
   }
 
-  public void decryptRequestDTOs(ArtifactoryArtifactDelegateRequest artifactoryRequest) {
+  public void decryptRequestDTOs(ArtifactoryDockerArtifactDelegateRequest artifactoryRequest) {
     if (artifactoryRequest.getArtifactoryConnectorDTO().getAuth() != null) {
       secretDecryptionService.decrypt(artifactoryRequest.getArtifactoryConnectorDTO().getAuth().getCredentials(),
           artifactoryRequest.getEncryptedDataDetails());

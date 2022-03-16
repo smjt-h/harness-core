@@ -35,8 +35,8 @@ public class ArtifactoryArtifactTaskHelper {
 
   public ArtifactTaskResponse getArtifactCollectResponse(
       ArtifactTaskParameters artifactTaskParameters, LogCallback executionLogCallback) {
-    ArtifactoryArtifactDelegateRequest attributes =
-        (ArtifactoryArtifactDelegateRequest) artifactTaskParameters.getAttributes();
+    ArtifactoryDockerArtifactDelegateRequest attributes =
+        (ArtifactoryDockerArtifactDelegateRequest) artifactTaskParameters.getAttributes();
     String registryUrl = attributes.getArtifactoryConnectorDTO().getArtifactoryServerUrl();
     artifactoryArtifactTaskHandler.decryptRequestDTOs(attributes);
     ArtifactTaskResponse artifactTaskResponse;
@@ -45,13 +45,13 @@ public class ArtifactoryArtifactTaskHelper {
         saveLogs(executionLogCallback, "Fetching Artifact details");
         artifactTaskResponse =
             getSuccessTaskResponse(artifactoryArtifactTaskHandler.getLastSuccessfulBuild(attributes));
-        ArtifactoryArtifactDelegateResponse artifactoryArtifactDelegateResponse =
-            (ArtifactoryArtifactDelegateResponse) (artifactTaskResponse.getArtifactTaskExecutionResponse()
-                                                       .getArtifactDelegateResponses()
-                                                       .size()
+        ArtifactoryDockerArtifactDelegateResponse artifactoryArtifactDelegateResponse =
+            (ArtifactoryDockerArtifactDelegateResponse) (artifactTaskResponse.getArtifactTaskExecutionResponse()
+                                                             .getArtifactDelegateResponses()
+                                                             .size()
                         != 0
                     ? artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().get(0)
-                    : ArtifactoryArtifactDelegateResponse.builder().build());
+                    : ArtifactoryDockerArtifactDelegateResponse.builder().build());
         String buildMetadataUrl = artifactoryArtifactDelegateResponse.getBuildDetails() != null
             ? artifactoryArtifactDelegateResponse.getBuildDetails().getBuildUrl()
             : null;

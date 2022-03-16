@@ -7,6 +7,8 @@
 
 package io.harness.cdng.artifact.mappers;
 
+import static software.wings.utils.RepositoryFormat.generic;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.artifact.bean.yaml.ArtifactoryRegistryArtifactConfig;
@@ -21,8 +23,10 @@ import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.beans.connector.nexusconnector.NexusConnectorDTO;
 import io.harness.delegate.task.artifacts.ArtifactDelegateRequestUtils;
+import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.ecr.EcrArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactDelegateRequest;
@@ -91,7 +95,19 @@ public class ArtifactConfigToDelegateReqMapper {
         ArtifactSourceType.NEXUS3_REGISTRY);
   }
 
-  public ArtifactoryArtifactDelegateRequest getArtifactoryArtifactDelegateRequest(
+  public ArtifactSourceDelegateRequest getArtifactoryArtifactDelegateRequest(
+      ArtifactoryRegistryArtifactConfig artifactConfig, ArtifactoryConnectorDTO artifactoryConnectorDTO,
+      List<EncryptedDataDetail> encryptedDataDetails, String connectorRef) {
+    if (artifactConfig.getRepositoryFormat().toString().equals(generic.name())) {
+      return ArtifactConfigToDelegateReqMapper.getArtifactoryGenericArtifactDelegateRequest(
+          artifactConfig, artifactoryConnectorDTO, encryptedDataDetails, connectorRef);
+    } else {
+      return ArtifactConfigToDelegateReqMapper.getArtifactoryDockerArtifactDelegateRequest(
+          artifactConfig, artifactoryConnectorDTO, encryptedDataDetails, connectorRef);
+    }
+  }
+
+  private ArtifactoryDockerArtifactDelegateRequest getArtifactoryDockerArtifactDelegateRequest(
       ArtifactoryRegistryArtifactConfig artifactConfig, ArtifactoryConnectorDTO artifactoryConnectorDTO,
       List<EncryptedDataDetail> encryptedDataDetails, String connectorRef) {
     // If both are empty, regex is latest among all docker artifacts.
@@ -107,6 +123,26 @@ public class ArtifactConfigToDelegateReqMapper {
     return ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(artifactConfig.getRepository().getValue(),
         artifactConfig.getArtifactPath().getValue(), artifactConfig.getRepositoryFormat().getValue(),
         artifactRepositoryUrl, tag, tagRegex, connectorRef, artifactoryConnectorDTO, encryptedDataDetails,
+        ArtifactSourceType.ARTIFACTORY_REGISTRY);
+  }
+
+  private ArtifactoryGenericArtifactDelegateRequest getArtifactoryGenericArtifactDelegateRequest(
+      ArtifactoryRegistryArtifactConfig artifactConfig, ArtifactoryConnectorDTO artifactoryConnectorDTO,
+      List<EncryptedDataDetail> encryptedDataDetails, String connectorRef) {
+    // If both are empty, artifactPathFilter is latest among all artifacts.
+    String artifactPathFilter =
+        artifactConfig.getArtifactPathFilter() != null ? artifactConfig.getArtifactPathFilter().getValue() : "";
+    String artifactPath = artifactConfig.getArtifactPath() != null ? artifactConfig.getArtifactPath().getValue() : "";
+    if (EmptyPredicate.isEmpty(artifactPath) && EmptyPredicate.isEmpty(artifactPathFilter)) {
+      artifactPathFilter = "\\*";
+    }
+
+    String artifactDirectory =
+        artifactConfig.getArtifactDirectory() != null ? artifactConfig.getArtifactDirectory().getValue() : null;
+
+    return ArtifactDelegateRequestUtils.getArtifactoryGenericArtifactDelegateRequest(
+        artifactConfig.getRepository().getValue(), artifactConfig.getRepositoryFormat().getValue(), artifactDirectory,
+        artifactPath, artifactPathFilter, connectorRef, artifactoryConnectorDTO, encryptedDataDetails,
         ArtifactSourceType.ARTIFACTORY_REGISTRY);
   }
 }

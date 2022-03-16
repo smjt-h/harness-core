@@ -43,8 +43,8 @@ import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.artifacts.ArtifactDelegateRequestUtils;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
 import io.harness.delegate.task.artifacts.ArtifactTaskType;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.request.ArtifactTaskParameters;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskResponse;
@@ -207,7 +207,7 @@ public class ArtifactoryResourceServiceImpl implements ArtifactoryResourceServic
     BaseNGAccess baseNGAccess =
         getBaseNGAccess(artifactoryConnectorRef.getAccountIdentifier(), orgIdentifier, projectIdentifier);
     List<EncryptedDataDetail> encryptionDetails = getEncryptionDetails(connector, baseNGAccess);
-    ArtifactoryArtifactDelegateRequest artifactoryRequest =
+    ArtifactoryDockerArtifactDelegateRequest artifactoryRequest =
         ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(repositoryName, artifactPath,
             repositoryFormat, artifactRepositoryUrl, null, null, null, connector, encryptionDetails,
             ArtifactSourceType.ARTIFACTORY_REGISTRY);
@@ -230,7 +230,7 @@ public class ArtifactoryResourceServiceImpl implements ArtifactoryResourceServic
     BaseNGAccess baseNGAccess =
         getBaseNGAccess(artifactoryConnectorRef.getAccountIdentifier(), orgIdentifier, projectIdentifier);
     List<EncryptedDataDetail> encryptionDetails = getEncryptionDetails(connector, baseNGAccess);
-    ArtifactoryArtifactDelegateRequest artifactoryRequest =
+    ArtifactoryDockerArtifactDelegateRequest artifactoryRequest =
         ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(repositoryName, artifactPath,
             repositoryFormat, artifactRepositoryUrl, artifactoryRequestDTO.getTag(),
             artifactoryRequestDTO.getTagRegex(), null, connector, encryptionDetails,
@@ -254,7 +254,7 @@ public class ArtifactoryResourceServiceImpl implements ArtifactoryResourceServic
     BaseNGAccess baseNGAccess =
         getBaseNGAccess(artifactoryConnectorRef.getAccountIdentifier(), orgIdentifier, projectIdentifier);
     List<EncryptedDataDetail> encryptionDetails = getEncryptionDetails(connector, baseNGAccess);
-    ArtifactoryArtifactDelegateRequest artifactoryRequest =
+    ArtifactoryDockerArtifactDelegateRequest artifactoryRequest =
         ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(null, null, null, null, null, null, null,
             connector, encryptionDetails, ArtifactSourceType.ARTIFACTORY_REGISTRY);
     ArtifactTaskExecutionResponse artifactTaskExecutionResponse =
@@ -297,14 +297,14 @@ public class ArtifactoryResourceServiceImpl implements ArtifactoryResourceServic
     return Collections.emptyList();
   }
 
-  private ArtifactTaskExecutionResponse executeSyncTask(ArtifactoryArtifactDelegateRequest artifactoryRequest,
+  private ArtifactTaskExecutionResponse executeSyncTask(ArtifactoryDockerArtifactDelegateRequest artifactoryRequest,
       ArtifactTaskType taskType, BaseNGAccess ngAccess, String ifFailedMessage) {
     DelegateResponseData responseData = getResponseData(ngAccess, artifactoryRequest, taskType);
     return getTaskExecutionResponse(responseData, ifFailedMessage);
   }
 
-  private DelegateResponseData getResponseData(
-      BaseNGAccess ngAccess, ArtifactoryArtifactDelegateRequest delegateRequest, ArtifactTaskType artifactTaskType) {
+  private DelegateResponseData getResponseData(BaseNGAccess ngAccess,
+      ArtifactoryDockerArtifactDelegateRequest delegateRequest, ArtifactTaskType artifactTaskType) {
     ArtifactTaskParameters artifactTaskParameters = ArtifactTaskParameters.builder()
                                                         .accountId(ngAccess.getAccountIdentifier())
                                                         .artifactTaskType(artifactTaskType)
@@ -350,10 +350,10 @@ public class ArtifactoryResourceServiceImpl implements ArtifactoryResourceServic
 
   private ArtifactoryResponseDTO getArtifactoryResponseDTO(
       ArtifactTaskExecutionResponse artifactTaskExecutionResponse) {
-    List<ArtifactoryArtifactDelegateResponse> artifactoryArtifactDelegateResponses =
+    List<ArtifactoryDockerArtifactDelegateResponse> artifactoryArtifactDelegateResponses =
         artifactTaskExecutionResponse.getArtifactDelegateResponses()
             .stream()
-            .map(delegateResponse -> (ArtifactoryArtifactDelegateResponse) delegateResponse)
+            .map(delegateResponse -> (ArtifactoryDockerArtifactDelegateResponse) delegateResponse)
             .collect(Collectors.toList());
     return ArtifactoryResourceMapper.toArtifactoryResponse(artifactoryArtifactDelegateResponses);
   }

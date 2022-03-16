@@ -7,6 +7,9 @@
 
 package io.harness.ng.core.artifacts.resources.artifactory;
 
+import static software.wings.beans.artifact.ArtifactStream.ArtifactStreamKeys.repositoryFormat;
+import static software.wings.utils.RepositoryType.generic;
+
 import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -75,7 +78,7 @@ public class ArtifactoryArtifactResource {
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
       @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
-    if (repositoryFormat.equals("generic")) {
+    if (repositoryFormat.equals(generic.name())) {
       List<ArtifactoryBuildDetailsDTO> repositoriesMap = new ArrayList<>();
       repositoriesMap.add(ArtifactoryGenericBuildDetailsDTO.builder().artifactPath("artifact.zip").build());
       ArtifactoryResponseDTO genericArtifactDetails =
@@ -105,7 +108,7 @@ public class ArtifactoryArtifactResource {
       @NotNull @QueryParam(NGCommonEntityConstants.PIPELINE_KEY) String pipelineIdentifier,
       @NotNull @QueryParam("fqnPath") String fqnPath, @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo,
       @NotNull String runtimeInputYaml) {
-    if (repositoryFormat.equals("generic")) {
+    if (repositoryFormat.equals(generic.name())) {
       List<ArtifactoryBuildDetailsDTO> repositoriesMap = new ArrayList<>();
       repositoriesMap.add(ArtifactoryGenericBuildDetailsDTO.builder().artifactPath("artifact.zip").build());
       ArtifactoryResponseDTO genericArtifactDetails =
@@ -165,14 +168,6 @@ public class ArtifactoryArtifactResource {
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier) {
-    if (repositoryType.equals("generic")) {
-      Map<String, String> repositoriesMap = new HashMap<>();
-      repositoriesMap.put("repo", "repo");
-      ArtifactoryRepoDetailsDTO repoGenericDetailsDTO =
-          ArtifactoryRepoDetailsDTO.builder().repositories(repositoriesMap).build();
-      return ResponseDTO.newResponse(repoGenericDetailsDTO);
-    }
-
     IdentifierRef connectorRef = IdentifierRefHelper.getIdentifierRef(
         artifactoryConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
     ArtifactoryRepoDetailsDTO repoDetailsDTO =
