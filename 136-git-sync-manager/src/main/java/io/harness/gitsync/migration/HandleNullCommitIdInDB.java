@@ -9,10 +9,8 @@ package io.harness.gitsync.migration;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.UNSYNCED;
-import static io.harness.gitsync.common.beans.GitBranch.GitBranchKeys.branchName;
-import static io.harness.gitsync.common.beans.GitBranch.GitBranchKeys.branchSyncStatus;
-import static io.harness.gitsync.common.beans.GitBranch.GitBranchKeys.repoURL;
-import static io.harness.gitsync.core.beans.GitCommit.GitCommitKeys.commitId;
+import static io.harness.gitsync.common.beans.GitBranch.GitBranchKeys;
+import static io.harness.gitsync.core.beans.GitCommit.GitCommitKeys;
 import static io.harness.gitsync.core.beans.GitCommit.GitCommitKeys.uuid;
 
 import static org.springframework.data.mongodb.core.query.Query.query;
@@ -47,7 +45,7 @@ public class HandleNullCommitIdInDB implements NGMigration {
   public void migrate() {
     log.info("Started processing the migration to handle the null commitId");
     try {
-      Criteria criteria = Criteria.where(commitId).is(null);
+      Criteria criteria = Criteria.where(GitCommitKeys.commitId).is(null);
       List<GitCommit> gitCommitList = mongoTemplate.find(query(criteria), GitCommit.class);
       log.info("The size of the git commits to be processed is {}", CollectionUtils.emptyIfNull(gitCommitList));
       saveTheBranchAsUnsyncedAndDeleteTheCommit(gitCommitList);
@@ -100,8 +98,8 @@ public class HandleNullCommitIdInDB implements NGMigration {
 
   private void updateTheBranchToUnSynced(String repoUrl, String branch) {
     log.info("Deleting the branch {} in repo {}", branch, repoUrl);
-    Update update = update(branchSyncStatus, UNSYNCED);
-    Criteria criteria = Criteria.where(repoURL).is(repoUrl).and(branchName).is(branch);
+    Update update = update(GitBranchKeys.branchSyncStatus, UNSYNCED);
+    Criteria criteria = Criteria.where(GitBranchKeys.repoURL).is(repoUrl).and(GitBranchKeys.branchName).is(branch);
     UpdateResult updateResult = mongoTemplate.updateMulti(query(criteria), update, GitBranch.class);
     log.info("Updated {} record for the repo {} and branch {}", updateResult.getModifiedCount(), repoUrl, branch);
   }

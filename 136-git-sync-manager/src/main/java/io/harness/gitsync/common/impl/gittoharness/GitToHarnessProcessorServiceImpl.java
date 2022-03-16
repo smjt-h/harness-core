@@ -18,7 +18,6 @@ import static io.harness.gitsync.common.beans.GitToHarnessProcessingStepType.PRO
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.EntityType;
 import io.harness.Microservice;
