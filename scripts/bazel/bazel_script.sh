@@ -133,7 +133,6 @@ BAZEL_MODULES="\
   //945-license-usage-sdk:module \
   //945-ng-audit-client:module \
   //947-scim-core:module \
-  //948-access-control-admin-client:module \
   //948-access-control-sdk:module \
   //950-command-library-common:module \
   //959-common-entities:module \
