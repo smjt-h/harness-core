@@ -183,6 +183,20 @@ import com.google.common.io.Resources;
 import com.google.common.util.concurrent.TimeLimiter;
 import com.google.common.util.concurrent.UncheckedTimeoutException;
 import com.google.inject.Inject;
+import io.fabric8.istio.api.networking.v1alpha3.Destination;
+import io.fabric8.istio.api.networking.v1alpha3.DestinationBuilder;
+import io.fabric8.istio.api.networking.v1alpha3.HTTPRoute;
+import io.fabric8.istio.api.networking.v1alpha3.HTTPRouteBuilder;
+import io.fabric8.istio.api.networking.v1alpha3.HTTPRouteDestination;
+import io.fabric8.istio.api.networking.v1alpha3.HTTPRouteDestinationBuilder;
+import io.fabric8.istio.api.networking.v1alpha3.PortSelectorBuilder;
+import io.fabric8.istio.api.networking.v1alpha3.Subset;
+import io.fabric8.istio.api.networking.v1alpha3.TCPRoute;
+import io.fabric8.istio.api.networking.v1alpha3.TLSRoute;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualService;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceBuilder;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceSpec;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceSpecBuilder;
 import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -229,19 +243,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import junitparams.JUnitParamsRunner;
 import lombok.extern.slf4j.Slf4j;
-import me.snowdrop.istio.api.networking.v1alpha3.Destination;
-import me.snowdrop.istio.api.networking.v1alpha3.DestinationBuilder;
-import me.snowdrop.istio.api.networking.v1alpha3.HTTPRouteDestination;
-import me.snowdrop.istio.api.networking.v1alpha3.HTTPRoute;
-import me.snowdrop.istio.api.networking.v1alpha3.HTTPRouteBuilder;
-import me.snowdrop.istio.api.networking.v1alpha3.PortSelectorBuilder;
-import me.snowdrop.istio.api.networking.v1alpha3.Subset;
-import me.snowdrop.istio.api.networking.v1alpha3.TCPRoute;
-import me.snowdrop.istio.api.networking.v1alpha3.TLSRoute;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualService;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceBuilder;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceSpec;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceSpecBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.junit.Before;
@@ -1690,15 +1691,13 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
             .stream()
             .map(entry
                 -> new HTTPRouteBuilder()
-                       .withRoute(
-                           new HTTPRouteDestinationBuilder()
-                               .withDestination(
-                                   new DestinationBuilder()
-                                       .withHost(entry.getKey())
-                                       .withPort(
-                                           new PortSelectorBuilder().withPort(new NumberPort(entry.getValue())).build())
-                                       .build())
-                               .build())
+                       .withRoute(new HTTPRouteDestinationBuilder()
+                                      .withDestination(
+                                          new DestinationBuilder()
+                                              .withHost(entry.getKey())
+                                              .withPort(new PortSelectorBuilder().withNumber(entry.getValue()).build())
+                                              .build())
+                                      .build())
                        .build())
             .collect(Collectors.toList());
 

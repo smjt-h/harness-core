@@ -51,11 +51,6 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.atteo.evo.inflector.English.plural;
 
-import io.fabric8.kubernetes.api.model.apps.StatefulSet;
-import io.fabric8.kubernetes.api.model.apps.StatefulSetSpec;
-import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
-import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscalerBuilder;
-import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscalerSpecBuilder;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.concurrent.HTimeLimiter;
@@ -102,6 +97,15 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.TimeLimiter;
 import com.google.common.util.concurrent.UncheckedTimeoutException;
 import com.google.inject.Inject;
+import io.fabric8.istio.api.networking.v1alpha3.Destination;
+import io.fabric8.istio.api.networking.v1alpha3.DestinationRule;
+import io.fabric8.istio.api.networking.v1alpha3.DestinationRuleBuilder;
+import io.fabric8.istio.api.networking.v1alpha3.DestinationRuleFluent;
+import io.fabric8.istio.api.networking.v1alpha3.HTTPRouteDestination;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualService;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceBuilder;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceFluent.SpecNested;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceSpecFluent.HttpNested;
 import io.fabric8.kubernetes.api.KubernetesHelper;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
@@ -126,6 +130,15 @@ import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
+import io.fabric8.kubernetes.api.model.apps.StatefulSet;
+import io.fabric8.kubernetes.api.model.apps.StatefulSetSpec;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscalerBuilder;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscalerSpecBuilder;
+import io.fabric8.kubernetes.api.model.autoscaling.v2beta1.MetricSpec;
+import io.fabric8.kubernetes.api.model.autoscaling.v2beta1.MetricSpecBuilder;
+import io.fabric8.kubernetes.api.model.autoscaling.v2beta1.ResourceMetricSource;
+import io.fabric8.kubernetes.api.model.autoscaling.v2beta1.ResourceMetricSourceBuilder;
 import io.fabric8.kubernetes.api.model.extensions.DaemonSet;
 import io.fabric8.kubernetes.api.model.extensions.DaemonSetSpec;
 import io.fabric8.kubernetes.api.model.extensions.Deployment;
@@ -152,16 +165,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
-import me.snowdrop.istio.api.IstioResource;
-import me.snowdrop.istio.api.networking.v1alpha3.Destination;
-import me.snowdrop.istio.api.networking.v1alpha3.DestinationRule;
-import me.snowdrop.istio.api.networking.v1alpha3.DestinationRuleBuilder;
-import me.snowdrop.istio.api.networking.v1alpha3.DestinationRuleFluent;
-import me.snowdrop.istio.api.networking.v1alpha3.HTTPRouteDestination;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualService;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceBuilder;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceFluent.SpecNested;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceSpecFluent.HttpNested;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.mongodb.morphia.annotations.Transient;
@@ -835,19 +838,28 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
       String virtualServiceName, Service service, Map<String, Integer> activeControllers, String containerServiceName,
       ExecutionLogCallback executionLogCallback, StringBuilder summaryOutput) {
     if (setupParams.isUseIstioRouteRule() && service != null) {
-      List<IstioResource> istioResourcesDefinition = createVirtualServiceAndDestinationRuleDefinition(
+      // Todo : find out generic way of creating istio resource rather than casting them and calli resource specific api
+      List<HasMetadata> istioResourcesDefinition = createVirtualServiceAndDestinationRuleDefinition(
           setupParams, virtualServiceName, service.getMetadata().getLabels(), activeControllers, executionLogCallback);
-      for (IstioResource r : istioResourcesDefinition) {
-        kubernetesContainerService.createOrReplaceIstioResource(kubernetesConfig, r);
+      for (HasMetadata r : istioResourcesDefinition) {
+        if (r instanceof VirtualService) {
+          kubernetesContainerService.createOrReplaceFabric8IstioVirtualService(kubernetesConfig, (VirtualService) r);
+        } else if (r instanceof DestinationRule) {
+          kubernetesContainerService.createOrReplaceFabric8IstioDestinationRule(kubernetesConfig, (DestinationRule) r);
+        } else {
+          throw new InvalidArgumentsException(
+              format("%s should either be VirtualService or DestinationRule", r.getFullResourceName()), USER);
+        }
         summaryOutput.append(format("%nIstio %s: %s", r.getKind(), r.getMetadata().getName()));
         if (StringUtils.equals(r.getKind(), "VirtualService")) {
-          printVirtualServiceRouteWeights(r, getPrefixFromControllerName(containerServiceName), executionLogCallback);
+          printVirtualServiceRouteWeights(
+              (VirtualService) r, getPrefixFromControllerName(containerServiceName), executionLogCallback);
         }
       }
     } else {
       try {
         VirtualService virtualService =
-            kubernetesContainerService.getIstioVirtualService(kubernetesConfig, virtualServiceName);
+            kubernetesContainerService.getFabric8IstioVirtualService(kubernetesConfig, virtualServiceName);
         if (virtualService != null
             && virtualService.getMetadata().getLabels().containsKey(HARNESS_KUBERNETES_MANAGED_LABEL_KEY)) {
           executionLogCallback.saveExecutionLog("Deleting Istio VirtualService" + virtualServiceName);
@@ -855,7 +867,7 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
         }
 
         DestinationRule destinationRule =
-            kubernetesContainerService.getIstioDestinationRule(kubernetesConfig, virtualServiceName);
+            kubernetesContainerService.getFabric8IstioDestinationRule(kubernetesConfig, virtualServiceName);
         if (destinationRule != null
             && destinationRule.getMetadata().getLabels().containsKey(HARNESS_KUBERNETES_MANAGED_LABEL_KEY)) {
           executionLogCallback.saveExecutionLog("Deleting Istio DestinationRule" + virtualServiceName);
@@ -1126,16 +1138,24 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
 
   private HorizontalPodAutoscaler getBasicHorizontalPodAutoscaler(String name, String kind, String apiVersion,
       String namespace, Map<String, String> serviceLabels, KubernetesSetupParams setupParams) {
-    HorizontalPodAutoscalerSpecBuilder spec =
-        new HorizontalPodAutoscalerSpecBuilder()
-            .withMinReplicas(setupParams.getMinAutoscaleInstances())
-            .withMaxReplicas(setupParams.getMaxAutoscaleInstances())
-            .withTargetCPUUtilizationPercentage(setupParams.getTargetCpuUtilizationPercentage())
-            .withNewScaleTargetRef()
-            .withKind(kind)
-            .withName(name)
-            .withApiVersion(apiVersion)
-            .endScaleTargetRef();
+    ResourceMetricSource resourceMetricSource =
+        new ResourceMetricSourceBuilder()
+            .withName("cpu")
+            .withTargetAverageUtilization(setupParams.getTargetCpuUtilizationPercentage())
+            .build();
+    MetricSpec metricSpec = new MetricSpecBuilder().withType("Resource").withResource(resourceMetricSource).build();
+
+    HorizontalPodAutoscalerSpecBuilder spec = new HorizontalPodAutoscalerSpecBuilder()
+
+                                                  .withMinReplicas(setupParams.getMinAutoscaleInstances())
+                                                  .withMaxReplicas(setupParams.getMaxAutoscaleInstances())
+                                                  .withMetrics(metricSpec)
+                                                  .withNewScaleTargetRef()
+                                                  .withKind(kind)
+                                                  .withName(name)
+                                                  .withApiVersion(apiVersion)
+                                                  .endScaleTargetRef();
+
     return new HorizontalPodAutoscalerBuilder()
         .withNewMetadata()
         .withAnnotations(harnessAnnotations)
@@ -1147,7 +1167,7 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
         .build();
   }
 
-  private List<IstioResource> createVirtualServiceAndDestinationRuleDefinition(KubernetesSetupParams setupParams,
+  private List<HasMetadata> createVirtualServiceAndDestinationRuleDefinition(KubernetesSetupParams setupParams,
       String kubernetesServiceName, Map<String, String> labels, Map<String, Integer> activeControllers,
       ExecutionLogCallback executionLogCallback) {
     SpecNested<VirtualServiceBuilder> virtualServiceSpecNested =
@@ -1223,8 +1243,8 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
 
     virtualServiceHttpNested.endHttp();
 
-    IstioResource virtualService = virtualServiceSpecNested.endSpec().build();
-    IstioResource destinationRule = destinationRuleSpecNested.endSpec().build();
+    HasMetadata virtualService = virtualServiceSpecNested.endSpec().build();
+    HasMetadata destinationRule = destinationRuleSpecNested.endSpec().build();
     executionLogCallback.saveExecutionLog("Creating istio VirtualService:\n\n" + toDisplayYaml(virtualService));
     executionLogCallback.saveExecutionLog("Creating istio DestinationRule:\n\n" + toDisplayYaml(destinationRule));
     return asList(virtualService, destinationRule);

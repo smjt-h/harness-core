@@ -57,7 +57,6 @@ import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-import io.fabric8.istio.api.networking.v1alpha3.VirtualService;
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
@@ -200,7 +199,6 @@ public class K8sTaskHelperTest extends CategoryTest {
   public void testGetResourceIdsForDeletion() throws Exception {
     K8sDeleteTaskParameters k8sDeleteTaskParameters =
         K8sDeleteTaskParameters.builder().releaseName("releaseName").build();
-    VirtualService
 
     ExecutionLogCallback executionLogCallback = logCallback;
     doNothing().when(executionLogCallback).saveExecutionLog(anyString());

@@ -20,7 +20,6 @@ import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.substringBefore;
 import static org.atteo.evo.inflector.English.plural;
 
-import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
 import io.harness.container.ContainerInfo;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.InvalidRequestException;
@@ -41,7 +40,16 @@ import software.wings.service.intfc.security.EncryptionService;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.inject.Inject;
+import io.fabric8.istio.api.networking.v1alpha3.Destination;
+import io.fabric8.istio.api.networking.v1alpha3.HTTPRoute;
+import io.fabric8.istio.api.networking.v1alpha3.HTTPRouteDestination;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualService;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceBuilder;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceFluent.SpecNested;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceSpec;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceSpecFluent.HttpNested;
 import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -51,15 +59,6 @@ import java.util.Optional;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import me.snowdrop.istio.api.IstioResource;
-import me.snowdrop.istio.api.networking.v1alpha3.Destination;
-import me.snowdrop.istio.api.networking.v1alpha3.HTTPRouteDestination;
-import me.snowdrop.istio.api.networking.v1alpha3.HTTPRoute;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualService;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceBuilder;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceFluent.SpecNested;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceSpec;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceSpecFluent.HttpNested;
 import org.mongodb.morphia.annotations.Transient;
 
 /**
@@ -157,20 +156,21 @@ public class KubernetesResizeCommandUnit extends ContainerResizeCommandUnit {
       String controllerName = resizeParams.getContainerServiceName();
       String kubernetesServiceName = getServiceNameFromControllerName(controllerName);
       String controllerPrefix = getPrefixFromControllerName(controllerName);
-      IstioResource existingVirtualService =
-          kubernetesContainerService.getIstioVirtualService(kubernetesConfig, kubernetesServiceName);
+      VirtualService existingVirtualService =
+          kubernetesContainerService.getFabric8IstioVirtualService(kubernetesConfig, kubernetesServiceName);
 
       if (existingVirtualService == null) {
         throw new InvalidRequestException(format("Virtual Service [%s] not found", kubernetesServiceName));
       }
 
-      IstioResource virtualServiceDefinition =
+      VirtualService virtualServiceDefinition =
           createVirtualServiceDefinition(contextData, allData, existingVirtualService, kubernetesServiceName);
 
       if (!virtualServiceHttpRouteMatchesExisting(existingVirtualService, virtualServiceDefinition)) {
         executionLogCallback.saveExecutionLog("Setting Istio VirtualService Route destination weights:");
         printVirtualServiceRouteWeights(virtualServiceDefinition, controllerPrefix, executionLogCallback);
-        kubernetesContainerService.createOrReplaceIstioResource(kubernetesConfig, virtualServiceDefinition);
+        kubernetesContainerService.createOrReplaceFabric8IstioVirtualService(
+            kubernetesConfig, virtualServiceDefinition);
       } else {
         executionLogCallback.saveExecutionLog("No change to Istio VirtualService Route rules :");
         printVirtualServiceRouteWeights(existingVirtualService, controllerPrefix, executionLogCallback);
@@ -184,7 +184,7 @@ public class KubernetesResizeCommandUnit extends ContainerResizeCommandUnit {
   }
 
   private boolean virtualServiceHttpRouteMatchesExisting(
-      IstioResource existingVirtualService, IstioResource virtualService) {
+      VirtualService existingVirtualService, VirtualService virtualService) {
     if (existingVirtualService == null) {
       return false;
     }
@@ -296,8 +296,8 @@ public class KubernetesResizeCommandUnit extends ContainerResizeCommandUnit {
     return ((KubernetesResizeParams) contextData.resizeParams).getTrafficPercent();
   }
 
-  private IstioResource createVirtualServiceDefinition(ContextData contextData, List<ContainerServiceData> allData,
-      IstioResource existingVirtualService, String kubernetesServiceName) {
+  private VirtualService createVirtualServiceDefinition(ContextData contextData, List<ContainerServiceData> allData,
+      VirtualService existingVirtualService, String kubernetesServiceName) {
     VirtualServiceSpec existingVirtualServiceSpec = ((VirtualService) existingVirtualService).getSpec();
 
     SpecNested<VirtualServiceBuilder> virtualServiceSpecNested =

@@ -30,7 +30,6 @@ import static okhttp3.ConnectionSpec.CLEARTEXT;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
-import io.fabric8.istio.client.NamespacedIstioClient;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidArgumentsException;
@@ -54,6 +53,11 @@ import com.fasterxml.jackson.dataformat.yaml.snakeyaml.constructor.SafeConstruct
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.fabric8.istio.api.networking.v1alpha3.HTTPRouteDestination;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualService;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceSpec;
+import io.fabric8.istio.client.DefaultIstioClient;
+import io.fabric8.istio.client.IstioClient;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
 import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscalerList;
@@ -96,12 +100,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import lombok.extern.slf4j.Slf4j;
-import me.snowdrop.istio.api.IstioResource;
-import me.snowdrop.istio.api.networking.v1alpha3.HTTPRouteDestination;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualService;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceSpec;
-import me.snowdrop.istio.client.DefaultIstioClient;
-import me.snowdrop.istio.client.IstioClient;
 import okhttp3.Authenticator;
 import okhttp3.ConnectionSpec;
 import okhttp3.Credentials;
@@ -243,7 +241,21 @@ public class KubernetesHelperService {
     return config;
   }
 
-  public IstioClient getIstioClient(KubernetesConfig kubernetesConfig) {
+  //  public IstioClient getIstioClient(KubernetesConfig kubernetesConfig) {
+  //    Config config = getConfig(kubernetesConfig, StringUtils.EMPTY);
+  //
+  //    String namespace = "default";
+  //    if (isNotBlank(config.getNamespace())) {
+  //      namespace = config.getNamespace();
+  //    }
+  //
+  //    OkHttpClient okHttpClient = createHttpClientWithProxySetting(config);
+  //    try (DefaultIstioClient client = new DefaultIstioClient(okHttpClient, config)) {
+  //      return client.inNamespace(namespace);
+  //    }
+  //  }
+
+  public IstioClient getFabric8IstioClient(KubernetesConfig kubernetesConfig) {
     Config config = getConfig(kubernetesConfig, StringUtils.EMPTY);
 
     String namespace = "default";
@@ -251,28 +263,14 @@ public class KubernetesHelperService {
       namespace = config.getNamespace();
     }
 
-    OkHttpClient okHttpClient = createHttpClientWithProxySetting(config);
-    try (DefaultIstioClient client = new DefaultIstioClient(okHttpClient, config)) {
-      return client.inNamespace(namespace);
-    }
-  }
-
-  public io.fabric8.istio.client.IstioClient getFabric8IstioClient(KubernetesConfig kubernetesConfig){
-    Config config = getConfig(kubernetesConfig, StringUtils.EMPTY);
-
-    String namespace = "default";
-    if (isNotBlank(config.getNamespace())) {
-      namespace = config.getNamespace();
-    }
-
-    try(io.fabric8.istio.client.DefaultIstioClient istioClient = new io.fabric8.istio.client.DefaultIstioClient(config)) {
+    try (DefaultIstioClient istioClient = new DefaultIstioClient(config)) {
       return istioClient.inNamespace(namespace);
     }
   }
 
   public static void printVirtualServiceRouteWeights(
-      IstioResource virtualService, String controllerPrefix, LogCallback logCallback) {
-    VirtualServiceSpec virtualServiceSpec = ((VirtualService) virtualService).getSpec();
+      VirtualService virtualService, String controllerPrefix, LogCallback logCallback) {
+    VirtualServiceSpec virtualServiceSpec = virtualService.getSpec();
     if (isNotEmpty(virtualServiceSpec.getHttp().get(0).getRoute())) {
       List<HTTPRouteDestination> sorted = virtualServiceSpec.getHttp().get(0).getRoute();
       sorted.sort(Comparator.comparing(a -> Integer.valueOf(a.getDestination().getSubset())));

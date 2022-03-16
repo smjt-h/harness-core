@@ -32,7 +32,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidRequestException;
 import io.harness.k8s.KubernetesContainerService;
@@ -59,6 +58,7 @@ import io.fabric8.kubernetes.api.model.ReplicationControllerBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.Date;
@@ -273,10 +273,6 @@ public class KubernetesSetupCommandUnitTest extends WingsBaseTest {
     assertThat(horizontalPodAutoscaler.getMetadata().getLabels().containsKey("version")).isTrue();
     assertThat(horizontalPodAutoscaler.getMetadata().getLabels().get("app")).isEqualTo("appName");
     assertThat(horizontalPodAutoscaler.getMetadata().getLabels().get("version")).isEqualTo("9");
-    assertThat(horizontalPodAutoscaler.getSpec().getAdditionalProperties()).isNotNull();
-    assertThat(horizontalPodAutoscaler.getSpec().getAdditionalProperties()).hasSize(1);
-    assertThat(horizontalPodAutoscaler.getSpec().getAdditionalProperties().keySet().iterator().next())
-        .isEqualTo("metrics");
     assertThat(horizontalPodAutoscaler.getSpec().getMinReplicas()).isEqualTo(Integer.valueOf(3));
     assertThat(horizontalPodAutoscaler.getSpec().getMaxReplicas()).isEqualTo(Integer.valueOf(6));
   }
@@ -305,7 +301,7 @@ public class KubernetesSetupCommandUnitTest extends WingsBaseTest {
         kubernetesSetupCommandUnit.createAutoscaler("abaris.hpanormal.prod.0", "Deployment", "extensions/v1beta1",
             "default", labels, setupParams, executionLogCallback);
 
-    assertThat(horizontalPodAutoscaler.getApiVersion()).isEqualTo("autoscaling/v1");
+    assertThat(horizontalPodAutoscaler.getApiVersion()).isEqualTo("autoscaling/v2beta1");
     assertThat(horizontalPodAutoscaler.getSpec()).isNotNull();
     assertThat(horizontalPodAutoscaler.getSpec().getScaleTargetRef().getName()).isEqualTo("abaris.hpanormal.prod.0");
     assertThat(horizontalPodAutoscaler.getSpec().getScaleTargetRef().getKind()).isEqualTo("Deployment");
@@ -319,7 +315,6 @@ public class KubernetesSetupCommandUnitTest extends WingsBaseTest {
     assertThat(horizontalPodAutoscaler.getMetadata().getLabels().get("version")).isEqualTo("9");
     assertThat(horizontalPodAutoscaler.getSpec().getMinReplicas()).isEqualTo(Integer.valueOf(1));
     assertThat(horizontalPodAutoscaler.getSpec().getMaxReplicas()).isEqualTo(Integer.valueOf(2));
-    assertThat(horizontalPodAutoscaler.getSpec().getTargetCPUUtilizationPercentage()).isEqualTo(Integer.valueOf(20));
 
     setupParams = KubernetesSetupParamsBuilder
                       .aKubernetesSetupParams()
@@ -333,7 +328,7 @@ public class KubernetesSetupCommandUnitTest extends WingsBaseTest {
     horizontalPodAutoscaler = kubernetesSetupCommandUnit.createAutoscaler("abaris.hpanormal.prod-0", "Deployment",
         "extensions/v1beta1", "default", labels, setupParams, executionLogCallback);
 
-    assertThat(horizontalPodAutoscaler.getApiVersion()).isEqualTo("autoscaling/v1");
+    assertThat(horizontalPodAutoscaler.getApiVersion()).isEqualTo("autoscaling/v2beta1");
     assertThat(horizontalPodAutoscaler.getSpec()).isNotNull();
     assertThat(horizontalPodAutoscaler.getSpec().getScaleTargetRef().getName()).isEqualTo("abaris.hpanormal.prod-0");
     assertThat(horizontalPodAutoscaler.getSpec().getScaleTargetRef().getKind()).isEqualTo("Deployment");
@@ -347,7 +342,6 @@ public class KubernetesSetupCommandUnitTest extends WingsBaseTest {
     assertThat(horizontalPodAutoscaler.getMetadata().getLabels().get("version")).isEqualTo("9");
     assertThat(horizontalPodAutoscaler.getSpec().getMinReplicas()).isEqualTo(Integer.valueOf(2));
     assertThat(horizontalPodAutoscaler.getSpec().getMaxReplicas()).isEqualTo(Integer.valueOf(3));
-    assertThat(horizontalPodAutoscaler.getSpec().getTargetCPUUtilizationPercentage()).isEqualTo(Integer.valueOf(30));
   }
 
   @Test
