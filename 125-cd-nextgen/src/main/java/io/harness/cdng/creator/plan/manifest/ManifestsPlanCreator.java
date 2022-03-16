@@ -7,6 +7,9 @@
 
 package io.harness.cdng.creator.plan.manifest;
 
+import static io.harness.cdng.manifest.ManifestType.HELM_SUPPORTED_MANIFEST_TYPES;
+import static io.harness.cdng.manifest.ManifestType.K8S_SUPPORTED_MANIFEST_TYPES;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.creator.plan.PlanCreatorConstants;
@@ -20,6 +23,7 @@ import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
 import io.harness.cdng.manifest.yaml.ManifestOverrideSetWrapper;
 import io.harness.cdng.manifest.yaml.ManifestOverrideSets;
 import io.harness.cdng.service.beans.ServiceConfig;
+import io.harness.cdng.service.beans.ServiceDefinitionType;
 import io.harness.cdng.utilities.ManifestsUtility;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.data.structure.EmptyPredicate;
@@ -81,6 +85,7 @@ public class ManifestsPlanCreator extends ChildrenPlanCreator<ManifestsListConfi
       return planCreationResponseMap;
     }
 
+    validateManifestList(serviceConfig, manifestList);
     YamlField manifestsYamlField = ctx.getCurrentField();
 
     List<YamlNode> yamlNodes = Optional.of(manifestsYamlField.getNode().asArray()).orElse(Collections.emptyList());
@@ -161,6 +166,45 @@ public class ManifestsPlanCreator extends ChildrenPlanCreator<ManifestsListConfi
   @Override
   public Map<String, Set<String>> getSupportedTypes() {
     return Collections.singletonMap(YamlTypes.MANIFEST_LIST_CONFIG, Collections.singleton(PlanCreatorUtils.ANY_TYPE));
+  }
+
+  private void validateManifestList(ServiceConfig serviceConfig, ManifestList manifestList) {
+    if (serviceConfig == null || serviceConfig.getServiceDefinition() == null) {
+      return;
+    }
+
+    if (serviceConfig.getServiceDefinition().getType() != null) {
+      switch (serviceConfig.getServiceDefinition().getType()) {
+        case KUBERNETES:
+          validateDuplicateManifests(
+              manifestList, K8S_SUPPORTED_MANIFEST_TYPES, ServiceDefinitionType.KUBERNETES.getYamlName());
+          break;
+        case NATIVE_HELM:
+          validateDuplicateManifests(
+              manifestList, HELM_SUPPORTED_MANIFEST_TYPES, ServiceDefinitionType.NATIVE_HELM.getYamlName());
+          break;
+        default:
+      }
+    }
+  }
+
+  private void validateDuplicateManifests(ManifestList manifestList, Set<String> supported, String deploymentType) {
+    Map<String, String> manifestIdTypeMap =
+        manifestList.getManifests()
+            .entrySet()
+            .stream()
+            .filter(entry -> supported.contains(entry.getValue().getParams().getType()))
+            .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getParams().getType()));
+
+    if (manifestIdTypeMap.values().size() > 1) {
+      String manifestIdType = manifestIdTypeMap.entrySet()
+                                  .stream()
+                                  .map(entry -> String.format("%s : %s", entry.getKey(), entry.getValue()))
+                                  .collect(Collectors.joining(", "));
+      throw new InvalidRequestException(String.format(
+          "Multiple manifests found [%s]. %s deployment support only one manifest of one of types: %s. Remove all unused manifests",
+          manifestIdType, deploymentType, String.join(", ", supported)));
+    }
   }
 
   @Value
