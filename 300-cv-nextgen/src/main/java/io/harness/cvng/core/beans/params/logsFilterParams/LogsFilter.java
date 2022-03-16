@@ -24,7 +24,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public abstract class LogsFilter {
   @ApiParam(required = true) @NotNull @QueryParam("logType") String logType;
-  @QueryParam("errorLogsOnly") @ApiParam(defaultValue = "false") boolean errorLogsOnly;
+  @ApiParam(defaultValue = "false") @QueryParam("errorLogsOnly") boolean errorLogsOnly;
 
   public CVNGLogType getCVNGLogType() {
     return CVNGLogType.toCVNGLogType(logType);
