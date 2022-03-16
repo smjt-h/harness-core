@@ -7,27 +7,28 @@
 
 package io.harness.shell;
 
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.shell.AccessType.USER_PASSWORD;
-import static io.harness.shell.AuthenticationScheme.KERBEROS;
-import static io.harness.shell.SshSessionConfig.Builder.aSshSessionConfig;
-
-import io.harness.logging.LogCallback;
-import io.harness.logging.NoopExecutionCallback;
-import io.harness.security.EncryptionUtils;
-import io.harness.ssh.SshHelperUtils;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import io.harness.logging.LogCallback;
+import io.harness.logging.NoopExecutionCallback;
+import io.harness.security.EncryptionUtils;
+import io.harness.ssh.SshHelperUtils;
+import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
-import lombok.experimental.UtilityClass;
-import lombok.extern.slf4j.Slf4j;
+
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.shell.AccessType.USER_PASSWORD;
+import static io.harness.shell.AuthenticationScheme.KERBEROS;
+import static io.harness.shell.SshSessionConfig.Builder.aSshSessionConfig;
 
 /**
  * Created by anubhaw on 2/8/16.
@@ -114,7 +115,13 @@ public class SshSessionFactory {
     } else if (config.getAccessType() != null && config.getAccessType() == USER_PASSWORD) {
       log.info("[SshSessionFactory]: SSH using Username Password");
       session = jsch.getSession(config.getUserName(), config.getHost(), config.getPort());
-      byte[] password = EncryptionUtils.toBytes(config.getSshPassword(), Charsets.UTF_8);
+      byte[] password = null;
+      if(isNotEmpty(config.getSshPassword())) {
+        password = EncryptionUtils.toBytes(config.getSshPassword(), Charsets.UTF_8);
+      }
+      else if(isNotEmpty(config.getPassword())) {
+        password = EncryptionUtils.toBytes(config.getPassword(), Charsets.UTF_8);
+      }
       session.setPassword(password);
       session.setUserInfo(new SshUserInfo(new String(password, Charsets.UTF_8)));
     } else if (config.isKeyLess()) {
