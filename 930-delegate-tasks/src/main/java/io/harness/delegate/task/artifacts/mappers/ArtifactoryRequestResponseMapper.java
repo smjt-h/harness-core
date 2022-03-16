@@ -14,8 +14,9 @@ import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryUsernamePasswordAuthDTO;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateResponse;
 import io.harness.utils.FieldWithPlainTextOrSecretValueHelper;
 
 import lombok.experimental.UtilityClass;
@@ -23,7 +24,7 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 @OwnedBy(HarnessTeam.CDP)
 public class ArtifactoryRequestResponseMapper {
-  public ArtifactoryConfigRequest toArtifactoryInternalConfig(ArtifactoryArtifactDelegateRequest request) {
+  public ArtifactoryConfigRequest toArtifactoryInternalConfig(ArtifactoryDockerArtifactDelegateRequest request) {
     char[] password = null;
     String username = null;
     boolean hasCredentials = false;
@@ -49,14 +50,26 @@ public class ArtifactoryRequestResponseMapper {
         .build();
   }
 
-  public ArtifactoryArtifactDelegateResponse toArtifactoryResponse(
-      BuildDetailsInternal buildDetailsInternal, ArtifactoryArtifactDelegateRequest request) {
-    return ArtifactoryArtifactDelegateResponse.builder()
+  public ArtifactoryDockerArtifactDelegateResponse toArtifactoryDockerResponse(
+      BuildDetailsInternal buildDetailsInternal, ArtifactoryDockerArtifactDelegateRequest request) {
+    return ArtifactoryDockerArtifactDelegateResponse.builder()
         .buildDetails(ArtifactBuildDetailsMapper.toBuildDetailsNG(buildDetailsInternal))
         .repositoryName(request.getRepositoryName())
         .artifactPath(request.getArtifactPath())
         .repositoryFormat(request.getRepositoryFormat())
         .tag(buildDetailsInternal.getNumber())
+        .sourceType(ArtifactSourceType.ARTIFACTORY_REGISTRY)
+        .build();
+  }
+
+  public ArtifactoryGenericArtifactDelegateResponse toArtifactoryGenericResponse(
+      BuildDetailsInternal buildDetailsInternal, ArtifactoryDockerArtifactDelegateRequest request) {
+    return ArtifactoryGenericArtifactDelegateResponse.builder()
+        .buildDetails(ArtifactBuildDetailsMapper.toBuildDetailsNG(buildDetailsInternal))
+        .repositoryName(request.getRepositoryName())
+        .artifactPath(request.getArtifactPath())
+        .repositoryFormat(request.getRepositoryFormat())
+        .artifactDirectory(buildDetailsInternal.getNumber())
         .sourceType(ArtifactSourceType.ARTIFACTORY_REGISTRY)
         .build();
   }

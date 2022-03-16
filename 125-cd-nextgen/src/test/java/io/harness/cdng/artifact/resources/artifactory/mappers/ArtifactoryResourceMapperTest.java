@@ -15,7 +15,7 @@ import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryDockerBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryResponseDTO;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.response.ArtifactBuildDetailsNG;
 import io.harness.rule.Owner;
 
@@ -29,8 +29,8 @@ public class ArtifactoryResourceMapperTest extends CategoryTest {
   @Owner(developers = MLUKIC)
   @Category(UnitTests.class)
   public void testToArtifactoryResponse() {
-    List<ArtifactoryArtifactDelegateResponse> artifactoryArtifactDelegateResponses =
-        Lists.newArrayList(ArtifactoryArtifactDelegateResponse.builder()
+    List<ArtifactoryDockerArtifactDelegateResponse> artifactoryArtifactDelegateResponses =
+        Lists.newArrayList(ArtifactoryDockerArtifactDelegateResponse.builder()
                                .buildDetails(ArtifactBuildDetailsNG.builder().build())
                                .artifactPath("/")
                                .build());

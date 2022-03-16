@@ -33,19 +33,18 @@ import lombok.Value;
 @Builder
 @EqualsAndHashCode(callSuper = false)
 @OwnedBy(HarnessTeam.CDP)
-public class ArtifactoryArtifactDelegateRequest implements ArtifactSourceDelegateRequest {
-  /** Host from where to pull the images */
-  String artifactRepositoryUrl;
+public class ArtifactoryGenericArtifactDelegateRequest implements ArtifactSourceDelegateRequest {
   /** Repository name */
   String repositoryName;
   /** Images in repos need to be referenced via a path. */
+  String artifactDirectory;
+
   String artifactPath;
+
+  String artifactPathFilter;
   /** Repository format - package type */
   String repositoryFormat;
-  /** Tag refers to exact tag number. */
-  String tag;
-  /** Tag regex is used to get latest build from builds matching regex. */
-  String tagRegex;
+
   String connectorRef;
   /** Artifactory Connector*/
   ArtifactoryConnectorDTO artifactoryConnectorDTO;

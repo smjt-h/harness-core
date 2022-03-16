@@ -9,6 +9,8 @@ package io.harness.cdng.artifact.utils;
 
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
+import static software.wings.utils.RepositoryFormat.generic;
+
 import io.harness.NGConstants;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -128,6 +130,14 @@ public class ArtifactUtils {
       case ARTIFACTORY_REGISTRY:
         ArtifactoryRegistryArtifactConfig artifactoryRegistryArtifactConfig =
             (ArtifactoryRegistryArtifactConfig) artifactConfig;
+        if (artifactoryRegistryArtifactConfig.getRepositoryFormat().toString().equals(generic.name())) {
+          return String.format(placeholder, sourceType,
+              artifactoryRegistryArtifactConfig.getArtifactDirectory().getValue(),
+              ParameterField.isNull(artifactoryRegistryArtifactConfig.getArtifactPath())
+                  ? artifactoryRegistryArtifactConfig.getArtifactPathFilter().getValue()
+                  : artifactoryRegistryArtifactConfig.getArtifactPath().getValue(),
+              artifactoryRegistryArtifactConfig.getConnectorRef().getValue());
+        }
         return String.format(placeholder, sourceType, artifactoryRegistryArtifactConfig.getArtifactPath().getValue(),
             ParameterField.isNull(artifactoryRegistryArtifactConfig.getTag())
                 ? artifactoryRegistryArtifactConfig.getTagRegex().getValue()

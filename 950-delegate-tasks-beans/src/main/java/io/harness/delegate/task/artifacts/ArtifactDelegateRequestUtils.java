@@ -14,7 +14,8 @@ import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.beans.connector.nexusconnector.NexusConnectorDTO;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.ecr.EcrArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactDelegateRequest;
@@ -89,11 +90,11 @@ public class ArtifactDelegateRequestUtils {
         .artifactRepositoryUrl(artifactRepositoryUrl)
         .build();
   }
-  public ArtifactoryArtifactDelegateRequest getArtifactoryArtifactDelegateRequest(String repositoryName,
+  public ArtifactoryDockerArtifactDelegateRequest getArtifactoryArtifactDelegateRequest(String repositoryName,
       String imagePath, String repositoryFormat, String artifactRepositoryUrl, String tag, String tagRegex,
       String connectorRef, ArtifactoryConnectorDTO artifactoryConnectorDTO,
       List<EncryptedDataDetail> encryptedDataDetails, ArtifactSourceType sourceType) {
-    return ArtifactoryArtifactDelegateRequest.builder()
+    return ArtifactoryDockerArtifactDelegateRequest.builder()
         .repositoryName(repositoryName)
         .artifactPath(trim(imagePath))
         .repositoryFormat(repositoryFormat)
@@ -106,6 +107,24 @@ public class ArtifactDelegateRequestUtils {
         .artifactRepositoryUrl(artifactRepositoryUrl)
         .build();
   }
+
+  public ArtifactoryGenericArtifactDelegateRequest getArtifactoryGenericArtifactDelegateRequest(String repositoryName,
+      String repositoryFormat, String artifactDirectory, String artifactPath, String artifactPathFilter,
+      String connectorRef, ArtifactoryConnectorDTO artifactoryConnectorDTO,
+      List<EncryptedDataDetail> encryptedDataDetails, ArtifactSourceType sourceType) {
+    return ArtifactoryGenericArtifactDelegateRequest.builder()
+        .repositoryName(repositoryName)
+        .repositoryFormat(repositoryFormat)
+        .artifactDirectory(artifactDirectory)
+        .artifactPath(artifactPath)
+        .artifactPathFilter(artifactPathFilter)
+        .connectorRef(connectorRef)
+        .artifactoryConnectorDTO(artifactoryConnectorDTO)
+        .encryptedDataDetails(encryptedDataDetails)
+        .sourceType(sourceType)
+        .build();
+  }
+
   private String trim(String str) {
     return str == null ? null : str.trim();
   }

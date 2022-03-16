@@ -9,7 +9,7 @@ package io.harness.polling.artifact;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.ecr.EcrArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactDelegateResponse;
@@ -34,7 +34,7 @@ public class ArtifactCollectionUtilsNg {
       case NEXUS3_REGISTRY:
         return ((NexusArtifactDelegateResponse) artifactDelegateResponse).getTag();
       case ARTIFACTORY_REGISTRY:
-        return ((ArtifactoryArtifactDelegateResponse) artifactDelegateResponse).getTag();
+        return ((ArtifactoryDockerArtifactDelegateResponse) artifactDelegateResponse).getTag();
       default:
         throw new InvalidRequestException(
             String.format("Source type %s not supported", artifactDelegateResponse.getSourceType()));
