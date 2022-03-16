@@ -15,6 +15,7 @@ import static io.harness.gitsync.common.beans.GitToHarnessProcessingStepStatus.D
 import static io.harness.gitsync.common.beans.GitToHarnessProcessingStepStatus.ERROR;
 import static io.harness.gitsync.common.beans.GitToHarnessProcessingStepStatus.IN_PROGRESS;
 import static io.harness.gitsync.common.beans.GitToHarnessProcessingStepType.PROCESS_FILES_IN_MSVS;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -24,8 +25,6 @@ import io.harness.Microservice;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
-import io.harness.exception.InvalidAccessRequestException;
-import io.harness.exception.UnexpectedException;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.ChangeSet;
 import io.harness.gitsync.ChangeSets;
