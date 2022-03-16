@@ -349,7 +349,9 @@ public class MessageServiceImpl implements MessageService {
       }
       log.info("done clearing channel ");
       BlockingQueue<Message> queue = messageQueues.get(getMessageChannel(type, id));
-      log.info("Messages still in queue {}", String.valueOf(queue));
+      log.info("Messages still in queue {}", String.valueOf(queue), " Now clearing !!");
+      messageQueues.get(getMessageChannel(type, id)).clear();
+      log.info("Messages now in queue {}", String.valueOf(queue));
     } catch (Exception e) {
       log.error("Error clearing channel {} {}", type, id, e);
     }

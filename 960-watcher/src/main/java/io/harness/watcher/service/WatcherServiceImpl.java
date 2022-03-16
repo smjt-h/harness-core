@@ -1196,7 +1196,7 @@ public class WatcherServiceImpl implements WatcherService {
             messageService.logAllMessages(DELEGATE, newDelegateProcess);
             messageService.clearChannel(DELEGATE, newDelegateProcess);
           }
-          log.info("before destroy **gaurav {}", newDelegate.toString());
+          log.info("before destroy **gaurav {}", newDelegate.getProcess());
           newDelegate.getProcess().destroy();
           log.info("after destroy **gaurav");
           if (newDelegate.getProcess().isAlive()) {
