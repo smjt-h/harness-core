@@ -1138,23 +1138,16 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
 
   private HorizontalPodAutoscaler getBasicHorizontalPodAutoscaler(String name, String kind, String apiVersion,
       String namespace, Map<String, String> serviceLabels, KubernetesSetupParams setupParams) {
-    ResourceMetricSource resourceMetricSource =
-        new ResourceMetricSourceBuilder()
-            .withName("cpu")
-            .withTargetAverageUtilization(setupParams.getTargetCpuUtilizationPercentage())
-            .build();
-    MetricSpec metricSpec = new MetricSpecBuilder().withType("Resource").withResource(resourceMetricSource).build();
-
-    HorizontalPodAutoscalerSpecBuilder spec = new HorizontalPodAutoscalerSpecBuilder()
-
-                                                  .withMinReplicas(setupParams.getMinAutoscaleInstances())
-                                                  .withMaxReplicas(setupParams.getMaxAutoscaleInstances())
-                                                  .withMetrics(metricSpec)
-                                                  .withNewScaleTargetRef()
-                                                  .withKind(kind)
-                                                  .withName(name)
-                                                  .withApiVersion(apiVersion)
-                                                  .endScaleTargetRef();
+    HorizontalPodAutoscalerSpecBuilder spec =
+        new HorizontalPodAutoscalerSpecBuilder()
+            .withMinReplicas(setupParams.getMinAutoscaleInstances())
+            .withMaxReplicas(setupParams.getMaxAutoscaleInstances())
+            .withTargetCPUUtilizationPercentage(setupParams.getTargetCpuUtilizationPercentage())
+            .withNewScaleTargetRef()
+            .withKind(kind)
+            .withName(name)
+            .withApiVersion(apiVersion)
+            .endScaleTargetRef();
 
     return new HorizontalPodAutoscalerBuilder()
         .withNewMetadata()
