@@ -130,10 +130,10 @@ func (t *pluginTask) Run(ctx context.Context) (map[string]string, *pb.Artifact, 
 		if errc != nil {
 			t.log.Errorw("error while collecting test reports", zap.Error(errc))
 		}
-		t.log.Infow("Step Succeeded", "output", so, "retries", t.numRetries)
+		t.log.Infow("Step Succeeded", "output:", so, "retries:", t.numRetries)
 		return so, nil, t.numRetries, err
 	}
-	t.log.Infow("Step Succeeded", "output", so, "retries", t.numRetries)
+	t.log.Infow("Step Succeeded", "output:", so, "retries:", t.numRetries)
 	return so, nil, t.numRetries, err
 }
 
