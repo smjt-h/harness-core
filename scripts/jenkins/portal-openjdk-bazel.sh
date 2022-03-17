@@ -248,7 +248,7 @@ cp ../../800-pipeline-service/keystore.jks .
 cp ../../800-pipeline-service/key.pem .
 cp ../../800-pipeline-service/cert.pem .
 cp ../../800-pipeline-service/src/main/resources/redisson-jcache.yaml .
-pwd
+
 cp ../../dockerization/pipeline-service/Dockerfile-pipeline-service-jenkins-k8-openjdk ./Dockerfile
 cp ../../dockerization/pipeline-service/Dockerfile-pipeline-service-jenkins-k8-gcr-openjdk ./Dockerfile-gcr
 cp -r ../../dockerization/pipeline-service/scripts/ .
