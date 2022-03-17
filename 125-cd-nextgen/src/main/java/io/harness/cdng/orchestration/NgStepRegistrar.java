@@ -46,6 +46,7 @@ import io.harness.cdng.service.steps.ServiceConfigStep;
 import io.harness.cdng.service.steps.ServiceDefinitionStep;
 import io.harness.cdng.service.steps.ServiceSpecStep;
 import io.harness.cdng.service.steps.ServiceStep;
+import io.harness.cdng.ssh.ExecuteCommandStep;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.sdk.core.steps.Step;
 import io.harness.registrar.NGCommonUtilStepsRegistrar;
@@ -97,6 +98,7 @@ public class NgStepRegistrar {
     engineSteps.put(EnvironmentStep.STEP_TYPE, EnvironmentStep.class);
     engineSteps.put(HelmDeployStep.STEP_TYPE, HelmDeployStep.class);
     engineSteps.put(HelmRollbackStep.STEP_TYPE, HelmRollbackStep.class);
+    engineSteps.put(ExecuteCommandStep.STEP_TYPE, ExecuteCommandStep.class);
 
     engineSteps.putAll(NGCommonUtilStepsRegistrar.getEngineSteps());
     return engineSteps;

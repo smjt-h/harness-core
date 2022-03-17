@@ -434,9 +434,13 @@ import io.harness.delegate.task.scm.ScmPushTaskParams;
 import io.harness.delegate.task.scm.ScmPushTaskResponseData;
 import io.harness.delegate.task.servicenow.ServiceNowTaskNGParameters;
 import io.harness.delegate.task.servicenow.ServiceNowTaskNGResponse;
+import io.harness.delegate.task.shell.CommandTaskParameters;
+import io.harness.delegate.task.shell.CommandTaskResponse;
 import io.harness.delegate.task.shell.ShellScriptApprovalTaskParameters;
 import io.harness.delegate.task.shell.ShellScriptTaskParametersNG;
 import io.harness.delegate.task.shell.ShellScriptTaskResponseNG;
+import io.harness.delegate.task.shell.SshCommandTaskParameters;
+import io.harness.delegate.task.shell.TailFilePatternDto;
 import io.harness.delegate.task.spotinst.request.SpotInstDeployTaskParameters;
 import io.harness.delegate.task.spotinst.request.SpotInstGetElastigroupJsonParameters;
 import io.harness.delegate.task.spotinst.request.SpotInstListElastigroupInstancesParameters;
@@ -1156,5 +1160,9 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(AcrArtifactDelegateResponse.class, 543500);
     kryo.register(AzureResourceGroupsResponse.class, 543501);
     kryo.register(AzureClustersResponse.class, 543502);
+    kryo.register(CommandTaskResponse.class, 543503);
+    kryo.register(CommandTaskParameters.class, 543504);
+    kryo.register(SshCommandTaskParameters.class, 543505);
+    kryo.register(TailFilePatternDto.class, 543506);
   }
 }

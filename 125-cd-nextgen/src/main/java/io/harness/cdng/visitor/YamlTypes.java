@@ -42,6 +42,7 @@ public interface YamlTypes {
 
   String HELM_DEPLOY = StepSpecTypeConstants.HELM_DEPLOY;
   String HELM_ROLLBACK = StepSpecTypeConstants.HELM_ROLLBACK;
+  String EXECUTE_COMMAND = StepSpecTypeConstants.EXECUTE_COMMAND;
 
   String MANIFEST_LIST_CONFIG = "manifests";
   String MANIFEST_CONFIG = "manifest";

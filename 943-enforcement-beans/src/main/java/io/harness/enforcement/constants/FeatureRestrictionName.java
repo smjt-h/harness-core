@@ -63,6 +63,7 @@ public enum FeatureRestrictionName {
   TERRAFORM_DESTROY,
   TERRAFORM_ROLLBACK,
   INTEGRATED_APPROVALS_WITH_SERVICE_NOW,
+  SSH,
 
   // STO Features
   SECURITY,

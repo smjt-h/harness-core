@@ -103,6 +103,7 @@ import io.harness.cdng.service.beans.SshServiceSpec;
 import io.harness.cdng.service.beans.StageOverridesConfig;
 import io.harness.cdng.service.beans.WinRmServiceSpec;
 import io.harness.cdng.service.steps.ServiceStepParameters;
+import io.harness.cdng.ssh.ExecuteCommandStepInfo;
 import io.harness.cdng.tasks.manifestFetch.step.ManifestFetchOutcome;
 import io.harness.cdng.tasks.manifestFetch.step.ManifestFetchParameters;
 import io.harness.cdng.variables.beans.NGVariableOverrideSetWrapper;
@@ -223,5 +224,6 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(WinRmServiceSpec.class, 12562);
     kryo.register(CustomArtifactConfig.class, 12563);
     kryo.register(AcrArtifactConfig.class, 12564);
+    kryo.register(ExecuteCommandStepInfo.class, 12565);
   }
 }

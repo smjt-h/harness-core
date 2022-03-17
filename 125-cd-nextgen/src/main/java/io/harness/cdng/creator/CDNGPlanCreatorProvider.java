@@ -25,6 +25,7 @@ import io.harness.cdng.creator.plan.stage.DeploymentStagePMSPlanCreatorV2;
 import io.harness.cdng.creator.plan.steps.CDPMSStepFilterJsonCreator;
 import io.harness.cdng.creator.plan.steps.CDPMSStepFilterJsonCreatorV2;
 import io.harness.cdng.creator.plan.steps.CDPMSStepPlanCreator;
+import io.harness.cdng.creator.plan.steps.ExecuteCommandStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.HelmDeployStepPlanCreatorV2;
 import io.harness.cdng.creator.plan.steps.HelmRollbackStepPlanCreatorV2;
 import io.harness.cdng.creator.plan.steps.K8sApplyStepPlanCreator;
@@ -43,6 +44,7 @@ import io.harness.cdng.creator.plan.steps.TerraformRollbackStepPlanCreator;
 import io.harness.cdng.creator.variables.DeploymentStageVariableCreator;
 import io.harness.cdng.creator.variables.HelmStepVariableCreator;
 import io.harness.cdng.creator.variables.K8sStepVariableCreator;
+import io.harness.cdng.creator.variables.SshVariableCreator;
 import io.harness.cdng.provision.terraform.variablecreator.TerraformStepsVariableCreator;
 import io.harness.enforcement.constants.FeatureRestrictionName;
 import io.harness.executions.steps.StepSpecTypeConstants;
@@ -104,6 +106,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     planCreators.add(new CDStepsPlanCreator());
     planCreators.add(new StepGroupPMSPlanCreator());
     planCreators.add(new ParallelPlanCreator());
+    planCreators.add(new ExecuteCommandStepPlanCreator());
     injectorUtils.injectMembers(planCreators);
     return planCreators;
   }
@@ -127,6 +130,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     variableCreators.add(new K8sStepVariableCreator());
     variableCreators.add(new TerraformStepsVariableCreator());
     variableCreators.add(new HelmStepVariableCreator());
+    variableCreators.add(new SshVariableCreator());
     return variableCreators;
   }
 
@@ -262,6 +266,15 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
             .setFeatureFlag(FeatureName.NG_NATIVE_HELM.name())
             .build();
 
+    StepInfo executeCommand =
+        StepInfo.newBuilder()
+            .setName("Execute Command")
+            .setType(StepSpecTypeConstants.EXECUTE_COMMAND)
+            //                    .setFeatureRestrictionName(FeatureRestrictionName.SSH.name())
+            .setFeatureFlag(FeatureName.SSH_NG.name())
+            .setStepMetaData(StepMetaData.newBuilder().addCategory("Ssh").addFolderPaths("Ssh").build())
+            .build();
+
     List<StepInfo> stepInfos = new ArrayList<>();
 
     stepInfos.add(k8sRolling);
@@ -279,6 +292,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     stepInfos.add(terraformDestroy);
     stepInfos.add(helmDeploy);
     stepInfos.add(helmRollback);
+    stepInfos.add(executeCommand);
     return stepInfos;
   }
 }

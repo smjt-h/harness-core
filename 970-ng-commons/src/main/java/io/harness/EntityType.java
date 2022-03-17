@@ -210,7 +210,10 @@ public enum EntityType {
       EntityYamlRootNames.BUILD_AND_PUSH_ECR),
   @JsonProperty(EntityTypeConstants.BUILD_AND_PUSH_DOCKER_REGISTRY)
   BUILD_AND_PUSH_DOCKER_REGISTRY(ModuleType.CI, EntityTypeConstants.BUILD_AND_PUSH_DOCKER_REGISTRY, IdentifierRef.class,
-      EntityYamlRootNames.BUILD_AND_PUSH_DOCKER_REGISTRY);
+      EntityYamlRootNames.BUILD_AND_PUSH_DOCKER_REGISTRY),
+  @JsonProperty(EntityTypeConstants.EXECUTE_COMMAND)
+  EXECUTE_COMMAND_STEP(
+      ModuleType.CD, EntityTypeConstants.EXECUTE_COMMAND, IdentifierRef.class, EntityYamlRootNames.EXECUTE_COMMAND);
 
   private final ModuleType moduleType;
   String yamlName;
