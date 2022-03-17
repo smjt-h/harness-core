@@ -94,9 +94,20 @@ public class KubernetesResizeCommandUnit extends ContainerResizeCommandUnit {
     }
 
     if (resizeParams.isUseAutoscaler() && resizeParams.isRollback()) {
-      HorizontalPodAutoscaler autoscaler =
+      HasMetadata autoscaler =
           kubernetesContainerService.getAutoscaler(kubernetesConfig, controllerName, resizeParams.getApiVersion());
-      if (autoscaler != null && controllerName.equals(autoscaler.getSpec().getScaleTargetRef().getName())) {
+      HorizontalPodAutoscaler v1AutoScaler = null;
+      io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler v2Beta1AutoScaler = null;
+      String scaleTargetRefName;
+
+      if (autoscaler instanceof HorizontalPodAutoscaler) {
+        v1AutoScaler = (HorizontalPodAutoscaler) autoscaler;
+         scaleTargetRefName = v1AutoScaler.getSpec().getScaleTargetRef().getName();
+      } else {
+        v2Beta1AutoScaler = (io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler) autoscaler;
+        scaleTargetRefName = v2Beta1AutoScaler.getSpec().getScaleTargetRef().getName();
+      }
+      if (autoscaler != null && controllerName.equals(scaleTargetRefName)) {
         executionLogCallback.saveExecutionLog("Deleting horizontal pod autoscaler: " + controllerName);
         kubernetesContainerService.deleteAutoscaler(kubernetesConfig, controllerName);
       }
@@ -142,7 +153,7 @@ public class KubernetesResizeCommandUnit extends ContainerResizeCommandUnit {
 
     // Enable HPA
     if (!resizeParams.isRollback() && contextData.deployingToHundredPercent && resizeParams.isUseAutoscaler()) {
-      HorizontalPodAutoscaler hpa =
+      HasMetadata hpa =
           kubernetesContainerService.createOrReplaceAutoscaler(kubernetesConfig, resizeParams.getAutoscalerYaml());
       if (hpa != null) {
         String hpaName = hpa.getMetadata().getName();

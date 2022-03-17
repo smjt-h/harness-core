@@ -22,7 +22,6 @@ import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.WRITE_
 import static io.fabric8.kubernetes.client.Config.KUBERNETES_KUBECONFIG_FILE;
 import static io.fabric8.kubernetes.client.Config.KUBERNETES_SERVICE_ACCOUNT_CA_CRT_PATH;
 import static io.fabric8.kubernetes.client.Config.KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH;
-import static io.fabric8.kubernetes.client.utils.HttpClientUtils.createHttpClient;
 import static io.fabric8.kubernetes.client.utils.Utils.isNotNullOrEmpty;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -59,8 +58,6 @@ import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceSpec;
 import io.fabric8.istio.client.DefaultIstioClient;
 import io.fabric8.istio.client.IstioClient;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
-import io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler;
-import io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscalerList;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -72,6 +69,7 @@ import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.internal.SSLUtils;
 import io.fabric8.kubernetes.client.okhttp.OkHttpClientImpl;
+import io.fabric8.kubernetes.client.utils.HttpClientUtils;
 import io.fabric8.kubernetes.client.utils.Utils;
 import io.fabric8.openshift.client.DefaultOpenShiftClient;
 import io.fabric8.openshift.client.OpenShiftClient;
@@ -92,6 +90,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -106,6 +105,7 @@ import okhttp3.Credentials;
 import okhttp3.Dispatcher;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
@@ -285,6 +285,10 @@ public class KubernetesHelperService {
     }
   }
 
+  private boolean shouldDisableHttp2() {
+    return System.getProperty("java.version", "").startsWith("1.8");
+  }
+
   /**
    * This is copied version of io.fabric8.kubernetes.client.utils.HttpClientUtils.createHttpClient()
    * with 1 addition, setting NO_PROXY flag on OkHttpClient if applicable.
@@ -298,10 +302,14 @@ public class KubernetesHelperService {
     try {
       OkHttpClient.Builder httpClientBuilder = getOkHttpClientBuilder();
       httpClientBuilder.proxy(Http.checkAndGetNonProxyIfApplicable(config.getMasterUrl()));
-
       // Follow any redirects
       httpClientBuilder.followRedirects(true);
       httpClientBuilder.followSslRedirects(true);
+      if (shouldDisableHttp2()) {
+        if (shouldDisableHttp2() && !config.isHttp2Disable()) {
+          httpClientBuilder.protocols(Collections.singletonList(Protocol.HTTP_1_1));
+        }
+      }
 
       if (config.isTrustCerts()) {
         httpClientBuilder.hostnameVerifier(new NoopHostnameVerifier());
@@ -464,7 +472,9 @@ public class KubernetesHelperService {
     return YamlUtils.cleanupYaml(yaml.dump(entity));
   }
 
-  public NonNamespaceOperation<HorizontalPodAutoscaler, HorizontalPodAutoscalerList, Resource<HorizontalPodAutoscaler>>
+  public NonNamespaceOperation<io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler,
+      io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscalerList,
+      Resource<io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler>>
   hpaOperationsForCustomMetricHPA(KubernetesConfig kubernetesConfig, String apiName) {
     DefaultKubernetesClient kubernetesClient = (DefaultKubernetesClient) getKubernetesClient(kubernetesConfig, apiName);
 
@@ -480,8 +490,10 @@ public class KubernetesHelperService {
      * getKubernetesClient(kubernetesConfig,encryptedDataDetails).autoscaling().horizontalPodAutoscalers()) always
      * returns client with "v1" apiVersion.
      * */
-    MixedOperation<HorizontalPodAutoscaler, HorizontalPodAutoscalerList, Resource<HorizontalPodAutoscaler>>
-        mixedOperation = kubernetesClient.autoscaling().v2beta1().horizontalPodAutoscalers();
+    MixedOperation<io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler,
+        io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscalerList,
+        Resource<io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler>> mixedOperation =
+        kubernetesClient.autoscaling().v2beta1().horizontalPodAutoscalers();
     return mixedOperation.inNamespace(kubernetesConfig.getNamespace());
   }
 

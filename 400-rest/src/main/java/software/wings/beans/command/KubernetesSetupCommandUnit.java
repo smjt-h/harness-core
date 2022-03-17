@@ -448,7 +448,7 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
       }
 
       // Create new autoscaler
-      HorizontalPodAutoscaler hpa = prepareHorizontalPodAutoscaler(setupParams, containerServiceName,
+      HasMetadata hpa = prepareHorizontalPodAutoscaler(setupParams, containerServiceName,
           controller.getKind(), controller.getApiVersion(), controllerLabels, executionLogCallback);
 
       commandExecutionDataBuilder.autoscalerYaml(toYaml(hpa));
@@ -1049,7 +1049,7 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
   }
 
   private String getAutoscalerYaml(KubernetesConfig kubernetesConfig, String containerServiceName) {
-    HorizontalPodAutoscaler hpa = getAutoscaler(kubernetesConfig, containerServiceName);
+    HasMetadata hpa = getAutoscaler(kubernetesConfig, containerServiceName);
     if (hpa != null) {
       try {
         return toYaml(hpa);
@@ -1401,7 +1401,7 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
 
   private void rollbackAutoscaler(
       ExecutionLogCallback executionLogCallback, KubernetesConfig kubernetesConfig, String autoscalerYaml) {
-    HorizontalPodAutoscaler hpa =
+    HasMetadata hpa =
         kubernetesContainerService.createOrReplaceAutoscaler(kubernetesConfig, autoscalerYaml);
     if (hpa != null) {
       String hpaName = hpa.getMetadata().getName();
@@ -1514,7 +1514,7 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
             kubernetesResource.getMetadata().getLabels().get(K8sConstants.HARNESS_KUBERNETES_REVISION_LABEL_KEY));
   }
 
-  private HorizontalPodAutoscaler getAutoscaler(KubernetesConfig kubernetesConfig, String name) {
+  private HasMetadata getAutoscaler(KubernetesConfig kubernetesConfig, String name) {
     return kubernetesContainerService.getAutoscaler(kubernetesConfig, name, KUBERNETES_V1.getVersionName());
   }
 

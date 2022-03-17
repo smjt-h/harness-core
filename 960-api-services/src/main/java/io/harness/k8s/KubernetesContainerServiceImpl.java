@@ -683,7 +683,7 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
   }
 
   @Override
-  public HorizontalPodAutoscaler createOrReplaceAutoscaler(KubernetesConfig kubernetesConfig, String autoscalerYaml) {
+  public HasMetadata createOrReplaceAutoscaler(KubernetesConfig kubernetesConfig, String autoscalerYaml) {
     if (isNotBlank(autoscalerYaml)) {
       HasMetadata hasMetadata;
       try {
@@ -700,7 +700,7 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
         return kubernetesHelperService.hpaOperations(kubernetesConfig).createOrReplace(v1Hpa);
       } else {
         io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler v2Beta1Hpa =
-            (io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler) hasMetadata;
+                (io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler) hasMetadata;
         return kubernetesHelperService.hpaOperationsForCustomMetricHPA(kubernetesConfig, api)
             .createOrReplace(v2Beta1Hpa);
       }
@@ -709,7 +709,7 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
   }
 
   @Override
-  public HorizontalPodAutoscaler getAutoscaler(KubernetesConfig kubernetesConfig, String name, String apiVersion) {
+  public HasMetadata getAutoscaler(KubernetesConfig kubernetesConfig, String name, String apiVersion) {
     if (KUBERNETES_V1.getVersionName().equals(apiVersion) || isEmpty(apiVersion)) {
       return kubernetesHelperService.hpaOperations(kubernetesConfig).withName(name).get();
     } else {

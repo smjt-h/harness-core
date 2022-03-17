@@ -9,13 +9,13 @@ package io.harness.k8s;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
-import io.fabric8.istio.api.networking.v1alpha3.DestinationRule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.container.ContainerInfo;
 import io.harness.k8s.model.KubernetesConfig;
 import io.harness.k8s.model.response.CEK8sDelegatePrerequisite;
 import io.harness.logging.LogCallback;
 
+import io.fabric8.istio.api.networking.v1alpha3.DestinationRule;
 import io.fabric8.istio.api.networking.v1alpha3.VirtualService;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.HasMetadata;
@@ -23,7 +23,6 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodTemplateSpec;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1Deployment;
@@ -62,9 +61,9 @@ public interface KubernetesContainerService {
 
   void deleteController(KubernetesConfig kubernetesConfig, String name);
 
-  HorizontalPodAutoscaler createOrReplaceAutoscaler(KubernetesConfig kubernetesConfig, String autoscalerYaml);
+  HasMetadata createOrReplaceAutoscaler(KubernetesConfig kubernetesConfig, String autoscalerYaml);
 
-  HorizontalPodAutoscaler getAutoscaler(KubernetesConfig kubernetesConfig, String name, String apiVersion);
+  HasMetadata getAutoscaler(KubernetesConfig kubernetesConfig, String name, String apiVersion);
 
   void deleteAutoscaler(KubernetesConfig kubernetesConfig, String name);
 
@@ -124,14 +123,15 @@ public interface KubernetesContainerService {
 
   //  DestinationRule getIstioDestinationRule(KubernetesConfig kubernetesConfig, String name);
 
-  DestinationRule getFabric8IstioDestinationRule(
-      KubernetesConfig kubernetesConfig, String name);
+  DestinationRule getFabric8IstioDestinationRule(KubernetesConfig kubernetesConfig, String name);
 
   //  IstioResource createOrReplaceIstioResource(KubernetesConfig kubernetesConfig, IstioResource definition);
 
-  VirtualService createOrReplaceFabric8IstioVirtualService(KubernetesConfig kubernetesConfig, VirtualService definition);
+  VirtualService createOrReplaceFabric8IstioVirtualService(
+      KubernetesConfig kubernetesConfig, VirtualService definition);
 
-  DestinationRule createOrReplaceFabric8IstioDestinationRule(KubernetesConfig kubernetesConfig, DestinationRule definition);
+  DestinationRule createOrReplaceFabric8IstioDestinationRule(
+      KubernetesConfig kubernetesConfig, DestinationRule definition);
 
   void deleteIstioDestinationRule(KubernetesConfig kubernetesConfig, String name);
 
@@ -177,8 +177,7 @@ public interface KubernetesContainerService {
 
   //  VirtualService getIstioVirtualService(KubernetesConfig kubernetesConfig, String name);
 
-  VirtualService getFabric8IstioVirtualService(
-      KubernetesConfig kubernetesConfig, String name);
+  VirtualService getFabric8IstioVirtualService(KubernetesConfig kubernetesConfig, String name);
 
   //  CustomResourceDefinition getCustomResourceDefinition(KubernetesClient client, IstioResource resource);
 
