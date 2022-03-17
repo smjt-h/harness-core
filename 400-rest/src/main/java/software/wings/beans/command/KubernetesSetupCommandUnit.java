@@ -135,10 +135,6 @@ import io.fabric8.kubernetes.api.model.apps.StatefulSetSpec;
 import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
 import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscalerBuilder;
 import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscalerSpecBuilder;
-import io.fabric8.kubernetes.api.model.autoscaling.v2beta1.MetricSpec;
-import io.fabric8.kubernetes.api.model.autoscaling.v2beta1.MetricSpecBuilder;
-import io.fabric8.kubernetes.api.model.autoscaling.v2beta1.ResourceMetricSource;
-import io.fabric8.kubernetes.api.model.autoscaling.v2beta1.ResourceMetricSourceBuilder;
 import io.fabric8.kubernetes.api.model.extensions.DaemonSet;
 import io.fabric8.kubernetes.api.model.extensions.DaemonSetSpec;
 import io.fabric8.kubernetes.api.model.extensions.Deployment;
@@ -448,8 +444,8 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
       }
 
       // Create new autoscaler
-      HasMetadata hpa = prepareHorizontalPodAutoscaler(setupParams, containerServiceName,
-          controller.getKind(), controller.getApiVersion(), controllerLabels, executionLogCallback);
+      HasMetadata hpa = prepareHorizontalPodAutoscaler(setupParams, containerServiceName, controller.getKind(),
+          controller.getApiVersion(), controllerLabels, executionLogCallback);
 
       commandExecutionDataBuilder.autoscalerYaml(toYaml(hpa));
 
@@ -1401,8 +1397,7 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
 
   private void rollbackAutoscaler(
       ExecutionLogCallback executionLogCallback, KubernetesConfig kubernetesConfig, String autoscalerYaml) {
-    HasMetadata hpa =
-        kubernetesContainerService.createOrReplaceAutoscaler(kubernetesConfig, autoscalerYaml);
+    HasMetadata hpa = kubernetesContainerService.createOrReplaceAutoscaler(kubernetesConfig, autoscalerYaml);
     if (hpa != null) {
       String hpaName = hpa.getMetadata().getName();
       executionLogCallback.saveExecutionLog("Rolled back horizontal pod autoscaler " + hpaName);

@@ -102,7 +102,7 @@ public class KubernetesResizeCommandUnit extends ContainerResizeCommandUnit {
 
       if (autoscaler instanceof HorizontalPodAutoscaler) {
         v1AutoScaler = (HorizontalPodAutoscaler) autoscaler;
-         scaleTargetRefName = v1AutoScaler.getSpec().getScaleTargetRef().getName();
+        scaleTargetRefName = v1AutoScaler.getSpec().getScaleTargetRef().getName();
       } else {
         v2Beta1AutoScaler = (io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler) autoscaler;
         scaleTargetRefName = v2Beta1AutoScaler.getSpec().getScaleTargetRef().getName();

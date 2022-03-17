@@ -156,8 +156,6 @@ public class K8sTrafficSplitTaskHandlerTest extends WingsBaseTest {
         K8sTrafficSplitTaskParameters.builder().build(), K8sDelegateTaskParams.builder().build());
     verify(handler, times(1)).init(any(K8sTrafficSplitTaskParameters.class), any(ExecutionLogCallback.class));
     verify(containerDeploymentDelegateHelper, times(1)).getKubernetesConfig(any(K8sClusterConfig.class), anyBoolean());
-    //    verify(kubernetesContainerService, times(1))
-    //        .createOrReplaceIstioResource(any(KubernetesConfig.class), any(IstioResource.class));
     verify(k8sTaskHelper, times(1))
         .getK8sTaskExecutionResponse(any(K8sTaskResponse.class), any(CommandExecutionStatus.class));
   }
@@ -176,8 +174,6 @@ public class K8sTrafficSplitTaskHandlerTest extends WingsBaseTest {
     k8sTrafficSplitTaskHandler.executeTaskInternal(k8sTrafficSplitTaskParams, K8sDelegateTaskParams.builder().build());
     verify(containerDeploymentDelegateHelper, times(2)).getKubernetesConfig(any(K8sClusterConfig.class), anyBoolean());
     verify(k8sTaskHelperBase, times(1)).getReleaseHistoryDataFromConfigMap(any(KubernetesConfig.class), anyString());
-    //    verify(kubernetesContainerService, times(1))
-    //        .createOrReplaceIstioResource(any(KubernetesConfig.class), any(IstioResource.class));
     verify(k8sTaskHelper, times(1))
         .getK8sTaskExecutionResponse(any(K8sTaskResponse.class), any(CommandExecutionStatus.class));
   }

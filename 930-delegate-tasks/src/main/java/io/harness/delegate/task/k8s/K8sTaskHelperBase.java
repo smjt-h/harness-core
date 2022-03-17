@@ -728,9 +728,6 @@ public class K8sTaskHelperBase {
     }
 
     KubernetesClient kubernetesClient = kubernetesHelperService.getKubernetesClient(kubernetesConfig);
-    //        kubernetesClient.customResources(fromCrd(kubernetesContainerService.getCustomResourceDefinition(
-    //                                             kubernetesClient, new VirtualServiceBuilder().build())),
-    //            VirtualService.class, VirtualServiceList.class);
     kubernetesClient.resources(VirtualService.class, VirtualServiceList.class);
     KubernetesResource kubernetesResource = virtualServiceResources.get(0);
     InputStream inputStream = IOUtils.toInputStream(kubernetesResource.getSpec(), UTF_8);
@@ -775,9 +772,6 @@ public class K8sTaskHelperBase {
     }
 
     KubernetesClient kubernetesClient = kubernetesHelperService.getKubernetesClient(kubernetesConfig);
-    //        kubernetesClient.customResources(fromCrd(kubernetesContainerService.getCustomResourceDefinition(
-    //                                             kubernetesClient, new DestinationRuleBuilder().build())),
-    //            DestinationRule.class, DestinationRuleList.class);
     kubernetesClient.resources(DestinationRule.class, DestinationRuleList.class);
 
     KubernetesResource kubernetesResource = destinationRuleResources.get(0);

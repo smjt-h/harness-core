@@ -121,11 +121,7 @@ public interface KubernetesContainerService {
 
   void deleteConfigMap(KubernetesConfig kubernetesConfig, String name);
 
-  //  DestinationRule getIstioDestinationRule(KubernetesConfig kubernetesConfig, String name);
-
   DestinationRule getFabric8IstioDestinationRule(KubernetesConfig kubernetesConfig, String name);
-
-  //  IstioResource createOrReplaceIstioResource(KubernetesConfig kubernetesConfig, IstioResource definition);
 
   VirtualService createOrReplaceFabric8IstioVirtualService(
       KubernetesConfig kubernetesConfig, VirtualService definition);
@@ -175,11 +171,7 @@ public interface KubernetesContainerService {
 
   void deleteIstioVirtualService(KubernetesConfig kubernetesConfig, String name);
 
-  //  VirtualService getIstioVirtualService(KubernetesConfig kubernetesConfig, String name);
-
   VirtualService getFabric8IstioVirtualService(KubernetesConfig kubernetesConfig, String name);
-
-  //  CustomResourceDefinition getCustomResourceDefinition(KubernetesClient client, IstioResource resource);
 
   V1Deployment getDeployment(KubernetesConfig kubernetesConfig, String namespace, String name);
 
