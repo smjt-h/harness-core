@@ -62,6 +62,10 @@ else
   yq write -i $CONFIG_FILE server.applicationConnectors[0].port "9080"
 fi
 
+if [[ "" != "$BASE_ROOT_PATH" ]]; then
+  yq write -i $CONFIG_FILE server.rootPath "$BASE_ROOT_PATH"
+fi
+
 if [[ "" != "$GRPC_SERVER_PORT" ]]; then
   yq write -i $CONFIG_FILE cg.grpcServerConfig.connectors[0].port "$GRPC_SERVER_PORT"
 fi
