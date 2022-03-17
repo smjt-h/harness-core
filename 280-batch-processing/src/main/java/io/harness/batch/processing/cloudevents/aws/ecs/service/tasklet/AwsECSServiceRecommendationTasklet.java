@@ -65,6 +65,7 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
     String accountId = jobConstants.getAccountId();
     Instant startTime = Instant.ofEpochMilli(jobConstants.getJobStartTime());
     Instant endTime = Instant.ofEpochMilli(jobConstants.getJobEndTime());
+    log.info("Job Started for account: {}, startTime: {}, endTime: {}", accountId, startTime, endTime);
     // Get all clusters for current account
     Map<String, String> ceClusters = ceClusterDao.getClusterIdNameMapping(accountId);
     if (CollectionUtils.isEmpty(ceClusters)) {
@@ -83,7 +84,6 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
         int cpuUnits = 2048;
         int memoryMb = 7764;
         List<UtilizationDataWithTime> utilData = utilMap.get(clusterIdAndServiceArn);
-        Instant today = Instant.ofEpochMilli(jobConstants.getJobStartTime());
         String clusterId = clusterIdAndServiceArn.getClusterId();
         String clusterName = ceClusters.get(clusterId);
         String serviceArn = clusterIdAndServiceArn.getServiceArn();
@@ -95,8 +95,8 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
             .clusterName(clusterName)
             .serviceArn(serviceArn)
             .serviceName(serviceName)
-            .date(today)
-            .lastUpdateTime(today)
+            .date(startTime)
+            .lastUpdateTime(startTime)
             .cpuHistogram(cpuHistogramCheckpointFromUtilData(utilData, cpuUnits))
             .memoryHistogram(memoryHistogramCheckpointFromUtilData(utilData, memoryMb))
             .firstSampleStart(utilData.isEmpty() ? null : utilData.get(0).getStartTime())
@@ -110,8 +110,8 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
         // 4. Get Partial recommendations for last 6 days
         List<ECSPartialRecommendationHistogram> partialHistograms =
             ecsRecommendationDAO.fetchPartialRecommendationHistograms(accountId, clusterId, clusterName, serviceName,
-                serviceArn, today.minus(Duration.ofDays(RECOMMENDATION_FOR_DAYS + 1)), today.minusSeconds(1));
-        // add today's histogram to the list
+                serviceArn, startTime.minus(Duration.ofDays(RECOMMENDATION_FOR_DAYS + 1)), startTime.minusSeconds(1));
+        // add startTime's histogram to the list
         partialHistograms.add(partialRecommendationHistogram);
 
         // 5. Create ECSServiceRecommendation
@@ -148,7 +148,7 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
         recommendation.setTotalSamplesCount(totalSamplesCount);
         recommendation.setMemoryPeak(memoryPeak);
         recommendation.setLastReceivedUtilDataAt(lastSampleStart);
-        recommendation.setLastComputedRecommendationAt(today);
+        recommendation.setLastComputedRecommendationAt(startTime);
         recommendation.setNumDays(partialHistograms.size());
 
         Map<String, Map<String, String>> computedPercentiles = new HashMap<>();
@@ -161,7 +161,7 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
         recommendation.setPercentileBasedResourceRecommendation(computedPercentiles);
 
         Cost lastDayCost = billingDataService.getECSServiceLastAvailableDayCost(accountId, clusterId, serviceName,
-            today.minus(Duration.ofDays(RECOMMENDATION_FOR_DAYS + 1)));
+            startTime.minus(Duration.ofDays(RECOMMENDATION_FOR_DAYS + 1)));
         if (lastDayCost != null) {
           recommendation.setLastDayCost(lastDayCost);
           recommendation.setLastDayCostAvailable(true);
