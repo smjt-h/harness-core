@@ -47,7 +47,7 @@ public class StreamModule extends AbstractModule {
   @Singleton
   AtmosphereServlet getAtmosphereServelet(
       AtmosphereBroadcaster atmosphereBroadcaster, @Named("atmosphere") Provider<RedisConfig> redisConfigProvider) {
-    AtmosphereServlet atmosphereServlet = new AtmosphereServlet();
+    AtmosphereServlet atmosphereServlet = new AtmosphereServlet(false, false);
     atmosphereServlet.framework()
         .addInitParameter(ApplicationConfig.WEBSOCKET_CONTENT_TYPE, "application/json")
         .addInitParameter(ApplicationConfig.BROADCASTER_MESSAGE_PROCESSING_THREADPOOL_MAXSIZE,
