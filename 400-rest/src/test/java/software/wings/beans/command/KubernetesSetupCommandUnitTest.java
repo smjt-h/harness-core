@@ -298,10 +298,10 @@ public class KubernetesSetupCommandUnitTest extends WingsBaseTest {
                                             .build();
 
     HorizontalPodAutoscaler horizontalPodAutoscaler =
-        kubernetesSetupCommandUnit.createAutoscaler("abaris.hpanormal.prod.0", "Deployment", "extensions/v1beta1",
+        kubernetesSetupCommandUnit.createAutoscaler("abaris.hpanormal.prod.0", "Deployment", "extensions/v1",
             "default", labels, setupParams, executionLogCallback);
 
-    assertThat(horizontalPodAutoscaler.getApiVersion()).isEqualTo("autoscaling/v2beta1");
+    assertThat(horizontalPodAutoscaler.getApiVersion()).isEqualTo("autoscaling/v1");
     assertThat(horizontalPodAutoscaler.getSpec()).isNotNull();
     assertThat(horizontalPodAutoscaler.getSpec().getScaleTargetRef().getName()).isEqualTo("abaris.hpanormal.prod.0");
     assertThat(horizontalPodAutoscaler.getSpec().getScaleTargetRef().getKind()).isEqualTo("Deployment");
@@ -328,7 +328,7 @@ public class KubernetesSetupCommandUnitTest extends WingsBaseTest {
     horizontalPodAutoscaler = kubernetesSetupCommandUnit.createAutoscaler("abaris.hpanormal.prod-0", "Deployment",
         "extensions/v1beta1", "default", labels, setupParams, executionLogCallback);
 
-    assertThat(horizontalPodAutoscaler.getApiVersion()).isEqualTo("autoscaling/v2beta1");
+    assertThat(horizontalPodAutoscaler.getApiVersion()).isEqualTo("autoscaling/v1");
     assertThat(horizontalPodAutoscaler.getSpec()).isNotNull();
     assertThat(horizontalPodAutoscaler.getSpec().getScaleTargetRef().getName()).isEqualTo("abaris.hpanormal.prod-0");
     assertThat(horizontalPodAutoscaler.getSpec().getScaleTargetRef().getKind()).isEqualTo("Deployment");

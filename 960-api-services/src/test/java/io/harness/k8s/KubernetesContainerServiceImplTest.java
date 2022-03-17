@@ -40,7 +40,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
@@ -59,6 +58,7 @@ import com.google.gson.reflect.TypeToken;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.ConfigMapList;
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceList;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
@@ -234,6 +234,9 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
       io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscalerList,
       Resource<io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler>> v2Beta1NamespacedHpa;
   @Mock private Resource<HorizontalPodAutoscaler> horizontalPodAutoscalerResource;
+  @Mock
+  private Resource<io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler>
+      v2Beta1HorizontalPodAutoscalerResource;
 
   @Mock private ExtensionsAPIGroupClient extensionsAPIGroupClient;
   @Mock private AppsAPIGroupClient appsAPIGroupClient;
@@ -283,6 +286,7 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
   ConfigMap configMap;
   Service service;
   HorizontalPodAutoscaler horizontalPodAutoscaler;
+  io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler v2Beta1HorizontalPodAutoscaler;
 
   @Before
   public void setUp() throws Exception {
@@ -338,6 +342,7 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
 
     when(kubernetesHelperService.hpaOperations(KUBERNETES_CONFIG)).thenReturn(namespacedHpa);
     when(namespacedHpa.withName(anyString())).thenReturn(horizontalPodAutoscalerResource);
+    when(v2Beta1NamespacedHpa.withName(anyString())).thenReturn(v2Beta1HorizontalPodAutoscalerResource);
 
     when(kubernetesHelperService.getApiClient(KUBERNETES_CONFIG)).thenReturn(k8sApiClient);
     when(k8sApiClient.buildCall(anyString(), anyString(), anyListOf(Pair.class), anyListOf(Pair.class), any(),
@@ -623,8 +628,8 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testGetAutoscaler() {
     when(horizontalPodAutoscalerResource.get()).thenReturn(horizontalPodAutoscaler);
-    HasMetadata autoscaler =
-        kubernetesContainerService.getAutoscaler(KUBERNETES_CONFIG, "autoscalar", "v1");
+    when(v2Beta1HorizontalPodAutoscalerResource.get()).thenReturn(v2Beta1HorizontalPodAutoscaler);
+    HasMetadata autoscaler = kubernetesContainerService.getAutoscaler(KUBERNETES_CONFIG, "autoscalar", "v1");
     assertThat(autoscaler).isEqualTo(horizontalPodAutoscaler);
     verify(horizontalPodAutoscalerResource).get();
     verify(kubernetesHelperService).hpaOperations(KUBERNETES_CONFIG);
@@ -633,10 +638,10 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
     when(kubernetesHelperService.hpaOperationsForCustomMetricHPA(KUBERNETES_CONFIG, "v1alpha1"))
         .thenReturn(v2Beta1NamespacedHpa);
     autoscaler = kubernetesContainerService.getAutoscaler(KUBERNETES_CONFIG, "autoscalar", "v1alpha1");
-    assertThat(autoscaler).isEqualTo(horizontalPodAutoscaler);
+    assertThat(autoscaler).isEqualTo(v2Beta1HorizontalPodAutoscaler);
     verify(kubernetesHelperService).hpaOperations(KUBERNETES_CONFIG);
     verify(kubernetesHelperService).hpaOperationsForCustomMetricHPA(KUBERNETES_CONFIG, "v1alpha1");
-    verify(horizontalPodAutoscalerResource, times(2)).get();
+    verify(v2Beta1HorizontalPodAutoscalerResource, times(1)).get();
   }
 
   @Test
@@ -655,7 +660,8 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
         .thenReturn(v2Beta1NamespacedHpa);
     kubernetesContainerService.createOrReplaceAutoscaler(KUBERNETES_CONFIG, autoscalerYaml);
     verify(kubernetesHelperService).hpaOperationsForCustomMetricHPA(KUBERNETES_CONFIG, "v2beta1");
-    verify(namespacedHpa).createOrReplace(any(HorizontalPodAutoscaler.class));
+    verify(v2Beta1NamespacedHpa)
+        .createOrReplace(any(io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler.class));
 
     autoscalerYaml = "apiVersion: autoscaling/v1\n"
         + "kind: HorizontalPodAutoscaler\n"
@@ -668,7 +674,7 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
     when(kubernetesHelperService.hpaOperations(KUBERNETES_CONFIG)).thenReturn(namespacedHpa);
     kubernetesContainerService.createOrReplaceAutoscaler(KUBERNETES_CONFIG, autoscalerYaml);
     verify(kubernetesHelperService).hpaOperations(KUBERNETES_CONFIG);
-    verify(namespacedHpa, times(2)).createOrReplace(any(HorizontalPodAutoscaler.class));
+    verify(namespacedHpa, times(1)).createOrReplace(any(HorizontalPodAutoscaler.class));
   }
 
   @Test
