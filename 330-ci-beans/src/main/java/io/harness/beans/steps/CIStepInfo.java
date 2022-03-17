@@ -71,6 +71,7 @@ public interface CIStepInfo extends StepSpecType, WithStepElementParameters, Spe
     StepElementParametersBuilder stepParametersBuilder =
         CiStepParametersUtils.getStepParameters(stepElementConfig, failRollbackParameters);
     stepParametersBuilder.spec(getSpecParameters());
+    stepParametersBuilder.delegateSelectors(stepElementConfig.getDelegateSelectors());
     return stepParametersBuilder.build();
   }
 }

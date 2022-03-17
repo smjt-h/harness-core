@@ -8,13 +8,15 @@
 package io.harness.delegate.beans.ci.k8s;
 
 import io.harness.delegate.beans.ci.CIExecuteStepTaskParams;
+import io.harness.delegate.beans.executioncapability.DelegateSelectorCapabilityHelper;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.ExecutionCapabilityDemander;
 import io.harness.delegate.beans.executioncapability.LiteEngineConnectionCapability;
 import io.harness.expression.ExpressionEvaluator;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.util.Collections;
+import com.google.common.collect.Sets;
+import java.util.ArrayList;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
@@ -28,6 +30,7 @@ public class CIK8ExecuteStepTaskParams implements CIExecuteStepTaskParams, Execu
   @NotNull private int port;
   @NotNull private String delegateSvcEndpoint;
   private boolean isLocal;
+  private List<String> delegateSelectors;
   @NotNull private byte[] serializedStep;
 
   @Builder.Default private static final CIExecuteStepTaskParams.Type type = CIExecuteStepTaskParams.Type.K8;
@@ -39,7 +42,10 @@ public class CIK8ExecuteStepTaskParams implements CIExecuteStepTaskParams, Execu
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
-    return Collections.singletonList(
-        LiteEngineConnectionCapability.builder().ip(ip).port(port).isLocal(isLocal).build());
+    List<ExecutionCapability> executionCapabilityList = new ArrayList<>();
+    executionCapabilityList.add(LiteEngineConnectionCapability.builder().ip(ip).port(port).isLocal(isLocal).build());
+    DelegateSelectorCapabilityHelper.populateDelegateSelectorCapability(
+        executionCapabilityList, Sets.newHashSet(delegateSelectors), "Step");
+    return executionCapabilityList;
   }
 }

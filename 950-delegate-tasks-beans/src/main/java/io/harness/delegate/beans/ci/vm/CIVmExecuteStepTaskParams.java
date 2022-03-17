@@ -12,13 +12,15 @@ import static io.harness.expression.Expression.ALLOW_SECRETS;
 import io.harness.delegate.beans.ci.CIExecuteStepTaskParams;
 import io.harness.delegate.beans.ci.vm.steps.VmStepInfo;
 import io.harness.delegate.beans.executioncapability.CIVmConnectionCapability;
+import io.harness.delegate.beans.executioncapability.DelegateSelectorCapabilityHelper;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.ExecutionCapabilityDemander;
 import io.harness.expression.Expression;
 import io.harness.expression.ExpressionEvaluator;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.util.Collections;
+import com.google.common.collect.Sets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
@@ -40,6 +42,7 @@ public class CIVmExecuteStepTaskParams implements CIExecuteStepTaskParams, Execu
   @NotNull private String logKey;
   @NotNull private String workingDir;
   private Map<String, String> volToMountPath;
+  private List<String> delegateSelectors;
 
   @Builder.Default private static final Type type = Type.VM;
 
@@ -50,6 +53,10 @@ public class CIVmExecuteStepTaskParams implements CIExecuteStepTaskParams, Execu
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
-    return Collections.singletonList(CIVmConnectionCapability.builder().poolId(poolId).build());
+    List<ExecutionCapability> executionCapabilityList = new ArrayList<>();
+    executionCapabilityList.add(CIVmConnectionCapability.builder().poolId(poolId).build());
+    DelegateSelectorCapabilityHelper.populateDelegateSelectorCapability(
+        executionCapabilityList, Sets.newHashSet(delegateSelectors), "Step");
+    return executionCapabilityList;
   }
 }

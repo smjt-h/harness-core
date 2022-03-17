@@ -16,10 +16,11 @@ import java.util.List;
 import java.util.Set;
 
 public class ConnectorCapabilityBaseHelper {
+  private static final String CONNECTOR_ORIGIN = "Connector";
   public static void populateDelegateSelectorCapability(
       List<ExecutionCapability> capabilityList, Set<String> delegateSelectors) {
     if (isNotEmpty(delegateSelectors)) {
-      capabilityList.add(SelectorCapability.builder().selectors(delegateSelectors).build());
+      capabilityList.add(SelectorCapability.builder().selectors(delegateSelectors).selectorOrigin(CONNECTOR_ORIGIN).build());
     }
   }
 }

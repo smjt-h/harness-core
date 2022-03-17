@@ -8,6 +8,7 @@
 package software.wings.service.impl;
 
 import static io.harness.beans.DelegateTask.Status.QUEUED;
+import static io.harness.beans.FeatureName.DELEGATE_SCOPING_NG;
 import static io.harness.data.structure.CollectionUtils.trimmedLowercaseSet;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -85,16 +86,21 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import jersey.repackaged.com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -124,6 +130,8 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
   public static final long WHITELIST_TTL = TimeUnit.HOURS.toMillis(6);
   public static final long BLACKLIST_TTL = TimeUnit.MINUTES.toMillis(5);
   private static final long WHITELIST_REFRESH_INTERVAL = TimeUnit.MINUTES.toMillis(10);
+  private static final List<String> SCOPING_PRIORITY_ORDER =
+      Lists.newArrayList("STEP", "STAGE", "PIPELINE", "CONNECTOR");
 
   @Inject private DelegateSelectionLogsService delegateSelectionLogsService;
   @Inject private DelegateService delegateService;
@@ -451,6 +459,18 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
     if (isEmpty(selectorsCapabilityList)) {
       return true;
     }
+    List<SelectorCapability> selectorCapabilities = selectorsCapabilityList;
+
+    if (featureFlagService.isEnabled(DELEGATE_SCOPING_NG, delegate.getAccountId()) && delegate.isNg()) {
+      Queue<SelectorCapability> selectorCapabilitiesOrder =
+          new PriorityQueue<>(Comparator.comparingInt(SCOPING_PRIORITY_ORDER::indexOf));
+      selectorCapabilitiesOrder.addAll(selectorCapabilities.stream()
+                                           .filter(c -> SCOPING_PRIORITY_ORDER.contains(c.getSelectorOrigin()))
+                                           .collect(Collectors.toList()));
+      selectorCapabilities = !selectorCapabilitiesOrder.isEmpty()
+          ? Collections.singletonList(selectorCapabilitiesOrder.element())
+          : selectorCapabilities;
+    }
 
     Set<String> delegateSelectors = trimmedLowercaseSet(delegateService.retrieveDelegateSelectors(delegate));
     if (isEmpty(delegateSelectors)) {
@@ -458,7 +478,7 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
     }
     boolean canAssignSelector = true;
 
-    for (SelectorCapability selectorCapability : selectorsCapabilityList) {
+    for (SelectorCapability selectorCapability : selectorCapabilities) {
       Set<String> selectors = selectorCapability.getSelectors();
       for (String selector : trimmedLowercaseSet(selectors)) {
         if (!delegateSelectors.contains(selector)) {
