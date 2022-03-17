@@ -199,7 +199,6 @@ public class PipelineServiceTestRule implements InjectorRuleMixin, MethodRule, M
     modules.add(TimeModule.getInstance());
     modules.add(TestMongoModule.getInstance());
     modules.add(new GitSyncablePersistenceTestModule());
-    //    modules.add(new SpringPersistenceTestModule());
     modules.add(
         OrchestrationModule.getInstance(OrchestrationModuleConfig.builder()
                                             .serviceName("PIPELINE_TEST")

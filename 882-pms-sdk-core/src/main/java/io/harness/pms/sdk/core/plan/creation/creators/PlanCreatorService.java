@@ -92,6 +92,8 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
     try (AutoLogContext ignore = PlanCreatorUtils.autoLogContextWithRandomRequestId(metadata.getMetadata(),
              metadata.getAccountIdentifier(), metadata.getOrgIdentifier(), metadata.getProjectIdentifier())) {
       try {
+        log.info("[PMS_PlanCreatorService_Time] Sdk Plan Creation started for initial dependencies size {}",
+            request.getDeps().getDependenciesMap().size());
         MergePlanCreationResponse finalResponse =
             createPlanForDependenciesRecursive(request.getDeps(), request.getContextMap());
         planCreationResponse = getPlanCreationResponseFromFinalResponse(finalResponse);
@@ -160,6 +162,8 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
       log.error(message, ex);
       throw new InvalidRequestException(message);
     }
+    log.info("[PMS_PlanCreatorService_Time] Dependencies list time started for dependencies size {}",
+        dependenciesList.size());
     // Iterating dependencies to create plan for each dependency by submitting parallel threads of executor thread.
     dependenciesList.forEach(key -> completableFutures.supplyAsync(() -> {
       try {
