@@ -12,6 +12,7 @@ import static io.harness.delegate.beans.storeconfig.StoreDelegateConfigType.GIT;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryCapabilityHelper;
 import io.harness.delegate.beans.connector.awsconnector.AwsCapabilityHelper;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.scm.GitCapabilityHelper;
@@ -40,11 +41,13 @@ public interface ServerlessCommandRequest extends TaskParameters, ExecutionCapab
   ServerlessInfraConfig getServerlessInfraConfig();
   ServerlessManifestConfig getServerlessManifestConfig();
   Integer getTimeoutIntervalInMin();
+  ServerlessArtifactConfig getServerlessArtifactConfig();
 
   @Override
   default List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
     ServerlessInfraConfig serverlessInfraConfig = getServerlessInfraConfig();
     ServerlessManifestConfig serverlessManifestConfig = getServerlessManifestConfig();
+    ServerlessArtifactConfig serverlessArtifactConfig = getServerlessArtifactConfig();
     List<EncryptedDataDetail> cloudProviderEncryptionDetails = serverlessInfraConfig.getEncryptionDataDetails();
 
     List<ExecutionCapability> capabilities =
@@ -68,6 +71,14 @@ public interface ServerlessCommandRequest extends TaskParameters, ExecutionCapab
             gitStoreDelegateConfig.getEncryptedDataDetails(), gitStoreDelegateConfig.getSshKeySpecDTO()));
         capabilities.addAll(EncryptedDataDetailsCapabilityHelper.fetchExecutionCapabilitiesForEncryptedDataDetails(
             gitStoreDelegateConfig.getEncryptedDataDetails(), maskingEvaluator));
+      }
+    }
+    if (serverlessArtifactConfig != null) {
+      if (serverlessArtifactConfig instanceof ServerlessArtifactoryArtifactConfig) {
+        ServerlessArtifactoryArtifactConfig serverlessArtifactoryArtifactConfig =
+            (ServerlessArtifactoryArtifactConfig) serverlessArtifactConfig;
+        capabilities.addAll(ArtifactoryCapabilityHelper.fetchRequiredExecutionCapabilities(
+            serverlessArtifactoryArtifactConfig.getConnectorDTO().getConnectorConfig(), maskingEvaluator));
       }
     }
     // todo:sls installation capability

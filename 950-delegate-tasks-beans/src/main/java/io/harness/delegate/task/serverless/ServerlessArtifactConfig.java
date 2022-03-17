@@ -7,4 +7,10 @@
 
 package io.harness.delegate.task.serverless;
 
-public interface ServerlessArtifactConfig {}
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
+
+@OwnedBy(HarnessTeam.CDP)
+public interface ServerlessArtifactConfig {
+  ServerlessArtifactType getServerlessArtifactType();
+}

@@ -7,9 +7,4 @@
 
 package io.harness.delegate.task.serverless;
 
-import lombok.Builder;
-import lombok.Value;
-
-@Value
-@Builder
-public class ServerlessAwsArtifactConfig implements ServerlessArtifactConfig {}
+public enum ServerlessArtifactType { ARTIFACTORY }
