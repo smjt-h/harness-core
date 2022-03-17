@@ -353,6 +353,7 @@ public class ExecutionHelper {
       return PlanExecution.builder().build();
     }
     if (isRetry) {
+      // TODO(Prashant Sharma): Verify whether this newPlan for retry works in V2 or not.
       Plan newPlan = retryExecutionHelper.transformPlan(plan, identifierOfSkipStages, previousExecutionId);
       return orchestrationService.startExecutionV2(
           planCreationId, abstractions, executionMetadata, planExecutionMetadata);

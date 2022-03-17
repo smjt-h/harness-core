@@ -98,9 +98,12 @@ public class PipelineEnforcementServiceImpl implements PipelineEnforcementServic
           nonCachedStageYamlFields.add(stageField);
         }
       }
+      log.info("[PMS_Enforcement] First loop time taken {}ms", System.currentTimeMillis() - start);
 
       if (!nonCachedStageYamlFields.isEmpty()) {
+        long s = System.currentTimeMillis();
         Map<String, PlanCreatorServiceInfo> services = pmsSdkHelper.getServices();
+        log.info("[PMS_Enforcement] pmssdk helper time taken {}ms", System.currentTimeMillis() - s);
         for (Map.Entry<String, PlanCreatorServiceInfo> planCreatorServiceInfoEntry : services.entrySet()) {
           Map<String, Set<String>> supportedTypes = planCreatorServiceInfoEntry.getValue().getSupportedTypes();
           for (YamlField stageField : stageFields) {
@@ -115,7 +118,9 @@ public class PipelineEnforcementServiceImpl implements PipelineEnforcementServic
           }
         }
       }
+      long s = System.currentTimeMillis();
       validateExecutionFeatureRestrictions(accountId, modules);
+      log.info("[PMS_Enforcement] validateRestriction time taken {}ms", System.currentTimeMillis() - s);
     } finally {
       log.info("[PMS_Enforcement] Validating enforcement on stages took time {}ms", System.currentTimeMillis() - start);
     }
