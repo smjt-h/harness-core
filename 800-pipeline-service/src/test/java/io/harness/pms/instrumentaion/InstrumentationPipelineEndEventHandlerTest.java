@@ -130,7 +130,7 @@ public class InstrumentationPipelineEndEventHandlerTest extends CategoryTest {
             .build();
     List<NodeExecution> nodeExecutionList =
         Arrays.asList(NodeExecution.builder().ambiance(ambiance).planNode(planNode).build());
-    doReturn(nodeExecutionList).when(nodeExecutionService).fetchNodeExecutions(any());
+    doReturn(nodeExecutionList).when(nodeExecutionService).fetchNodeExecutions(any(), any());
     doReturn(new HashSet() {
       { add("Http"); }
     })

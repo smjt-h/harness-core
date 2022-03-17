@@ -37,7 +37,7 @@ public interface NodeExecutionService {
 
   NodeExecution getByPlanNodeUuid(String planNodeUuid, String planExecutionId);
 
-  List<NodeExecution> fetchNodeExecutions(String planExecutionId);
+  List<NodeExecution> fetchNodeExecutions(String planExecutionId, Set<String> fieldsToInclude);
 
   List<Status> fetchNodeExecutionsWithoutOldRetriesOnlyStatus(String planExecutionId);
 

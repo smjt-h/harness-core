@@ -157,8 +157,11 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
   }
 
   @Override
-  public List<NodeExecution> fetchNodeExecutions(String planExecutionId) {
+  public List<NodeExecution> fetchNodeExecutions(String planExecutionId, Set<String> fieldsToInclude) {
     Query query = query(where(NodeExecutionKeys.planExecutionId).is(planExecutionId));
+    for (String field : fieldsToInclude) {
+      query.fields().include(field);
+    }
     return mongoTemplate.find(query, NodeExecution.class);
   }
 

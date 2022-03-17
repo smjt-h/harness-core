@@ -38,6 +38,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.observers.OrchestrationEndObserver;
 import io.harness.execution.NodeExecution;
+import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.ng.core.dto.AccountDTO;
 import io.harness.notification.bean.NotificationRules;
 import io.harness.notification.bean.PipelineEvent;
@@ -56,6 +57,7 @@ import io.harness.telemetry.Category;
 import io.harness.telemetry.TelemetryOption;
 import io.harness.telemetry.TelemetryReporter;
 
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -88,30 +90,30 @@ public class InstrumentationPipelineEndEventHandler implements OrchestrationEndO
     String accountName = accountDTO.getName();
     String projectId = AmbianceUtils.getProjectIdentifier(ambiance);
     String orgId = AmbianceUtils.getOrgIdentifier(ambiance);
-    // TODO : Optimize this query to use projections
-    List<NodeExecution> nodeExecutionList = nodeExecutionService.fetchNodeExecutions(planExecutionId);
     Set<String> allSdkSteps = sdkStepHelper.getAllStepVisibleInUI();
+    List<NodeExecution> nodeExecutionList =
+        nodeExecutionService
+            .fetchNodeExecutions(planExecutionId,
+                Sets.newHashSet(NodeExecutionKeys.stepType, NodeExecutionKeys.identifier, NodeExecutionKeys.status))
+            .stream()
+            .filter(nodeExecution -> allSdkSteps.contains(nodeExecution.getStepType().getType()))
+            .collect(Collectors.toList());
 
     List<String> stepTypes =
         nodeExecutionList.stream()
-            .map(nodeExecution -> AmbianceUtils.getCurrentStepType(nodeExecution.getAmbiance()))
+            .map(NodeExecution::getStepType)
             .filter(stepType -> stepType != null && stepType.getStepCategory() == StepCategory.STEP)
             .map(StepType::getType)
-            .filter(allSdkSteps::contains)
             .collect(Collectors.toList());
-    List<String> failedSteps =
-        nodeExecutionList.stream()
-            .filter(o -> allSdkSteps.contains(AmbianceUtils.getCurrentStepType(o.getAmbiance()).getType()))
-            .filter(o -> StatusUtils.brokeStatuses().contains(o.getStatus()))
-            .map(o -> AmbianceUtils.obtainCurrentLevel(o.getAmbiance()).getIdentifier())
-            .collect(Collectors.toList());
-    List<String> failedStepTypes =
-        nodeExecutionList.stream()
-            .filter(o -> allSdkSteps.contains(AmbianceUtils.getCurrentStepType(o.getAmbiance()).getType()))
-            .filter(o -> StatusUtils.brokeStatuses().contains(o.getStatus()))
-            .map(o -> AmbianceUtils.getCurrentStepType(o.getAmbiance()).getType())
-            .collect(Collectors.toList());
-    String pipelineId = ambiance.getMetadata().getPipelineIdentifier();
+    List<String> failedSteps = nodeExecutionList.stream()
+                                   .filter(o -> StatusUtils.brokeStatuses().contains(o.getStatus()))
+                                   .map(NodeExecution::getIdentifier)
+                                   .collect(Collectors.toList());
+    List<String> failedStepTypes = nodeExecutionList.stream()
+                                       .filter(o -> StatusUtils.brokeStatuses().contains(o.getStatus()))
+                                       .map(o -> o.getStepType().getType())
+                                       .collect(Collectors.toList());
+
     PipelineExecutionSummaryEntity pipelineExecutionSummaryEntity =
         pmsExecutionService.getPipelineExecutionSummaryEntity(accountId, orgId, projectId, planExecutionId, false);
 
