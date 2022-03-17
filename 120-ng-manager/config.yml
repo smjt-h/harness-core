@@ -229,7 +229,7 @@ redisLockConfig:
 pmsSdkGrpcServerConfig:
   connectors:
     - port: 12101
-      secure: true
+      secure: false
       keyFilePath: key.pem
       certFilePath: cert.pem
     - port: 12102
