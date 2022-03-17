@@ -89,6 +89,7 @@ public class PipelineEnforcementServiceImpl implements PipelineEnforcementServic
     long start = System.currentTimeMillis();
     try {
       Set<YamlField> stageFields = PipelineUtils.getStagesFieldFromPipeline(pipelineField);
+      log.info("[PMS_Enforcement] Before loop time taken {}ms", System.currentTimeMillis() - start);
       Set<String> modules = new HashSet<>();
       Set<YamlField> nonCachedStageYamlFields = new HashSet<>();
       for (YamlField stageField : stageFields) {
