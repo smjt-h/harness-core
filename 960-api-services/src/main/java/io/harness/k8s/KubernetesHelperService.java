@@ -59,13 +59,14 @@ import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceSpec;
 import io.fabric8.istio.client.DefaultIstioClient;
 import io.fabric8.istio.client.IstioClient;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
-import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
-import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscalerList;
+import io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler;
+import io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscalerList;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.kubernetes.client.SimpleClientContext;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
@@ -94,7 +95,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -169,13 +169,11 @@ public class KubernetesHelperService {
       namespace = config.getNamespace();
     }
 
-    Consumer<OkHttpClient.Builder> httpClientBuilder =
-        builder -> builder.proxy(Http.checkAndGetNonProxyIfApplicable(config.getMasterUrl()));
-    OkHttpClientImpl okHttpClient = createHttpClient(config, httpClientBuilder);
-    //    OkHttpClient.Builder httpClientBuilder = getOkHttpClientBuilder();
-    //    httpClientBuilder.proxy(Http.checkAndGetNonProxyIfApplicable(config.getMasterUrl()));
+    OkHttpClient okHttpClient = createHttpClientWithProxySetting(config);
+    OkHttpClientImpl fabric8OkHttpClient = new OkHttpClientImpl(okHttpClient);
+    SimpleClientContext simpleClientContext = new SimpleClientContext(config, fabric8OkHttpClient);
 
-    try (DefaultKubernetesClient client = new DefaultKubernetesClient(okHttpClient, config)) {
+    try (DefaultKubernetesClient client = new DefaultKubernetesClient(simpleClientContext)) {
       return client.inNamespace(namespace);
     }
   }
@@ -262,8 +260,11 @@ public class KubernetesHelperService {
     if (isNotBlank(config.getNamespace())) {
       namespace = config.getNamespace();
     }
+    OkHttpClient okHttpClient = createHttpClientWithProxySetting(config);
+    OkHttpClientImpl fabric8OkHttpClient = new OkHttpClientImpl(okHttpClient);
+    SimpleClientContext simpleClientContext = new SimpleClientContext(config, fabric8OkHttpClient);
 
-    try (DefaultIstioClient istioClient = new DefaultIstioClient(config)) {
+    try (DefaultIstioClient istioClient = new DefaultIstioClient(simpleClientContext)) {
       return istioClient.inNamespace(namespace);
     }
   }
@@ -480,12 +481,13 @@ public class KubernetesHelperService {
      * returns client with "v1" apiVersion.
      * */
     MixedOperation<HorizontalPodAutoscaler, HorizontalPodAutoscalerList, Resource<HorizontalPodAutoscaler>>
-        mixedOperation = kubernetesClient.autoscaling().v1().horizontalPodAutoscalers();
-
+        mixedOperation = kubernetesClient.autoscaling().v2beta1().horizontalPodAutoscalers();
     return mixedOperation.inNamespace(kubernetesConfig.getNamespace());
   }
 
-  public NonNamespaceOperation<HorizontalPodAutoscaler, HorizontalPodAutoscalerList, Resource<HorizontalPodAutoscaler>>
+  public NonNamespaceOperation<io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler,
+      io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscalerList,
+      Resource<io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler>>
   hpaOperations(KubernetesConfig kubernetesConfig) {
     return getKubernetesClient(kubernetesConfig)
         .autoscaling()

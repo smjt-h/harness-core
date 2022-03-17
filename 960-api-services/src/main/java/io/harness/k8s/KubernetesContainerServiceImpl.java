@@ -64,7 +64,6 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 
-import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceList;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.concurrent.HTimeLimiter;
 import io.harness.container.ContainerInfo;
@@ -106,6 +105,7 @@ import io.fabric8.istio.api.networking.v1alpha3.DestinationRuleBuilder;
 import io.fabric8.istio.api.networking.v1alpha3.DestinationRuleList;
 import io.fabric8.istio.api.networking.v1alpha3.HTTPRouteDestination;
 import io.fabric8.istio.api.networking.v1alpha3.VirtualService;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceList;
 import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceSpec;
 import io.fabric8.istio.client.IstioClient;
 import io.fabric8.kubernetes.api.KubernetesHelper;
@@ -685,20 +685,24 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
   @Override
   public HorizontalPodAutoscaler createOrReplaceAutoscaler(KubernetesConfig kubernetesConfig, String autoscalerYaml) {
     if (isNotBlank(autoscalerYaml)) {
-      HorizontalPodAutoscaler hpa;
+      HasMetadata hasMetadata;
       try {
-        hpa = KubernetesHelper.loadYaml(autoscalerYaml);
-        hpa.getMetadata().setResourceVersion(null);
+        hasMetadata = KubernetesHelper.loadYaml(autoscalerYaml);
+        hasMetadata.getMetadata().setResourceVersion(null);
       } catch (Exception e) {
         throw new WingsException(ErrorCode.INVALID_ARGUMENT, USER)
             .addParam("args", "Couldn't parse horizontal pod autoscaler YAML: " + autoscalerYaml);
       }
-      String api = kubernetesHelperService.trimVersion(hpa.getApiVersion());
+      String api = kubernetesHelperService.trimVersion(hasMetadata.getApiVersion());
 
       if (KUBERNETES_V1.getVersionName().equals(api)) {
-        return kubernetesHelperService.hpaOperations(kubernetesConfig).createOrReplace(hpa);
+        HorizontalPodAutoscaler v1Hpa = (HorizontalPodAutoscaler) hasMetadata;
+        return kubernetesHelperService.hpaOperations(kubernetesConfig).createOrReplace(v1Hpa);
       } else {
-        return kubernetesHelperService.hpaOperationsForCustomMetricHPA(kubernetesConfig, api).createOrReplace(hpa);
+        io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler v2Beta1Hpa =
+            (io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler) hasMetadata;
+        return kubernetesHelperService.hpaOperationsForCustomMetricHPA(kubernetesConfig, api)
+            .createOrReplace(v2Beta1Hpa);
       }
     }
     return null;
@@ -1416,9 +1420,7 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
   public VirtualService getFabric8IstioVirtualService(KubernetesConfig kubernetesConfig, String name) {
     KubernetesClient kubernetesClient = kubernetesHelperService.getKubernetesClient(kubernetesConfig);
     try {
-      return kubernetesClient
-          .resources(VirtualService.class,
-              VirtualServiceList.class)
+      return kubernetesClient.resources(VirtualService.class, VirtualServiceList.class)
           .inNamespace(kubernetesConfig.getNamespace())
           .withName(name)
           .get();

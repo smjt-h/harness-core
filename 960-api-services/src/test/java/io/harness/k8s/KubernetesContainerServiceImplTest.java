@@ -638,21 +638,7 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
   @Owner(developers = ANSHUL)
   @Category(UnitTests.class)
   public void testCreateOrReplaceAutoscaler() {
-    String autoscalerYaml = "apiVersion: autoscaling/v2beta1\n"
-        + "kind: HorizontalPodAutoscaler\n"
-        + "metadata:\n"
-        + "  name: hpa-name\n"
-        + "spec:\n"
-        + "  minReplicas: 2\n";
-
-    when(kubernetesHelperService.trimVersion("autoscaling/v2beta1")).thenReturn("v2beta1");
-    when(kubernetesHelperService.hpaOperationsForCustomMetricHPA(KUBERNETES_CONFIG, "v2beta1"))
-        .thenReturn(namespacedHpa);
-    kubernetesContainerService.createOrReplaceAutoscaler(KUBERNETES_CONFIG, autoscalerYaml);
-    verify(kubernetesHelperService).hpaOperationsForCustomMetricHPA(KUBERNETES_CONFIG, "v2beta1");
-    verify(namespacedHpa).createOrReplace(any(HorizontalPodAutoscaler.class));
-
-    autoscalerYaml = "apiVersion: autoscaling/v1\n"
+    String autoscalerYaml = "apiVersion: autoscaling/v1\n"
         + "kind: HorizontalPodAutoscaler\n"
         + "metadata:\n"
         + "  name: hpa-name\n"
@@ -663,7 +649,7 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
     when(kubernetesHelperService.hpaOperations(KUBERNETES_CONFIG)).thenReturn(namespacedHpa);
     kubernetesContainerService.createOrReplaceAutoscaler(KUBERNETES_CONFIG, autoscalerYaml);
     verify(kubernetesHelperService).hpaOperations(KUBERNETES_CONFIG);
-    verify(namespacedHpa, times(2)).createOrReplace(any(HorizontalPodAutoscaler.class));
+    verify(namespacedHpa, times(1)).createOrReplace(any(HorizontalPodAutoscaler.class));
   }
 
   @Test
