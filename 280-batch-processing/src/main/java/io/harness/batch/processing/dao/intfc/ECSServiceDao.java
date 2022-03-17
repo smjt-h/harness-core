@@ -7,13 +7,8 @@
 
 package io.harness.batch.processing.dao.intfc;
 
-import io.harness.ccm.commons.beans.Resource;
 import io.harness.ccm.commons.entities.ecs.ECSService;
-
-import java.util.List;
-import java.util.Map;
 
 public interface ECSServiceDao {
   void create(ECSService ecsService);
-  Map<String, Resource> fetchResourceForServices(String accountId, List<String> serviceArns);
 }
