@@ -1,6 +1,6 @@
 # Any edit in this file should accompany an increment in version.
 name: permissionsConfiguration
-version: 19
+version: 20
 permissions:
   - identifier: core_project_delete
     name: Delete Project
@@ -731,14 +731,6 @@ permissions:
       - project
   - identifier: gitops_application_sync
     name: Sync a Gitops Application
-    status: ACTIVE
-    includeInAllRoles: false
-    allowedScopeLevels:
-      - account
-      - organization
-      - project
-  - identifier: gitops_application_override
-    name: Override a Gitops Application
     status: ACTIVE
     includeInAllRoles: false
     allowedScopeLevels:
