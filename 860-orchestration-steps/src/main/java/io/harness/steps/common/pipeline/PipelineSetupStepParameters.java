@@ -48,6 +48,7 @@ public class PipelineSetupStepParameters implements StepParameters {
   Map<String, String> tags;
   ParameterField<Map<String, Object>> properties;
   @SkipAutoEvaluation ParameterField<Map<String, Object>> variables;
+  ParameterField<List<String>> delegateSelectors;
 
   String executionId;
   int sequenceId;
@@ -55,7 +56,7 @@ public class PipelineSetupStepParameters implements StepParameters {
   @Builder(builderMethodName = "newBuilder")
   public PipelineSetupStepParameters(String childNodeID, String name, String identifier, FlowControlConfig flowControl,
       ParameterField<String> description, Map<String, String> tags, NGProperties properties,
-      List<NGVariable> originalVariables, String executionId, int sequenceId) {
+      List<NGVariable> originalVariables, String executionId, int sequenceId, ParameterField<List<String>> delegateSelectors) {
     this.childNodeID = childNodeID;
     this.name = name;
     this.identifier = identifier;
@@ -66,6 +67,7 @@ public class PipelineSetupStepParameters implements StepParameters {
     this.variables = ParameterField.createValueField(NGVariablesUtils.getMapOfVariables(originalVariables));
     this.executionId = executionId;
     this.sequenceId = sequenceId;
+    this.delegateSelectors = delegateSelectors;
   }
 
   public static PipelineSetupStepParameters getStepParameters(
@@ -85,6 +87,6 @@ public class PipelineSetupStepParameters implements StepParameters {
     return new PipelineSetupStepParameters(childNodeID, infoConfig.getName(), infoConfig.getIdentifier(),
         infoConfig.getFlowControl(), ParameterFieldHelper.getParameterFieldHandleValueNull(infoConfig.getDescription()),
         infoConfig.getTags(), infoConfig.getProperties(), infoConfig.getVariables(),
-        executionMetadata.getExecutionUuid(), executionMetadata.getRunSequence());
+        executionMetadata.getExecutionUuid(), executionMetadata.getRunSequence(), infoConfig.getDelegateSelectors());
   }
 }

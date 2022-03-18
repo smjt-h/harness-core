@@ -75,5 +75,7 @@ public class PipelineInfoConfig {
   @Pattern(regexp = NGRegexValidatorConstants.TIMEOUT_PATTERN)
   ParameterField<Timeout> timeout;
 
+  ParameterField<List<String>> delegateSelectors;
+
   boolean allowStageExecutions;
 }

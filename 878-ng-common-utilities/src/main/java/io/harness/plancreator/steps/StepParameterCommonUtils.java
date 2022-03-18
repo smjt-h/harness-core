@@ -60,6 +60,7 @@ public class StepParameterCommonUtils {
         ParameterFieldHelper.getParameterFieldHandleValueNull(stageElementConfig.getDescription()));
     stageBuilder.failureStrategies(stageElementConfig.getFailureStrategies());
     stageBuilder.skipCondition(stageElementConfig.getSkipCondition());
+    stageBuilder.delegateSelectors(stageElementConfig.getDelegateSelectors());
     stageBuilder.when(stageElementConfig.getWhen());
     stageBuilder.type(stageElementConfig.getType());
     stageBuilder.uuid(stageElementConfig.getUuid());

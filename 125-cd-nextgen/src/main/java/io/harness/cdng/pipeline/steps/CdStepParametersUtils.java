@@ -24,9 +24,11 @@ import io.harness.utils.TimeoutUtils;
 import io.harness.yaml.utils.NGVariablesUtils;
 
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 @UtilityClass
+@Slf4j
 public class CdStepParametersUtils {
   public StepElementParametersBuilder getStepParameters(CdAbstractStepNode stepNode) {
     StepElementParametersBuilder stepBuilder = StepElementParameters.builder();
@@ -40,7 +42,8 @@ public class CdStepParametersUtils {
     stepBuilder.when(stepNode.getWhen());
     stepBuilder.type(stepNode.getType());
     stepBuilder.uuid(stepNode.getUuid());
-
+    log.info("CdStepParametersUtils::getStepParameters values for identifier {} and delegate selector: {} ",
+        stepNode.getIdentifier(), stepNode.getDelegateSelectors());
     return stepBuilder;
   }
 
@@ -55,11 +58,13 @@ public class CdStepParametersUtils {
     stageBuilder.skipCondition(stageNode.getSkipCondition());
     stageBuilder.when(stageNode.getWhen());
     stageBuilder.type(stageNode.getType());
+    stageBuilder.delegateSelectors(stageNode.getDelegateSelectors());
     stageBuilder.uuid(stageNode.getUuid());
     stageBuilder.variables(
         ParameterField.createValueField(NGVariablesUtils.getMapOfVariables(stageNode.getVariables())));
     stageBuilder.tags(CollectionUtils.emptyIfNull(stageNode.getTags()));
-
+    log.info("CdStepParametersUtils::getStageParameters Stage values for identifier {} and delegate selector: {}",
+        stageNode.getIdentifier(), stageNode.getDelegateSelectors());
     return stageBuilder;
   }
 

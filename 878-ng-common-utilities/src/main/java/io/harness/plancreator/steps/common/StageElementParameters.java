@@ -47,6 +47,8 @@ public class StageElementParameters implements StepParameters {
   String type;
   SpecParameters specConfig;
 
+  ParameterField<List<String>> delegateSelectors;
+
   @Override
   public String toViewJson() {
     StageElementParameters stageElementParameters = cloneParameters();
@@ -66,6 +68,7 @@ public class StageElementParameters implements StepParameters {
         .skipCondition(this.skipCondition)
         .variables(this.variables)
         .tags(this.tags)
+        .delegateSelectors(delegateSelectors)
         .build();
   }
 }
