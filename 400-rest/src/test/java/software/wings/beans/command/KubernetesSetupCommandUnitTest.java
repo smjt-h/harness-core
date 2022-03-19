@@ -298,7 +298,7 @@ public class KubernetesSetupCommandUnitTest extends WingsBaseTest {
                                             .build();
 
     HorizontalPodAutoscaler horizontalPodAutoscaler =
-        kubernetesSetupCommandUnit.createAutoscaler("abaris.hpanormal.prod.0", "Deployment", "extensions/v1",
+        kubernetesSetupCommandUnit.createAutoscaler("abaris.hpanormal.prod.0", "Deployment", "extensions/v1beta1",
             "default", labels, setupParams, executionLogCallback);
 
     assertThat(horizontalPodAutoscaler.getApiVersion()).isEqualTo("autoscaling/v1");

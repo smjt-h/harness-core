@@ -58,6 +58,8 @@ import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceSpec;
 import io.fabric8.istio.client.DefaultIstioClient;
 import io.fabric8.istio.client.IstioClient;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscalerList;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -482,9 +484,7 @@ public class KubernetesHelperService {
     return mixedOperation.inNamespace(kubernetesConfig.getNamespace());
   }
 
-  public NonNamespaceOperation<io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler,
-      io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscalerList,
-      Resource<io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler>>
+  public NonNamespaceOperation<HorizontalPodAutoscaler, HorizontalPodAutoscalerList, Resource<HorizontalPodAutoscaler>>
   hpaOperations(KubernetesConfig kubernetesConfig) {
     return getKubernetesClient(kubernetesConfig)
         .autoscaling()
