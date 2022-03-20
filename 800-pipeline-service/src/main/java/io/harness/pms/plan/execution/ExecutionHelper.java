@@ -342,7 +342,6 @@ public class ExecutionHelper {
                                                       .build();
       long endTs = System.currentTimeMillis();
       log.info("[PMS_PLAN] Time taken to complete plan: {}ms ", endTs - startTs);
-
       if (isRetry) {
         Plan newPlan = retryExecutionHelper.transformPlan(plan, identifierOfSkipStages, previousExecutionId);
         return orchestrationService.startExecution(newPlan, abstractions, executionMetadata, planExecutionMetadata);
