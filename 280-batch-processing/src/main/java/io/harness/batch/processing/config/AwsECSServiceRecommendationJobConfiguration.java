@@ -38,7 +38,7 @@ public class AwsECSServiceRecommendationJobConfiguration {
   @Autowired
   @Qualifier(value = "awsECSServiceRecommendationJob")
   public Job awsECSServiceRecommendationJob(JobBuilderFactory jobBuilderFactory, Step awsECSServiceRecommendationStep) {
-    return jobBuilderFactory.get(BatchJobType.AWS_ECS_CLUSTER_SYNC.name())
+    return jobBuilderFactory.get(BatchJobType.AWS_ECS_SERVICE_RECOMMENDATION.name())
         .incrementer(new RunIdIncrementer())
         .listener(batchJobExecutionListener)
         .start(awsECSServiceRecommendationStep)
