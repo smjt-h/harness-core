@@ -32,6 +32,7 @@ import io.harness.batch.processing.cloudevents.aws.ecs.service.tasklet.support.E
 import io.harness.batch.processing.cloudevents.aws.ecs.service.tasklet.support.ng.NGConnectorHelper;
 import io.harness.batch.processing.cloudevents.aws.ecs.service.tasklet.support.response.EcsUtilizationData;
 import io.harness.batch.processing.cloudevents.aws.ecs.service.tasklet.support.response.MetricValue;
+import io.harness.batch.processing.dao.intfc.ECSServiceDao;
 import io.harness.batch.processing.dao.intfc.InstanceDataDao;
 import io.harness.batch.processing.service.intfc.InstanceDataService;
 import io.harness.batch.processing.service.intfc.InstanceResourceService;
@@ -93,6 +94,7 @@ public class AwsECSClusterDataSyncTaskletTest extends CategoryTest {
   @Mock private EcsMetricClient ecsMetricClient;
   @Mock private InstanceDataDao instanceDataDao;
   @Mock private CECloudAccountDao ceCloudAccountDao;
+  @Mock private ECSServiceDao ecsServiceDao;
   @Mock private AwsECSHelperService awsECSHelperService;
   @Mock private AwsEC2HelperService awsEC2HelperService;
   @Mock protected InstanceDataService instanceDataService;
@@ -269,7 +271,8 @@ public class AwsECSClusterDataSyncTaskletTest extends CategoryTest {
     when(cloudToHarnessMappingService.getHarnessServiceInfo(any()))
         .thenReturn(Optional.of(new HarnessServiceInfo(null, null, null, null, null, null)));
     when(instanceDataDao.fetchInstanceData(anySet())).thenReturn(singletonList(getInstanceData()));
-    awsECSClusterDataSyncTasklet.updateTasks(accountId, ceCluster, singletonList(getTask()), deploymentIdServiceMap);
+    awsECSClusterDataSyncTasklet.updateTasks(accountId, ceCluster, singletonList(getTask()), deploymentIdServiceMap,
+        Collections.EMPTY_MAP, Instant.ofEpochMilli(startTime));
     ArgumentCaptor<InstanceData> captor = ArgumentCaptor.forClass(InstanceData.class);
     then(instanceDataService).should().create(captor.capture());
     InstanceData instanceData = captor.getValue();

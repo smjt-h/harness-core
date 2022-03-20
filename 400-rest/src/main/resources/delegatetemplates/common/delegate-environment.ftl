@@ -13,8 +13,6 @@
           value: ${delegateCheckLocation}
         - name: HELM_DESIRED_VERSION
           value: ""
-        - name: USE_CDN
-          value: "${useCdn}"
         - name: CDN_URL
           value: ${cdnUrl}
         - name: JRE_VERSION
@@ -65,6 +63,10 @@
 <#macro cgSpecific>
         - name: DELEGATE_PROFILE
           value: "${delegateProfile}"
+</#macro>
+<#macro cgImmutableSpecific>
+        - name: DELEGATE_GROUP_NAME
+          value: "${delegateGroupName}"
 </#macro>
 <#macro ngSpecific>
         - name: DELEGATE_DESCRIPTION
