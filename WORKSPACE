@@ -110,6 +110,20 @@ go_repository(
 )
 
 go_repository(
+    name = "com_github_dgrijalva_jwt_go",
+    importpath = "github.com/dgrijalva/jwt-go",
+    sum = "h1:7qlOGliEKZXTDg6OTjfoBKDXWrumCAMpl/TFQ4/5kLM=",
+    version = "v3.2.0+incompatible",
+)
+
+go_repository(
+    name = "com_github_dgrijalva_jwt_go_v4",
+    importpath = "github.com/dgrijalva/jwt-go/v4",
+    sum = "h1:CaO/zOnF8VvUfEbhRatPcwKVWamvbYd8tQGRWacE9kU=",
+    version = "v4.0.0-preview1",
+)
+
+go_repository(
     name = "org_golang_google_grpc_cmd_protoc_gen_go_grpc",
     importpath = "google.golang.org/grpc/cmd/protoc-gen-go-grpc",
     sum = "h1:M1YKkFIboKNieVO5DLUEVzQfGwJD30Nv2jfUgzb5UcE=",
@@ -1008,8 +1022,8 @@ go_repository(
 go_repository(
     name = "com_github_drone_go_scm",
     importpath = "github.com/drone/go-scm",
-    sum = "h1:BQn5DpjS33LenuXwMufodhNAeY9+VxiMltq87J+nU+k=",
-    version = "v1.19.1",
+    sum = "h1:SGB8TnE/85rklK+Gb3ZRTHQRt2atSCFHgtDKNqPwBQU=",
+    version = "v1.20.0",
 )
 
 go_repository(
@@ -4332,12 +4346,12 @@ plain_artifacts = [
     "com.bugsnag:bugsnag:3.6.2",
     "com.carrotsearch:hppc:0.8.1",
     "com.coveo:saml-client:3.0.2",
-    "com.cronutils:cron-utils:9.0.1",
+    "com.cronutils:cron-utils:9.1.6",
     "com.datadoghq:java-dogstatsd-client:2.3",
     "com.deftlabs:mongo-java-distributed-lock:0.1.7",
     "com.eclipsesource.j2v8:j2v8_macosx_x86_64:4.6.0",
     "com.esotericsoftware.yamlbeans:yamlbeans:1.13",
-    "com.esotericsoftware:kryo:4.0.0",
+    "com.esotericsoftware:kryo:4.0.2",
     "com.esotericsoftware:minlog:1.3.0",
     "com.esotericsoftware:reflectasm:1.11.3",
     "com.fasterxml.jackson.core:jackson-annotations:2.13.1",
@@ -5286,9 +5300,9 @@ filegroup(
         "make install",
         "ln -s bazel_install/bin/python3 python_bin",
     ],
-    sha256 = "991c3f8ac97992f3d308fefeb03a64db462574eadbff34ce8bc5bb583d9903ff",
-    strip_prefix = "Python-3.9.1",
-    urls = ["http://jfrogdev.dev.harness.io:80/artifactory/python-remote/3.9.1/Python-3.9.1.tar.xz"],
+    sha256 = "0a8fbfb5287ebc3a13e9baf3d54e08fa06778ffeccf6311aef821bb3a6586cc8",
+    strip_prefix = "Python-3.9.10",
+    urls = ["https://www.python.org/ftp/python/3.9.10/Python-3.9.10.tar.xz"],
 )
 
 register_toolchains("//:py_toolchain")

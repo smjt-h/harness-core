@@ -7,12 +7,13 @@ package git
 
 import (
 	"context"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/drone/go-scm/scm"
-	"github.com/harness/harness-core/product/ci/scm/converter"
 	"github.com/harness/harness-core/commons/go/lib/utils"
+	"github.com/harness/harness-core/product/ci/scm/converter"
 	"github.com/harness/harness-core/product/ci/scm/gitclient"
 	pb "github.com/harness/harness-core/product/ci/scm/proto"
 	"go.uber.org/zap"
@@ -200,12 +201,17 @@ func GetLatestCommit(ctx context.Context, request *pb.GetLatestCommitRequest, lo
 		return nil, err
 	}
 
-	ref, err := gitclient.GetValidRef(*request.Provider, request.GetRef(), request.GetBranch())
+	branch := request.GetBranch()
+	if client.Driver == scm.DriverGitlab {
+		branch = url.QueryEscape(branch)
+	}
+
+	ref, err := gitclient.GetValidRef(*request.Provider, request.GetRef(), branch)
 	if err != nil {
 		log.Errorw("GetLatestCommit failure, bad ref/branch", "provider", gitclient.GetProvider(*request.GetProvider()), "slug", request.GetSlug(), "ref", ref, "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
 		return nil, err
 	}
-	if request.GetBranch() != "" && strings.Contains(ref, "/") {
+	if branch != "" && strings.Contains(ref, "/") {
 		switch client.Driver {
 		case scm.DriverBitbucket,
 			scm.DriverStash:
@@ -341,12 +347,12 @@ func ListCommits(ctx context.Context, request *pb.ListCommitsRequest, log *zap.S
 	}
 
 	commits, response, err := client.Git.ListCommits(ctx, request.GetSlug(), scm.CommitListOptions{Ref: ref, Page: int(request.GetPagination().GetPage()), Path: request.FilePath})
-	
+
 	if err != nil {
 		log.Errorw("ListCommits failure", "provider", gitclient.GetProvider(*request.GetProvider()), "slug", request.GetSlug(), "ref", ref, "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
 		return nil, err
 	}
-	
+
 	log.Infow("ListCommits success", "slug", request.GetSlug(), "ref", ref, "elapsed_time_ms", utils.TimeSince(start))
 	var commitIDs []string
 	for _, v := range commits {
@@ -453,19 +459,19 @@ func GetLatestCommitOnFile(ctx context.Context, request *pb.GetLatestCommitOnFil
 	// For Bitbucket, we also get commits for a non-existent file if it had been created before (deleted now)
 	response, err := ListCommits(ctx, &pb.ListCommitsRequest{Provider: request.Provider, Slug: request.Slug, Type: &pb.ListCommitsRequest_Branch{Branch: request.Branch}, FilePath: request.FilePath}, log)
 	if err != nil {
-		return &pb.GetLatestCommitOnFileResponse {
+		return &pb.GetLatestCommitOnFileResponse{
 			CommitId: "",
-			Error: err.Error(),
+			Error:    err.Error(),
 		}, err
 	}
-	
-	if (response.CommitIds != nil && len(response.CommitIds) !=0) {
-		return &pb.GetLatestCommitOnFileResponse {
+
+	if response.CommitIds != nil && len(response.CommitIds) != 0 {
+		return &pb.GetLatestCommitOnFileResponse{
 			CommitId: response.CommitIds[0],
 		}, nil
 	}
 	// TODO Return an error saying no commit found for the given file
-	return &pb.GetLatestCommitOnFileResponse {
+	return &pb.GetLatestCommitOnFileResponse{
 		CommitId: "",
 	}, nil
 }

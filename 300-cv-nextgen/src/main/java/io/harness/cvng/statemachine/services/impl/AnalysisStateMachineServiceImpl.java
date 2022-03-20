@@ -8,6 +8,7 @@
 package io.harness.cvng.statemachine.services.impl;
 
 import static io.harness.cvng.CVConstants.STATE_MACHINE_IGNORE_MINUTES;
+import static io.harness.cvng.CVConstants.STATE_MACHINE_IGNORE_MINUTES_DEFAULT;
 import static io.harness.cvng.CVConstants.STATE_MACHINE_IGNORE_MINUTES_FOR_DEMO;
 import static io.harness.cvng.CVConstants.STATE_MACHINE_IGNORE_MINUTES_FOR_SLI;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
@@ -22,6 +23,7 @@ import io.harness.cvng.core.entities.VerificationTask;
 import io.harness.cvng.core.entities.VerificationTask.DeploymentInfo;
 import io.harness.cvng.core.entities.VerificationTask.TaskType;
 import io.harness.cvng.core.services.api.CVConfigService;
+import io.harness.cvng.core.services.api.ExecutionLogService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.models.VerificationType;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator;
@@ -68,6 +70,7 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
   @Inject private VerificationTaskService verificationTaskService;
   @Inject private Clock clock;
   @Inject private ServiceLevelIndicatorService serviceLevelIndicatorService;
+  @Inject private ExecutionLogService executionLogService;
 
   @Override
   public void initiateStateMachine(String verificationTaskId, AnalysisStateMachine stateMachine) {
@@ -99,6 +102,8 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
           .execute(stateMachine.getCurrentState());
     }
     hPersistence.save(stateMachine);
+    executionLogService.getLogger(stateMachine)
+        .log(stateMachine.getLogLevel(), "Analysis state machine status: " + stateMachine.getStatus());
   }
 
   @Override
@@ -131,6 +136,9 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
           analysisStateMachine.getVerificationTaskId(), analysisStateMachine.getAnalysisStartTime(),
           analysisStateMachine.getAnalysisEndTime(), STATE_MACHINE_IGNORE_MINUTES);
       analysisStateMachine.setStatus(AnalysisStatus.IGNORED);
+      executionLogService.getLogger(analysisStateMachine)
+          .log(
+              analysisStateMachine.getLogLevel(), "Analysis state machine status: " + analysisStateMachine.getStatus());
       return Optional.of(analysisStateMachine);
     }
     return Optional.empty();
@@ -214,6 +222,8 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
       nextStateExecutor.handleFinalStatuses(nextState);
     }
     hPersistence.save(analysisStateMachine);
+    executionLogService.getLogger(analysisStateMachine)
+        .log(analysisStateMachine.getLogLevel(), "Analysis state machine status: " + analysisStateMachine.getStatus());
     return analysisStateMachine.getCurrentState().getStatus();
   }
 
@@ -237,6 +247,8 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
     }
 
     hPersistence.save(analysisStateMachine);
+    executionLogService.getLogger(analysisStateMachine)
+        .log(analysisStateMachine.getLogLevel(), "Analysis state machine status: " + analysisStateMachine.getStatus());
   }
 
   @Override
@@ -286,6 +298,8 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
       }
       if (cvConfig.isDemo()) {
         stateMachine.setStateMachineIgnoreMinutes(STATE_MACHINE_IGNORE_MINUTES_FOR_DEMO);
+      } else {
+        stateMachine.setStateMachineIgnoreMinutes(STATE_MACHINE_IGNORE_MINUTES_DEFAULT);
       }
       firstState.setStatus(AnalysisStatus.CREATED);
       firstState.setInputs(inputForAnalysis);
@@ -299,6 +313,7 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
       Preconditions.checkNotNull(verificationJobInstance, "verificationJobInstance can not be null");
       Preconditions.checkNotNull(cvConfigForDeployment, "cvConfigForDeployment can not be null");
       stateMachine.setAccountId(verificationTask.getAccountId());
+      stateMachine.setStateMachineIgnoreMinutes(STATE_MACHINE_IGNORE_MINUTES_DEFAULT);
       if (verificationJobInstance.getResolvedJob().getType() == VerificationJobType.HEALTH) {
         createHealthAnalysisState(stateMachine, inputForAnalysis, verificationJobInstance);
       } else {
@@ -317,6 +332,8 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
     } else {
       throw new IllegalStateException("Invalid verificationType");
     }
+    executionLogService.getLogger(stateMachine)
+        .log(stateMachine.getLogLevel(), "Analysis state machine status: " + stateMachine.getStatus());
     return stateMachine;
   }
 

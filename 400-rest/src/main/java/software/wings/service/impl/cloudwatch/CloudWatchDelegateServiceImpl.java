@@ -12,12 +12,12 @@ import static io.harness.govern.Switch.unhandled;
 
 import static software.wings.common.VerificationConstants.DURATION_TO_ASK_MINUTES;
 import static software.wings.delegatetasks.AbstractDelegateDataCollectionTask.PREDECTIVE_HISTORY_MINUTES;
+import static software.wings.delegatetasks.cv.CVConstants.CONTROL_HOST_NAME;
+import static software.wings.delegatetasks.cv.CVConstants.TEST_HOST_NAME;
 import static software.wings.service.impl.analysis.AnalysisComparisonStrategy.COMPARE_WITH_CURRENT;
 import static software.wings.service.impl.analysis.AnalysisComparisonStrategy.COMPARE_WITH_PREVIOUS;
 import static software.wings.service.impl.analysis.AnalysisComparisonStrategy.PREDICTIVE;
 import static software.wings.service.impl.newrelic.NewRelicMetricDataRecord.DEFAULT_GROUP_NAME;
-import static software.wings.sm.states.DynatraceState.CONTROL_HOST_NAME;
-import static software.wings.sm.states.DynatraceState.TEST_HOST_NAME;
 
 import io.harness.delegate.task.DataCollectionExecutorService;
 import io.harness.exception.InvalidRequestException;
@@ -28,6 +28,7 @@ import io.harness.serializer.JsonUtils;
 import software.wings.beans.AwsConfig;
 import software.wings.common.VerificationConstants;
 import software.wings.delegatetasks.DelegateLogService;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.impl.AwsHelperService;
 import software.wings.service.impl.ThirdPartyApiCallLog;
 import software.wings.service.impl.ThirdPartyApiCallLog.FieldType;
@@ -39,7 +40,6 @@ import software.wings.service.impl.aws.client.CloseableAmazonWebServiceClient;
 import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
 import software.wings.service.intfc.cloudwatch.CloudWatchDelegateService;
 import software.wings.service.intfc.security.EncryptionService;
-import software.wings.sm.StateType;
 
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
 import com.amazonaws.services.cloudwatch.model.Datapoint;
@@ -275,7 +275,7 @@ public class CloudWatchDelegateServiceImpl implements CloudWatchDelegateService 
     datapoints.forEach(datapoint -> {
       NewRelicMetricDataRecord newRelicMetricDataRecord =
           NewRelicMetricDataRecord.builder()
-              .stateType(StateType.CLOUD_WATCH)
+              .stateType(DelegateStateType.CLOUD_WATCH)
               .appId(appId)
               .name(metricName)
               .workflowId(dataCollectionInfo.getWorkflowId())

@@ -21,10 +21,10 @@ import io.harness.cvng.cdng.beans.CVNGStepType;
 import io.harness.cvng.cdng.entities.CVNGStepTask;
 import io.harness.cvng.cdng.entities.CVNGStepTask.CVNGStepTaskBuilder;
 import io.harness.cvng.cdng.services.api.CVNGStepTaskService;
-import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.beans.sidekick.DemoActivitySideKickData;
 import io.harness.cvng.core.entities.CVConfig;
+import io.harness.cvng.core.entities.MonitoredService;
 import io.harness.cvng.core.services.api.FeatureFlagService;
 import io.harness.cvng.core.services.api.SideKickService;
 import io.harness.cvng.core.services.api.monitoredService.HealthSourceService;
@@ -38,6 +38,8 @@ import io.harness.cvng.verificationjob.services.api.VerificationJobInstanceServi
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.eraro.ErrorCode;
 import io.harness.eraro.Level;
+import io.harness.plancreator.steps.common.StepElementParameters;
+import io.harness.plancreator.steps.common.rollback.AsyncExecutableWithRollback;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.AsyncExecutableResponse;
 import io.harness.pms.contracts.execution.Status;
@@ -48,7 +50,6 @@ import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.data.Outcome;
-import io.harness.pms.sdk.core.steps.executables.AsyncExecutable;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
 import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
@@ -67,6 +68,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -78,7 +80,7 @@ import org.springframework.data.annotation.TypeAlias;
 
 @Slf4j
 @OwnedBy(HarnessTeam.CV)
-public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
+public class CVNGStep extends AsyncExecutableWithRollback {
   public static final StepType STEP_TYPE = StepType.newBuilder()
                                                .setType(CVNGStepType.CVNG_VERIFY.getDisplayName())
                                                .setStepCategory(StepCategory.STEP)
@@ -92,9 +94,10 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
   @Inject private SideKickService sideKickService;
 
   @Override
-  public AsyncExecutableResponse executeAsync(Ambiance ambiance, CVNGStepParameter stepParameters,
+  public AsyncExecutableResponse executeAsync(Ambiance ambiance, StepElementParameters stepElementParameters,
       StepInputPackage inputPackage, PassThroughData passThroughData) {
     log.info("ExecuteAsync called for CVNGStep");
+    CVNGStepParameter stepParameters = (CVNGStepParameter) stepElementParameters.getSpec();
     String accountId = AmbianceUtils.getAccountId(ambiance);
     String projectIdentifier = AmbianceUtils.getProjectIdentifier(ambiance);
     String orgIdentifier = AmbianceUtils.getOrgIdentifier(ambiance);
@@ -110,12 +113,13 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
                                                             .environmentIdentifier(envIdentifier)
                                                             .build();
 
-    MonitoredServiceDTO monitoredServiceDTO = monitoredServiceService.getMonitoredServiceDTO(serviceEnvironmentParams);
+    Optional<MonitoredService> monitoredService =
+        monitoredServiceService.getApplicationMonitoredService(serviceEnvironmentParams);
     Instant deploymentStartTime = Instant.ofEpochMilli(
         AmbianceUtils.getStageLevelFromAmbiance(ambiance)
             .orElseThrow(() -> new IllegalStateException("verify step needs to be part of a stage."))
             .getStartTs());
-    if (monitoredServiceDTO == null || monitoredServiceDTO.getSources().getHealthSources().isEmpty()) {
+    if (!monitoredService.isPresent() || monitoredService.get().getHealthSourceIdentifiers().isEmpty()) {
       CVNGStepTaskBuilder cvngStepTaskBuilder = CVNGStepTask.builder();
       cvngStepTaskBuilder.skip(true);
       cvngStepTaskBuilder.callbackId(UUID.randomUUID().toString());
@@ -132,14 +136,14 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
     } else {
       String verificationJobInstanceId;
       DeploymentActivity activity = getDeploymentActivity(
-          stepParameters, serviceEnvironmentParams, monitoredServiceDTO, ambiance, deploymentStartTime);
+          stepParameters, serviceEnvironmentParams, monitoredService.get(), ambiance, deploymentStartTime);
       boolean isDemoEnabled = isDemoEnabled(accountId, ambiance);
       boolean shouldFailVerification = false;
       if (isDemoEnabled) {
         shouldFailVerification = shouldFailVerification(ambiance, stepParameters.getSensitivity());
         VerificationJobInstance verificationJobInstance =
             getVerificationJobInstanceForDemo(AmbianceUtils.obtainCurrentLevel(ambiance).getIdentifier(),
-                stepParameters, serviceEnvironmentParams, monitoredServiceDTO, deploymentStartTime,
+                stepParameters, serviceEnvironmentParams, monitoredService.get(), deploymentStartTime,
                 shouldFailVerification(ambiance, stepParameters.getSensitivity())
                     ? ActivityVerificationStatus.VERIFICATION_FAILED
                     : ActivityVerificationStatus.VERIFICATION_PASSED);
@@ -149,7 +153,7 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
       } else {
         VerificationJobInstanceBuilder verificationJobInstanceBuilder =
             getVerificationJobInstanceBuilder(AmbianceUtils.obtainCurrentLevel(ambiance).getIdentifier(),
-                stepParameters, serviceEnvironmentParams, monitoredServiceDTO, deploymentStartTime);
+                stepParameters, serviceEnvironmentParams, monitoredService.get(), deploymentStartTime);
         activity.fillInVerificationJobInstanceDetails(verificationJobInstanceBuilder);
         verificationJobInstanceId = verificationJobInstanceService.create(verificationJobInstanceBuilder.build());
       }
@@ -192,7 +196,7 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
 
   private VerificationJobInstanceBuilder getVerificationJobInstanceBuilder(String stepName,
       CVNGStepParameter stepParameters, ServiceEnvironmentParams serviceEnvironmentParams,
-      MonitoredServiceDTO monitoredServiceDTO, Instant deploymentStartTime) {
+      MonitoredService monitoredService, Instant deploymentStartTime) {
     Instant verificationStartTime = clock.instant();
     VerificationJob verificationJob =
         stepParameters.getVerificationJobBuilder()
@@ -201,12 +205,11 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
             .projectIdentifier(serviceEnvironmentParams.getProjectIdentifier())
             .orgIdentifier(serviceEnvironmentParams.getOrgIdentifier())
             .accountId(serviceEnvironmentParams.getAccountIdentifier())
-            .monitoringSources(monitoredServiceDTO.getSources()
-                                   .getHealthSources()
+            .monitoringSources(monitoredService.getHealthSourceIdentifiers()
                                    .stream()
-                                   .map(healthSource
+                                   .map(healthSourceIdentifier
                                        -> HealthSourceService.getNameSpacedIdentifier(
-                                           monitoredServiceDTO.getIdentifier(), healthSource.getIdentifier()))
+                                           monitoredService.getIdentifier(), healthSourceIdentifier))
                                    .collect(Collectors.toList()))
             .build();
     VerificationJobInstanceBuilder verificationJobInstanceBuilder =
@@ -218,10 +221,10 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
   }
 
   private VerificationJobInstance getVerificationJobInstanceForDemo(String stepName, CVNGStepParameter stepParameters,
-      ServiceEnvironmentParams serviceEnvironmentParams, MonitoredServiceDTO monitoredServiceDTO,
-      Instant deploymentStartTime, ActivityVerificationStatus activityVerificationStatus) {
+      ServiceEnvironmentParams serviceEnvironmentParams, MonitoredService monitoredService, Instant deploymentStartTime,
+      ActivityVerificationStatus activityVerificationStatus) {
     VerificationJobInstanceBuilder verificationJobInstanceBuilder = getVerificationJobInstanceBuilder(
-        stepName, stepParameters, serviceEnvironmentParams, monitoredServiceDTO, deploymentStartTime);
+        stepName, stepParameters, serviceEnvironmentParams, monitoredService, deploymentStartTime);
     verificationJobInstanceBuilder.verificationStatus(activityVerificationStatus);
     verificationJobInstanceBuilder.startTime(clock.instant().minus(Duration.ofMinutes(15)));
     verificationJobInstanceBuilder.deploymentStartTime(clock.instant().minus(Duration.ofMinutes(16)));
@@ -238,7 +241,7 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
 
   @NotNull
   private DeploymentActivity getDeploymentActivity(CVNGStepParameter stepParameters,
-      ServiceEnvironmentParams serviceEnvironmentParams, MonitoredServiceDTO monitoredServiceDTO, Ambiance ambiance,
+      ServiceEnvironmentParams serviceEnvironmentParams, MonitoredService monitoredService, Ambiance ambiance,
       Instant activityStartTime) {
     Instant startTime = clock.instant();
     VerificationJob verificationJob =
@@ -248,12 +251,11 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
             .projectIdentifier(serviceEnvironmentParams.getProjectIdentifier())
             .orgIdentifier(serviceEnvironmentParams.getOrgIdentifier())
             .accountId(serviceEnvironmentParams.getAccountIdentifier())
-            .monitoringSources(monitoredServiceDTO.getSources()
-                                   .getHealthSources()
+            .monitoringSources(monitoredService.getHealthSourceIdentifiers()
                                    .stream()
-                                   .map(healthSource
+                                   .map(healthSourceIdentifier
                                        -> HealthSourceService.getNameSpacedIdentifier(
-                                           monitoredServiceDTO.getIdentifier(), healthSource.getIdentifier()))
+                                           monitoredService.getIdentifier(), healthSourceIdentifier))
                                    .collect(Collectors.toList()))
             .build();
     DeploymentActivity deploymentActivity =
@@ -270,8 +272,7 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
     deploymentActivity.setOrgIdentifier(serviceEnvironmentParams.getOrgIdentifier());
     deploymentActivity.setAccountId(serviceEnvironmentParams.getAccountIdentifier());
     deploymentActivity.setProjectIdentifier(serviceEnvironmentParams.getProjectIdentifier());
-    deploymentActivity.setServiceIdentifier(stepParameters.getServiceIdentifier());
-    deploymentActivity.setEnvironmentIdentifier(stepParameters.getEnvIdentifier());
+    deploymentActivity.setMonitoredServiceIdentifier(monitoredService.getIdentifier());
     deploymentActivity.setActivityName(getActivityName(stepParameters));
     deploymentActivity.setType(ActivityType.DEPLOYMENT);
     return deploymentActivity;
@@ -309,8 +310,9 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
 
   @Override
   public StepResponse handleAsyncResponse(
-      Ambiance ambiance, CVNGStepParameter stepParameters, Map<String, ResponseData> responseDataMap) {
+      Ambiance ambiance, StepElementParameters stepElementParameters, Map<String, ResponseData> responseDataMap) {
     log.info("handleAsyncResponse async response");
+    CVNGStepParameter stepParameters = (CVNGStepParameter) stepElementParameters.getSpec();
     CVNGResponseData cvngResponseData = (CVNGResponseData) responseDataMap.values().iterator().next();
     StepResponseBuilder stepResponseBuilder = StepResponse.builder();
     if (cvngResponseData.isSkip()) {
@@ -379,7 +381,8 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
   }
 
   @Override
-  public ProgressData handleProgress(Ambiance ambiance, CVNGStepParameter stepParameters, ProgressData progressData) {
+  public ProgressData handleProgress(
+      Ambiance ambiance, StepElementParameters stepElementParameters, ProgressData progressData) {
     CVNGResponseData cvngResponseData = (CVNGResponseData) progressData;
     return VerifyStepOutcome.builder()
         .progressPercentage(cvngResponseData.getActivityStatusDTO().getProgressPercentage())
@@ -390,13 +393,13 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
   }
 
   @Override
-  public Class<CVNGStepParameter> getStepParametersClass() {
-    return CVNGStepParameter.class;
+  public Class<StepElementParameters> getStepParametersClass() {
+    return StepElementParameters.class;
   }
 
   @Override
   public void handleAbort(
-      Ambiance ambiance, CVNGStepParameter stepParameters, AsyncExecutableResponse executableResponse) {
+      Ambiance ambiance, StepElementParameters stepElementParameters, AsyncExecutableResponse executableResponse) {
     CVNGStepTask cvngStepTask = cvngStepTaskService.getByCallBackId(executableResponse.getCallbackIds(0));
     activityService.abort(cvngStepTask.getActivityId());
   }

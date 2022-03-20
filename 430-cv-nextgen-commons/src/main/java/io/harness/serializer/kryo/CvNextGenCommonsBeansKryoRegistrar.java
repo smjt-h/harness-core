@@ -55,13 +55,11 @@ import io.harness.cvng.beans.activity.KubernetesActivitySourceDTO;
 import io.harness.cvng.beans.activity.KubernetesActivitySourceDTO.KubernetesActivitySourceConfig;
 import io.harness.cvng.beans.appd.AppDynamicFetchFileStructureRequest;
 import io.harness.cvng.beans.appd.AppDynamicSingleMetricDataRequest;
-import io.harness.cvng.beans.appd.AppDynamicsApplication;
 import io.harness.cvng.beans.appd.AppDynamicsDataCollectionRequest;
 import io.harness.cvng.beans.appd.AppDynamicsFetchAppRequest;
 import io.harness.cvng.beans.appd.AppDynamicsFetchTiersRequest;
 import io.harness.cvng.beans.appd.AppDynamicsFileDefinition;
 import io.harness.cvng.beans.appd.AppDynamicsMetricDataValidationRequest;
-import io.harness.cvng.beans.appd.AppDynamicsTier;
 import io.harness.cvng.beans.customhealth.CustomHealthFetchSampleDataRequest;
 import io.harness.cvng.beans.customhealth.TimestampInfo;
 import io.harness.cvng.beans.datadog.DatadogActiveMetricsRequest;
@@ -123,8 +121,6 @@ public class CvNextGenCommonsBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(SplunkValidationResponse.class, 9017);
     kryo.register(SplunkValidationResponse.SampleLog.class, 9018);
     kryo.register(DataCollectionConnectorBundle.class, 9019);
-    kryo.register(AppDynamicsApplication.class, 9020);
-    kryo.register(AppDynamicsTier.class, 9021);
     kryo.register(TimeSeriesThresholdDTO.class, 9022);
     kryo.register(TimeSeriesThresholdActionType.class, 9023);
     kryo.register(TimeSeriesThresholdCriteria.class, 9024);
@@ -201,5 +197,9 @@ public class CvNextGenCommonsBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(DynatraceDataCollectionInfo.class, 9097);
     kryo.register(CustomHealthMetricInfo.class, 9098);
     kryo.register(MetricResponseMappingDTO.class, 9099);
+    kryo.register(NewRelicDataCollectionInfo.NewRelicMetricInfoDTO.class, 9100);
+    kryo.register(DatadogMetricsDataCollectionInfo.MetricCollectionInfo.class, 9101);
+    kryo.register(PrometheusDataCollectionInfo.MetricCollectionInfo.class, 9102);
+    kryo.register(DynatraceDataCollectionInfo.MetricCollectionInfo.class, 9104);
   }
 }
