@@ -699,7 +699,7 @@ if [[ "" != "$REDIS_SENTINELS" ]]; then
 fi
 
 if [[ "" != "$REDIS_ENV_NAMESPACE" ]]; then
-    yq write -i $CONFIG_FILE cg.edisLockConfig.envNamespace "$REDIS_ENV_NAMESPACE"
+    yq write -i $CONFIG_FILE cg.redisLockConfig.envNamespace "$REDIS_ENV_NAMESPACE"
     yq write -i $CONFIG_FILE cg.redisAtmosphereConfig.envNamespace "$REDIS_ENV_NAMESPACE"
 fi
 
@@ -969,4 +969,16 @@ fi
 
 if [[ "" != "$INCORRECT_ATTEMPTS_UNTIL_SECOPS_NOTIFIED" ]]; then
  yq write -i config.yml cg.totp.incorrectAttemptsUntilSecOpsNotified "$INCORRECT_ATTEMPTS_UNTIL_SECOPS_NOTIFIED"
+fi
+
+if [[ "" != "$PIPELINE_SERVICE_CLIENT_BASEURL" ]]; then
+  yq write -i $CONFIG_FILE pipelineServiceClientConfig.baseUrl "$PIPELINE_SERVICE_CLIENT_BASEURL"
+fi
+
+if [[ "" != "$NG_MANAGER_CLIENT_BASEURL" ]]; then
+  yq write -i $CONFIG_FILE ngClientConfig.baseUrl "$NG_MANAGER_CLIENT_BASEURL"
+fi
+
+if [[ "" != "$TEMPLATE_SERVICE_ENDPOINT" ]]; then
+  yq write -i $CONFIG_FILE templateServiceClientConfig.baseUrl "$TEMPLATE_SERVICE_ENDPOINT"
 fi
