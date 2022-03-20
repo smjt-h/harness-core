@@ -295,6 +295,9 @@ mongo:
     mongoSSLEnabled: false
     mongoTrustStorePath:
     mongoTrustStorePassword:
+  analyticNodeConfig:
+    mongoTagKey: none
+    mongoTagValue: none
 
 events-mongo:
   uri: mongodb://localhost:27017/events
@@ -322,7 +325,7 @@ deployMode: KUBERNETES
 deployVariant: SAAS
 envPath: ""
 
-scmVersion: e2904e73
+scmVersion: 98fc345b
 
 ngAuthUIEnabled: false
 

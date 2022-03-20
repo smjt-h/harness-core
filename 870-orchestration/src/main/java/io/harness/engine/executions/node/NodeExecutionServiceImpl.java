@@ -85,9 +85,10 @@ import org.springframework.data.mongodb.core.query.Update;
 @Slf4j
 @OwnedBy(PIPELINE)
 public class NodeExecutionServiceImpl implements NodeExecutionService {
-  private static final Set<String> GRAPH_FIELDS = ImmutableSet.of(NodeExecutionKeys.progressData,
-      NodeExecutionKeys.unitProgresses, NodeExecutionKeys.executableResponses, NodeExecutionKeys.interruptHistories,
-      NodeExecutionKeys.retryIds, NodeExecutionKeys.oldRetry, NodeExecutionKeys.failureInfo, NodeExecutionKeys.endTs);
+  private static final Set<String> GRAPH_FIELDS =
+      ImmutableSet.of(NodeExecutionKeys.mode, NodeExecutionKeys.progressData, NodeExecutionKeys.unitProgresses,
+          NodeExecutionKeys.executableResponses, NodeExecutionKeys.interruptHistories, NodeExecutionKeys.retryIds,
+          NodeExecutionKeys.oldRetry, NodeExecutionKeys.failureInfo, NodeExecutionKeys.endTs);
   @Inject private MongoTemplate mongoTemplate;
   @Inject private OrchestrationEventEmitter eventEmitter;
   @Inject private PlanExecutionMetadataService planExecutionMetadataService;
@@ -335,14 +336,21 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
         }
         return nodeExecution1;
       });
+      if (savedNodeExecution != null) {
+        emitEvent(savedNodeExecution, OrchestrationEventType.NODE_EXECUTION_STATUS_UPDATE);
+      }
       nodeExecutionStartSubject.fireInform(
           NodeExecutionStartObserver::onNodeStart, NodeStartInfo.builder().nodeExecution(savedNodeExecution).build());
       return savedNodeExecution;
     } else {
-      return transactionHelper.performTransaction(() -> {
+      NodeExecution savedNodeExecution = transactionHelper.performTransaction(() -> {
         orchestrationLogPublisher.onNodeStart(NodeStartInfo.builder().nodeExecution(nodeExecution).build());
         return mongoTemplate.save(nodeExecution);
       });
+      if (savedNodeExecution != null) {
+        emitEvent(savedNodeExecution, OrchestrationEventType.NODE_EXECUTION_STATUS_UPDATE);
+      }
+      return savedNodeExecution;
     }
   }
 
@@ -400,7 +408,9 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
       if (updated == null) {
         log.warn("Cannot update execution status for the node {} with {}", nodeExecutionId, status);
       } else {
-        emitEvent(updated, OrchestrationEventType.NODE_EXECUTION_STATUS_UPDATE);
+        if (updated.getStepType().getStepCategory() == StepCategory.STAGE || StatusUtils.isFinalStatus(status)) {
+          emitEvent(updated, OrchestrationEventType.NODE_EXECUTION_STATUS_UPDATE);
+        }
         if (orchestrationLogConfiguration.isReduceOrchestrationLog()) {
           orchestrationLogPublisher.onNodeStatusUpdate(NodeUpdateInfo.builder().nodeExecution(updated).build());
         }
@@ -587,7 +597,8 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
     children.forEach(child -> extractChildList(parentChildrenMap, child.getUuid(), finalList));
   }
 
-  private void emitEvent(NodeExecution nodeExecution, OrchestrationEventType orchestrationEventType) {
+  @VisibleForTesting
+  void emitEvent(NodeExecution nodeExecution, OrchestrationEventType orchestrationEventType) {
     TriggerPayload triggerPayload = TriggerPayload.newBuilder().build();
     if (nodeExecution != null && nodeExecution.getAmbiance() != null) {
       PlanExecutionMetadata metadata =
