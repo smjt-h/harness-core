@@ -324,28 +324,31 @@ public class ExecutionHelper {
       ExecutionMetadata executionMetadata, PlanExecutionMetadata planExecutionMetadata, boolean isRetry,
       List<String> identifierOfSkipStages, String previousExecutionId) {
     long startTs = System.currentTimeMillis();
-    PlanCreationBlobResponse resp;
-    try {
-      resp = planCreatorMergeService.createPlan(
-          accountId, orgIdentifier, projectIdentifier, executionMetadata, planExecutionMetadata);
-    } catch (IOException e) {
-      log.error(format("Invalid yaml in node [%s]", YamlUtils.getErrorNodePartialFQN(e)), e);
-      throw new InvalidYamlException(format("Invalid yaml in node [%s]", YamlUtils.getErrorNodePartialFQN(e)), e);
-    }
-    Plan plan = PlanExecutionUtils.extractPlan(resp);
-    ImmutableMap<String, String> abstractions = ImmutableMap.<String, String>builder()
-                                                    .put(SetupAbstractionKeys.accountId, accountId)
-                                                    .put(SetupAbstractionKeys.orgIdentifier, orgIdentifier)
-                                                    .put(SetupAbstractionKeys.projectIdentifier, projectIdentifier)
-                                                    .build();
-    long endTs = System.currentTimeMillis();
-    log.info("Time taken to complete plan: {}", endTs - startTs);
+    try (AutoLogContext ignore =
+             PlanCreatorUtils.autoLogContext(executionMetadata, accountId, orgIdentifier, projectIdentifier)) {
+      PlanCreationBlobResponse resp;
+      try {
+        resp = planCreatorMergeService.createPlan(
+            accountId, orgIdentifier, projectIdentifier, executionMetadata, planExecutionMetadata);
+      } catch (IOException e) {
+        log.error(format("Invalid yaml in node [%s]", YamlUtils.getErrorNodePartialFQN(e)), e);
+        throw new InvalidYamlException(format("Invalid yaml in node [%s]", YamlUtils.getErrorNodePartialFQN(e)), e);
+      }
+      Plan plan = PlanExecutionUtils.extractPlan(resp);
+      ImmutableMap<String, String> abstractions = ImmutableMap.<String, String>builder()
+                                                      .put(SetupAbstractionKeys.accountId, accountId)
+                                                      .put(SetupAbstractionKeys.orgIdentifier, orgIdentifier)
+                                                      .put(SetupAbstractionKeys.projectIdentifier, projectIdentifier)
+                                                      .build();
+      long endTs = System.currentTimeMillis();
+      log.info("Time taken to complete plan: {}", endTs - startTs);
 
-    if (isRetry) {
-      Plan newPlan = retryExecutionHelper.transformPlan(plan, identifierOfSkipStages, previousExecutionId);
-      return orchestrationService.startExecution(newPlan, abstractions, executionMetadata, planExecutionMetadata);
+      if (isRetry) {
+        Plan newPlan = retryExecutionHelper.transformPlan(plan, identifierOfSkipStages, previousExecutionId);
+        return orchestrationService.startExecution(newPlan, abstractions, executionMetadata, planExecutionMetadata);
+      }
+      return orchestrationService.startExecution(plan, abstractions, executionMetadata, planExecutionMetadata);
     }
-    return orchestrationService.startExecution(plan, abstractions, executionMetadata, planExecutionMetadata);
   }
 
   public PlanExecution startExecutionV2(String accountId, String orgIdentifier, String projectIdentifier,
