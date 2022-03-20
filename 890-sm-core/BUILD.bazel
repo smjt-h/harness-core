@@ -55,6 +55,7 @@ java_library(
         "@maven//:com_microsoft_azure_azure_client_runtime",
         "@maven//:com_microsoft_azure_azure_keyvault",
         "@maven//:com_microsoft_azure_azure_mgmt_keyvault",
+        "@maven//:com_microsoft_azure_azure_keyvault_cryptography",
         "@maven//:com_microsoft_azure_azure_mgmt_resources",
         "@maven//:com_microsoft_azure_azure_keyvault_extensions",
         "@maven//:com_microsoft_rest_client_runtime",
