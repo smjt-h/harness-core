@@ -25,9 +25,9 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import io.harness.NGCommonEntityConstants;
 import io.harness.NGResourceFilterConstants;
 import io.harness.accesscontrol.AccountIdentifier;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.Resource;
-import io.harness.accesscontrol.clients.ResourceScope;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.enforcement.client.annotation.FeatureRestrictionCheck;
@@ -196,6 +196,23 @@ public class UserResource {
                       .projectIdentifier(projectIdentifier)
                       .build();
     return ResponseDTO.newResponse(ngUserService.isUserAtScope(userId, scope));
+  }
+
+  @GET
+  @Hidden
+  @Path("admin")
+  @ApiOperation(value = "Check if user is account admin", nickname = "checkIfAccountAdmin", hidden = true)
+  @InternalApi
+  public ResponseDTO<Boolean> isUserAdmin(
+      @Parameter(
+          description =
+              "This is the User Identifier. The membership details of the user corresponding to this identifier will be checked.",
+          required = true) @NotNull @QueryParam(NGCommonEntityConstants.USER_ID) String userId,
+      @Parameter(
+          description =
+              "This is the Account Identifier. The membership details within the scope of this Account will be checked.",
+          required = true) @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier) {
+    return ResponseDTO.newResponse(ngUserService.isAccountAdmin(userId, accountIdentifier));
   }
 
   @GET

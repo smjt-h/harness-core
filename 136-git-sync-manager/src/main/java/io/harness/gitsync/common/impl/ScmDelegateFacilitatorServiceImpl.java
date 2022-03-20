@@ -389,7 +389,7 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
   public CreateFileResponse createFile(InfoForGitPush infoForPush) {
     GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(),
         infoForPush.getFilePath(), infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch(),
-        SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()));
+        SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()), infoForPush.getCommitId());
     final List<EncryptedDataDetail> encryptionDetails = getEncryptedDataDetails(infoForPush.getAccountId(),
         infoForPush.getOrgIdentifier(), infoForPush.getProjectIdentifier(), infoForPush.getScmConnector());
     ScmPushTaskParams scmPushTaskParams = ScmPushTaskParams.builder()
@@ -417,7 +417,7 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
   public UpdateFileResponse updateFile(InfoForGitPush infoForPush) {
     GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(),
         infoForPush.getFilePath(), infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch(),
-        SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()));
+        SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()), infoForPush.getCommitId());
     gitFileDetails.oldFileSha(infoForPush.getOldFileSha());
     final List<EncryptedDataDetail> encryptionDetails = getEncryptedDataDetails(infoForPush.getAccountId(),
         infoForPush.getOrgIdentifier(), infoForPush.getProjectIdentifier(), infoForPush.getScmConnector());
@@ -446,7 +446,7 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
   public DeleteFileResponse deleteFile(InfoForGitPush infoForPush) {
     GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(),
         infoForPush.getFilePath(), infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch(),
-        SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()));
+        SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()), infoForPush.getCommitId());
     gitFileDetails.oldFileSha(infoForPush.getOldFileSha());
     final List<EncryptedDataDetail> encryptionDetails = getEncryptedDataDetails(infoForPush.getAccountId(),
         infoForPush.getOrgIdentifier(), infoForPush.getProjectIdentifier(), infoForPush.getScmConnector());
@@ -626,14 +626,14 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
     try {
       delegateResponseData = delegateGrpcClientWrapper.executeSyncTask(delegateTaskRequest);
     } catch (DelegateServiceDriverException ex) {
-      throw new HintException(
-          String.format(HintException.DELEGATE_NOT_AVAILABLE, DocumentLinksConstants.DELEGATE_INSTALLATION_LINK),
+      throw new HintException(String.format(HintException.DELEGATE_NOT_AVAILABLE_FOR_GIT_SYNC,
+                                  DocumentLinksConstants.DELEGATE_INSTALLATION_LINK),
           new DelegateNotAvailableException(ex.getCause().getMessage(), ex, WingsException.USER));
     }
 
     if (delegateResponseData instanceof ErrorNotifyResponseData) {
-      throw new HintException(
-          String.format(HintException.DELEGATE_NOT_AVAILABLE, DocumentLinksConstants.DELEGATE_INSTALLATION_LINK),
+      throw new HintException(String.format(HintException.DELEGATE_NOT_AVAILABLE_FOR_GIT_SYNC,
+                                  DocumentLinksConstants.DELEGATE_INSTALLATION_LINK),
           new DelegateNotAvailableException("Delegates are not available", WingsException.USER));
     }
     return delegateResponseData;

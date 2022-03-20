@@ -1133,7 +1133,29 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
     // Update Workflow Phase steps
     workflowServiceTemplateHelper.updateLinkedWorkflowPhases(
         orchestrationWorkflow.getWorkflowPhases(), existingOrchestrationWorkflow.getWorkflowPhases(), fromYaml);
-    return updateWorkflow(workflow, workflow.getOrchestrationWorkflow(), false);
+    boolean envChanged = false;
+    if (workflow.getEnvId() != null) {
+      if (existingWorkflow.getEnvId() == null || !existingWorkflow.getEnvId().equals(workflow.getEnvId())) {
+        envChanged = true;
+      }
+    }
+    return updateWorkflow(workflow, workflow.getOrchestrationWorkflow(), envChanged, false);
+  }
+
+  @Override
+  public Workflow updateWorkflow(
+      Workflow workflow, OrchestrationWorkflow orchestrationWorkflow, boolean envChanged, boolean migration) {
+    if (!workflow.checkServiceTemplatized() && !workflow.checkInfraDefinitionTemplatized()) {
+      workflowServiceHelper.validateServiceAndInfraDefinition(
+          workflow.getAppId(), workflow.getServiceId(), workflow.getInfraDefinitionId());
+    }
+
+    if (!migration) {
+      Workflow savedWorkflow = readWorkflow(workflow.getAppId(), workflow.getUuid());
+      validateWorkflowNameForDuplicates(workflow);
+      validateWorkflowVariables(savedWorkflow, orchestrationWorkflow);
+    }
+    return updateWorkflow(workflow, orchestrationWorkflow, true, false, envChanged, false, migration);
   }
 
   @Override
@@ -2593,6 +2615,7 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
     if (isEmpty(applicationManifests)) {
       return null;
     }
+
     List<ApplicationManifestSummary> applicationManifestSummaryList = new ArrayList<>();
     for (ApplicationManifest applicationManifest : applicationManifests) {
       if (applicationManifest == null || applicationManifest.getHelmChartConfig() == null) {
@@ -2606,9 +2629,22 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
                 .filter(chart -> serviceId.equals(chart.getServiceId()))
                 .findFirst()
           : Optional.empty();
+
+      final String defaultAppManifestName;
+      if (helmChartOptional.isPresent()) {
+        defaultAppManifestName =
+            applicationManifests.stream()
+                .filter(appManifest -> appManifest.getUuid().equals(helmChartOptional.get().getApplicationManifestId()))
+                .map(ApplicationManifest::getName)
+                .findFirst()
+                .orElse("");
+        helmChartOptional.get().setAppManifestName(defaultAppManifestName);
+      }
+
       applicationManifestSummaryList.add(
           ApplicationManifestSummary.builder()
               .appManifestId(applicationManifest.getUuid())
+              .appManifestName(applicationManifest.getName())
               .settingId(applicationManifest.getHelmChartConfig().getConnectorId())
               .defaultManifest(helmChartOptional.map(ManifestSummary::prepareSummaryFromHelmChart).orElse(null))
               .lastCollectedManifest(ManifestSummary.prepareSummaryFromHelmChart(lastCollectedHelmChart))
@@ -2663,7 +2699,7 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
       Optional<HelmChart> requiredHelmChart, String serviceId, String appId) {
     if (requiredHelmChart.isPresent()) {
       Map<String, List<HelmChart>> presentHelmCharts =
-          helmChartService.listHelmChartsForService(appId, serviceId, null, new PageRequest<>());
+          helmChartService.listHelmChartsForService(appId, serviceId, null, new PageRequest<>(), true);
       return presentHelmCharts.values()
           .stream()
           .flatMap(Collection::stream)

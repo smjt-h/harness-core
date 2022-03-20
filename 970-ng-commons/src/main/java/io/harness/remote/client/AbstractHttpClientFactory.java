@@ -42,6 +42,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.retrofit.CircuitBreakerCallAdapter;
+import io.serializer.HObjectMapper;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -123,7 +124,7 @@ public abstract class AbstractHttpClientFactory {
   }
 
   protected ObjectMapper getObjectMapper() {
-    ObjectMapper objMapper = new ObjectMapper();
+    ObjectMapper objMapper = HObjectMapper.get();
     objMapper.setSubtypeResolver(new JsonSubtypeResolver(objMapper.getSubtypeResolver()));
     objMapper.setConfig(objMapper.getSerializationConfig().withView(JsonViews.Public.class));
     objMapper.disable(FAIL_ON_UNKNOWN_PROPERTIES);

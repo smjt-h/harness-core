@@ -88,6 +88,8 @@ import io.harness.health.HealthMonitor;
 import io.harness.health.HealthService;
 import io.harness.insights.DelegateInsightsSummaryJob;
 import io.harness.iterator.DelegateTaskExpiryCheckIterator;
+import io.harness.iterator.DelegateTaskRebroadcastIterator;
+import io.harness.iterator.FailDelegateTaskIterator;
 import io.harness.lock.AcquiredLock;
 import io.harness.lock.DistributedLockImplementation;
 import io.harness.lock.PersistentLocker;
@@ -292,6 +294,7 @@ import software.wings.yaml.gitSync.GitChangeSetRunnable;
 import software.wings.yaml.gitSync.GitSyncEntitiesExpiryHandler;
 
 import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.Annotated;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
@@ -429,6 +432,7 @@ public class WingsApplication extends Application<MainConfiguration> {
   }
 
   public static void configureObjectMapper(final ObjectMapper mapper) {
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     mapper.addMixIn(AssetsConfiguration.class, AssetsConfigurationMixin.class);
     final AnnotationAwareJsonSubtypeResolver subtypeResolver =
         AnnotationAwareJsonSubtypeResolver.newInstance(mapper.getSubtypeResolver());
@@ -1266,7 +1270,6 @@ public class WingsApplication extends Application<MainConfiguration> {
     // delegate task broadcasting schedule job
     injector.getInstance(Key.get(ScheduledExecutorService.class, Names.named("delegateTaskNotifier")))
         .scheduleWithFixedDelay(injector.getInstance(DelegateQueueTask.class), random.nextInt(5), 5L, TimeUnit.SECONDS);
-
     delegateExecutor.scheduleWithFixedDelay(new Schedulable("Failed while monitoring task progress updates",
                                                 injector.getInstance(ProgressUpdateService.class)),
         0L, 5L, TimeUnit.SECONDS);
@@ -1420,6 +1423,10 @@ public class WingsApplication extends Application<MainConfiguration> {
             iteratorsConfig.getPerpetualTaskRebalanceIteratorConfig().getThreadPoolSize());
     injector.getInstance(DelegateTaskExpiryCheckIterator.class)
         .registerIterators(iteratorsConfig.getDelegateTaskExpiryCheckIteratorConfig().getThreadPoolSize());
+    injector.getInstance(DelegateTaskRebroadcastIterator.class)
+        .registerIterators(iteratorsConfig.getDelegateTaskRebroadcastIteratorConfig().getThreadPoolSize());
+    injector.getInstance(FailDelegateTaskIterator.class)
+        .registerIterators(iteratorsConfig.getFailDelegateTaskIteratorConfig().getThreadPoolSize());
     injector.getInstance(DelegateTelemetryPublisher.class).registerIterators();
   }
 

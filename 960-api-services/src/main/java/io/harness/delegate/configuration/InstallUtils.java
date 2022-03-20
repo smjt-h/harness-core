@@ -62,7 +62,7 @@ public class InstallUtils {
   private static final String helmBaseDir = "./client-tools/helm/";
 
   private static final String chartMuseumVersionOld = "v0.8.2";
-  private static final String chartMuseumVersionNew = "v0.13.0"; // updated version from v0.8.2 to v0.13.0
+  private static final String chartMuseumVersionNew = "v0.12.0"; // updated version from v0.8.2 to v0.12.0
   // to enable IRSA for chartmuseum
   private static final List<String> chartMuseumVersions = Arrays.asList(chartMuseumVersionOld, chartMuseumVersionNew);
   private static final Map<String, String> chartMuseumPaths = new HashMap<>();
@@ -114,7 +114,7 @@ public class InstallUtils {
 
   private static final String scmBaseDir = "./client-tools/scm/";
   private static final String scmBinary = "scm";
-  private static final String defaultScmVersion = "3ac4cefa";
+  private static final String defaultScmVersion = "04ad961e";
 
   private static final String KUBECTL_CDN_PATH = "public/shared/tools/kubectl/release/%s/bin/%s/amd64/kubectl";
   private static final String CHART_MUSEUM_CDN_PATH =
@@ -878,7 +878,7 @@ public class InstallUtils {
       String downloadUrl = getScmDownloadUrl(configuration);
       log.info("Download Url is {}", downloadUrl);
 
-      String script = "curl $MANAGER_PROXY_CURL -LO " + downloadUrl + "\n"
+      String script = "curl $MANAGER_PROXY_CURL -kLO " + downloadUrl + "\n"
           + "chmod +x ./scm";
 
       ProcessExecutor processExecutor = new ProcessExecutor()

@@ -14,6 +14,10 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.artifactory.ArtifactoryNgService;
+import io.harness.artifactory.ArtifactoryNgServiceImpl;
+import io.harness.artifactory.service.ArtifactoryRegistryService;
+import io.harness.artifactory.service.ArtifactoryRegistryServiceImpl;
 import io.harness.artifacts.docker.client.DockerRestClientFactory;
 import io.harness.artifacts.docker.client.DockerRestClientFactoryImpl;
 import io.harness.artifacts.docker.service.DockerRegistryService;
@@ -131,11 +135,17 @@ import io.harness.delegate.task.artifactory.ArtifactoryDelegateTask;
 import io.harness.delegate.task.artifactory.ArtifactoryValidationHandler;
 import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
 import io.harness.delegate.task.artifacts.DelegateArtifactTaskHandler;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactTaskHandler;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactTaskNG;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactTaskNG;
 import io.harness.delegate.task.artifacts.ecr.EcrArtifactTaskNG;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactTaskNG;
+import io.harness.delegate.task.artifacts.nexus.NexusArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.nexus.NexusArtifactTaskHandler;
+import io.harness.delegate.task.artifacts.nexus.NexusArtifactTaskNG;
 import io.harness.delegate.task.aws.AwsCodeCommitApiDelegateTask;
 import io.harness.delegate.task.aws.AwsCodeCommitDelegateTask;
 import io.harness.delegate.task.aws.AwsDelegateTask;
@@ -179,6 +189,7 @@ import io.harness.delegate.task.k8s.K8sTaskNG;
 import io.harness.delegate.task.k8s.K8sTaskType;
 import io.harness.delegate.task.k8s.KubernetesTestConnectionDelegateTask;
 import io.harness.delegate.task.k8s.KubernetesValidationHandler;
+import io.harness.delegate.task.k8s.exception.KubernetesApiClientRuntimeExceptionHandler;
 import io.harness.delegate.task.k8s.exception.KubernetesApiExceptionHandler;
 import io.harness.delegate.task.k8s.exception.KubernetesCliRuntimeExceptionHandler;
 import io.harness.delegate.task.manifests.CustomManifestFetchTask;
@@ -252,6 +263,8 @@ import io.harness.kustomize.KustomizeClient;
 import io.harness.kustomize.KustomizeClientImpl;
 import io.harness.manifest.CustomManifestService;
 import io.harness.manifest.CustomManifestServiceImpl;
+import io.harness.nexus.service.NexusRegistryService;
+import io.harness.nexus.service.NexusRegistryServiceImpl;
 import io.harness.openshift.OpenShiftClient;
 import io.harness.openshift.OpenShiftClientImpl;
 import io.harness.pcf.CfCliClient;
@@ -261,6 +274,7 @@ import io.harness.pcf.CfSdkClient;
 import io.harness.pcf.cfcli.client.CfCliClientImpl;
 import io.harness.pcf.cfsdk.CfSdkClientImpl;
 import io.harness.perpetualtask.internal.AssignmentTask;
+import io.harness.perpetualtask.manifest.ArtifactoryHelmRepositoryService;
 import io.harness.perpetualtask.manifest.HelmRepositoryService;
 import io.harness.perpetualtask.manifest.ManifestRepositoryService;
 import io.harness.perpetualtask.polling.manifest.HelmChartCollectionService;
@@ -404,6 +418,7 @@ import software.wings.delegatetasks.cvng.K8InfoDataService;
 import software.wings.delegatetasks.helm.HelmCollectChartTask;
 import software.wings.delegatetasks.helm.HelmCommandTask;
 import software.wings.delegatetasks.helm.HelmValuesFetchTask;
+import software.wings.delegatetasks.helm.ManifestRepoServiceType;
 import software.wings.delegatetasks.jira.JiraTask;
 import software.wings.delegatetasks.jira.ShellScriptApprovalTask;
 import software.wings.delegatetasks.k8s.K8sTask;
@@ -789,7 +804,8 @@ public class DelegateModule extends AbstractModule {
   @Singleton
   @Named("taskExecutor")
   public ExecutorService taskExecutor() {
-    return ThreadPool.create(10, 400, 1, TimeUnit.SECONDS,
+    final int maxPoolSize = configuration.isDynamicHandlingOfRequestEnabled() ? Integer.MAX_VALUE : 400;
+    return ThreadPool.create(10, maxPoolSize, 1, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("task-exec-%d").setPriority(Thread.MIN_PRIORITY).build());
   }
 
@@ -1098,7 +1114,12 @@ public class DelegateModule extends AbstractModule {
     bind(AzureWebClient.class).to(AzureWebClientImpl.class);
     bind(NGGitService.class).to(NGGitServiceImpl.class);
     bind(GcpClient.class).to(GcpClientImpl.class);
-    bind(ManifestRepositoryService.class).to(HelmRepositoryService.class);
+    bind(ManifestRepositoryService.class)
+        .annotatedWith(Names.named(ManifestRepoServiceType.HELM_COMMAND_SERVICE))
+        .to(HelmRepositoryService.class);
+    bind(ManifestRepositoryService.class)
+        .annotatedWith(Names.named(ManifestRepoServiceType.ARTIFACTORY_HELM_SERVICE))
+        .to(ArtifactoryHelmRepositoryService.class);
     bind(AwsClient.class).to(AwsClientImpl.class);
     bind(CVNGDataCollectionDelegateService.class).to(CVNGDataCollectionDelegateServiceImpl.class);
     bind(AzureManagementClient.class).to(AzureManagementClientImpl.class);
@@ -1109,6 +1130,7 @@ public class DelegateModule extends AbstractModule {
     bind(ScmServiceClient.class).to(ScmServiceClientImpl.class);
     bind(ManifestCollectionService.class).to(HelmChartCollectionService.class);
     bind(AzureKubernetesClient.class).to(AzureKubernetesClientImpl.class);
+    bind(ArtifactoryNgService.class).to(ArtifactoryNgServiceImpl.class);
 
     // NG Delegate
     MapBinder<String, K8sRequestHandler> k8sTaskTypeToRequestHandler =
@@ -1135,6 +1157,8 @@ public class DelegateModule extends AbstractModule {
     // HelmNG Task Handlers
 
     bind(DockerRegistryService.class).to(DockerRegistryServiceImpl.class);
+    bind(NexusRegistryService.class).to(NexusRegistryServiceImpl.class);
+    bind(ArtifactoryRegistryService.class).to(ArtifactoryRegistryServiceImpl.class);
     bind(HttpService.class).to(HttpServiceImpl.class);
     bind(GithubService.class).to(GithubServiceImpl.class);
     bind(GitlabService.class).to(GitlabServiceImpl.class);
@@ -1147,6 +1171,20 @@ public class DelegateModule extends AbstractModule {
                 new TypeLiteral<Class<? extends DelegateArtifactTaskHandler>>() {});
     artifactServiceMapBinder.addBinding(DockerArtifactDelegateRequest.class)
         .toInstance(DockerArtifactTaskHandler.class);
+
+    MapBinder<Class<? extends ArtifactSourceDelegateRequest>, Class<? extends DelegateArtifactTaskHandler>>
+        nexusArtifactServiceMapBinder =
+            MapBinder.newMapBinder(binder(), new TypeLiteral<Class<? extends ArtifactSourceDelegateRequest>>() {},
+                new TypeLiteral<Class<? extends DelegateArtifactTaskHandler>>() {});
+    nexusArtifactServiceMapBinder.addBinding(NexusArtifactDelegateRequest.class)
+        .toInstance(NexusArtifactTaskHandler.class);
+
+    MapBinder<Class<? extends ArtifactSourceDelegateRequest>, Class<? extends DelegateArtifactTaskHandler>>
+        artifactoryArtifactServiceMapBinder =
+            MapBinder.newMapBinder(binder(), new TypeLiteral<Class<? extends ArtifactSourceDelegateRequest>>() {},
+                new TypeLiteral<Class<? extends DelegateArtifactTaskHandler>>() {});
+    artifactoryArtifactServiceMapBinder.addBinding(ArtifactoryArtifactDelegateRequest.class)
+        .toInstance(ArtifactoryArtifactTaskHandler.class);
 
     MapBinder<GcpTaskType, TaskHandler> gcpTaskTypeToTaskHandlerMap =
         MapBinder.newMapBinder(binder(), GcpTaskType.class, TaskHandler.class);
@@ -1470,6 +1508,8 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.DOCKER_ARTIFACT_TASK_NG).toInstance(DockerArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.GCR_ARTIFACT_TASK_NG).toInstance(GcrArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.ECR_ARTIFACT_TASK_NG).toInstance(EcrArtifactTaskNG.class);
+    mapBinder.addBinding(TaskType.NEXUS_ARTIFACT_TASK_NG).toInstance(NexusArtifactTaskNG.class);
+    mapBinder.addBinding(TaskType.ARTIFACTORY_ARTIFACT_TASK_NG).toInstance(ArtifactoryArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.AWS_ROUTE53_TASK).toInstance(AwsRoute53Task.class);
     mapBinder.addBinding(TaskType.SHELL_SCRIPT_APPROVAL).toInstance(ShellScriptApprovalTask.class);
     mapBinder.addBinding(TaskType.CUSTOM_GET_BUILDS).toInstance(ServiceImplDelegateTask.class);
@@ -1696,6 +1736,8 @@ public class DelegateModule extends AbstractModule {
         exception -> exceptionHandlerMapBinder.addBinding(exception).to(HelmClientRuntimeExceptionHandler.class));
     KubernetesApiExceptionHandler.exceptions().forEach(
         exception -> exceptionHandlerMapBinder.addBinding(exception).to(KubernetesApiExceptionHandler.class));
+    KubernetesApiClientRuntimeExceptionHandler.exceptions().forEach(exception
+        -> exceptionHandlerMapBinder.addBinding(exception).to(KubernetesApiClientRuntimeExceptionHandler.class));
     TerraformRuntimeExceptionHandler.exceptions().forEach(
         exception -> exceptionHandlerMapBinder.addBinding(exception).to(TerraformRuntimeExceptionHandler.class));
     KubernetesCliRuntimeExceptionHandler.exceptions().forEach(

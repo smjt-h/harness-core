@@ -118,7 +118,7 @@ go_repository(
 
 go_rules_dependencies()
 
-go_register_toolchains(version = "1.17.5")
+go_register_toolchains(version = "1.17.7")
 
 gazelle_dependencies()
 
@@ -1008,8 +1008,8 @@ go_repository(
 go_repository(
     name = "com_github_drone_go_scm",
     importpath = "github.com/drone/go-scm",
-    sum = "h1:JB/Rln0fBH1y2ENYj4Rr8T+CLfaFOa32KCb7brx/sHY=",
-    version = "v1.19.0",
+    sum = "h1:BQn5DpjS33LenuXwMufodhNAeY9+VxiMltq87J+nU+k=",
+    version = "v1.19.1",
 )
 
 go_repository(
@@ -4549,6 +4549,7 @@ plain_artifacts = [
     "de.danielbechler:java-object-diff:0.94",
     "de.javakaffee:kryo-serializers:0.41",
     "de.jkeylockmanager:jkeylockmanager:2.1.0",
+    "de.skuzzle:semantic-version:2.1.0",
     "dk.brics.automaton:automaton:1.11-8",
     "dnsjava:dnsjava:2.1.8",
     "es.moki.ratelimitj:ratelimitj-core:0.6.0",
