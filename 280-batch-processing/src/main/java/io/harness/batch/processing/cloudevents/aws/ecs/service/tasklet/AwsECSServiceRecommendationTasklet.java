@@ -16,7 +16,9 @@ import io.harness.batch.processing.ccm.CCMJobConstants;
 import io.harness.batch.processing.cloudevents.aws.ecs.service.CEClusterDao;
 import io.harness.batch.processing.cloudevents.aws.ecs.service.util.ClusterIdAndServiceArn;
 import io.harness.batch.processing.cloudevents.aws.ecs.service.util.UtilizationDataWithTime;
+import io.harness.batch.processing.dao.intfc.ECSServiceDao;
 import io.harness.ccm.commons.beans.JobConstants;
+import io.harness.ccm.commons.beans.Resource;
 import io.harness.ccm.commons.dao.recommendation.ECSRecommendationDAO;
 import io.harness.ccm.commons.entities.ecs.recommendation.ECSPartialRecommendationHistogram;
 import io.harness.ccm.commons.entities.ecs.recommendation.ECSServiceRecommendation;
@@ -36,6 +38,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.harness.batch.processing.config.k8s.recommendation.estimators.ResourceAmountUtils.convertToReadableForm;
 import static io.harness.batch.processing.config.k8s.recommendation.estimators.ResourceAmountUtils.makeResourceMap;
@@ -49,6 +52,7 @@ import static software.wings.graphql.datafetcher.ce.recommendation.entity.Resour
 @Singleton
 public class AwsECSServiceRecommendationTasklet implements Tasklet {
   @Autowired private CEClusterDao ceClusterDao;
+  @Autowired private ECSServiceDao ecsServiceDao;
   @Autowired private UtilizationDataServiceImpl utilizationDataService;
   @Autowired private ECSRecommendationDAO ecsRecommendationDAO;
   @Autowired private BillingDataServiceImpl billingDataService;
@@ -72,17 +76,24 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
       return null;
     }
     List<String> clusterIds = new ArrayList<>(ceClusters.keySet());
+    log.info("Fetched {} clusters for account: {}", clusterIds.size(), accountId);
 
     for (List<String> ceClustersPartition: Lists.partition(clusterIds, BATCH_SIZE)) {
       // Get utilization data for all clusters in this batch for a day
+      log.info("Fetching utilization data for account: {} cluster ids: {}", accountId, ceClustersPartition);
       Map<ClusterIdAndServiceArn, List<UtilizationDataWithTime>> utilMap =
           utilizationDataService.getUtilizationDataForECSClusters(accountId, ceClustersPartition,
               startTime.toString(), endTime.toString());
+      log.info("Utilization data size: {} for account: {}", utilMap.size(), accountId);
+      Map<String, Resource> serviceArnToResourceMapping = ecsServiceDao.fetchServicesResource(
+          utilMap.keySet().stream().map(ClusterIdAndServiceArn::getServiceArn).collect(Collectors.toList()));
+      log.info("Fetched service resource for {} for account: {}", serviceArnToResourceMapping.size(), accountId);
 
       for (ClusterIdAndServiceArn clusterIdAndServiceArn : utilMap.keySet()) {
         // Get service resource details cpuUnits and memoryMb
         int cpuUnits = 2048;
         int memoryMb = 7764;
+        Resource resource = serviceArnToResourceMapping.get(clusterIdAndServiceArn.getServiceArn());
         List<UtilizationDataWithTime> utilData = utilMap.get(clusterIdAndServiceArn);
         String clusterId = clusterIdAndServiceArn.getClusterId();
         String clusterName = ceClusters.get(clusterId);
@@ -105,18 +116,20 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
             .windowEnd(utilData.isEmpty() ? null : utilData.get(utilData.size()-1).getEndTime())
             .version(1)
             .build();
+        log.info("Partial Histogram: {}", partialRecommendationHistogram);
         ecsRecommendationDAO.savePartialRecommendation(partialRecommendationHistogram);
 
         // 4. Get Partial recommendations for last 6 days
         List<ECSPartialRecommendationHistogram> partialHistograms =
             ecsRecommendationDAO.fetchPartialRecommendationHistograms(accountId, clusterId, clusterName, serviceName,
                 serviceArn, startTime.minus(Duration.ofDays(RECOMMENDATION_FOR_DAYS + 1)), startTime.minusSeconds(1));
+        log.info("Old partial recommendations size: {}", partialHistograms.size());
         // add startTime's histogram to the list
         partialHistograms.add(partialRecommendationHistogram);
 
         // 5. Create ECSServiceRecommendation
         ECSServiceRecommendation recommendation =
-            ecsRecommendationDAO.fetchServiceRecommendation(accountId, clusterId, clusterName, serviceName, serviceArn);
+            getNewRecommendation(accountId, clusterId, clusterName, serviceName, serviceArn);
         Histogram cpuHistogram = newCpuHistogramV2();
         Histogram memoryHistogram = newMemoryHistogramV2();
         Instant firstSampleStart = Instant.now();
@@ -174,11 +187,27 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
           log.debug("Unable to get lastDayCost for serviceArn: {}", serviceArn);
         }
 
+        log.info("Saving ECS Recommendation: {}", recommendation);
+
         ecsRecommendationDAO.saveRecommendation(recommendation);
       }
     }
+    log.info("Job Ended for account: {}, startTime: {}, endTime: {}", accountId, startTime, endTime);
 
     return null;
+  }
+
+  ECSServiceRecommendation getNewRecommendation(String accountId, String clusterId, String clusterName,
+      String serviceName, String serviceArn) {
+    return ECSServiceRecommendation.builder()
+               .accountId(accountId)
+               .clusterId(clusterId)
+               .clusterName(clusterName)
+               .serviceName(serviceName)
+               .serviceArn(serviceArn)
+               .cpuHistogram(newCpuHistogramV2().saveToCheckpoint())
+               .memoryHistogram(newMemoryHistogramV2().saveToCheckpoint())
+               .build();
   }
 
   BigDecimal estimateMonthlySavings(Map<String, String> current, Map<String, String> recommendation, Cost lastDayCost) {

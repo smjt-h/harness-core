@@ -42,6 +42,10 @@ public final class ECSService implements PersistentEntity, UuidAware, CreatedAtA
                  .field(ECSServiceKeys.clusterId)
                  .field(ECSServiceKeys.serviceArn)
                  .build())
+        .add(CompoundMongoIndex.builder()
+                 .name("serviceArn")
+                 .field(ECSServiceKeys.serviceArn)
+                 .build())
         .build();
   }
   @Id String uuid;
