@@ -175,6 +175,7 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
 
         Cost lastDayCost = billingDataService.getECSServiceLastAvailableDayCost(accountId, clusterId, serviceName,
             startTime.minus(Duration.ofDays(RECOMMENDATION_FOR_DAYS + 1)));
+        log.info("Last Day Cost for account: {}, cost: {}", accountId, lastDayCost);
         if (lastDayCost != null) {
           recommendation.setLastDayCost(lastDayCost);
           recommendation.setLastDayCostAvailable(true);
