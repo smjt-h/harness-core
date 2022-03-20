@@ -164,7 +164,6 @@ public class ExecutionHelper {
       TriggerFlowPlanDetails triggerFlowPlanDetails) {
     long start = System.currentTimeMillis();
     final String executionId = generateUuid();
-
     try (AutoLogContext ignore =
              PlanCreatorUtils.autoLogContext(pipelineEntity.getAccountId(), pipelineEntity.getOrgIdentifier(),
                  pipelineEntity.getProjectIdentifier(), pipelineEntity.getIdentifier(), executionId)) {
