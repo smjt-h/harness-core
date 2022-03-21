@@ -14,7 +14,11 @@ import static io.harness.rule.OwnerRule.VLAD;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
 
 import io.harness.CategoryTest;
 import io.harness.accesscontrol.NGAccessDeniedException;
@@ -25,13 +29,11 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidRequestException;
-import io.harness.exception.WingsException;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.validator.dto.HostValidationDTO;
 import io.harness.ng.validator.service.api.HostValidationService;
 import io.harness.rule.Owner;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.junit.Test;
