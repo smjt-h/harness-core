@@ -10,8 +10,8 @@ package io.harness.skip.skipper;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.EphemeralOrchestrationGraph;
 import io.harness.beans.GraphVertex;
+import io.harness.beans.OrchestrationGraph;
 import io.harness.beans.internal.EdgeListInternal;
 import io.harness.beans.internal.OrchestrationAdjacencyListInternal;
 
@@ -20,7 +20,7 @@ import java.util.Map;
 
 @OwnedBy(CDC)
 public abstract class VertexSkipper {
-  public void remapRelations(EphemeralOrchestrationGraph orchestrationGraph, GraphVertex skippedVertex) {
+  public void remapRelations(OrchestrationGraph orchestrationGraph, GraphVertex skippedVertex) {
     OrchestrationAdjacencyListInternal adjacencyList = orchestrationGraph.getAdjacencyList();
     EdgeListInternal skippedVertexEdgeList = adjacencyList.getAdjacencyMap().get(skippedVertex.getUuid());
 
@@ -44,7 +44,7 @@ public abstract class VertexSkipper {
     orchestrationAdjacencyList.getAdjacencyMap().remove(skippedVertexId);
   }
 
-  public abstract void skip(EphemeralOrchestrationGraph orchestrationGraph, GraphVertex skippedVertex);
+  public abstract void skip(OrchestrationGraph orchestrationGraph, GraphVertex skippedVertex);
 
   private void remapRelations(
       OrchestrationAdjacencyListInternal orchestrationAdjacencyList, String skippedVertexId, String precedingId) {

@@ -15,8 +15,8 @@ import static io.harness.rule.OwnerRule.ALEXEI;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.OrchestrationVisualizationTestBase;
-import io.harness.beans.EphemeralOrchestrationGraph;
 import io.harness.beans.GraphVertex;
+import io.harness.beans.OrchestrationGraph;
 import io.harness.beans.internal.EdgeListInternal;
 import io.harness.beans.internal.OrchestrationAdjacencyListInternal;
 import io.harness.category.element.UnitTests;
@@ -90,17 +90,17 @@ public class SkipNodeSkipperTest extends OrchestrationVisualizationTestBase {
             .edges(new ArrayList<>())
             .build());
 
-    EphemeralOrchestrationGraph orchestrationGraph = EphemeralOrchestrationGraph.builder()
-                                                         .startTs(System.currentTimeMillis())
-                                                         .endTs(System.currentTimeMillis())
-                                                         .status(Status.SUCCEEDED)
-                                                         .rootNodeIds(Collections.singletonList("someId"))
-                                                         .planExecutionId(PLAN_EXECUTION_ID)
-                                                         .adjacencyList(OrchestrationAdjacencyListInternal.builder()
-                                                                            .graphVertexMap(graphVertexMap)
-                                                                            .adjacencyMap(adjacencyList)
-                                                                            .build())
-                                                         .build();
+    OrchestrationGraph orchestrationGraph = OrchestrationGraph.builder()
+                                                .startTs(System.currentTimeMillis())
+                                                .endTs(System.currentTimeMillis())
+                                                .status(Status.SUCCEEDED)
+                                                .rootNodeIds(Collections.singletonList("someId"))
+                                                .planExecutionId(PLAN_EXECUTION_ID)
+                                                .adjacencyList(OrchestrationAdjacencyListInternal.builder()
+                                                                   .graphVertexMap(graphVertexMap)
+                                                                   .adjacencyMap(adjacencyList)
+                                                                   .build())
+                                                .build();
 
     skipNodeSkipper.skip(orchestrationGraph, current);
 
@@ -195,17 +195,17 @@ public class SkipNodeSkipperTest extends OrchestrationVisualizationTestBase {
             .edges(new ArrayList<>())
             .build());
 
-    EphemeralOrchestrationGraph orchestrationGraph = EphemeralOrchestrationGraph.builder()
-                                                         .startTs(System.currentTimeMillis())
-                                                         .endTs(System.currentTimeMillis())
-                                                         .status(Status.SUCCEEDED)
-                                                         .rootNodeIds(Collections.singletonList("someId"))
-                                                         .planExecutionId(PLAN_EXECUTION_ID)
-                                                         .adjacencyList(OrchestrationAdjacencyListInternal.builder()
-                                                                            .graphVertexMap(graphVertexMap)
-                                                                            .adjacencyMap(adjacencyList)
-                                                                            .build())
-                                                         .build();
+    OrchestrationGraph orchestrationGraph = OrchestrationGraph.builder()
+                                                .startTs(System.currentTimeMillis())
+                                                .endTs(System.currentTimeMillis())
+                                                .status(Status.SUCCEEDED)
+                                                .rootNodeIds(Collections.singletonList("someId"))
+                                                .planExecutionId(PLAN_EXECUTION_ID)
+                                                .adjacencyList(OrchestrationAdjacencyListInternal.builder()
+                                                                   .graphVertexMap(graphVertexMap)
+                                                                   .adjacencyMap(adjacencyList)
+                                                                   .build())
+                                                .build();
 
     skipNodeSkipper.skip(orchestrationGraph, current);
 
@@ -289,17 +289,17 @@ public class SkipNodeSkipperTest extends OrchestrationVisualizationTestBase {
             .edges(new ArrayList<>())
             .build());
 
-    EphemeralOrchestrationGraph orchestrationGraph = EphemeralOrchestrationGraph.builder()
-                                                         .startTs(System.currentTimeMillis())
-                                                         .endTs(System.currentTimeMillis())
-                                                         .status(Status.SUCCEEDED)
-                                                         .rootNodeIds(Lists.newArrayList(current.getUuid()))
-                                                         .planExecutionId(PLAN_EXECUTION_ID)
-                                                         .adjacencyList(OrchestrationAdjacencyListInternal.builder()
-                                                                            .graphVertexMap(graphVertexMap)
-                                                                            .adjacencyMap(adjacencyList)
-                                                                            .build())
-                                                         .build();
+    OrchestrationGraph orchestrationGraph = OrchestrationGraph.builder()
+                                                .startTs(System.currentTimeMillis())
+                                                .endTs(System.currentTimeMillis())
+                                                .status(Status.SUCCEEDED)
+                                                .rootNodeIds(Lists.newArrayList(current.getUuid()))
+                                                .planExecutionId(PLAN_EXECUTION_ID)
+                                                .adjacencyList(OrchestrationAdjacencyListInternal.builder()
+                                                                   .graphVertexMap(graphVertexMap)
+                                                                   .adjacencyMap(adjacencyList)
+                                                                   .build())
+                                                .build();
 
     skipNodeSkipper.skip(orchestrationGraph, current);
 

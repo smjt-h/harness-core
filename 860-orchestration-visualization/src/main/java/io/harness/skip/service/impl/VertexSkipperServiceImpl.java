@@ -7,8 +7,8 @@
 
 package io.harness.skip.service.impl;
 
-import io.harness.beans.EphemeralOrchestrationGraph;
 import io.harness.beans.GraphVertex;
+import io.harness.beans.OrchestrationGraph;
 import io.harness.pms.contracts.steps.SkipType;
 import io.harness.skip.factory.VertexSkipperFactory;
 import io.harness.skip.service.VertexSkipperService;
@@ -23,7 +23,7 @@ public class VertexSkipperServiceImpl implements VertexSkipperService {
   @Inject VertexSkipperFactory vertexSkipperFactory;
 
   @Override
-  public void removeSkippedVertices(EphemeralOrchestrationGraph orchestrationGraph) {
+  public void removeSkippedVertices(OrchestrationGraph orchestrationGraph) {
     Map<String, GraphVertex> graphVertexMap = orchestrationGraph.getAdjacencyList().getGraphVertexMap();
 
     graphVertexMap.values()

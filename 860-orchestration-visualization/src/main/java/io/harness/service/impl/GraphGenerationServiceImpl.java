@@ -11,11 +11,9 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.EphemeralOrchestrationGraph;
 import io.harness.beans.GraphVertex;
 import io.harness.beans.OrchestrationEventLog;
 import io.harness.beans.OrchestrationGraph;
-import io.harness.beans.converter.EphemeralOrchestrationGraphConverter;
 import io.harness.cache.SpringCacheEntity;
 import io.harness.cache.SpringMongoStore;
 import io.harness.data.structure.EmptyPredicate;
@@ -211,10 +209,8 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
     } else {
       sendUpdateEventIfAny(cachedOrchestrationGraph);
     }
-    EphemeralOrchestrationGraph ephemeralOrchestrationGraph =
-        EphemeralOrchestrationGraphConverter.convertFrom(cachedOrchestrationGraph);
-    vertexSkipperService.removeSkippedVertices(ephemeralOrchestrationGraph);
-    return OrchestrationGraphDTOConverter.convertFrom(ephemeralOrchestrationGraph);
+    vertexSkipperService.removeSkippedVertices(cachedOrchestrationGraph);
+    return OrchestrationGraphDTOConverter.convertFrom(cachedOrchestrationGraph);
   }
 
   @Override
@@ -266,14 +262,15 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
         nodeExecutions.stream()
             .filter(nodeExecution -> nodeExecution.getStepType().getStepCategory() == StepCategory.STAGE)
             .collect(Collectors.toList());
+    vertexSkipperService.removeSkippedVertices(graph);
     cacheOrchestrationGraph(graph);
     pmsExecutionSummaryService.regenerateStageLayoutGraph(planExecutionId, stageNodeExecutions);
     return graph;
   }
 
   private OrchestrationGraphDTO generatePartialGraph(String startId, OrchestrationGraph orchestrationGraph) {
-    EphemeralOrchestrationGraph ephemeralOrchestrationGraph =
-        EphemeralOrchestrationGraph.builder()
+    OrchestrationGraph orchestrationGraph1 =
+        OrchestrationGraph.builder()
             .planExecutionId(orchestrationGraph.getPlanExecutionId())
             .rootNodeIds(Lists.newArrayList(startId))
             .startTs(orchestrationGraph.getStartTs())
@@ -283,9 +280,9 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
                 startId, orchestrationGraph.getAdjacencyList()))
             .build();
 
-    vertexSkipperService.removeSkippedVertices(ephemeralOrchestrationGraph);
+    vertexSkipperService.removeSkippedVertices(orchestrationGraph);
 
-    return OrchestrationGraphDTOConverter.convertFrom(ephemeralOrchestrationGraph);
+    return OrchestrationGraphDTOConverter.convertFrom(orchestrationGraph1);
   }
 
   private String obtainStartingIdFromSetupNodeId(Map<String, GraphVertex> graphVertexMap, String startingSetupNodeId) {

@@ -10,8 +10,8 @@ package io.harness.skip.skipper.impl;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.EphemeralOrchestrationGraph;
 import io.harness.beans.GraphVertex;
+import io.harness.beans.OrchestrationGraph;
 import io.harness.beans.internal.EdgeListInternal;
 import io.harness.beans.internal.OrchestrationAdjacencyListInternal;
 import io.harness.skip.skipper.VertexSkipper;
@@ -23,7 +23,7 @@ import lombok.AllArgsConstructor;
 @OwnedBy(CDC)
 public class SkipNodeSkipper extends VertexSkipper {
   @Override
-  public void skip(EphemeralOrchestrationGraph orchestrationGraph, GraphVertex skippedVertex) {
+  public void skip(OrchestrationGraph orchestrationGraph, GraphVertex skippedVertex) {
     OrchestrationAdjacencyListInternal adjacencyList = orchestrationGraph.getAdjacencyList();
     if (!adjacencyList.getGraphVertexMap().containsKey(skippedVertex.getUuid())) {
       return;
@@ -40,7 +40,7 @@ public class SkipNodeSkipper extends VertexSkipper {
     removeVertex(orchestrationGraph.getAdjacencyList(), skippedVertex.getUuid());
   }
 
-  private void promoteChildren(EphemeralOrchestrationGraph orchestrationGraph, GraphVertex skippedVertex) {
+  private void promoteChildren(OrchestrationGraph orchestrationGraph, GraphVertex skippedVertex) {
     Map<String, EdgeListInternal> adjacencyList = orchestrationGraph.getAdjacencyList().getAdjacencyMap();
 
     EdgeListInternal skippedVertexEdgeList = adjacencyList.get(skippedVertex.getUuid());

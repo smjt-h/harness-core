@@ -32,6 +32,7 @@ import io.harness.pms.contracts.plan.TriggeredBy;
 import io.harness.repositories.orchestrationEventLog.OrchestrationEventLogRepository;
 import io.harness.rule.Owner;
 import io.harness.service.GraphGenerationService;
+import io.harness.skip.service.impl.VertexSkipperServiceImpl;
 import io.harness.testlib.RealMongo;
 
 import com.google.common.collect.Lists;
@@ -43,6 +44,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 
 /**
@@ -54,6 +56,7 @@ public class OrchestrationEndEventHandlerTest extends OrchestrationVisualization
 
   @Inject PlanExecutionService planExecutionService;
   @Inject @InjectMocks GraphGenerationService graphGenerationService;
+  @Mock VertexSkipperServiceImpl vertexSkipperService;
 
   private OrchestrationEndGraphHandler orchestrationEndEventHandler;
 
@@ -63,7 +66,7 @@ public class OrchestrationEndEventHandlerTest extends OrchestrationVisualization
     OrchestrationEventLogRepository orchestrationEventLogRepository = mock(OrchestrationEventLogRepository.class);
     doNothing().when(orchestrationEventLogRepository).deleteLogsForGivenPlanExecutionId(any());
     orchestrationEndEventHandler = new OrchestrationEndGraphHandler(
-        executorService, planExecutionService, graphGenerationService, orchestrationEventLogRepository);
+        executorService, planExecutionService, graphGenerationService, vertexSkipperService);
   }
 
   private static final ExecutionMetadata metadata =

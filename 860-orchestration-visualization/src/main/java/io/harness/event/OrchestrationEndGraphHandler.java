@@ -18,8 +18,8 @@ import io.harness.logging.AutoLogContext;
 import io.harness.observer.AsyncInformObserver;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
-import io.harness.repositories.orchestrationEventLog.OrchestrationEventLogRepository;
 import io.harness.service.GraphGenerationService;
+import io.harness.skip.service.VertexSkipperService;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -34,36 +34,31 @@ public class OrchestrationEndGraphHandler implements AsyncInformObserver, Orches
   private final ExecutorService executorService;
   private final PlanExecutionService planExecutionService;
   private final GraphGenerationService graphGenerationService;
-  private final OrchestrationEventLogRepository orchestrationEventLogRepository;
+  private final VertexSkipperService vertexSkipperService;
 
   @Inject
   public OrchestrationEndGraphHandler(@Named("OrchestrationVisualizationExecutorService")
                                       ExecutorService executorService, PlanExecutionService planExecutionService,
-      GraphGenerationService graphGenerationService, OrchestrationEventLogRepository orchestrationEventLogRepository) {
+      GraphGenerationService graphGenerationService, VertexSkipperService vertexSkipperService) {
     this.executorService = executorService;
     this.planExecutionService = planExecutionService;
     this.graphGenerationService = graphGenerationService;
-    this.orchestrationEventLogRepository = orchestrationEventLogRepository;
+    this.vertexSkipperService = vertexSkipperService;
   }
 
   @Override
   public void onEnd(Ambiance ambiance) {
     try (AutoLogContext autoLogContext = AmbianceUtils.autoLogContext(ambiance)) {
-      PlanExecution planExecution = planExecutionService.get(ambiance.getPlanExecutionId());
       // One last time try to update the graph to process any unprocessed logs
-      boolean updated = graphGenerationService.updateGraphWithWaitLock(planExecution.getUuid());
+      boolean updated = graphGenerationService.updateGraphWithWaitLock(ambiance.getPlanExecutionId());
       if (!updated) {
         log.error(
             "[GRAPH_ERROR] Exception occurred while updating graph through logs. Regenerating the graph from nodeExecutions");
         graphGenerationService.buildOrchestrationGraph(ambiance.getPlanExecutionId());
       }
-      // We are not deleting logs pro-actively if exception occurred, they will be helpful in debugging.
-      orchestrationEventLogRepository.deleteLogsForGivenPlanExecutionId(ambiance.getPlanExecutionId());
-
-      // Todo: Check if this is required
       OrchestrationGraph orchestrationGraph =
           graphGenerationService.getCachedOrchestrationGraph(ambiance.getPlanExecutionId());
-      orchestrationGraph = orchestrationGraph.withStatus(planExecution.getStatus()).withEndTs(planExecution.getEndTs());
+      vertexSkipperService.removeSkippedVertices(orchestrationGraph);
       graphGenerationService.cacheOrchestrationGraph(orchestrationGraph);
     } catch (Exception e) {
       log.error("[GRAPH_ERROR] Cannot update Orchestration graph for ORCHESTRATION_END", e);
