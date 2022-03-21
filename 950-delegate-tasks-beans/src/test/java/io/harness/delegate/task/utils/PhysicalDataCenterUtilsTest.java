@@ -8,6 +8,7 @@
 package io.harness.delegate.task.utils;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.rule.OwnerRule.IVAN;
 import static io.harness.rule.OwnerRule.VLAD;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,5 +45,18 @@ public class PhysicalDataCenterUtilsTest {
   public void shouldExtractPortFromHostNotANumber() {
     Optional<Integer> result = PhysicalDataCenterUtils.extractPortFromHost("local:host");
     assertThat(result.isPresent()).isFalse();
+  }
+
+  @Test
+  @Owner(developers = IVAN)
+  @Category(UnitTests.class)
+  public void testExtractHostnameFromHost() {
+    Optional<String> hostname = PhysicalDataCenterUtils.extractHostnameFromHost("localhost:22");
+    assertThat(hostname.isPresent()).isTrue();
+    assertThat(hostname.get()).isEqualTo("localhost");
+
+    hostname = PhysicalDataCenterUtils.extractHostnameFromHost("127.0.0.1:22");
+    assertThat(hostname.isPresent()).isTrue();
+    assertThat(hostname.get()).isEqualTo("127.0.0.1");
   }
 }

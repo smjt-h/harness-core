@@ -116,9 +116,9 @@ public class InfrastructureMapper {
     }
 
     if (!notEmptyOrExpression(infrastructure.getHosts()) && !hasValueOrExpression(infrastructure.getConnectorRef())) {
-      throw new InvalidArgumentsException(Pair.of("sshKeyRef", "cannot be empty"),
+      throw new InvalidArgumentsException(Pair.of("hosts", "cannot be empty"),
           Pair.of("connectorRef", "cannot be empty"),
-          new IllegalArgumentException("sshKeyRef and connectorRef are not defined"));
+          new IllegalArgumentException("hosts and connectorRef are not defined"));
     }
   }
 

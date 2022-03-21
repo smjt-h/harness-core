@@ -4,14 +4,14 @@ import static io.harness.NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE;
 import static io.harness.NGCommonEntityConstants.ORG_PARAM_MESSAGE;
 import static io.harness.NGCommonEntityConstants.PROJECT_PARAM_MESSAGE;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.ng.accesscontrol.PlatformPermissions.VIEW_USERGROUP_PERMISSION;
-import static io.harness.ng.accesscontrol.PlatformResourceTypes.USERGROUP;
+import static io.harness.secrets.SecretPermissions.SECRET_ACCESS_PERMISSION;
+import static io.harness.secrets.SecretPermissions.SECRET_RESOURCE_TYPE;
 
 import io.harness.NGCommonEntityConstants;
 import io.harness.accesscontrol.acl.api.Resource;
 import io.harness.accesscontrol.acl.api.ResourceScope;
-import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ng.core.api.impl.SecretPermissionValidator;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
@@ -68,7 +68,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class HostValidationResource {
   private final HostValidationService hostValidationService;
-  private final AccessControlClient accessControlClient;
+  private final SecretPermissionValidator secretPermissionValidator;
 
   @POST
   @Consumes({"application/json"})
@@ -89,8 +89,9 @@ public class HostValidationResource {
       @Parameter(description = "Secret Identifier") @QueryParam(
           NGCommonEntityConstants.IDENTIFIER_KEY) @NotNull String secretIdentifier,
       @RequestBody(required = true, description = "List of SSH hosts to validate") @NotNull List<String> hosts) {
-    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
-        Resource.of(USERGROUP, null), VIEW_USERGROUP_PERMISSION);
+    secretPermissionValidator.checkForAccessOrThrow(
+        ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier), Resource.of(SECRET_RESOURCE_TYPE, null),
+        SECRET_ACCESS_PERMISSION, null);
 
     return ResponseDTO.newResponse(hostValidationService.validateSSHHosts(
         hosts, accountIdentifier, orgIdentifier, projectIdentifier, secretIdentifier));
