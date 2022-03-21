@@ -10,6 +10,7 @@ package io.harness.batch.processing.cloudevents.aws.ecs.service.tasklet;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.inject.Singleton;
+import io.harness.batch.processing.billing.service.UtilizationData;
 import io.harness.batch.processing.billing.timeseries.service.impl.BillingDataServiceImpl;
 import io.harness.batch.processing.billing.timeseries.service.impl.UtilizationDataServiceImpl;
 import io.harness.batch.processing.ccm.CCMJobConstants;
@@ -81,10 +82,21 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
     for (List<String> ceClustersPartition: Lists.partition(clusterIds, BATCH_SIZE)) {
       // Get utilization data for all clusters in this batch for a day
       log.info("Fetching utilization data for account: {} cluster ids: {}", accountId, ceClustersPartition);
-      Map<ClusterIdAndServiceArn, List<UtilizationDataWithTime>> utilMap =
-          utilizationDataService.getUtilizationDataForECSClusters(accountId, ceClustersPartition,
-              startTime.toString(), endTime.toString());
+      Map<ClusterIdAndServiceArn, List<UtilizationDataWithTime>> utilMap = new HashMap<>();
+      try {
+        utilMap =
+            utilizationDataService.getUtilizationDataForECSClusters(accountId, ceClustersPartition,
+                startTime.toString(), endTime.toString());
+      } catch (Exception e) {
+        log.info("accountId: {} Timescale DB ERROR", accountId);
+      }
       log.info("Utilization data size: {} for account: {}", utilMap.size(), accountId);
+
+      for(String clusterId: ceClustersPartition) {
+        utilMap.put(new ClusterIdAndServiceArn(clusterId, "dummyServiceArn"), Collections.singletonList(UtilizationDataWithTime.builder().startTime(startTime).endTime(endTime).utilizationData(UtilizationData.builder().avgCpuUtilization(0.1).avgCpuUtilizationValue(0.1).avgMemoryUtilization(0.1).avgMemoryUtilizationValue(0.1).maxCpuUtilization(0.1).maxMemoryUtilization(0.1).maxCpuUtilizationValue(0.1).maxMemoryUtilizationValue(0.1).build()).build()));
+      }
+      log.info("Utilization data size: {} for account: {}", utilMap.size(), accountId);
+
       Map<String, Resource> serviceArnToResourceMapping = ecsServiceDao.fetchServicesResource(
           utilMap.keySet().stream().map(ClusterIdAndServiceArn::getServiceArn).collect(Collectors.toList()));
       log.info("Fetched service resource for {} for account: {}", serviceArnToResourceMapping.size(), accountId);

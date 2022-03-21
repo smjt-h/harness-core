@@ -150,7 +150,7 @@ public class UtilizationDataServiceImpl {
               Instant utilStartTime = resultSet.getTimestamp("STARTTIME").toInstant();
               Instant utilEndTime = resultSet.getTimestamp("ENDTIME").toInstant();
               try {
-                ClusterIdAndServiceArn clusterIdAndServiceArn = new ClusterIdAndServiceArn(serviceId, clusterId);
+                ClusterIdAndServiceArn clusterIdAndServiceArn = new ClusterIdAndServiceArn(clusterId, serviceId);
                 if (!utilizationDataMap.containsKey(clusterIdAndServiceArn))
                   utilizationDataMap.put(clusterIdAndServiceArn, new ArrayList<>());
                 utilizationDataMap.get(clusterIdAndServiceArn)

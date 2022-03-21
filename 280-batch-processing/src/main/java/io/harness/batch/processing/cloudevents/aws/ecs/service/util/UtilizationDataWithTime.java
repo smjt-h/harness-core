@@ -17,7 +17,6 @@ import java.time.Instant;
 @Builder
 public class UtilizationDataWithTime {
   private UtilizationData utilizationData;
-  private String serviceId;
   private Instant startTime;
   private Instant endTime;
 }
