@@ -10,6 +10,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	statuspb "github.com/harness/harness-core/910-delegate-task-grpc-service/src/main/proto/io/harness/task/service"
@@ -56,15 +59,30 @@ func (e *stepExecutor) Run(ctx context.Context, step *pb.UnitStep) error {
 	start := time.Now()
 	e.log.Infow("Step info", "step", step.String(), "step_id", step.GetId())
 
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGTERM)
+	go func() {
+		fmt.Println("waiting for signal ... ")
+		sig := <-ch
+		fmt.Printf("Received signal: %s. Canceling step execution for: %s", sig, step.GetId())
+		cancel()
+	}()
+
 	stepOutput, artifact, err := e.execute(ctx, step)
+	fmt.Println("execute step done ... ")
+	fmt.Println("error is: ", err)
 	// Stops the addon container if step executed successfully.
 	// If step fails, then it can be retried on the same container.
 	// Hence, not stopping failed step containers.
 	if err == nil {
-		stopAddon(ctx, step.GetId(), step.GetContainerPort(), e.log)
+		stopAddon(context.Background(), step.GetId(), step.GetContainerPort(), e.log)
 	}
 
-	statusErr := e.updateStepStatus(ctx, step, stepOutput, artifact, err, time.Since(start))
+	fmt.Println("sending step status ... ")
+	statusErr := e.updateStepStatus(context.Background(), step, stepOutput, artifact, err, time.Since(start))
+	fmt.Println("completed sending step status")
 	if statusErr != nil {
 		return statusErr
 	}
