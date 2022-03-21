@@ -138,7 +138,7 @@ public class ArtifactoryArtifactTaskHelper {
     ArtifactoryConfigRequest artifactoryConfigRequest = artifactoryRequestMapper.toArtifactoryRequest(
         artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
 
-    String filePath = Paths.get(artifactoryGenericArtifactDelegateRequest.getArtifactDirectory(), "*.zip").toString();
+    String filePath = Paths.get(artifactoryGenericArtifactDelegateRequest.getArtifactDirectory(), "*").toString();
 
     List<BuildDetails> buildDetails = artifactoryNgService.getBuildDetails(
         artifactoryConfigRequest, artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, 100);
