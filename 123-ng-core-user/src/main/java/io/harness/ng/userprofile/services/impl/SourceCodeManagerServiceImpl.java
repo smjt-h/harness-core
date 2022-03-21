@@ -12,10 +12,14 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 import static java.lang.String.format;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.connector.entities.embedded.githubconnector.GithubHttpAuthentication;
+import io.harness.connector.entities.embedded.githubconnector.GithubUsernameToken;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ng.core.api.NGSecretServiceV2;
 import io.harness.ng.userprofile.commons.SCMType;
 import io.harness.ng.userprofile.commons.SourceCodeManagerDTO;
+import io.harness.ng.userprofile.entities.GithubSCM;
 import io.harness.ng.userprofile.entities.SourceCodeManager;
 import io.harness.ng.userprofile.entities.SourceCodeManager.SourceCodeManagerMapper;
 import io.harness.ng.userprofile.services.api.SourceCodeManagerService;
@@ -37,6 +41,7 @@ import org.springframework.dao.DuplicateKeyException;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SourceCodeManagerServiceImpl implements SourceCodeManagerService {
+  @Inject private NGSecretServiceV2 ngSecretServiceV2;
   @Inject SourceCodeManagerRepository sourceCodeManagerRepository;
   @Inject private Map<SCMType, SourceCodeManagerMapper> scmMapBinder;
 
@@ -106,12 +111,24 @@ public class SourceCodeManagerServiceImpl implements SourceCodeManagerService {
 
   @Override
   public boolean delete(String name, String accountIdentifier) {
-    return getUserIdentifier()
-        .filter(userIdentifier
-            -> sourceCodeManagerRepository.deleteByUserIdentifierAndNameAndAccountIdentifier(
-                   userIdentifier, name, accountIdentifier)
-                > 0)
-        .isPresent();
+    List<SourceCodeManager> scmList = sourceCodeManagerRepository.findByUserIdentifierAndAccountIdentifier(
+        getUserIdentifier().get(), accountIdentifier);
+    if (!scmList.isEmpty()) {
+      if ((((GithubHttpAuthentication) ((GithubSCM) (scmList.get(0))).getAuthenticationDetails()).getAuth()
+                  instanceof GithubUsernameToken)) {
+        String secretId = ((GithubUsernameToken) ((GithubHttpAuthentication) ((GithubSCM) (scmList.get(0)))
+                                                      .getAuthenticationDetails())
+                               .getAuth())
+                              .getTokenRef()
+                              .split("\\.")[1];
+        ngSecretServiceV2.delete(accountIdentifier, null, null, secretId);
+      }
+      sourceCodeManagerRepository.deleteByUserIdentifierAndNameAndAccountIdentifier(
+          getUserIdentifier().get(), name, accountIdentifier);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private Optional<String> getUserIdentifier() {
