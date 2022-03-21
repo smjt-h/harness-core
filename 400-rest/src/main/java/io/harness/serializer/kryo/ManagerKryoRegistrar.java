@@ -196,7 +196,6 @@ import software.wings.beans.DatadogYaml;
 import software.wings.beans.DelegateTaskBroadcast;
 import software.wings.beans.DirectKubernetesInfrastructureMapping;
 import software.wings.beans.DockerConfig;
-import software.wings.beans.DynaTraceConfig;
 import software.wings.beans.EcrConfig;
 import software.wings.beans.EcsInfrastructureMapping;
 import software.wings.beans.ElasticLoadBalancerConfig;
@@ -227,7 +226,6 @@ import software.wings.beans.InstanceUnitType;
 import software.wings.beans.JiraConfig;
 import software.wings.beans.KubernetesClusterConfig;
 import software.wings.beans.NameValuePair;
-import software.wings.beans.NewRelicConfig;
 import software.wings.beans.PcfConfig;
 import software.wings.beans.PcfInfrastructureMapping;
 import software.wings.beans.Permission;
@@ -494,6 +492,7 @@ import software.wings.helpers.ext.k8s.response.K8sCanaryDeployResponse;
 import software.wings.helpers.ext.k8s.response.K8sDeleteResponse;
 import software.wings.helpers.ext.k8s.response.K8sInstanceSyncResponse;
 import software.wings.helpers.ext.k8s.response.K8sRollingDeployResponse;
+import software.wings.helpers.ext.k8s.response.K8sRollingDeployRollbackResponse;
 import software.wings.helpers.ext.k8s.response.K8sScaleResponse;
 import software.wings.helpers.ext.k8s.response.K8sTaskExecutionResponse;
 import software.wings.helpers.ext.k8s.response.K8sTaskResponse;
@@ -541,7 +540,6 @@ import software.wings.service.impl.PerpetualTaskCapabilityCheckResponse;
 import software.wings.service.impl.SlackMessageSenderImpl;
 import software.wings.service.impl.WorkflowExecutionUpdate;
 import software.wings.service.impl.WorkflowTree;
-import software.wings.service.impl.analysis.AnalysisComparisonStrategy;
 import software.wings.service.impl.analysis.DataCollectionCallback;
 import software.wings.service.impl.analysis.MLAnalysisType;
 import software.wings.service.impl.analysis.TimeSeries;
@@ -676,11 +674,6 @@ import software.wings.service.impl.cloudwatch.AwsNameSpace;
 import software.wings.service.impl.cloudwatch.CloudWatchDataCollectionInfo;
 import software.wings.service.impl.cloudwatch.CloudWatchMetric;
 import software.wings.service.impl.cloudwatch.CloudWatchSetupTestNodeData;
-import software.wings.service.impl.dynatrace.DynaTraceApplication;
-import software.wings.service.impl.dynatrace.DynaTraceDataCollectionInfo;
-import software.wings.service.impl.dynatrace.DynaTraceMetricDataResponse;
-import software.wings.service.impl.dynatrace.DynaTraceSetupTestNodeData;
-import software.wings.service.impl.dynatrace.DynaTraceTimeSeries;
 import software.wings.service.impl.elk.ElkDataCollectionInfo;
 import software.wings.service.impl.elk.ElkDataCollectionInfoV2;
 import software.wings.service.impl.elk.ElkLogFetchRequest;
@@ -698,10 +691,8 @@ import software.wings.service.impl.instana.InstanaTagFilter;
 import software.wings.service.impl.instana.InstanaTimeFrame;
 import software.wings.service.impl.instance.sync.response.ContainerSyncResponse;
 import software.wings.service.impl.logz.LogzDataCollectionInfo;
-import software.wings.service.impl.newrelic.NewRelicDataCollectionInfo;
 import software.wings.service.impl.newrelic.NewRelicDataCollectionInfoV2;
 import software.wings.service.impl.newrelic.NewRelicMarkerExecutionData;
-import software.wings.service.impl.newrelic.NewRelicSetupTestNodeData;
 import software.wings.service.impl.prometheus.PrometheusDataCollectionInfo;
 import software.wings.service.impl.prometheus.PrometheusMetricDataResponse;
 import software.wings.service.impl.servicenow.ServiceNowDelegateServiceImpl;
@@ -987,7 +978,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(ShellScriptParameters.class, 5186);
     kryo.register(TerraformProvisionParameters.class, 5342);
     kryo.register(DockerConfig.class, 5010);
-    kryo.register(DynaTraceConfig.class, 5237);
     kryo.register(EcrConfig.class, 5011);
     kryo.register(ElasticLoadBalancerConfig.class, 5020);
     kryo.register(ElementExecutionSummary.class, 5027);
@@ -1014,7 +1004,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(JiraConfig.class, 5581);
     kryo.register(KubernetesClusterConfig.class, 5244);
     kryo.register(NameValuePair.class, 5226);
-    kryo.register(NewRelicConfig.class, 5175);
     kryo.register(PcfConfig.class, 5296);
     kryo.register(Permission.class, 5310);
     kryo.register(PrometheusConfig.class, 5314);
@@ -1095,7 +1084,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(TriggerDeploymentNeededResponse.class, 5554);
     kryo.register(TriggerResponse.class, 5556);
     kryo.register(TwoFactorAuthenticationMechanism.class, 5358);
-    kryo.register(AnalysisComparisonStrategy.class, 5240);
     kryo.register(TimeSeries.class, 5312);
     kryo.register(APMDataCollectionInfo.class, 5320);
     kryo.register(APMMetricInfo.ResponseMapper.class, 5322);
@@ -1196,19 +1184,12 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(CloudWatchMetric.class, 5318);
     kryo.register(CloudWatchSetupTestNodeData.class, 5494);
     kryo.register(ContainerServiceParams.class, 5156);
-    kryo.register(DynaTraceDataCollectionInfo.class, 5238);
-    kryo.register(DynaTraceMetricDataResponse.DynaTraceMetricDataResult.class, 5514);
-    kryo.register(DynaTraceMetricDataResponse.class, 5513);
-    kryo.register(DynaTraceSetupTestNodeData.class, 5512);
-    kryo.register(DynaTraceTimeSeries.class, 5239);
     kryo.register(ElkDataCollectionInfo.class, 5169);
     kryo.register(ElkLogFetchRequest.class, 5376);
     kryo.register(ElkQueryType.class, 5275);
     kryo.register(LogzDataCollectionInfo.class, 5170);
 
-    kryo.register(NewRelicDataCollectionInfo.class, 5171);
     kryo.register(NewRelicMarkerExecutionData.class, 5243);
-    kryo.register(NewRelicSetupTestNodeData.class, 5529);
     kryo.register(PrometheusDataCollectionInfo.class, 5311);
     kryo.register(PrometheusMetricDataResponse.PrometheusMetric.class, 5489);
     kryo.register(PrometheusMetricDataResponse.PrometheusMetricData.class, 5487);
@@ -1546,8 +1527,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(PipelineStageExecutionAdvisor.class, 8072);
     kryo.register(ContinuePipelineResponseData.class, 8073);
 
-    kryo.register(DynaTraceApplication.class, 8074);
-
     kryo.register(PodStatus.class, 8090);
     kryo.register(PodStatus.Status.class, 8091);
     kryo.register(AzureVMSSAllPhaseRollbackData.class, 8092);
@@ -1705,5 +1684,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(RancherKubernetesInfrastructure.ClusterSelectionCriteriaEntry.class, 50008);
     kryo.register(RancherStateExecutionData.class, 50009);
     kryo.register(UserGroupEntityReference.class, 50010);
+    kryo.register(K8sRollingDeployRollbackResponse.class, 50011);
   }
 }

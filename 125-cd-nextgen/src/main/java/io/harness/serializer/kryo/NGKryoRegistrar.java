@@ -87,6 +87,7 @@ import io.harness.cdng.pipeline.beans.RollbackOptionalChildChainStepParameters;
 import io.harness.cdng.pipeline.executions.CDAccountExecutionMetadata;
 import io.harness.cdng.provision.terraform.TerraformApplyStepInfo;
 import io.harness.cdng.provision.terraform.TerraformPlanStepInfo;
+import io.harness.cdng.serverless.*;
 import io.harness.cdng.service.beans.KubernetesServiceSpec;
 import io.harness.cdng.service.beans.NativeHelmServiceSpec;
 import io.harness.cdng.service.beans.ServiceConfig;
@@ -215,5 +216,11 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(ManifestStepParameters.class, 12559);
     kryo.register(NGVariableOverrideSets.class, 12560);
     kryo.register(SshServiceSpec.class, 12561);
+
+    kryo.register(ServerlessAwsLambdaDeployStepInfo.class, 14001);
+    kryo.register(ServerlessAwsLambdaDeployStepParameters.class, 14002);
+    kryo.register(ServerlessStepPassThroughData.class, 14003);
+    kryo.register(ServerlessAwsLambdaRollbackStepInfo.class, 14004);
+    kryo.register(ServerlessAwsLambdaRollbackStepParameters.class, 14005);
   }
 }

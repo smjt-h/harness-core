@@ -19,13 +19,18 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.DecryptableEntity;
 import io.harness.beans.IdentifierRef;
+import io.harness.cdng.artifact.outcome.ArtifactOutcome;
+import io.harness.cdng.artifact.outcome.ArtifactoryGenericArtifactOutcome;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.infra.beans.ServerlessAwsLambdaInfrastructureOutcome;
 import io.harness.cdng.infra.yaml.InfrastructureKind;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.services.ConnectorService;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
+import io.harness.delegate.task.serverless.ServerlessArtifactConfig;
+import io.harness.delegate.task.serverless.ServerlessArtifactoryArtifactConfig;
 import io.harness.delegate.task.serverless.ServerlessAwsLambdaInfraConfig;
 import io.harness.delegate.task.serverless.ServerlessInfraConfig;
 import io.harness.exception.InvalidRequestException;
@@ -55,6 +60,15 @@ public class ServerlessEntityHelper {
         List<DecryptableEntity> awsDecryptableEntities = awsConnectorDTO.getDecryptableEntities();
         if (isNotEmpty(awsDecryptableEntities)) {
           return secretManagerClientService.getEncryptionDetails(ngAccess, awsDecryptableEntities.get(0));
+        } else {
+          return emptyList();
+        }
+      case ARTIFACTORY:
+        ArtifactoryConnectorDTO artifactoryConnectorDTO = (ArtifactoryConnectorDTO) connectorDTO.getConnectorConfig();
+        List<DecryptableEntity> artifactoryDecryptableEntities = artifactoryConnectorDTO.getDecryptableEntities();
+        if (isNotEmpty(artifactoryDecryptableEntities)) {
+          return secretManagerClientService.getEncryptionDetails(
+              ngAccess, artifactoryConnectorDTO.getAuth().getCredentials());
         } else {
           return emptyList();
         }
@@ -91,6 +105,27 @@ public class ServerlessEntityHelper {
       default:
         throw new UnsupportedOperationException(
             format("Unsupported Infrastructure type: [%s]", infrastructureOutcome.getKind()));
+    }
+  }
+
+  public ServerlessArtifactConfig getServerlessArtifactConfig(ArtifactOutcome artifactOutcome, NGAccess ngAccess) {
+    ConnectorInfoDTO connectorDTO;
+    if (artifactOutcome instanceof ArtifactoryGenericArtifactOutcome) {
+      ArtifactoryGenericArtifactOutcome artifactoryGenericArtifactOutcome =
+          (ArtifactoryGenericArtifactOutcome) artifactOutcome;
+      connectorDTO = getConnectorInfoDTO(artifactoryGenericArtifactOutcome.getConnectorRef(), ngAccess);
+      return ServerlessArtifactoryArtifactConfig.builder()
+          .repositoryName(artifactoryGenericArtifactOutcome.getRepositoryName())
+          .identifier(artifactoryGenericArtifactOutcome.getIdentifier())
+          .connectorDTO(connectorDTO)
+          .encryptedDataDetails(getEncryptionDataDetails(connectorDTO, ngAccess))
+          .artifactDirectory(artifactoryGenericArtifactOutcome.getArtifactDirectory())
+          .artifactPath(artifactoryGenericArtifactOutcome.getArtifactPath())
+          .repositoryFormat(artifactoryGenericArtifactOutcome.getRepositoryFormat())
+          .build();
+    } else {
+      throw new UnsupportedOperationException(
+          format("Unsupported Artifact type: [%s]", artifactOutcome.getArtifactType()));
     }
   }
 }

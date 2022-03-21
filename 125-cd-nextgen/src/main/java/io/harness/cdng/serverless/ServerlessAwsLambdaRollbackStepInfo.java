@@ -41,8 +41,9 @@ public class ServerlessAwsLambdaRollbackStepInfo
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 
   @Builder(builderMethodName = "infoBuilder")
-  public ServerlessAwsLambdaRollbackStepInfo(ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
-    super(delegateSelectors);
+  public ServerlessAwsLambdaRollbackStepInfo(
+      ParameterField<List<TaskSelectorYaml>> delegateSelectors, String serverlessAwsLambdaRollbackFnq) {
+    super(delegateSelectors, serverlessAwsLambdaRollbackFnq);
   }
 
   @Override
@@ -57,6 +58,8 @@ public class ServerlessAwsLambdaRollbackStepInfo
 
   @Override
   public SpecParameters getSpecParameters() {
-    return ServerlessAwsLambdaDeployStepParameters.infoBuilder().delegateSelectors(this.getDelegateSelectors()).build();
+    return ServerlessAwsLambdaRollbackStepParameters.infoBuilder()
+        .delegateSelectors(this.getDelegateSelectors())
+        .build();
   }
 }

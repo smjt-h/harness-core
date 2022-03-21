@@ -21,7 +21,6 @@ import static org.springframework.data.domain.Sort.by;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
 
-import io.harness.OrchestrationModuleConfig;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.events.OrchestrationEventEmitter;
 import io.harness.engine.executions.plan.PlanExecutionMetadataService;
@@ -31,6 +30,7 @@ import io.harness.engine.observers.NodeStartInfo;
 import io.harness.engine.observers.NodeStatusUpdateObserver;
 import io.harness.engine.observers.NodeUpdateInfo;
 import io.harness.engine.observers.NodeUpdateObserver;
+import io.harness.event.OrchestrationLogConfiguration;
 import io.harness.event.OrchestrationLogPublisher;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
@@ -85,15 +85,16 @@ import org.springframework.data.mongodb.core.query.Update;
 @Slf4j
 @OwnedBy(PIPELINE)
 public class NodeExecutionServiceImpl implements NodeExecutionService {
-  private static final Set<String> GRAPH_FIELDS = ImmutableSet.of(NodeExecutionKeys.progressData,
-      NodeExecutionKeys.unitProgresses, NodeExecutionKeys.executableResponses, NodeExecutionKeys.interruptHistories,
-      NodeExecutionKeys.retryIds, NodeExecutionKeys.oldRetry, NodeExecutionKeys.failureInfo, NodeExecutionKeys.endTs);
+  private static final Set<String> GRAPH_FIELDS =
+      ImmutableSet.of(NodeExecutionKeys.mode, NodeExecutionKeys.progressData, NodeExecutionKeys.unitProgresses,
+          NodeExecutionKeys.executableResponses, NodeExecutionKeys.interruptHistories, NodeExecutionKeys.retryIds,
+          NodeExecutionKeys.oldRetry, NodeExecutionKeys.failureInfo, NodeExecutionKeys.endTs);
   @Inject private MongoTemplate mongoTemplate;
   @Inject private OrchestrationEventEmitter eventEmitter;
   @Inject private PlanExecutionMetadataService planExecutionMetadataService;
   @Inject private TransactionHelper transactionHelper;
   @Inject private OrchestrationLogPublisher orchestrationLogPublisher;
-  @Inject private OrchestrationModuleConfig orchestrationModuleConfig;
+  @Inject private OrchestrationLogConfiguration orchestrationLogConfiguration;
 
   @Getter private final Subject<NodeStatusUpdateObserver> stepStatusUpdateSubject = new Subject<>();
   @Getter private final Subject<NodeExecutionStartObserver> nodeExecutionStartSubject = new Subject<>();
@@ -296,7 +297,7 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
   @VisibleForTesting
   @Override
   public boolean shouldLog(Update updateOps) {
-    if (!orchestrationModuleConfig.isReduceOrchestrationLog()) {
+    if (!orchestrationLogConfiguration.isReduceOrchestrationLog()) {
       return false;
     }
     Set<String> fieldsUpdated = new HashSet<>();
@@ -330,7 +331,7 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
       eventEmitter.emitEvent(builder.build());
       NodeExecution savedNodeExecution = transactionHelper.performTransaction(() -> {
         NodeExecution nodeExecution1 = mongoTemplate.insert(nodeExecution);
-        if (orchestrationModuleConfig.isReduceOrchestrationLog()) {
+        if (orchestrationLogConfiguration.isReduceOrchestrationLog()) {
           orchestrationLogPublisher.onNodeStart(NodeStartInfo.builder().nodeExecution(nodeExecution).build());
         }
         return nodeExecution1;
@@ -401,7 +402,7 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
         log.warn("Cannot update execution status for the node {} with {}", nodeExecutionId, status);
       } else {
         emitEvent(updated, OrchestrationEventType.NODE_EXECUTION_STATUS_UPDATE);
-        if (orchestrationModuleConfig.isReduceOrchestrationLog()) {
+        if (orchestrationLogConfiguration.isReduceOrchestrationLog()) {
           orchestrationLogPublisher.onNodeStatusUpdate(NodeUpdateInfo.builder().nodeExecution(updated).build());
         }
       }

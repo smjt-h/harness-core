@@ -83,13 +83,17 @@ import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.ci.pod.ContainerParams;
 import io.harness.delegate.beans.ci.pod.ContainerResourceParams;
 import io.harness.delegate.beans.ci.pod.ContainerSecrets;
+import io.harness.delegate.beans.ci.pod.EmptyDirVolume;
 import io.harness.delegate.beans.ci.pod.EncryptedVariableWithType;
 import io.harness.delegate.beans.ci.pod.EnvVariableEnum;
 import io.harness.delegate.beans.ci.pod.HostAliasParams;
+import io.harness.delegate.beans.ci.pod.HostPathVolume;
 import io.harness.delegate.beans.ci.pod.ImageDetailsWithConnector;
 import io.harness.delegate.beans.ci.pod.PVCParams;
+import io.harness.delegate.beans.ci.pod.PVCVolume;
 import io.harness.delegate.beans.ci.pod.PodParams;
 import io.harness.delegate.beans.ci.pod.PodToleration;
+import io.harness.delegate.beans.ci.pod.PodVolume;
 import io.harness.delegate.beans.ci.pod.SSHKeyDetails;
 import io.harness.delegate.beans.ci.pod.SecretParams;
 import io.harness.delegate.beans.ci.pod.SecretVariableDTO;
@@ -125,6 +129,10 @@ import io.harness.delegate.beans.connector.awsconnector.AwsValidationParams;
 import io.harness.delegate.beans.connector.awskmsconnector.AwsKmsValidationParams;
 import io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerValidationParams;
 import io.harness.delegate.beans.connector.azureconnector.AzureContainerRegistryConnectorDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureTaskParams;
+import io.harness.delegate.beans.connector.azureconnector.AzureTaskType;
+import io.harness.delegate.beans.connector.azureconnector.AzureValidateTaskResponse;
+import io.harness.delegate.beans.connector.azureconnector.AzureValidationParams;
 import io.harness.delegate.beans.connector.azurekeyvaultconnector.AzureKeyVaultValidationParams;
 import io.harness.delegate.beans.connector.cvconnector.CVConnectorTaskParams;
 import io.harness.delegate.beans.connector.cvconnector.CVConnectorTaskResponse;
@@ -1120,6 +1128,15 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(ArtifactoryFetchBuildsResponse.class, 543478);
     kryo.register(ArtifactoryStoreDelegateConfig.class, 543479);
     kryo.register(PodToleration.class, 543480);
+
+    kryo.register(AzureTaskParams.class, 543481);
+    kryo.register(AzureTaskType.class, 543482);
+    kryo.register(AzureValidateTaskResponse.class, 543483);
+    kryo.register(AzureValidationParams.class, 543484);
+    kryo.register(PodVolume.class, 543485);
+    kryo.register(EmptyDirVolume.class, 543486);
+    kryo.register(HostPathVolume.class, 543487);
+    kryo.register(PVCVolume.class, 543488);
 
     kryo.register(ServerlessAwsLambdaServerInstanceInfo.class, 563477);
     // todo: may need to add more classes
