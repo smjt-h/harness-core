@@ -36,7 +36,7 @@ Stores histogram data for a single day
 @FieldNameConstants(innerTypeName = "ECSPartialRecommendationHistogramKeys")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @StoreIn(DbAliases.CENG)
-@Entity(value = "ECSPartialRecommendationHistogram", noClassnameStored = true)
+@Entity(value = "ecsPartialRecommendationHistogram", noClassnameStored = true)
 public final class ECSPartialRecommendationHistogram
     implements PersistentEntity, UuidAware, CreatedAtAware, UpdatedAtAware, AccountAccess {
   public static List<MongoIndex> mongoIndexes() {
