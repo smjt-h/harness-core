@@ -64,15 +64,14 @@ func (e *stepExecutor) Run(ctx context.Context, step *pb.UnitStep) error {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM)
 	go func() {
-		fmt.Println("waiting for signal ... ")
 		sig := <-ch
-		fmt.Printf("Received signal: %s. Canceling step execution for: %s", sig, step.GetId())
+		// On SIGTERM, loggers will also start getting closed so printing in both places for precaution.
+		fmt.Printf("Received signal: %s. Canceling step execution for: %s\n", sig, step.GetId())
+		e.log.Errorw(fmt.Sprintf("Received signal: %s. Canceling step execution for: %s\n", sig, step.GetId()))
 		cancel()
 	}()
 
 	stepOutput, artifact, err := e.execute(ctx, step)
-	fmt.Println("execute step done ... ")
-	fmt.Println("error is: ", err)
 	// Stops the addon container if step executed successfully.
 	// If step fails, then it can be retried on the same container.
 	// Hence, not stopping failed step containers.
@@ -80,9 +79,7 @@ func (e *stepExecutor) Run(ctx context.Context, step *pb.UnitStep) error {
 		stopAddon(context.Background(), step.GetId(), step.GetContainerPort(), e.log)
 	}
 
-	fmt.Println("sending step status ... ")
 	statusErr := e.updateStepStatus(context.Background(), step, stepOutput, artifact, err, time.Since(start))
-	fmt.Println("completed sending step status")
 	if statusErr != nil {
 		return statusErr
 	}
