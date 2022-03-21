@@ -68,7 +68,7 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
     final JobConstants jobConstants = CCMJobConstants.fromContext(chunkContext);
     String accountId = jobConstants.getAccountId();
-    Instant startTime = Instant.ofEpochMilli(jobConstants.getJobStartTime());
+    Instant startTime = Instant.ofEpochMilli(jobConstants.getJobStartTime()).minus(Duration.ofDays(1));
     Instant endTime = Instant.ofEpochMilli(jobConstants.getJobEndTime());
     log.info("Job Started for account: {}, startTime: {}, endTime: {}", accountId, startTime, endTime);
     // Get all clusters for current account
