@@ -26,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import static io.harness.persistence.HQuery.excludeValidate;
+
 @Slf4j
 @Repository
 public class ECSServiceDaoImpl implements ECSServiceDao {
@@ -67,7 +69,7 @@ public class ECSServiceDaoImpl implements ECSServiceDao {
   @Override
   public Map<String, Resource> fetchServicesResource(List<String> serviceArns) {
     Map<String, Resource> resourceMap = new HashMap<>();
-    for (ECSService ecsService : hPersistence.createQuery(ECSService.class)
+    for (ECSService ecsService : hPersistence.createQuery(ECSService.class, excludeValidate)
         .field(ECSServiceKeys.serviceArn)
         .in(serviceArns)
         .project(ECSServiceKeys.serviceArn, true)
