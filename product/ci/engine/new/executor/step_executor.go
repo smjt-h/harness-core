@@ -66,8 +66,10 @@ func (e *stepExecutor) Run(ctx context.Context, step *pb.UnitStep) error {
 	go func() {
 		sig := <-ch
 		// On SIGTERM, loggers will also start getting closed so printing in both places for precaution.
-		fmt.Printf("Received signal: %s. Canceling step execution for: %s\n", sig, step.GetId())
-		e.log.Errorw(fmt.Sprintf("Received signal: %s. Canceling step execution for: %s\n", sig, step.GetId()))
+		errStr := fmt.Sprintf("Received signal: %s. Canceling step execution for: %s\n", sig, step.GetId())
+		fmt.Printf(errStr)
+		e.log.Errorw(errStr)
+		e.updateStepStatus(context.Background(), step, nil, nil, errors.New(errStr), time.Since(start))
 		cancel()
 	}()
 
