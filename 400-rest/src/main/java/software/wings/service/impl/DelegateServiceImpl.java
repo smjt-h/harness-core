@@ -8,8 +8,7 @@
 package software.wings.service.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.DEL;
-import static io.harness.beans.FeatureName.DELEGATE_ENABLE_DYNAMIC_HANDLING_OF_REQUEST;
-import static io.harness.beans.FeatureName.USE_IMMUTABLE_DELEGATE;
+import static io.harness.beans.FeatureName.*;
 import static io.harness.configuration.DeployVariant.DEPLOY_VERSION;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -1181,7 +1180,9 @@ public class DelegateServiceImpl implements DelegateService {
       final TemplateParameters templateParameters, final boolean isNgDelegate) {
     final CdnConfig cdnConfig = mainConfiguration.getCdnConfig();
 
-    final boolean useCDN = mainConfiguration.useCdnForDelegateStorage() && cdnConfig != null;
+    final boolean useCDN =featureFlagService.isEnabled(
+        USE_CDN_FF, templateParameters.getAccountId());
+//        mainConfiguration.useCdnForDelegateStorage() && cdnConfig != null;
 
     final String delegateMetadataUrl = subdomainUrlHelper.getDelegateMetadataUrl(templateParameters.getAccountId(),
         templateParameters.getManagerHost(), mainConfiguration.getDeployMode().name());
