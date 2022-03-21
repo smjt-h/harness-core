@@ -15,6 +15,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.EntityName;
 import io.harness.data.validator.Trimmed;
+import io.harness.gitsync.persistance.GitSyncableEntity;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.DbAliases;
@@ -49,7 +50,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @TypeAlias("io.harness.ng.core.service.entity.ServiceEntity")
 @ChangeDataCapture(table = "services", dataStore = "ng-harness", fields = {}, handler = "Services")
 @StoreIn(DbAliases.NG_MANAGER)
-public class ServiceEntity implements PersistentEntity {
+public class ServiceEntity implements PersistentEntity, GitSyncableEntity {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -98,4 +99,30 @@ public class ServiceEntity implements PersistentEntity {
   @Setter @NonFinal String yamlGitConfigRef;
   @Setter @NonFinal String filePath;
   @Setter @NonFinal String rootFolder;
+  @Wither @NonFinal Boolean isEntityInvalid;
+
+  @Override
+  public String getAccountIdentifier() {
+    return accountId;
+  }
+
+  @Override
+  public String getUuid() {
+    return id;
+  }
+
+  @Override
+  public boolean isEntityInvalid() {
+    return Boolean.TRUE.equals(isEntityInvalid);
+  }
+
+  @Override
+  public void setEntityInvalid(boolean isEntityInvalid) {
+    this.isEntityInvalid = isEntityInvalid;
+  }
+
+  @Override
+  public String getInvalidYamlString() {
+    return yaml;
+  }
 }
