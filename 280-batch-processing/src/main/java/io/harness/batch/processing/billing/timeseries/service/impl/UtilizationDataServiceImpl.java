@@ -137,7 +137,7 @@ public class UtilizationDataServiceImpl {
         ResultSet resultSet = null;
         Map<ClusterIdAndServiceArn, List<UtilizationDataWithTime>> utilizationDataMap = new HashMap<>();
         int retryCount = 0;
-        log.debug("Utilization data query : {}", query);
+        log.info("Utilization data query : {}", query);
         while (retryCount < SELECT_MAX_RETRY_COUNT) {
           retryCount++;
           try (Connection connection = timeScaleDBService.getDBConnection();
@@ -170,7 +170,7 @@ public class UtilizationDataServiceImpl {
         }
         return null;
       } else {
-        throw new InvalidRequestException("Cannot process request in InstanceBillingDataTasklet");
+        throw new InvalidRequestException("Cannot process request in ECS Recommendation");
       }
     } catch (Exception e) {
       throw new InvalidRequestException("Error while fetching utilization data {}", e);
