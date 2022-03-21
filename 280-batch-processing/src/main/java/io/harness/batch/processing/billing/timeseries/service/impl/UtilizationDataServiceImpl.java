@@ -130,6 +130,7 @@ public class UtilizationDataServiceImpl {
 
   public Map<ClusterIdAndServiceArn, List<UtilizationDataWithTime>> getUtilizationDataForECSClusters(String accountId,
                                                                                                      List<String> clusterIds, String startTime, String endTime) {
+    log.info("Getting util data...");
     try {
       if (timeScaleDBService.isValid()) {
         String query = String.format(UTILIZATION_DATA_QUERY_BY_CLUSTER_IDS, accountId,
