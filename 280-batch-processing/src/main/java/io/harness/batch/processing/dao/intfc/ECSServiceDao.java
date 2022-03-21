@@ -15,5 +15,5 @@ import java.util.Map;
 
 public interface ECSServiceDao {
   void create(ECSService ecsService);
-  Map<String, Resource> fetchServicesResource(List<String> serviceArns);
+  Map<String, Resource> fetchServicesResource(String accountId, List<String> serviceArns);
 }

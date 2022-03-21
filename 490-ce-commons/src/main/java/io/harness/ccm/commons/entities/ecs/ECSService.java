@@ -43,7 +43,8 @@ public final class ECSService implements PersistentEntity, UuidAware, CreatedAtA
                  .field(ECSServiceKeys.serviceArn)
                  .build())
         .add(CompoundMongoIndex.builder()
-                 .name("serviceArn")
+                 .name("accountId_serviceArn")
+                 .field(ECSServiceKeys.accountId)
                  .field(ECSServiceKeys.serviceArn)
                  .build())
         .build();

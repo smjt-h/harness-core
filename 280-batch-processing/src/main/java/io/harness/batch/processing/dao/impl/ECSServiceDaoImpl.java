@@ -67,9 +67,11 @@ public class ECSServiceDaoImpl implements ECSServiceDao {
   }
 
   @Override
-  public Map<String, Resource> fetchServicesResource(List<String> serviceArns) {
+  public Map<String, Resource> fetchServicesResource(String accountId, List<String> serviceArns) {
     Map<String, Resource> resourceMap = new HashMap<>();
     for (ECSService ecsService : hPersistence.createQuery(ECSService.class, excludeValidate)
+        .field(ECSServiceKeys.accountId)
+        .equal(accountId)
         .field(ECSServiceKeys.serviceArn)
         .in(serviceArns)
         .project(ECSServiceKeys.serviceArn, true)

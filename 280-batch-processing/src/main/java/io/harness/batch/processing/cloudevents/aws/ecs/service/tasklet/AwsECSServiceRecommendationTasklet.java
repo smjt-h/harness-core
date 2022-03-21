@@ -97,7 +97,7 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
       }
       log.info("Utilization data size: {} for account: {}", utilMap.size(), accountId);
 
-      Map<String, Resource> serviceArnToResourceMapping = ecsServiceDao.fetchServicesResource(
+      Map<String, Resource> serviceArnToResourceMapping = ecsServiceDao.fetchServicesResource(accountId,
           utilMap.keySet().stream().map(ClusterIdAndServiceArn::getServiceArn).collect(Collectors.toList()));
       log.info("Fetched service resource for {} for account: {}", serviceArnToResourceMapping.size(), accountId);
 
