@@ -123,7 +123,8 @@ public class ClusterDataToBigQueryTasklet implements Tasklet {
     boolean avroFileWithSchemaExists = false;
     do {
       instanceBillingDataList = billingDataReader.getNext();
-      List<ClusterBillingData> clusterBillingDataList = getClusterBillingDataForBatch(instanceBillingDataList);
+      List<ClusterBillingData> clusterBillingDataList =
+          getClusterBillingDataForBatch(instanceBillingDataList, jobConstants.getAccountId());
       log.debug("clusterBillingDataList size: {}", clusterBillingDataList.size());
       writeDataToAvro(
           jobConstants.getAccountId(), clusterBillingDataList, billingDataFileName, avroFileWithSchemaExists);
@@ -142,21 +143,26 @@ public class ClusterDataToBigQueryTasklet implements Tasklet {
   }
 
   @VisibleForTesting
-  public List<ClusterBillingData> getClusterBillingDataForBatch(List<InstanceBillingData> instanceBillingDataList) {
+  public List<ClusterBillingData> getClusterBillingDataForBatch(
+      List<InstanceBillingData> instanceBillingDataList, String accountId) {
     List<ClusterBillingData> clusterBillingDataList = new ArrayList<>();
 
     Map<String, Map<String, String>> instanceIdToLabelMapping = new HashMap<>();
-    List<String> instanceIdList =
+    Map<String, List<String>> instanceIdList =
         instanceBillingDataList.stream()
             .filter(instanceBillingData
                 -> ImmutableSet
                        .of(InstanceType.ECS_TASK_FARGATE.name(), InstanceType.ECS_CONTAINER_INSTANCE.name(),
                            InstanceType.ECS_TASK_EC2.name())
                        .contains(instanceBillingData.getInstanceType()))
-            .map(InstanceBillingData::getInstanceId)
-            .collect(Collectors.toList());
+            .collect(Collectors.groupingBy(InstanceBillingData::clusterId,
+                Collectors.mapping(InstanceBillingData::instanceId, Collectors.toList())));
     if (!instanceIdList.isEmpty()) {
-      instanceIdToLabelMapping = instanceDataService.fetchLabelsForGivenInstances(instanceIdList);
+      for (Map.Entry<String, List<String>> entry : instanceIdList.entrySet()) {
+        instanceIdToLabelMapping.putAll(
+            instanceDataService.fetchLabelsForGivenInstances(accountId, entry.getKey(), entry.getValue()));
+      }
+      log.info("instanceIdToLabelMapping: {}", instanceIdToLabelMapping);
     }
 
     Map<Key, List<InstanceBillingData>> instanceBillingDataGrouped =
@@ -171,8 +177,9 @@ public class ClusterDataToBigQueryTasklet implements Tasklet {
         Map<String, String> labels = labelMap.get(
             new K8SWorkloadService.CacheKey(instanceBillingData.getAccountId(), instanceBillingData.getClusterId(),
                 instanceBillingData.getNamespace(), instanceBillingData.getWorkloadName()));
-        ClusterBillingData clusterBillingData = convertInstanceBillingDataToAVROObjects(
-            instanceBillingData, labels, instanceIdToLabelMapping.get(instanceBillingData.getInstanceId()));
+        ClusterBillingData clusterBillingData = convertInstanceBillingDataToAVROObjects(instanceBillingData, labels,
+            instanceIdToLabelMapping.get(
+                String.join(":", instanceBillingData.getClusterId(), instanceBillingData.getInstanceId())));
         clusterBillingDataList.add(clusterBillingData);
       }
     }
