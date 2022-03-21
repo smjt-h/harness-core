@@ -9,6 +9,7 @@ package io.harness.delegate.task.artifacts.response;
 
 import io.harness.delegate.beans.DelegateMetaInfo;
 import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
+import io.harness.delegate.beans.artifactory.ArtifactoryFetchBuildsResponse;
 import io.harness.eraro.ErrorCode;
 import io.harness.logging.CommandExecutionStatus;
 

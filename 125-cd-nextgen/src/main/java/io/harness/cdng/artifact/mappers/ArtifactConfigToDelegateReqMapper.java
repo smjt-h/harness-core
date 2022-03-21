@@ -120,10 +120,11 @@ public class ArtifactConfigToDelegateReqMapper {
     String artifactRepositoryUrl =
         artifactConfig.getArtifactRepositoryUrl() != null ? artifactConfig.getArtifactRepositoryUrl().getValue() : null;
 
-    return ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(artifactConfig.getRepository().getValue(),
-        artifactConfig.getArtifactPath().getValue(), artifactConfig.getRepositoryFormat().getValue(),
-        artifactRepositoryUrl, tag, tagRegex, connectorRef, artifactoryConnectorDTO, encryptedDataDetails,
-        ArtifactSourceType.ARTIFACTORY_REGISTRY);
+    return (ArtifactoryDockerArtifactDelegateRequest)
+        ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(artifactConfig.getRepository().getValue(),
+            artifactConfig.getArtifactPath().getValue(), artifactConfig.getRepositoryFormat().getValue(),
+            artifactRepositoryUrl, tag, tagRegex, connectorRef, artifactoryConnectorDTO, encryptedDataDetails,
+            ArtifactSourceType.ARTIFACTORY_REGISTRY);
   }
 
   private ArtifactoryGenericArtifactDelegateRequest getArtifactoryGenericArtifactDelegateRequest(

@@ -7,10 +7,16 @@
 
 package io.harness.delegate.task.artifacts.artifactory;
 
+import static io.harness.delegate.task.artifacts.ArtifactTaskType.GET_BUILDS;
+import static io.harness.logging.CommandExecutionStatus.SUCCESS;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifact.ArtifactMetadataKeys;
+import io.harness.artifactory.ArtifactoryConfigRequest;
+import io.harness.artifactory.ArtifactoryNgService;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.delegate.task.artifactory.ArtifactoryRequestMapper;
 import io.harness.delegate.task.artifacts.request.ArtifactTaskParameters;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskResponse;
@@ -18,10 +24,13 @@ import io.harness.eraro.ErrorCode;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 
+import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.utils.RepositoryFormat;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.nio.file.Paths;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +40,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Singleton
 public class ArtifactoryArtifactTaskHelper {
+  @Inject ArtifactoryRequestMapper artifactoryRequestMapper;
+  @Inject ArtifactoryNgService artifactoryNgService;
+
   private final ArtifactoryArtifactTaskHandler artifactoryArtifactTaskHandler;
 
   public ArtifactTaskResponse getArtifactCollectResponse(
@@ -99,9 +111,47 @@ public class ArtifactoryArtifactTaskHelper {
     return artifactTaskResponse;
   }
 
+  public ArtifactTaskResponse getGenericArtifactCollectResponse(
+      ArtifactTaskParameters artifactTaskParameters, LogCallback executionLogCallback) {
+    ArtifactTaskResponse artifactTaskResponse;
+    if (artifactTaskParameters.getArtifactTaskType().equals(GET_BUILDS)) {
+      saveLogs(executionLogCallback, "Fetching artifact details");
+      artifactTaskResponse = fetchFileBuilds(artifactTaskParameters);
+      saveLogs(executionLogCallback,
+          "Fetched " + artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().size()
+              + " artifacts");
+    } else {
+      artifactTaskResponse = ArtifactTaskResponse.builder()
+                                 .commandExecutionStatus(CommandExecutionStatus.FAILURE)
+                                 .errorMessage("There is no Artifactory artifact task type impl defined for - "
+                                     + artifactTaskParameters.getArtifactTaskType().name())
+                                 .errorCode(ErrorCode.INVALID_ARGUMENT)
+                                 .build();
+    }
+    return artifactTaskResponse;
+  }
+
+  public ArtifactTaskResponse fetchFileBuilds(ArtifactTaskParameters params) {
+    ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest =
+        (ArtifactoryGenericArtifactDelegateRequest) params.getAttributes();
+    artifactoryArtifactTaskHandler.decryptRequestDTOs(artifactoryGenericArtifactDelegateRequest);
+    ArtifactoryConfigRequest artifactoryConfigRequest = artifactoryRequestMapper.toArtifactoryRequest(
+        artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
+
+    String filePath = Paths.get(artifactoryGenericArtifactDelegateRequest.getArtifactDirectory(), "*.zip").toString();
+
+    List<BuildDetails> buildDetails = artifactoryNgService.getBuildDetails(
+        artifactoryConfigRequest, artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, 100);
+
+    return ArtifactTaskResponse.builder()
+        .artifactTaskExecutionResponse(ArtifactTaskExecutionResponse.builder().buildDetails(buildDetails).build())
+        .commandExecutionStatus(SUCCESS)
+        .build();
+  }
+
   private ArtifactTaskResponse getSuccessTaskResponse(ArtifactTaskExecutionResponse taskExecutionResponse) {
     return ArtifactTaskResponse.builder()
-        .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
+        .commandExecutionStatus(SUCCESS)
         .artifactTaskExecutionResponse(taskExecutionResponse)
         .build();
   }
@@ -112,6 +162,9 @@ public class ArtifactoryArtifactTaskHelper {
     }
   }
   public ArtifactTaskResponse getArtifactCollectResponse(ArtifactTaskParameters artifactTaskParameters) {
+    if (artifactTaskParameters.getAttributes() instanceof ArtifactoryGenericArtifactDelegateRequest) {
+      return getGenericArtifactCollectResponse(artifactTaskParameters, null);
+    }
     return getArtifactCollectResponse(artifactTaskParameters, null);
   }
 }

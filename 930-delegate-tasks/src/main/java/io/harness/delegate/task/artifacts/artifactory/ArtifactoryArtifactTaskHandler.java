@@ -101,4 +101,10 @@ public class ArtifactoryArtifactTaskHandler
           artifactoryRequest.getEncryptedDataDetails());
     }
   }
+  public void decryptRequestDTOs(ArtifactoryGenericArtifactDelegateRequest artifactoryRequest) {
+    if (artifactoryRequest.getArtifactoryConnectorDTO().getAuth() != null) {
+      secretDecryptionService.decrypt(artifactoryRequest.getArtifactoryConnectorDTO().getAuth().getCredentials(),
+          artifactoryRequest.getEncryptedDataDetails());
+    }
+  }
 }
