@@ -69,13 +69,13 @@ public class ArtifactResponseToOutcomeMapper {
       case ARTIFACTORY_REGISTRY:
         ArtifactoryRegistryArtifactConfig artifactoryRegistryArtifactConfig =
             (ArtifactoryRegistryArtifactConfig) artifactConfig;
-        if (artifactoryRegistryArtifactConfig.getRepositoryFormat().toString().equals(docker.name())) {
+        if (artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue().equals(docker.name())) {
           ArtifactoryDockerArtifactDelegateResponse artifactoryDelegateResponse =
               (ArtifactoryDockerArtifactDelegateResponse) artifactDelegateResponse;
           return getArtifactoryArtifactOutcome(
               artifactoryRegistryArtifactConfig, artifactoryDelegateResponse, useDelegateResponse);
         }
-        if (artifactoryRegistryArtifactConfig.getRepositoryFormat().toString().equals(generic.name())) {
+        if (artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue().equals(generic.name())) {
           ArtifactoryGenericArtifactDelegateResponse artifactoryGenericDelegateResponse =
               (ArtifactoryGenericArtifactDelegateResponse) artifactDelegateResponse;
           return getArtifactoryGenericArtifactOutcome(
