@@ -7,13 +7,20 @@
 
 package io.harness.cdng.creator.plan.steps.serverless;
 
+import static io.harness.cdng.visitor.YamlTypes.*;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.creator.plan.steps.CDPMSStepPlanCreatorV2;
+import io.harness.cdng.helm.HelmRollbackStepNode;
+import io.harness.cdng.helm.rollback.HelmRollbackStepParams;
 import io.harness.cdng.serverless.ServerlessAwsLambdaRollbackStepNode;
+import io.harness.cdng.serverless.ServerlessAwsLambdaRollbackStepParameters;
 import io.harness.executions.steps.StepSpecTypeConstants;
+import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
+import io.harness.pms.sdk.core.steps.io.StepParameters;
 
 import com.google.common.collect.Sets;
 import java.util.Set;
@@ -36,5 +43,16 @@ public class ServerlessAwsLambdaRollbackStepPlanCreator
       PlanCreationContext ctx, ServerlessAwsLambdaRollbackStepNode stepElement) {
     return super.createPlanForField(ctx, stepElement);
   }
-  // todo: check for function getStepParameters()
+
+  @Override
+  protected StepParameters getStepParameters(PlanCreationContext ctx, ServerlessAwsLambdaRollbackStepNode stepElement) {
+    final StepParameters stepParameters = super.getStepParameters(ctx, stepElement);
+
+    String serverlessAwsLambdaRollbackFnq = getExecutionStepFqn(ctx.getCurrentField(), SERVERLESS_AWS_LAMBDA_DEPLOY);
+    ((ServerlessAwsLambdaRollbackStepParameters) ((StepElementParameters) stepParameters).getSpec())
+        .setServerlessAwsLambdaRollbackFnq(serverlessAwsLambdaRollbackFnq);
+
+    return stepParameters;
+  }
+  // todo: check function
 }

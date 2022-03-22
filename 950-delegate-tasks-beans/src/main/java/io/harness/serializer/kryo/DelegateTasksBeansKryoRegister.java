@@ -217,6 +217,10 @@ import io.harness.delegate.beans.polling.ArtifactPollingDelegateResponse;
 import io.harness.delegate.beans.polling.ManifestPollingDelegateResponse;
 import io.harness.delegate.beans.polling.PollingDelegateResponse;
 import io.harness.delegate.beans.secrets.SSHConfigValidationTaskResponse;
+import io.harness.delegate.beans.serverless.ServerlessAwsLambdaDeployResult;
+import io.harness.delegate.beans.serverless.ServerlessAwsLambdaRollbackResult;
+import io.harness.delegate.beans.serverless.ServerlessDeployResult;
+import io.harness.delegate.beans.serverless.ServerlessRollbackResult;
 import io.harness.delegate.beans.storeconfig.ArtifactoryStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.delegate.beans.storeconfig.GcsHelmStoreDelegateConfig;
@@ -226,6 +230,7 @@ import io.harness.delegate.beans.storeconfig.S3HelmStoreDelegateConfig;
 import io.harness.delegate.command.CommandExecutionResult;
 import io.harness.delegate.exception.DelegateRetryableException;
 import io.harness.delegate.exception.HelmNGException;
+import io.harness.delegate.exception.ServerlessNGException;
 import io.harness.delegate.exception.TaskNGDataException;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
 import io.harness.delegate.task.artifacts.ArtifactTaskType;
@@ -423,6 +428,15 @@ import io.harness.delegate.task.scm.ScmPathFilterEvaluationTaskParams;
 import io.harness.delegate.task.scm.ScmPathFilterEvaluationTaskResponse;
 import io.harness.delegate.task.scm.ScmPushTaskParams;
 import io.harness.delegate.task.scm.ScmPushTaskResponseData;
+import io.harness.delegate.task.serverless.*;
+import io.harness.delegate.task.serverless.request.ServerlessCommandRequest;
+import io.harness.delegate.task.serverless.request.ServerlessDeployRequest;
+import io.harness.delegate.task.serverless.request.ServerlessGitFetchRequest;
+import io.harness.delegate.task.serverless.request.ServerlessRollbackRequest;
+import io.harness.delegate.task.serverless.response.ServerlessCommandResponse;
+import io.harness.delegate.task.serverless.response.ServerlessDeployResponse;
+import io.harness.delegate.task.serverless.response.ServerlessGitFetchResponse;
+import io.harness.delegate.task.serverless.response.ServerlessRollbackResponse;
 import io.harness.delegate.task.servicenow.ServiceNowTaskNGParameters;
 import io.harness.delegate.task.servicenow.ServiceNowTaskNGResponse;
 import io.harness.delegate.task.shell.ShellScriptApprovalTaskParameters;
@@ -482,6 +496,7 @@ import io.harness.secretmanagerclient.SSHAuthScheme;
 import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.ValueType;
 import io.harness.serializer.KryoRegistrar;
+import io.harness.serverless.model.ServerlessAwsLambdaFunction;
 
 import software.wings.beans.AwsConfig;
 import software.wings.beans.GitConfig;
@@ -1138,7 +1153,37 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(HostPathVolume.class, 543487);
     kryo.register(PVCVolume.class, 543488);
 
-    kryo.register(ServerlessAwsLambdaServerInstanceInfo.class, 563477);
-    // todo: may need to add more classes
+    kryo.register(ServerlessAwsLambdaServerInstanceInfo.class, 563500);
+    kryo.register(ServerlessGitFetchRequest.class, 563501);
+    kryo.register(ServerlessGitFetchResponse.class, 563502);
+    kryo.register(ServerlessGitFetchFileConfig.class, 563503);
+    kryo.register(ServerlessCommandRequest.class, 563504);
+    kryo.register(ServerlessCommandResponse.class, 563505);
+    kryo.register(ServerlessDeployRequest.class, 563506);
+    kryo.register(ServerlessDeployResponse.class, 563507);
+    kryo.register(ServerlessRollbackRequest.class, 563508);
+    kryo.register(ServerlessRollbackResponse.class, 563509);
+    kryo.register(ServerlessInfraConfig.class, 563510);
+    kryo.register(ServerlessAwsLambdaInfraConfig.class, 563511);
+    kryo.register(ServerlessInfraType.class, 563512);
+    kryo.register(ServerlessCommandType.class, 563513);
+    kryo.register(ServerlessManifestConfig.class, 563514);
+    kryo.register(ServerlessManifestType.class, 563515);
+    kryo.register(ServerlessAwsLambdaManifestConfig.class, 563516);
+    kryo.register(ServerlessDeployConfig.class, 563517);
+    kryo.register(ServerlessAwsLambdaDeployConfig.class, 563518);
+    kryo.register(ServerlessArtifactConfig.class, 563519);
+    kryo.register(ServerlessArtifactType.class, 563520);
+    kryo.register(ServerlessArtifactoryArtifactConfig.class, 563521);
+    kryo.register(ServerlessRollbackConfig.class, 563522);
+    kryo.register(ServerlessAwsLambdaRollbackConfig.class, 563523);
+    kryo.register(ServerlessNGException.class, 563524);
+    kryo.register(ServerlessDeployResult.class, 563525);
+    kryo.register(ServerlessAwsLambdaDeployResult.class, 563526);
+    kryo.register(ServerlessAwsLambdaFunction.class, 563527);
+    kryo.register(ServerlessRollbackResult.class, 563528);
+    kryo.register(ServerlessAwsLambdaRollbackResult.class, 563529);
+
+    // todo: may need to add more classes and confirm numbers
   }
 }
