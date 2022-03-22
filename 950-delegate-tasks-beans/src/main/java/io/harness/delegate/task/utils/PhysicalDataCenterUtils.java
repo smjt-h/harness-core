@@ -1,11 +1,11 @@
 package io.harness.delegate.task.utils;
 
-import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.DEFAULT_SSH_PORT;
-
-import static org.apache.commons.lang3.StringUtils.isBlank;
+import lombok.experimental.UtilityClass;
 
 import java.util.Optional;
-import lombok.experimental.UtilityClass;
+
+import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.DEFAULT_SSH_PORT;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @UtilityClass
 public class PhysicalDataCenterUtils {
@@ -40,6 +40,6 @@ public class PhysicalDataCenterUtils {
       return isBlank(hostParts[0]) ? Optional.empty() : Optional.of(hostParts[0]);
     }
 
-    return Optional.empty();
+    return Optional.of(host);
   }
 }

@@ -1,25 +1,19 @@
 package io.harness.ng.core.remote;
 
-import static io.harness.NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE;
-import static io.harness.NGCommonEntityConstants.ORG_PARAM_MESSAGE;
-import static io.harness.NGCommonEntityConstants.PROJECT_PARAM_MESSAGE;
-import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.secrets.SecretPermissions.SECRET_ACCESS_PERMISSION;
-import static io.harness.secrets.SecretPermissions.SECRET_RESOURCE_TYPE;
-
+import com.google.inject.Inject;
 import io.harness.NGCommonEntityConstants;
 import io.harness.accesscontrol.acl.api.Resource;
 import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ng.core.api.SecretCrudService;
 import io.harness.ng.core.api.impl.SecretPermissionValidator;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.ng.core.dto.secrets.SecretResponseWrapper;
 import io.harness.ng.validator.dto.HostValidationDTO;
 import io.harness.ng.validator.service.api.HostValidationService;
 import io.harness.security.annotations.NextGenManagerAuth;
-
-import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -30,15 +24,23 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
+import static io.harness.NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.ORG_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.PROJECT_PARAM_MESSAGE;
+import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.secrets.SecretPermissions.SECRET_ACCESS_PERMISSION;
+import static io.harness.secrets.SecretPermissions.SECRET_RESOURCE_TYPE;
 
 @OwnedBy(CDP)
 @Path("/host-validation")
@@ -69,6 +71,7 @@ import lombok.extern.slf4j.Slf4j;
 public class HostValidationResource {
   private final HostValidationService hostValidationService;
   private final SecretPermissionValidator secretPermissionValidator;
+  private final SecretCrudService ngSecretService;
 
   @POST
   @Consumes({"application/json"})
@@ -89,11 +92,15 @@ public class HostValidationResource {
       @Parameter(description = "Secret Identifier") @QueryParam(
           NGCommonEntityConstants.IDENTIFIER_KEY) @NotNull String secretIdentifier,
       @RequestBody(required = true, description = "List of SSH hosts to validate") @NotNull List<String> hosts) {
-    secretPermissionValidator.checkForAccessOrThrow(
-        ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier), Resource.of(SECRET_RESOURCE_TYPE, null),
-        SECRET_ACCESS_PERMISSION, null);
 
-    return ResponseDTO.newResponse(hostValidationService.validateSSHHosts(
+      SecretResponseWrapper secret =
+              ngSecretService.get(accountIdentifier, orgIdentifier, projectIdentifier, secretIdentifier).orElse(null);
+      secretPermissionValidator.checkForAccessOrThrow(
+        ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+            Resource.of(SECRET_RESOURCE_TYPE, secretIdentifier),
+        SECRET_ACCESS_PERMISSION, secret != null ? secret.getSecret().getOwner() : null);
+
+      return ResponseDTO.newResponse(hostValidationService.validateSSHHosts(
         hosts, accountIdentifier, orgIdentifier, projectIdentifier, secretIdentifier));
   }
 }
