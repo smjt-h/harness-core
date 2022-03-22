@@ -12,10 +12,12 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotations.dev.OwnedBy;
 
 @OwnedBy(CDP)
-public interface PhysicalDataCenterConstants {
-  int EXECUTION_TIMEOUT_IN_SECONDS = 45;
-  String DEFAULT_HOST_VALIDATION_FAILED_MSG = "Host Validation failed";
-  String TRUE_STR = "true";
-  String DEFAULT_SSH_PORT = "22";
-  int HOSTS_NUMBER_VALIDATION_LIMIT = 10;
+public final class PhysicalDataCenterConstants {
+  private PhysicalDataCenterConstants() {}
+
+  public static final int EXECUTION_TIMEOUT_IN_SECONDS = 45;
+  public static final String DEFAULT_HOST_VALIDATION_FAILED_MSG = "Host Validation failed";
+  public static final String TRUE_STR = "true";
+  public static final String DEFAULT_SSH_PORT = "22";
+  public static final int HOSTS_NUMBER_VALIDATION_LIMIT = 10;
 }
