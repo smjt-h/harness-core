@@ -580,7 +580,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       delegateId = registerDelegate(builder);
       log.info("[New] Delegate registered in {} ms", clock.millis() - start);
       DelegateStackdriverLogAppender.setDelegateId(delegateId);
-
+      startDynamicHandlingOfTasks();
       if (delegateConfiguration.isDynamicHandlingOfRequestEnabled()) {
         startDynamicHandlingOfTasks();
       }
@@ -748,20 +748,19 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private void maybeUpdateTaskRejectionStatus() {
     MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
     double currentRSS = memoryMXBean.getHeapMemoryUsage().getUsed();
-
-    OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
-    double currentCPU = osBean.getSystemCpuLoad();
-
-    if (currentRSS >= RESOURCE_USAGE_THRESHOLD * maxRSS || currentCPU >= RESOURCE_USAGE_THRESHOLD) {
+    log.info(
+        "current resource threshold. CurrentRSSMB {} ThresholdMB {}",
+        currentRSS, RESOURCE_USAGE_THRESHOLD * maxRSS);
+    if (currentRSS >= RESOURCE_USAGE_THRESHOLD * maxRSS) {
       log.warn(
-          "Reached resource threshold, temporarily reject incoming task request. CurrentCPU {} CurrentRSSMB {} ThresholdMB {}",
-          currentCPU, currentRSS, RESOURCE_USAGE_THRESHOLD * maxRSS);
+          "Reached resource threshold, temporarily reject incoming task request. CurrentRSSMB {} ThresholdMB {}",
+          currentRSS, RESOURCE_USAGE_THRESHOLD * maxRSS);
       rejectRequest.compareAndSet(false, true);
       return;
     }
 
     if (rejectRequest.compareAndSet(true, false)) {
-      log.info("Accepting incoming task request. CurrentCPU {} CurrentRSSMB {} ThresholdMB {}", currentCPU, currentRSS,
+      log.info("Accepting incoming task request. CurrentRSSMB {} ThresholdMB {}", currentRSS,
           RESOURCE_USAGE_THRESHOLD * maxRSS);
     }
   }
