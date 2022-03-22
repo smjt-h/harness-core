@@ -38,6 +38,7 @@ import software.wings.graphql.datafetcher.ce.recommendation.entity.Cost;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -186,7 +187,7 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
         recommendation.setPercentileBasedResourceRecommendation(computedPercentiles);
 
         Cost lastDayCost = billingDataService.getECSServiceLastAvailableDayCost(accountId, clusterId, serviceName,
-              startTime.minus(Duration.ofDays(RECOMMENDATION_FOR_DAYS + 1)));
+              startTime.minus(Duration.ofDays(RECOMMENDATION_FOR_DAYS + 1)).truncatedTo(ChronoUnit.DAYS));
         log.info("Last Day Cost for account: {}, cost: {}", accountId, lastDayCost);
         if (lastDayCost != null) {
           recommendation.setLastDayCost(lastDayCost);
