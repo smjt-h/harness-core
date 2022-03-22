@@ -5148,7 +5148,7 @@ maven_install(
         maven_test_artifact("de.flapdoodle.embed:de.flapdoodle.embed.process:2.0.3"),
         maven_test_artifact("io.dropwizard:dropwizard-testing:1.3.24"),
         maven_test_artifact("io.fabric8:kubernetes-server-mock:5.12.1"),
-        maven_test_artifact("io.fabric8:mockwebserver:0.1.0"),
+        maven_test_artifact("io.fabric8:mockwebserver:0.2.2"),
         maven_test_artifact("io.grpc:grpc-testing:1.33.1"),
         maven_test_artifact("junit:junit:4.12"),
         maven_test_artifact("net.javacrumbs.json-unit:json-unit-fluent:1.12.1"),
