@@ -12,6 +12,8 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaCloudFormationSchema;
+import io.harness.delegate.beans.serverless.ServerlessAwsLambdaFunction;
+import io.harness.delegate.beans.serverless.ServerlessAwsLambdaFunction.ServerlessAwsLambdaFunctionBuilder;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaManifestSchema;
 import io.harness.filesystem.FileIo;
 import io.harness.logging.CommandExecutionStatus;
@@ -19,8 +21,6 @@ import io.harness.logging.LogCallback;
 import io.harness.serializer.YamlUtils;
 import io.harness.serverless.*;
 import io.harness.serverless.model.ServerlessAwsLambdaConfig;
-import io.harness.serverless.model.ServerlessAwsLambdaFunction;
-import io.harness.serverless.model.ServerlessAwsLambdaFunction.ServerlessAwsLambdaFunctionBuilder;
 import io.harness.serverless.model.ServerlessDelegateTaskParams;
 
 import com.google.common.collect.Iterables;

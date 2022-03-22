@@ -496,7 +496,6 @@ import io.harness.secretmanagerclient.SSHAuthScheme;
 import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.ValueType;
 import io.harness.serializer.KryoRegistrar;
-import io.harness.serverless.model.ServerlessAwsLambdaFunction;
 
 import software.wings.beans.AwsConfig;
 import software.wings.beans.GitConfig;
@@ -1180,7 +1179,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(ServerlessNGException.class, 563524);
     kryo.register(ServerlessDeployResult.class, 563525);
     kryo.register(ServerlessAwsLambdaDeployResult.class, 563526);
-    kryo.register(ServerlessAwsLambdaFunction.class, 563527);
+    //    kryo.register(ServerlessAwsLambdaFunction.class, 563527);
     kryo.register(ServerlessRollbackResult.class, 563528);
     kryo.register(ServerlessAwsLambdaRollbackResult.class, 563529);
 

@@ -16,6 +16,7 @@ import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaDeployResult;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaDeployResult.ServerlessAwsLambdaDeployResultBuilder;
+import io.harness.delegate.beans.serverless.ServerlessAwsLambdaFunction;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaManifestSchema;
 import io.harness.delegate.task.serverless.*;
 import io.harness.delegate.task.serverless.request.ServerlessCommandRequest;
@@ -29,7 +30,6 @@ import io.harness.serverless.ServerlessCliResponse;
 import io.harness.serverless.ServerlessClient;
 import io.harness.serverless.ServerlessCommandUnitConstants;
 import io.harness.serverless.model.ServerlessAwsLambdaConfig;
-import io.harness.serverless.model.ServerlessAwsLambdaFunction;
 import io.harness.serverless.model.ServerlessDelegateTaskParams;
 
 import com.google.inject.Inject;
