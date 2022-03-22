@@ -15,6 +15,7 @@ import io.harness.steps.environment.EnvironmentOutcome;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
 import org.springframework.data.annotation.TypeAlias;
@@ -30,7 +31,7 @@ public class PdcInfrastructureOutcome implements InfrastructureOutcome {
   List<String> hosts;
   String connectorRef;
   List<String> hostFilters;
-  List<AttributeFilter> attributeFilters;
+  Map<String, String> attributeFilters;
 
   EnvironmentOutcome environment;
   String infrastructureKey;

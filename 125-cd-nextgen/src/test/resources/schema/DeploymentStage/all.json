@@ -452,18 +452,6 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
-    "AttributeFilter": {
-      "type": "object",
-      "properties": {
-        "attribute": {
-          "type": "string"
-        },
-        "value": {
-          "type": "string"
-        }
-      },
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
     "BarrierStepInfo": {
       "allOf": [
         {
@@ -3764,9 +3752,9 @@
             "attributeFilters": {
               "oneOf": [
                 {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/AttributeFilter"
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
                   }
                 },
                 {

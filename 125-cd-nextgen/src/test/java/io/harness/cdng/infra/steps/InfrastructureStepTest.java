@@ -30,7 +30,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.common.beans.SetupAbstractionKeys;
 import io.harness.cdng.environment.yaml.EnvironmentYaml;
-import io.harness.cdng.infra.beans.AttributeFilter;
 import io.harness.cdng.infra.beans.InfraMapping;
 import io.harness.cdng.infra.beans.K8sDirectInfraMapping;
 import io.harness.cdng.infra.beans.K8sGcpInfraMapping;
@@ -75,6 +74,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.Rule;
 import org.junit.Test;
@@ -245,9 +245,9 @@ public class InfrastructureStepTest extends CategoryTest {
   public void testCreatePdcInfraMappingWithConnectorAndAttributeFilters() {
     String sshKeyRef = "some-key-ref";
     String connectorRef = "some-connector-ref";
-    List<AttributeFilter> attributeFilters =
-        Arrays.asList(AttributeFilter.builder().attribute("some-attribute").value("some-value").build(),
-            AttributeFilter.builder().attribute("another-attribute").value("another-value").build());
+    Map<String, String> attributeFilters = new HashMap<>();
+    attributeFilters.put("some-attribute", "some-value");
+    attributeFilters.put("another-attribute", "another-value");
 
     Infrastructure infrastructureSpec = PdcInfrastructure.builder()
                                             .sshKeyRef(ParameterField.createValueField(sshKeyRef))

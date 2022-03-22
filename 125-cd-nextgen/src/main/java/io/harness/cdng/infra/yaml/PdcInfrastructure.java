@@ -8,12 +8,12 @@
 package io.harness.cdng.infra.yaml;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.beans.SwaggerConstants.STRING_MAP_CLASSPATH;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
-import io.harness.cdng.infra.beans.AttributeFilter;
 import io.harness.cdng.infra.beans.InfraMapping;
 import io.harness.cdng.infra.beans.PdcInfraMapping;
 import io.harness.cdng.infra.beans.PdcInfraMapping.PdcInfraMappingBuilder;
@@ -64,9 +64,9 @@ public class PdcInfrastructure implements Infrastructure, Visitable, WithConnect
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> connectorRef;
 
   @YamlSchemaTypes({runtime})
-  @ApiModelProperty(dataType = "[Lio.harness.cdng.infra.beans.AttributeFilter;")
+  @ApiModelProperty(dataType = STRING_MAP_CLASSPATH)
   @Wither
-  ParameterField<List<AttributeFilter>> attributeFilters;
+  ParameterField<Map<String, String>> attributeFilters;
 
   @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)

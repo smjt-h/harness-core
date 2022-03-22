@@ -14,6 +14,7 @@ import io.harness.annotations.dev.OwnedBy;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 import org.mongodb.morphia.annotations.Id;
@@ -31,6 +32,6 @@ public class PdcInfraMapping implements InfraMapping {
   private String sshKeyRef;
   private List<String> hosts;
   private String connectorRef;
-  private List<AttributeFilter> attributeFilters;
+  private Map<String, String> attributeFilters;
   private List<String> hostFilters;
 }
