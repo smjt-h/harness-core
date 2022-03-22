@@ -7,6 +7,8 @@
 
 package io.harness.delegate.task.artifacts;
 
+import static software.wings.utils.RepositoryType.generic;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
@@ -90,13 +92,18 @@ public class ArtifactDelegateRequestUtils {
         .artifactRepositoryUrl(artifactRepositoryUrl)
         .build();
   }
-  public ArtifactoryDockerArtifactDelegateRequest getArtifactoryArtifactDelegateRequest(String repositoryName,
-      String imagePath, String repositoryFormat, String artifactRepositoryUrl, String tag, String tagRegex,
-      String connectorRef, ArtifactoryConnectorDTO artifactoryConnectorDTO,
-      List<EncryptedDataDetail> encryptedDataDetails, ArtifactSourceType sourceType) {
+  public ArtifactSourceDelegateRequest getArtifactoryArtifactDelegateRequest(String repositoryName, String artifactPath,
+      String repositoryFormat, String artifactRepositoryUrl, String tag, String tagRegex, String connectorRef,
+      ArtifactoryConnectorDTO artifactoryConnectorDTO, List<EncryptedDataDetail> encryptedDataDetails,
+      ArtifactSourceType sourceType) {
+    String artifactDirectory = artifactPath;
+    if (repositoryFormat.equals(generic.name())) {
+      return getArtifactoryGenericArtifactDelegateRequest(repositoryName, repositoryFormat, artifactDirectory, null,
+          null, null, artifactoryConnectorDTO, encryptedDataDetails, ArtifactSourceType.ARTIFACTORY_REGISTRY);
+    }
     return ArtifactoryDockerArtifactDelegateRequest.builder()
         .repositoryName(repositoryName)
-        .artifactPath(trim(imagePath))
+        .artifactPath(trim(artifactPath))
         .repositoryFormat(repositoryFormat)
         .tag(trim(tag))
         .tagRegex(trim(tagRegex))
