@@ -21,6 +21,7 @@ import io.harness.annotations.ExposeInternalException;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.beans.MonitoredServiceType;
+import io.harness.cvng.beans.cvnglog.CVNGLogDTO;
 import io.harness.cvng.core.beans.HealthMonitoringFlagResponse;
 import io.harness.cvng.core.beans.monitoredService.AnomaliesSummaryDTO;
 import io.harness.cvng.core.beans.monitoredService.CountServiceDTO;
@@ -34,9 +35,11 @@ import io.harness.cvng.core.beans.monitoredService.MonitoredServiceResponse;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceWithHealthSources;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.HealthSourceDTO;
 import io.harness.cvng.core.beans.params.MonitoredServiceParams;
+import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.beans.params.TimeRangeParams;
+import io.harness.cvng.core.beans.params.logsFilterParams.LiveMonitoringLogsFilter;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.ResponseDTO;
@@ -178,30 +181,6 @@ public class MonitoredServiceResource {
   @GET
   @Timed
   @ExceptionMetered
-  @Path("overall-health-score")
-  @ApiOperation(value = "get monitored service overall health score data using service and environment identifiers",
-      nickname = "getMonitoredServiceOverAllHealthScoreWithServiceAndEnv")
-  public ResponseDTO<HistoricalTrend>
-  getOverAllHealthScore(@NotNull @QueryParam("accountId") String accountId,
-      @NotNull @QueryParam("orgIdentifier") String orgIdentifier,
-      @NotNull @QueryParam("projectIdentifier") String projectIdentifier,
-      @NotNull @QueryParam("environmentIdentifier") String environmentIdentifier,
-      @NotNull @QueryParam("serviceIdentifier") String serviceIdentifier,
-      @NotNull @QueryParam("duration") DurationDTO durationDTO, @NotNull @QueryParam("endTime") Long endTime) {
-    ServiceEnvironmentParams serviceEnvironmentParams = ServiceEnvironmentParams.builder()
-                                                            .serviceIdentifier(serviceIdentifier)
-                                                            .environmentIdentifier(environmentIdentifier)
-                                                            .accountIdentifier(accountId)
-                                                            .orgIdentifier(orgIdentifier)
-                                                            .projectIdentifier(projectIdentifier)
-                                                            .build();
-    return ResponseDTO.newResponse(monitoredServiceService.getOverAllHealthScore(
-        serviceEnvironmentParams, durationDTO, Instant.ofEpochMilli(endTime)));
-  }
-
-  @GET
-  @Timed
-  @ExceptionMetered
   @ApiOperation(value = "list monitored service data ", nickname = "listMonitoredService")
   @NGAccessControlCheck(resourceType = MONITORED_SERVICE, permission = VIEW_PERMISSION)
   public ResponseDTO<PageResponse<MonitoredServiceListItemDTO>> list(
@@ -319,29 +298,6 @@ public class MonitoredServiceResource {
                                                           .projectIdentifier(projectIdentifier)
                                                           .monitoredServiceIdentifier(identifier)
                                                           .build();
-    return ResponseDTO.newResponse(
-        monitoredServiceService.getCurrentAndDependentServicesScore(serviceEnvironmentParams));
-  }
-
-  @GET
-  @Timed
-  @ExceptionMetered
-  @Path("/scores")
-  @ApiOperation(value = "get monitored service scores from service and env ref",
-      nickname = "getMonitoredServiceScoresFromServiceAndEnvironment")
-  public ResponseDTO<HealthScoreDTO>
-  getMonitoredServiceScoreFromServiceAndEnvironment(@NotNull @QueryParam("accountId") String accountId,
-      @NotNull @QueryParam("orgIdentifier") String orgIdentifier,
-      @NotNull @QueryParam("projectIdentifier") String projectIdentifier,
-      @NotNull @QueryParam("serviceIdentifier") String serviceIdentifier,
-      @NotNull @QueryParam("environmentIdentifier") String environmentIdentifier) {
-    ServiceEnvironmentParams serviceEnvironmentParams = ServiceEnvironmentParams.builder()
-                                                            .accountIdentifier(accountId)
-                                                            .orgIdentifier(orgIdentifier)
-                                                            .projectIdentifier(projectIdentifier)
-                                                            .serviceIdentifier(serviceIdentifier)
-                                                            .environmentIdentifier(environmentIdentifier)
-                                                            .build();
     return ResponseDTO.newResponse(
         monitoredServiceService.getCurrentAndDependentServicesScore(serviceEnvironmentParams));
   }
@@ -492,11 +448,44 @@ public class MonitoredServiceResource {
   @GET
   @Timed
   @ExceptionMetered
+  @Path("{monitoredServiceIdentifier}/service-details")
+  @ApiOperation(value = "get details of a monitored service present in the Service Dependency Graph",
+      nickname = "getMonitoredServiceDetailsWithServiceId")
+  public MonitoredServiceListItemDTO
+  getMonitoredServiceDetails(@BeanParam ProjectParams projectParams,
+      @PathParam("monitoredServiceIdentifier") String monitoredServiceIdentifier) {
+    return monitoredServiceService.getMonitoredServiceDetails(
+        MonitoredServiceParams.builderWithProjectParams(projectParams)
+            .monitoredServiceIdentifier(monitoredServiceIdentifier)
+            .build());
+  }
+
+  @GET
+  @Timed
+  @ExceptionMetered
   @Path("/service-details")
   @ApiOperation(value = "get details of a monitored service present in the Service Dependency Graph",
       nickname = "getMonitoredServiceDetails")
+  @Deprecated
   public MonitoredServiceListItemDTO
   getMonitoredServiceDetails(@BeanParam ServiceEnvironmentParams serviceEnvironmentParams) {
     return monitoredServiceService.getMonitoredServiceDetails(serviceEnvironmentParams);
+  }
+
+  @GET
+  @Timed
+  @ExceptionMetered
+  @Path("{monitoredServiceIdentifier}/logs")
+  @ApiOperation(value = "get monitored service logs", nickname = "getMonitoredServiceLogs")
+  @NGAccessControlCheck(resourceType = MONITORED_SERVICE, permission = VIEW_PERMISSION)
+  public RestResponse<PageResponse<CVNGLogDTO>> getMonitoredServiceLogs(@BeanParam ProjectParams projectParams,
+      @ApiParam(required = true) @NotNull @PathParam(
+          "monitoredServiceIdentifier") @ResourceIdentifier String monitoredServiceIdentifier,
+      @BeanParam LiveMonitoringLogsFilter liveMonitoringLogsFilter, @BeanParam PageParams pageParams) {
+    return new RestResponse<>(
+        monitoredServiceService.getCVNGLogs(MonitoredServiceParams.builderWithProjectParams(projectParams)
+                                                .monitoredServiceIdentifier(monitoredServiceIdentifier)
+                                                .build(),
+            liveMonitoringLogsFilter, pageParams));
   }
 }

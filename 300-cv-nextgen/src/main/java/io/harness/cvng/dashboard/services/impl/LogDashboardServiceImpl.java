@@ -1,11 +1,13 @@
 /*
- * Copyright 2021 Harness Inc. All rights reserved.
+ * Copyright 2022 Harness Inc. All rights reserved.
  * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
  * that can be found in the licenses directory at the root of this repository, also available at
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
 package io.harness.cvng.dashboard.services.impl;
+
+import static io.harness.cvng.beans.DataSourceType.ERROR_TRACKING;
 
 import io.harness.cvng.analysis.beans.LiveMonitoringLogAnalysisClusterDTO;
 import io.harness.cvng.analysis.entities.LogAnalysisCluster;
@@ -80,12 +82,6 @@ public class LogDashboardServiceImpl implements LogDashboardService {
   public PageResponse<AnalyzedLogDataDTO> getAllLogsData(MonitoredServiceParams monitoredServiceParams,
       TimeRangeParams timeRangeParams, LiveMonitoringLogAnalysisFilter liveMonitoringLogAnalysisFilter,
       PageParams pageParams) {
-    if (monitoredServiceParams.getMonitoredServiceIdentifier() == null) {
-      // Remove this once UI start sending monitoredServiceIdentifier
-      monitoredServiceParams.setMonitoredServiceIdentifier(
-          monitoredServiceService.getMonitoredServiceDTO(monitoredServiceParams.getServiceEnvironmentParams())
-              .getIdentifier());
-    }
     List<CVConfig> configs = getCVConfigs(monitoredServiceParams, liveMonitoringLogAnalysisFilter);
     List<String> cvConfigIds = configs.stream().map(CVConfig::getUuid).collect(Collectors.toList());
     List<LogAnalysisTag> tags = liveMonitoringLogAnalysisFilter.filterByClusterTypes()
@@ -101,12 +97,6 @@ public class LogDashboardServiceImpl implements LogDashboardService {
   public List<LiveMonitoringLogAnalysisClusterDTO> getLogAnalysisClusters(MonitoredServiceParams monitoredServiceParams,
       TimeRangeParams timeRangeParams, LiveMonitoringLogAnalysisFilter liveMonitoringLogAnalysisFilter) {
     List<LiveMonitoringLogAnalysisClusterDTO> liveMonitoringLogAnalysisClusterDTOS = new ArrayList<>();
-    if (monitoredServiceParams.getMonitoredServiceIdentifier() == null) {
-      // Remove this once UI start sending monitoredServiceIdentifier
-      monitoredServiceParams.setMonitoredServiceIdentifier(
-          monitoredServiceService.getMonitoredServiceDTO(monitoredServiceParams.getServiceEnvironmentParams())
-              .getIdentifier());
-    }
     List<String> cvConfigIds = getCVConfigs(monitoredServiceParams, liveMonitoringLogAnalysisFilter)
                                    .stream()
                                    .map(CVConfig::getUuid)
@@ -154,6 +144,10 @@ public class LogDashboardServiceImpl implements LogDashboardService {
     } else {
       configs = cvConfigService.list(monitoredServiceParams);
     }
+
+    // Limit to NOT include Error Tracking configs
+    configs = configs.stream().filter(config -> !ERROR_TRACKING.equals(config.getType())).collect(Collectors.toList());
+
     return configs;
   }
 

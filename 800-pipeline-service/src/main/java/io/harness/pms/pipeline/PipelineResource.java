@@ -33,6 +33,7 @@ import io.harness.gitsync.interceptor.GitEntityUpdateInfoDTO;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.ng.core.template.TemplateMergeResponseDTO;
 import io.harness.notification.bean.NotificationRules;
 import io.harness.plancreator.steps.http.PmsAbstractStepNode;
 import io.harness.pms.annotations.PipelineServiceAuth;
@@ -150,7 +151,7 @@ public class PipelineResource implements YamlSchemaResource {
   @POST
   @Path("/v2")
   @ApiOperation(value = "Create a Pipeline", nickname = "createPipelineV2")
-  @Operation(operationId = "postPipelineV2", summary = "Create a Pipeline API (V2 Version)",
+  @Operation(operationId = "postPipelineV2", summary = "Create a Pipeline API With Governance Checks",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -248,6 +249,10 @@ public class PipelineResource implements YamlSchemaResource {
             -> new InvalidRequestException(
                 String.format("Pipeline with the given ID: %s does not exist or has been deleted", pipelineId))));
 
+    TemplateMergeResponseDTO templateMergeResponseDTO =
+        pipelineTemplateHelper.resolveTemplateRefsInPipeline(pipelineEntity.get());
+    pipeline.setResolvedTemplatesPipelineYaml(templateMergeResponseDTO.getMergedPipelineYaml());
+
     return ResponseDTO.newResponse(version, pipeline);
   }
 
@@ -290,7 +295,7 @@ public class PipelineResource implements YamlSchemaResource {
   @PUT
   @Path("/v2/{pipelineIdentifier}")
   @ApiOperation(value = "Update a Pipeline", nickname = "putPipelineV2")
-  @Operation(operationId = "updatePipelineV2", summary = "Updates a Pipeline by identifier (V2 Version)",
+  @Operation(operationId = "updatePipelineV2", summary = "Updates a Pipeline by identifier with Governance checks",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -481,6 +486,7 @@ public class PipelineResource implements YamlSchemaResource {
   @GET
   @Path("/notification")
   @ApiOperation(value = "Get Notification Schema", nickname = "getNotificationSchema")
+  @Hidden
   public ResponseDTO<NotificationRules> getNotificationSchema() {
     return ResponseDTO.newResponse(NotificationRules.builder().build());
   }
@@ -547,6 +553,7 @@ public class PipelineResource implements YamlSchemaResource {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(responseCode = "default", description = "Refresh the feature flag cache")
       })
+  @Hidden
   public ResponseDTO<Boolean>
   refreshFFCache(@NotNull @Parameter(description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE,
       required = true) @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountId) {

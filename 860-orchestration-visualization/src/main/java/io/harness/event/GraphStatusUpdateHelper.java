@@ -72,13 +72,13 @@ public class GraphStatusUpdateHelper {
           updateGraphVertex(graphVertexMap, nodeExecution, planExecutionId);
         }
       } else if (!nodeExecution.getOldRetry()) {
-        log.info("[PMS_GRAPH] Adding graph vertex with id [{}] and status [{}]. PlanExecutionId: [{}]", nodeExecutionId,
-            nodeExecution.getStatus(), planExecutionId);
         orchestrationAdjacencyListGenerator.addVertex(orchestrationGraph.getAdjacencyList(), nodeExecution);
       }
     } catch (Exception e) {
-      log.error(
-          "[PMS_GRAPH]  [{}] event failed for [{}] for plan [{}]", eventType, nodeExecutionId, planExecutionId, e);
+      log.error(String.format("[GRAPH_ERROR]  [%s] event failed for [%s] for plan [%s]", eventType, nodeExecutionId,
+                    planExecutionId),
+          e);
+      throw e;
     }
     return orchestrationGraph;
   }
@@ -86,8 +86,6 @@ public class GraphStatusUpdateHelper {
   private void updateGraphVertex(
       Map<String, GraphVertex> graphVertexMap, NodeExecution nodeExecution, String planExecutionId) {
     String nodeExecutionId = nodeExecution.getUuid();
-    log.info("[PMS_GRAPH] Updating graph vertex for [{}] with status [{}]. PlanExecutionId: [{}]", nodeExecutionId,
-        nodeExecution.getStatus(), planExecutionId);
     graphVertexMap.computeIfPresent(nodeExecutionId, (key, prevValue) -> {
       GraphVertex newValue = convertFromNodeExecution(prevValue, nodeExecution);
       if (StatusUtils.isFinalStatus(newValue.getStatus())) {

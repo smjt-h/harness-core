@@ -63,19 +63,24 @@ public class NGCommonEntityConstants {
   public static final String IS_OPTIMIZATION_ENABLED = "optimizationEnabled";
   public static final String IS_CUR_ENABLED = "curEnabled";
 
-  public static final String ACCOUNT_PARAM_MESSAGE = "Account Identifier for the Entity";
-  public static final String ORG_PARAM_MESSAGE = "Organization Identifier for the Entity";
-  public static final String ORG_LIST_PARAM_MESSAGE = "List of Organization Identifiers for the Entities";
-  public static final String PROJECT_PARAM_MESSAGE = "Project Identifier for the Entity";
-  public static final String IDENTIFIER_PARAM_MESSAGE = "Identifier for the Entity";
+  public static final String ACCOUNT_PARAM_MESSAGE = "Account Identifier for the Entity.";
+  public static final String ORG_PARAM_MESSAGE = "Organization Identifier for the Entity.";
+  public static final String ORG_LIST_PARAM_MESSAGE = "List of Organization Identifiers for the Entities.";
+  public static final String PROJECT_PARAM_MESSAGE = "Project Identifier for the Entity.";
+  public static final String IDENTIFIER_PARAM_MESSAGE = "Identifier for the Entity.";
   public static final String TAGS = "Tags";
   public static final String DESCRIPTION = "Description of the entity";
+  public static final String CREATED_AT_MESSAGE = "Time at which the entity was created";
+  public static final String UPDATED_AT_MESSAGE = "Time at which the entity was last updated";
+  public static final String NAME_PARAM_MESSAGE = "Name of the Entity";
+  public static final String COLOR_PARAM_MESSAGE = "Color Code for the Entity";
+  public static final String DELETED_PARAM_MESSAGE = "Deletion status for Entity";
+  public static final String VERSION_PARAM_MESSAGE = "Version of Entity";
 
   public static final String GCP_CONNECTOR_IDENTIFIER = "GCP Connector Identifier";
 
-  public static final String PAGE_PARAM_MESSAGE =
-      "Indicates the number of pages. Results for these pages will be retrieved.";
-  public static final String SIZE_PARAM_MESSAGE = "The number of the elements to fetch";
+  public static final String PAGE_PARAM_MESSAGE = "Number of pages.";
+  public static final String SIZE_PARAM_MESSAGE = "Number of Elements to fetch.";
   public static final String SORT_PARAM_MESSAGE = "Sort criteria for the elements.";
   public static final String BAD_REQUEST_PARAM_MESSAGE = "Bad Request";
   public static final String INTERNAL_SERVER_ERROR_MESSAGE = "Internal Server Error";
@@ -83,4 +88,7 @@ public class NGCommonEntityConstants {
   public static final String INTERNAL_SERVER_ERROR_CODE = "500";
   public static final String APPLICATION_JSON_MEDIA_TYPE = "application/json";
   public static final String APPLICATION_YAML_MEDIA_TYPE = "application/yaml";
+
+  // Environment Group
+  public static final String ENVIRONMENT_GROUP_KEY = "envGroupIdentifier";
 }

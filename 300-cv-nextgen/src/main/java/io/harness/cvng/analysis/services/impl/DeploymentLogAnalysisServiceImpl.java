@@ -7,8 +7,11 @@
 
 package io.harness.cvng.analysis.services.impl;
 
+import static io.harness.cvng.CVConstants.TAG_DATA_SOURCE;
+import static io.harness.cvng.beans.MonitoredServiceDataSourceType.ERROR_TRACKING;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
+import io.harness.cvng.activity.beans.DeploymentActivityResultDTO.ErrorAnalysisSummary;
 import io.harness.cvng.activity.beans.DeploymentActivityResultDTO.LogsAnalysisSummary;
 import io.harness.cvng.analysis.beans.DeploymentLogAnalysisDTO.Cluster;
 import io.harness.cvng.analysis.beans.DeploymentLogAnalysisDTO.ClusterSummary;
@@ -22,9 +25,12 @@ import io.harness.cvng.analysis.beans.Risk;
 import io.harness.cvng.analysis.entities.DeploymentLogAnalysis;
 import io.harness.cvng.analysis.entities.DeploymentLogAnalysis.DeploymentLogAnalysisKeys;
 import io.harness.cvng.analysis.services.api.DeploymentLogAnalysisService;
+import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.filterParams.DeploymentLogAnalysisFilter;
 import io.harness.cvng.core.entities.CVConfig;
+import io.harness.cvng.core.entities.VerificationTask;
+import io.harness.cvng.core.entities.VerificationTask.VerificationTaskKeys;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.core.utils.CVNGObjectUtils;
 import io.harness.cvng.verificationjob.entities.VerificationJobInstance;
@@ -210,6 +216,36 @@ public class DeploymentLogAnalysisServiceImpl implements DeploymentLogAnalysisSe
   }
 
   @Override
+  public ErrorAnalysisSummary getErrorAnalysisSummary(String accountId, List<String> verificationJobInstanceIds) {
+    List<Integer> anomClusterCounts = new ArrayList<>();
+    List<Integer> totalClusterCounts = new ArrayList<>();
+
+    Preconditions.checkNotNull(
+        verificationJobInstanceIds, "Missing verificationJobInstanceIds when looking for summary");
+    DeploymentLogAnalysisFilter filter =
+        DeploymentLogAnalysisFilter.builder().hostName(DataSourceType.ERROR_TRACKING.getDisplayName()).build();
+
+    verificationJobInstanceIds.forEach(verificationJobInstanceId -> {
+      List<LogAnalysisClusterDTO> logAnalysisClusters =
+          getLogAnalysisResult(accountId, verificationJobInstanceId, null, filter);
+      int anomClusters = 0, totalClusters = 0;
+      for (LogAnalysisClusterDTO logAnalysisClusterDTO : logAnalysisClusters) {
+        if (logAnalysisClusterDTO.getRisk().isGreaterThan(Risk.HEALTHY)) {
+          anomClusters++;
+        }
+        totalClusters++;
+      }
+      anomClusterCounts.add(anomClusters);
+      totalClusterCounts.add(totalClusters);
+    });
+
+    return ErrorAnalysisSummary.builder()
+        .anomalousClusterCount(anomClusterCounts.stream().mapToInt(Integer::intValue).sum())
+        .totalClusterCount(totalClusterCounts.stream().mapToInt(Integer::intValue).sum())
+        .build();
+  }
+
+  @Override
   public Optional<Risk> getRecentHighestRiskScore(String accountId, String verificationJobInstanceId) {
     DeploymentLogAnalysis recentHighestDeploymentLogAnalysis =
         getRecentHighestDeploymentLogAnalysis(accountId, verificationJobInstanceId);
@@ -307,19 +343,27 @@ public class DeploymentLogAnalysisServiceImpl implements DeploymentLogAnalysisSe
     deploymentLogAnalysis.getClusters().forEach(cluster -> labelToClusterMap.put(cluster.getLabel(), cluster));
 
     List<LogAnalysisClusterChartDTO> logAnalysisClusterChartDTOList = new ArrayList<>();
-    deploymentLogAnalysis.getClusterCoordinates()
-        .stream()
-        .filter(clusterCoordinate -> hostName == null || clusterCoordinate.getHost().equals(hostName))
-        .forEach(clusterCoordinate -> {
-          Cluster cluster = labelToClusterMap.get(clusterCoordinate.getLabel());
-          logAnalysisClusterChartDTOList.add(LogAnalysisClusterChartDTO.builder()
-                                                 .label(cluster.getLabel())
-                                                 .text(cluster.getText())
-                                                 .hostName(clusterCoordinate.getHost())
-                                                 .x(clusterCoordinate.getX())
-                                                 .y(clusterCoordinate.getY())
-                                                 .build());
-        });
+
+    VerificationTask verificationTask =
+        hPersistence.createQuery(VerificationTask.class)
+            .filter(VerificationTaskKeys.uuid, deploymentLogAnalysis.getVerificationTaskId())
+            .get();
+    if (hostName != null || !ERROR_TRACKING.name().equals(verificationTask.getTags().get(TAG_DATA_SOURCE))) {
+      deploymentLogAnalysis.getClusterCoordinates()
+          .stream()
+          .filter(clusterCoordinate -> hostName == null || clusterCoordinate.getHost().equals(hostName))
+          .forEach(clusterCoordinate -> {
+            Cluster cluster = labelToClusterMap.get(clusterCoordinate.getLabel());
+            logAnalysisClusterChartDTOList.add(LogAnalysisClusterChartDTO.builder()
+                                                   .label(cluster.getLabel())
+                                                   .text(cluster.getText())
+                                                   .hostName(clusterCoordinate.getHost())
+                                                   .x(clusterCoordinate.getX())
+                                                   .y(clusterCoordinate.getY())
+                                                   .build());
+          });
+    }
+
     return logAnalysisClusterChartDTOList;
   }
 
@@ -359,11 +403,17 @@ public class DeploymentLogAnalysisServiceImpl implements DeploymentLogAnalysisSe
   private List<LogAnalysisClusterDTO> getOverallLogAnalysisClusters(
       DeploymentLogAnalysis deploymentLogAnalysis, Integer label) {
     List<LogAnalysisClusterDTO> logAnalysisClusters = new ArrayList<>();
-    deploymentLogAnalysis.getClusters()
-        .stream()
-        .filter(cluster -> label != null ? cluster.getLabel() == label : Boolean.TRUE)
-        .forEach(cluster
-            -> addLogAnalysisClusterDTO(logAnalysisClusters, deploymentLogAnalysis.getResultSummary(), cluster));
+    VerificationTask verificationTask =
+        hPersistence.createQuery(VerificationTask.class)
+            .filter(VerificationTaskKeys.uuid, deploymentLogAnalysis.getVerificationTaskId())
+            .get();
+    if (!ERROR_TRACKING.name().equals(verificationTask.getTags().get(TAG_DATA_SOURCE))) {
+      deploymentLogAnalysis.getClusters()
+          .stream()
+          .filter(cluster -> label != null ? cluster.getLabel() == label : Boolean.TRUE)
+          .forEach(cluster
+              -> addLogAnalysisClusterDTO(logAnalysisClusters, deploymentLogAnalysis.getResultSummary(), cluster));
+    }
     return logAnalysisClusters;
   }
 }

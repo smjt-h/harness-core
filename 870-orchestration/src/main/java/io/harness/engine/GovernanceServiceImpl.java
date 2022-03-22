@@ -16,7 +16,6 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.HarnessStringUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.network.SafeHttpCall;
-import io.harness.ng.core.user.UserInfo;
 import io.harness.opaclient.OpaServiceClient;
 import io.harness.opaclient.OpaUtils;
 import io.harness.opaclient.model.OpaConstants;
@@ -24,7 +23,6 @@ import io.harness.opaclient.model.OpaEvaluationResponseHolder;
 import io.harness.opaclient.model.OpaPolicyEvaluationResponse;
 import io.harness.opaclient.model.OpaPolicySetEvaluationResponse;
 import io.harness.opaclient.model.PipelineOpaEvaluationContext;
-import io.harness.opaclient.model.UserOpaEvaluationContext;
 import io.harness.pms.PmsFeatureFlagService;
 import io.harness.pms.contracts.governance.GovernanceMetadata;
 import io.harness.pms.contracts.governance.PolicyMetadata;
@@ -32,11 +30,9 @@ import io.harness.pms.contracts.governance.PolicySetMetadata;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlUtils;
-import io.harness.remote.client.RestClientUtils;
 import io.harness.security.SourcePrincipalContextBuilder;
 import io.harness.security.dto.UserPrincipal;
 import io.harness.serializer.JsonUtils;
-import io.harness.user.remote.UserClient;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -49,7 +45,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -59,50 +54,56 @@ import lombok.extern.slf4j.Slf4j;
 public class GovernanceServiceImpl implements GovernanceService {
   private final PmsFeatureFlagService pmsFeatureFlagService;
   private final OpaServiceClient opaServiceClient;
-  private final UserClient userClient;
 
   @Override
   public GovernanceMetadata evaluateGovernancePolicies(String expandedJson, String accountId, String orgIdentifier,
       String projectIdentifier, String action, String planExecutionId) {
-    if (!pmsFeatureFlagService.isEnabled(accountId, FeatureName.OPA_PIPELINE_GOVERNANCE)) {
-      return GovernanceMetadata.newBuilder()
-          .setDeny(false)
-          .setMessage(
-              String.format("FF: [%s] is disabled for account: [%s]", FeatureName.OPA_PIPELINE_GOVERNANCE, accountId))
-          .build();
-    }
-    log.info("Initiating policy check for pipeline with expanded JSON:\n" + expandedJson);
-
-    PipelineOpaEvaluationContext context;
+    long startTs = System.currentTimeMillis();
     try {
-      context = createEvaluationContext(expandedJson, action);
-    } catch (IOException ex) {
-      log.error("Could not create OPA evaluation context", ex);
-      return GovernanceMetadata.newBuilder()
-          .setDeny(true)
-          .setMessage(String.format("Could not create OPA context: [%s]", ex.getMessage()))
-          .build();
+      if (!pmsFeatureFlagService.isEnabled(accountId, FeatureName.OPA_PIPELINE_GOVERNANCE)) {
+        return GovernanceMetadata.newBuilder()
+            .setDeny(false)
+            .setMessage(
+                String.format("FF: [%s] is disabled for account: [%s]", FeatureName.OPA_PIPELINE_GOVERNANCE, accountId))
+            .build();
+      }
+      log.info("Initiating policy check for pipeline with expanded JSON:\n" + expandedJson);
+
+      PipelineOpaEvaluationContext context;
+      try {
+        context = createEvaluationContext(expandedJson);
+      } catch (IOException ex) {
+        log.error("Could not create OPA evaluation context", ex);
+        return GovernanceMetadata.newBuilder()
+            .setDeny(true)
+            .setMessage(String.format("Could not create OPA context: [%s]", ex.getMessage()))
+            .build();
+      }
+
+      OpaEvaluationResponseHolder response;
+      try {
+        YamlField pipelineField = YamlUtils.readTree(expandedJson);
+        String pipelineIdentifier =
+            pipelineField.getNode().getField(YAMLFieldNameConstants.PIPELINE).getNode().getIdentifier();
+        String pipelineName = pipelineField.getNode().getField(YAMLFieldNameConstants.PIPELINE).getNode().getName();
+        String entityString = getEntityString(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier);
+        String entityMetadata = getEntityMetadataString(
+            accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, pipelineName, planExecutionId);
+        String userIdentifier = getUserIdentifier();
+
+        response = SafeHttpCall.executeWithExceptions(
+            opaServiceClient.evaluateWithCredentials(OpaConstants.OPA_EVALUATION_TYPE_PIPELINE, accountId,
+                orgIdentifier, projectIdentifier, action, entityString, entityMetadata, userIdentifier, context));
+      } catch (Exception ex) {
+        log.error("Exception while evaluating OPA rules", ex);
+        throw new InvalidRequestException("Exception while evaluating OPA rules: " + ex.getMessage(), ex);
+      }
+
+      return mapResponseToMetadata(response);
+    } finally {
+      log.info("[PMS_Governance_Metadata] Time taken to evaluate governance policies: {}ms",
+          System.currentTimeMillis() - startTs);
     }
-
-    OpaEvaluationResponseHolder response;
-    try {
-      YamlField pipelineField = YamlUtils.readTree(expandedJson);
-      String pipelineIdentifier =
-          pipelineField.getNode().getField(YAMLFieldNameConstants.PIPELINE).getNode().getIdentifier();
-      String pipelineName = pipelineField.getNode().getField(YAMLFieldNameConstants.PIPELINE).getNode().getName();
-      String entityString = getEntityString(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier);
-      String entityMetadata = getEntityMetadataString(
-          accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, pipelineName, planExecutionId);
-
-      response = SafeHttpCall.executeWithExceptions(
-          opaServiceClient.evaluateWithCredentials(OpaConstants.OPA_EVALUATION_TYPE_PIPELINE, accountId, orgIdentifier,
-              projectIdentifier, action, entityString, entityMetadata, context));
-    } catch (Exception ex) {
-      log.error("Exception while evaluating OPA rules", ex);
-      throw new InvalidRequestException("Exception while evaluating OPA rules: " + ex.getMessage(), ex);
-    }
-
-    return mapResponseToMetadata(response);
   }
 
   private String getEntityString(String accountId, String orgIdentifier, String projectIdentifier,
@@ -190,27 +191,19 @@ public class GovernanceServiceImpl implements GovernanceService {
     return policyMetadataList;
   }
 
-  private PipelineOpaEvaluationContext createEvaluationContext(String yaml, String action) throws IOException {
+  private PipelineOpaEvaluationContext createEvaluationContext(String yaml) throws IOException {
     return PipelineOpaEvaluationContext.builder()
-        .action(action)
         .pipeline(OpaUtils.extractObjectFromYamlString(yaml, OpaConstants.OPA_EVALUATION_TYPE_PIPELINE))
-        .user(extractUserFromSecurityContext())
         .date(new Date())
         .build();
   }
 
-  private UserOpaEvaluationContext extractUserFromSecurityContext() {
+  private String getUserIdentifier() {
     if (SourcePrincipalContextBuilder.getSourcePrincipal() == null
         || !USER.equals(SourcePrincipalContextBuilder.getSourcePrincipal().getType())) {
-      return null;
+      return "";
     }
     UserPrincipal userPrincipal = (UserPrincipal) SourcePrincipalContextBuilder.getSourcePrincipal();
-    String userId = userPrincipal.getName();
-    Optional<UserInfo> userOptional = RestClientUtils.getResponse(userClient.getUserById(userId));
-    if (!userOptional.isPresent()) {
-      return null;
-    }
-    UserInfo user = userOptional.get();
-    return UserOpaEvaluationContext.builder().email(user.getEmail()).name(user.getName()).build();
+    return userPrincipal.getName();
   }
 }

@@ -13,8 +13,12 @@ import static java.util.Collections.singletonList;
 import io.harness.delegate.beans.ci.pod.CIK8ContainerParams;
 import io.harness.delegate.beans.ci.pod.CIK8PodParams;
 import io.harness.delegate.beans.ci.pod.ContainerSecrets;
+import io.harness.delegate.beans.ci.pod.EmptyDirVolume;
+import io.harness.delegate.beans.ci.pod.HostPathVolume;
 import io.harness.delegate.beans.ci.pod.ImageDetailsWithConnector;
 import io.harness.delegate.beans.ci.pod.PVCParams;
+import io.harness.delegate.beans.ci.pod.PVCVolume;
+import io.harness.delegate.beans.ci.pod.PodToleration;
 import io.harness.delegate.beans.ci.pod.SecretVariableDTO;
 import io.harness.delegate.beans.ci.pod.SecretVariableDetails;
 import io.harness.delegate.task.citasks.cik8handler.params.CIConstants;
@@ -25,17 +29,22 @@ import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.security.encryption.EncryptedRecordData;
 import io.harness.security.encryption.EncryptionType;
 
+import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.models.V1ContainerBuilder;
 import io.kubernetes.client.openapi.models.V1EmptyDirVolumeSourceBuilder;
+import io.kubernetes.client.openapi.models.V1HostPathVolumeSourceBuilder;
 import io.kubernetes.client.openapi.models.V1LocalObjectReferenceBuilder;
 import io.kubernetes.client.openapi.models.V1PersistentVolumeClaimVolumeSourceBuilder;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodBuilder;
+import io.kubernetes.client.openapi.models.V1TolerationBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeBuilder;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
 import io.kubernetes.client.openapi.models.V1VolumeMountBuilder;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +58,15 @@ public class PodSpecBuilderTestHelper {
   private static String containerName1 = "container1";
   private static String containerName2 = "container2";
   private static String volume1 = "volume1";
+  private static String volume2 = "volume2";
+  private static String volume3 = "volume3";
+  private static String volume4 = "volume4";
   private static String mountPath1 = "/mnt1";
+  private static String mountPath2 = "/mnt2";
+  private static String mountPath3 = "/mnt3";
+  private static String mountPath4 = "/mnt4";
+  private static String hostPath = "/var/log";
+  private static String claimName = "pvc";
 
   private static String imageName = "IMAGE";
   private static String tag = "TAG";
@@ -60,7 +77,6 @@ public class PodSpecBuilderTestHelper {
   private static String registrySecretName = "hs-index-docker-io-v1-usr-hs";
   private static String storageClass = "test-storage";
   private static Integer storageMib = 100;
-  private static String claimName = "pvc";
 
   public static CIK8ContainerParams basicContainerParamsWithoutImageCred() {
     ImageDetails imageWithoutCred = ImageDetails.builder().name(imageName).tag(tag).registryUrl(registryUrl).build();
@@ -155,6 +171,23 @@ public class PodSpecBuilderTestHelper {
         .build();
   }
 
+  public static CIK8PodParams<CIK8ContainerParams> basicInputTaint() {
+    return CIK8PodParams.<CIK8ContainerParams>builder()
+        .name(podName)
+        .namespace(namespace)
+        .stepExecVolumeName(stepExecVolumeName)
+        .stepExecWorkingDir(stepExecWorkingDir)
+        .containerParamsList(asList(basicContainerParamsWithoutImageCred()))
+        .nodeSelector(Collections.singletonMap("ssd", "true"))
+        .tolerations(asList(PodToleration.builder()
+                                .key("dedicated")
+                                .operator("Equal")
+                                .value("experimental")
+                                .effect("NoSchedule")
+                                .build()))
+        .build();
+  }
+
   public static CIK8PodParams<CIK8ContainerParams> getPodSpecWithEnvSecret() {
     return CIK8PodParams.<CIK8ContainerParams>builder()
         .name(podName)
@@ -208,6 +241,32 @@ public class PodSpecBuilderTestHelper {
         .withVolumes(new ArrayList<>())
         .withInitContainers(new ArrayList<>())
         .withImagePullSecrets(new ArrayList<>())
+        .withTolerations(new ArrayList<>())
+        .endSpec()
+        .build();
+  }
+
+  public static V1Pod basicExpectedPodWithTaint() {
+    return new V1PodBuilder()
+        .withNewMetadata()
+        .withName(podName)
+        .withNamespace(namespace)
+        .endMetadata()
+        .withNewSpec()
+        .withContainers(basicContainerBuilder().build())
+        .withRestartPolicy(CIConstants.RESTART_POLICY)
+        .withActiveDeadlineSeconds(CIConstants.POD_MAX_TTL_SECS)
+        .withHostAliases(new ArrayList<>())
+        .withVolumes(new ArrayList<>())
+        .withInitContainers(new ArrayList<>())
+        .withImagePullSecrets(new ArrayList<>())
+        .withNodeSelector(Collections.singletonMap("ssd", "true"))
+        .withTolerations(Arrays.asList(new V1TolerationBuilder()
+                                           .withKey("dedicated")
+                                           .withOperator("Equal")
+                                           .withValue("experimental")
+                                           .withEffect("NoSchedule")
+                                           .build()))
         .endSpec()
         .build();
   }
@@ -226,6 +285,7 @@ public class PodSpecBuilderTestHelper {
         .withHostAliases(new ArrayList<>())
         .withVolumes(new ArrayList<>())
         .withInitContainers(new ArrayList<>())
+        .withTolerations(new ArrayList<>())
         .endSpec()
         .build();
   }
@@ -247,6 +307,8 @@ public class PodSpecBuilderTestHelper {
         .withActiveDeadlineSeconds(CIConstants.POD_MAX_TTL_SECS)
         .withHostAliases(new ArrayList<>())
         .withInitContainers(new ArrayList<>())
+        .withTolerations(new ArrayList<>())
+
         .endSpec()
         .build();
   }
@@ -271,6 +333,8 @@ public class PodSpecBuilderTestHelper {
         .withActiveDeadlineSeconds(CIConstants.POD_MAX_TTL_SECS)
         .withHostAliases(new ArrayList<>())
         .withInitContainers(new ArrayList<>())
+        .withTolerations(new ArrayList<>())
+
         .endSpec()
         .build();
   }
@@ -289,6 +353,7 @@ public class PodSpecBuilderTestHelper {
         .withVolumes(new ArrayList<>())
         .withInitContainers(new ArrayList<>())
         .withImagePullSecrets(new ArrayList<>())
+        .withTolerations(new ArrayList<>())
         .endSpec()
         .build();
   }
@@ -307,6 +372,80 @@ public class PodSpecBuilderTestHelper {
         .withVolumes(new ArrayList<>())
         .withInitContainers(new ArrayList<>())
         .withImagePullSecrets(new ArrayList<>())
+        .withTolerations(new ArrayList<>())
+        .endSpec()
+        .build();
+  }
+
+  public static CIK8ContainerParams basicContainerParamsWithVolume() {
+    Map<String, String> volumeToMountPath = new HashMap<>();
+    volumeToMountPath.put(volume1, mountPath1);
+    volumeToMountPath.put(volume2, mountPath2);
+    volumeToMountPath.put(volume3, mountPath3);
+    volumeToMountPath.put(volume4, mountPath4);
+    ImageDetails imageWithoutCred = ImageDetails.builder().name(imageName).tag(tag).registryUrl(registryUrl).build();
+    return CIK8ContainerParams.builder()
+        .name(containerName1)
+        .imageDetailsWithConnector(ImageDetailsWithConnector.builder().imageDetails(imageWithoutCred).build())
+        .volumeToMountPath(volumeToMountPath)
+        .build();
+  }
+
+  public static CIK8PodParams<CIK8ContainerParams> basicInputWithVolumes() {
+    EmptyDirVolume vol1 =
+        EmptyDirVolume.builder().name(volume1).mountPath(mountPath1).sizeMib(10).medium("memory").build();
+    HostPathVolume vol2 =
+        HostPathVolume.builder().name(volume2).mountPath(mountPath2).path(hostPath).hostPathType("Directory").build();
+    PVCVolume vol3 =
+        PVCVolume.builder().name(volume3).mountPath(mountPath3).claimName(claimName).readOnly(false).build();
+
+    return CIK8PodParams.<CIK8ContainerParams>builder()
+        .name(podName)
+        .namespace(namespace)
+        .stepExecVolumeName(stepExecVolumeName)
+        .stepExecWorkingDir(stepExecWorkingDir)
+        .containerParamsList(asList(basicContainerParamsWithVolume()))
+        .volumes(Arrays.asList(vol1, vol2, vol3))
+        .containerParamsList(Arrays.asList(basicContainerParamsWithVolume()))
+        .build();
+  }
+
+  public static V1Pod expectedPodWithVolume() {
+    V1Volume vol1 = new V1VolumeBuilder()
+                        .withName(volume1)
+                        .withEmptyDir(new V1EmptyDirVolumeSourceBuilder()
+                                          .withMedium("memory")
+                                          .withSizeLimit(Quantity.fromString("10Mi"))
+                                          .build())
+                        .build();
+    V1Volume vol2 =
+        new V1VolumeBuilder()
+            .withName(volume2)
+            .withHostPath(new V1HostPathVolumeSourceBuilder().withPath(hostPath).withType("Directory").build())
+            .build();
+    V1Volume vol3 =
+        new V1VolumeBuilder()
+            .withName(volume3)
+            .withPersistentVolumeClaim(
+                new V1PersistentVolumeClaimVolumeSourceBuilder().withClaimName(claimName).withReadOnly(false).build())
+            .build();
+    V1Volume vol4 =
+        new V1VolumeBuilder().withName(volume4).withEmptyDir(new V1EmptyDirVolumeSourceBuilder().build()).build();
+
+    return new V1PodBuilder()
+        .withNewMetadata()
+        .withName(podName)
+        .withNamespace(namespace)
+        .endMetadata()
+        .withNewSpec()
+        .withContainers(basicContainerBuilder().build())
+        .withRestartPolicy(CIConstants.RESTART_POLICY)
+        .withActiveDeadlineSeconds(CIConstants.POD_MAX_TTL_SECS)
+        .withHostAliases(new ArrayList<>())
+        .withVolumes(Arrays.asList(vol1, vol3, vol2, vol4))
+        .withInitContainers(new ArrayList<>())
+        .withImagePullSecrets(new ArrayList<>())
+        .withTolerations(new ArrayList<>())
         .endSpec()
         .build();
   }
