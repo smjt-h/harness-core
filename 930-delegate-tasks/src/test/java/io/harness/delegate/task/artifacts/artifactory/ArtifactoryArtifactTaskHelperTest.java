@@ -49,7 +49,9 @@ public class ArtifactoryArtifactTaskHelperTest extends CategoryTest {
   @Owner(developers = MLUKIC)
   @Category(UnitTests.class)
   public void testGetArtifactCollectResponseGetLastSuccessfulBuild() {
-    doNothing().when(artifactoryArtifactTaskHandler).decryptRequestDTOs(any());
+    doNothing()
+        .when(artifactoryArtifactTaskHandler)
+        .decryptRequestDTOs(ArtifactoryDockerArtifactDelegateRequest.builder().build());
     ArtifactoryDockerArtifactDelegateRequest artifactoryArtifactDelegateRequest =
         ArtifactoryDockerArtifactDelegateRequest.builder()
             .artifactoryConnectorDTO(
@@ -68,7 +70,7 @@ public class ArtifactoryArtifactTaskHelperTest extends CategoryTest {
     assertThat(artifactTaskResponse).isNotNull();
     assertThat(artifactTaskResponse.getArtifactTaskExecutionResponse()).isEqualTo(artifactTaskExecutionResponse);
 
-    verify(artifactoryArtifactTaskHandler).decryptRequestDTOs(any());
+    verify(artifactoryArtifactTaskHandler).decryptRequestDTOs(artifactoryArtifactDelegateRequest);
     verify(artifactoryArtifactTaskHandler).getLastSuccessfulBuild(artifactoryArtifactDelegateRequest);
   }
 
@@ -76,7 +78,9 @@ public class ArtifactoryArtifactTaskHelperTest extends CategoryTest {
   @Owner(developers = MLUKIC)
   @Category(UnitTests.class)
   public void testGetArtifactCollectResponseGetBuilds() {
-    doNothing().when(artifactoryArtifactTaskHandler).decryptRequestDTOs(any());
+    doNothing()
+        .when(artifactoryArtifactTaskHandler)
+        .decryptRequestDTOs(ArtifactoryDockerArtifactDelegateRequest.builder().build());
     ArtifactoryDockerArtifactDelegateRequest artifactoryArtifactDelegateRequest =
         ArtifactoryDockerArtifactDelegateRequest.builder()
             .artifactoryConnectorDTO(
@@ -95,7 +99,7 @@ public class ArtifactoryArtifactTaskHelperTest extends CategoryTest {
     assertThat(artifactTaskResponse).isNotNull();
     assertThat(artifactTaskResponse.getArtifactTaskExecutionResponse()).isEqualTo(artifactTaskExecutionResponse);
 
-    verify(artifactoryArtifactTaskHandler).decryptRequestDTOs(any());
+    verify(artifactoryArtifactTaskHandler).decryptRequestDTOs(artifactoryArtifactDelegateRequest);
     verify(artifactoryArtifactTaskHandler).getBuilds(artifactoryArtifactDelegateRequest);
   }
 
@@ -103,7 +107,9 @@ public class ArtifactoryArtifactTaskHelperTest extends CategoryTest {
   @Owner(developers = MLUKIC)
   @Category(UnitTests.class)
   public void testGetArtifactCollectResponseValidateArtifactServers() {
-    doNothing().when(artifactoryArtifactTaskHandler).decryptRequestDTOs(any());
+    doNothing()
+        .when(artifactoryArtifactTaskHandler)
+        .decryptRequestDTOs(ArtifactoryDockerArtifactDelegateRequest.builder().build());
     ArtifactoryDockerArtifactDelegateRequest artifactoryArtifactDelegateRequest =
         ArtifactoryDockerArtifactDelegateRequest.builder()
             .artifactoryConnectorDTO(
@@ -122,7 +128,7 @@ public class ArtifactoryArtifactTaskHelperTest extends CategoryTest {
     assertThat(artifactTaskResponse).isNotNull();
     assertThat(artifactTaskResponse.getArtifactTaskExecutionResponse()).isEqualTo(artifactTaskExecutionResponse);
 
-    verify(artifactoryArtifactTaskHandler).decryptRequestDTOs(any());
+    verify(artifactoryArtifactTaskHandler).decryptRequestDTOs(artifactoryArtifactDelegateRequest);
     verify(artifactoryArtifactTaskHandler).validateArtifactServer(artifactoryArtifactDelegateRequest);
   }
 }
