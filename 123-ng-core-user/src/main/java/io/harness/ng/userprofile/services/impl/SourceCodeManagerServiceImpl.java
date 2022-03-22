@@ -114,8 +114,8 @@ public class SourceCodeManagerServiceImpl implements SourceCodeManagerService {
     List<SourceCodeManager> scmList = sourceCodeManagerRepository.findByUserIdentifierAndAccountIdentifier(
         getUserIdentifier().get(), accountIdentifier);
     if (!scmList.isEmpty()) {
-      if ((((GithubHttpAuthentication) ((GithubSCM) (scmList.get(0))).getAuthenticationDetails()).getAuth()
-                  instanceof GithubUsernameToken)) {
+      if (((GithubHttpAuthentication) ((GithubSCM) (scmList.get(0))).getAuthenticationDetails()).getAuth()
+              instanceof GithubUsernameToken) {
         String secretId = ((GithubUsernameToken) ((GithubHttpAuthentication) ((GithubSCM) (scmList.get(0)))
                                                       .getAuthenticationDetails())
                                .getAuth())
