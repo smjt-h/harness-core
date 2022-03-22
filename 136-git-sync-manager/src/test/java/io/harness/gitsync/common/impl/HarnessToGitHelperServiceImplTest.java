@@ -79,10 +79,10 @@ public class HarnessToGitHelperServiceImplTest extends GitSyncTestBase {
   @Category(UnitTests.class)
   public void testFetchLastCommitIdForFileUpdateCase() {
     ArgumentCaptor<String> branchArgumentCaptor = ArgumentCaptor.forClass(String.class);
-    when(gitEntityService.get(any(), any(), any())).thenReturn(getGitSyncEntityDTODefault());
+    when(gitEntityService.get(any(), any(), any(), any(), any())).thenReturn(getGitSyncEntityDTODefault());
     String lastCommitId = harnessToGitHelperService.fetchLastCommitIdForFile(
         getFileInfoDefault("", ChangeType.MODIFY), getEntityDetailDefault());
-    verify(gitEntityService, times(1)).get(any(), any(), branchArgumentCaptor.capture());
+    verify(gitEntityService, times(1)).get(any(), any(), branchArgumentCaptor.capture(), any(), any());
     assertThat(branchArgumentCaptor.getValue()).isEqualTo(branch);
     assertThat(lastCommitId).isEqualTo(commitId);
   }
@@ -92,10 +92,10 @@ public class HarnessToGitHelperServiceImplTest extends GitSyncTestBase {
   @Category(UnitTests.class)
   public void testFetchLastCommitIdForFileUpdateToNewBranchCase() {
     ArgumentCaptor<String> branchArgumentCaptor = ArgumentCaptor.forClass(String.class);
-    when(gitEntityService.get(any(), any(), any())).thenReturn(getGitSyncEntityDTODefault());
+    when(gitEntityService.get(any(), any(), any(), any(), any())).thenReturn(getGitSyncEntityDTODefault());
     String lastCommitId = harnessToGitHelperService.fetchLastCommitIdForFile(
         getFileInfoDefault("", ChangeType.MODIFY, true), getEntityDetailDefault());
-    verify(gitEntityService, times(1)).get(any(), any(), branchArgumentCaptor.capture());
+    verify(gitEntityService, times(1)).get(any(), any(), branchArgumentCaptor.capture(), any(), any());
     assertThat(branchArgumentCaptor.getValue()).isEqualTo(baseBranch);
     assertThat(lastCommitId).isEqualTo(commitId);
   }
