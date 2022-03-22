@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Singleton;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -45,10 +46,15 @@ public class PhysicalDataCenterDTOToEntity
     return hostDTOs.stream()
         .filter(Objects::nonNull)
         .map(hostDTO
-            -> Host.builder()
-                   .hostName(hostDTO.getHostName())
-                   .hostAttributes(ImmutableMap.copyOf(hostDTO.getHostAttributes()))
-                   .build())
+            -> Host.builder().hostName(hostDTO.getHostName()).hostAttributes(getHostAttributes(hostDTO)).build())
         .collect(Collectors.toList());
+  }
+
+  private Map<String, String> getHostAttributes(HostDTO hostDTO) {
+    if (hostDTO.getHostAttributes() == null) {
+      return Collections.emptyMap();
+    }
+
+    return ImmutableMap.copyOf(hostDTO.getHostAttributes());
   }
 }
