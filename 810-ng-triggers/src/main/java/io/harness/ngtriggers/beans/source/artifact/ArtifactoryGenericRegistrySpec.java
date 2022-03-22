@@ -9,7 +9,6 @@ package io.harness.ngtriggers.beans.source.artifact;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.ngtriggers.Constants.ARTIFACTORY_GENERIC_REGISTRY;
-import static io.harness.ngtriggers.Constants.ARTIFACTORY_REGISTRY;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ngtriggers.beans.source.webhook.v2.TriggerEventDataCondition;

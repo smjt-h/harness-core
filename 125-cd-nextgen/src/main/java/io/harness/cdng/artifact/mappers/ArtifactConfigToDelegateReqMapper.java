@@ -98,7 +98,7 @@ public class ArtifactConfigToDelegateReqMapper {
   public ArtifactSourceDelegateRequest getArtifactoryArtifactDelegateRequest(
       ArtifactoryRegistryArtifactConfig artifactConfig, ArtifactoryConnectorDTO artifactoryConnectorDTO,
       List<EncryptedDataDetail> encryptedDataDetails, String connectorRef) {
-    if (artifactConfig.getRepositoryFormat().toString().equals(generic.name())) {
+    if (artifactConfig.getRepositoryFormat().getValue().equals(generic.name())) {
       return ArtifactConfigToDelegateReqMapper.getArtifactoryGenericArtifactDelegateRequest(
           artifactConfig, artifactoryConnectorDTO, encryptedDataDetails, connectorRef);
     } else {
