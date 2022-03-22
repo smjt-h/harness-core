@@ -36,6 +36,9 @@ public interface GitEntityService {
 
   GitSyncEntityDTO get(EntityReference entityReference, EntityType entityType, String branch);
 
+  GitSyncEntityDTO get(
+      EntityReference entityReference, EntityType entityType, String branch, String folderPath, String filePath);
+
   boolean save(String accountId, EntityDetail entityDetail, YamlGitConfigDTO yamlGitConfig, String folderPath,
       String filePath, String commitId, String branchName);
 

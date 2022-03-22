@@ -27,6 +27,9 @@ public interface GitFileLocationRepository
   Optional<GitFileLocation> findByEntityIdentifierFQNAndEntityTypeAndAccountIdAndBranch(
       String fqn, String entityType, String accountId, String branch);
 
+  Optional<GitFileLocation> findByEntityIdentifierFQNAndEntityTypeAndAccountIdAndBranchAndCompleteGitPath(
+      String fqn, String entityType, String accountId, String branch, String completeGitPath);
+
   Optional<GitFileLocation> findByEntityGitPathAndGitSyncConfigIdAndAccountIdAndBranch(
       String entityGitPath, String gitSyncConfigId, String accountId, String branch);
 

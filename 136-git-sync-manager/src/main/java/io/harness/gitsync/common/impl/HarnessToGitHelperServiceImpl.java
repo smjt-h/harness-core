@@ -365,8 +365,8 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     if (isEmpty(lastCommitIdForFile) && request.getChangeType() != ChangeType.ADD) {
       // If its saveToNewBranch use-case, then we choose base branch for existing entity commit
       String branch = request.getIsNewBranch() ? request.getBaseBranch().getValue() : request.getBranch();
-      GitSyncEntityDTO gitSyncEntityDTO =
-          gitEntityService.get(entityDetailDTO.getEntityRef(), entityDetailDTO.getType(), branch);
+      GitSyncEntityDTO gitSyncEntityDTO = gitEntityService.get(entityDetailDTO.getEntityRef(),
+          entityDetailDTO.getType(), branch, request.getFolderPath(), request.getFilePath());
       lastCommitIdForFile = gitSyncEntityDTO.getLastCommitId();
     }
     return lastCommitIdForFile;

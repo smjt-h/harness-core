@@ -265,6 +265,25 @@ public class GitEntityServiceImpl implements GitEntityService {
   }
 
   @Override
+  public GitSyncEntityDTO get(
+      EntityReference entityReference, EntityType entityType, String branch, String folderPath, String filePath) {
+    Optional<GitFileLocation> gitFileLocation;
+    String completeFilePath = GitSyncFilePathUtils.createFilePath(folderPath, filePath);
+    gitFileLocation =
+        gitFileLocationRepository.findByEntityIdentifierFQNAndEntityTypeAndAccountIdAndBranchAndCompleteGitPath(
+            entityReference.getFullyQualifiedName(), entityType.name(), entityReference.getAccountIdentifier(), branch,
+            completeFilePath);
+    if (!gitFileLocation.isPresent()) {
+      // try with complete path without forward slash
+      gitFileLocation =
+          gitFileLocationRepository.findByEntityIdentifierFQNAndEntityTypeAndAccountIdAndBranchAndCompleteGitPath(
+              entityReference.getFullyQualifiedName(), entityType.name(), entityReference.getAccountIdentifier(),
+              branch, completeFilePath.substring(1));
+    }
+    return gitFileLocation.map(this::buildGitSyncEntityDTO).orElse(null);
+  }
+
+  @Override
   public boolean save(String accountId, EntityDetail entityDetail, YamlGitConfigDTO yamlGitConfig, String folderPath,
       String filePath, String commitId, String branchName) {
     final Optional<GitFileLocation> gitFileLocation =
