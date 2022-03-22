@@ -280,7 +280,12 @@ public class GitEntityServiceImpl implements GitEntityService {
               entityReference.getFullyQualifiedName(), entityType.name(), entityReference.getAccountIdentifier(),
               branch, completeFilePath.substring(1));
     }
-    return gitFileLocation.map(this::buildGitSyncEntityDTO).orElse(null);
+    return gitFileLocation.map(this::buildGitSyncEntityDTO)
+        .orElseThrow(
+            ()
+                -> new InvalidRequestException(String.format(
+                    "No entity found for %s for entity type %s in branch [%s] with folderpath [%s] and filepath [%s]",
+                    entityReference.getFullyQualifiedName(), entityType, branch, folderPath, filePath)));
   }
 
   @Override
