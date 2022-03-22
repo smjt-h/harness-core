@@ -3460,18 +3460,6 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
-    "HostAttributeDTO": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        }
-      },
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
     "HostDTO": {
       "type": "object",
       "required": [
@@ -3479,9 +3467,9 @@
       ],
       "properties": {
         "hostAttributes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/HostAttributeDTO"
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
           }
         },
         "hostname": {

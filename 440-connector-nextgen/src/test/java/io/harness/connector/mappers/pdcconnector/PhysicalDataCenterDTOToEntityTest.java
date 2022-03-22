@@ -8,10 +8,6 @@
 package io.harness.connector.mappers.pdcconnector;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.connector.ConnectorTestConstants.ATTRIBUTE_NAME_1;
-import static io.harness.connector.ConnectorTestConstants.ATTRIBUTE_NAME_2;
-import static io.harness.connector.ConnectorTestConstants.ATTRIBUTE_TYPE_1;
-import static io.harness.connector.ConnectorTestConstants.ATTRIBUTE_TYPE_2;
 import static io.harness.connector.ConnectorTestConstants.HOST_NAME_1;
 import static io.harness.connector.ConnectorTestConstants.HOST_NAME_2;
 import static io.harness.connector.ConnectorTestConstants.SSK_KEY_REF_IDENTIFIER;
@@ -23,9 +19,7 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.connector.entities.embedded.pdcconnector.Host;
-import io.harness.connector.entities.embedded.pdcconnector.HostAttribute;
 import io.harness.connector.entities.embedded.pdcconnector.PhysicalDataCenterConnector;
-import io.harness.delegate.beans.connector.pdcconnector.HostAttributeDTO;
 import io.harness.delegate.beans.connector.pdcconnector.HostDTO;
 import io.harness.delegate.beans.connector.pdcconnector.PhysicalDataCenterConnectorDTO;
 import io.harness.encryption.Scope;
@@ -33,9 +27,10 @@ import io.harness.encryption.SecretRefData;
 import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 
+import com.google.common.collect.Maps;
 import java.util.Arrays;
 import java.util.List;
-import org.jetbrains.annotations.NotNull;
+import java.util.Map;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -73,30 +68,19 @@ public class PhysicalDataCenterDTOToEntityTest extends CategoryTest {
   private HostDTO getHostDTO(String hostName) {
     HostDTO hostDTO = new HostDTO();
     hostDTO.setHostName(hostName);
-    hostDTO.setHostAttributes(getListHostAttributeDTOs());
+    hostDTO.setHostAttributes(getHostAttributes());
 
     return hostDTO;
   }
 
-  private List<HostAttributeDTO> getListHostAttributeDTOs() {
-    HostAttributeDTO hostAttributeDTO1 = new HostAttributeDTO();
-    hostAttributeDTO1.setType(ATTRIBUTE_TYPE_1);
-    hostAttributeDTO1.setName(ATTRIBUTE_NAME_1);
-
-    HostAttributeDTO hostAttributeDTO2 = new HostAttributeDTO();
-    hostAttributeDTO2.setType(ATTRIBUTE_TYPE_2);
-    hostAttributeDTO2.setName(ATTRIBUTE_NAME_2);
-
-    return Arrays.asList(hostAttributeDTO1, hostAttributeDTO2);
+  private Map<String, String> getHostAttributes() {
+    Map<String, String> attr1 = Maps.newHashMap();
+    attr1.put("region", "west");
+    attr1.put("hostType", "DB");
+    return attr1;
   }
 
   private Host getHost(String hostName) {
     return Host.builder().hostName(hostName).hostAttributes(getHostAttributes()).build();
-  }
-
-  @NotNull
-  private List<HostAttribute> getHostAttributes() {
-    return Arrays.asList(HostAttribute.builder().name(ATTRIBUTE_NAME_1).type(ATTRIBUTE_TYPE_1).build(),
-        HostAttribute.builder().name(ATTRIBUTE_NAME_2).type(ATTRIBUTE_TYPE_2).build());
   }
 }

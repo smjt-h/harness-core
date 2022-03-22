@@ -11,7 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
 
-import java.util.List;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Value;
@@ -25,5 +25,5 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("io.harness.connector.entities.embedded.pdcconnector.Host")
 public class Host {
   String hostName;
-  List<HostAttribute> hostAttributes;
+  Map<String, String> hostAttributes;
 }

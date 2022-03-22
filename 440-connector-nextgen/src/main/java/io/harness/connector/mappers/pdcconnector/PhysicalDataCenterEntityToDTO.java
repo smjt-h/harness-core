@@ -12,14 +12,13 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.entities.embedded.pdcconnector.Host;
-import io.harness.connector.entities.embedded.pdcconnector.HostAttribute;
 import io.harness.connector.entities.embedded.pdcconnector.PhysicalDataCenterConnector;
 import io.harness.connector.mappers.ConnectorEntityToDTOMapper;
-import io.harness.delegate.beans.connector.pdcconnector.HostAttributeDTO;
 import io.harness.delegate.beans.connector.pdcconnector.HostDTO;
 import io.harness.delegate.beans.connector.pdcconnector.PhysicalDataCenterConnectorDTO;
 import io.harness.encryption.SecretRefHelper;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Singleton;
 import java.util.Collections;
 import java.util.List;
@@ -51,23 +50,7 @@ public class PhysicalDataCenterEntityToDTO
   private HostDTO getHostDTO(Host host) {
     HostDTO hostDTO = new HostDTO();
     hostDTO.setHostName(host.getHostName());
-    hostDTO.setHostAttributes(getHostAttributesDTOsFromHostAttributes(host.getHostAttributes()));
+    hostDTO.setHostAttributes(ImmutableMap.copyOf(host.getHostAttributes()));
     return hostDTO;
-  }
-
-  private List<HostAttributeDTO> getHostAttributesDTOsFromHostAttributes(List<HostAttribute> hostAttributes) {
-    if (isEmpty(hostAttributes)) {
-      return Collections.emptyList();
-    }
-
-    return hostAttributes.stream().filter(Objects::nonNull).map(this::getHostAttributeDTO).collect(Collectors.toList());
-  }
-
-  @NotNull
-  private HostAttributeDTO getHostAttributeDTO(HostAttribute hostAttribute) {
-    HostAttributeDTO hostAttributeDTO = new HostAttributeDTO();
-    hostAttributeDTO.setName(hostAttribute.getName());
-    hostAttributeDTO.setType(hostAttribute.getType());
-    return hostAttributeDTO;
   }
 }
