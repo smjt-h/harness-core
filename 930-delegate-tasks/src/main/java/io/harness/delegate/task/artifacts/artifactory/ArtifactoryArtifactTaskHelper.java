@@ -141,7 +141,7 @@ public class ArtifactoryArtifactTaskHelper {
     String filePath = Paths.get(artifactoryGenericArtifactDelegateRequest.getArtifactDirectory(), "*").toString();
 
     List<BuildDetails> buildDetails = artifactoryNgService.getBuildDetails(
-        artifactoryConfigRequest, artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, 100);
+        artifactoryConfigRequest, artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, 100000);
 
     return ArtifactTaskResponse.builder()
         .artifactTaskExecutionResponse(ArtifactTaskExecutionResponse.builder().buildDetails(buildDetails).build())
