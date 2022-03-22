@@ -39,12 +39,9 @@ import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketSshCredentials
 import io.harness.delegate.beans.connector.scm.github.*;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabAuthenticationDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabSshCredentialsDTO;
-import io.harness.delegate.utils.TaskSetupAbstractionHelper;
 import io.harness.encryption.SecretRefHelper;
 import io.harness.exception.InvalidRequestException;
-import io.harness.ng.core.api.NGSecretActivityService;
 import io.harness.ng.core.api.NGSecretServiceV2;
-import io.harness.ng.core.api.impl.NGSecretServiceV2Impl;
 import io.harness.ng.userprofile.commons.AwsCodeCommitSCMDTO;
 import io.harness.ng.userprofile.commons.AzureDevOpsSCMDTO;
 import io.harness.ng.userprofile.commons.BitbucketSCMDTO;
@@ -58,11 +55,8 @@ import io.harness.ng.userprofile.entities.GitlabSCM;
 import io.harness.ng.userprofile.entities.SourceCodeManager;
 import io.harness.ng.userprofile.entities.SourceCodeManager.SourceCodeManagerMapper;
 import io.harness.ng.userprofile.services.api.SourceCodeManagerService;
-import io.harness.outbox.api.OutboxService;
-import io.harness.repositories.ng.core.spring.SecretRepository;
 import io.harness.repositories.ng.userprofile.spring.SourceCodeManagerRepository;
 import io.harness.rule.Owner;
-import io.harness.secretmanagerclient.services.SshKeySpecDTOHelper;
 import io.harness.security.SourcePrincipalContextBuilder;
 import io.harness.security.dto.Principal;
 import io.harness.security.dto.PrincipalType;
@@ -73,12 +67,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import io.harness.service.DelegateGrpcClientWrapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.springframework.transaction.support.TransactionTemplate;
 
 @OwnedBy(PL)
 public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
@@ -87,19 +78,13 @@ public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
   @Inject private Map<SCMType, SourceCodeManagerMapper> scmMapBinder;
 
   private SourceCodeManagerRepository sourceCodeManagerRepository;
-  private  SecretRepository secretRepository;
-  private  DelegateGrpcClientWrapper delegateGrpcClientWrapper;
-  private  SshKeySpecDTOHelper sshKeySpecDTOHelper;
-  private  NGSecretActivityService ngSecretActivityService;
-  private  OutboxService outboxService;
-  private  TransactionTemplate transactionTemplate;
-  private  TaskSetupAbstractionHelper taskSetupAbstractionHelper;
   private String userIdentifier;
   private String name;
   private String sshKeyRef;
   private String accessKey;
   private String accessKeyRef;
   private String secretKeyRef;
+  private String secretRef;
   private String accountIdentifier;
 
   @Before
@@ -107,15 +92,7 @@ public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
     userIdentifier = generateUuid();
     accountIdentifier = randomAlphabetic(10);
     sourceCodeManagerRepository = mock(SourceCodeManagerRepository.class);
-    secretRepository = mock(SecretRepository.class);
-    delegateGrpcClientWrapper = mock(DelegateGrpcClientWrapper.class);
-    sshKeySpecDTOHelper = mock(SshKeySpecDTOHelper.class);
-    ngSecretActivityService = mock(NGSecretActivityService.class);
-    outboxService = mock(OutboxService.class);
-    transactionTemplate = mock(TransactionTemplate.class);
-    taskSetupAbstractionHelper = new TaskSetupAbstractionHelper();
-    ngSecretServiceV2 = new NGSecretServiceV2Impl(secretRepository, delegateGrpcClientWrapper, sshKeySpecDTOHelper,
-            ngSecretActivityService, outboxService, transactionTemplate, taskSetupAbstractionHelper);
+    ngSecretServiceV2 = mock(NGSecretServiceV2.class);
     sourceCodeManagerService =
         new SourceCodeManagerServiceImpl(ngSecretServiceV2, sourceCodeManagerRepository, scmMapBinder);
     Principal principal = mock(Principal.class);
@@ -127,6 +104,7 @@ public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
     accessKey = "access-key";
     accessKeyRef = "access-key-ref";
     secretKeyRef = "secret-key-ref";
+    secretRef = "account.secret-key-ref";
   }
 
   @Test
@@ -218,14 +196,15 @@ public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
   @Owner(developers = BOOPESH)
   @Category(UnitTests.class)
   public void testDeleteGitHubScmWithHttpAuth() {
-    SourceCodeManager gitHubScm = githubSCMhttpAuthDTOCreate();
+    SourceCodeManager gitHubScm = githubSCMHttpAuth();
     List<SourceCodeManager> sourceCodeManagerList = new ArrayList<>(Arrays.asList(gitHubScm));
-    when(sourceCodeManagerRepository.findByUserIdentifierAndAccountIdentifier(any(), any())).thenReturn(sourceCodeManagerList);
+    when(sourceCodeManagerRepository.findByUserIdentifierAndAccountIdentifier(any(), any()))
+        .thenReturn(sourceCodeManagerList);
     when(sourceCodeManagerRepository.deleteByUserIdentifierAndNameAndAccountIdentifier(any(), any(), any()))
-            .thenReturn(delete(sourceCodeManagerList));
-//    when(ngSecretServiceV2.get(accountIdentifier, null, null, secretKeyRef))
-//            .thenReturn(Optional.ofNullable(secretV2Optional));
+        .thenReturn(1L);
+    when(ngSecretServiceV2.delete(any(), any(), any(), any())).thenReturn(true);
     sourceCodeManagerService.delete(gitHubScm.getName(), gitHubScm.getAccountIdentifier());
+    delete(sourceCodeManagerList);
     assertThat(sourceCodeManagerList).hasSize(0);
   }
 
@@ -295,18 +274,6 @@ public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
         .build();
   }
 
-  private SourceCodeManager githubSCMhttpAuthDTOCreate() {
-    GithubHttpAuthentication githubAuthentication =
-            GithubHttpAuthentication.builder().auth(GithubUsernameToken.builder().tokenRef(secretKeyRef).build()).build();
-    return GithubSCM.builder()
-            .userIdentifier(userIdentifier)
-            .name(name)
-            .accountIdentifier(accountIdentifier)
-            .authType(GitAuthType.HTTP)
-            .authenticationDetails(githubAuthentication)
-            .build();
-  }
-
   private SourceCodeManagerDTO bitbucketSCMDTOCreate() {
     BitbucketAuthenticationDTO bitbucketAuthenticationDTO =
         BitbucketAuthenticationDTO.builder()
@@ -345,6 +312,18 @@ public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
         .name(name)
         .accountIdentifier(accountIdentifier)
         .authentication(githubAuthenticationDTO)
+        .build();
+  }
+
+  private SourceCodeManager githubSCMHttpAuth() {
+    GithubHttpAuthentication githubAuthentication =
+        GithubHttpAuthentication.builder().auth(GithubUsernameToken.builder().tokenRef(secretRef).build()).build();
+    return GithubSCM.builder()
+        .userIdentifier(userIdentifier)
+        .name(name)
+        .accountIdentifier(accountIdentifier)
+        .authType(GitAuthType.HTTP)
+        .authenticationDetails(githubAuthentication)
         .build();
   }
 
