@@ -116,11 +116,12 @@ public class SourceCodeManagerServiceImpl implements SourceCodeManagerService {
     if (!scmList.isEmpty()) {
       if (((GithubHttpAuthentication) ((GithubSCM) (scmList.get(0))).getAuthenticationDetails()).getAuth()
               instanceof GithubUsernameToken) {
-        String secretId = ((GithubUsernameToken) ((GithubHttpAuthentication) ((GithubSCM) (scmList.get(0)))
-                                                      .getAuthenticationDetails())
-                               .getAuth())
-                              .getTokenRef()
-                              .split("\\.")[1];
+        String[] tokenRef = ((GithubUsernameToken) ((GithubHttpAuthentication) ((GithubSCM) (scmList.get(0)))
+                                                        .getAuthenticationDetails())
+                                 .getAuth())
+                                .getTokenRef()
+                                .split("\\.");
+        String secretId = tokenRef.length > 0 ? tokenRef[1] : tokenRef[0];
         ngSecretServiceV2.delete(accountIdentifier, null, null, secretId);
       }
       sourceCodeManagerRepository.deleteByUserIdentifierAndNameAndAccountIdentifier(
