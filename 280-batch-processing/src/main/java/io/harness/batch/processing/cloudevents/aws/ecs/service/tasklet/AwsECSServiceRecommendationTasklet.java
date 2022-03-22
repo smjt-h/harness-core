@@ -185,14 +185,8 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
         }
         recommendation.setPercentileBasedResourceRecommendation(computedPercentiles);
 
-        Cost lastDayCost;
-        try {
-          lastDayCost = billingDataService.getECSServiceLastAvailableDayCost(accountId, clusterId, serviceName,
+        Cost lastDayCost = billingDataService.getECSServiceLastAvailableDayCost(accountId, clusterId, serviceName,
               startTime.minus(Duration.ofDays(RECOMMENDATION_FOR_DAYS + 1)));
-        } catch (Exception e) {
-          log.info("Error getting last day cost Timescale error");
-          lastDayCost = null;
-        }
         log.info("Last Day Cost for account: {}, cost: {}", accountId, lastDayCost);
         if (lastDayCost != null) {
           recommendation.setLastDayCost(lastDayCost);
