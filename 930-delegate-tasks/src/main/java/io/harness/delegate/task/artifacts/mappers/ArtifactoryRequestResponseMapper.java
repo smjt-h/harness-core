@@ -16,8 +16,11 @@ import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryUsern
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateResponse;
 import io.harness.utils.FieldWithPlainTextOrSecretValueHelper;
+
+import software.wings.helpers.ext.jenkins.BuildDetails;
 
 import lombok.experimental.UtilityClass;
 
@@ -63,13 +66,12 @@ public class ArtifactoryRequestResponseMapper {
   }
 
   public ArtifactoryGenericArtifactDelegateResponse toArtifactoryGenericResponse(
-      BuildDetailsInternal buildDetailsInternal, ArtifactoryDockerArtifactDelegateRequest request) {
+      BuildDetails buildDetails, ArtifactoryGenericArtifactDelegateRequest request) {
     return ArtifactoryGenericArtifactDelegateResponse.builder()
-        .buildDetails(ArtifactBuildDetailsMapper.toBuildDetailsNG(buildDetailsInternal))
+        .buildDetails(ArtifactBuildDetailsMapper.toBuildDetailsNG(buildDetails))
         .repositoryName(request.getRepositoryName())
-        .artifactPath(request.getArtifactPath())
+        .artifactPath(buildDetails.getArtifactPath())
         .repositoryFormat(request.getRepositoryFormat())
-        .artifactDirectory(buildDetailsInternal.getNumber())
         .sourceType(ArtifactSourceType.ARTIFACTORY_REGISTRY)
         .build();
   }

@@ -7,25 +7,26 @@
 
 package io.harness.delegate.task.executioncapability;
 
+import static io.harness.k8s.kubectl.Utils.executeCommand;
+
 import io.harness.capability.CapabilityParameters;
 import io.harness.capability.CapabilitySubjectPermission;
 import io.harness.delegate.beans.executioncapability.CapabilityResponse;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.ServerlessInstallationCapability;
 
-import static io.harness.k8s.kubectl.Utils.executeCommand;
-
 public class ServerlessInstallationCapabilityCheck implements CapabilityCheck, ProtoCapabilityCheck {
   private final String serverlessVersionCommand = "serverless --version";
 
   @Override
   public CapabilityResponse performCapabilityCheck(ExecutionCapability executionCapability) {
-    ServerlessInstallationCapability serverlessInstallationCapability = (ServerlessInstallationCapability) executionCapability;
+    ServerlessInstallationCapability serverlessInstallationCapability =
+        (ServerlessInstallationCapability) executionCapability;
 
     return CapabilityResponse.builder()
-            .validated(executeCommand(serverlessVersionCommand, 2))
-            .delegateCapability(serverlessInstallationCapability)
-            .build();
+        .validated(executeCommand(serverlessVersionCommand, 2))
+        .delegateCapability(serverlessInstallationCapability)
+        .build();
   }
 
   @Override
@@ -33,7 +34,9 @@ public class ServerlessInstallationCapabilityCheck implements CapabilityCheck, P
     CapabilitySubjectPermission.CapabilitySubjectPermissionBuilder builder = CapabilitySubjectPermission.builder();
 
     return builder
-            .permissionResult(executeCommand(serverlessVersionCommand, 2) ? CapabilitySubjectPermission.PermissionResult.ALLOWED : CapabilitySubjectPermission.PermissionResult.DENIED)
-            .build();
+        .permissionResult(executeCommand(serverlessVersionCommand, 2)
+                ? CapabilitySubjectPermission.PermissionResult.ALLOWED
+                : CapabilitySubjectPermission.PermissionResult.DENIED)
+        .build();
   }
 }
