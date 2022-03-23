@@ -38,6 +38,6 @@ ENV PATH="$JAVA_HOME/bin:${PATH}"
 RUN curl -#k https://app.harness.io/public/shared/tools/alpn/release/8.1.13.v20181017/alpn-boot-8.1.13.v20181017.jar -o alpn-boot-8.1.13.v20181017.jar
 COPY ./delegate.jar ./delegate.jar
 
-USER 1001
+# USER 1001
 
 CMD [ "./start.sh" ]
