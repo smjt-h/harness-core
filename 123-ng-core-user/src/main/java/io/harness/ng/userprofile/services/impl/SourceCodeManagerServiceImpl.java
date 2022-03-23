@@ -14,6 +14,8 @@ import static java.lang.String.format;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.entities.embedded.githubconnector.GithubHttpAuthentication;
 import io.harness.connector.entities.embedded.githubconnector.GithubUsernameToken;
+import io.harness.encryption.SecretRefData;
+import io.harness.encryption.SecretRefHelper;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.api.NGSecretServiceV2;
@@ -35,8 +37,10 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 
+@Slf4j
 @OwnedBy(PL)
 @NoArgsConstructor
 @AllArgsConstructor
@@ -116,13 +120,18 @@ public class SourceCodeManagerServiceImpl implements SourceCodeManagerService {
     if (!scmList.isEmpty()) {
       if (((GithubHttpAuthentication) ((GithubSCM) (scmList.get(0))).getAuthenticationDetails()).getAuth()
               instanceof GithubUsernameToken) {
-        String[] tokenRef = ((GithubUsernameToken) ((GithubHttpAuthentication) ((GithubSCM) (scmList.get(0)))
-                                                        .getAuthenticationDetails())
-                                 .getAuth())
-                                .getTokenRef()
-                                .split("\\.");
-        String secretId = tokenRef.length > 0 ? tokenRef[1] : tokenRef[0];
-        ngSecretServiceV2.delete(accountIdentifier, null, null, secretId);
+        String secretId =
+            SecretRefHelper
+                .createSecretRef(((GithubUsernameToken) ((GithubHttpAuthentication) ((GithubSCM) (scmList.get(0)))
+                                                             .getAuthenticationDetails())
+                                      .getAuth())
+                                     .getTokenRef())
+                .getIdentifier();
+        if (!ngSecretServiceV2.delete(accountIdentifier, null, null, secretId)) {
+          log.error("Not able to delete Secret with id:{} associated with SCM {} in account {}", secretId, name,
+              accountIdentifier);
+          throw new InvalidRequestException("Secret cannot be deleted");
+        }
       }
       sourceCodeManagerRepository.deleteByUserIdentifierAndNameAndAccountIdentifier(
           getUserIdentifier().get(), name, accountIdentifier);

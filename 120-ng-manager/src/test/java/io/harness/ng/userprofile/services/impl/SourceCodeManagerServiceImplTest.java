@@ -17,6 +17,7 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -46,6 +47,7 @@ import io.harness.delegate.beans.connector.scm.gitlab.GitlabSshCredentialsDTO;
 import io.harness.encryption.SecretRefHelper;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.api.NGSecretServiceV2;
+import io.harness.ng.core.api.impl.NGSecretServiceV2Impl;
 import io.harness.ng.userprofile.commons.AwsCodeCommitSCMDTO;
 import io.harness.ng.userprofile.commons.AzureDevOpsSCMDTO;
 import io.harness.ng.userprofile.commons.BitbucketSCMDTO;
@@ -66,11 +68,7 @@ import io.harness.security.dto.Principal;
 import io.harness.security.dto.PrincipalType;
 
 import com.google.inject.Inject;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -78,6 +76,7 @@ import org.junit.experimental.categories.Category;
 @OwnedBy(PL)
 public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
   NGSecretServiceV2 ngSecretServiceV2;
+  NGSecretServiceV2Impl ngSecretServiceV2Impl;
   SourceCodeManagerService sourceCodeManagerService;
   @Inject private Map<SCMType, SourceCodeManagerMapper> scmMapBinder;
 
@@ -97,6 +96,7 @@ public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
     accountIdentifier = randomAlphabetic(10);
     sourceCodeManagerRepository = mock(SourceCodeManagerRepository.class);
     ngSecretServiceV2 = mock(NGSecretServiceV2.class);
+    ngSecretServiceV2Impl = mock(NGSecretServiceV2Impl.class);
     sourceCodeManagerService =
         new SourceCodeManagerServiceImpl(ngSecretServiceV2, sourceCodeManagerRepository, scmMapBinder);
     Principal principal = mock(Principal.class);
@@ -199,17 +199,49 @@ public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
   @Test
   @Owner(developers = BOOPESH)
   @Category(UnitTests.class)
-  public void testDeleteGitHubScmWithHttpAuth() {
-    SourceCodeManager gitHubScm = githubSCMHttpAuth();
+  public void testDeleteValidGitHubScmWithHttpAuth() {
+    SourceCodeManager gitHubScm = githubSCMHttpAuth(secretRef);
     List<SourceCodeManager> sourceCodeManagerList = new ArrayList<>(Arrays.asList(gitHubScm));
     when(sourceCodeManagerRepository.findByUserIdentifierAndAccountIdentifier(any(), any()))
         .thenReturn(sourceCodeManagerList);
     when(sourceCodeManagerRepository.deleteByUserIdentifierAndNameAndAccountIdentifier(any(), any(), any()))
         .thenReturn(1L);
-    when(ngSecretServiceV2.delete(any(), any(), any(), any())).thenReturn(true);
-    sourceCodeManagerService.delete(gitHubScm.getName(), gitHubScm.getAccountIdentifier());
+    when(ngSecretServiceV2.delete(any(), any(), any(), eq(secretKeyRef))).thenReturn(true);
+    boolean result = sourceCodeManagerService.delete(gitHubScm.getName(), gitHubScm.getAccountIdentifier());
+    assertThat(result).isTrue();
     delete(sourceCodeManagerList);
     assertThat(sourceCodeManagerList).hasSize(0);
+  }
+
+  @Test
+  @Owner(developers = BOOPESH)
+  @Category(UnitTests.class)
+  public void testDeleteGitHubScmWithHttpAuthAndOnlySecretId() {
+    SourceCodeManager gitHubScm = githubSCMHttpAuth(secretKeyRef);
+    List<SourceCodeManager> sourceCodeManagerList = new ArrayList<>(Collections.singletonList(gitHubScm));
+    when(sourceCodeManagerRepository.findByUserIdentifierAndAccountIdentifier(any(), any()))
+        .thenReturn(sourceCodeManagerList);
+    when(sourceCodeManagerRepository.deleteByUserIdentifierAndNameAndAccountIdentifier(any(), any(), any()))
+        .thenReturn(1L);
+    when(ngSecretServiceV2.delete(any(), any(), any(), eq(secretKeyRef))).thenReturn(true);
+    boolean result = sourceCodeManagerService.delete(gitHubScm.getName(), gitHubScm.getAccountIdentifier());
+    assertThat(result).isTrue();
+    delete(sourceCodeManagerList);
+    assertThat(sourceCodeManagerList).hasSize(0);
+  }
+
+  @Test(expected = InvalidRequestException.class)
+  @Owner(developers = BOOPESH)
+  @Category(UnitTests.class)
+  public void testDeleteInValidGitHubScmWithHttpAuthAndEmptySecretRef() {
+    SourceCodeManager gitHubScm = githubSCMHttpAuth("");
+    List<SourceCodeManager> sourceCodeManagerList = new ArrayList<>(Arrays.asList(gitHubScm));
+    when(sourceCodeManagerRepository.findByUserIdentifierAndAccountIdentifier(any(), any()))
+        .thenReturn(sourceCodeManagerList);
+    when(sourceCodeManagerRepository.deleteByUserIdentifierAndNameAndAccountIdentifier(any(), any(), any()))
+        .thenReturn(1L);
+    when(ngSecretServiceV2.delete(any(), any(), any(), eq(secretKeyRef))).thenReturn(true);
+    sourceCodeManagerService.delete(gitHubScm.getName(), gitHubScm.getAccountIdentifier());
   }
 
   @Test
@@ -319,7 +351,7 @@ public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
         .build();
   }
 
-  private SourceCodeManager githubSCMHttpAuth() {
+  private SourceCodeManager githubSCMHttpAuth(String secretRef) {
     GithubHttpAuthentication githubAuthentication =
         GithubHttpAuthentication.builder().auth(GithubUsernameToken.builder().tokenRef(secretRef).build()).build();
     return GithubSCM.builder()
