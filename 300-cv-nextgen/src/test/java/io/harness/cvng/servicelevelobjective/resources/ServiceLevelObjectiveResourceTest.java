@@ -337,6 +337,7 @@ public class ServiceLevelObjectiveResourceTest extends CvNextGenTestBase {
 
   private static String convertToJson(String yamlString) {
     Yaml yaml = new Yaml();
+
     Map<String, Object> map = yaml.load(yamlString);
 
     JSONObject jsonObject = new JSONObject(map);
