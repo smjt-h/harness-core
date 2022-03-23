@@ -7,9 +7,9 @@
 
 package io.harness.connector;
 
-import static io.harness.AuthorizationServiceHeader.CE_NEXT_GEN;
-import static io.harness.annotations.dev.HarnessTeam.DX;
-
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.MapBinder;
+import com.google.inject.name.Names;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.aws.AwsClient;
 import io.harness.aws.AwsClientImpl;
@@ -20,7 +20,7 @@ import io.harness.connector.impl.ConnectorActivityServiceImpl;
 import io.harness.connector.impl.ConnectorFilterServiceImpl;
 import io.harness.connector.impl.ConnectorHeartbeatServiceImpl;
 import io.harness.connector.impl.DefaultConnectorServiceImpl;
-import io.harness.connector.impl.HostServiceImpl;
+import io.harness.connector.impl.NGHostServiceImpl;
 import io.harness.connector.impl.NGConnectorSecretManagerServiceImpl;
 import io.harness.connector.mappers.ConnectorDTOToEntityMapper;
 import io.harness.connector.mappers.ConnectorEntityToDTOMapper;
@@ -32,8 +32,8 @@ import io.harness.connector.services.ConnectorActivityService;
 import io.harness.connector.services.ConnectorFilterService;
 import io.harness.connector.services.ConnectorHeartbeatService;
 import io.harness.connector.services.ConnectorService;
-import io.harness.connector.services.HostService;
 import io.harness.connector.services.NGConnectorSecretManagerService;
+import io.harness.connector.services.NGHostService;
 import io.harness.connector.task.ConnectorValidationHandler;
 import io.harness.connector.validator.ConnectionValidator;
 import io.harness.delegate.beans.connector.ConnectorType;
@@ -49,9 +49,8 @@ import io.harness.ng.core.accountsetting.services.NGAccountSettingServiceImpl;
 import io.harness.persistence.HPersistence;
 import io.harness.service.ScmServiceClient;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.MapBinder;
-import com.google.inject.name.Names;
+import static io.harness.AuthorizationServiceHeader.CE_NEXT_GEN;
+import static io.harness.annotations.dev.HarnessTeam.DX;
 
 @OwnedBy(DX)
 public class ConnectorModule extends AbstractModule {
@@ -120,7 +119,7 @@ public class ConnectorModule extends AbstractModule {
     bind(GithubService.class).to(GithubServiceImpl.class);
     bind(ScmServiceClient.class).to(ScmServiceClientImpl.class);
     bind(NGAccountSettingService.class).to(NGAccountSettingServiceImpl.class);
-    bind(HostService.class).to(HostServiceImpl.class);
+    bind(NGHostService.class).to(NGHostServiceImpl.class);
     MapBinder<String, FilterPropertiesMapper> filterPropertiesMapper =
         MapBinder.newMapBinder(binder(), String.class, FilterPropertiesMapper.class);
     filterPropertiesMapper.addBinding(FilterType.CONNECTOR.toString()).to(ConnectorFilterPropertiesMapper.class);

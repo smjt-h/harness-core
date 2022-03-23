@@ -1,10 +1,7 @@
 package io.harness.connector.impl;
 
-import static io.harness.annotations.dev.HarnessTeam.CDP;
-
-import static java.util.Arrays.asList;
-import static org.assertj.core.api.Assertions.assertThat;
-
+import com.google.common.collect.Maps;
+import com.google.inject.Inject;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.connector.ConnectorDTO;
@@ -18,11 +15,6 @@ import io.harness.delegate.beans.connector.pdcconnector.PhysicalDataCenterConnec
 import io.harness.ng.beans.PageRequest;
 import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
-
-import com.google.common.collect.Maps;
-import com.google.inject.Inject;
-import java.util.List;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -30,9 +22,16 @@ import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
+import java.util.Map;
+
+import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
+
 @OwnedBy(CDP)
 @Slf4j
-public class HostServiceImplTest extends ConnectorsTestBase {
+public class NGHostServiceImplTest extends ConnectorsTestBase {
   private static final String REGION = "region";
   private static final String WEST = "west";
   private static final String HOST_TYPE = "hostType";
@@ -42,7 +41,7 @@ public class HostServiceImplTest extends ConnectorsTestBase {
   private static final String accountIdentifier = "accountIdentifier";
   private static final String identifier = "identifier";
   private static final String name = "name";
-  @Inject @InjectMocks private HostServiceImpl hostService;
+  @Inject @InjectMocks private NGHostServiceImpl hostService;
   @Inject @InjectMocks private DefaultConnectorServiceImpl connectorService;
 
   @Test
@@ -118,8 +117,8 @@ public class HostServiceImplTest extends ConnectorsTestBase {
   private ConnectorDTO createPdcConnectorRequestDTO() {
     PhysicalDataCenterConnectorDTO connectorDTO = PhysicalDataCenterConnectorDTO.builder().hosts(createHosts()).build();
     ConnectorInfoDTO connectorInfo = ConnectorInfoDTO.builder()
-                                         .name(HostServiceImplTest.name)
-                                         .identifier(HostServiceImplTest.identifier)
+                                         .name(NGHostServiceImplTest.name)
+                                         .identifier(NGHostServiceImplTest.identifier)
                                          .connectorType(ConnectorType.PDC)
                                          .connectorConfig(connectorDTO)
                                          .build();

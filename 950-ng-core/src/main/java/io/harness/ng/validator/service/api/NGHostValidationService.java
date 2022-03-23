@@ -7,17 +7,17 @@
 
 package io.harness.ng.validator.service.api;
 
-import static io.harness.annotations.dev.HarnessTeam.CDP;
-
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.validator.dto.HostValidationDTO;
 
-import java.util.List;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
+import java.util.List;
+
+import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 @OwnedBy(CDP)
-public interface HostValidationService {
+public interface NGHostValidationService {
   /**
    * Validate SSH hosts credentials and connectivity.
    *

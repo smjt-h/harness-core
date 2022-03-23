@@ -7,13 +7,6 @@
 
 package io.harness.delegate.beans.connector.pdcconnector;
 
-import static io.harness.annotations.dev.HarnessTeam.CDP;
-
-import static org.apache.commons.lang3.StringUtils.isBlank;
-
-import io.harness.annotations.dev.OwnedBy;
-import io.harness.exception.InvalidRequestException;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JavaType;
@@ -22,13 +15,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import io.harness.annotations.dev.OwnedBy;
+import io.harness.exception.InvalidRequestException;
+import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
+
+import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @OwnedBy(CDP)
 public class HostDTOsDeserializer extends StdDeserializer<List<HostDTO>> {
@@ -78,8 +77,7 @@ public class HostDTOsDeserializer extends StdDeserializer<List<HostDTO>> {
 
   @NotNull
   private HostDTO getHostDTO(final String host) {
-    HostDTO hostDTO = new HostDTO();
-    hostDTO.setHostName(host);
+    HostDTO hostDTO = new HostDTO(host, Collections.EMPTY_MAP);
     return hostDTO;
   }
 }

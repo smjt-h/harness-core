@@ -1,11 +1,6 @@
-package io.harness.connector.apis.resource;
+package io.harness.ng.core.remote;
 
-import static io.harness.NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE;
-import static io.harness.NGCommonEntityConstants.ORG_PARAM_MESSAGE;
-import static io.harness.NGCommonEntityConstants.PROJECT_PARAM_MESSAGE;
-import static io.harness.connector.accesscontrol.ConnectorsAccessControlPermissions.VIEW_CONNECTOR_PERMISSION;
-import static io.harness.utils.PageUtils.getNGPageResponse;
-
+import com.google.inject.Inject;
 import io.harness.NGCommonEntityConstants;
 import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.accesscontrol.NGAccessControlCheck;
@@ -13,7 +8,7 @@ import io.harness.accesscontrol.ResourceIdentifier;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.accesscontrol.ResourceTypes;
-import io.harness.connector.services.HostService;
+import io.harness.connector.services.NGHostService;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.delegate.beans.connector.pdcconnector.HostDTO;
 import io.harness.delegate.beans.connector.pdcconnector.HostFilterDTO;
@@ -25,8 +20,6 @@ import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.security.annotations.NextGenManagerAuth;
-
-import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -37,15 +30,22 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.hibernate.validator.constraints.NotBlank;
+import org.springframework.data.domain.Page;
+import retrofit2.http.Body;
+
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import org.hibernate.validator.constraints.NotBlank;
-import org.springframework.data.domain.Page;
-import retrofit2.http.Body;
+
+import static io.harness.NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.ORG_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.PROJECT_PARAM_MESSAGE;
+import static io.harness.connector.accesscontrol.ConnectorsAccessControlPermissions.VIEW_CONNECTOR_PERMISSION;
+import static io.harness.utils.PageUtils.getNGPageResponse;
 
 @Api("/hosts")
 @Path("/hosts")
@@ -71,11 +71,11 @@ import retrofit2.http.Body;
     })
 @NextGenManagerAuth
 @OwnedBy(HarnessTeam.CDP)
-public class ConnectorHostResource {
-  private final HostService hostService;
+public class NGHostResource {
+  private final NGHostService hostService;
 
   @Inject
-  public ConnectorHostResource(HostService hostService) {
+  public NGHostResource(NGHostService hostService) {
     this.hostService = hostService;
   }
 

@@ -7,21 +7,8 @@
 
 package io.harness.ng.validator.service;
 
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.delegate.beans.NgSetupFields.NG;
-import static io.harness.delegate.beans.NgSetupFields.OWNER;
-import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.DEFAULT_HOST_VALIDATION_FAILED_MSG;
-import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.HOSTS_NUMBER_VALIDATION_LIMIT;
-import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.TRUE_STR;
-import static io.harness.delegate.task.utils.PhysicalDataCenterUtils.extractHostnameFromHost;
-import static io.harness.delegate.task.utils.PhysicalDataCenterUtils.extractPortFromHost;
-import static io.harness.exception.WingsException.USER;
-import static io.harness.exception.WingsException.USER_SRE;
-import static io.harness.ng.validator.dto.HostValidationDTO.HostValidationStatus.FAILED;
-
-import static java.lang.String.format;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.harness.beans.DelegateTaskRequest;
 import io.harness.beans.IdentifierRef;
 import io.harness.delegate.beans.DelegateResponseData;
@@ -42,18 +29,18 @@ import io.harness.ng.core.dto.ErrorDetail;
 import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
 import io.harness.ng.core.models.Secret;
 import io.harness.ng.validator.dto.HostValidationDTO;
-import io.harness.ng.validator.service.api.HostValidationService;
+import io.harness.ng.validator.service.api.NGHostValidationService;
 import io.harness.pms.utils.CompletableFutures;
 import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.services.SshKeySpecDTOHelper;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.service.DelegateGrpcClientWrapper;
 import io.harness.utils.IdentifierRefHelper;
-
+import lombok.extern.slf4j.Slf4j;
 import software.wings.beans.TaskType;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,13 +52,24 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-import lombok.extern.slf4j.Slf4j;
+
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.delegate.beans.NgSetupFields.NG;
+import static io.harness.delegate.beans.NgSetupFields.OWNER;
+import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.DEFAULT_HOST_VALIDATION_FAILED_MSG;
+import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.HOSTS_NUMBER_VALIDATION_LIMIT;
+import static io.harness.delegate.task.utils.PhysicalDataCenterConstants.TRUE_STR;
+import static io.harness.delegate.task.utils.PhysicalDataCenterUtils.extractHostnameFromHost;
+import static io.harness.delegate.task.utils.PhysicalDataCenterUtils.extractPortFromHost;
+import static io.harness.exception.WingsException.USER;
+import static io.harness.exception.WingsException.USER_SRE;
+import static io.harness.ng.validator.dto.HostValidationDTO.HostValidationStatus.FAILED;
+import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @Singleton
 @Slf4j
-public class HostValidationServiceImpl implements HostValidationService {
+public class NGHostValidationServiceImpl implements NGHostValidationService {
   @Inject private SshKeySpecDTOHelper sshKeySpecDTOHelper;
   @Inject private NGSecretServiceV2 ngSecretServiceV2;
   @Inject private TaskSetupAbstractionHelper taskSetupAbstractionHelper;

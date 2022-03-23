@@ -22,7 +22,7 @@ import io.harness.encryption.Scope;
 import io.harness.encryption.SecretRefData;
 import io.harness.ng.core.dto.ErrorDetail;
 import io.harness.ng.validator.dto.HostValidationDTO;
-import io.harness.ng.validator.service.api.HostValidationService;
+import io.harness.ng.validator.service.api.NGHostValidationService;
 import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 
@@ -38,7 +38,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PhysicalDataCenterConnectorValidatorTest extends CategoryTest {
-  @Mock private HostValidationService hostValidationService;
+  @Mock private NGHostValidationService hostValidationService;
   @InjectMocks private PhysicalDataCenterConnectorValidator physicalDataCenterConnectorValidator;
 
   @Test

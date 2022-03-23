@@ -4,15 +4,13 @@ import com.google.inject.Inject;
 import io.harness.NGCommonEntityConstants;
 import io.harness.accesscontrol.acl.api.Resource;
 import io.harness.accesscontrol.acl.api.ResourceScope;
+import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.ng.core.api.SecretCrudService;
-import io.harness.ng.core.api.impl.SecretPermissionValidator;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
-import io.harness.ng.core.dto.secrets.SecretResponseWrapper;
 import io.harness.ng.validator.dto.HostValidationDTO;
-import io.harness.ng.validator.service.api.HostValidationService;
+import io.harness.ng.validator.service.api.NGHostValidationService;
 import io.harness.security.annotations.NextGenManagerAuth;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -69,9 +67,8 @@ import static io.harness.secrets.SecretPermissions.SECRET_RESOURCE_TYPE;
 @NextGenManagerAuth
 @Slf4j
 public class HostValidationResource {
-  private final HostValidationService hostValidationService;
-  private final SecretPermissionValidator secretPermissionValidator;
-  private final SecretCrudService ngSecretService;
+  private final NGHostValidationService hostValidationService;
+  private final AccessControlClient accessControlClient;
 
   @POST
   @Consumes({"application/json"})
@@ -93,12 +90,11 @@ public class HostValidationResource {
           NGCommonEntityConstants.IDENTIFIER_KEY) @NotNull String secretIdentifier,
       @RequestBody(required = true, description = "List of SSH hosts to validate") @NotNull List<String> hosts) {
 
-      SecretResponseWrapper secret =
-              ngSecretService.get(accountIdentifier, orgIdentifier, projectIdentifier, secretIdentifier).orElse(null);
-      secretPermissionValidator.checkForAccessOrThrow(
-        ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
-            Resource.of(SECRET_RESOURCE_TYPE, secretIdentifier),
-        SECRET_ACCESS_PERMISSION, secret != null ? secret.getSecret().getOwner() : null);
+      accessControlClient.checkForAccessOrThrow(
+              ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+              Resource.of(SECRET_RESOURCE_TYPE, secretIdentifier),
+              SECRET_ACCESS_PERMISSION,
+              "Unauthorized to view secrets.");
 
       return ResponseDTO.newResponse(hostValidationService.validateSSHHosts(
         hosts, accountIdentifier, orgIdentifier, projectIdentifier, secretIdentifier));

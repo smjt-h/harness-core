@@ -7,15 +7,6 @@
 
 package io.harness.ng.validator.service;
 
-import static io.harness.rule.OwnerRule.IVAN;
-import static io.harness.rule.OwnerRule.VLAD;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -35,10 +26,6 @@ import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.services.SshKeySpecDTOHelper;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.service.DelegateGrpcClientWrapper;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -47,9 +34,21 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import static io.harness.rule.OwnerRule.IVAN;
+import static io.harness.rule.OwnerRule.VLAD;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 @OwnedBy(HarnessTeam.CDP)
 @RunWith(MockitoJUnitRunner.class)
-public class HostValidationServiceImplTest extends CategoryTest {
+public class NGHostValidationServiceImplTest extends CategoryTest {
   private static final String ACCOUNT_IDENTIFIER = "accountIdentifier";
   private static final String ORG_IDENTIFIER = "orgIdentifier";
   private static final String PROJECT_IDENTIFIER = "projectIdentifier";
@@ -65,7 +64,8 @@ public class HostValidationServiceImplTest extends CategoryTest {
   @Mock private SshKeySpecDTOHelper sshKeySpecDTOHelper;
   @Mock private TaskSetupAbstractionHelper taskSetupAbstractionHelper;
   @Mock private DelegateGrpcClientWrapper delegateGrpcClientWrapper;
-  @InjectMocks HostValidationServiceImpl hostValidationService;
+  @InjectMocks
+  NGHostValidationServiceImpl hostValidationService;
 
   @Test
   @Owner(developers = {VLAD, IVAN})
