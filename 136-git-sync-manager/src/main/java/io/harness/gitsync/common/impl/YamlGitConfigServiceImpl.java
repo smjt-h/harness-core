@@ -202,8 +202,6 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
 
   @Override
   public YamlGitConfigDTO save(YamlGitConfigDTO ygs) {
-    userProfileHelper.validateIfScmUserProfileIsSet(ygs.getAccountIdentifier());
-
     // before saving the git config, check if branch exists
     // otherwise we end-up saving invalid git configs
     checkIfBranchExists(ygs);
@@ -243,7 +241,7 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
   private void validateThatImmutableValuesAreNotChanged(
       YamlGitConfigDTO gitSyncConfigDTO, YamlGitConfig existingYamlGitConfigDTO) {
     if (!gitSyncConfigDTO.getRepo().equals(existingYamlGitConfigDTO.getRepo())) {
-      throw new InvalidRequestException("The repo url of an git config cannot be changed");
+      throw new InvalidRequestException("The repository url of an git config cannot be changed");
     }
     if (!gitSyncConfigDTO.getBranch().equals(existingYamlGitConfigDTO.getBranch())) {
       throw new InvalidRequestException("The default branch of an git config cannot be changed");

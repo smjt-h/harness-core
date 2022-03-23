@@ -14,6 +14,7 @@ import static org.mockito.Mockito.verify;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
+import io.harness.cdng.envGroup.beans.EnvironmentGroupEntity;
 import io.harness.cdng.envGroup.services.EnvironmentGroupServiceImpl;
 import io.harness.repositories.envGroup.EnvironmentGroupRepository;
 import io.harness.rule.Owner;
@@ -24,6 +25,10 @@ import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.query.Criteria;
 
 public class EnvironmentGroupServiceImplTest extends CategoryTest {
   private String ACC_ID = "accId";
@@ -42,10 +47,29 @@ public class EnvironmentGroupServiceImplTest extends CategoryTest {
   @Test
   @Owner(developers = PRASHANTSHARMA)
   @Category(UnitTests.class)
-  public void testWriteDto() {
+  public void testGet() {
     environmentGroupService.get(ACC_ID, ORG_ID, PRO_ID, "envGroup", false);
     verify(environmentGroupRepository, times(1))
         .findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
             ACC_ID, ORG_ID, PRO_ID, "envGroup", true);
+  }
+
+  @Test
+  @Owner(developers = PRASHANTSHARMA)
+  @Category(UnitTests.class)
+  public void testCreate() {
+    environmentGroupService.create(EnvironmentGroupEntity.builder().build());
+    verify(environmentGroupRepository, times(1)).create(EnvironmentGroupEntity.builder().build());
+  }
+
+  @Test
+  @Owner(developers = PRASHANTSHARMA)
+  @Category(UnitTests.class)
+  public void testList() {
+    Criteria criteria = new Criteria();
+    Pageable pageRequest =
+        PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, EnvironmentGroupEntity.EnvironmentGroupKeys.createdAt));
+    environmentGroupService.list(criteria, (Pageable) pageRequest, PRO_ID, ORG_ID, ACC_ID);
+    verify(environmentGroupRepository, times(1)).list(criteria, pageRequest, PRO_ID, ORG_ID, ACC_ID);
   }
 }
