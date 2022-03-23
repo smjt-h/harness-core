@@ -274,9 +274,9 @@ aeriform("//920-delegate-agent-beans:tests")
 
 aeriform("//920-delegate-service-beans:module")
 
-aeriform("//920-ng-signup:module")
+aeriform("//891-ng-signup:module")
 
-aeriform("//920-ng-signup:tests")
+aeriform("//891-ng-signup:tests")
 
 aeriform("//925-enforcement-service:module")
 
@@ -286,7 +286,7 @@ aeriform("//930-delegate-tasks:module")
 
 aeriform("//930-delegate-tasks:tests")
 
-aeriform("//930-ng-core-clients:module")
+aeriform("//892-ng-core-clients:module")
 
 aeriform("//930-ng-license-manager:module")
 
@@ -362,9 +362,9 @@ aeriform("//950-log-client:tests")
 
 aeriform("//950-ng-authentication-service:module")
 
-aeriform("//950-ng-core:module")
+aeriform("//893-ng-core:module")
 
-aeriform("//950-ng-core:tests")
+aeriform("//893-ng-core:tests")
 
 aeriform("//950-ng-project-n-orgs:module")
 

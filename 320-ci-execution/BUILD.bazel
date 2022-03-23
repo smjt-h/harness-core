@@ -9,7 +9,7 @@ shared_dependencies = [
     "//878-ng-common-utilities:module",
     "//879-pms-sdk:module",
     "//890-sm-core:module",
-    "//930-ng-core-clients:module",
+    "//892-ng-core-clients:module",
     "//942-enforcement-sdk:module",
     "//950-log-client:module",
     "//955-delegate-beans:module",

@@ -16,7 +16,7 @@ java_library(
         "//889-yaml-commons:module",
         "//890-pms-contracts:module",
         "//890-sm-core:module",
-        "//930-ng-core-clients:module",
+        "//892-ng-core-clients:module",
         "//945-ng-audit-client:module",
         "//950-ng-project-n-orgs:module",
         "//952-scm-java-client:module",

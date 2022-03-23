@@ -9,7 +9,7 @@ directories:
   490-ce-commons
   890-sm-core
   910-delegate-service-driver
-  930-ng-core-clients
+  892-ng-core-clients
   940-feature-flag
   940-primary-version-manager
   950-delegate-tasks-beans

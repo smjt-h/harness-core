@@ -21,8 +21,6 @@ import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.ReferencedEntityException;
 import io.harness.exception.UnexpectedException;
-import io.harness.gitsync.common.utils.GitEntityFilePath;
-import io.harness.gitsync.common.utils.GitSyncFilePathUtils;
 import io.harness.ng.DuplicateKeyExceptionParser;
 import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
@@ -35,8 +33,8 @@ import io.harness.ng.core.service.entity.ServiceEntity;
 import io.harness.ng.core.service.entity.ServiceEntity.ServiceEntityKeys;
 import io.harness.ng.core.service.services.ServiceEntityService;
 import io.harness.outbox.api.OutboxService;
+import io.harness.repositories.service.custom.ServiceV2Repository;
 import io.harness.repositories.service.spring.ServiceRepository;
-import io.harness.template.entity.TemplateEntity;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
@@ -64,7 +62,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @OwnedBy(PIPELINE)
@@ -73,6 +70,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Slf4j
 public class ServiceEntityServiceImpl implements ServiceEntityService {
   private final ServiceRepository serviceRepository;
+  private final ServiceV2Repository serviceV2Repository;
   private final EntitySetupUsageService entitySetupUsageService;
   private static final Integer QUERY_PAGE_SIZE = 10000;
   @Inject @Named(OUTBOX_TRANSACTION_TEMPLATE) private final TransactionTemplate transactionTemplate;

@@ -6,7 +6,7 @@ shared_dependencies = [
     "//293-cdng-clients:module",
     "//295-cdng-contracts:module",
     "//888-pms-client:module",
-    "//930-ng-core-clients:module",
+    "//892-ng-core-clients:module",
     "//945-account-mgmt:module",
     "//965-api-key-filter:module",
     "//960-persistence:module",

@@ -23,7 +23,7 @@ directories:
   920-delegate-agent-beans
   920-delegate-service-beans
   930-delegate-tasks
-  930-ng-core-clients
+  892-ng-core-clients
   937-persistence-tracer
   940-feature-flag
   940-notification-client
@@ -36,7 +36,7 @@ directories:
   949-access-control-commons
   950-delegate-tasks-beans
   950-log-client
-  950-ng-core
+  893-ng-core
   950-ng-project-n-orgs
   950-ng-signup-beans
   950-opa-client

@@ -115,10 +115,10 @@ BAZEL_MODULES="\
   //920-delegate-agent-beans:module \
   //920-delegate-service-beans/src/main/proto:all \
   //920-delegate-service-beans:module \
-  //920-ng-signup:module \
+  //891-ng-signup:module \
   //925-enforcement-service:module \
   //930-delegate-tasks:module \
-  //930-ng-core-clients:module \
+  //892-ng-core-clients:module \
   //932-connector-task:module \
   //935-analyser-service:module \
   //937-persistence-tracer:module \
@@ -147,7 +147,7 @@ BAZEL_MODULES="\
   //959-debezium-beans:module \
   //951-ng-audit-commons:module \
   //950-ng-authentication-service:module \
-  //950-ng-core:module \
+  //893-ng-core:module \
   //950-ng-project-n-orgs:module \
   //950-ng-signup-beans:module \
   //950-telemetry:module \
@@ -336,7 +336,7 @@ build_bazel_module 910-delegate-task-grpc-service
 build_bazel_module 920-delegate-agent-beans
 build_bazel_module 920-delegate-service-beans
 build_bazel_module 930-delegate-tasks
-build_bazel_module 930-ng-core-clients
+build_bazel_module 892-ng-core-clients
 build_bazel_module 932-connector-task
 build_bazel_module 940-feature-flag
 build_bazel_module 940-ng-audit-service
@@ -349,7 +349,7 @@ build_bazel_module 959-common-entities
 build_bazel_module 950-delegate-tasks-beans
 build_bazel_module 950-events-framework
 build_bazel_module 950-log-client
-build_bazel_module 950-ng-core
+build_bazel_module 893-ng-core
 build_bazel_module 950-ng-project-n-orgs
 build_bazel_module 950-wait-engine
 build_bazel_module 950-walktree-visitor

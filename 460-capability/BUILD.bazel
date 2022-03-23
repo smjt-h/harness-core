@@ -29,7 +29,7 @@ java_library(
     testonly = True,
     srcs = glob(["src/test/**/*.java"]),
     resources = [
-        "//950-ng-core/src/test/resources:resource",
+        "//893-ng-core/src/test/resources:resource",
     ],
     visibility = ["//visibility:public"],
     deps = [

@@ -6,11 +6,12 @@ java_library(
     name = "module",
     srcs = glob(["src/main/java/**/*.java"]),
     resources = [
-        "//950-ng-core/src/main/resources:resource",
+        "//893-ng-core/src/main/resources:resource",
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//:lombok",
+        "//900-git-sync-sdk:module",
         "//951-ng-audit-commons:module",
         "//952-scm-java-client:module",
         "//953-events-api:module",
@@ -51,12 +52,13 @@ java_library(
     testonly = True,
     srcs = glob(["src/test/**/*.java"]),
     resources = [
-        "//950-ng-core/src/test/resources:resource",
+        "//893-ng-core/src/test/resources:resource",
     ],
     visibility = ["//visibility:public"],
     deps = [
         "module",
         "//:lombok",
+        "//900-git-sync-sdk:module",
         "//953-events-api:module",
         "//955-outbox-sdk:module",
         "//955-setup-usage-sdk:module",
