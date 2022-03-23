@@ -39,10 +39,11 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 
-@Slf4j
+
 @OwnedBy(PL)
 @NoArgsConstructor
 @AllArgsConstructor
+@Slf4j
 public class SourceCodeManagerServiceImpl implements SourceCodeManagerService {
   @Inject private NGSecretServiceV2 ngSecretServiceV2;
   @Inject SourceCodeManagerRepository sourceCodeManagerRepository;
