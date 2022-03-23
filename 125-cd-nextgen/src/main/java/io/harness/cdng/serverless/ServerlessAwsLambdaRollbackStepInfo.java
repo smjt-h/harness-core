@@ -48,7 +48,7 @@ public class ServerlessAwsLambdaRollbackStepInfo
 
   @Override
   public StepType getStepType() {
-    return null;
+    return ServerlessAwsLambdaRollbackStep.STEP_TYPE;
   }
 
   @Override

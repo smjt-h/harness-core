@@ -10,10 +10,8 @@ package io.harness.delegate.beans.instancesync.info;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
-import io.harness.serverless.model.ServerlessAwsLambdaFunction;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import java.util.List;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -27,5 +25,6 @@ public class ServerlessAwsLambdaServerInstanceInfo extends ServerInstanceInfo {
   private String serviceName;
   private String region;
   private String stage;
-  private List<ServerlessAwsLambdaFunction> functions;
+  //  private List<ServerlessAwsLambdaFunction> functions;
+  // todo: create a mapper object
 }

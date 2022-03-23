@@ -19,6 +19,7 @@ import io.harness.delegate.beans.connector.scm.GitCapabilityHelper;
 import io.harness.delegate.beans.connector.scm.adapter.ScmConnectorMapper;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.ExecutionCapabilityDemander;
+import io.harness.delegate.beans.executioncapability.ServerlessInstallationCapability;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.capability.EncryptedDataDetailsCapabilityHelper;
@@ -81,6 +82,7 @@ public interface ServerlessCommandRequest extends TaskParameters, ExecutionCapab
             serverlessArtifactoryArtifactConfig.getConnectorDTO().getConnectorConfig(), maskingEvaluator));
       }
     }
+    capabilities.add(ServerlessInstallationCapability.builder().build());
     // todo:sls installation capability
     return capabilities;
   }
