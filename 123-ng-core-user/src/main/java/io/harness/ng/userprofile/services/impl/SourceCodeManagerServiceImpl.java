@@ -39,7 +39,6 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 
-
 @OwnedBy(PL)
 @NoArgsConstructor
 @AllArgsConstructor
