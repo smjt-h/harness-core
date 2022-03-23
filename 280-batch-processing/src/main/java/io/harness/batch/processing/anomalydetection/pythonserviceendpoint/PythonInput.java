@@ -34,6 +34,7 @@ public class PythonInput {
   String awsService;
   String awsInstanceType;
   String awsUsageType;
+  String azureSubscriptionGuid;
 
   APITimeSeries data;
 
