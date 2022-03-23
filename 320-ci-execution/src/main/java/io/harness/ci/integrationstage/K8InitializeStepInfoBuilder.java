@@ -515,8 +515,8 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
   private ContainerResourceParams getStepContainerResource(
       ContainerResource resource, String stepType, String stepId, String accountId) {
     return ContainerResourceParams.builder()
-        .resourceRequestMilliCpu(STEP_REQUEST_MILLI_CPU)
-        .resourceRequestMemoryMiB(STEP_REQUEST_MEMORY_MIB)
+        .resourceRequestMilliCpu(getContainerCpuLimit(resource, stepType, stepId, accountId))
+        .resourceRequestMemoryMiB(getContainerMemoryLimit(resource, stepType, stepId, accountId))
         .resourceLimitMilliCpu(getContainerCpuLimit(resource, stepType, stepId, accountId))
         .resourceLimitMemoryMiB(getContainerMemoryLimit(resource, stepType, stepId, accountId))
         .build();

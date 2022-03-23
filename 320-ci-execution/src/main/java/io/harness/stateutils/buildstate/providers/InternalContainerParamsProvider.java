@@ -157,8 +157,11 @@ public class InternalContainerParamsProvider {
   }
 
   private ContainerResourceParams getLiteEngineResourceParams(Integer stageCpuRequest, Integer stageMemoryRequest) {
-    Integer cpu = stageCpuRequest + LITE_ENGINE_CONTAINER_CPU;
-    Integer memory = stageMemoryRequest + LITE_ENGINE_CONTAINER_MEM;
+//    Integer cpu = stageCpuRequest + LITE_ENGINE_CONTAINER_CPU;
+//    Integer memory = stageMemoryRequest + LITE_ENGINE_CONTAINER_MEM;
+
+    Integer cpu = LITE_ENGINE_CONTAINER_CPU;
+    Integer memory = LITE_ENGINE_CONTAINER_MEM;
     return ContainerResourceParams.builder()
         .resourceRequestMilliCpu(cpu)
         .resourceRequestMemoryMiB(memory)
