@@ -19,6 +19,7 @@ import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.utils.WithDelegateSelector;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
 
@@ -40,7 +41,8 @@ import org.springframework.data.annotation.TypeAlias;
 @SimpleVisitorHelper(helperClass = K8sRollingRollbackStepInfoVisitorHelper.class)
 @TypeAlias("k8sRollingRollback")
 @RecasterAlias("io.harness.cdng.k8s.K8sRollingRollbackStepInfo")
-public class K8sRollingRollbackStepInfo extends K8sRollingRollbackBaseStepInfo implements CDStepInfo, Visitable {
+public class K8sRollingRollbackStepInfo
+    extends K8sRollingRollbackBaseStepInfo implements CDStepInfo, Visitable, WithDelegateSelector {
   // For Visitor Framework Impl
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 
@@ -67,5 +69,10 @@ public class K8sRollingRollbackStepInfo extends K8sRollingRollbackBaseStepInfo i
         .delegateSelectors(delegateSelectors)
         .rollingStepFqn(rollingStepFqn)
         .build();
+  }
+
+  @Override
+  public ParameterField<List<TaskSelectorYaml>> delegateSelectors() {
+    return delegateSelectors;
   }
 }

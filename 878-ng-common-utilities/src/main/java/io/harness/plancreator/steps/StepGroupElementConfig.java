@@ -59,4 +59,5 @@ public class StepGroupElementConfig {
 
   List<FailureStrategyConfig> failureStrategies;
   @NotNull @Size(min = 1) List<ExecutionWrapperConfig> steps;
+  ParameterField<List<String>> delegateSelectors;
 }

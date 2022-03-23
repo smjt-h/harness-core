@@ -19,6 +19,7 @@ import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.utils.WithDelegateSelector;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
 
@@ -40,7 +41,7 @@ import org.springframework.data.annotation.TypeAlias;
 @SimpleVisitorHelper(helperClass = K8sScaleStepInfoVisitorHelper.class)
 @TypeAlias("k8sScale")
 @RecasterAlias("io.harness.cdng.k8s.K8sScaleStepInfo")
-public class K8sScaleStepInfo extends K8sScaleBaseStepInfo implements CDStepInfo, Visitable {
+public class K8sScaleStepInfo extends K8sScaleBaseStepInfo implements CDStepInfo, Visitable, WithDelegateSelector {
   // For Visitor Framework Impl
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 
@@ -70,5 +71,10 @@ public class K8sScaleStepInfo extends K8sScaleBaseStepInfo implements CDStepInfo
         .skipSteadyStateCheck(skipSteadyStateCheck)
         .delegateSelectors(delegateSelectors)
         .build();
+  }
+
+  @Override
+  public ParameterField<List<TaskSelectorYaml>> delegateSelectors() {
+    return delegateSelectors;
   }
 }

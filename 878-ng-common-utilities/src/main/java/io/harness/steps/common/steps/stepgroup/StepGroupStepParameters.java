@@ -39,6 +39,7 @@ public class StepGroupStepParameters implements StepParameters {
   ParameterField<String> skipCondition;
   StepWhenCondition when;
   List<FailureStrategyConfig> failureStrategies;
+  ParameterField<List<String>> delegateSelectors;
 
   String childNodeID;
 
@@ -51,6 +52,7 @@ public class StepGroupStepParameters implements StepParameters {
         .name(config.getName())
         .skipCondition(config.getSkipCondition())
         .when(config.getWhen())
+        .delegateSelectors(config.getDelegateSelectors())
         .failureStrategies(config.getFailureStrategies())
         .childNodeID(childNodeID)
         .build();

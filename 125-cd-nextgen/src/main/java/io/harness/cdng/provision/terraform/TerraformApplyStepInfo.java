@@ -18,6 +18,7 @@ import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.utils.WithDelegateSelector;
 import io.harness.validation.Validator;
 import io.harness.walktree.visitor.Visitable;
 
@@ -45,7 +46,7 @@ import org.springframework.data.annotation.TypeAlias;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @RecasterAlias("io.harness.cdng.provision.terraform.TerraformApplyStepInfo")
 public class TerraformApplyStepInfo
-    extends TerraformApplyBaseStepInfo implements CDStepInfo, Visitable, WithConnectorRef {
+    extends TerraformApplyBaseStepInfo implements CDStepInfo, Visitable, WithConnectorRef, WithDelegateSelector {
   @NotNull @JsonProperty("configuration") TerraformStepConfiguration terraformStepConfiguration;
 
   @Builder(builderMethodName = "infoBuilder")

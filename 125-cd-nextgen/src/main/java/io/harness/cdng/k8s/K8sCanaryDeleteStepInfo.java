@@ -19,6 +19,7 @@ import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.utils.WithDelegateSelector;
 import io.harness.walktree.visitor.Visitable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -36,7 +37,7 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonTypeName(StepSpecTypeConstants.K8S_CANARY_DELETE)
 @TypeAlias("k8sCanaryDeleteStepInfo")
 @RecasterAlias("io.harness.cdng.k8s.K8sCanaryDeleteStepInfo")
-public class K8sCanaryDeleteStepInfo implements CDStepInfo, Visitable {
+public class K8sCanaryDeleteStepInfo implements CDStepInfo, Visitable, WithDelegateSelector {
   @ApiModelProperty(dataType = SwaggerConstants.BOOLEAN_CLASSPATH) ParameterField<Boolean> skipDryRun;
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   ParameterField<List<TaskSelectorYaml>> delegateSelectors;
@@ -64,5 +65,10 @@ public class K8sCanaryDeleteStepInfo implements CDStepInfo, Visitable {
         .canaryStepFqn(canaryStepFqn)
         .canaryDeleteStepFqn(canaryDeleteStepFqn)
         .build();
+  }
+
+  @Override
+  public ParameterField<List<TaskSelectorYaml>> delegateSelectors() {
+    return delegateSelectors;
   }
 }

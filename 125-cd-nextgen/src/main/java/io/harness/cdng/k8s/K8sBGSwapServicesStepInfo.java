@@ -20,6 +20,7 @@ import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.utils.WithDelegateSelector;
 import io.harness.walktree.visitor.Visitable;
 import io.harness.yaml.YamlSchemaTypes;
 
@@ -40,7 +41,7 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonTypeName(StepSpecTypeConstants.K8S_BG_SWAP_SERVICES)
 @TypeAlias("k8sBGSwapServicesStepInfo")
 @RecasterAlias("io.harness.cdng.k8s.K8sBGSwapServicesStepInfo")
-public class K8sBGSwapServicesStepInfo implements CDStepInfo, Visitable {
+public class K8sBGSwapServicesStepInfo implements CDStepInfo, Visitable, WithDelegateSelector {
   @ApiModelProperty(dataType = SwaggerConstants.BOOLEAN_CLASSPATH) ParameterField<Boolean> skipDryRun;
   @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
@@ -69,5 +70,10 @@ public class K8sBGSwapServicesStepInfo implements CDStepInfo, Visitable {
         .blueGreenStepFqn(blueGreenStepFqn)
         .blueGreenSwapServicesFqn(blueGreenSwapServicesStepFqn)
         .build();
+  }
+
+  @Override
+  public ParameterField<List<TaskSelectorYaml>> delegateSelectors() {
+    return delegateSelectors;
   }
 }

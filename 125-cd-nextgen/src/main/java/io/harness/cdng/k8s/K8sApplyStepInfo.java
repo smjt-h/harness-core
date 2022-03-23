@@ -19,6 +19,7 @@ import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.utils.WithDelegateSelector;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
 
@@ -40,7 +41,7 @@ import org.springframework.data.annotation.TypeAlias;
 @SimpleVisitorHelper(helperClass = K8sApplyStepInfoVisitorHelper.class)
 @TypeAlias("k8sApplyStepInfo")
 @RecasterAlias("io.harness.cdng.k8s.K8sApplyStepInfo")
-public class K8sApplyStepInfo extends K8sApplyBaseStepInfo implements CDStepInfo, Visitable {
+public class K8sApplyStepInfo extends K8sApplyBaseStepInfo implements CDStepInfo, Visitable, WithDelegateSelector {
   // For Visitor Framework Impl
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 
