@@ -77,8 +77,7 @@ public class CapabilityCheckFactory {
   @Inject GitConnectionNGCapabilityChecker gitConnectionNGCapabilityCheck;
   @Inject NoOpCapabilityCheck noOpCapabilityCheck;
   @Inject CIVmConnectionCapabilityCheck ciVmConnectionCapabilityCheck;
-  @Inject
-  ServerlessInstallationCapabilityCheck serverlessInstallationCapabilityCheck;
+  @Inject ServerlessInstallationCapabilityCheck serverlessInstallationCapabilityCheck;
 
   public CapabilityCheck obtainCapabilityCheck(CapabilityType capabilityCheckType) {
     switch (capabilityCheckType) {

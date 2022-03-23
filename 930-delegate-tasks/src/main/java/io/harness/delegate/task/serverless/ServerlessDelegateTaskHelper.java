@@ -35,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 public class ServerlessDelegateTaskHelper {
   @Inject private Map<String, ServerlessCommandTaskHandler> commandTaskTypeToTaskHandlerMap;
   @Inject private ServerlessInfraConfigHelper serverlessInfraConfigHelper;
-  @Inject private ServerlessGlobalConfigService serverlessGlobalConfigService;
 
   private static final String WORKING_DIR_BASE = "./repository/serverless/";
 
@@ -58,10 +57,7 @@ public class ServerlessDelegateTaskHelper {
       createDirectoryIfDoesNotExist(workingDirectory);
       waitForDirectoryToBeAccessibleOutOfProcess(workingDirectory, 10);
       ServerlessDelegateTaskParams serverlessDelegateTaskParams =
-          ServerlessDelegateTaskParams.builder()
-              .serverlessClientPath(serverlessGlobalConfigService.getServerlessClientPath())
-              .workingDirectory(workingDirectory)
-              .build();
+          ServerlessDelegateTaskParams.builder().workingDirectory(workingDirectory).build();
       ServerlessCommandResponse serverlessCommandResponse = commandTaskHandler.executeTask(
           serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
       serverlessCommandResponse.setCommandUnitsProgress(

@@ -100,11 +100,11 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
       ServerlessDelegateTaskParams serverlessDelegateTaskParams) throws Exception {
     executionLogCallback.saveExecutionLog("Initializing..\n");
     ServerlessCliResponse response;
-    String homeDirectory = Paths.get(HOME_DIRECTORY, convertBase64UuidToCanonicalForm(generateUuid()))
-                               .normalize()
-                               .toAbsolutePath()
-                               .toString();
-    serverlessTaskHelperBase.createHomeDirectory(homeDirectory);
+    //    String homeDirectory = Paths.get(HOME_DIRECTORY, convertBase64UuidToCanonicalForm(generateUuid()))
+    //                               .normalize()
+    //                               .toAbsolutePath()
+    //                               .toString();
+    //    serverlessTaskHelperBase.createHomeDirectory(homeDirectory);
     serverlessManifestConfig =
         (ServerlessAwsLambdaManifestConfig) serverlessDeployRequest.getServerlessManifestConfig();
     serverlessTaskHelperBase.fetchManifestFilesAndWriteToDirectory(serverlessManifestConfig,
@@ -112,7 +112,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
     serverlessTaskHelperBase.replaceManifestWithRenderedContent(serverlessDelegateTaskParams, serverlessManifestConfig);
     serverlessAwsLambdaConfig = (ServerlessAwsLambdaConfig) serverlessInfraConfigHelper.createServerlessConfig(
         serverlessDeployRequest.getServerlessInfraConfig());
-    serverlessClient = ServerlessClient.client(serverlessDelegateTaskParams.getServerlessClientPath(), homeDirectory);
+    serverlessClient = ServerlessClient.client(serverlessDelegateTaskParams.getServerlessClientPath(), "");
     serverlessAwsCommandTaskHelper.configCredential(serverlessClient, serverlessAwsLambdaConfig,
         serverlessDelegateTaskParams, executionLogCallback, true, timeoutInMillis);
     serverlessManifestSchema = serverlessAwsCommandTaskHelper.parseServerlessManifest(serverlessManifestConfig);
