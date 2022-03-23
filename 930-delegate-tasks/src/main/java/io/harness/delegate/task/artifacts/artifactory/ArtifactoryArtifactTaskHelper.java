@@ -7,6 +7,7 @@
 
 package io.harness.delegate.task.artifacts.artifactory;
 
+import static io.harness.artifactory.service.ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT;
 import static io.harness.delegate.task.artifacts.ArtifactTaskType.GET_BUILDS;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 
@@ -17,6 +18,7 @@ import io.harness.artifactory.ArtifactoryConfigRequest;
 import io.harness.artifactory.ArtifactoryNgService;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.task.artifactory.ArtifactoryRequestMapper;
+import io.harness.delegate.task.artifacts.mappers.ArtifactoryRequestResponseMapper;
 import io.harness.delegate.task.artifacts.request.ArtifactTaskParameters;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskResponse;
@@ -30,6 +32,7 @@ import software.wings.utils.RepositoryFormat;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -114,21 +117,63 @@ public class ArtifactoryArtifactTaskHelper {
   public ArtifactTaskResponse getGenericArtifactCollectResponse(
       ArtifactTaskParameters artifactTaskParameters, LogCallback executionLogCallback) {
     ArtifactTaskResponse artifactTaskResponse;
-    if (artifactTaskParameters.getArtifactTaskType().equals(GET_BUILDS)) {
-      saveLogs(executionLogCallback, "Fetching artifact details");
-      artifactTaskResponse = fetchFileBuilds(artifactTaskParameters);
-      saveLogs(executionLogCallback,
-          "Fetched " + artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().size()
-              + " artifacts");
-    } else {
-      artifactTaskResponse = ArtifactTaskResponse.builder()
-                                 .commandExecutionStatus(CommandExecutionStatus.FAILURE)
-                                 .errorMessage("There is no Artifactory artifact task type impl defined for - "
-                                     + artifactTaskParameters.getArtifactTaskType().name())
-                                 .errorCode(ErrorCode.INVALID_ARGUMENT)
-                                 .build();
+    switch (artifactTaskParameters.getArtifactTaskType()) {
+      case GET_LAST_SUCCESSFUL_BUILD:
+        saveLogs(executionLogCallback, "Fetching Artifact details");
+        artifactTaskResponse = getSuccessTaskResponse(getLatestArtifact(artifactTaskParameters));
+        ArtifactoryGenericArtifactDelegateResponse artifactoryGenericArtifactDelegateResponse =
+            (ArtifactoryGenericArtifactDelegateResponse) (artifactTaskResponse.getArtifactTaskExecutionResponse()
+                                                              .getArtifactDelegateResponses()
+                                                              .size()
+                        != 0
+                    ? artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().get(0)
+                    : ArtifactoryDockerArtifactDelegateResponse.builder().build());
+        String buildMetadataUrl = artifactoryGenericArtifactDelegateResponse.getBuildDetails() != null
+            ? artifactoryGenericArtifactDelegateResponse.getBuildDetails().getBuildUrl()
+            : null;
+        saveLogs(executionLogCallback,
+            "Fetched Artifact details"
+                + "\ntype: Artifactory Artifact"
+                + "\nbuild metadata url: " + buildMetadataUrl
+                + "\nrepository: " + artifactoryGenericArtifactDelegateResponse.getRepositoryName()
+                + "\nartifactPath: " + artifactoryGenericArtifactDelegateResponse.getArtifactPath()
+                + "\nrepository type: " + artifactoryGenericArtifactDelegateResponse.getRepositoryFormat());
+        break;
+      case GET_BUILDS:
+        saveLogs(executionLogCallback, "Fetching artifact details");
+        artifactTaskResponse = fetchFileBuilds(artifactTaskParameters);
+        saveLogs(executionLogCallback,
+            "Fetched " + artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().size()
+                + " artifacts");
+        break;
+      default:
+        artifactTaskResponse = ArtifactTaskResponse.builder()
+                                   .commandExecutionStatus(CommandExecutionStatus.FAILURE)
+                                   .errorMessage("There is no Artifactory artifact task type impl defined for - "
+                                       + artifactTaskParameters.getArtifactTaskType().name())
+                                   .errorCode(ErrorCode.INVALID_ARGUMENT)
+                                   .build();
     }
     return artifactTaskResponse;
+  }
+
+  public ArtifactTaskExecutionResponse getLatestArtifact(ArtifactTaskParameters artifactTaskParameters) {
+    ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest =
+        (ArtifactoryGenericArtifactDelegateRequest) artifactTaskParameters.getAttributes();
+    artifactoryArtifactTaskHandler.decryptRequestDTOs(artifactoryGenericArtifactDelegateRequest);
+    ArtifactoryConfigRequest artifactoryConfigRequest = artifactoryRequestMapper.toArtifactoryRequest(
+        artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
+
+    BuildDetails buildDetails = artifactoryNgService.getLatestArtifact(artifactoryConfigRequest,
+        artifactoryGenericArtifactDelegateRequest.getRepositoryName(),
+        artifactoryGenericArtifactDelegateRequest.getArtifactDirectory(),
+        artifactoryGenericArtifactDelegateRequest.getArtifactPathFilter(), MAX_NO_OF_TAGS_PER_ARTIFACT);
+    ArtifactoryGenericArtifactDelegateResponse artifactoryGenericArtifactDelegateResponse =
+        ArtifactoryRequestResponseMapper.toArtifactoryGenericResponse(
+            buildDetails, artifactoryGenericArtifactDelegateRequest);
+
+    return artifactoryArtifactTaskHandler.getSuccessTaskExecutionResponseGeneric(
+        Collections.singletonList(artifactoryGenericArtifactDelegateResponse));
   }
 
   public ArtifactTaskResponse fetchFileBuilds(ArtifactTaskParameters params) {
@@ -140,8 +185,8 @@ public class ArtifactoryArtifactTaskHelper {
 
     String filePath = Paths.get(artifactoryGenericArtifactDelegateRequest.getArtifactDirectory(), "*").toString();
 
-    List<BuildDetails> buildDetails = artifactoryNgService.getBuildDetails(
-        artifactoryConfigRequest, artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, 100000);
+    List<BuildDetails> buildDetails = artifactoryNgService.getArtifactList(artifactoryConfigRequest,
+        artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, MAX_NO_OF_TAGS_PER_ARTIFACT);
 
     return ArtifactTaskResponse.builder()
         .artifactTaskExecutionResponse(ArtifactTaskExecutionResponse.builder().buildDetails(buildDetails).build())

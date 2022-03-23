@@ -292,6 +292,97 @@ public class ArtifactoryClientImpl {
     return repositories;
   }
 
+  public List<BuildDetails> getArtifactList(
+      ArtifactoryConfigRequest artifactoryConfig, String repositoryName, String artifactPath, int maxVersions) {
+    log.info("Retrieving file paths for repositoryName {} artifactPath {}", repositoryName, artifactPath);
+    List<String> artifactPaths = new ArrayList<>();
+    LinkedHashMap<String, String> map = new LinkedHashMap<>();
+    Artifactory artifactory = getArtifactoryClient(artifactoryConfig);
+    String artifactName;
+    try {
+      String aclQuery = "api/search/aql";
+      String requestBody;
+      if (isNotBlank(artifactPath)) {
+        if (artifactPath.charAt(0) == '/') {
+          artifactPath = artifactPath.substring(1);
+        }
+        String subPath;
+        if (artifactPath.contains("/")) {
+          String[] pathElems = artifactPath.split("/");
+          subPath = getPath(Arrays.stream(pathElems).limit(pathElems.length - 1).collect(toList()));
+          artifactName = pathElems[pathElems.length - 1];
+          if (!artifactName.contains("?") && !artifactName.contains("*")) {
+            artifactName = artifactName + "*";
+          }
+          requestBody = "items.find({\"repo\":\"" + repositoryName + "\"}, {\"path\": {\"$match\":\"" + subPath
+              + "\"}}, {\"name\": {\"$match\": \"" + artifactName + "\"}}).sort({\"$desc\" : [\"created\"]}).limit("
+              + maxVersions + ")";
+        } else {
+          artifactPath = artifactPath + "*";
+          requestBody = "items.find({\"repo\":\"" + repositoryName + "\"}, {\"depth\": 1}, {\"name\": {\"$match\": \""
+              + artifactPath + "\"}}).sort({\"$desc\" : [\"created\"]}).limit(" + maxVersions + ")";
+        }
+        ArtifactoryRequest repositoryRequest = new ArtifactoryRequestImpl()
+                                                   .apiUrl(aclQuery)
+                                                   .method(POST)
+                                                   .requestBody(requestBody)
+                                                   .requestType(TEXT)
+                                                   .responseType(JSON);
+        ArtifactoryResponse artifactoryResponse = artifactory.restCall(repositoryRequest);
+        if (artifactoryResponse.getStatusLine().getStatusCode() == 403
+            || artifactoryResponse.getStatusLine().getStatusCode() == 400) {
+          log.warn(
+              "User not authorized to perform or using OSS version deep level search. Trying with different search api. Message {}",
+              artifactoryResponse.getStatusLine().getReasonPhrase());
+          return getBuildDetailsForAnonymousUser(
+              artifactoryConfig, artifactory, repositoryName, artifactPath, maxVersions);
+        }
+        Map<String, List> response = artifactoryResponse.parseBody(Map.class);
+        if (response != null) {
+          List<Map<String, String>> results = response.get(RESULTS);
+          if (results != null) {
+            for (Map<String, String> result : results) {
+              String createdBy = result.get(CREATED_BY);
+              if (createdBy == null || !createdBy.equals(SYSTEM)) {
+                String path = result.get("path");
+                String name = result.get("name");
+                String size = String.valueOf(result.get("size"));
+                if (path != null && !path.equals(".")) {
+                  artifactPaths.add(path + "/" + name);
+                  map.put(path + "/" + name, size);
+                } else {
+                  artifactPaths.add(name);
+                  map.put(name, size);
+                }
+              }
+            }
+          }
+        }
+        log.info("Artifact paths order from Artifactory Server" + artifactPaths);
+        Collections.reverse(artifactPaths);
+        String finalArtifactPath = artifactPath;
+        return artifactPaths.stream()
+            .map(path
+                -> aBuildDetails()
+                       .withNumber(constructBuildNumber(finalArtifactPath, path.substring(path.indexOf('/') + 1)))
+                       .withArtifactPath(path)
+                       .withBuildUrl(getBaseUrl(artifactoryConfig) + path)
+                       .withArtifactFileSize(map.get(path))
+                       .withUiDisplayName(
+                           "Build# " + constructBuildNumber(finalArtifactPath, path.substring(path.indexOf('/') + 1)))
+                       .build())
+            .collect(toList());
+      } else {
+        throw new ArtifactoryServerException("Artifact path can not be empty", INVALID_ARTIFACT_SERVER, USER);
+      }
+    } catch (Exception e) {
+      log.error("Error occurred while retrieving File Paths from Artifactory server {}",
+          artifactoryConfig.getArtifactoryUrl(), e);
+      handleAndRethrow(e, USER);
+    }
+    return new ArrayList<>();
+  }
+
   public List<BuildDetails> getBuildDetails(
       ArtifactoryConfigRequest artifactoryConfig, String repositoryName, String artifactPath, int maxVersions) {
     log.info("Retrieving file paths for repositoryName {} artifactPath {}", repositoryName, artifactPath);

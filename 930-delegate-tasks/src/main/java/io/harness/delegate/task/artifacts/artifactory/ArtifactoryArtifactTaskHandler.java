@@ -91,6 +91,15 @@ public class ArtifactoryArtifactTaskHandler
         .build();
   }
 
+  public ArtifactTaskExecutionResponse getSuccessTaskExecutionResponseGeneric(
+      List<ArtifactoryGenericArtifactDelegateResponse> responseList) {
+    return ArtifactTaskExecutionResponse.builder()
+        .artifactDelegateResponses(responseList)
+        .isArtifactSourceValid(true)
+        .isArtifactServerValid(true)
+        .build();
+  }
+
   boolean isRegex(ArtifactoryDockerArtifactDelegateRequest artifactDelegateRequest) {
     return EmptyPredicate.isNotEmpty(artifactDelegateRequest.getTagRegex());
   }

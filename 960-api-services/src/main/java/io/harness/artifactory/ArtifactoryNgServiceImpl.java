@@ -13,6 +13,10 @@ import static org.jfrog.artifactory.client.model.impl.PackageTypeImpl.maven;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.artifacts.comparator.BuildDetailsComparatorDescending;
+import io.harness.exception.ArtifactoryRegistryException;
+import io.harness.exception.NestedExceptionUtils;
+import io.harness.expression.RegexFunctor;
 
 import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.utils.RepositoryType;
@@ -20,10 +24,12 @@ import software.wings.utils.RepositoryType;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
 @Singleton
@@ -36,6 +42,37 @@ public class ArtifactoryNgServiceImpl implements ArtifactoryNgService {
   public List<BuildDetails> getBuildDetails(
       ArtifactoryConfigRequest artifactoryConfig, String repositoryName, String artifactPath, int maxVersions) {
     return artifactoryClient.getBuildDetails(artifactoryConfig, repositoryName, artifactPath, maxVersions);
+  }
+
+  @Override
+  public List<BuildDetails> getArtifactList(
+      ArtifactoryConfigRequest artifactoryConfig, String repositoryName, String artifactPath, int maxVersions) {
+    return artifactoryClient.getArtifactList(artifactoryConfig, repositoryName, artifactPath, maxVersions);
+  }
+
+  @Override
+  public BuildDetails getLatestArtifact(ArtifactoryConfigRequest artifactoryConfig, String repositoryName,
+      String artifactDirectory, String artifactPathFilter, int maxVersions) {
+    String filePath = Paths.get(artifactDirectory, artifactPathFilter).toString();
+
+    List<BuildDetails> buildDetails =
+        artifactoryClient.getArtifactList(artifactoryConfig, repositoryName, filePath, maxVersions);
+
+    buildDetails = buildDetails.stream()
+                       .filter(build -> new RegexFunctor().match(artifactPathFilter, build.getNumber()))
+                       .sorted(new BuildDetailsComparatorDescending())
+                       .collect(Collectors.toList());
+    if (buildDetails.isEmpty()) {
+      throw NestedExceptionUtils.hintWithExplanationException(
+          "Please check ArtifactPathFilter field in Artifactory artifact configuration.",
+          String.format(
+              "Could not find any Artifact that match ArtifactPathFilter [%s] for Artifactory repository [%s] for generic artifact directory [%s] in registry [%s].",
+              artifactPathFilter, repositoryName, artifactDirectory, artifactoryConfig.getArtifactoryUrl()),
+          new ArtifactoryRegistryException(
+              String.format("Could not find an artifact that matches artifactPathFilter '%s'", artifactPathFilter)));
+    }
+
+    return buildDetails.get(0);
   }
 
   @Override
