@@ -14,7 +14,6 @@ import static java.lang.String.format;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.entities.embedded.githubconnector.GithubHttpAuthentication;
 import io.harness.connector.entities.embedded.githubconnector.GithubUsernameToken;
-import io.harness.encryption.SecretRefData;
 import io.harness.encryption.SecretRefHelper;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
