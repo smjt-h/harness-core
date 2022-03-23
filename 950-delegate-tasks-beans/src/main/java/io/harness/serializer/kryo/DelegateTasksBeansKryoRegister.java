@@ -217,10 +217,7 @@ import io.harness.delegate.beans.polling.ArtifactPollingDelegateResponse;
 import io.harness.delegate.beans.polling.ManifestPollingDelegateResponse;
 import io.harness.delegate.beans.polling.PollingDelegateResponse;
 import io.harness.delegate.beans.secrets.SSHConfigValidationTaskResponse;
-import io.harness.delegate.beans.serverless.ServerlessAwsLambdaDeployResult;
-import io.harness.delegate.beans.serverless.ServerlessAwsLambdaRollbackResult;
-import io.harness.delegate.beans.serverless.ServerlessDeployResult;
-import io.harness.delegate.beans.serverless.ServerlessRollbackResult;
+import io.harness.delegate.beans.serverless.*;
 import io.harness.delegate.beans.storeconfig.ArtifactoryStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.delegate.beans.storeconfig.GcsHelmStoreDelegateConfig;
@@ -1179,7 +1176,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(ServerlessNGException.class, 563524);
     kryo.register(ServerlessDeployResult.class, 563525);
     kryo.register(ServerlessAwsLambdaDeployResult.class, 563526);
-    //    kryo.register(ServerlessAwsLambdaFunction.class, 563527);
+    kryo.register(ServerlessAwsLambdaFunction.class, 563527);
     kryo.register(ServerlessRollbackResult.class, 563528);
     kryo.register(ServerlessAwsLambdaRollbackResult.class, 563529);
 
