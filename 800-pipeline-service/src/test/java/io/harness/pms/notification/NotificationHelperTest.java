@@ -244,7 +244,7 @@ public class NotificationHelperTest extends CategoryTest {
         .thenReturn(Optional.of(PlanExecutionMetadata.builder().yaml(emailNotificationYaml).build()));
     ArgumentCaptor<NotificationChannel> notificationChannelArgumentCaptor =
         ArgumentCaptor.forClass(NotificationChannel.class);
-    doReturn(notificationRulesMap).when(pmsEngineExpressionService).resolve(eq(ambiance), any(), eq(true));
+    doReturn(notificationRulesMap).when(pmsEngineExpressionService).resolve(eq(ambiance), any());
 
     notificationHelper.sendNotification(ambiance, PipelineEventType.PIPELINE_SUCCESS, nodeExecution, 1L);
     verify(notificationClient, times(1)).sendNotificationAsync(notificationChannelArgumentCaptor.capture());
@@ -275,7 +275,7 @@ public class NotificationHelperTest extends CategoryTest {
         .thenReturn(PlanExecution.builder().status(Status.SUCCEEDED).startTs(0L).endTs(0L).build());
     when(planExecutionMetadataService.findByPlanExecutionId(anyString()))
         .thenReturn(Optional.of(PlanExecutionMetadata.builder().yaml(allEventsYaml).build()));
-    doReturn(notificationRulesMap).when(pmsEngineExpressionService).resolve(eq(ambiance), any(), eq(true));
+    doReturn(notificationRulesMap).when(pmsEngineExpressionService).resolve(eq(ambiance), any());
     for (int idx = 0; idx < pipelineEventTypeList.size(); idx++) {
       notificationHelper.sendNotification(ambiance, pipelineEventTypeList.get(idx), nodeExecution, 1L);
       verify(notificationClient, times(idx + 1)).sendNotificationAsync(any());

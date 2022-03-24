@@ -120,10 +120,10 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
     return nodeExecutionService.save(nodeExecution);
   }
 
-  private void resolveParameters(Ambiance ambiance, PmsStepParameters stepParameters, boolean skipUnresolvedCheck) {
+  private void resolveParameters(Ambiance ambiance, PmsStepParameters stepParameters) {
     String nodeExecutionId = Objects.requireNonNull(AmbianceUtils.obtainCurrentRuntimeId(ambiance));
     log.info("Starting to Resolve step parameters");
-    Object resolvedStepParameters = pmsEngineExpressionService.resolve(ambiance, stepParameters, skipUnresolvedCheck);
+    Object resolvedStepParameters = pmsEngineExpressionService.resolve(ambiance, stepParameters);
     PmsStepParameters resolvedParameters = PmsStepParameters.parse(
         OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepParameters));
     // TODO (prashant) : This is a hack right now to serialize in binary as findAndModify is not honoring converter
@@ -139,7 +139,7 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
     String nodeId = AmbianceUtils.obtainCurrentSetupId(ambiance);
     try (AutoLogContext ignore = AmbianceUtils.autoLogContext(ambiance)) {
       PlanNode planNode = planService.fetchNode(ambiance.getPlanId(), nodeId);
-      resolveParameters(ambiance, planNode.getStepParameters(), planNode.isSkipUnresolvedExpressionsCheck());
+      resolveParameters(ambiance, planNode.getStepParameters());
 
       ExecutionCheck check = performPreFacilitationChecks(ambiance, planNode);
       if (!check.isProceed()) {

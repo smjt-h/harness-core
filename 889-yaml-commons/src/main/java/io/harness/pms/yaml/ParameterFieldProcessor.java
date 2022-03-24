@@ -66,7 +66,7 @@ public class ParameterFieldProcessor {
     Map<String, Object> map = field.getValueDoc();
     Object valueField = map.get(ParameterFieldValueWrapper.VALUE_FIELD);
     if (valueField != null) {
-      Object finalValue = engineExpressionEvaluator.resolve(valueField, skipUnresolvedExpressionsCheck);
+      Object finalValue = engineExpressionEvaluator.resolve(valueField);
       if (finalValue != null) {
         field.updateWithValue(finalValue);
         ProcessorResult processorResult = validateUsingValidator(finalValue, inputSetValidator);

@@ -37,9 +37,9 @@ public class PmsEngineExpressionServiceImpl implements PmsEngineExpressionServic
   }
 
   @Override
-  public Object resolve(Ambiance ambiance, Object o, boolean skipUnresolvedExpressionsCheck) {
+  public Object resolve(Ambiance ambiance, Object o) {
     EngineExpressionEvaluator evaluator = prepareExpressionEvaluator(ambiance);
-    return evaluator.resolve(o, skipUnresolvedExpressionsCheck);
+    return evaluator.resolve(o);
   }
 
   @Override

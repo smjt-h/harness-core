@@ -159,8 +159,12 @@ public class EngineExpressionEvaluator {
    */
   // TODO(archit):Replace skipUnresolvedExpressionsCheck with enum to get unresolved variable value to be replaced with
   // like empty string, null or original expression.
+  public Object resolve(Object o) {
+    return resolve(o, true);
+  }
+
   public Object resolve(Object o, boolean skipUnresolvedExpressionsCheck) {
-    return ExpressionEvaluatorUtils.updateExpressions(o, new ResolveFunctorImpl(this, true));
+    return ExpressionEvaluatorUtils.updateExpressions(o, new ResolveFunctorImpl(this, skipUnresolvedExpressionsCheck));
   }
 
   public PartialEvaluateResult partialResolve(Object o) {
