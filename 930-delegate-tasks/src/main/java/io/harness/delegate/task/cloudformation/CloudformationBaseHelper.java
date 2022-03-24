@@ -26,7 +26,7 @@ public interface CloudformationBaseHelper {
   List<Tag> getCloudformationTags(String tagsJson) throws IOException;
 
   Set<String> getCapabilities(AwsInternalConfig awsInternalConfig, String region, String data,
-      List<String> userDefinedCapabilities, String type);
+      List<String> userDefinedCapabilities, String templateType);
 
   long printStackEvents(
       AwsInternalConfig awsInternalConfig, String region, long stackEventsTs, Stack stack, LogCallback logCallback);

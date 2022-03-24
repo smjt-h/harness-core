@@ -56,8 +56,8 @@ public class CloudformationBaseHelperImpl implements CloudformationBaseHelper {
   }
 
   public Set<String> getCapabilities(AwsInternalConfig awsInternalConfig, String region, String data,
-      List<String> userDefinedCapabilities, String type) {
-    List<String> capabilities = awsCFHelperServiceDelegate.getCapabilities(awsInternalConfig, region, data, type);
+      List<String> userDefinedCapabilities, String templateType) {
+    List<String> capabilities = awsCFHelperServiceDelegate.getCapabilities(awsInternalConfig, region, data, templateType);
     Set<String> allCapabilities = new HashSet<>();
 
     if (isNotEmpty(userDefinedCapabilities)) {

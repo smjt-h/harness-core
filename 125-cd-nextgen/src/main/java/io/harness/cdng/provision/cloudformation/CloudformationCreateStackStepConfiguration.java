@@ -35,14 +35,13 @@ import lombok.experimental.FieldDefaults;
 
 public class CloudformationCreateStackStepConfiguration {
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> stackName;
-  @NotNull @JsonProperty("templateFile") CloudformationTemplateFile templateFile;
+  @NotNull CloudformationTemplateFile templateFile;
   @JsonProperty("parameters") List<CloudformationParametersFileSpec> parametersFilesSpecs;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> awsConnectorRef;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> awsRegion;
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> roleArn;
   @YamlSchemaTypes(value = {string})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
-  @JsonProperty("capabilities")
   ParameterField<List<String>> capabilities;
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> tags;
   @YamlSchemaTypes(value = {string})
