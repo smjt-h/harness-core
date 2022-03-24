@@ -8,19 +8,26 @@
 package io.harness.delegate.task.cloudformation;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.expression.Expression.ALLOW_SECRETS;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.ExecutionCapabilityDemander;
 import io.harness.delegate.task.TaskParameters;
+import io.harness.expression.Expression;
 import io.harness.expression.ExpressionEvaluator;
 import io.harness.expression.ExpressionReflectionUtils.NestedAnnotationResolver;
+import io.harness.security.encryption.EncryptedDataDetail;
 
+import com.amazonaws.services.cloudformation.model.StackStatus;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 
 @Value
@@ -30,11 +37,20 @@ import lombok.extern.slf4j.Slf4j;
 public class CloudformationTaskNGParameters
     implements TaskParameters, ExecutionCapabilityDemander, NestedAnnotationResolver {
   @NonNull String accountId;
-  String currentStateFieldId;
   @NonNull CloudformationTaskType taskType;
-  @NonNull String entityId;
-
   CloudformationCommandUnit cfCommandUnit;
+  @Expression(ALLOW_SECRETS) String templateBody;
+  @NonFinal @Expression(ALLOW_SECRETS) String templateUrl;
+  @NonNull AwsConnectorDTO awsConnector;
+  @NonNull List<EncryptedDataDetail> encryptedDataDetails;
+  @NonNull String region;
+  String cloudFormationRoleArn;
+  @NonNull String stackName;
+  @Expression(ALLOW_SECRETS) Map<String, String> parameters;
+  List<String> capabilities;
+  String tags;
+  List<StackStatus> stackStatusesToMarkAsSuccess;
+  long timeoutInMs;
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {

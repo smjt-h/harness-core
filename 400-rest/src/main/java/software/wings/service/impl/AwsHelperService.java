@@ -481,17 +481,9 @@ public class AwsHelperService {
 
   public S3Object getObjectFromS3(
       AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String bucketName, String key) {
-    try {
-      encryptionService.decrypt(awsConfig, encryptionDetails, false);
-      tracker.trackS3Call("Get Object");
-      return getAmazonS3Client(getBucketRegion(awsConfig, encryptionDetails, bucketName), awsConfig)
-          .getObject(bucketName, key);
-    } catch (AmazonServiceException amazonServiceException) {
-      awsApiHelperService.handleAmazonServiceException(amazonServiceException);
-    } catch (AmazonClientException amazonClientException) {
-      awsApiHelperService.handleAmazonClientException(amazonClientException);
-    }
-    return null;
+    encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    return awsApiHelperService.getObjectFromS3(
+        AwsConfigToInternalMapper.toAwsInternalConfig(awsConfig), getRegion(awsConfig), bucketName, key);
   }
 
   public ObjectMetadata getObjectMetadataFromS3(

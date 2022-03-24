@@ -44,7 +44,7 @@ public class CloudFormationCreateStackHandlerTest extends WingsBaseTest {
   @Mock private AwsCFHelperServiceDelegate awsCFHelperServiceDelegate;
   @InjectMocks private CloudFormationCreateStackHandler cloudFormationCreateStackHandler;
 
-  @Test
+  /*@Test
   @Owner(developers = PRAKHAR)
   @Category(UnitTests.class)
   public void testGetCloudformationTags() throws IOException {
@@ -65,9 +65,9 @@ public class CloudFormationCreateStackHandlerTest extends WingsBaseTest {
         new Tag().withKey("tagKey1").withValue("tagValue1"), new Tag().withKey("tagKey2").withValue("tagValue2"));
     assertThat(cloudFormationCreateStackHandler.getCloudformationTags(cloudFormationCreateStackRequest))
         .isEqualTo(expectedTags);
-  }
+  }*/
 
-  @Test
+ /* @Test
   @Owner(developers = PRAKHAR)
   @Category(UnitTests.class)
   public void testGetCapabilities() throws IOException {
@@ -95,5 +95,5 @@ public class CloudFormationCreateStackHandlerTest extends WingsBaseTest {
     assertThat(cloudFormationCreateStackHandler.getCapabilities(
                    AwsConfig.builder().build(), "us-east-2", "data", userDefinedCapabilities, "type"))
         .hasSameElementsAs(expectedCapabilities);
-  }
+  }*/
 }

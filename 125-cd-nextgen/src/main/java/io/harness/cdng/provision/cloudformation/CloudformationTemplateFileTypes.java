@@ -10,4 +10,5 @@ package io.harness.cdng.provision.cloudformation;
 public interface CloudformationTemplateFileTypes {
   String Inline = "Inline";
   String Remote = "Remote";
+  String S3Url = "S3URL";
 }

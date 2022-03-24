@@ -25,16 +25,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CloudformationTemplateFile {
   @NotNull String type;
-  @NotNull String identifier;
 
   @NotNull
   @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
   CloudformationTemplateFileSpec spec;
 
   @Builder
-  public CloudformationTemplateFile(String type, String identifier, CloudformationTemplateFileSpec spec) {
+  public CloudformationTemplateFile(String type, CloudformationTemplateFileSpec spec) {
     this.type = type;
-    this.identifier = identifier;
     this.spec = spec;
   }
 }

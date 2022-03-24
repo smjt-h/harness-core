@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
 @JsonSubTypes({
   @JsonSubTypes.Type(value = InlineCloudformationTemplateFileSpec.class, name = CloudformationTemplateFileTypes.Inline)
-  ,
+  , @JsonSubTypes.Type(value = S3UrlCloudformationTemplateFileSpec.class, name = CloudformationTemplateFileTypes.S3Url),
       @JsonSubTypes.Type(
           value = RemoteCloudformationTemplateFileSpec.class, name = CloudformationTemplateFileTypes.Remote),
 })

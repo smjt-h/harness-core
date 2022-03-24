@@ -35,23 +35,23 @@ import lombok.experimental.FieldDefaults;
 
 public class CloudformationCreateStackStepConfiguration {
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> stackName;
-  @NotNull @JsonProperty("templateFile") CloudformationTemplateFilesWrapper templateFilesWrapper;
-  @JsonProperty("parameters") ParameterField<List<CloudformationParametersFilesWrapper>> parametersFilesWrapper;
-  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> connectorRef;
-  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> region;
-  @JsonProperty("awsRoleARN") ParameterField<CloudformationAwsRoleARN> awsRoleARN;
+  @NotNull @JsonProperty("templateFile") CloudformationTemplateFile templateFile;
+  @JsonProperty("parameters") List<CloudformationParametersFileSpec> parametersFilesSpecs;
+  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> awsConnectorRef;
+  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> awsRegion;
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> roleArn;
   @YamlSchemaTypes(value = {string})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
-  @JsonProperty("awsCapabilities")
-  ParameterField<List<String>> awsCapabilities;
-  List<NGVariable> tags;
-  @JsonProperty("cloudformationSkipWaitForResources") ParameterField<Boolean> cloudformationSkipWaitForResources;
-  @JsonProperty("cloudformationSkipWaitForResourcesTimeout")
-  ParameterField<Integer> cloudformationSkipWaitForResourcesTimeout;
-  @JsonProperty("skipBasedOnStackStatuses") ParameterField<List<String>> skipBasedOnStackStatuses;
+  @JsonProperty("capabilities")
+  ParameterField<List<String>> capabilities;
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> tags;
+  @YamlSchemaTypes(value = {string})
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
+  ParameterField<List<String>> skipOnStackStatuses;
+  List<NGVariable> parameterOverrides;
 
   void validateParams() {
-    Validator.notNullCheck("AWS connectorRef is null", connectorRef);
-    Validator.notNullCheck("AWS region  is null", region);
+    Validator.notNullCheck("AWS connector is null", awsConnectorRef);
+    Validator.notNullCheck("AWS region is null", awsRegion);
   }
 }

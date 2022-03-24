@@ -49,6 +49,7 @@ import com.amazonaws.services.cloudformation.model.StackResource;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import java.util.List;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 @TargetModule(HarnessModule._930_DELEGATE_TASKS)
@@ -188,34 +189,6 @@ public abstract class CloudFormationCommandTaskHandler {
   }
 
   @VisibleForTesting
-  protected long printStackEvents(CloudFormationCommandRequest request, long stackEventsTs, Stack stack,
-      ExecutionLogCallback executionLogCallback) {
-    List<StackEvent> stackEvents = getStackEvents(request, stack);
-    boolean printed = false;
-    long currentLatestTs = -1;
-    for (StackEvent event : stackEvents) {
-      long tsForEvent = event.getTimestamp().getTime();
-      if (tsForEvent > stackEventsTs) {
-        if (!printed) {
-          executionLogCallback.saveExecutionLog("******************** Cloud Formation Events ********************");
-          executionLogCallback.saveExecutionLog("********[Status] [Type] [Logical Id] [Status Reason] ***********");
-          printed = true;
-        }
-        executionLogCallback.saveExecutionLog(format("[%s] [%s] [%s] [%s] [%s]", event.getResourceStatus(),
-            event.getResourceType(), event.getLogicalResourceId(), getStatusReason(event.getResourceStatusReason()),
-            event.getPhysicalResourceId()));
-        if (currentLatestTs == -1) {
-          currentLatestTs = tsForEvent;
-        }
-      }
-    }
-    if (currentLatestTs != -1) {
-      stackEventsTs = currentLatestTs;
-    }
-    return stackEventsTs;
-  }
-
-  @VisibleForTesting
   protected long printStackEvents(String region, String stackId, AwsInternalConfig awsConfig,
       ExecutionLogCallback executionLogCallback, long stackEventsTs) {
     List<StackEvent> stackEvents = getStackEvents(region, stackId, awsConfig);
@@ -245,21 +218,6 @@ public abstract class CloudFormationCommandTaskHandler {
 
   @VisibleForTesting
   protected void printStackResources(
-      CloudFormationCommandRequest request, Stack stack, ExecutionLogCallback executionLogCallback) {
-    if (stack == null) {
-      return;
-    }
-    List<StackResource> stackResources = getStackResources(request, stack);
-    executionLogCallback.saveExecutionLog("******************** Cloud Formation Resources ********************");
-    executionLogCallback.saveExecutionLog("********[Status] [Type] [Logical Id] [Status Reason] ***********");
-    stackResources.forEach(resource
-        -> executionLogCallback.saveExecutionLog(format("[%s] [%s] [%s] [%s] [%s]", resource.getResourceStatus(),
-            resource.getResourceType(), resource.getLogicalResourceId(),
-            getStatusReason(resource.getResourceStatusReason()), resource.getPhysicalResourceId())));
-  }
-
-  @VisibleForTesting
-  protected void printStackResources(
       String region, String stackId, AwsInternalConfig awsConfig, ExecutionLogCallback executionLogCallback) {
     if (isEmpty(stackId)) {
       return;
@@ -273,21 +231,9 @@ public abstract class CloudFormationCommandTaskHandler {
             getStatusReason(resource.getResourceStatusReason()), resource.getPhysicalResourceId())));
   }
 
-  private List<StackResource> getStackResources(CloudFormationCommandRequest request, Stack stack) {
-    return awsHelperService.getAllStackResources(request.getRegion(),
-        new DescribeStackResourcesRequest().withStackName(stack.getStackName()),
-        AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()));
-  }
-
   private List<StackResource> getStackResources(String region, String stackId, AwsInternalConfig awsConfig) {
     return awsHelperService.getAllStackResources(
         region, new DescribeStackResourcesRequest().withStackName(stackId), awsConfig);
-  }
-
-  private List<StackEvent> getStackEvents(CloudFormationCommandRequest request, Stack stack) {
-    return awsHelperService.getAllStackEvents(request.getRegion(),
-        new DescribeStackEventsRequest().withStackName(stack.getStackName()),
-        AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()));
   }
 
   private List<StackEvent> getStackEvents(String region, String stackName, AwsInternalConfig awsConfig) {
@@ -297,6 +243,20 @@ public abstract class CloudFormationCommandTaskHandler {
 
   private String getStatusReason(String reason) {
     return isNotEmpty(reason) ? reason : StringUtils.EMPTY;
+  }
+
+  protected Optional<Stack> getIfStackExists(
+      String customStackName, String suffix, AwsInternalConfig awsConfig, String region) {
+    List<Stack> stacks = awsHelperService.getAllStacks(region, new DescribeStacksRequest(), awsConfig);
+    if (isEmpty(stacks)) {
+      return Optional.empty();
+    }
+
+    if (isNotEmpty(customStackName)) {
+      return stacks.stream().filter(stack -> stack.getStackName().equals(customStackName)).findFirst();
+    } else {
+      return stacks.stream().filter(stack -> stack.getStackName().endsWith(suffix)).findFirst();
+    }
   }
 
   protected abstract CloudFormationCommandExecutionResponse executeInternal(CloudFormationCommandRequest request,

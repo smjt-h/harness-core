@@ -9,24 +9,23 @@ package io.harness.cdng.provision.cloudformation;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
-import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
 import io.harness.pms.yaml.ParameterField;
 
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.AccessLevel;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.FieldDefaults;
 
 @OwnedBy(CDP)
 @Data
 @NoArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
-@JsonTypeName("AwsRoleARN")
-@RecasterAlias("io.harness.cdng.provision.cloudformation.AwsRoleARN")
-public class CloudformationAwsRoleARN {
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> roleArn;
+public class S3UrlCloudformationTemplateFileSpec implements CloudformationTemplateFileSpec {
+  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> templateUrl;
+
+  @Override
+  public String getType() {
+    return CloudformationTemplateFileTypes.S3Url;
+  }
 }

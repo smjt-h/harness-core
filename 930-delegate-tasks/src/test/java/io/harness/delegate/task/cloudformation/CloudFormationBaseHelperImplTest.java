@@ -13,8 +13,9 @@ import static io.harness.rule.OwnerRule.TMACARI;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessModule;
@@ -23,12 +24,15 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.aws.AWSCloudformationClient;
 import io.harness.aws.beans.AwsInternalConfig;
 import io.harness.category.element.UnitTests;
+import io.harness.logging.LogCallback;
 import io.harness.rule.Owner;
 
+import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.service.intfc.security.EncryptionService;
 
 import com.amazonaws.services.cloudformation.model.Stack;
-import java.util.Optional;
+import com.amazonaws.services.cloudformation.model.StackEvent;
+import java.util.Date;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -39,7 +43,7 @@ import org.mockito.MockitoAnnotations;
 @OwnedBy(CDP)
 @TargetModule(HarnessModule._930_DELEGATE_TASKS)
 public class CloudFormationBaseHelperImplTest extends CategoryTest {
-  @Mock private AWSCloudformationClient awsHelperService;
+  @Mock private AWSCloudformationClient awsCloudformationClient;
   @Mock protected EncryptionService encryptionService;
   @InjectMocks private CloudformationBaseHelperImpl cloudFormationBaseHelper;
 
@@ -51,15 +55,26 @@ public class CloudFormationBaseHelperImplTest extends CategoryTest {
   @Test
   @Owner(developers = TMACARI)
   @Category(UnitTests.class)
-  public void testGetIfStackExists() {
-    String customStackName = "CUSTOM_STACK_NAME";
-    String stackId = "STACK_ID";
-    doReturn(singletonList(new Stack().withStackId(stackId).withStackName(customStackName)))
-        .when(awsHelperService)
-        .getAllStacks(anyString(), any(), any());
-    Optional<Stack> stack = cloudFormationBaseHelper.getIfStackExists(
-        customStackName, "foo", AwsInternalConfig.builder().build(), "us-east-1");
-    assertThat(stack.isPresent()).isTrue();
-    assertThat(stackId).isEqualTo(stack.get().getStackId());
+  public void testPrintStackEvents() {
+    String stackName = "HarnessStack-test";
+    long stackEventTs = 1000;
+    String stackNameSuffix = "Stack Name 00";
+    Date timeStamp = new Date();
+    Stack testStack = new Stack().withStackStatus("CREATE_COMPLETE").withStackName(stackName + stackNameSuffix);
+    LogCallback logCallback = mock(ExecutionLogCallback.class);
+    StackEvent stackEvent = new StackEvent()
+                                .withStackName(stackName)
+                                .withEventId("id")
+                                .withResourceStatusReason("statusReason")
+                                .withTimestamp(timeStamp);
+    when(awsCloudformationClient.getAllStackEvents(any(), any(), any())).thenReturn(singletonList(stackEvent));
+
+    long resStackEventTs = cloudFormationBaseHelper.printStackEvents(
+        AwsInternalConfig.builder().build(), "us-east-1", stackEventTs, testStack, logCallback);
+    String message =
+        String.format("[%s] [%s] [%s] [%s] [%s]", stackEvent.getResourceStatus(), stackEvent.getResourceType(),
+            stackEvent.getLogicalResourceId(), "statusReason", stackEvent.getPhysicalResourceId());
+    verify(logCallback).saveExecutionLog(message);
+    assertThat(resStackEventTs).isEqualTo(timeStamp.getTime());
   }
 }

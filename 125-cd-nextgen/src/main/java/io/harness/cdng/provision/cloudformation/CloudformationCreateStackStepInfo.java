@@ -59,14 +59,18 @@ public class CloudformationCreateStackStepInfo
   public Map<String, ParameterField<String>> extractConnectorRefs() {
     Map<String, ParameterField<String>> connectorRefMap = new HashMap<>();
     // Extract connector refs from the step configuration
-    if (cloudformationStepConfiguration.getTemplateFilesWrapper().getTemplateFile().getSpec().getType()
-        == CloudformationTemplateFileTypes.Remote) {
+    if (cloudformationStepConfiguration.getTemplateFile().getSpec().getType().equals(
+            CloudformationTemplateFileTypes.Remote)) {
       RemoteCloudformationTemplateFileSpec remoteTemplateFile =
-          (RemoteCloudformationTemplateFileSpec) cloudformationStepConfiguration.getTemplateFilesWrapper()
-              .getTemplateFile()
-              .getSpec();
+          (RemoteCloudformationTemplateFileSpec) cloudformationStepConfiguration.getTemplateFile().getSpec();
       connectorRefMap.put("configuration.spec.templateFile.store.spec.connectorRef",
           remoteTemplateFile.getStore().getSpec().getConnectorReference());
+
+      cloudformationStepConfiguration.getParametersFilesSpecs().forEach(cloudformationParametersFileSpec -> {
+        connectorRefMap.put("configuration.spec.parameters." + cloudformationParametersFileSpec.getIdentifier()
+                + ".store.spec.connectorRef",
+            cloudformationParametersFileSpec.getStore().getSpec().getConnectorReference());
+      });
     }
     return connectorRefMap;
   }
