@@ -988,7 +988,7 @@ public class AccountServiceImpl implements AccountService {
 
       if (account.getDelegateConfiguration().getValidUntil() != null
           && account.getDelegateConfiguration().getValidUntil() < System.currentTimeMillis()) {
-        log.warn("We can cleanup old record for delegate configuration for account [{}]", accountId);
+        log.info("We can cleanup old record for delegate configuration for account [{}]", accountId);
       } else {
         return account.getDelegateConfiguration();
       }
