@@ -45,7 +45,8 @@ import lombok.extern.slf4j.Slf4j;
 public class ArtifactoryArtifactTaskHelper {
   @Inject ArtifactoryRequestMapper artifactoryRequestMapper;
   @Inject ArtifactoryNgService artifactoryNgService;
-
+  static final String DEFAULT_ARTIFACT_FILTER = "*";
+  static final String DEFAULT_ARTIFACT_DIRECTORY = "/";
   private final ArtifactoryArtifactTaskHandler artifactoryArtifactTaskHandler;
 
   public ArtifactTaskResponse getArtifactCollectResponse(
@@ -120,7 +121,7 @@ public class ArtifactoryArtifactTaskHelper {
     switch (artifactTaskParameters.getArtifactTaskType()) {
       case GET_LAST_SUCCESSFUL_BUILD:
         saveLogs(executionLogCallback, "Fetching Artifact details");
-        artifactTaskResponse = getSuccessTaskResponse(getLatestArtifact(artifactTaskParameters));
+        artifactTaskResponse = getSuccessTaskResponse(getLatestArtifact(artifactTaskParameters, executionLogCallback));
         ArtifactoryGenericArtifactDelegateResponse artifactoryGenericArtifactDelegateResponse =
             (ArtifactoryGenericArtifactDelegateResponse) (artifactTaskResponse.getArtifactTaskExecutionResponse()
                                                               .getArtifactDelegateResponses()
@@ -141,33 +142,45 @@ public class ArtifactoryArtifactTaskHelper {
         break;
       case GET_BUILDS:
         saveLogs(executionLogCallback, "Fetching artifact details");
-        artifactTaskResponse = fetchFileBuilds(artifactTaskParameters);
+        artifactTaskResponse = fetchFileBuilds(artifactTaskParameters, executionLogCallback);
         saveLogs(executionLogCallback,
             "Fetched " + artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().size()
                 + " artifacts");
         break;
       default:
-        artifactTaskResponse = ArtifactTaskResponse.builder()
-                                   .commandExecutionStatus(CommandExecutionStatus.FAILURE)
-                                   .errorMessage("There is no Artifactory artifact task type impl defined for - "
-                                       + artifactTaskParameters.getArtifactTaskType().name())
-                                   .errorCode(ErrorCode.INVALID_ARGUMENT)
-                                   .build();
+        saveLogs(executionLogCallback,
+            "No corresponding Artifactory artifact task type [{}]: " + artifactTaskParameters.toString());
+        log.error("No corresponding Artifactory artifact task type [{}]", artifactTaskParameters.toString());
+        return ArtifactTaskResponse.builder()
+            .commandExecutionStatus(CommandExecutionStatus.FAILURE)
+            .errorMessage("There is no Artifactory artifact task type impl defined for - "
+                + artifactTaskParameters.getArtifactTaskType().name())
+            .errorCode(ErrorCode.INVALID_ARGUMENT)
+            .build();
     }
     return artifactTaskResponse;
   }
 
-  public ArtifactTaskExecutionResponse getLatestArtifact(ArtifactTaskParameters artifactTaskParameters) {
+  public ArtifactTaskExecutionResponse getLatestArtifact(
+      ArtifactTaskParameters artifactTaskParameters, LogCallback executionLogCallback) {
     ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest =
         (ArtifactoryGenericArtifactDelegateRequest) artifactTaskParameters.getAttributes();
     artifactoryArtifactTaskHandler.decryptRequestDTOs(artifactoryGenericArtifactDelegateRequest);
     ArtifactoryConfigRequest artifactoryConfigRequest = artifactoryRequestMapper.toArtifactoryRequest(
         artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
-
+    String artifactPathFilter = artifactoryGenericArtifactDelegateRequest.getArtifactPathFilter();
+    String artifactDirectory = artifactoryGenericArtifactDelegateRequest.getArtifactDirectory();
+    if (artifactPathFilter.isEmpty()) {
+      artifactPathFilter = DEFAULT_ARTIFACT_FILTER;
+    }
+    if (artifactDirectory.isEmpty()) {
+      saveLogs(executionLogCallback,
+          "Artifact Directory is Empty, assuming Artifacts are present in root of the repository");
+      artifactDirectory = DEFAULT_ARTIFACT_DIRECTORY;
+    }
     BuildDetails buildDetails = artifactoryNgService.getLatestArtifact(artifactoryConfigRequest,
-        artifactoryGenericArtifactDelegateRequest.getRepositoryName(),
-        artifactoryGenericArtifactDelegateRequest.getArtifactDirectory(),
-        artifactoryGenericArtifactDelegateRequest.getArtifactPathFilter(), MAX_NO_OF_TAGS_PER_ARTIFACT);
+        artifactoryGenericArtifactDelegateRequest.getRepositoryName(), artifactDirectory, artifactPathFilter,
+        MAX_NO_OF_TAGS_PER_ARTIFACT);
     ArtifactoryGenericArtifactDelegateResponse artifactoryGenericArtifactDelegateResponse =
         ArtifactoryRequestResponseMapper.toArtifactoryGenericResponse(
             buildDetails, artifactoryGenericArtifactDelegateRequest);
@@ -176,14 +189,19 @@ public class ArtifactoryArtifactTaskHelper {
         Collections.singletonList(artifactoryGenericArtifactDelegateResponse));
   }
 
-  public ArtifactTaskResponse fetchFileBuilds(ArtifactTaskParameters params) {
+  public ArtifactTaskResponse fetchFileBuilds(ArtifactTaskParameters params, LogCallback executionLogCallback) {
     ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest =
         (ArtifactoryGenericArtifactDelegateRequest) params.getAttributes();
     artifactoryArtifactTaskHandler.decryptRequestDTOs(artifactoryGenericArtifactDelegateRequest);
     ArtifactoryConfigRequest artifactoryConfigRequest = artifactoryRequestMapper.toArtifactoryRequest(
         artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
-
-    String filePath = Paths.get(artifactoryGenericArtifactDelegateRequest.getArtifactDirectory(), "*").toString();
+    String artifactDirectory = artifactoryGenericArtifactDelegateRequest.getArtifactDirectory();
+    if (artifactDirectory.isEmpty()) {
+      saveLogs(executionLogCallback,
+          "Artifact Directory is Empty, assuming Artifacts are present in root of the repository");
+      artifactDirectory = DEFAULT_ARTIFACT_DIRECTORY;
+    }
+    String filePath = Paths.get(artifactDirectory, DEFAULT_ARTIFACT_FILTER).toString();
 
     List<BuildDetails> buildDetails = artifactoryNgService.getArtifactList(artifactoryConfigRequest,
         artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, MAX_NO_OF_TAGS_PER_ARTIFACT);

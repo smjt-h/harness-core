@@ -63,7 +63,7 @@ public class ArtifactoryRegistryArtifactConfig implements ArtifactConfig, Visita
   /**
    * Images in repos need to be referenced via a path.
    */
-  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> artifactPath;
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> artifactPath;
 
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Wither ParameterField<String> artifactPathFilter;
 
