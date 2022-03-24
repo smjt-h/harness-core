@@ -7,19 +7,26 @@
 
 package io.harness.notification.eventbackbone;
 
+import static io.harness.AuthorizationServiceHeader.NOTIFICATION_SERVICE;
+
 import io.harness.NotificationRequest;
 import io.harness.notification.entities.MongoNotificationRequest;
 import io.harness.notification.service.api.NotificationService;
 import io.harness.queue.QueueConsumer;
+import io.harness.queue.QueueController;
 import io.harness.queue.QueueListener;
+import io.harness.security.SecurityContextBuilder;
+import io.harness.security.dto.ServicePrincipal;
 
 import com.google.inject.Inject;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class MongoMessageConsumer extends QueueListener<MongoNotificationRequest> implements MessageConsumer {
   private NotificationService notificationService;
+  @Inject private QueueController queueController;
 
   @Inject
   public MongoMessageConsumer(
@@ -31,13 +38,30 @@ public class MongoMessageConsumer extends QueueListener<MongoNotificationRequest
   @Override
   public void onMessage(MongoNotificationRequest message) {
     try {
-      NotificationRequest notificationRequest = NotificationRequest.parseFrom(message.getBytes());
-      if (!notificationRequest.getUnknownFields().asMap().isEmpty()) {
-        throw new InvalidProtocolBufferException("Unknown fields detected. Check Notification Request producer");
+      SecurityContextBuilder.setContext(new ServicePrincipal(NOTIFICATION_SERVICE.getServiceId()));
+      while (!Thread.currentThread().isInterrupted()) {
+        if (queueController.isNotPrimary()) {
+          log.info("EntityActivity consumer is not running on primary deployment, will try again after some time...");
+          TimeUnit.SECONDS.sleep(30);
+          continue;
+        }
+        processNewMessage(message);
       }
-      notificationService.processNewMessage(notificationRequest);
+    } catch (InterruptedException ex) {
+      SecurityContextBuilder.unsetCompleteContext();
+      Thread.currentThread().interrupt();
     } catch (InvalidProtocolBufferException e) {
       log.error("Corrupted message received off the mongo queue");
+    } finally {
+      SecurityContextBuilder.unsetCompleteContext();
     }
+  }
+
+  private void processNewMessage(MongoNotificationRequest message) throws InvalidProtocolBufferException {
+    NotificationRequest notificationRequest = NotificationRequest.parseFrom(message.getBytes());
+    if (!notificationRequest.getUnknownFields().asMap().isEmpty()) {
+      throw new InvalidProtocolBufferException("Unknown fields detected. Check Notification Request producer");
+    }
+    notificationService.processNewMessage(notificationRequest);
   }
 }
