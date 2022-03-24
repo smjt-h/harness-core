@@ -7,7 +7,10 @@
 
 package io.harness.connector.validator;
 
-import com.google.inject.Inject;
+import static io.harness.annotations.dev.HarnessTeam.CDP;
+
+import static java.lang.String.format;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.ConnectivityStatus;
 import io.harness.connector.ConnectorResponseDTO;
@@ -18,15 +21,13 @@ import io.harness.delegate.beans.connector.pdcconnector.PhysicalDataCenterConnec
 import io.harness.ng.core.dto.ErrorDetail;
 import io.harness.ng.validator.dto.HostValidationDTO;
 import io.harness.ng.validator.service.api.NGHostValidationService;
-import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 
+import com.google.inject.Inject;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static java.lang.String.format;
+import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 
 @OwnedBy(CDP)
 public class PhysicalDataCenterConnectorValidator implements ConnectionValidator<PhysicalDataCenterConnectorDTO> {

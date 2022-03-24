@@ -7,6 +7,19 @@
 
 package io.harness.ng.core.remote;
 
+import static io.harness.exception.WingsException.USER;
+import static io.harness.rule.OwnerRule.IVAN;
+import static io.harness.rule.OwnerRule.VLAD;
+import static io.harness.secrets.SecretPermissions.SECRET_ACCESS_PERMISSION;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+
 import io.harness.CategoryTest;
 import io.harness.accesscontrol.NGAccessDeniedException;
 import io.harness.accesscontrol.acl.api.Resource;
@@ -20,27 +33,15 @@ import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.validator.dto.HostValidationDTO;
 import io.harness.ng.validator.service.api.NGHostValidationService;
 import io.harness.rule.Owner;
+
+import java.util.Collections;
+import java.util.List;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Collections;
-import java.util.List;
-
-import static io.harness.exception.WingsException.USER;
-import static io.harness.rule.OwnerRule.IVAN;
-import static io.harness.rule.OwnerRule.VLAD;
-import static io.harness.secrets.SecretPermissions.SECRET_ACCESS_PERMISSION;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
 
 @RunWith(MockitoJUnitRunner.class)
 @OwnedBy(HarnessTeam.CDP)
@@ -50,8 +51,7 @@ public class HostValidationResourceTest extends CategoryTest {
   private static final String PROJECT_IDENTIFIER = "projectIdentifier";
   private static final String SECRET_IDENTIFIER = "secretIdentifier";
 
-  @Mock
-  NGHostValidationService hostValidationService;
+  @Mock NGHostValidationService hostValidationService;
   @Mock AccessControlClient accessControlClient;
   @InjectMocks HostValidationResource hostValidationResource;
 
@@ -71,7 +71,7 @@ public class HostValidationResourceTest extends CategoryTest {
         .validateSSHHosts(hosts, ACCOUNT_IDENTIFIER, null, null, SECRET_IDENTIFIER);
 
     ResponseDTO<List<HostValidationDTO>> result = hostValidationResource.validateSshHost(
-            ACCOUNT_IDENTIFIER, null, null, SECRET_IDENTIFIER, Collections.singletonList(host1));
+        ACCOUNT_IDENTIFIER, null, null, SECRET_IDENTIFIER, Collections.singletonList(host1));
 
     assertThat(result.getData().get(0).getHost()).isEqualTo(host1);
     assertThat(result.getData().get(0).getStatus()).isEqualTo(HostValidationDTO.HostValidationStatus.SUCCESS);

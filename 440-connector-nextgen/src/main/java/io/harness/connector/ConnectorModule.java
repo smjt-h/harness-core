@@ -7,9 +7,9 @@
 
 package io.harness.connector;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.MapBinder;
-import com.google.inject.name.Names;
+import static io.harness.AuthorizationServiceHeader.CE_NEXT_GEN;
+import static io.harness.annotations.dev.HarnessTeam.DX;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.aws.AwsClient;
 import io.harness.aws.AwsClientImpl;
@@ -20,8 +20,8 @@ import io.harness.connector.impl.ConnectorActivityServiceImpl;
 import io.harness.connector.impl.ConnectorFilterServiceImpl;
 import io.harness.connector.impl.ConnectorHeartbeatServiceImpl;
 import io.harness.connector.impl.DefaultConnectorServiceImpl;
-import io.harness.connector.impl.NGHostServiceImpl;
 import io.harness.connector.impl.NGConnectorSecretManagerServiceImpl;
+import io.harness.connector.impl.NGHostServiceImpl;
 import io.harness.connector.mappers.ConnectorDTOToEntityMapper;
 import io.harness.connector.mappers.ConnectorEntityToDTOMapper;
 import io.harness.connector.mappers.filter.ConnectorFilterPropertiesMapper;
@@ -49,8 +49,9 @@ import io.harness.ng.core.accountsetting.services.NGAccountSettingServiceImpl;
 import io.harness.persistence.HPersistence;
 import io.harness.service.ScmServiceClient;
 
-import static io.harness.AuthorizationServiceHeader.CE_NEXT_GEN;
-import static io.harness.annotations.dev.HarnessTeam.DX;
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.MapBinder;
+import com.google.inject.name.Names;
 
 @OwnedBy(DX)
 public class ConnectorModule extends AbstractModule {

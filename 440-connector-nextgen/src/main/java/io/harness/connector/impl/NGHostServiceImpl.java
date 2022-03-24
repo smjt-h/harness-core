@@ -7,8 +7,11 @@
 
 package io.harness.connector.impl;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.utils.PageUtils.getPageRequest;
+
+import static java.util.stream.Collectors.toList;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.entities.Connector;
@@ -24,18 +27,16 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageRequest;
 import io.harness.repositories.ConnectorRepository;
 import io.harness.utils.FullyQualifiedIdentifierHelper;
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.utils.PageUtils.getPageRequest;
-import static java.util.stream.Collectors.toList;
 
 @Singleton
 @AllArgsConstructor(onConstructor = @__({ @Inject }))
@@ -49,7 +50,7 @@ public class NGHostServiceImpl implements NGHostService {
 
   @Override
   public Page<HostDTO> filterHostsByConnector(String accountIdentifier, String orgIdentifier, String projectIdentifier,
-                                              String connectorIdentifier, HostFilterDTO filter, PageRequest pageRequest) {
+      String connectorIdentifier, HostFilterDTO filter, PageRequest pageRequest) {
     Connector connector = getConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifier);
 
     if (!ConnectorType.PDC.equals(connector.getType())) {
