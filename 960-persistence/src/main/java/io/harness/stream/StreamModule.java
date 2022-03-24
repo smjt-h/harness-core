@@ -45,8 +45,8 @@ public class StreamModule extends AbstractModule {
 
   @Provides
   @Singleton
-  AtmosphereServlet getAtmosphereServelet(AtmosphereBroadcaster atmosphereBroadcaster,
-      @Named("atmosphere") Provider<RedisConfig> redisConfigProvider) {
+  AtmosphereServlet getAtmosphereServelet(
+      AtmosphereBroadcaster atmosphereBroadcaster, @Named("atmosphere") Provider<RedisConfig> redisConfigProvider) {
     AtmosphereServlet atmosphereServlet = new AtmosphereServlet();
     atmosphereServlet.framework()
         .addInitParameter(ApplicationConfig.WEBSOCKET_CONTENT_TYPE, "application/json")

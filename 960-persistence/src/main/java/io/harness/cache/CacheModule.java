@@ -182,7 +182,6 @@ public class CacheModule extends AbstractModule implements ServersModule {
 
   @Override
   protected void configure() {
-
     if (cacheConfig.getCacheBackend() == REDIS) {
       bind(RedissonKryoCodec.class).toInstance(new RedissonKryoCodec());
     }
