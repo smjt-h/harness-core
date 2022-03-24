@@ -97,6 +97,9 @@ public class ArtifactDelegateRequestUtils {
       ArtifactoryConnectorDTO artifactoryConnectorDTO, List<EncryptedDataDetail> encryptedDataDetails,
       ArtifactSourceType sourceType) {
     String artifactDirectory = artifactPath;
+    if (artifactDirectory.isEmpty()) {
+      artifactDirectory = "/";
+    }
     if (repositoryFormat.equals(generic.name())) {
       return getArtifactoryGenericArtifactDelegateRequest(repositoryName, repositoryFormat, artifactDirectory, null,
           null, null, artifactoryConnectorDTO, encryptedDataDetails, ArtifactSourceType.ARTIFACTORY_REGISTRY);
