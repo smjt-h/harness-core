@@ -17,7 +17,7 @@ import io.harness.connector.entities.embedded.githubconnector.GithubUsernameToke
 import io.harness.encryption.SecretRefHelper;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
-import io.harness.ng.core.api.NGSecretServiceV2;
+import io.harness.ng.core.api.SecretCrudService;
 import io.harness.ng.userprofile.commons.SCMType;
 import io.harness.ng.userprofile.commons.SourceCodeManagerDTO;
 import io.harness.ng.userprofile.entities.GithubSCM;
@@ -44,7 +44,7 @@ import org.springframework.dao.DuplicateKeyException;
 @AllArgsConstructor
 @Slf4j
 public class SourceCodeManagerServiceImpl implements SourceCodeManagerService {
-  @Inject private NGSecretServiceV2 ngSecretServiceV2;
+  @Inject private SecretCrudService ngSecretService;
   @Inject SourceCodeManagerRepository sourceCodeManagerRepository;
   @Inject private Map<SCMType, SourceCodeManagerMapper> scmMapBinder;
 
@@ -126,7 +126,7 @@ public class SourceCodeManagerServiceImpl implements SourceCodeManagerService {
                                       .getAuth())
                                      .getTokenRef())
                 .getIdentifier();
-        if (!ngSecretServiceV2.delete(accountIdentifier, null, null, secretId)) {
+        if (!ngSecretService.delete(accountIdentifier, null, null, secretId)) {
           log.error("Not able to delete Secret with id:{} associated with SCM {} in account {}", secretId, name,
               accountIdentifier);
           throw new InvalidRequestException("Secret cannot be deleted");

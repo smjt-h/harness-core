@@ -46,8 +46,7 @@ import io.harness.delegate.beans.connector.scm.gitlab.GitlabAuthenticationDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabSshCredentialsDTO;
 import io.harness.encryption.SecretRefHelper;
 import io.harness.exception.InvalidRequestException;
-import io.harness.ng.core.api.NGSecretServiceV2;
-import io.harness.ng.core.api.impl.NGSecretServiceV2Impl;
+import io.harness.ng.core.api.impl.SecretCrudServiceImpl;
 import io.harness.ng.userprofile.commons.AwsCodeCommitSCMDTO;
 import io.harness.ng.userprofile.commons.AzureDevOpsSCMDTO;
 import io.harness.ng.userprofile.commons.BitbucketSCMDTO;
@@ -80,8 +79,7 @@ import org.junit.experimental.categories.Category;
 
 @OwnedBy(PL)
 public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
-  NGSecretServiceV2 ngSecretServiceV2;
-  NGSecretServiceV2Impl ngSecretServiceV2Impl;
+  SecretCrudServiceImpl secretCrudService;
   SourceCodeManagerService sourceCodeManagerService;
   @Inject private Map<SCMType, SourceCodeManagerMapper> scmMapBinder;
 
@@ -100,10 +98,9 @@ public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
     userIdentifier = generateUuid();
     accountIdentifier = randomAlphabetic(10);
     sourceCodeManagerRepository = mock(SourceCodeManagerRepository.class);
-    ngSecretServiceV2 = mock(NGSecretServiceV2.class);
-    ngSecretServiceV2Impl = mock(NGSecretServiceV2Impl.class);
+    secretCrudService = mock(SecretCrudServiceImpl.class);
     sourceCodeManagerService =
-        new SourceCodeManagerServiceImpl(ngSecretServiceV2, sourceCodeManagerRepository, scmMapBinder);
+        new SourceCodeManagerServiceImpl(secretCrudService, sourceCodeManagerRepository, scmMapBinder);
     Principal principal = mock(Principal.class);
     when(principal.getType()).thenReturn(PrincipalType.USER);
     when(principal.getName()).thenReturn(userIdentifier);
@@ -211,7 +208,7 @@ public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
         .thenReturn(sourceCodeManagerList);
     when(sourceCodeManagerRepository.deleteByUserIdentifierAndNameAndAccountIdentifier(any(), any(), any()))
         .thenReturn(1L);
-    when(ngSecretServiceV2.delete(any(), any(), any(), eq(secretKeyRef))).thenReturn(true);
+    when(secretCrudService.delete(any(), any(), any(), eq(secretKeyRef))).thenReturn(true);
     boolean result = sourceCodeManagerService.delete(gitHubScm.getName(), gitHubScm.getAccountIdentifier());
     assertThat(result).isTrue();
     delete(sourceCodeManagerList);
@@ -228,7 +225,7 @@ public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
         .thenReturn(sourceCodeManagerList);
     when(sourceCodeManagerRepository.deleteByUserIdentifierAndNameAndAccountIdentifier(any(), any(), any()))
         .thenReturn(1L);
-    when(ngSecretServiceV2.delete(any(), any(), any(), eq(secretKeyRef))).thenReturn(true);
+    when(secretCrudService.delete(any(), any(), any(), eq(secretKeyRef))).thenReturn(true);
     boolean result = sourceCodeManagerService.delete(gitHubScm.getName(), gitHubScm.getAccountIdentifier());
     assertThat(result).isTrue();
     delete(sourceCodeManagerList);
@@ -245,7 +242,7 @@ public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
         .thenReturn(sourceCodeManagerList);
     when(sourceCodeManagerRepository.deleteByUserIdentifierAndNameAndAccountIdentifier(any(), any(), any()))
         .thenReturn(1L);
-    when(ngSecretServiceV2.delete(any(), any(), any(), eq(secretKeyRef))).thenReturn(true);
+    when(secretCrudService.delete(any(), any(), any(), eq(secretKeyRef))).thenReturn(true);
     sourceCodeManagerService.delete(gitHubScm.getName(), gitHubScm.getAccountIdentifier());
   }
 
