@@ -8,28 +8,44 @@
 package io.harness.delegate.task.serverless;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.data.structure.UUIDGenerator.convertBase64UuidToCanonicalForm;
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.filesystem.FileIo.*;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.artifactory.ArtifactoryConfigRequest;
+import io.harness.artifactory.ArtifactoryNgService;
 import io.harness.connector.service.git.NGGitService;
 import io.harness.connector.task.git.GitDecryptionHelper;
+import io.harness.data.structure.EmptyPredicate;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.scm.adapter.ScmConnectorMapper;
 import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.beans.logstreaming.NGDelegateLogCallback;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
+import io.harness.delegate.task.artifactory.ArtifactoryRequestMapper;
 import io.harness.delegate.task.git.ScmFetchFilesHelperNG;
 import io.harness.filesystem.FileIo;
 import io.harness.logging.LogCallback;
+import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.serverless.model.ServerlessDelegateTaskParams;
 import io.harness.shell.SshSessionConfig;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 
 @Singleton
 @Slf4j
@@ -39,6 +55,16 @@ public class ServerlessTaskHelperBase {
   @Inject private ScmFetchFilesHelperNG scmFetchFilesHelper;
   @Inject private GitDecryptionHelper gitDecryptionHelper;
   @Inject private NGGitService ngGitService;
+  @Inject private SecretDecryptionService secretDecryptionService;
+  @Inject private ArtifactoryNgService artifactoryNgService;
+  @Inject private ArtifactoryRequestMapper artifactoryRequestMapper;
+
+  private static final String ARTIFACTORY_ARTIFACT_PATH = "artifactPath";
+  private static final String ARTIFACTORY_ARTIFACT_NAME = "artifactName";
+  private static final String ARTIFACT_FILE_NAME = "artifactFile";
+  private static final String ARTIFACT_ZIP_REGEX = ".*\\.zip";
+  private static final String ARTIFACT_JAR_REGEX = ".*\\.jar";
+  private static final String ARTIFACT_WAR_REGEX = ".*\\.war";
 
   public LogCallback getLogCallback(ILogStreamingTaskClient logStreamingTaskClient, String commandUnitName,
       boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress) {
@@ -88,5 +114,76 @@ public class ServerlessTaskHelperBase {
   private void updateManifestFileContent(String manifestFilePath, String manifestContent) throws IOException {
     FileIo.deleteFileIfExists(manifestFilePath);
     FileIo.writeUtf8StringToFile(manifestFilePath, manifestContent);
+  }
+
+  public void fetchArtifact(ServerlessArtifactConfig serverlessArtifactConfig, LogCallback logCallback,
+      String artifactoryBaseDir, ServerlessManifestConfig serverlessManifestConfig) throws IOException {
+    String artifactoryDirectory = Paths.get(artifactoryBaseDir, convertBase64UuidToCanonicalForm(generateUuid()))
+                                      .normalize()
+                                      .toAbsolutePath()
+                                      .toString();
+    if (serverlessArtifactConfig instanceof ServerlessArtifactoryArtifactConfig) {
+      ServerlessArtifactoryArtifactConfig serverlessArtifactoryArtifactConfig =
+          (ServerlessArtifactoryArtifactConfig) serverlessArtifactConfig;
+      ServerlessAwsLambdaManifestConfig serverlessAwsLambdaManifestConfig =
+          (ServerlessAwsLambdaManifestConfig) serverlessManifestConfig;
+      fetchArtifactoryArtifact(serverlessArtifactoryArtifactConfig, logCallback, artifactoryDirectory,
+          serverlessAwsLambdaManifestConfig.getManifestContent());
+    }
+  }
+
+  private void fetchArtifactoryArtifact(ServerlessArtifactoryArtifactConfig artifactoryArtifactConfig,
+      LogCallback logCallback, String artifactWorkingDirectory, String manifestContent) throws IOException {
+    String artifactFilePath =
+        downloadArtifactoryArtifact(artifactoryArtifactConfig, logCallback, artifactWorkingDirectory);
+    updateArtifactPathInManifest(manifestContent, artifactFilePath);
+  }
+
+  public String downloadArtifactoryArtifact(ServerlessArtifactoryArtifactConfig artifactoryArtifactConfig,
+      LogCallback logCallback, String artifactWorkingDirectory) throws IOException {
+    if (EmptyPredicate.isEmpty(artifactoryArtifactConfig.getArtifactPath())) {
+      // todo: handle it
+    }
+    ArtifactoryConnectorDTO artifactoryConnectorDTO =
+        (ArtifactoryConnectorDTO) artifactoryArtifactConfig.getConnectorDTO().getConnectorConfig();
+    secretDecryptionService.decrypt(
+        artifactoryConnectorDTO.getAuth().getCredentials(), artifactoryArtifactConfig.getEncryptedDataDetails());
+    ArtifactoryConfigRequest artifactoryConfigRequest =
+        artifactoryRequestMapper.toArtifactoryRequest(artifactoryConnectorDTO);
+    Map<String, String> artifactMetadata = new HashMap<>();
+    artifactMetadata.put(ARTIFACTORY_ARTIFACT_PATH, artifactoryArtifactConfig.getArtifactPath());
+    artifactMetadata.put(ARTIFACTORY_ARTIFACT_NAME, artifactoryArtifactConfig.getArtifactPath());
+    Optional<String> artifactFileFormat = getArtifactoryFormat(artifactoryArtifactConfig.getArtifactPath());
+    if (!artifactFileFormat.isPresent()) {
+      // todo: handle it
+    }
+    String artifactFileName = ARTIFACT_FILE_NAME + artifactFileFormat.get();
+    File artifactFile = new File(artifactWorkingDirectory + "/" + artifactFileName);
+    try (InputStream artifactInputStream = artifactoryNgService.downloadArtifacts(artifactoryConfigRequest,
+             artifactoryArtifactConfig.getRepositoryName(), artifactMetadata, ARTIFACTORY_ARTIFACT_PATH,
+             ARTIFACTORY_ARTIFACT_NAME);
+         FileOutputStream outputStream = new FileOutputStream(artifactFile)) {
+      if (artifactInputStream == null) {
+        // todo: handle it
+      }
+      if (!artifactFile.createNewFile()) {
+        // todo: handle it
+      }
+      IOUtils.copy(artifactInputStream, outputStream);
+      return artifactFile.getAbsolutePath();
+    }
+  }
+
+  private void updateArtifactPathInManifest(String manifestContent, String artifactFilePath) {}
+
+  private Optional<String> getArtifactoryFormat(String artifactPath) {
+    if (Pattern.matches(ARTIFACT_ZIP_REGEX, artifactPath)) {
+      return Optional.of(".zip");
+    } else if (Pattern.matches(ARTIFACT_JAR_REGEX, artifactPath)) {
+      return Optional.of(".jar");
+    } else if (Pattern.matches(ARTIFACT_WAR_REGEX, artifactPath)) {
+      return Optional.of(".war");
+    }
+    return Optional.empty();
   }
 }

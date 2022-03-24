@@ -11,15 +11,13 @@ import org.apache.commons.lang3.StringUtils;
 
 public class ServerlessClient {
   private String serverlessPath;
-  private String homeDirectoryPath;
 
-  private ServerlessClient(String serverlessPath, String homeDirectoryPath) {
+  private ServerlessClient(String serverlessPath) {
     this.serverlessPath = serverlessPath;
-    this.homeDirectoryPath = homeDirectoryPath;
   }
 
-  public static ServerlessClient client(String serverlessPath, String homeDirectoryPath) {
-    return new ServerlessClient(serverlessPath, homeDirectoryPath);
+  public static ServerlessClient client(String serverlessPath) {
+    return new ServerlessClient(serverlessPath);
   }
 
   public VersionCommand version() {
@@ -48,9 +46,6 @@ public class ServerlessClient {
 
   public String command() {
     StringBuilder command = new StringBuilder(256);
-    if (StringUtils.isNotBlank(homeDirectoryPath)) {
-      command.append(home(ServerlessUtils.encloseWithQuotesIfNeeded(homeDirectoryPath)));
-    }
     if (StringUtils.isNotBlank(serverlessPath)) {
       command.append(ServerlessUtils.encloseWithQuotesIfNeeded(serverlessPath));
     } else {
