@@ -1,3 +1,10 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.gitsync.common.impl;
 
 import static io.harness.rule.OwnerRule.MEET;
@@ -10,6 +17,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.category.element.UnitTests;
 import io.harness.common.EntityReference;
+import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
 import io.harness.gitsync.GitSyncTestBase;
 import io.harness.gitsync.common.service.GitEntityService;
@@ -61,6 +69,7 @@ public class GitEntityServiceImplTest extends GitSyncTestBase {
                            .accountIdentifier(ACCOUNT)
                            .organizationIdentifier(ORG)
                            .projectIdentifier(PROJECT)
+                           .gitConnectorType(ConnectorType.GITHUB)
                            .branch(BRANCH_NAME)
                            .build();
     gitEntityService.save(ACCOUNT, entityDetail, yamlGitConfigDTO, FOLDER_PATH, FILE_PATH, COMMIT_ID, BRANCH_NAME);
