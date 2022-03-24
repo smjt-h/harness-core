@@ -19,7 +19,14 @@ import io.harness.cdng.manifest.ManifestType;
 import io.harness.cdng.manifest.yaml.GitStoreConfig;
 import io.harness.cdng.manifest.yaml.ManifestOutcome;
 import io.harness.cdng.manifest.yaml.ServerlessAwsLambdaManifestOutcome;
+import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
+import io.harness.delegate.beans.instancesync.mapper.ServerlessAwsLambdaFunctionToServerInstanceInfoMapper;
+import io.harness.delegate.beans.serverless.ServerlessAwsLambdaDeployResult;
+import io.harness.delegate.beans.serverless.ServerlessAwsLambdaRollbackResult;
+import io.harness.delegate.beans.serverless.ServerlessDeployResult;
+import io.harness.delegate.beans.serverless.ServerlessRollbackResult;
 import io.harness.delegate.task.serverless.*;
+import io.harness.delegate.task.serverless.response.ServerlessDeployResponse;
 import io.harness.exception.InvalidRequestException;
 import io.harness.pms.contracts.ambiance.Ambiance;
 
@@ -95,5 +102,39 @@ public class ServerlessAwsLambdaStepHelper implements ServerlessStepHelper {
     }
     throw new UnsupportedOperationException(
         format("Unsupported serverless manifest type: [%s]", manifestOutcome.getType()));
+  }
+
+  @Override
+  public List<ServerInstanceInfo> getServerlessDeployFunctionInstanceInfo(
+      ServerlessDeployResult serverlessDeployResult) {
+    if (serverlessDeployResult instanceof ServerlessAwsLambdaDeployResult) {
+      ServerlessAwsLambdaDeployResult serverlessAwsLambdaDeployResult =
+          (ServerlessAwsLambdaDeployResult) serverlessDeployResult;
+      return ServerlessAwsLambdaFunctionToServerInstanceInfoMapper.toServerInstanceInfoList(
+          serverlessAwsLambdaDeployResult.getFunctions(), serverlessAwsLambdaDeployResult.getRegion(),
+          serverlessAwsLambdaDeployResult.getStage(), serverlessAwsLambdaDeployResult.getService());
+    }
+    throw new UnsupportedOperationException(
+        format("Unsupported serverless deploy instance: [%s]", serverlessDeployResult.getClass()));
+  }
+
+  @Override
+  public List<ServerInstanceInfo> getServerlessRollbackFunctionInstanceInfo(
+      ServerlessRollbackResult serverlessRollbackResult) {
+    if (serverlessRollbackResult instanceof ServerlessAwsLambdaRollbackResult) {
+      ServerlessAwsLambdaRollbackResult serverlessAwsLambdaRollbackResult =
+          (ServerlessAwsLambdaRollbackResult) serverlessRollbackResult;
+      return ServerlessAwsLambdaFunctionToServerInstanceInfoMapper.toServerInstanceInfoList(
+          serverlessAwsLambdaRollbackResult.getFunctions(), serverlessAwsLambdaRollbackResult.getRegion(),
+          serverlessAwsLambdaRollbackResult.getStage(), serverlessAwsLambdaRollbackResult.getService());
+    }
+    throw new UnsupportedOperationException(
+        format("Unsupported serverless deploy instance: [%s]", serverlessRollbackResult.getClass()));
+  }
+
+  public String getPreviousVersion(ServerlessDeployResponse serverlessDeployResponse) {
+    ServerlessAwsLambdaDeployResult serverlessAwsLambdaDeployResult =
+        (ServerlessAwsLambdaDeployResult) serverlessDeployResponse.getServerlessDeployResult();
+    return serverlessAwsLambdaDeployResult.getPreviousVersionTimeStamp();
   }
 }

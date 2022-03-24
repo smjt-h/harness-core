@@ -10,11 +10,15 @@ package io.harness.cdng.serverless;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.manifest.yaml.ManifestOutcome;
+import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
+import io.harness.delegate.beans.serverless.ServerlessDeployResult;
+import io.harness.delegate.beans.serverless.ServerlessRollbackResult;
 import io.harness.delegate.task.serverless.ServerlessDeployConfig;
 import io.harness.delegate.task.serverless.ServerlessManifestConfig;
 import io.harness.pms.contracts.ambiance.Ambiance;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import org.hibernate.validator.constraints.NotEmpty;
 
@@ -28,4 +32,8 @@ public interface ServerlessStepHelper {
 
   ServerlessManifestConfig getServerlessManifestConfig(
       ManifestOutcome manifestOutcome, Ambiance ambiance, Map<String, Object> manifestParams);
+
+  List<ServerInstanceInfo> getServerlessDeployFunctionInstanceInfo(ServerlessDeployResult serverlessDeployResult);
+
+  List<ServerInstanceInfo> getServerlessRollbackFunctionInstanceInfo(ServerlessRollbackResult serverlessRollbackResult);
 }

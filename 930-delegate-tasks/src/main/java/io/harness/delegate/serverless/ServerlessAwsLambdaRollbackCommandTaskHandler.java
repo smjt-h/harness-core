@@ -53,7 +53,6 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
   private ServerlessAwsLambdaInfraConfig serverlessAwsLambdaInfraConfig;
   private ServerlessAwsLambdaConfig serverlessAwsLambdaConfig;
   private long timeoutInMillis;
-  private static final String HOME_DIRECTORY = "./repository/serverless/home";
 
   @Override
   protected ServerlessCommandResponse executeTaskInternal(ServerlessCommandRequest serverlessCommandRequest,
@@ -96,19 +95,15 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
       ServerlessDelegateTaskParams serverlessDelegateTaskParams) throws Exception {
     executionLogCallback.saveExecutionLog("Initializing...\n");
     ServerlessCliResponse response;
-    String homeDirectory = Paths.get(HOME_DIRECTORY, convertBase64UuidToCanonicalForm(generateUuid()))
-                               .normalize()
-                               .toAbsolutePath()
-                               .toString();
-    serverlessTaskHelperBase.createHomeDirectory(homeDirectory);
     serverlessManifestConfig =
         (ServerlessAwsLambdaManifestConfig) serverlessRollbackRequest.getServerlessManifestConfig();
     serverlessTaskHelperBase.fetchManifestFilesAndWriteToDirectory(serverlessManifestConfig,
         serverlessRollbackRequest.getAccountId(), executionLogCallback, serverlessDelegateTaskParams);
-    serverlessTaskHelperBase.replaceManifestWithRenderedContent(serverlessDelegateTaskParams, serverlessManifestConfig);
+    serverlessTaskHelperBase.replaceManifestWithRenderedContent(
+        serverlessDelegateTaskParams, serverlessManifestConfig, serverlessManifestConfig.getManifestContent());
     serverlessAwsLambdaConfig = (ServerlessAwsLambdaConfig) serverlessInfraConfigHelper.createServerlessConfig(
         serverlessRollbackRequest.getServerlessInfraConfig());
-    serverlessClient = ServerlessClient.client(serverlessDelegateTaskParams.getServerlessClientPath(), homeDirectory);
+    serverlessClient = ServerlessClient.client(serverlessDelegateTaskParams.getServerlessClientPath());
     serverlessAwsCommandTaskHelper.configCredential(serverlessClient, serverlessAwsLambdaConfig,
         serverlessDelegateTaskParams, executionLogCallback, true, timeoutInMillis);
     serverlessManifestSchema = serverlessAwsCommandTaskHelper.parseServerlessManifest(serverlessManifestConfig);

@@ -46,7 +46,6 @@ public class ServerlessAwsCommandTaskHelper {
   private static String AWS_LAMBDA_FUNCTION_MEMORY_PROPERTY_KEY = "MemorySize";
   private static String AWS_LAMBDA_FUNCTION_RUNTIME_PROPERTY_KEY = "Runtime";
   private static String AWS_LAMBDA_FUNCTION_TIMEOUT_PROPERTY_KEY = "Timeout";
-  private static String CLOUDFORMATION_CREATE_FILE = "cloudformation-template-create-stack.json";
   private static String CLOUDFORMATION_UPDATE_FILE = "cloudformation-template-update-stack.json";
   private static String NEW_LINE_REGEX = "\\r?\\n";
   private static String WHITESPACE_REGEX = "[\\s]";
@@ -124,13 +123,9 @@ public class ServerlessAwsCommandTaskHelper {
   public List<ServerlessAwsLambdaFunction> fetchFunctionOutputFromCloudFormationTemplate(
       String cloudFormationTemplateDirectory) throws Exception {
     String cloudFormationTemplatePath =
-        Paths.get(cloudFormationTemplateDirectory, CLOUDFORMATION_CREATE_FILE).toString();
+        Paths.get(cloudFormationTemplateDirectory, CLOUDFORMATION_UPDATE_FILE).toString();
     String cloudFormationTemplateContent =
         FileIo.getFileContentsWithSharedLockAcrossProcesses(cloudFormationTemplatePath);
-    if (EmptyPredicate.isEmpty(cloudFormationTemplateContent)) {
-      cloudFormationTemplatePath = Paths.get(cloudFormationTemplateDirectory, CLOUDFORMATION_UPDATE_FILE).toString();
-      cloudFormationTemplateContent = FileIo.getFileContentsWithSharedLockAcrossProcesses(cloudFormationTemplatePath);
-    }
     if (EmptyPredicate.isEmpty(cloudFormationTemplateContent)) {
       return Collections.emptyList();
     }

@@ -178,7 +178,7 @@ public class ServerlessAwsLambdaRollbackStep extends TaskExecutableWithRollbackA
                          .build();
     } else {
       List<ServerInstanceInfo> functionInstanceInfos =
-          serverlessStepCommonHelper.getFunctionInstanceInfo(rollbackResponse);
+          serverlessStepCommonHelper.getFunctionInstanceInfo(rollbackResponse, serverlessAwsLambdaStepHelper);
       StepResponse.StepOutcome stepOutcome =
           instanceInfoService.saveServerInstancesIntoSweepingOutput(ambiance, functionInstanceInfos);
 

@@ -36,6 +36,7 @@ import io.harness.data.structure.HarnessStringUtils;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
+import io.harness.delegate.beans.serverless.ServerlessAwsLambdaDeployResult;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.exception.TaskNGDataException;
 import io.harness.delegate.task.git.TaskStatus;
@@ -45,6 +46,7 @@ import io.harness.delegate.task.serverless.request.ServerlessGitFetchRequest;
 import io.harness.delegate.task.serverless.response.ServerlessCommandResponse;
 import io.harness.delegate.task.serverless.response.ServerlessDeployResponse;
 import io.harness.delegate.task.serverless.response.ServerlessGitFetchResponse;
+import io.harness.delegate.task.serverless.response.ServerlessRollbackResponse;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.GeneralException;
 import io.harness.exception.InvalidRequestException;
@@ -314,14 +316,6 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
     return serverlessCommandResponse.getErrorMessage() == null ? "" : serverlessCommandResponse.getErrorMessage();
   }
 
-  public String getPreviousVersionStamp(ServerlessDeployResponse serverlessDeployResponse) {
-    return null;
-  }
-
-  public String getServiceName(ServerlessDeployResponse serverlessDeployResponse) {
-    return null;
-  }
-
   private Optional<Pair<String, String>> getManifestFileContent(
       Map<String, FetchFilesResult> fetchFilesResultMap, ManifestOutcome manifestOutcome) {
     StoreConfig store = manifestOutcome.getStore();
@@ -408,9 +402,18 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
     return serverlessStepHelper.getServerlessManifestConfig(serverlessManifestOutcome, ambiance, manifestParams);
   }
 
-  public List<ServerInstanceInfo> getFunctionInstanceInfo(ServerlessCommandResponse serverlessCommandResponse) {
-    return null;
-    // todo: implement it.
+  public List<ServerInstanceInfo> getFunctionInstanceInfo(
+      ServerlessCommandResponse serverlessCommandResponse, ServerlessStepHelper serverlessStepHelper) {
+    if (serverlessCommandResponse instanceof ServerlessDeployResponse) {
+      ServerlessDeployResponse serverlessDeployResponse = (ServerlessDeployResponse) serverlessCommandResponse;
+      return serverlessStepHelper.getServerlessDeployFunctionInstanceInfo(
+          serverlessDeployResponse.getServerlessDeployResult());
+    } else if (serverlessCommandResponse instanceof ServerlessRollbackResponse) {
+      ServerlessRollbackResponse serverlessRollbackResponse = (ServerlessRollbackResponse) serverlessCommandResponse;
+      return serverlessStepHelper.getServerlessRollbackFunctionInstanceInfo(
+          serverlessRollbackResponse.getServerlessRollbackResult());
+    }
+    throw new GeneralException("Invalid serverless command response instance");
   }
 
   private ConnectorInfoDTO getConnectorDTO(String connectorId, Ambiance ambiance) {

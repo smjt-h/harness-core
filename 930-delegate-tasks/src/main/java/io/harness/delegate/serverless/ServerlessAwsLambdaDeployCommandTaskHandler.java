@@ -104,9 +104,11 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
         (ServerlessAwsLambdaManifestConfig) serverlessDeployRequest.getServerlessManifestConfig();
     serverlessTaskHelperBase.fetchManifestFilesAndWriteToDirectory(serverlessManifestConfig,
         serverlessDeployRequest.getAccountId(), executionLogCallback, serverlessDelegateTaskParams);
-    serverlessTaskHelperBase.fetchArtifact(serverlessDeployRequest.getServerlessArtifactConfig(), executionLogCallback,
-        ARTIFACT_DIRECTORY, serverlessManifestConfig);
-    serverlessTaskHelperBase.replaceManifestWithRenderedContent(serverlessDelegateTaskParams, serverlessManifestConfig);
+    String updatedManifestContent =
+        serverlessTaskHelperBase.fetchArtifact(serverlessDeployRequest.getServerlessArtifactConfig(),
+            executionLogCallback, ARTIFACT_DIRECTORY, serverlessManifestConfig);
+    serverlessTaskHelperBase.replaceManifestWithRenderedContent(
+        serverlessDelegateTaskParams, serverlessManifestConfig, updatedManifestContent);
     serverlessAwsLambdaConfig = (ServerlessAwsLambdaConfig) serverlessInfraConfigHelper.createServerlessConfig(
         serverlessDeployRequest.getServerlessInfraConfig());
     serverlessClient = ServerlessClient.client(serverlessDelegateTaskParams.getServerlessClientPath());

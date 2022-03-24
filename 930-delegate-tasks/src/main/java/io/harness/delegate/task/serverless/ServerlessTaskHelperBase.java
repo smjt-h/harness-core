@@ -65,6 +65,8 @@ public class ServerlessTaskHelperBase {
   private static final String ARTIFACT_ZIP_REGEX = ".*\\.zip";
   private static final String ARTIFACT_JAR_REGEX = ".*\\.jar";
   private static final String ARTIFACT_WAR_REGEX = ".*\\.war";
+  private static final String ARTIFACT_PATH_REGEX = ".*<\\+artifact\\.path>.*";
+  private static final String ARTIFACT_PATH = "<+artifact.path>";
 
   public LogCallback getLogCallback(ILogStreamingTaskClient logStreamingTaskClient, String commandUnitName,
       boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress) {
@@ -103,8 +105,7 @@ public class ServerlessTaskHelperBase {
     }
   }
   public void replaceManifestWithRenderedContent(ServerlessDelegateTaskParams serverlessDelegateTaskParams,
-      ServerlessAwsLambdaManifestConfig serverlessManifestConfig) throws IOException {
-    String updatedManifestContent = serverlessManifestConfig.getManifestContent();
+      ServerlessAwsLambdaManifestConfig serverlessManifestConfig, String updatedManifestContent) throws IOException {
     String manifestFilePath =
         Paths.get(serverlessDelegateTaskParams.getWorkingDirectory(), serverlessManifestConfig.getManifestPath())
             .toString();
@@ -116,27 +117,31 @@ public class ServerlessTaskHelperBase {
     FileIo.writeUtf8StringToFile(manifestFilePath, manifestContent);
   }
 
-  public void fetchArtifact(ServerlessArtifactConfig serverlessArtifactConfig, LogCallback logCallback,
+  public String fetchArtifact(ServerlessArtifactConfig serverlessArtifactConfig, LogCallback logCallback,
       String artifactoryBaseDir, ServerlessManifestConfig serverlessManifestConfig) throws IOException {
     String artifactoryDirectory = Paths.get(artifactoryBaseDir, convertBase64UuidToCanonicalForm(generateUuid()))
                                       .normalize()
                                       .toAbsolutePath()
                                       .toString();
+    ServerlessAwsLambdaManifestConfig serverlessAwsLambdaManifestConfig =
+        (ServerlessAwsLambdaManifestConfig) serverlessManifestConfig;
     if (serverlessArtifactConfig instanceof ServerlessArtifactoryArtifactConfig) {
       ServerlessArtifactoryArtifactConfig serverlessArtifactoryArtifactConfig =
           (ServerlessArtifactoryArtifactConfig) serverlessArtifactConfig;
-      ServerlessAwsLambdaManifestConfig serverlessAwsLambdaManifestConfig =
-          (ServerlessAwsLambdaManifestConfig) serverlessManifestConfig;
-      fetchArtifactoryArtifact(serverlessArtifactoryArtifactConfig, logCallback, artifactoryDirectory,
+      return fetchArtifactoryArtifact(serverlessArtifactoryArtifactConfig, logCallback, artifactoryDirectory,
           serverlessAwsLambdaManifestConfig.getManifestContent());
     }
+    return serverlessAwsLambdaManifestConfig.getManifestContent();
   }
 
-  private void fetchArtifactoryArtifact(ServerlessArtifactoryArtifactConfig artifactoryArtifactConfig,
+  private String fetchArtifactoryArtifact(ServerlessArtifactoryArtifactConfig artifactoryArtifactConfig,
       LogCallback logCallback, String artifactWorkingDirectory, String manifestContent) throws IOException {
+    if (!Pattern.matches(ARTIFACT_PATH_REGEX, manifestContent)) {
+      return manifestContent;
+    }
     String artifactFilePath =
         downloadArtifactoryArtifact(artifactoryArtifactConfig, logCallback, artifactWorkingDirectory);
-    updateArtifactPathInManifest(manifestContent, artifactFilePath);
+    return manifestContent.replace(ARTIFACT_PATH, artifactFilePath);
   }
 
   public String downloadArtifactoryArtifact(ServerlessArtifactoryArtifactConfig artifactoryArtifactConfig,
@@ -173,8 +178,6 @@ public class ServerlessTaskHelperBase {
       return artifactFile.getAbsolutePath();
     }
   }
-
-  private void updateArtifactPathInManifest(String manifestContent, String artifactFilePath) {}
 
   private Optional<String> getArtifactoryFormat(String artifactPath) {
     if (Pattern.matches(ARTIFACT_ZIP_REGEX, artifactPath)) {

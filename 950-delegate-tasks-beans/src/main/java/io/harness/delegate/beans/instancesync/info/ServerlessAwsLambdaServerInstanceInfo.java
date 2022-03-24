@@ -25,6 +25,9 @@ public class ServerlessAwsLambdaServerInstanceInfo extends ServerInstanceInfo {
   private String serviceName;
   private String region;
   private String stage;
-  //  private List<ServerlessAwsLambdaFunction> functions;
-  // todo: create a mapper object
+  private String functionName;
+  private String handler;
+  private String memorySize;
+  private String runTime;
+  private String timeout;
 }

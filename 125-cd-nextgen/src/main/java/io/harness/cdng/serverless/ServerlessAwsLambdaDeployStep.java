@@ -167,7 +167,7 @@ public class ServerlessAwsLambdaDeployStep
       return serverlessStepCommonHelper.handleTaskException(ambiance, serverlessExecutionPassThroughData, e);
     }
     serverlessRollbackDataOutcomeBuilder.previousVersionTimeStamp(
-        serverlessStepCommonHelper.getPreviousVersionStamp(serverlessDeployResponse));
+        serverlessAwsLambdaStepHelper.getPreviousVersion(serverlessDeployResponse));
     StepResponse.StepResponseBuilder stepResponseBuilder =
         StepResponse.builder().unitProgressList(serverlessDeployResponse.getUnitProgressData().getUnitProgresses());
     if (serverlessDeployResponse.getCommandExecutionStatus() != CommandExecutionStatus.SUCCESS) {
@@ -177,9 +177,8 @@ public class ServerlessAwsLambdaDeployStep
       return ServerlessStepCommonHelper.getFailureResponseBuilder(serverlessDeployResponse, stepResponseBuilder)
           .build();
     }
-
     List<ServerInstanceInfo> functionInstanceInfos =
-        serverlessStepCommonHelper.getFunctionInstanceInfo(serverlessDeployResponse);
+        serverlessStepCommonHelper.getFunctionInstanceInfo(serverlessDeployResponse, serverlessAwsLambdaStepHelper);
     StepResponse.StepOutcome stepOutcome =
         instanceInfoService.saveServerInstancesIntoSweepingOutput(ambiance, functionInstanceInfos);
 
