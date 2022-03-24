@@ -65,6 +65,8 @@ public class StageElementConfig {
   @ApiModelProperty(hidden = true)
   ParameterField<String> skipCondition;
 
+  ParameterField<List<String>> delegateSelectors;
+
   StageWhenCondition when;
 
   List<FailureStrategyConfig> failureStrategies;
@@ -79,7 +81,7 @@ public class StageElementConfig {
   @Builder
   public StageElementConfig(String uuid, String identifier, String name, ParameterField<String> description,
       List<FailureStrategyConfig> failureStrategies, List<NGVariable> variables, String type, StageInfoConfig stageType,
-      ParameterField<String> skipCondition, StageWhenCondition when) {
+      ParameterField<String> skipCondition, StageWhenCondition when, ParameterField<List<String>> delegateSelectors) {
     this.uuid = uuid;
     this.identifier = identifier;
     this.name = name;
@@ -90,5 +92,6 @@ public class StageElementConfig {
     this.stageType = stageType;
     this.skipCondition = skipCondition;
     this.when = when;
+    this.delegateSelectors = delegateSelectors;
   }
 }

@@ -72,9 +72,4 @@ public class K8sScaleStepInfo extends K8sScaleBaseStepInfo implements CDStepInfo
         .delegateSelectors(delegateSelectors)
         .build();
   }
-
-  @Override
-  public ParameterField<List<TaskSelectorYaml>> delegateSelectors() {
-    return delegateSelectors;
-  }
 }

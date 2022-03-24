@@ -68,4 +68,5 @@ public class PipelineMetadata {
   ExecutionSummaryInfo executionSummaryInfo;
   EntityGitDetails entityGitDetails;
   int runSequence;
+
 }

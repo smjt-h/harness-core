@@ -24,6 +24,7 @@ import io.harness.steps.StepSpecTypeConstants;
 import io.harness.steps.jira.JiraStepUtils;
 import io.harness.steps.jira.beans.JiraField;
 import io.harness.steps.jira.update.beans.TransitionTo;
+import io.harness.utils.WithDelegateSelector;
 import io.harness.yaml.YamlSchemaTypes;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -45,7 +46,7 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonTypeName(StepSpecTypeConstants.JIRA_UPDATE)
 @TypeAlias("jiraUpdateStepInfo")
 @RecasterAlias("io.harness.steps.jira.update.JiraUpdateStepInfo")
-public class JiraUpdateStepInfo implements PMSStepInfo, WithConnectorRef {
+public class JiraUpdateStepInfo implements PMSStepInfo, WithConnectorRef, WithDelegateSelector {
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> connectorRef;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> issueKey;
 

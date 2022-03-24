@@ -16,6 +16,7 @@ import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.steps.StepSpecTypeConstants;
+import io.harness.utils.WithDelegateSelector;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
 import io.harness.yaml.core.variables.NGVariable;
@@ -38,7 +39,7 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("shellScriptStepInfo")
 @OwnedBy(HarnessTeam.CDC)
 @RecasterAlias("io.harness.cdng.pipeline.stepinfo.ShellScriptStepInfo")
-public class ShellScriptStepInfo extends ShellScriptBaseStepInfo implements PMSStepInfo, Visitable {
+public class ShellScriptStepInfo extends ShellScriptBaseStepInfo implements PMSStepInfo, Visitable, WithDelegateSelector {
   List<NGVariable> outputVariables;
   List<NGVariable> environmentVariables;
 

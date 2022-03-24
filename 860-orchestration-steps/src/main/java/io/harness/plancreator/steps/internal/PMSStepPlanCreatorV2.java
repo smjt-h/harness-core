@@ -59,6 +59,7 @@ import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.timeout.trackers.absolute.AbsoluteTimeoutTrackerFactory;
 import io.harness.utils.TimeoutUtils;
+import io.harness.utils.WithDelegateSelector;
 import io.harness.when.utils.RunInfoUtils;
 import io.harness.yaml.core.failurestrategy.FailureStrategyActionConfig;
 import io.harness.yaml.core.failurestrategy.FailureStrategyConfig;
@@ -93,6 +94,9 @@ public abstract class PMSStepPlanCreatorV2<T extends PmsAbstractStepNode> extend
     List<AdviserObtainment> adviserObtainmentFromMetaData = getAdviserObtainmentFromMetaData(ctx.getCurrentField());
 
     StepParameters stepParameters = getStepParameters(ctx, stepElement);
+    if (stepParameters instanceof WithDelegateSelector){
+       //ctx
+    }
     PlanNode stepPlanNode =
         PlanNode.builder()
             .uuid(ctx.getCurrentField().getNode().getUuid())

@@ -22,6 +22,7 @@ import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.steps.StepSpecTypeConstants;
 import io.harness.steps.approval.ApprovalFacilitator;
 import io.harness.steps.approval.step.beans.CriteriaSpecWrapper;
+import io.harness.utils.WithDelegateSelector;
 import io.harness.yaml.YamlSchemaTypes;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -43,7 +44,7 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonTypeName(StepSpecTypeConstants.SERVICENOW_APPROVAL)
 @TypeAlias("serviceNowApprovalStepInfo")
 @RecasterAlias("io.harness.steps.approval.step.servicenow.ServiceNowApprovalStepInfo")
-public class ServiceNowApprovalStepInfo implements PMSStepInfo, WithConnectorRef {
+public class ServiceNowApprovalStepInfo implements PMSStepInfo, WithConnectorRef, WithDelegateSelector {
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> connectorRef;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> ticketNumber;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> ticketType;

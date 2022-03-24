@@ -24,6 +24,7 @@ import io.harness.steps.StepSpecTypeConstants;
 import io.harness.steps.jira.create.JiraCreateStep;
 import io.harness.steps.servicenow.ServiceNowStepUtils;
 import io.harness.steps.servicenow.beans.ServiceNowField;
+import io.harness.utils.WithDelegateSelector;
 import io.harness.yaml.YamlSchemaTypes;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -45,7 +46,7 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonTypeName(StepSpecTypeConstants.SERVICENOW_UPDATE)
 @TypeAlias("serviceNowUpdateStepInfo")
 @RecasterAlias("io.harness.steps.servicenow.update.ServiceNowUpdateStepInfo")
-public class ServiceNowUpdateStepInfo implements PMSStepInfo, WithConnectorRef {
+public class ServiceNowUpdateStepInfo implements PMSStepInfo, WithConnectorRef, WithDelegateSelector {
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> connectorRef;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> ticketType;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> ticketNumber;

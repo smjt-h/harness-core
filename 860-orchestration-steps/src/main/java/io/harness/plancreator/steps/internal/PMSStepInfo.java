@@ -27,6 +27,7 @@ import io.harness.steps.policy.PolicyStepInfo;
 import io.harness.steps.servicenow.create.ServiceNowCreateStepInfo;
 import io.harness.steps.servicenow.update.ServiceNowUpdateStepInfo;
 import io.harness.steps.shellscript.ShellScriptStepInfo;
+import io.harness.utils.WithDelegateSelector;
 import io.harness.yaml.core.StepSpecType;
 
 import io.swagger.annotations.ApiModel;
@@ -36,7 +37,7 @@ import io.swagger.annotations.ApiModel;
               HarnessApprovalStepInfo.class, JiraApprovalStepInfo.class, JiraCreateStepInfo.class,
               JiraUpdateStepInfo.class, ShellScriptStepInfo.class, ServiceNowApprovalStepInfo.class,
               PolicyStepInfo.class, ServiceNowCreateStepInfo.class, ServiceNowUpdateStepInfo.class})
-public interface PMSStepInfo extends StepSpecType, WithStepElementParameters {
+public interface PMSStepInfo extends StepSpecType, WithStepElementParameters, WithDelegateSelector {
   default StepParameters getStepParameters(
       PmsAbstractStepNode stepElementConfig, OnFailRollbackParameters failRollbackParameters) {
     StepElementParametersBuilder stepParametersBuilder =

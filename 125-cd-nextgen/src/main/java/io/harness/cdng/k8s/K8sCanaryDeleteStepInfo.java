@@ -66,9 +66,4 @@ public class K8sCanaryDeleteStepInfo implements CDStepInfo, Visitable, WithDeleg
         .canaryDeleteStepFqn(canaryDeleteStepFqn)
         .build();
   }
-
-  @Override
-  public ParameterField<List<TaskSelectorYaml>> delegateSelectors() {
-    return delegateSelectors;
-  }
 }

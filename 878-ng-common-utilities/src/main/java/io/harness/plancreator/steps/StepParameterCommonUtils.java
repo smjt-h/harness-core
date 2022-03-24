@@ -62,6 +62,7 @@ public class StepParameterCommonUtils {
     stageBuilder.skipCondition(stageElementConfig.getSkipCondition());
     stageBuilder.when(stageElementConfig.getWhen());
     stageBuilder.type(stageElementConfig.getType());
+    //stageBuilder.delegateSelectors(stageElementConfig.getDelegateSelectors());
     stageBuilder.uuid(stageElementConfig.getUuid());
     stageBuilder.variables(
         ParameterField.createValueField(NGVariablesUtils.getMapOfVariables(stageElementConfig.getVariables())));

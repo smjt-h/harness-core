@@ -76,4 +76,6 @@ public class PipelineInfoConfig {
   ParameterField<Timeout> timeout;
 
   boolean allowStageExecutions;
+
+  ParameterField<List<String>> delegateSelectors;
 }

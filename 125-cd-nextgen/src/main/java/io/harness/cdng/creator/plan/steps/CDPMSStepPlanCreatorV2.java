@@ -64,6 +64,7 @@ import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.timeout.trackers.absolute.AbsoluteTimeoutTrackerFactory;
 import io.harness.utils.TimeoutUtils;
+import io.harness.utils.WithDelegateSelector;
 import io.harness.when.utils.RunInfoUtils;
 import io.harness.yaml.core.failurestrategy.FailureStrategyActionConfig;
 import io.harness.yaml.core.failurestrategy.FailureStrategyConfig;
@@ -195,9 +196,13 @@ public abstract class CDPMSStepPlanCreatorV2<T extends CdAbstractStepNode> exten
   protected StepParameters getStepParameters(PlanCreationContext ctx, T stepElement) {
     if (stepElement.getStepSpecType() instanceof WithStepElementParameters) {
       stepElement.setTimeout(TimeoutUtils.getTimeout(stepElement.getTimeout()));
-      return ((CDStepInfo) stepElement.getStepSpecType())
+      StepParameters stepParameters =  ((CDStepInfo) stepElement.getStepSpecType())
           .getStepParameters(stepElement,
               getRollbackParameters(ctx.getCurrentField(), Collections.emptySet(), RollbackStrategy.UNKNOWN));
+      if (stepParameters instanceof WithDelegateSelector){
+
+      }
+      return stepParameters;
     }
 
     return stepElement.getStepSpecType().getStepParameters();

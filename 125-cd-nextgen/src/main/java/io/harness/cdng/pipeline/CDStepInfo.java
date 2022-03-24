@@ -27,6 +27,7 @@ import io.harness.cdng.provision.terraform.TerraformDestroyStepInfo;
 import io.harness.cdng.provision.terraform.TerraformPlanStepInfo;
 import io.harness.cdng.provision.terraform.steps.rolllback.TerraformRollbackStepInfo;
 import io.harness.plancreator.steps.TaskSelectorYaml;
+import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.plancreator.steps.common.StepElementParameters.StepElementParametersBuilder;
 import io.harness.plancreator.steps.common.WithStepElementParameters;
 import io.harness.pms.sdk.core.steps.io.StepParameters;
@@ -54,7 +55,4 @@ public interface CDStepInfo extends StepSpecType, WithStepElementParameters, Wit
     return stepParametersBuilder.build();
   }
 
-  default ParameterField<List<TaskSelectorYaml>> delegateSelectors(){
-    return null;
-  }
 }

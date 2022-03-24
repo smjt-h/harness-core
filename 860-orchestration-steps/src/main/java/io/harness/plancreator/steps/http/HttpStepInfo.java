@@ -98,8 +98,6 @@ public class HttpStepInfo extends HttpBaseStepInfo implements PMSStepInfo, Visit
         .method(getMethod())
         .outputVariables(NGVariablesUtils.getMapOfVariables(outputVariables, 0L))
         .requestBody(getRequestBody())
-        .delegateSelectors(ParameterField.createValueField(
-            CollectionUtils.emptyIfNull(delegateSelectors != null ? delegateSelectors.getValue() : null)))
         .url(getUrl())
         .build();
   }

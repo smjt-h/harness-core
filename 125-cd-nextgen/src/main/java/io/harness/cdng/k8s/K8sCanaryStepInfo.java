@@ -81,8 +81,4 @@ public class K8sCanaryStepInfo extends K8sCanaryBaseStepInfo implements CDStepIn
         .build();
   }
 
-  @Override
-  public ParameterField<List<TaskSelectorYaml>> delegateSelectors() {
-    return delegateSelectors;
-  }
 }

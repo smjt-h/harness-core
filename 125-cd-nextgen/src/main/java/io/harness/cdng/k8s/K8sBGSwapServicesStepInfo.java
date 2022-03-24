@@ -72,8 +72,4 @@ public class K8sBGSwapServicesStepInfo implements CDStepInfo, Visitable, WithDel
         .build();
   }
 
-  @Override
-  public ParameterField<List<TaskSelectorYaml>> delegateSelectors() {
-    return delegateSelectors;
-  }
 }
