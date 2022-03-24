@@ -44,9 +44,16 @@ import com.amazonaws.services.cloudformation.model.Stack;
 import com.amazonaws.services.cloudformation.model.StackEvent;
 import com.amazonaws.services.cloudformation.model.StackResource;
 import com.amazonaws.services.cloudformation.model.UpdateStackRequest;
+import com.amazonaws.services.cloudformation.waiters.AmazonCloudFormationWaiters;
+import com.amazonaws.waiters.Waiter;
 import java.util.List;
+import java.util.concurrent.Future;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 public class AWSCloudformationClientTest extends CategoryTest {
   @Mock private AwsApiHelperService awsApiHelperService;

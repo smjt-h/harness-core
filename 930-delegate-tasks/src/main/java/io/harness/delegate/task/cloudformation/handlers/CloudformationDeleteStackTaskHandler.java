@@ -15,8 +15,10 @@ import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.task.cloudformation.CloudformationBaseHelper;
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGParameters;
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGResponse;
+import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 
+import com.amazonaws.services.cloudformation.model.Stack;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.Optional;
