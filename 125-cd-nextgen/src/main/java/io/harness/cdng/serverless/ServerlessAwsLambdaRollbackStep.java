@@ -131,7 +131,7 @@ public class ServerlessAwsLambdaRollbackStep extends TaskExecutableWithRollbackA
     ServerlessRollbackRequest serverlessRollbackRequest =
         ServerlessRollbackRequest.builder()
             .accountId(accountId)
-            .serverlessCommandType(ServerlessCommandType.AWS_LAMBDA_ROLLBACK)
+            .serverlessCommandType(ServerlessCommandType.SERVERLESS_AWS_LAMBDA_ROLLBACK)
             .serverlessInfraConfig(serverlessStepCommonHelper.getServerlessInfraConfig(infrastructureOutcome, ambiance))
             .serverlessManifestConfig(serverlessManifestConfig)
             .serverlessRollbackConfig(serverlessAwsLambdaRollbackConfig)

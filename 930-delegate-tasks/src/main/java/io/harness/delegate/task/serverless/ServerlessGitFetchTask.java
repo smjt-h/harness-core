@@ -37,6 +37,7 @@ import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.git.GitFetchResponse;
 import io.harness.delegate.task.git.TaskStatus;
 import io.harness.delegate.task.serverless.request.ServerlessGitFetchRequest;
+import io.harness.delegate.task.serverless.response.ServerlessGitFetchResponse;
 import io.harness.git.model.FetchFilesResult;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
@@ -89,7 +90,7 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
       if (serverlessGitFetchRequest.isCloseLogStream()) {
         executionLogCallback.saveExecutionLog("Done.", INFO, CommandExecutionStatus.SUCCESS);
       }
-      return GitFetchResponse.builder()
+      return ServerlessGitFetchResponse.builder()
           .taskStatus(TaskStatus.SUCCESS)
           .filesFromMultipleRepo(filesFromMultipleRepo)
           .unitProgressData(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))

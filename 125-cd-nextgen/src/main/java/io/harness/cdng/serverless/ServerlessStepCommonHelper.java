@@ -420,8 +420,14 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
 
   private List<String> getFolderPathsForManifest(GitStoreConfig gitStoreConfig) {
     List<String> folderPaths = new ArrayList<>();
-    String folderPath = getParameterFieldValue(gitStoreConfig.getFolderPath());
-    folderPaths.add(normalizeFolderPath(folderPath));
+
+    List<String> paths = getParameterFieldValue(gitStoreConfig.getPaths());
+    if (!paths.isEmpty()) {
+      folderPaths.add(normalizeFolderPath(paths.get(0)));
+    } else {
+      folderPaths.add(normalizeFolderPath(getParameterFieldValue(gitStoreConfig.getFolderPath())));
+    }
     return folderPaths;
+    // todo: add error handling
   }
 }

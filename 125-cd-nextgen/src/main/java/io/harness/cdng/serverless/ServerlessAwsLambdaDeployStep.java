@@ -113,7 +113,7 @@ public class ServerlessAwsLambdaDeployStep
         ServerlessDeployRequest.builder()
             .commandName(SERVERLESS_AWS_LAMBDA_DEPLOY_COMMAND_NAME)
             .accountId(accountId)
-            .serverlessCommandType(ServerlessCommandType.AWS_LAMBDA_DEPLOY)
+            .serverlessCommandType(ServerlessCommandType.SERVERLESS_AWS_LAMBDA_DEPLOY)
             .serverlessInfraConfig(serverlessStepCommonHelper.getServerlessInfraConfig(infrastructureOutcome, ambiance))
             .serverlessDeployConfig(serverlessDeployConfig)
             .serverlessManifestConfig(serverlessManifestConfig)

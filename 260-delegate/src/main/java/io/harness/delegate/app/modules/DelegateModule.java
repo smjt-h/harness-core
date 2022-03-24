@@ -114,6 +114,9 @@ import io.harness.delegate.message.MessageServiceImpl;
 import io.harness.delegate.message.MessengerType;
 import io.harness.delegate.provider.DelegateConfigurationServiceProviderImpl;
 import io.harness.delegate.provider.DelegatePropertiesServiceProviderImpl;
+import io.harness.delegate.serverless.ServerlessAwsLambdaDeployCommandTaskHandler;
+import io.harness.delegate.serverless.ServerlessAwsLambdaRollbackCommandTaskHandler;
+import io.harness.delegate.serverless.ServerlessCommandTaskHandler;
 import io.harness.delegate.service.DelegateAgentService;
 import io.harness.delegate.service.DelegateAgentServiceImpl;
 import io.harness.delegate.service.DelegateCVActivityLogServiceImpl;
@@ -207,6 +210,9 @@ import io.harness.delegate.task.scm.ScmGitRefTask;
 import io.harness.delegate.task.scm.ScmGitWebhookTask;
 import io.harness.delegate.task.scm.ScmPathFilterEvaluationTask;
 import io.harness.delegate.task.scm.ScmPushTask;
+import io.harness.delegate.task.serverless.ServerlessCommandTask;
+import io.harness.delegate.task.serverless.ServerlessCommandType;
+import io.harness.delegate.task.serverless.ServerlessGitFetchTask;
 import io.harness.delegate.task.servicenow.ServiceNowTaskNG;
 import io.harness.delegate.task.servicenow.ServiceNowValidationHandler;
 import io.harness.delegate.task.servicenow.connection.ServiceNowTestConnectionTaskNG;
@@ -1206,6 +1212,14 @@ public class DelegateModule extends AbstractModule {
     azureResourceTaskTypeToTaskHandlerMap.addBinding(AzureResourceProvider.CONTAINER_REGISTRY.name())
         .to(ACRResourceProviderTaskHandler.class);
 
+    // Serverless Tasks
+    MapBinder<String, ServerlessCommandTaskHandler> serverlessTaskTypeToTaskHandlerMap =
+        MapBinder.newMapBinder(binder(), String.class, ServerlessCommandTaskHandler.class);
+    serverlessTaskTypeToTaskHandlerMap.addBinding(ServerlessCommandType.SERVERLESS_AWS_LAMBDA_DEPLOY.name())
+        .to(ServerlessAwsLambdaDeployCommandTaskHandler.class);
+    serverlessTaskTypeToTaskHandlerMap.addBinding(ServerlessCommandType.SERVERLESS_AWS_LAMBDA_ROLLBACK.name())
+        .to(ServerlessAwsLambdaRollbackCommandTaskHandler.class);
+
     registerSecretManagementBindings();
     registerConnectorValidatorsBindings();
 
@@ -1547,6 +1561,8 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.SCM_GIT_WEBHOOK_TASK).toInstance(ScmGitWebhookTask.class);
     mapBinder.addBinding(TaskType.SERVICENOW_CONNECTIVITY_TASK_NG).toInstance(ServiceNowTestConnectionTaskNG.class);
     mapBinder.addBinding(TaskType.SERVICENOW_TASK_NG).toInstance(ServiceNowTaskNG.class);
+    mapBinder.addBinding(TaskType.SERVERLESS_GIT_FETCH_TASK_NG).toInstance(ServerlessGitFetchTask.class);
+    mapBinder.addBinding(TaskType.SERVERLESS_COMMAND_TASK).toInstance(ServerlessCommandTask.class);
   }
 
   private void registerSecretManagementBindings() {

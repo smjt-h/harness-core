@@ -77,7 +77,7 @@ public class ServerlessInfraConfigHelper {
     serverlessAwsConfigBuilder.provider("aws");
     serverlessAwsConfigBuilder.accessKey(getSecretAsStringFromPlainTextOrSecretRef(
         awsManualConfigSpecDTO.getAccessKey(), awsManualConfigSpecDTO.getAccessKeyRef()));
-    serverlessAwsConfigBuilder.secretKey(Arrays.toString(awsManualConfigSpecDTO.getSecretKeyRef().getDecryptedValue()));
+    serverlessAwsConfigBuilder.secretKey(String.valueOf(awsManualConfigSpecDTO.getSecretKeyRef().getDecryptedValue()));
     return serverlessAwsConfigBuilder.build();
   }
 }
