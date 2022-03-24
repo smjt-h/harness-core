@@ -4947,7 +4947,7 @@ plain_artifacts = [
     "org.opensaml:opensaml-messaging-api:3.4.3",
     "org.opensaml:opensaml-profile-api:3.4.3",
     "org.opensaml:opensaml-saml-api:3.4.3",
-    "org.opensaml:opensaml-saml-impl:3.4.3",
+    "org.opensaml:opensaml-saml-impl:4.0.1",
     "org.opensaml:opensaml-security-api:3.4.3",
     "org.opensaml:opensaml-security-impl:3.4.3",
     "org.opensaml:opensaml-soap-api:3.4.3",
