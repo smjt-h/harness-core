@@ -13,9 +13,9 @@ import io.harness.pms.yaml.YamlUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Value;
@@ -56,17 +56,8 @@ public class ExpansionRequestBatchHelper {
   RequestBatchWithUuidMap buildRequestBatchForModule(
       Set<ExpansionRequest> expansionRequests, ExpansionRequestMetadata expansionRequestMetadata) {
     // separate all requests by key so that each key's requests are handled independently
-    Map<String, Set<ExpansionRequest>> requestsPerKey = new HashMap<>();
-    for (ExpansionRequest expansionRequest : expansionRequests) {
-      String expansionRequestKey = expansionRequest.getKey();
-      if (requestsPerKey.containsKey(expansionRequestKey)) {
-        requestsPerKey.get(expansionRequestKey).add(expansionRequest);
-      } else {
-        Set<ExpansionRequest> currKeyRequests = new HashSet<>();
-        currKeyRequests.add(expansionRequest);
-        requestsPerKey.put(expansionRequestKey, currKeyRequests);
-      }
-    }
+    Map<String, Set<ExpansionRequest>> requestsPerKey = expansionRequests.stream().collect(
+        Collectors.groupingBy(ExpansionRequest::getKey, Collectors.mapping(Function.identity(), Collectors.toSet())));
 
     // get request batch and fqn to requestUUID map for each key, and build full fqn to requestUUID map for the module
     ExpansionRequestBatch.Builder batchBuilder =
@@ -87,17 +78,8 @@ public class ExpansionRequestBatchHelper {
   RequestBatchWithUuidMap buildRequestBatchForModuleAndKey(
       Set<ExpansionRequest> expansionRequests, String key, ExpansionRequestMetadata expansionRequestMetadata) {
     // separate all requests by value so that each value's requests are mapped to one common request
-    Map<JsonNode, Set<ExpansionRequest>> requestsPerValue = new HashMap<>();
-    for (ExpansionRequest expansionRequest : expansionRequests) {
-      JsonNode value = expansionRequest.getFieldValue();
-      if (requestsPerValue.containsKey(value)) {
-        requestsPerValue.get(value).add(expansionRequest);
-      } else {
-        Set<ExpansionRequest> currKeyRequests = new HashSet<>();
-        currKeyRequests.add(expansionRequest);
-        requestsPerValue.put(value, currKeyRequests);
-      }
-    }
+    Map<JsonNode, Set<ExpansionRequest>> requestsPerValue = expansionRequests.stream().collect(Collectors.groupingBy(
+        ExpansionRequest::getFieldValue, Collectors.mapping(Function.identity(), Collectors.toSet())));
 
     // build common request for each value, and create the fqnToUUIDMap
     ExpansionRequestBatch.Builder batchBuilder =
