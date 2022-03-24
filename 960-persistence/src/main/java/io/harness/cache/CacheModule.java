@@ -162,6 +162,7 @@ public class CacheModule extends AbstractModule implements ServersModule {
     CacheBackend cacheBackend = cacheConfig.getCacheBackend();
     switch (cacheBackend) {
       case NOOP:
+      case HAZELCAST:
         return new NoOpHarnessCacheManager();
       case REDIS:
         this.cacheManager = redisProvider.get();
