@@ -269,7 +269,7 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
   }
 
   private OrchestrationGraphDTO generatePartialGraph(String startId, OrchestrationGraph orchestrationGraph) {
-    OrchestrationGraph orchestrationGraph1 =
+    OrchestrationGraph ephemeralOrchestrationGraph =
         OrchestrationGraph.builder()
             .planExecutionId(orchestrationGraph.getPlanExecutionId())
             .rootNodeIds(Lists.newArrayList(startId))
@@ -280,9 +280,9 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
                 startId, orchestrationGraph.getAdjacencyList()))
             .build();
 
-    vertexSkipperService.removeSkippedVertices(orchestrationGraph);
+    vertexSkipperService.removeSkippedVertices(ephemeralOrchestrationGraph);
 
-    return OrchestrationGraphDTOConverter.convertFrom(orchestrationGraph1);
+    return OrchestrationGraphDTOConverter.convertFrom(ephemeralOrchestrationGraph);
   }
 
   private String obtainStartingIdFromSetupNodeId(Map<String, GraphVertex> graphVertexMap, String startingSetupNodeId) {
