@@ -28,13 +28,7 @@ import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@RunWith(SpringJUnit4ClassRunner.class)
 public class K8sJobTest extends CategoryTest {
   @Autowired private HPersistence hPersistence;
   @Autowired private JobLauncher jobLauncher;

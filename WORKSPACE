@@ -5169,7 +5169,6 @@ maven_install(
         maven_test_artifact("org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:2.23.1"),
         maven_test_artifact("org.glassfish.jersey.test-framework:jersey-test-framework-core:2.23.1"),
         maven_test_artifact("org.mockito:mockito-core:1.10.19"),
-        maven_test_artifact("org.springframework.boot:spring-boot-starter-test:2.1.6.RELEASE"),
         maven_test_artifact("pl.pragmatists:JUnitParams:1.0.4"),
     ],
     excluded_artifacts = [],
