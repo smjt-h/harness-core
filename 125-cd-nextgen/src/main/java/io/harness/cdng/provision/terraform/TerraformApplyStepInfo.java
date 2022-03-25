@@ -14,6 +14,7 @@ import io.harness.cdng.pipeline.CDStepInfo;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.executions.steps.StepSpecTypeConstants;
 import io.harness.filters.WithConnectorRef;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
@@ -55,6 +56,7 @@ public class TerraformApplyStepInfo
     super(provisionerIdentifier, delegateSelectors);
     this.terraformStepConfiguration = terraformStepConfiguration;
   }
+
 
   @Override
   @JsonIgnore
@@ -106,5 +108,10 @@ public class TerraformApplyStepInfo
       }
     }
     return connectorRefMap;
+  }
+
+  @Override
+  public ParameterField<List<String>> delegateSelectors() {
+    return delegateSelectors();
   }
 }

@@ -52,6 +52,11 @@ public class K8sRollingStepInfo extends K8sRollingBaseStepInfo implements CDStep
   }
 
   @Override
+  public ParameterField<List<TaskSelectorYaml>> delegateSelectorsOnTaskSelectorYaml() {
+    return delegateSelectors;
+  }
+
+  @Override
   public StepType getStepType() {
     return K8sRollingStep.STEP_TYPE;
   }
@@ -69,4 +74,5 @@ public class K8sRollingStepInfo extends K8sRollingBaseStepInfo implements CDStep
         .canaryStepFqn(canaryStepFqn)
         .build();
   }
+
 }

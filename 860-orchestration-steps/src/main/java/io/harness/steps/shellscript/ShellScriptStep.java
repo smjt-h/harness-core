@@ -62,7 +62,7 @@ public class ShellScriptStep extends TaskExecutableWithRollback<ShellScriptTaskR
   public TaskRequest obtainTask(
       Ambiance ambiance, StepElementParameters stepParameters, StepInputPackage inputPackage) {
     ShellScriptStepParameters shellScriptStepParameters = (ShellScriptStepParameters) stepParameters.getSpec();
-
+  //stepParameters.getDelegateSelectors()
     ShellScriptTaskParametersNG taskParameters =
         shellScriptHelperService.buildShellScriptTaskParametersNG(ambiance, shellScriptStepParameters);
 
@@ -73,10 +73,12 @@ public class ShellScriptStep extends TaskExecutableWithRollback<ShellScriptTaskR
             .parameters(new Object[] {taskParameters})
             .timeout(StepUtils.getTimeoutMillis(stepParameters.getTimeout(), StepUtils.DEFAULT_STEP_TIMEOUT))
             .build();
+    //prepare
+
     String taskName = TaskType.SHELL_SCRIPT_TASK_NG.getDisplayName();
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         singletonList(ShellScriptTaskNG.COMMAND_UNIT), taskName,
-        StepUtils.getTaskSelectors(shellScriptStepParameters.getDelegateSelectors()),
+        StepUtils.getComputedDelegateSelector(stepParameters),
         stepHelper.getEnvironmentType(ambiance));
   }
 

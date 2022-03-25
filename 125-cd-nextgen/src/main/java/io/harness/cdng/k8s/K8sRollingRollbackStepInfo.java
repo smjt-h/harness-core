@@ -71,4 +71,8 @@ public class K8sRollingRollbackStepInfo
         .build();
   }
 
+  @Override
+  public ParameterField<List<TaskSelectorYaml>> delegateSelectorsOnTaskSelectorYaml() {
+    return delegateSelectors;
+  }
 }

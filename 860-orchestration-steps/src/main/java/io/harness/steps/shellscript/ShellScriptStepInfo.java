@@ -39,7 +39,8 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("shellScriptStepInfo")
 @OwnedBy(HarnessTeam.CDC)
 @RecasterAlias("io.harness.cdng.pipeline.stepinfo.ShellScriptStepInfo")
-public class ShellScriptStepInfo extends ShellScriptBaseStepInfo implements PMSStepInfo, Visitable, WithDelegateSelector {
+public class ShellScriptStepInfo
+    extends ShellScriptBaseStepInfo implements PMSStepInfo, Visitable, WithDelegateSelector {
   List<NGVariable> outputVariables;
   List<NGVariable> environmentVariables;
 
@@ -72,8 +73,13 @@ public class ShellScriptStepInfo extends ShellScriptBaseStepInfo implements PMSS
         .outputVariables(NGVariablesUtils.getMapOfVariables(outputVariables, 0L))
         .environmentVariables(NGVariablesUtils.getMapOfVariables(environmentVariables, 0L))
         .shellType(getShell())
+        .delegateSelectors(delegateSelectors)
         .source(getSource())
-        .delegateSelectors(getDelegateSelectors())
         .build();
+  }
+
+  @Override
+  public ParameterField<List<String>> delegateSelectors() {
+    return delegateSelectors;
   }
 }

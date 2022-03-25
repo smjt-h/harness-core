@@ -49,6 +49,11 @@ public class K8sCanaryStepInfo extends K8sCanaryBaseStepInfo implements CDStepIn
   // For Visitor Framework Impl
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 
+  @Override
+  public ParameterField<List<TaskSelectorYaml>> delegateSelectorsOnTaskSelectorYaml() {
+    return delegateSelectors;
+  }
+
   @Builder(builderMethodName = "infoBuilder")
   public K8sCanaryStepInfo(InstanceSelectionWrapper instanceSelection, ParameterField<Boolean> skipDryRun,
       ParameterField<List<TaskSelectorYaml>> delegateSelectors, String name, String identifier) {

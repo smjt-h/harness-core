@@ -45,6 +45,11 @@ public class K8sApplyStepInfo extends K8sApplyBaseStepInfo implements CDStepInfo
   // For Visitor Framework Impl
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 
+  @Override
+  public ParameterField<List<TaskSelectorYaml>> delegateSelectorsOnTaskSelectorYaml() {
+    return delegateSelectors;
+  }
+
   @Builder(builderMethodName = "infoBuilder")
   public K8sApplyStepInfo(ParameterField<Boolean> skipDryRun, ParameterField<Boolean> skipSteadyStateCheck,
       ParameterField<List<String>> filePaths, ParameterField<List<TaskSelectorYaml>> delegateSelectors) {

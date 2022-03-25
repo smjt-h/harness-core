@@ -75,6 +75,11 @@ public class TerraformPlanStepInfo
         .build();
   }
 
+  @Override
+  public ParameterField<List<String>> delegateSelectors() {
+    return delegateSelectors;
+  }
+
   void validateSpecParams() {
     Validator.notNullCheck("Terraform Plan configuration is NULL", terraformPlanExecutionData);
     terraformPlanExecutionData.validateParams();

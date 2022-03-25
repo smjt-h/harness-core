@@ -39,6 +39,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logstreaming.LogStreamingHelper;
+import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.Status;
@@ -350,6 +351,10 @@ public class StepUtils {
       timeoutString = timeout.getValue();
     }
     return NGTimeConversionHelper.convertTimeStringToMilliseconds(timeoutString);
+  }
+
+  public static List<TaskSelector> getComputedDelegateSelector(StepElementParameters stepElementParameters){
+    return getTaskSelectors(stepElementParameters.getDelegateSelectors());
   }
 
   public static List<TaskSelector> getTaskSelectors(ParameterField<List<String>> delegateSelectors) {

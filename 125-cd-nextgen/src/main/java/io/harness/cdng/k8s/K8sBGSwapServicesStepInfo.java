@@ -49,6 +49,11 @@ public class K8sBGSwapServicesStepInfo implements CDStepInfo, Visitable, WithDel
   @JsonIgnore String blueGreenStepFqn;
   @JsonIgnore String blueGreenSwapServicesStepFqn;
 
+  @Override
+  public ParameterField<List<TaskSelectorYaml>> delegateSelectorsOnTaskSelectorYaml() {
+    return delegateSelectors;
+  }
+
   // For Visitor Framework Impl
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 

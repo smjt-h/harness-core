@@ -55,6 +55,11 @@ public class JiraApprovalStepInfo implements PMSStepInfo, WithConnectorRef, With
   ParameterField<List<String>> delegateSelectors;
 
   @Override
+  public ParameterField<List<String>> delegateSelectors() {
+    return delegateSelectors;
+  }
+
+  @Override
   public StepType getStepType() {
     return JiraApprovalStep.STEP_TYPE;
   }

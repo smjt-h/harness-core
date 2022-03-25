@@ -57,6 +57,11 @@ public class TerraformDestroyStepInfo
   }
 
   @Override
+  public ParameterField<List<String>> delegateSelectors() {
+    return delegateSelectors;
+  }
+
+  @Override
   @JsonIgnore
   public StepType getStepType() {
     return TerraformDestroyStep.STEP_TYPE;

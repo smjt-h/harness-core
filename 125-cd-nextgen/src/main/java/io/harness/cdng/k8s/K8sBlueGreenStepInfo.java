@@ -41,7 +41,8 @@ import org.springframework.data.annotation.TypeAlias;
 @SimpleVisitorHelper(helperClass = K8sBlueGreenStepInfoVisitorHelper.class)
 @TypeAlias("k8sBlueGreenStepInfo")
 @RecasterAlias("io.harness.cdng.k8s.K8sBlueGreenStepInfo")
-public class K8sBlueGreenStepInfo extends K8sBlueGreenBaseStepInfo implements CDStepInfo, Visitable, WithDelegateSelector {
+public class K8sBlueGreenStepInfo
+    extends K8sBlueGreenBaseStepInfo implements CDStepInfo, Visitable, WithDelegateSelector {
   // For Visitor Framework Impl
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 
@@ -49,6 +50,11 @@ public class K8sBlueGreenStepInfo extends K8sBlueGreenBaseStepInfo implements CD
   public K8sBlueGreenStepInfo(
       ParameterField<Boolean> skipDryRun, ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
     super(skipDryRun, delegateSelectors);
+  }
+
+  @Override
+  public ParameterField<List<TaskSelectorYaml>> delegateSelectorsOnTaskSelectorYaml() {
+    return delegateSelectors;
   }
 
   @Override

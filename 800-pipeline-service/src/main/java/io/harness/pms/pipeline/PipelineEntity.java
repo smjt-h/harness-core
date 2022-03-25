@@ -119,6 +119,8 @@ public class PipelineEntity
 
   @Wither Boolean allowStageExecutions;
 
+  @Wither @Singular List<String> delegateSelectors;
+
   @Wither @Setter @NonFinal @Default Boolean templateReference = false;
 
   @Wither @Setter @NonFinal String objectIdOfYaml;

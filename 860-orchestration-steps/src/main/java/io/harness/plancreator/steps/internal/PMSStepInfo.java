@@ -43,6 +43,7 @@ public interface PMSStepInfo extends StepSpecType, WithStepElementParameters, Wi
     StepElementParametersBuilder stepParametersBuilder =
         StepParametersUtils.getStepParameters(stepElementConfig, failRollbackParameters);
     stepParametersBuilder.spec(getSpecParameters());
+    stepParametersBuilder.delegateSelectors(delegateSelectors());
     return stepParametersBuilder.build();
   }
 }

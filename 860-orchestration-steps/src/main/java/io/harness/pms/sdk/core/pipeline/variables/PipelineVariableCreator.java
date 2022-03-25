@@ -73,6 +73,11 @@ public class PipelineVariableCreator extends ChildrenVariableCreator {
       VariableCreatorHelper.addVariablesForVariables(
           variablesField, yamlPropertiesMap, YAMLFieldNameConstants.PIPELINE);
     }
+    YamlField delegateSelectorsField = yamlNode.getField(YAMLFieldNameConstants.DELEGATE_SELECTORS);
+    if (delegateSelectorsField != null) {
+      VariableCreatorHelper.addVariablesForVariables(
+              delegateSelectorsField, yamlPropertiesMap, YAMLFieldNameConstants.PIPELINE);
+    }
     YamlField propertiesField = yamlNode.getField(YAMLFieldNameConstants.PROPERTIES);
     if (propertiesField != null) {
       VariableCreatorHelper.addPropertiesForSchemaAutocomplete(propertiesField, yamlPropertiesMap);

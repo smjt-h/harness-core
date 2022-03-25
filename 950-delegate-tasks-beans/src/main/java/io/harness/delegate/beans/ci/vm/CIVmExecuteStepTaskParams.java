@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
+
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
@@ -40,6 +41,7 @@ public class CIVmExecuteStepTaskParams implements CIExecuteStepTaskParams, Execu
   @NotNull private String logKey;
   @NotNull private String workingDir;
   private Map<String, String> volToMountPath;
+  private List<String> delegateSelectors;
 
   @Builder.Default private static final Type type = Type.VM;
 
@@ -52,4 +54,5 @@ public class CIVmExecuteStepTaskParams implements CIExecuteStepTaskParams, Execu
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
     return Collections.singletonList(CIVmConnectionCapability.builder().poolId(poolId).build());
   }
+
 }

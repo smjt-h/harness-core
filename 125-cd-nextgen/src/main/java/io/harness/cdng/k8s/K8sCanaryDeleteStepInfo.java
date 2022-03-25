@@ -44,6 +44,11 @@ public class K8sCanaryDeleteStepInfo implements CDStepInfo, Visitable, WithDeleg
   @JsonIgnore String canaryStepFqn;
   @JsonIgnore String canaryDeleteStepFqn;
 
+  @Override
+  public ParameterField<List<TaskSelectorYaml>> delegateSelectorsOnTaskSelectorYaml() {
+    return delegateSelectors;
+  }
+
   // For Visitor Framework Impl
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 

@@ -51,6 +51,11 @@ public class HelmRollbackStepInfo
   }
 
   @Override
+  public ParameterField<List<TaskSelectorYaml>> delegateSelectorsOnTaskSelectorYaml() {
+    return delegateSelectors;
+  }
+
+  @Override
   public StepType getStepType() {
     return HelmRollbackStep.STEP_TYPE;
   }

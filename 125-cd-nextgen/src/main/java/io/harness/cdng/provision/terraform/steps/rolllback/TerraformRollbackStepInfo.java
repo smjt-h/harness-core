@@ -39,6 +39,12 @@ import lombok.experimental.FieldDefaults;
 @RecasterAlias("io.harness.cdng.provision.terraform.steps.rolllback.TerraformRollbackStepInfo")
 public class TerraformRollbackStepInfo implements CDStepInfo, WithDelegateSelector {
   @NotNull String provisionerIdentifier;
+
+  @Override
+  public ParameterField<List<String>> delegateSelectors() {
+    return delegateSelectors;
+  }
+
   @YamlSchemaTypes(value = {runtime})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   ParameterField<List<String>> delegateSelectors;

@@ -29,6 +29,7 @@ import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.plancreator.steps.common.StepElementParameters.StepElementParametersBuilder;
 import io.harness.plancreator.steps.common.WithStepElementParameters;
 import io.harness.pms.sdk.core.steps.io.StepParameters;
+import io.harness.utils.WithDelegateSelector;
 import io.harness.yaml.core.StepSpecType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -41,7 +42,7 @@ import java.util.List;
               SaveCacheGCSStepInfo.class, SaveCacheS3StepInfo.class, UploadToGCSStepInfo.class,
               UploadToS3StepInfo.class, UploadToArtifactoryStepInfo.class, RunTestsStepInfo.class})
 @OwnedBy(CI)
-public interface CIStepInfo extends StepSpecType, WithStepElementParameters, SpecParameters {
+public interface CIStepInfo extends StepSpecType, WithStepElementParameters, SpecParameters, WithDelegateSelector {
   int MIN_RETRY = 0;
   int MAX_RETRY = 5;
   long DEFAULT_TIMEOUT = Duration.ofHours(2).toMillis();
@@ -71,6 +72,7 @@ public interface CIStepInfo extends StepSpecType, WithStepElementParameters, Spe
     StepElementParametersBuilder stepParametersBuilder =
         CiStepParametersUtils.getStepParameters(stepElementConfig, failRollbackParameters);
     stepParametersBuilder.spec(getSpecParameters());
+    stepParametersBuilder.delegateSelectors(delegateSelectors());
     return stepParametersBuilder.build();
   }
 }

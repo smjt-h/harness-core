@@ -56,6 +56,11 @@ public class ServiceNowCreateStepInfo implements PMSStepInfo, WithConnectorRef, 
   ParameterField<List<String>> delegateSelectors;
 
   @Override
+  public ParameterField<List<String>> delegateSelectors() {
+    return delegateSelectors;
+  }
+
+  @Override
   public StepType getStepType() {
     return ServiceNowCreateStep.STEP_TYPE;
   }

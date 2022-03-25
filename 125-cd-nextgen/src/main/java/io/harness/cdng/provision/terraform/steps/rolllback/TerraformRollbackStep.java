@@ -164,13 +164,9 @@ public class TerraformRollbackStep extends TaskExecutableWithRollbackAndRbac<Ter
               .parameters(new Object[] {builder.build()})
               .build();
 
-      ParameterField<List<String>> delegateSelectors = stepParametersSpec.getDelegateSelectors();
-
-      List<TaskSelector> taskSelectors = StepUtils.getTaskSelectors(delegateSelectors);
-
       return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
           Collections.singletonList(TerraformCommandUnit.Rollback.name()), TaskType.TERRAFORM_TASK_NG.getDisplayName(),
-          taskSelectors, stepHelper.getEnvironmentType(ambiance));
+              StepUtils.getComputedDelegateSelector(stepParameters), stepHelper.getEnvironmentType(ambiance));
     }
   }
 

@@ -149,7 +149,7 @@ public class TerraformPlanStep extends TaskExecutableWithRollbackAndRbac<Terrafo
 
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         Collections.singletonList(TerraformCommandUnit.Plan.name()), TaskType.TERRAFORM_TASK_NG.getDisplayName(),
-        StepUtils.getTaskSelectors(planStepParameters.getDelegateSelectors()), stepHelper.getEnvironmentType(ambiance));
+        StepUtils.getComputedDelegateSelector(stepElementParameters), stepHelper.getEnvironmentType(ambiance));
   }
 
   @Override

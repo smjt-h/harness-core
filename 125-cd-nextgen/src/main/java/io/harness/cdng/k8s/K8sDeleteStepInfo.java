@@ -51,6 +51,11 @@ public class K8sDeleteStepInfo extends K8sDeleteBaseStepInfo implements CDStepIn
   }
 
   @Override
+  public ParameterField<List<TaskSelectorYaml>> delegateSelectorsOnTaskSelectorYaml() {
+    return delegateSelectors;
+  }
+
+  @Override
   public StepType getStepType() {
     return K8sDeleteStep.STEP_TYPE;
   }

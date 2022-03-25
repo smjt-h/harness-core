@@ -94,9 +94,6 @@ public abstract class PMSStepPlanCreatorV2<T extends PmsAbstractStepNode> extend
     List<AdviserObtainment> adviserObtainmentFromMetaData = getAdviserObtainmentFromMetaData(ctx.getCurrentField());
 
     StepParameters stepParameters = getStepParameters(ctx, stepElement);
-    if (stepParameters instanceof WithDelegateSelector){
-       //ctx
-    }
     PlanNode stepPlanNode =
         PlanNode.builder()
             .uuid(ctx.getCurrentField().getNode().getUuid())
@@ -189,6 +186,10 @@ public abstract class PMSStepPlanCreatorV2<T extends PmsAbstractStepNode> extend
   }
 
   protected StepParameters getStepParameters(PlanCreationContext ctx, T stepElement) {
+    if (stepElement.getDelegateSelectors() instanceof WithDelegateSelector){
+      List<YamlNode> yamlNodes = YamlUtils.findParentNode(ctx.getCurrentField().getNode(), "stage").getField("delegateSelectors").getNode().asArray();
+      //stepElement.setDelegateSelectors();
+    }
     if (stepElement.getStepSpecType() instanceof WithStepElementParameters) {
       stepElement.setTimeout(TimeoutUtils.getTimeout(stepElement.getTimeout()));
       return ((PMSStepInfo) stepElement.getStepSpecType())

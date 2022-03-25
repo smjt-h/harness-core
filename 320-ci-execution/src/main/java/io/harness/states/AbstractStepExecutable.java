@@ -138,7 +138,7 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
     String accountId = AmbianceUtils.getAccountId(ambiance);
     ParameterField<String> timeout = stepParameters.getTimeout();
     String stepParametersName = stepParameters.getName();
-
+    ParameterField<List<String>> delegateSelectors = stepParameters.getDelegateSelectors();
     CIStepInfo ciStepInfo = (CIStepInfo) stepParameters.getSpec();
 
     log.info("Received step {} for execution with type {}", stepIdentifier,

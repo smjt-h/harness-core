@@ -25,6 +25,7 @@ import io.harness.steps.StepSpecTypeConstants;
 import io.harness.steps.http.HttpBaseStepInfo;
 import io.harness.steps.http.HttpStep;
 import io.harness.steps.http.HttpStepParameters;
+import io.harness.utils.WithDelegateSelector;
 import io.harness.walktree.beans.VisitableChildren;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
@@ -52,7 +53,7 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("httpStepInfo")
 @OwnedBy(PIPELINE)
 @RecasterAlias("io.harness.plancreator.steps.http.HttpStepInfo")
-public class HttpStepInfo extends HttpBaseStepInfo implements PMSStepInfo, Visitable {
+public class HttpStepInfo extends HttpBaseStepInfo implements PMSStepInfo, Visitable, WithDelegateSelector {
   // For Visitor Framework Impl
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 
@@ -61,6 +62,11 @@ public class HttpStepInfo extends HttpBaseStepInfo implements PMSStepInfo, Visit
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   @YamlSchemaTypes(value = {runtime})
   ParameterField<List<TaskSelectorYaml>> delegateSelectors;
+
+  @Override
+  public ParameterField<List<TaskSelectorYaml>> delegateSelectorsOnTaskSelectorYaml() {
+    return delegateSelectors;
+  }
 
   @Builder(builderMethodName = "infoBuilder")
   public HttpStepInfo(ParameterField<String> url, ParameterField<String> method, ParameterField<String> requestBody,
@@ -98,6 +104,8 @@ public class HttpStepInfo extends HttpBaseStepInfo implements PMSStepInfo, Visit
         .method(getMethod())
         .outputVariables(NGVariablesUtils.getMapOfVariables(outputVariables, 0L))
         .requestBody(getRequestBody())
+        .delegateSelectors(ParameterField.createValueField(
+            CollectionUtils.emptyIfNull(delegateSelectors != null ? delegateSelectors.getValue() : null)))
         .url(getUrl())
         .build();
   }

@@ -51,6 +51,11 @@ public class ServiceNowApprovalStepInfo implements PMSStepInfo, WithConnectorRef
   @NotNull CriteriaSpecWrapper approvalCriteria;
   CriteriaSpecWrapper rejectionCriteria;
 
+  @Override
+  public ParameterField<List<String>> delegateSelectors() {
+    return delegateSelectors;
+  }
+
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   @YamlSchemaTypes(value = {runtime})
   ParameterField<List<String>> delegateSelectors;

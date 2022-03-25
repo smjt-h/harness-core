@@ -49,6 +49,12 @@ public class HelmDeployStepInfo extends HelmDeployBaseStepInfo implements CDStep
   public HelmDeployStepInfo(ParameterField<List<TaskSelectorYaml>> delegateSelectors, String helmDeployFqn) {
     super(delegateSelectors, helmDeployFqn);
   }
+
+  @Override
+  public ParameterField<List<TaskSelectorYaml>> delegateSelectorsOnTaskSelectorYaml() {
+    return delegateSelectors;
+  }
+
   @Override
   public StepType getStepType() {
     return HelmDeployStep.STEP_TYPE;
