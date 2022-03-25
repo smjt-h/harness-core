@@ -25,7 +25,7 @@ public interface ArtifactoryNgService {
       ArtifactoryConfigRequest artifactoryConfig, String repositoryName, String artifactPath, int maxVersions);
 
   BuildDetails getLatestArtifact(ArtifactoryConfigRequest artifactoryConfig, String repositoryName,
-      String ArtifactPathDirectory, String artifactPathFilter, int maxVersions);
+      String ArtifactPathDirectory, String artifactPathFilter, String artifactPath, int maxVersions);
 
   Map<String, String> getRepositories(ArtifactoryConfigRequest artifactoryConfig, String packageType);
 
