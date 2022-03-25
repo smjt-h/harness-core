@@ -113,6 +113,7 @@ public class NextGenConfiguration extends Configuration {
   public static final String ACCOUNT_SETTING_PACKAGE = "io.harness.ng.core.accountsetting.resources";
   public static final String ENV_GROUP_RESOURCE = "io.harness.ng.core.envGroup.resource";
   public static final String NG_GLOBAL_KMS_RESOURCE_PACKAGE = "io.harness.ng.core.globalkms.resource";
+  public static final String AWS_PACKAGE = "io.harness.ng.core.aws.resources";
   public static final Collection<Class<?>> HARNESS_RESOURCE_CLASSES = getResourceClasses();
 
   @JsonProperty("swagger") private SwaggerBundleConfiguration swaggerBundleConfiguration;
@@ -187,6 +188,7 @@ public class NextGenConfiguration extends Configuration {
   @JsonProperty("secretsConfiguration") private SecretsConfiguration secretsConfiguration;
   @JsonProperty("pmsPlanCreatorServicePoolConfig") private ThreadPoolConfig pmsPlanCreatorServicePoolConfig;
   @JsonProperty("ffServerClientConfig") ServiceHttpClientConfig ffServerClientConfig;
+  @JsonProperty("awsRegionIdToName") private Map<String, String> awsRegionIdToName;
 
   // [secondary-db]: Uncomment this and the corresponding config in yaml file if you want to connect to another database
   //  @JsonProperty("secondary-mongo") MongoConfig secondaryMongoConfig;
@@ -219,7 +221,7 @@ public class NextGenConfiguration extends Configuration {
                 SCHEMA_PACKAGE, DELEGATE_PACKAGE, ACCESS_CONTROL_PACKAGE, FEEDBACK_PACKAGE, INSTANCE_SYNC_PACKAGE,
                 INVITE_PACKAGE, USER_PACKAGE, INSTANCE_NG_PACKAGE, LICENSING_USAGE_PACKAGE, SMTP_NG_RESOURCE,
                 SERVICENOW_PACKAGE, SCIM_NG_RESOURCE, NG_GLOBAL_KMS_RESOURCE_PACKAGE, ACCOUNT_SETTING_PACKAGE,
-                ENV_GROUP_RESOURCE))
+                ENV_GROUP_RESOURCE, AWS_PACKAGE))
         .collect(Collectors.toSet());
   }
 
