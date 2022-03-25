@@ -184,28 +184,6 @@ public class AwsCodeDeployServiceImpl implements AwsCodeDeployService {
   }
 
   @Override
-  public List<Instance> listDeploymentInstances(String region, SettingAttribute cloudProviderSetting,
-      List<EncryptedDataDetail> encryptedDataDetails, String deploymentId) {
-    AwsConfig awsConfig = awsHelperService.validateAndGetAwsConfig(cloudProviderSetting, encryptedDataDetails, false);
-
-    List<String> instanceIds = fetchAllDeploymentInstances(
-        awsConfig, encryptedDataDetails, region, deploymentId, asList(InstanceStatus.Succeeded.name()));
-
-    if (isNotEmpty(instanceIds)) {
-      DescribeInstancesRequest describeInstancesRequest =
-          awsHelperService.getDescribeInstancesRequestWithRunningFilter().withInstanceIds(instanceIds);
-
-      return awsHelperService.describeEc2Instances(awsConfig, encryptedDataDetails, region, describeInstancesRequest)
-          .getReservations()
-          .stream()
-          .flatMap(reservation -> reservation.getInstances().stream())
-          .collect(toList());
-    } else {
-      return Collections.EMPTY_LIST;
-    }
-  }
-
-  @Override
   public RevisionLocation getApplicationRevisionList(String region, String appName, String deploymentGroupName,
       SettingAttribute cloudProviderSetting, List<EncryptedDataDetail> encryptedDataDetails) {
     AwsConfig awsConfig = awsHelperService.validateAndGetAwsConfig(cloudProviderSetting, encryptedDataDetails, false);

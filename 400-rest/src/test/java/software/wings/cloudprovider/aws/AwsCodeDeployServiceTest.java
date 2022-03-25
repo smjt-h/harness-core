@@ -117,38 +117,4 @@ public class AwsCodeDeployServiceTest extends WingsBaseTest {
                      Collections.emptyList())
                  .toString());
   }
-
-  @Test
-  @Owner(developers = ADWAIT)
-  @Category(UnitTests.class)
-  @Ignore("TODO: please provide clear motivation why this test is ignored")
-  public void shouldListDeploymentInstances() {
-    doReturn(AwsConfig.builder().build()).when(awsHelperService).validateAndGetAwsConfig(any(), any(), false);
-
-    ListDeploymentInstancesResult listDeploymentInstancesResult = new ListDeploymentInstancesResult();
-    listDeploymentInstancesResult.setInstancesList(Collections.EMPTY_LIST);
-    listDeploymentInstancesResult.setNextToken(null);
-    doReturn(listDeploymentInstancesResult).when(awsHelperService).listDeploymentInstances(any(), any(), any(), any());
-
-    List<Instance> instanceList =
-        awsCodeDeployService.listDeploymentInstances(Regions.US_EAST_1.getName(), null, null, "deploymentId");
-    assertThat(instanceList).isNotNull();
-    assertThat(instanceList).isEmpty();
-
-    listDeploymentInstancesResult.setInstancesList(Collections.singletonList("Ec2InstanceId"));
-    doReturn(listDeploymentInstancesResult).when(awsHelperService).listDeploymentInstances(any(), any(), any(), any());
-
-    DescribeInstancesRequest request = new DescribeInstancesRequest();
-    doReturn(request).when(awsHelperService).getDescribeInstancesRequestWithRunningFilter();
-
-    DescribeInstancesResult result = new DescribeInstancesResult();
-    result.withReservations(asList(new Reservation().withInstances(new Instance().withPublicDnsName(PUBLIC_DNS_NAME))));
-    doReturn(result).when(awsHelperService).describeEc2Instances(any(), any(), any(), any());
-
-    instanceList =
-        awsCodeDeployService.listDeploymentInstances(Regions.US_EAST_1.getName(), null, null, "deploymentId");
-    assertThat(instanceList).isNotNull();
-    assertThat(instanceList).hasSize(1);
-    assertThat(instanceList.iterator().next().getPublicDnsName()).isEqualTo(PUBLIC_DNS_NAME);
-  }
 }

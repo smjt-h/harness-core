@@ -216,7 +216,6 @@ public class AwsHelperService {
   @Inject private EncryptionService encryptionService;
   @Inject private TimeLimiter timeLimiter;
   @Inject private ManagerExpressionEvaluator expressionEvaluator;
-  @Inject private AwsUtils awsUtils;
   @Inject private AwsCallTracker tracker;
   @Inject private AwsApiHelperService awsApiHelperService;
 
@@ -1269,44 +1268,6 @@ public class AwsHelperService {
     return allRunning;
   }
 
-  public List<Instance> listAutoScalingGroupInstances(
-      AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String region, String autoScalingGroupName) {
-    List<Instance> instanceList = newArrayList();
-    encryptionService.decrypt(awsConfig, encryptionDetails, false);
-    try (CloseableAmazonWebServiceClient<AmazonEC2Client> closeableAmazonEC2Client =
-             new CloseableAmazonWebServiceClient(getAmazonEc2Client(region, awsConfig))) {
-      List<String> instanceIds =
-          listInstanceIdsFromAutoScalingGroup(awsConfig, encryptionDetails, region, autoScalingGroupName);
-
-      if (CollectionUtils.isEmpty(instanceIds)) {
-        return instanceList;
-      }
-
-      // This will return only RUNNING instances
-      DescribeInstancesRequest describeInstancesRequest =
-          getDescribeInstancesRequestWithRunningFilter().withInstanceIds(instanceIds);
-      DescribeInstancesResult describeInstancesResult;
-
-      do {
-        tracker.trackEC2Call("Describe Instances.");
-        describeInstancesResult = closeableAmazonEC2Client.getClient().describeInstances(describeInstancesRequest);
-        describeInstancesResult.getReservations().forEach(
-            reservation -> instanceList.addAll(reservation.getInstances()));
-
-        describeInstancesRequest.withNextToken(describeInstancesResult.getNextToken());
-
-      } while (describeInstancesResult.getNextToken() != null);
-    } catch (AmazonServiceException amazonServiceException) {
-      awsApiHelperService.handleAmazonServiceException(amazonServiceException);
-    } catch (AmazonClientException amazonClientException) {
-      awsApiHelperService.handleAmazonClientException(amazonClientException);
-    } catch (Exception e) {
-      log.error("Exception listAutoScalingGroupInstances", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
-    }
-    return instanceList;
-  }
-
   public List<String> listInstanceIdsFromAutoScalingGroup(
       AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String region, String autoScalingGroupName) {
     AutoScalingGroup group = getAutoScalingGroup(awsConfig, encryptionDetails, region, autoScalingGroupName);
@@ -1591,14 +1552,6 @@ public class AwsHelperService {
 
     log.info("Failed in ECS validation, failed to fetch current region");
     return false;
-  }
-
-  public List<Filter> getAwsFiltersForRunningState() {
-    return awsUtils.getAwsFilters(AwsInfrastructureMapping.Builder.anAwsInfrastructureMapping().build(), null);
-  }
-
-  public DescribeInstancesRequest getDescribeInstancesRequestWithRunningFilter() {
-    return new DescribeInstancesRequest().withFilters(getAwsFiltersForRunningState());
   }
 
   public TagResourceResult tagService(String region, List<EncryptedDataDetail> encryptedDataDetails,
