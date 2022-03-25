@@ -18,9 +18,11 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.envGroup.beans.EnvironmentGroupConfig;
 import io.harness.cdng.envGroup.beans.EnvironmentGroupEntity;
+import io.harness.data.structure.CollectionUtils;
 import io.harness.encryption.ScopeHelper;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.EntityDetail;
+import io.harness.ng.core.envGroup.dto.EnvironmentGroupDeleteResponse;
 import io.harness.ng.core.envGroup.dto.EnvironmentGroupResponse;
 import io.harness.ng.core.envGroup.dto.EnvironmentGroupResponseDTO;
 import io.harness.pms.yaml.YamlUtils;
@@ -56,6 +58,16 @@ public class EnvironmentGroupMapper {
         .build();
   }
 
+  public EnvironmentGroupDeleteResponse toDeleteResponseWrapper(EnvironmentGroupEntity envGroup) {
+    return EnvironmentGroupDeleteResponse.builder()
+        .accountId(envGroup.getAccountId())
+        .orgIdentifier(envGroup.getOrgIdentifier())
+        .projectIdentifier(envGroup.getProjectIdentifier())
+        .identifier(envGroup.getIdentifier())
+        .deleted(envGroup.getDeleted())
+        .build();
+  }
+
   public EnvironmentGroupEntity toEnvironmentEntity(String accId, String orgId, String projectId, String yaml) {
     EnvironmentGroupConfig environmentGroupConfig;
     try {
@@ -76,7 +88,7 @@ public class EnvironmentGroupMapper {
         .color(environmentGroupConfig.getColor())
         .description(environmentGroupConfig.getDescription())
         .tags(convertToList(environmentGroupConfig.getTags()))
-        .envIdentifiers(environmentGroupConfig.getEnvIdentifiers())
+        .envIdentifiers(CollectionUtils.emptyIfNull(environmentGroupConfig.getEnvIdentifiers()))
         .yaml(yaml)
         .build();
   }

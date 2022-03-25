@@ -4460,7 +4460,7 @@ plain_artifacts = [
     "com.graphql-java:java-dataloader:2.1.1",
     "com.hazelcast:hazelcast-aws:2.4",
     "com.hazelcast:hazelcast-kubernetes:1.5.3",
-    "com.hazelcast:hazelcast:3.12.8",
+    "com.hazelcast:hazelcast:5.1",
     "com.healthmarketscience.sqlbuilder:sqlbuilder:3.0.0",
     "com.hierynomus:asn-one:0.4.0",
     "com.hierynomus:smbj:0.9.0",
@@ -4651,7 +4651,7 @@ plain_artifacts = [
     "io.grpc:grpc-services:1.33.1",
     "io.grpc:grpc-stub:1.33.1",
     "io.gsonfire:gson-fire:1.8.3",
-    "io.harness.cv:data-collection-dsl:0.33-RELEASE",
+    "io.harness.cv:data-collection-dsl:0.34-RELEASE",
     "io.harness:ff-java-server-sdk:1.0.5.1",
     "io.jsonwebtoken:jjwt:0.9.1",
     "io.kubernetes:client-java-api:11.0.2",
@@ -5245,6 +5245,35 @@ maven_install(
         "https://harness.jfrog.io/harness/thirdparty-annonymous",
         "https://s01.oss.sonatype.org/content/repositories/releases",
         "https://s01.oss.sonatype.org/content/repositories/snapshots",
+    ],
+)
+
+# Adding maven rule for upgraded version of debezium (1.8.0.Final) and required version of mongodb java driver for debezium service
+maven_install(
+    name = "maven_debezium",
+    artifacts = [
+        "org.mongodb:mongodb-driver-core:4.0.4",
+        "org.mongodb:mongodb-driver-sync:4.0.4",
+        "io.debezium:debezium-api:1.8.0.Final",
+        "io.debezium:debezium-connector-mongodb:1.8.0.Final",
+        "io.debezium:debezium-core:1.8.0.Final",
+        maven.artifact(
+            group = "io.debezium",
+            artifact = "debezium-embedded",
+            version = "1.8.0.Final",
+            exclusions = [
+                "log4j:log4j",
+                "org.slf4j:slf4j-log4j12",
+            ],
+        ),
+    ],
+    repositories = [
+        "https://repo1.maven.org/maven2",
+        "http://jfrogdev.dev.harness.io:80/artifactory/portal-maven",
+        "https://harness.jfrog.io/harness/thirdparty-annonymous",
+        "https://s01.oss.sonatype.org/content/repositories/releases",
+        "https://s01.oss.sonatype.org/content/repositories/snapshots",
+        "https://mvnrepository.com/artifact/org.mongodb/mongodb-driver-core/4.3.4",
     ],
 )
 
