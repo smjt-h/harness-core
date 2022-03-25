@@ -7,6 +7,8 @@
 
 package io.harness.ng.core.service.dto;
 
+import io.harness.gitsync.sdk.EntityGitDetails;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -32,4 +34,5 @@ public class ServiceResponseDTO {
   Map<String, String> tags;
   @JsonIgnore Long version;
   String yaml;
+  EntityGitDetails gitDetails;
 }

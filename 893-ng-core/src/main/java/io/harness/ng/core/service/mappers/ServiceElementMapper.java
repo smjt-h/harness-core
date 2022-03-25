@@ -12,6 +12,7 @@ import static io.harness.ng.core.mapper.TagMapper.convertToList;
 import static io.harness.ng.core.mapper.TagMapper.convertToMap;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.gitsync.sdk.EntityGitDetailsMapper;
 import io.harness.ng.core.service.dto.ServiceRequestDTO;
 import io.harness.ng.core.service.dto.ServiceResponse;
 import io.harness.ng.core.service.dto.ServiceResponseDTO;
@@ -51,6 +52,7 @@ public class ServiceElementMapper {
         .tags(convertToMap(serviceEntity.getTags()))
         .version(serviceEntity.getVersion())
         .yaml(serviceEntity.getYaml())
+        .gitDetails(EntityGitDetailsMapper.mapEntityGitDetails(serviceEntity))
         .build();
   }
 

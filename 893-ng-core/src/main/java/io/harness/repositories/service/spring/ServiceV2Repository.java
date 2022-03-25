@@ -5,10 +5,19 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.repositories.service.custom;
+package io.harness.repositories.service.spring;
 
+import static io.harness.annotations.dev.HarnessTeam.CDC;
+
+import io.harness.annotations.dev.OwnedBy;
+import io.harness.gitsync.persistance.GitSyncableHarnessRepo;
 import io.harness.ng.core.service.entity.ServiceEntity;
+import io.harness.repositories.service.custom.ServiceV2RepositoryCustom;
 
 import org.springframework.data.repository.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+@GitSyncableHarnessRepo
+@Transactional
+@OwnedBy(CDC)
 public interface ServiceV2Repository extends Repository<ServiceEntity, String>, ServiceV2RepositoryCustom {}

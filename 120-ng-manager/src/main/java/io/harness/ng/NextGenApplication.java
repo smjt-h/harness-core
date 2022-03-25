@@ -108,6 +108,9 @@ import io.harness.ng.core.migration.ProjectMigrationProvider;
 import io.harness.ng.core.remote.licenserestriction.CloudCostK8sConnectorRestrictionsUsageImpl;
 import io.harness.ng.core.remote.licenserestriction.OrgRestrictionsUsageImpl;
 import io.harness.ng.core.remote.licenserestriction.ProjectRestrictionsUsageImpl;
+import io.harness.ng.core.service.entity.ServiceEntity;
+import io.harness.ng.core.service.gitsync.ServiceEntityGitSyncHandler;
+import io.harness.ng.core.service.yaml.NGServiceConfig;
 import io.harness.ng.core.user.exception.mapper.InvalidUserRemoveRequestExceptionMapper;
 import io.harness.ng.migration.DelegateMigrationProvider;
 import io.harness.ng.migration.NGCoreMigrationProvider;
@@ -498,6 +501,12 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
                                           .yamlClass(EnvironmentGroupConfig.class)
                                           .entityClass(EnvironmentGroupEntity.class)
                                           .entityHelperClass(EnvironmentGroupEntityGitSyncHelper.class)
+                                          .build());
+    gitSyncEntitiesConfigurations.add(GitSyncEntitiesConfiguration.builder()
+                                          .entityType(EntityType.SERVICE)
+                                          .yamlClass(NGServiceConfig.class)
+                                          .entityClass(ServiceEntity.class)
+                                          .entityHelperClass(ServiceEntityGitSyncHandler.class)
                                           .build());
     final GitSdkConfiguration gitSdkConfiguration = config.getGitSdkConfiguration();
     return GitSyncSdkConfiguration.builder()

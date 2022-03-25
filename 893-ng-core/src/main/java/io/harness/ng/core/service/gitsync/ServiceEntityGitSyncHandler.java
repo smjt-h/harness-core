@@ -107,7 +107,8 @@ public class ServiceEntityGitSyncHandler extends AbstractGitSdkEntityHandler<Ser
 
   @Override
   public NGServiceConfig update(String accountIdentifier, String yaml, ChangeType changeType) {
-    return null;
+    ServiceEntity serviceEntity = NGServiceEntityMapper.toServiceEntity(accountIdentifier, yaml);
+    return NGServiceEntityMapper.toNGServiceConfig(serviceEntity);
   }
 
   @Override

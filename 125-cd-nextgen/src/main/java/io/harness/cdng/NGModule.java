@@ -45,6 +45,8 @@ import io.harness.licensing.usage.interfaces.LicenseUsageInterface;
 import io.harness.ng.core.NGCoreModule;
 import io.harness.ng.core.service.services.ServiceEntityService;
 import io.harness.ng.core.service.services.impl.ServiceEntityServiceImpl;
+import io.harness.repositories.service.custom.ServiceV2RepositoryCustom;
+import io.harness.repositories.service.custom.ServiceV2RepositoryCustomImpl;
 import io.harness.service.instance.InstanceService;
 import io.harness.service.instance.InstanceServiceImpl;
 

@@ -38,6 +38,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
+import io.harness.gitsync.interceptor.GitEntityCreateInfoDTO;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.OrgAndProjectValidationHelper;
 import io.harness.ng.core.dto.ErrorDTO;
@@ -74,6 +75,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -156,7 +158,8 @@ public class ServiceResourceV2 {
       @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectIdentifier,
       @Parameter(description = "Specify whether Service is deleted or not") @QueryParam(
-          NGCommonEntityConstants.DELETED_KEY) @DefaultValue("false") boolean deleted) {
+          NGCommonEntityConstants.DELETED_KEY) @DefaultValue("false") boolean deleted,
+      @BeanParam GitEntityCreateInfoDTO gitEntityCreateInfo) {
     Optional<ServiceEntity> serviceEntity =
         serviceEntityService.get(accountId, orgIdentifier, projectIdentifier, serviceIdentifier, deleted);
     String version = "0";
@@ -184,7 +187,9 @@ public class ServiceResourceV2 {
   public ResponseDTO<ServiceResponse>
   create(@Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
              NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
-      @Parameter(description = "Details of the Service to be created") @Valid ServiceRequestDTO serviceRequestDTO) {
+      @Parameter(description = "Details of the Service to be created") @Valid ServiceRequestDTO serviceRequestDTO,
+      @Parameter(description = "This contains details of Git Entity like Git Branch, Git Repository to be created")
+      @BeanParam GitEntityCreateInfoDTO gitEntityCreateInfo) {
     throwExceptionForNoRequestDTO(serviceRequestDTO);
     accessControlClient.checkForAccessOrThrow(
         ResourceScope.of(accountId, serviceRequestDTO.getOrgIdentifier(), serviceRequestDTO.getProjectIdentifier()),
@@ -264,7 +269,8 @@ public class ServiceResourceV2 {
   update(@HeaderParam(IF_MATCH) String ifMatch,
       @Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
-      @Parameter(description = "Details of the Service to be updated") @Valid ServiceRequestDTO serviceRequestDTO) {
+      @Parameter(description = "Details of the Service to be updated") @Valid ServiceRequestDTO serviceRequestDTO,
+      @BeanParam GitEntityCreateInfoDTO gitEntityCreateInfo) {
     throwExceptionForNoRequestDTO(serviceRequestDTO);
     accessControlClient.checkForAccessOrThrow(
         ResourceScope.of(accountId, serviceRequestDTO.getOrgIdentifier(), serviceRequestDTO.getProjectIdentifier()),

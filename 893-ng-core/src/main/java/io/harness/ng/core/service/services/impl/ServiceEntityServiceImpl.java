@@ -33,8 +33,8 @@ import io.harness.ng.core.service.entity.ServiceEntity;
 import io.harness.ng.core.service.entity.ServiceEntity.ServiceEntityKeys;
 import io.harness.ng.core.service.services.ServiceEntityService;
 import io.harness.outbox.api.OutboxService;
-import io.harness.repositories.service.custom.ServiceV2Repository;
 import io.harness.repositories.service.spring.ServiceRepository;
+import io.harness.repositories.service.spring.ServiceV2Repository;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
@@ -94,7 +94,7 @@ public class ServiceEntityServiceImpl implements ServiceEntityService {
       setNameIfNotPresent(serviceEntity);
       modifyServiceRequest(serviceEntity);
       return Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
-        ServiceEntity service = serviceRepository.save(serviceEntity);
+        ServiceEntity service = serviceV2Repository.save(serviceEntity);
         outboxService.save(ServiceCreateEvent.builder()
                                .accountIdentifier(serviceEntity.getAccountId())
                                .orgIdentifier(serviceEntity.getOrgIdentifier())
@@ -115,7 +115,7 @@ public class ServiceEntityServiceImpl implements ServiceEntityService {
   @Override
   public Optional<ServiceEntity> get(
       String accountId, String orgIdentifier, String projectIdentifier, String serviceIdentifier, boolean deleted) {
-    return serviceRepository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
+    return serviceV2Repository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
         accountId, orgIdentifier, projectIdentifier, serviceIdentifier, !deleted);
   }
 
@@ -131,7 +131,8 @@ public class ServiceEntityServiceImpl implements ServiceEntityService {
     if (serviceEntityOptional.isPresent()) {
       ServiceEntity oldService = serviceEntityOptional.get();
       return Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
-        ServiceEntity updatedResult = serviceRepository.update(criteria, requestService);
+        // ServiceEntity updatedResult = serviceRepository.update(criteria, requestService);
+        ServiceEntity updatedResult = serviceV2Repository.update(requestService, criteria);
         if (updatedResult == null) {
           throw new InvalidRequestException(
               String.format("Service [%s] under Project[%s], Organization [%s] couldn't be updated or doesn't exist.",
