@@ -166,25 +166,24 @@ public class ArtifactoryArtifactTaskHelper {
     ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest =
         (ArtifactoryGenericArtifactDelegateRequest) artifactTaskParameters.getAttributes();
     artifactoryArtifactTaskHandler.decryptRequestDTOs(artifactoryGenericArtifactDelegateRequest);
-
+    ArtifactoryConfigRequest artifactoryConfigRequest = artifactoryRequestMapper.toArtifactoryRequest(
+        artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
+    String artifactPathFilter = artifactoryGenericArtifactDelegateRequest.getArtifactPathFilter();
     String artifactDirectory = artifactoryGenericArtifactDelegateRequest.getArtifactDirectory();
-    ArtifactoryGenericArtifactDelegateResponse artifactoryGenericArtifactDelegateResponse;
-
-    if (EmptyPredicate.isEmpty(artifactDirectory)) {
+    if (artifactPathFilter.isEmpty()) {
+      artifactPathFilter = DEFAULT_ARTIFACT_FILTER;
+    }
+    if (artifactDirectory.isEmpty()) {
       saveLogs(executionLogCallback,
-              "Artifact Directory is Empty, assuming Artifacts are present in root of the repository");
+          "Artifact Directory is Empty, assuming Artifacts are present in root of the repository");
       artifactDirectory = DEFAULT_ARTIFACT_DIRECTORY;
     }
-
-    ArtifactoryConfigRequest artifactoryConfigRequest = artifactoryRequestMapper.toArtifactoryRequest(
-              artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
     BuildDetails buildDetails = artifactoryNgService.getLatestArtifact(artifactoryConfigRequest,
-              artifactoryGenericArtifactDelegateRequest.getRepositoryName(), artifactDirectory,
-              artifactoryGenericArtifactDelegateRequest.getArtifactPathFilter(),
-              artifactoryGenericArtifactDelegateRequest.getArtifactPath(), MAX_NO_OF_TAGS_PER_ARTIFACT);
-    artifactoryGenericArtifactDelegateResponse =
-              ArtifactoryRequestResponseMapper.toArtifactoryGenericResponse(
-                      buildDetails, artifactoryGenericArtifactDelegateRequest);
+        artifactoryGenericArtifactDelegateRequest.getRepositoryName(), artifactDirectory, artifactPathFilter,
+        MAX_NO_OF_TAGS_PER_ARTIFACT);
+    ArtifactoryGenericArtifactDelegateResponse artifactoryGenericArtifactDelegateResponse =
+        ArtifactoryRequestResponseMapper.toArtifactoryGenericResponse(
+            buildDetails, artifactoryGenericArtifactDelegateRequest);
 
     return artifactoryArtifactTaskHandler.getSuccessTaskExecutionResponseGeneric(
         Collections.singletonList(artifactoryGenericArtifactDelegateResponse));

@@ -131,8 +131,7 @@ public class ArtifactUtils {
         ArtifactoryRegistryArtifactConfig artifactoryRegistryArtifactConfig =
             (ArtifactoryRegistryArtifactConfig) artifactConfig;
         if (artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue().equals(generic.name())) {
-          String genericPlaceholder = " type: %s, artifactDirectory: %s, artifactPath/artifactPathFilter: %s, connectorRef: %s\n";
-          return String.format(genericPlaceholder, sourceType,
+          return String.format(placeholder, sourceType,
               artifactoryRegistryArtifactConfig.getArtifactDirectory().getValue(),
               ParameterField.isNull(artifactoryRegistryArtifactConfig.getArtifactPath())
                   ? artifactoryRegistryArtifactConfig.getArtifactPathFilter().getValue()

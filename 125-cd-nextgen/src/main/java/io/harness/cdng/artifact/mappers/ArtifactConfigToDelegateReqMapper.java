@@ -134,6 +134,9 @@ public class ArtifactConfigToDelegateReqMapper {
     String artifactPathFilter =
         artifactConfig.getArtifactPathFilter() != null ? artifactConfig.getArtifactPathFilter().getValue() : "";
     String artifactPath = artifactConfig.getArtifactPath() != null ? artifactConfig.getArtifactPath().getValue() : "";
+    if (EmptyPredicate.isEmpty(artifactPath) && EmptyPredicate.isEmpty(artifactPathFilter)) {
+      artifactPathFilter = "\\*";
+    }
 
     String artifactDirectory =
         artifactConfig.getArtifactDirectory() != null ? artifactConfig.getArtifactDirectory().getValue() : null;

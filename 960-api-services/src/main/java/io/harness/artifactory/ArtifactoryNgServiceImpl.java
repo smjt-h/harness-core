@@ -14,7 +14,6 @@ import static org.jfrog.artifactory.client.model.impl.PackageTypeImpl.maven;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifacts.comparator.BuildDetailsComparatorDescending;
-import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.ArtifactoryRegistryException;
 import io.harness.exception.NestedExceptionUtils;
 import io.harness.expression.RegexFunctor;
@@ -53,23 +52,14 @@ public class ArtifactoryNgServiceImpl implements ArtifactoryNgService {
 
   @Override
   public BuildDetails getLatestArtifact(ArtifactoryConfigRequest artifactoryConfig, String repositoryName,
-      String artifactDirectory, String artifactPathFilter, String artifactPath, int maxVersions) {
-
-    if (EmptyPredicate.isEmpty(artifactPath) && EmptyPredicate.isEmpty(artifactPathFilter)) {
-      throw NestedExceptionUtils.hintWithExplanationException(
-              "Please check ArtifactPath/ArtifactPathFilter field in Artifactory artifact configuration.",
-              "Both Artifact Path and Artifact Path Filter cannot be empty",
-              new ArtifactoryRegistryException("Could not find an artifact"));
-    } else if (EmptyPredicate.isEmpty(artifactPathFilter)) {
-      artifactPathFilter = artifactPath;
-    }
-
+      String artifactDirectory, String artifactPathFilter, int maxVersions) {
     String filePath = Paths.get(artifactDirectory, artifactPathFilter).toString();
 
     List<BuildDetails> buildDetails =
         artifactoryClient.getArtifactList(artifactoryConfig, repositoryName, filePath, maxVersions);
 
     buildDetails = buildDetails.stream()
+                       .filter(build -> new RegexFunctor().match(artifactPathFilter, build.getNumber()))
                        .sorted(new BuildDetailsComparatorDescending())
                        .collect(Collectors.toList());
     if (buildDetails.isEmpty()) {
