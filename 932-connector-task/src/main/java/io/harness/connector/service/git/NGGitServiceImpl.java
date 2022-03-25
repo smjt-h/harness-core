@@ -66,7 +66,11 @@ public class NGGitServiceImpl implements NGGitService {
   void setGitBaseRequest(GitConfigDTO gitConfig, String accountId, GitBaseRequest gitBaseRequest,
       GitRepositoryType repositoryType, SshSessionConfig sshSessionConfig) {
     gitBaseRequest.setAuthRequest(getAuthRequest(gitConfig, sshSessionConfig));
-    gitBaseRequest.setBranch(gitConfig.getBranchName());
+
+    if(gitConfig.getBranchName()!=null) {
+      gitBaseRequest.setBranch(gitConfig.getBranchName());
+    }
+
     gitBaseRequest.setRepoType(repositoryType);
     gitBaseRequest.setRepoUrl(gitConfig.getUrl());
     gitBaseRequest.setAccountId(accountId);

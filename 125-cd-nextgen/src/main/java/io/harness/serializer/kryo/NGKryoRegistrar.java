@@ -25,6 +25,9 @@ import io.harness.cdng.artifact.bean.yaml.SidecarArtifact;
 import io.harness.cdng.artifact.bean.yaml.SidecarArtifactWrapper;
 import io.harness.cdng.artifact.steps.ArtifactStepParameters;
 import io.harness.cdng.environment.yaml.EnvironmentYaml;
+import io.harness.cdng.gitOps.GitOpsConfigUpdatePassThroughData;
+import io.harness.cdng.gitOps.GitOpsConfigUpdateStepInfo;
+import io.harness.cdng.gitOps.GitOpsConfigUpdateStepParams;
 import io.harness.cdng.helm.HelmDeployStepInfo;
 import io.harness.cdng.helm.HelmDeployStepParams;
 import io.harness.cdng.helm.NativeHelmStepPassThroughData;
@@ -87,6 +90,7 @@ import io.harness.cdng.pipeline.beans.RollbackOptionalChildChainStepParameters;
 import io.harness.cdng.pipeline.executions.CDAccountExecutionMetadata;
 import io.harness.cdng.provision.terraform.TerraformApplyStepInfo;
 import io.harness.cdng.provision.terraform.TerraformPlanStepInfo;
+import io.harness.cdng.service.beans.GitOpsServiceSpec;
 import io.harness.cdng.service.beans.KubernetesServiceSpec;
 import io.harness.cdng.service.beans.NativeHelmServiceSpec;
 import io.harness.cdng.service.beans.ServiceConfig;
@@ -197,6 +201,11 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(NativeHelmStepPassThroughData.class, 13003);
     kryo.register(HelmRollbackStepInfo.class, 13004);
     kryo.register(HelmRollbackStepParams.class, 13005);
+
+    kryo.register(GitOpsServiceSpec.class, 13006);
+    kryo.register(GitOpsConfigUpdateStepInfo.class, 13007);
+    kryo.register(GitOpsConfigUpdateStepParams.class, 13008);
+    kryo.register(GitOpsConfigUpdatePassThroughData.class, 13009);
 
     kryo.register(StoreConfigWrapper.class, 8045);
 

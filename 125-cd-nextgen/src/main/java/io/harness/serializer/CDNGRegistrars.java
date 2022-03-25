@@ -12,6 +12,7 @@ import io.harness.ModuleType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.creator.plan.stage.DeploymentStageNode;
+import io.harness.cdng.gitOps.GitOpsConfigUpdateStepNode;
 import io.harness.cdng.helm.HelmDeployStepNode;
 import io.harness.cdng.helm.HelmRollbackStepNode;
 import io.harness.cdng.k8s.K8sApplyStepNode;
@@ -275,6 +276,18 @@ public class CDNGRegistrars {
                    .availableAtOrgLevel(false)
                    .availableAtAccountLevel(false)
                    .clazz(HelmRollbackStepNode.class)
+                   .yamlSchemaMetadata(YamlSchemaMetadata.builder()
+                                           .namespace(SchemaNamespaceConstants.CD)
+                                           .modulesSupported(Collections.singletonList(ModuleType.CD))
+                                           .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
+                                           .build())
+                   .build())
+          .add(YamlSchemaRootClass.builder()
+                   .entityType(EntityType.GITOPS_CONFIG_UPDATE)
+                   .availableAtProjectLevel(true)
+                   .availableAtOrgLevel(false)
+                   .availableAtAccountLevel(false)
+                   .clazz(GitOpsConfigUpdateStepNode.class)
                    .yamlSchemaMetadata(YamlSchemaMetadata.builder()
                                            .namespace(SchemaNamespaceConstants.CD)
                                            .modulesSupported(Collections.singletonList(ModuleType.CD))

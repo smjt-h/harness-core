@@ -71,6 +71,7 @@ public interface EntityTypeConstants {
   String TERRAFORM_ROLLBACK = "TerraformRollback";
   String HELM_DEPLOY = "HelmDeploy";
   String HELM_ROLLBACK = "HelmRollback";
+  String GITOPS_CONFIG_UPDATE = "GitOpsConfigUpdate";
   String SERVICENOW_APPROVAL = "ServiceNowApproval";
   String JIRA_APPROVAL = "JiraApproval";
   String HARNESS_APPROVAL = "HarnessApproval";

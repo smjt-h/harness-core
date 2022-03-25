@@ -50,7 +50,9 @@ import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
 import io.harness.common.NGTimeConversionHelper;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.helper.GitApiAccessDecryptionHelper;
+import io.harness.connector.service.git.NGGitService;
 import io.harness.connector.services.ConnectorService;
+import io.harness.connector.task.shell.SshSessionConfigMapper;
 import io.harness.connector.validator.scmValidators.GitConfigAuthenticationInfoHelper;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
@@ -75,6 +77,8 @@ import io.harness.delegate.beans.connector.scm.gitlab.GitlabHttpAuthenticationTy
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabHttpCredentialsDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabTokenSpecDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabUsernameTokenDTO;
+import io.harness.delegate.beans.git.GitCommandParams;
+import io.harness.delegate.beans.git.GitCommandType;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
 import io.harness.delegate.beans.storeconfig.GcsHelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
@@ -91,6 +95,8 @@ import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.executions.steps.StepConstants;
 import io.harness.expression.EngineExpressionEvaluator;
+import io.harness.git.model.CommitAndPushRequest;
+import io.harness.git.model.GitFileChange;
 import io.harness.k8s.model.HelmVersion;
 import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
@@ -138,6 +144,9 @@ public class CDStepHelper {
   @Inject private LogStreamingStepClientFactory logStreamingStepClientFactory;
   @Inject private EntityReferenceExtractorUtils entityReferenceExtractorUtils;
   @Inject private PipelineRbacHelper pipelineRbacHelper;
+
+  @Inject SshSessionConfigMapper sshSessionConfigMapper;
+  @Inject NGGitService ngGitService;
 
   public static final String RELEASE_NAME_VALIDATION_REGEX =
       "[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*";
@@ -290,6 +299,53 @@ public class CDStepHelper {
         .manifestType(manifestOutcome.getType())
         .manifestId(manifestOutcome.getIdentifier())
         .optimizedFilesFetch(optimizedFilesFetch)
+        .build();
+  }
+
+  public GitCommandParams getGitCommitPushCommandParams(@Nonnull GitStoreConfig gitstoreConfig,
+      @Nonnull ConnectorInfoDTO connectorDTO, ManifestOutcome manifestOutcome, List<String> paths, Ambiance ambiance,
+      List<GitFileChange> gitFileChanges, String commitMsg) {
+    NGAccess basicNGAccessObject = AmbianceUtils.getNgAccess(ambiance);
+    ScmConnector scmConnector;
+    List<EncryptedDataDetail> apiAuthEncryptedDataDetails = null;
+    GitConfigDTO gitConfigDTO = ScmConnectorMapper.toGitConfigDTO((ScmConnector) connectorDTO.getConnectorConfig());
+    SSHKeySpecDTO sshKeySpecDTO = getSshKeySpecDTO(gitConfigDTO, ambiance);
+    List<EncryptedDataDetail> encryptedDataDetails =
+        gitConfigAuthenticationInfoHelper.getEncryptedDataDetails(gitConfigDTO, sshKeySpecDTO, basicNGAccessObject);
+
+    scmConnector = gitConfigDTO;
+
+    boolean optimizedFilesFetch = isOptimizedFilesFetch(connectorDTO, AmbianceUtils.getAccountId(ambiance))
+        && !ManifestType.Kustomize.equals(manifestOutcome.getType());
+
+    if (optimizedFilesFetch) {
+      scmConnector = (ScmConnector) connectorDTO.getConnectorConfig();
+      addApiAuthIfRequired(scmConnector);
+      final DecryptableEntity apiAccessDecryptableEntity =
+          GitApiAccessDecryptionHelper.getAPIAccessDecryptableEntity(scmConnector);
+      apiAuthEncryptedDataDetails =
+          secretManagerClientService.getEncryptionDetails(basicNGAccessObject, apiAccessDecryptableEntity);
+      encryptedDataDetails.addAll(apiAuthEncryptedDataDetails);
+    }
+
+    convertToRepoGitConfig(gitstoreConfig, scmConnector);
+    return GitCommandParams.builder()
+        .gitConfig(gitConfigDTO)
+        .scmConnector(scmConnector)
+        .sshKeySpecDTO(sshKeySpecDTO)
+        .gitCommandType(GitCommandType.COMMIT_AND_PUSH)
+        .gitCommandRequest(CommitAndPushRequest.builder()
+                               .gitFileChanges(gitFileChanges)
+                               .branch(trim(getParameterFieldValue(gitstoreConfig.getBranch())))
+                               .commitId(trim(getParameterFieldValue(gitstoreConfig.getCommitId())))
+                               .repoUrl(gitConfigDTO.getUrl())
+                               .accountId(AmbianceUtils.getAccountId(ambiance))
+                               .connectorId(connectorDTO.getName())
+                               .pushOnlyIfHeadSeen(false)
+                               .forcePush(true)
+                               .commitMessage(commitMsg)
+                               .build())
+        .encryptionDetails(encryptedDataDetails)
         .build();
   }
 

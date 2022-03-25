@@ -27,6 +27,9 @@ public enum ServiceDefinitionType {
   NATIVE_HELM("NativeHelm", Lists.newArrayList(ExecutionStrategyType.ROLLING, ExecutionStrategyType.DEFAULT),
       ServiceSpecType.NATIVE_HELM),
 
+  @JsonProperty(ServiceSpecType.GITOPS)
+  GITOPS("GitOps", Lists.newArrayList(ExecutionStrategyType.DEFAULT), ServiceSpecType.GITOPS),
+
   @JsonProperty(ServiceSpecType.SSH) SSH("Ssh", Lists.newArrayList(ExecutionStrategyType.DEFAULT), ServiceSpecType.SSH);
 
   /*

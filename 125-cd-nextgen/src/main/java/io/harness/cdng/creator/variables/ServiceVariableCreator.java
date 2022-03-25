@@ -85,6 +85,8 @@ public class ServiceVariableCreator {
       switch (typeField.getNode().getCurrJsonNode().textValue()) {
         case ServiceSpecType.KUBERNETES:
         case ServiceSpecType.NATIVE_HELM:
+        // TODO: We need a new fn for GITOPS?
+        case ServiceSpecType.GITOPS:
           YamlField specNode = serviceDefNode.getNode().getField(YamlTypes.SERVICE_SPEC);
           if (specNode != null) {
             addVariablesForKubernetesHelmServiceSpec(specNode, yamlPropertiesMap);

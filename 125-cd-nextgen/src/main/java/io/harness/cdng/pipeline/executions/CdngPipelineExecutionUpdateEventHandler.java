@@ -49,7 +49,7 @@ public class CdngPipelineExecutionUpdateEventHandler implements OrchestrationEve
       StepSpecTypeConstants.K8S_ROLLING_ROLLBACK, StepSpecTypeConstants.K8S_BLUE_GREEN_DEPLOY,
       StepSpecTypeConstants.K8S_APPLY, StepSpecTypeConstants.K8S_SCALE, StepSpecTypeConstants.K8S_BG_SWAP_SERVICES,
       StepSpecTypeConstants.K8S_CANARY_DELETE, StepSpecTypeConstants.K8S_CANARY_DEPLOY,
-      StepSpecTypeConstants.K8S_DELETE, StepSpecTypeConstants.HELM_DEPLOY, StepSpecTypeConstants.HELM_ROLLBACK);
+      StepSpecTypeConstants.K8S_DELETE, StepSpecTypeConstants.HELM_DEPLOY, StepSpecTypeConstants.HELM_ROLLBACK, StepSpecTypeConstants.GITOPS_CONFIG_UPDATE);
 
   @Inject private LogStreamingStepClientFactory logStreamingStepClientFactory;
   @Inject private StepHelper stepHelper;

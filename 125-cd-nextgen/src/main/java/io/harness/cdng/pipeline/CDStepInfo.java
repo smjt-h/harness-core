@@ -10,6 +10,7 @@ package io.harness.cdng.pipeline;
 import io.harness.advisers.rollback.OnFailRollbackParameters;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.gitOps.GitOpsConfigUpdateStepInfo;
 import io.harness.cdng.helm.HelmDeployStepInfo;
 import io.harness.cdng.helm.rollback.HelmRollbackStepInfo;
 import io.harness.cdng.k8s.K8sApplyStepInfo;
@@ -33,11 +34,12 @@ import io.harness.yaml.core.StepSpecType;
 
 import io.swagger.annotations.ApiModel;
 
-@ApiModel(subTypes = {K8sApplyStepInfo.class, K8sBlueGreenStepInfo.class, K8sCanaryStepInfo.class,
-              K8sRollingStepInfo.class, K8sRollingRollbackStepInfo.class, K8sScaleStepInfo.class,
-              K8sDeleteStepInfo.class, K8sBGSwapServicesStepInfo.class, K8sCanaryDeleteStepInfo.class,
-              TerraformApplyStepInfo.class, TerraformPlanStepInfo.class, TerraformDestroyStepInfo.class,
-              TerraformRollbackStepInfo.class, HelmDeployStepInfo.class, HelmRollbackStepInfo.class})
+@ApiModel(
+    subTypes = {K8sApplyStepInfo.class, K8sBlueGreenStepInfo.class, K8sCanaryStepInfo.class, K8sRollingStepInfo.class,
+        K8sRollingRollbackStepInfo.class, K8sScaleStepInfo.class, K8sDeleteStepInfo.class,
+        K8sBGSwapServicesStepInfo.class, K8sCanaryDeleteStepInfo.class, TerraformApplyStepInfo.class,
+        TerraformPlanStepInfo.class, TerraformDestroyStepInfo.class, TerraformRollbackStepInfo.class,
+        HelmDeployStepInfo.class, HelmRollbackStepInfo.class, GitOpsConfigUpdateStepInfo.class})
 
 @OwnedBy(HarnessTeam.CDC)
 public interface CDStepInfo extends StepSpecType, WithStepElementParameters {

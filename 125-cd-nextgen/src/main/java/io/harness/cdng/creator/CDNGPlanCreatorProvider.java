@@ -25,6 +25,7 @@ import io.harness.cdng.creator.plan.stage.DeploymentStagePMSPlanCreatorV2;
 import io.harness.cdng.creator.plan.steps.CDPMSStepFilterJsonCreator;
 import io.harness.cdng.creator.plan.steps.CDPMSStepFilterJsonCreatorV2;
 import io.harness.cdng.creator.plan.steps.CDPMSStepPlanCreator;
+import io.harness.cdng.creator.plan.steps.GitOpsConfigUpdateStepPlanCreatorV2;
 import io.harness.cdng.creator.plan.steps.HelmDeployStepPlanCreatorV2;
 import io.harness.cdng.creator.plan.steps.HelmRollbackStepPlanCreatorV2;
 import io.harness.cdng.creator.plan.steps.K8sApplyStepPlanCreator;
@@ -90,6 +91,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     planCreators.add(new TerraformDestroyStepPlanCreator());
     planCreators.add(new TerraformRollbackStepPlanCreator());
     planCreators.add(new HelmDeployStepPlanCreatorV2());
+    planCreators.add(new GitOpsConfigUpdateStepPlanCreatorV2());
     planCreators.add(new HelmRollbackStepPlanCreatorV2());
     planCreators.add(new HelmRollbackStepPlanCreator());
     planCreators.add(new CDExecutionPMSPlanCreator());
@@ -262,6 +264,14 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
             .setFeatureFlag(FeatureName.NG_NATIVE_HELM.name())
             .build();
 
+    StepInfo gitOpsConfigUpdate =
+        StepInfo.newBuilder()
+            .setName("GitOps Config Update")
+            .setType(StepSpecTypeConstants.GITOPS_CONFIG_UPDATE)
+            .setStepMetaData(StepMetaData.newBuilder().addCategory("GitOps").setFolderPath("GitOps").build())
+            .setFeatureFlag(FeatureName.GITOPS_CONFIG_UPDATE.name())
+            .build();
+
     List<StepInfo> stepInfos = new ArrayList<>();
 
     stepInfos.add(k8sRolling);
@@ -279,6 +289,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     stepInfos.add(terraformDestroy);
     stepInfos.add(helmDeploy);
     stepInfos.add(helmRollback);
+    stepInfos.add(gitOpsConfigUpdate);
     return stepInfos;
   }
 }

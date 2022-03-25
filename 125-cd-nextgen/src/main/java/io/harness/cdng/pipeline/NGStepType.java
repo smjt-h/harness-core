@@ -47,6 +47,11 @@ public enum NGStepType {
   HELM_ROLLBACK("Helm Rollback", Arrays.asList(ServiceDefinitionType.NATIVE_HELM), "Native Helm",
       StepSpecTypeConstants.HELM_ROLLBACK),
 
+  // gitOps steps
+  @JsonProperty(StepSpecTypeConstants.GITOPS_CONFIG_UPDATE)
+  GITOPS_CONFIG_UPDATE("GitOps Config Update", Arrays.asList(ServiceDefinitionType.GITOPS), "GitOps",
+      StepSpecTypeConstants.GITOPS_CONFIG_UPDATE),
+
   @JsonProperty(StepSpecTypeConstants.K8S_BG_SWAP_SERVICES)
   SWAP_SELECTORS("Swap Selectors", Arrays.asList(ServiceDefinitionType.KUBERNETES), "Kubernetes",
       StepSpecTypeConstants.K8S_BG_SWAP_SERVICES),

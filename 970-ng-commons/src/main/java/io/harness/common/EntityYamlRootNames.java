@@ -68,6 +68,7 @@ public class EntityYamlRootNames {
   public static String TERRAFORM_ROLLBACK = "TerraformRollback";
   public static String HELM_DEPLOY = "HelmDeploy";
   public static String HELM_ROLLBACK = "HelmRollback";
+  public static String GITOPS_CONFIG_UPDATE = "GitOpsConfigUpdate";
   public static String SERVICENOW_CREATE = "ServiceNowCreate";
   public static String SERVICENOW_UPDATE = "ServiceNowUpdate";
   public static String SERVICENOW_APPROVAL = "ServiceNowApproval";

@@ -13,6 +13,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.artifact.steps.ArtifactStep;
 import io.harness.cdng.artifact.steps.ArtifactsStep;
 import io.harness.cdng.artifact.steps.SidecarsStep;
+import io.harness.cdng.gitOps.GitOpsConfigUpdate;
 import io.harness.cdng.helm.HelmDeployStep;
 import io.harness.cdng.helm.HelmRollbackStep;
 import io.harness.cdng.infra.steps.EnvironmentStep;
@@ -95,6 +96,7 @@ public class NgStepRegistrar {
     engineSteps.put(EnvironmentStep.STEP_TYPE, EnvironmentStep.class);
     engineSteps.put(HelmDeployStep.STEP_TYPE, HelmDeployStep.class);
     engineSteps.put(HelmRollbackStep.STEP_TYPE, HelmRollbackStep.class);
+    engineSteps.put(GitOpsConfigUpdate.STEP_TYPE, GitOpsConfigUpdate.class);
 
     engineSteps.putAll(NGCommonUtilStepsRegistrar.getEngineSteps());
     return engineSteps;

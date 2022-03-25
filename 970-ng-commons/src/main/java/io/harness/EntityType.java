@@ -101,6 +101,11 @@ public enum EntityType {
   @JsonProperty(EntityTypeConstants.HELM_ROLLBACK)
   HELM_ROLLBACK_STEP(
       ModuleType.CD, EntityTypeConstants.HELM_ROLLBACK, IdentifierRef.class, EntityYamlRootNames.HELM_ROLLBACK),
+
+  @JsonProperty(EntityTypeConstants.GITOPS_CONFIG_UPDATE)
+  GITOPS_CONFIG_UPDATE(ModuleType.CD, EntityTypeConstants.GITOPS_CONFIG_UPDATE, IdentifierRef.class,
+      EntityYamlRootNames.GITOPS_CONFIG_UPDATE),
+
   @JsonProperty(EntityTypeConstants.CONNECTORS)
   CONNECTORS(ModuleType.CORE, EntityTypeConstants.CONNECTORS, IdentifierRef.class, EntityYamlRootNames.CONNECTOR),
   @JsonProperty(EntityTypeConstants.SECRETS)
