@@ -17,6 +17,8 @@ import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.mixin.JiraCapabilityGenerator;
 import io.harness.expression.ExpressionEvaluator;
 import io.harness.jira.JiraActionNG;
+import io.harness.plancreator.steps.TaskSelectorYaml;
+import io.harness.pms.yaml.ParameterField;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import java.util.HashSet;
@@ -54,7 +56,8 @@ public class JiraTaskNGParameters implements TaskParameters, ExecutionCapability
 
   // Fields sent while creating/updating issue.
   Map<String, String> fields;
-  List<String> delegateSelectors;
+  ParameterField<List<TaskSelectorYaml>> delegateSelectors;
+
 
   public Set<String> getDelegateSelectors() {
     Set<String> combinedDelegateSelectors = new HashSet<>();
