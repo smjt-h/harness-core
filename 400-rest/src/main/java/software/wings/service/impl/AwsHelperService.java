@@ -17,7 +17,6 @@ import static io.harness.threading.Morpheus.sleep;
 
 import static software.wings.service.impl.aws.model.AwsConstants.AWS_DEFAULT_REGION;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static java.time.Duration.ofSeconds;
 import static java.util.Collections.emptyList;
@@ -47,7 +46,6 @@ import io.harness.security.encryption.EncryptedDataDetail;
 import software.wings.annotation.EncryptableSetting;
 import software.wings.beans.AWSTemporaryCredentials;
 import software.wings.beans.AwsConfig;
-import software.wings.beans.AwsInfrastructureMapping;
 import software.wings.beans.EcrConfig;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
@@ -79,8 +77,6 @@ import com.amazonaws.services.autoscaling.model.DescribeAutoScalingGroupsResult;
 import com.amazonaws.services.autoscaling.model.DescribeScalingActivitiesRequest;
 import com.amazonaws.services.autoscaling.model.DescribeScalingActivitiesResult;
 import com.amazonaws.services.autoscaling.model.SetDesiredCapacityRequest;
-import com.amazonaws.services.cloudformation.AmazonCloudFormationClient;
-import com.amazonaws.services.cloudformation.AmazonCloudFormationClientBuilder;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClientBuilder;
 import com.amazonaws.services.cloudwatch.model.ListMetricsRequest;
@@ -203,7 +199,6 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
-import org.apache.commons.collections.CollectionUtils;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
@@ -352,14 +347,6 @@ public class AwsHelperService {
     awsApiHelperService.attachCredentialsAndBackoffPolicy(
         builder, AwsConfigToInternalMapper.toAwsInternalConfig(awsConfig));
     return (AmazonCodeDeployClient) builder.build();
-  }
-
-  @VisibleForTesting
-  AmazonCloudFormationClient getAmazonCloudFormationClient(Regions region, AwsConfig awsConfig) {
-    AmazonCloudFormationClientBuilder builder = AmazonCloudFormationClientBuilder.standard().withRegion(region);
-    awsApiHelperService.attachCredentialsAndBackoffPolicy(
-        builder, AwsConfigToInternalMapper.toAwsInternalConfig(awsConfig));
-    return (AmazonCloudFormationClient) builder.build();
   }
 
   @VisibleForTesting
