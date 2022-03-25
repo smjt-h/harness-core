@@ -18,7 +18,6 @@ import software.wings.cloudprovider.CodeDeployDeploymentInfo;
 
 import com.amazonaws.services.codedeploy.model.CreateDeploymentRequest;
 import com.amazonaws.services.codedeploy.model.RevisionLocation;
-import com.amazonaws.services.ec2.model.Instance;
 import java.util.List;
 
 /**
