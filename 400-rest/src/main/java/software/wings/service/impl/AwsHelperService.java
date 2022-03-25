@@ -64,8 +64,6 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
-import com.amazonaws.services.applicationautoscaling.AWSApplicationAutoScaling;
-import com.amazonaws.services.applicationautoscaling.AWSApplicationAutoScalingClientBuilder;
 import com.amazonaws.services.autoscaling.AmazonAutoScalingClient;
 import com.amazonaws.services.autoscaling.AmazonAutoScalingClientBuilder;
 import com.amazonaws.services.autoscaling.model.Activity;
@@ -276,14 +274,6 @@ public class AwsHelperService {
     awsApiHelperService.attachCredentialsAndBackoffPolicy(
         builder, AwsConfigToInternalMapper.toAwsInternalConfig(awsConfig));
     return (AmazonECSClient) builder.build();
-  }
-
-  private AWSApplicationAutoScaling getAWSApplicationAutoScalingClient(
-      String region, String accessKey, char[] secretKey) {
-    return AWSApplicationAutoScalingClientBuilder.standard()
-        .withRegion(region)
-        .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, new String(secretKey))))
-        .build();
   }
 
   public AmazonECRClient getAmazonEcrClient(EcrConfig ecrConfig, List<EncryptedDataDetail> encryptedDataDetails) {
