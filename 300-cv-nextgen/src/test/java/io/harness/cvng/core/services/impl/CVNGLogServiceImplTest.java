@@ -27,6 +27,7 @@ import io.harness.cvng.beans.cvnglog.CVNGLogType;
 import io.harness.cvng.beans.cvnglog.ExecutionLogDTO;
 import io.harness.cvng.beans.cvnglog.TraceableType;
 import io.harness.cvng.core.beans.params.PageParams;
+import io.harness.cvng.core.beans.params.logsFilterParams.DeploymentLogsFilter;
 import io.harness.cvng.core.beans.params.logsFilterParams.SLILogsFilter;
 import io.harness.cvng.core.entities.CVNGLog;
 import io.harness.cvng.core.entities.CVNGLog.CVNGLogKeys;
@@ -42,7 +43,6 @@ import java.lang.reflect.Field;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -186,9 +186,11 @@ public class CVNGLogServiceImplTest extends CvNextGenTestBase {
     FieldUtils.writeField(cvngLogService, "verificationTaskService", verificationTaskService, true);
     when(verificationTaskService.maybeGetVerificationTaskIds(any(), any())).thenReturn(traceableIds);
 
+    DeploymentLogsFilter deploymentLogsFilter =
+        DeploymentLogsFilter.builder().logType(CVNGLogType.API_CALL_LOG).errorLogsOnly(false).build();
     PageResponse<CVNGLogDTO> cvngLogDTOResponse = cvngLogService.getCVNGLogs(accountId,
-        verificationTaskService.getVerificationJobInstanceId(traceableIds.iterator().next()), CVNGLogType.API_CALL_LOG,
-        Collections.emptyList(), false, PageParams.builder().page(0).size(10).build());
+        verificationTaskService.getVerificationJobInstanceId(traceableIds.iterator().next()), deploymentLogsFilter,
+        PageParams.builder().page(0).size(10).build());
 
     assertThat(cvngLogDTOResponse.getContent().size()).isEqualTo(3);
     assertThat(cvngLogDTOResponse.getPageIndex()).isEqualTo(0);
@@ -220,9 +222,11 @@ public class CVNGLogServiceImplTest extends CvNextGenTestBase {
     FieldUtils.writeField(cvngLogService, "verificationTaskService", verificationTaskService, true);
     when(verificationTaskService.maybeGetVerificationTaskIds(any(), any())).thenReturn(traceableIds);
 
+    DeploymentLogsFilter deploymentLogsFilter =
+        DeploymentLogsFilter.builder().logType(CVNGLogType.API_CALL_LOG).errorLogsOnly(true).build();
     PageResponse<CVNGLogDTO> cvngLogDTOResponse = cvngLogService.getCVNGLogs(accountId,
-        verificationTaskService.getVerificationJobInstanceId(traceableIds.iterator().next()), CVNGLogType.API_CALL_LOG,
-        Collections.emptyList(), true, PageParams.builder().page(0).size(10).build());
+        verificationTaskService.getVerificationJobInstanceId(traceableIds.iterator().next()), deploymentLogsFilter,
+        PageParams.builder().page(0).size(10).build());
 
     assertThat(cvngLogDTOResponse.getContent().size()).isEqualTo(1);
     assertThat(cvngLogDTOResponse.getPageIndex()).isEqualTo(0);
@@ -255,9 +259,11 @@ public class CVNGLogServiceImplTest extends CvNextGenTestBase {
     FieldUtils.writeField(cvngLogService, "verificationTaskService", verificationTaskService, true);
     when(verificationTaskService.maybeGetVerificationTaskIds(any(), any())).thenReturn(traceableIds);
 
+    DeploymentLogsFilter deploymentLogsFilter =
+        DeploymentLogsFilter.builder().logType(CVNGLogType.EXECUTION_LOG).errorLogsOnly(false).build();
     PageResponse<CVNGLogDTO> cvngLogDTOResponse = cvngLogService.getCVNGLogs(accountId,
-        verificationTaskService.getVerificationJobInstanceId(traceableIds.iterator().next()), CVNGLogType.EXECUTION_LOG,
-        Collections.emptyList(), false, PageParams.builder().page(0).size(10).build());
+        verificationTaskService.getVerificationJobInstanceId(traceableIds.iterator().next()), deploymentLogsFilter,
+        PageParams.builder().page(0).size(10).build());
 
     assertThat(cvngLogDTOResponse.getContent().size()).isEqualTo(3);
     assertThat(cvngLogDTOResponse.getPageIndex()).isEqualTo(0);
@@ -291,9 +297,11 @@ public class CVNGLogServiceImplTest extends CvNextGenTestBase {
     FieldUtils.writeField(cvngLogService, "verificationTaskService", verificationTaskService, true);
     when(verificationTaskService.maybeGetVerificationTaskIds(any(), any())).thenReturn(traceableIds);
 
+    DeploymentLogsFilter deploymentLogsFilter =
+        DeploymentLogsFilter.builder().logType(CVNGLogType.EXECUTION_LOG).errorLogsOnly(true).build();
     PageResponse<CVNGLogDTO> cvngLogDTOResponse = cvngLogService.getCVNGLogs(accountId,
-        verificationTaskService.getVerificationJobInstanceId(traceableIds.iterator().next()), CVNGLogType.EXECUTION_LOG,
-        Collections.emptyList(), true, PageParams.builder().page(0).size(10).build());
+        verificationTaskService.getVerificationJobInstanceId(traceableIds.iterator().next()), deploymentLogsFilter,
+        PageParams.builder().page(0).size(10).build());
 
     assertThat(cvngLogDTOResponse.getContent().size()).isEqualTo(1);
     assertThat(cvngLogDTOResponse.getPageIndex()).isEqualTo(0);
@@ -322,7 +330,7 @@ public class CVNGLogServiceImplTest extends CvNextGenTestBase {
     Set<String> traceableIds =
         cvngLogDTOs.stream().map(cvngLogDTO -> cvngLogDTO.getTraceableId()).collect(Collectors.toSet());
     SLILogsFilter sliLogsFilter = SLILogsFilter.builder()
-                                      .logType("ApiCallLog")
+                                      .logType(CVNGLogType.API_CALL_LOG)
                                       .errorLogsOnly(false)
                                       .startTime(startTime.toEpochMilli())
                                       .endTime(endTime.toEpochMilli())
@@ -359,7 +367,7 @@ public class CVNGLogServiceImplTest extends CvNextGenTestBase {
     Set<String> traceableIds =
         cvngLogDTOs.stream().map(cvngLogDTO -> cvngLogDTO.getTraceableId()).collect(Collectors.toSet());
     SLILogsFilter sliLogsFilter = SLILogsFilter.builder()
-                                      .logType("ApiCallLog")
+                                      .logType(CVNGLogType.API_CALL_LOG)
                                       .errorLogsOnly(true)
                                       .startTime(startTime.toEpochMilli())
                                       .endTime(endTime.toEpochMilli())
@@ -396,7 +404,7 @@ public class CVNGLogServiceImplTest extends CvNextGenTestBase {
     Set<String> traceableIds =
         cvngLogDTOs.stream().map(cvngLogDTO -> cvngLogDTO.getTraceableId()).collect(Collectors.toSet());
     SLILogsFilter sliLogsFilter = SLILogsFilter.builder()
-                                      .logType("ExecutionLog")
+                                      .logType(CVNGLogType.EXECUTION_LOG)
                                       .errorLogsOnly(false)
                                       .startTime(startTime.toEpochMilli())
                                       .endTime(endTime.toEpochMilli())
@@ -434,7 +442,7 @@ public class CVNGLogServiceImplTest extends CvNextGenTestBase {
     Set<String> traceableIds =
         cvngLogDTOs.stream().map(cvngLogDTO -> cvngLogDTO.getTraceableId()).collect(Collectors.toSet());
     SLILogsFilter sliLogsFilter = SLILogsFilter.builder()
-                                      .logType("ExecutionLog")
+                                      .logType(CVNGLogType.EXECUTION_LOG)
                                       .errorLogsOnly(true)
                                       .startTime(startTime.toEpochMilli())
                                       .endTime(endTime.toEpochMilli())

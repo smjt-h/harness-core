@@ -165,14 +165,6 @@ public class CVConfigServiceImpl implements CVConfigService {
     return query.asList();
   }
 
-  private List<CVConfig> listConfigsForProject(String accountId, String orgIdentifier, String projectIdentifier) {
-    return hPersistence.createQuery(CVConfig.class, excludeAuthority)
-        .filter(CVConfigKeys.accountId, accountId)
-        .filter(CVConfigKeys.orgIdentifier, orgIdentifier)
-        .filter(CVConfigKeys.projectIdentifier, projectIdentifier)
-        .asList();
-  }
-
   @Override
   public List<String> getProductNames(String accountId, String connectorIdentifier) {
     checkNotNull(accountId, "accountId can not be null");
@@ -413,6 +405,15 @@ public class CVConfigServiceImpl implements CVConfigService {
     return cvConfigs.stream()
         .filter(cvConfig -> monitoringSources.contains(cvConfig.getIdentifier()))
         .collect(Collectors.toList());
+  }
+  @Override
+  public List<CVConfig> getCVConfigs(MonitoredServiceParams monitoredServiceParams) {
+    return hPersistence.createQuery(CVConfig.class, excludeAuthority)
+        .filter(CVConfigKeys.accountId, monitoredServiceParams.getAccountIdentifier())
+        .filter(CVConfigKeys.orgIdentifier, monitoredServiceParams.getOrgIdentifier())
+        .filter(CVConfigKeys.projectIdentifier, monitoredServiceParams.getProjectIdentifier())
+        .filter(CVConfigKeys.monitoredServiceIdentifier, monitoredServiceParams.getMonitoredServiceIdentifier())
+        .asList();
   }
 
   @Override

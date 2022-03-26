@@ -7,7 +7,12 @@
 
 package io.harness.debezium;
 
+import io.harness.data.structure.EmptyPredicate;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import lombok.Builder;
 import lombok.Data;
 
@@ -24,6 +29,10 @@ public class DebeziumConfig {
    * path where the offset will be stored, this contains a a mongodb uri string in our case
    */
   @JsonProperty("offset.storage.file.filename") private String offsetStorageFileName;
+  /**
+   * Redis Key to store offsets
+   */
+  @JsonProperty("offset.storage.topic") private String offsetStorageTopic;
   /**
    * whether to include schema for keys as a part of the event
    */
@@ -96,4 +105,11 @@ public class DebeziumConfig {
    the server chooses an appropriate fetch size.
    */
   @JsonProperty("snapshot.fetch.size") private String snapshotFetchSize;
+
+  public List<String> getMonitoredCollections() {
+    if (EmptyPredicate.isEmpty(collectionIncludeList)) {
+      return new ArrayList<>();
+    }
+    return Arrays.asList(collectionIncludeList.split(","));
+  }
 }

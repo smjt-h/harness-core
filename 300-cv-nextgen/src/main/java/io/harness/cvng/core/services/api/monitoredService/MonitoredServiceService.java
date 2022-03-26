@@ -34,6 +34,7 @@ import io.harness.ng.core.environment.dto.EnvironmentResponse;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import lombok.NonNull;
@@ -54,7 +55,7 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
   @Deprecated MonitoredService getMonitoredService(ProjectParams projectParams, String identifier);
   MonitoredService getMonitoredService(MonitoredServiceParams monitoredServiceParams);
 
-  MonitoredService getApplicationMonitoredService(ServiceEnvironmentParams serviceEnvironmentParams);
+  Optional<MonitoredService> getApplicationMonitoredService(ServiceEnvironmentParams serviceEnvironmentParams);
 
   List<MonitoredService> list(
       @NonNull ProjectParams projectParams, @Nullable String serviceIdentifier, @Nullable String environmentIdentifier);
@@ -70,12 +71,6 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
 
   HistoricalTrend getOverAllHealthScore(
       ProjectParams projectParams, String identifier, DurationDTO duration, Instant endTime);
-  /**
-   * use #getOverAllHealthScore with monitored service identifier instead
-   */
-  @Deprecated
-  HistoricalTrend getOverAllHealthScore(
-      ServiceEnvironmentParams serviceEnvironmentParams, DurationDTO duration, Instant endTime);
 
   HealthScoreDTO getCurrentAndDependentServicesScore(MonitoredServiceParams monitoredServiceParams);
 

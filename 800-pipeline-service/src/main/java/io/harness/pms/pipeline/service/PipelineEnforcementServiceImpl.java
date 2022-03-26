@@ -20,6 +20,7 @@ import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepInfo;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.pipeline.CommonStepInfo;
+import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.plan.creation.PlanCreatorServiceInfo;
 import io.harness.pms.plan.creation.PlanCreatorUtils;
 import io.harness.pms.sdk.PmsSdkHelper;
@@ -85,6 +86,17 @@ public class PipelineEnforcementServiceImpl implements PipelineEnforcementServic
   }
 
   @Override
+  public void validateExecutionEnforcementsBasedOnStage(PipelineEntity pipelineEntity) {
+    long start = System.currentTimeMillis();
+    try {
+      Set<String> modules = pipelineEntity.getFilters().keySet();
+      validateExecutionFeatureRestrictions(pipelineEntity.getAccountId(), modules);
+    } finally {
+      log.info("[PMS_Enforcement] Validating enforcement on stages took time {}ms", System.currentTimeMillis() - start);
+    }
+  }
+
+  @Override
   public void validateExecutionEnforcementsBasedOnStage(String accountId, YamlField pipelineField) {
     long start = System.currentTimeMillis();
     try {
@@ -147,6 +159,7 @@ public class PipelineEnforcementServiceImpl implements PipelineEnforcementServic
    */
   @Override
   public void validatePipelineExecutionRestriction(String accountId, Set<StepType> stepTypes) {
+    // Todo: Create a method in SdkStepsHelper and use it here. Cache this data.
     Map<String, Set<SdkStep>> sdkSteps = pmsSdkInstanceService.getSdkSteps();
     Multimap<String, String> featureRestrictionToStepNamesMap =
         getFeatureRestrictionMapFromUsedSteps(sdkSteps, stepTypes);

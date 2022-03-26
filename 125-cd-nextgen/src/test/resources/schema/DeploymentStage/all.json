@@ -724,6 +724,9 @@
         },
         {
           "type": "object",
+          "required": [
+            "payload"
+          ],
           "properties": {
             "payload": {
               "type": "string"
@@ -3692,15 +3695,27 @@
         },
         {
           "type": "object",
+          "required": [
+            "policySets"
+          ],
           "properties": {
             "metadata": {
               "type": "string"
             },
             "policySets": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
             },
             "type": {
               "type": "string"
