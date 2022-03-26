@@ -23,6 +23,8 @@ import io.harness.azure.client.AzureManagementRestClient;
 import io.harness.azure.context.AzureClientContext;
 import io.harness.azure.model.AzureConfig;
 import io.harness.azure.model.AzureConstants;
+import io.harness.azure.utility.AzureUtils;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.AzureClientException;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidCredentialsException;
@@ -33,6 +35,7 @@ import com.google.inject.Singleton;
 import com.microsoft.aad.adal4j.AuthenticationException;
 import com.microsoft.azure.AzureEnvironment;
 import com.microsoft.azure.credentials.ApplicationTokenCredentials;
+import com.microsoft.azure.credentials.MSICredentials;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.rest.LogLevel;
 import com.microsoft.rest.ServiceResponseBuilder;
@@ -66,9 +69,9 @@ public class AzureClient {
 
   protected Azure getAzureClientWithDefaultSubscription(AzureConfig azureConfig) {
     try {
-      ApplicationTokenCredentials credentials =
-          new ApplicationTokenCredentials(azureConfig.getClientId(), azureConfig.getTenantId(),
-              String.valueOf(azureConfig.getKey()), getAzureEnvironment(azureConfig.getAzureEnvironmentType()));
+      ApplicationTokenCredentials credentials = new ApplicationTokenCredentials(azureConfig.getClientId(),
+          azureConfig.getTenantId(), String.valueOf(azureConfig.getKey()),
+          AzureUtils.getAzureEnvironment(azureConfig.getAzureEnvironmentType()));
 
       return Azure.configure().withLogLevel(LogLevel.NONE).authenticate(credentials).withDefaultSubscription();
     } catch (Exception e) {
@@ -83,9 +86,9 @@ public class AzureClient {
     }
 
     try {
-      ApplicationTokenCredentials credentials =
-          new ApplicationTokenCredentials(azureConfig.getClientId(), azureConfig.getTenantId(),
-              String.valueOf(azureConfig.getKey()), getAzureEnvironment(azureConfig.getAzureEnvironmentType()));
+      ApplicationTokenCredentials credentials = new ApplicationTokenCredentials(azureConfig.getClientId(),
+          azureConfig.getTenantId(), String.valueOf(azureConfig.getKey()),
+          AzureUtils.getAzureEnvironment(azureConfig.getAzureEnvironmentType()));
 
       return Azure.configure().withLogLevel(LogLevel.NONE).authenticate(credentials).withSubscription(subscriptionId);
     } catch (Exception e) {
@@ -94,18 +97,41 @@ public class AzureClient {
     }
   }
 
-  protected AzureEnvironment getAzureEnvironment(AzureEnvironmentType azureEnvironmentType) {
-    if (azureEnvironmentType == null) {
-      return AzureEnvironment.AZURE;
-    }
+  protected Azure getAzureClientWithUserAssignedManagedIdentity(
+      String clientId, AzureEnvironmentType azureEnvironmentType) {
+    return getAzureClientWithManagedIdentity(true, clientId, azureEnvironmentType);
+  }
 
-    switch (azureEnvironmentType) {
-      case AZURE_US_GOVERNMENT:
-        return AzureEnvironment.AZURE_US_GOVERNMENT;
+  protected Azure getAzureClientWithSystemAssignedManagedIdentity(AzureEnvironmentType azureEnvironmentType) {
+    return getAzureClientWithManagedIdentity(false, null, azureEnvironmentType);
+  }
 
-      case AZURE:
-      default:
-        return AzureEnvironment.AZURE;
+  protected Azure getAzureClientWithManagedIdentity(
+      boolean isUserAssignedManagedIdentity, String clientId, AzureEnvironmentType azureEnvironmentType) {
+    return getAzureClientWithManagedIdentity(isUserAssignedManagedIdentity, clientId, null, azureEnvironmentType);
+  }
+
+  protected Azure getAzureClientWithManagedIdentity(boolean isUserAssignedManagedIdentity, String clientId,
+      String subscription, AzureEnvironmentType azureEnvironmentType) {
+    try {
+      Azure azure;
+      MSICredentials msiCredentials = new MSICredentials(AzureUtils.getAzureEnvironment(azureEnvironmentType));
+
+      if (isUserAssignedManagedIdentity) {
+        msiCredentials.withClientId(clientId);
+      }
+
+      if (EmptyPredicate.isEmpty(subscription)) {
+        azure = Azure.configure().withLogLevel(LogLevel.NONE).authenticate(msiCredentials).withDefaultSubscription();
+      } else {
+        azure =
+            Azure.configure().withLogLevel(LogLevel.NONE).authenticate(msiCredentials).withSubscription(subscription);
+      }
+
+      return azure;
+    } catch (Exception e) {
+      handleAzureAuthenticationException(e);
+      throw new InvalidRequestException("Failed to connect to Azure cluster. " + ExceptionUtils.getMessage(e), USER);
     }
   }
 
@@ -146,12 +172,12 @@ public class AzureClient {
   }
 
   protected AzureManagementRestClient getAzureManagementRestClient(AzureEnvironmentType azureEnvironmentType) {
-    String url = getAzureEnvironment(azureEnvironmentType).resourceManagerEndpoint();
+    String url = AzureUtils.getAzureEnvironment(azureEnvironmentType).resourceManagerEndpoint();
     return getAzureRestClient(url, AzureManagementRestClient.class);
   }
 
   protected AzureBlueprintRestClient getAzureBlueprintRestClient(AzureEnvironmentType azureEnvironmentType) {
-    String url = getAzureEnvironment(azureEnvironmentType).resourceManagerEndpoint();
+    String url = AzureUtils.getAzureEnvironment(azureEnvironmentType).resourceManagerEndpoint();
     return getAzureRestClient(url, AzureBlueprintRestClient.class);
   }
 
@@ -178,7 +204,7 @@ public class AzureClient {
 
   protected String getAzureBearerAuthToken(AzureConfig azureConfig) {
     try {
-      AzureEnvironment azureEnvironment = getAzureEnvironment(azureConfig.getAzureEnvironmentType());
+      AzureEnvironment azureEnvironment = AzureUtils.getAzureEnvironment(azureConfig.getAzureEnvironmentType());
       ApplicationTokenCredentials credentials = new ApplicationTokenCredentials(
           azureConfig.getClientId(), azureConfig.getTenantId(), new String(azureConfig.getKey()), azureEnvironment);
 

@@ -27,6 +27,7 @@ import io.harness.connector.entities.embedded.awskmsconnector.AwsKmsManualCreden
 import io.harness.connector.entities.embedded.awskmsconnector.AwsKmsStsCredential;
 import io.harness.connector.entities.embedded.awssecretmanager.AwsSecretManagerConnector;
 import io.harness.connector.entities.embedded.azureconnector.AzureConfig;
+import io.harness.connector.entities.embedded.azureconnector.AzureManagedIdentityCredential;
 import io.harness.connector.entities.embedded.azureconnector.AzureManualCredential;
 import io.harness.connector.entities.embedded.azurekeyvaultconnector.AzureKeyVaultConnector;
 import io.harness.connector.entities.embedded.bitbucketconnector.BitbucketConnector;
@@ -191,5 +192,7 @@ public class ConnectorMorphiaClassesRegistrar implements MorphiaRegistrar {
         HttpHelmUsernamePasswordAuthentication.class);
     h.put("connector.entities.embedded.gcpccm.GcpBillingExportDetails", GcpBillingExportDetails.class);
     h.put("connector.entities.embedded.azureconnector.AzureManualCredential", AzureManualCredential.class);
+    h.put("connector.entities.embedded.azureconnector.AzureManagedIdentityCredential",
+        AzureManagedIdentityCredential.class);
   }
 }

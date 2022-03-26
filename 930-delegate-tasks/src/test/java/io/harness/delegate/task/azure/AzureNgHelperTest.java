@@ -9,6 +9,7 @@ package io.harness.delegate.task.azure;
 
 import static io.harness.exception.WingsException.USER;
 import static io.harness.rule.OwnerRule.BUHA;
+import static io.harness.rule.OwnerRule.MLUKIC;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -24,18 +25,26 @@ import io.harness.azure.client.AzureManagementClient;
 import io.harness.category.element.UnitTests;
 import io.harness.connector.ConnectivityStatus;
 import io.harness.connector.ConnectorValidationResult;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.connector.azureconnector.AzureAuthDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureClientKeyCertDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureClientSecretKeyDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureCredentialDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
+import io.harness.delegate.beans.connector.azureconnector.AzureInheritFromDelegateDetailsDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureMSIAuthDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureMSIAuthSADTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureMSIAuthUADTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureManagedIdentityType;
 import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureSecretType;
+import io.harness.delegate.beans.connector.azureconnector.AzureUserAssignedMSIAuthDTO;
 import io.harness.encryption.Scope;
 import io.harness.encryption.SecretRefData;
 import io.harness.errorhandling.NGErrorHelper;
 import io.harness.exception.InvalidCredentialsException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.SecretDecryptionService;
 
@@ -130,5 +139,85 @@ public class AzureNgHelperTest extends CategoryTest {
 
                 .build())
         .build();
+  }
+
+  private AzureConnectorDTO getAzureConnectorDTOWithMSI(String clientId) {
+    AzureMSIAuthDTO azureMSIAuthDTO;
+
+    if (EmptyPredicate.isNotEmpty(clientId)) {
+      AzureUserAssignedMSIAuthDTO azureUserAssignedMSIAuthDTO =
+          AzureUserAssignedMSIAuthDTO.builder().clientId(clientId).build();
+      azureMSIAuthDTO = AzureMSIAuthUADTO.builder()
+                            .azureManagedIdentityType(AzureManagedIdentityType.USER_ASSIGNED_MANAGED_IDENTITY)
+                            .credentials(azureUserAssignedMSIAuthDTO)
+                            .build();
+    } else {
+      azureMSIAuthDTO = AzureMSIAuthSADTO.builder()
+                            .azureManagedIdentityType(AzureManagedIdentityType.SYSTEM_ASSIGNED_MANAGED_IDENTITY)
+                            .build();
+    }
+
+    return AzureConnectorDTO.builder()
+        .azureEnvironmentType(AzureEnvironmentType.AZURE)
+        .credential(AzureCredentialDTO.builder()
+                        .azureCredentialType(AzureCredentialType.INHERIT_FROM_DELEGATE)
+                        .config(AzureInheritFromDelegateDetailsDTO.builder().authDTO(azureMSIAuthDTO).build())
+
+                        .build())
+        .build();
+  }
+
+  @Test
+  @Owner(developers = MLUKIC)
+  @Category(UnitTests.class)
+  public void testGetConnectorValidationResultWithInheritFromDelegateUserAssignedMSIConnection() {
+    AzureConnectorDTO azureConnectorDTO = getAzureConnectorDTOWithMSI("testClientId");
+
+    ConnectorValidationResult result = azureNgHelper.getConnectorValidationResult(null, azureConnectorDTO);
+
+    assertThat(result.getStatus()).isEqualTo(ConnectivityStatus.SUCCESS);
+
+    verify(azureManagementClient).validateAzureConnection(true, "testClientId", AzureEnvironmentType.AZURE);
+  }
+
+  @Test
+  @Owner(developers = MLUKIC)
+  @Category(UnitTests.class)
+  public void testGetConnectorValidationResultWithInheritFromDelegateSystemAssignedMSIConnection() {
+    AzureConnectorDTO azureConnectorDTO = getAzureConnectorDTOWithMSI(null);
+
+    ConnectorValidationResult result = azureNgHelper.getConnectorValidationResult(null, azureConnectorDTO);
+
+    assertThat(result.getStatus()).isEqualTo(ConnectivityStatus.SUCCESS);
+
+    verify(azureManagementClient).validateAzureConnection(false, null, AzureEnvironmentType.AZURE);
+  }
+
+  @Test
+  @Owner(developers = MLUKIC)
+  @Category(UnitTests.class)
+  public void testFail_GetConnectorValidationResultWithInheritFromDelegateUserAssignedMSIConnection() {
+    AzureConnectorDTO azureConnectorDTO = getAzureConnectorDTOWithMSI("badTestClientId");
+    doThrow(new InvalidRequestException("Failed to connect to Azure cluster.", USER))
+        .when(azureManagementClient)
+        .validateAzureConnection(true, "badTestClientId", AzureEnvironmentType.AZURE);
+    ConnectorValidationResult result = azureNgHelper.getConnectorValidationResult(null, azureConnectorDTO);
+
+    verify(azureManagementClient).validateAzureConnection(true, "badTestClientId", AzureEnvironmentType.AZURE);
+    assertThat(result.getStatus()).isEqualTo(ConnectivityStatus.FAILURE);
+  }
+
+  @Test
+  @Owner(developers = MLUKIC)
+  @Category(UnitTests.class)
+  public void testFail_GetConnectorValidationResultWithInheritFromDelegateSystemAssignedMSIConnection() {
+    AzureConnectorDTO azureConnectorDTO = getAzureConnectorDTOWithMSI(null);
+    doThrow(new InvalidRequestException("Failed to connect to Azure cluster.", USER))
+        .when(azureManagementClient)
+        .validateAzureConnection(false, null, AzureEnvironmentType.AZURE);
+    ConnectorValidationResult result = azureNgHelper.getConnectorValidationResult(null, azureConnectorDTO);
+
+    verify(azureManagementClient).validateAzureConnection(false, null, AzureEnvironmentType.AZURE);
+    assertThat(result.getStatus()).isEqualTo(ConnectivityStatus.FAILURE);
   }
 }

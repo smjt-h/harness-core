@@ -18,7 +18,12 @@ import io.harness.delegate.beans.connector.azureconnector.AzureClientKeyCertDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureClientSecretKeyDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureCredentialDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureInheritFromDelegateDetailsDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureMSIAuthDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureMSIAuthSADTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureMSIAuthUADTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureUserAssignedMSIAuthDTO;
 import io.harness.errorhandling.NGErrorHelper;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.security.encryption.SecretDecryptionService;
@@ -41,8 +46,9 @@ public class AzureNgHelper {
     try {
       switch (connectorDTO.getCredential().getAzureCredentialType()) {
         case INHERIT_FROM_DELEGATE:
-          throw new IllegalStateException(
-              "Credential type not supported yet: " + connectorDTO.getCredential().getAzureCredentialType());
+          handleValidateManagedIdentityCredentialsTask(
+              connectorDTO.getCredential(), encryptedDataDetails, connectorDTO.getAzureEnvironmentType());
+          break;
         case MANUAL_CREDENTIALS:
           handleValidateManualCredentialsTask(
               connectorDTO.getCredential(), encryptedDataDetails, connectorDTO.getAzureEnvironmentType());
@@ -65,6 +71,24 @@ public class AzureNgHelper {
                                       .build();
     }
     return connectorValidationResult;
+  }
+
+  private void handleValidateManagedIdentityCredentialsTask(AzureCredentialDTO credential,
+      List<EncryptedDataDetail> encryptedDataDetails, AzureEnvironmentType azureEnvironmentType) {
+    AzureInheritFromDelegateDetailsDTO azureConfig = (AzureInheritFromDelegateDetailsDTO) credential.getConfig();
+    AzureMSIAuthDTO azureMSIAuthDTO = azureConfig.getAuthDTO();
+
+    if (azureMSIAuthDTO instanceof AzureMSIAuthUADTO) {
+      AzureUserAssignedMSIAuthDTO azureUserAssignedMSIAuthDTO =
+          (AzureUserAssignedMSIAuthDTO) ((AzureMSIAuthUADTO) azureMSIAuthDTO).getCredentials();
+      azureManagementClient.validateAzureConnection(
+          true, azureUserAssignedMSIAuthDTO.getClientId(), azureEnvironmentType);
+    } else if (azureMSIAuthDTO instanceof AzureMSIAuthSADTO) {
+      azureManagementClient.validateAzureConnection(false, null, azureEnvironmentType);
+    } else {
+      throw new IllegalStateException(
+          "Unexpected ManagedIdentity credentials type : " + azureMSIAuthDTO.getClass().getName());
+    }
   }
 
   private void handleValidateManualCredentialsTask(AzureCredentialDTO credential,
