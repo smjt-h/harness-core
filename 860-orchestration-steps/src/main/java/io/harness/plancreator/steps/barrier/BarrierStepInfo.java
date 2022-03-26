@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.plancreator.steps.common.SpecParameters;
+import io.harness.plancreator.steps.common.WithDelegateSelectors;
 import io.harness.plancreator.steps.internal.PMSStepInfo;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
@@ -38,7 +39,7 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("barrierStepInfo")
 @OwnedBy(PIPELINE)
 @RecasterAlias("io.harness.plancreator.steps.barrier.BarrierStepInfo")
-public class BarrierStepInfo implements PMSStepInfo {
+public class BarrierStepInfo implements PMSStepInfo, WithDelegateSelectors {
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String name;
   @JsonProperty("barrierRef") @NotNull String identifier;
 

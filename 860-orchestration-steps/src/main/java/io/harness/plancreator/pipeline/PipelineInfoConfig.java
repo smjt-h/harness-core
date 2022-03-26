@@ -76,4 +76,7 @@ public class PipelineInfoConfig {
   ParameterField<Timeout> timeout;
 
   boolean allowStageExecutions;
+
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
+  ParameterField<List<String>> delegateSelectors;
 }

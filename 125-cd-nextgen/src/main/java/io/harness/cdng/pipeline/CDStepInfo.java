@@ -26,12 +26,19 @@ import io.harness.cdng.provision.terraform.TerraformApplyStepInfo;
 import io.harness.cdng.provision.terraform.TerraformDestroyStepInfo;
 import io.harness.cdng.provision.terraform.TerraformPlanStepInfo;
 import io.harness.cdng.provision.terraform.steps.rolllback.TerraformRollbackStepInfo;
+import io.harness.plancreator.steps.TaskSelectorYaml;
+import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.plancreator.steps.common.StepElementParameters.StepElementParametersBuilder;
+import io.harness.plancreator.steps.common.WithDelegateSelectors;
 import io.harness.plancreator.steps.common.WithStepElementParameters;
+import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.steps.io.StepParameters;
+import io.harness.pms.yaml.ParameterField;
+import io.harness.steps.StepUtils;
 import io.harness.yaml.core.StepSpecType;
 
 import io.swagger.annotations.ApiModel;
+import java.util.List;
 
 @ApiModel(subTypes = {K8sApplyStepInfo.class, K8sBlueGreenStepInfo.class, K8sCanaryStepInfo.class,
               K8sRollingStepInfo.class, K8sRollingRollbackStepInfo.class, K8sScaleStepInfo.class,
@@ -42,10 +49,15 @@ import io.swagger.annotations.ApiModel;
 @OwnedBy(HarnessTeam.CDC)
 public interface CDStepInfo extends StepSpecType, WithStepElementParameters {
   default StepParameters getStepParameters(
-      CdAbstractStepNode stepElementConfig, OnFailRollbackParameters failRollbackParameters) {
+      CdAbstractStepNode stepElementConfig, OnFailRollbackParameters failRollbackParameters, PlanCreationContext ctx) {
     StepElementParametersBuilder stepParametersBuilder =
         CdStepParametersUtils.getStepParameters(stepElementConfig, failRollbackParameters);
-    stepParametersBuilder.spec(getSpecParameters());
+    SpecParameters specParameters = getSpecParameters();
+    // update spec param here
+    if (stepElementConfig.getStepSpecType() instanceof WithDelegateSelectors) {
+      ParameterField<List<TaskSelectorYaml>> delegateSelectors = StepUtils.getDelegateSelectorsForNode(ctx);
+    }
+    stepParametersBuilder.spec(specParameters);
     return stepParametersBuilder.build();
   }
 }

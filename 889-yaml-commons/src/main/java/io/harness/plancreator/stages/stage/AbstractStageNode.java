@@ -62,6 +62,10 @@ public abstract class AbstractStageNode {
   List<NGVariable> variables;
   Map<String, String> tags;
 
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
+  @ApiModelProperty(hidden = true)
+  ParameterField<List<String>> delegateSelectors;
+
   @JsonIgnore public abstract String getType();
   @JsonIgnore public abstract StageInfoConfig getStageInfoConfig();
 }

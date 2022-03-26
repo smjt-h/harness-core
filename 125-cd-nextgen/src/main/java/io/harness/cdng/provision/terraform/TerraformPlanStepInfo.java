@@ -15,6 +15,7 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.executions.steps.StepSpecTypeConstants;
 import io.harness.filters.WithConnectorRef;
 import io.harness.plancreator.steps.common.SpecParameters;
+import io.harness.plancreator.steps.common.WithDelegateSelectors;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
@@ -41,7 +42,7 @@ import lombok.experimental.FieldDefaults;
 @JsonTypeName(StepSpecTypeConstants.TERRAFORM_PLAN)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @RecasterAlias("io.harness.cdng.provision.terraform.TerraformPlanStepInfo")
-public class TerraformPlanStepInfo extends TerraformPlanBaseStepInfo implements CDStepInfo, WithConnectorRef {
+public class TerraformPlanStepInfo extends TerraformPlanBaseStepInfo implements CDStepInfo, WithConnectorRef, WithDelegateSelectors {
   @NotNull @JsonProperty("configuration") TerraformPlanExecutionData terraformPlanExecutionData;
 
   @Builder(builderMethodName = "infoBuilder")

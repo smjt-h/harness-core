@@ -101,6 +101,7 @@ public abstract class CDPMSStepPlanCreatorV2<T extends CdAbstractStepNode> exten
     List<AdviserObtainment> adviserObtainmentFromMetaData = getAdviserObtainmentFromMetaData(ctx.getCurrentField());
 
     StepParameters stepParameters = getStepParameters(ctx, stepElement);
+
     PlanNode stepPlanNode =
         PlanNode.builder()
             .uuid(ctx.getCurrentField().getNode().getUuid())
@@ -197,7 +198,7 @@ public abstract class CDPMSStepPlanCreatorV2<T extends CdAbstractStepNode> exten
       stepElement.setTimeout(TimeoutUtils.getTimeout(stepElement.getTimeout()));
       return ((CDStepInfo) stepElement.getStepSpecType())
           .getStepParameters(stepElement,
-              getRollbackParameters(ctx.getCurrentField(), Collections.emptySet(), RollbackStrategy.UNKNOWN));
+              getRollbackParameters(ctx.getCurrentField(), Collections.emptySet(), RollbackStrategy.UNKNOWN), ctx);
     }
 
     return stepElement.getStepSpecType().getStepParameters();

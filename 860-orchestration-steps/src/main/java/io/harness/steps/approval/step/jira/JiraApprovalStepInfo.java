@@ -15,6 +15,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
 import io.harness.filters.WithConnectorRef;
 import io.harness.plancreator.steps.common.SpecParameters;
+import io.harness.plancreator.steps.common.WithDelegateSelectors;
 import io.harness.plancreator.steps.internal.PMSStepInfo;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.yaml.ParameterField;
@@ -43,7 +44,7 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonTypeName(StepSpecTypeConstants.JIRA_APPROVAL)
 @TypeAlias("jiraApprovalStepInfo")
 @RecasterAlias("io.harness.steps.approval.step.jira.JiraApprovalStepInfo")
-public class JiraApprovalStepInfo implements PMSStepInfo, WithConnectorRef {
+public class JiraApprovalStepInfo implements PMSStepInfo, WithConnectorRef, WithDelegateSelectors {
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> connectorRef;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> issueKey;
   @NotNull CriteriaSpecWrapper approvalCriteria;

@@ -11,13 +11,19 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 import io.harness.advisers.rollback.OnFailRollbackParameters;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.barrier.BarrierStepInfo;
+import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.plancreator.steps.common.StepElementParameters.StepElementParametersBuilder;
 import io.harness.plancreator.steps.common.StepParametersUtils;
+import io.harness.plancreator.steps.common.WithDelegateSelectors;
 import io.harness.plancreator.steps.common.WithStepElementParameters;
 import io.harness.plancreator.steps.http.HttpStepInfo;
 import io.harness.plancreator.steps.http.PmsAbstractStepNode;
+import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.steps.io.StepParameters;
+import io.harness.pms.yaml.ParameterField;
+import io.harness.steps.StepUtils;
 import io.harness.steps.approval.step.harness.HarnessApprovalStepInfo;
 import io.harness.steps.approval.step.jira.JiraApprovalStepInfo;
 import io.harness.steps.approval.step.servicenow.ServiceNowApprovalStepInfo;
@@ -30,6 +36,7 @@ import io.harness.steps.shellscript.ShellScriptStepInfo;
 import io.harness.yaml.core.StepSpecType;
 
 import io.swagger.annotations.ApiModel;
+import java.util.List;
 
 @OwnedBy(PIPELINE)
 @ApiModel(subTypes = {BarrierStepInfo.class, HttpStepInfo.class, FlagConfigurationStepInfo.class,
@@ -38,10 +45,15 @@ import io.swagger.annotations.ApiModel;
               PolicyStepInfo.class, ServiceNowCreateStepInfo.class, ServiceNowUpdateStepInfo.class})
 public interface PMSStepInfo extends StepSpecType, WithStepElementParameters {
   default StepParameters getStepParameters(
-      PmsAbstractStepNode stepElementConfig, OnFailRollbackParameters failRollbackParameters) {
+      PmsAbstractStepNode stepElementConfig, OnFailRollbackParameters failRollbackParameters, PlanCreationContext ctx) {
     StepElementParametersBuilder stepParametersBuilder =
         StepParametersUtils.getStepParameters(stepElementConfig, failRollbackParameters);
-    stepParametersBuilder.spec(getSpecParameters());
+
+    SpecParameters specParameters = getSpecParameters();
+    if (stepElementConfig.getStepSpecType() instanceof WithDelegateSelectors) {
+      ParameterField<List<TaskSelectorYaml>> delegateSelectors = StepUtils.getDelegateSelectorsForNode(ctx);
+    }
+    stepParametersBuilder.spec(specParameters);
     return stepParametersBuilder.build();
   }
 }

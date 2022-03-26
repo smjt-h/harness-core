@@ -15,6 +15,7 @@ import io.harness.cdng.pipeline.CDStepInfo;
 import io.harness.executions.steps.StepSpecTypeConstants;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
+import io.harness.plancreator.steps.common.WithDelegateSelectors;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
@@ -39,7 +40,7 @@ import org.springframework.data.annotation.TypeAlias;
 @SimpleVisitorHelper(helperClass = K8sDeleteStepInfoVisitorHelper.class)
 @TypeAlias("K8sDeleteStepInfo")
 @RecasterAlias("io.harness.cdng.k8s.K8sDeleteStepInfo")
-public class K8sDeleteStepInfo extends K8sDeleteBaseStepInfo implements CDStepInfo, Visitable {
+public class K8sDeleteStepInfo extends K8sDeleteBaseStepInfo implements CDStepInfo, Visitable, WithDelegateSelectors {
   // For Visitor Framework Impl
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 

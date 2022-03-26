@@ -16,6 +16,7 @@ import io.harness.cdng.pipeline.CDStepInfo;
 import io.harness.executions.steps.StepSpecTypeConstants;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
+import io.harness.plancreator.steps.common.WithDelegateSelectors;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
@@ -36,7 +37,7 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonTypeName(StepSpecTypeConstants.K8S_CANARY_DELETE)
 @TypeAlias("k8sCanaryDeleteStepInfo")
 @RecasterAlias("io.harness.cdng.k8s.K8sCanaryDeleteStepInfo")
-public class K8sCanaryDeleteStepInfo implements CDStepInfo, Visitable {
+public class K8sCanaryDeleteStepInfo implements CDStepInfo, Visitable, WithDelegateSelectors {
   @ApiModelProperty(dataType = SwaggerConstants.BOOLEAN_CLASSPATH) ParameterField<Boolean> skipDryRun;
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   ParameterField<List<TaskSelectorYaml>> delegateSelectors;

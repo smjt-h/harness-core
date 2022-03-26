@@ -16,6 +16,7 @@ import io.harness.cdng.pipeline.CDStepInfo;
 import io.harness.executions.steps.StepSpecTypeConstants;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
+import io.harness.plancreator.steps.common.WithDelegateSelectors;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
@@ -40,7 +41,8 @@ import org.springframework.data.annotation.TypeAlias;
 @SimpleVisitorHelper(helperClass = HelmRollbackStepInfoVisitorHelper.class)
 @TypeAlias("HelmRollbackStepInfo")
 @RecasterAlias("io.harness.cdng.helm.rollback.HelmRollbackStepInfo")
-public class HelmRollbackStepInfo extends HelmRollbackBaseStepInfo implements CDStepInfo, Visitable {
+public class HelmRollbackStepInfo
+    extends HelmRollbackBaseStepInfo implements CDStepInfo, Visitable, WithDelegateSelectors {
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 
   @Builder(builderMethodName = "infoBuilder")

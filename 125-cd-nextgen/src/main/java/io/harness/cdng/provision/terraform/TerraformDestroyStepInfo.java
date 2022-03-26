@@ -15,6 +15,7 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.executions.steps.StepSpecTypeConstants;
 import io.harness.filters.WithConnectorRef;
 import io.harness.plancreator.steps.common.SpecParameters;
+import io.harness.plancreator.steps.common.WithDelegateSelectors;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
@@ -45,7 +46,7 @@ import org.springframework.data.annotation.TypeAlias;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @RecasterAlias("io.harness.cdng.provision.terraform.TerraformDestroyStepInfo")
 public class TerraformDestroyStepInfo
-    extends TerraformDestroyBaseStepInfo implements CDStepInfo, Visitable, WithConnectorRef {
+    extends TerraformDestroyBaseStepInfo implements CDStepInfo, Visitable, WithConnectorRef, WithDelegateSelectors {
   @NotNull @JsonProperty("configuration") TerraformStepConfiguration terraformStepConfiguration;
 
   @Builder(builderMethodName = "infoBuilder")
