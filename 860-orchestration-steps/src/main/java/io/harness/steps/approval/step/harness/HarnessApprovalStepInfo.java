@@ -7,7 +7,9 @@
 
 package io.harness.steps.approval.step.harness;
 
-import com.fasterxml.jackson.annotation.JsonTypeName;
+import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
+
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
@@ -20,19 +22,17 @@ import io.harness.steps.approval.ApprovalFacilitator;
 import io.harness.steps.approval.step.harness.beans.ApproverInputInfo;
 import io.harness.steps.approval.step.harness.beans.Approvers;
 import io.harness.yaml.YamlSchemaTypes;
+
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.List;
+import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.data.annotation.TypeAlias;
-
-import javax.validation.constraints.NotNull;
-import java.util.List;
-
-import static io.harness.annotations.dev.HarnessTeam.CDC;
-import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
 @OwnedBy(CDC)
 @Data
 @Builder
