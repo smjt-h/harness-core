@@ -13,6 +13,7 @@ import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
@@ -50,14 +51,19 @@ public class FlagConfigurationStepInfo implements PMSStepInfo {
   @YamlSchemaTypes(value = {runtime})
   ParameterField<List<PatchInstruction>> instructions;
 
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
+  @YamlSchemaTypes(value = {runtime})
+  ParameterField<List<TaskSelectorYaml>> delegateSelectors;
+
   @Builder
   @ConstructorProperties({"name", "feature", "environment", "instructions"})
   public FlagConfigurationStepInfo(String name, ParameterField<String> feature, ParameterField<String> environment,
-      ParameterField<List<PatchInstruction>> instructions) {
+      ParameterField<List<PatchInstruction>> instructions, ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
     this.name = name;
     this.feature = feature;
     this.environment = environment;
     this.instructions = instructions;
+    this.delegateSelectors = delegateSelectors;
   }
 
   @Override
@@ -77,6 +83,7 @@ public class FlagConfigurationStepInfo implements PMSStepInfo {
         .feature(feature)
         .environment(environment)
         .instructions(instructions)
+        .delegateSelectors(delegateSelectors)
         .build();
   }
 }

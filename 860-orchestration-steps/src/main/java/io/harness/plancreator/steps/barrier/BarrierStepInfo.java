@@ -8,21 +8,27 @@
 package io.harness.plancreator.steps.barrier;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.SwaggerConstants;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.plancreator.steps.internal.PMSStepInfo;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
+import io.harness.pms.yaml.ParameterField;
 import io.harness.steps.StepSpecTypeConstants;
 import io.harness.steps.barriers.BarrierSpecParameters;
 import io.harness.steps.barriers.BarrierStep;
+import io.harness.yaml.YamlSchemaTypes;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModelProperty;
 import java.beans.ConstructorProperties;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
@@ -42,11 +48,16 @@ public class BarrierStepInfo implements PMSStepInfo {
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String name;
   @JsonProperty("barrierRef") @NotNull String identifier;
 
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
+  @YamlSchemaTypes(value = {runtime})
+  ParameterField<List<TaskSelectorYaml>> delegateSelectors;
+
   @Builder
   @ConstructorProperties({"name", "identifier"})
-  public BarrierStepInfo(String name, String identifier) {
+  public BarrierStepInfo(String name, String identifier, ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
     this.name = name;
     this.identifier = identifier;
+    this.delegateSelectors = delegateSelectors;
   }
 
   @Override
@@ -61,6 +72,6 @@ public class BarrierStepInfo implements PMSStepInfo {
 
   @Override
   public SpecParameters getSpecParameters() {
-    return BarrierSpecParameters.builder().barrierRef(identifier).build();
+    return BarrierSpecParameters.builder().barrierRef(identifier).delegateSelectors(delegateSelectors).build();
   }
 }

@@ -11,8 +11,11 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
+import io.harness.pms.yaml.ParameterField;
 
+import java.util.List;
 import lombok.Builder;
 import lombok.Value;
 import org.springframework.data.annotation.TypeAlias;
@@ -24,4 +27,5 @@ import org.springframework.data.annotation.TypeAlias;
 @RecasterAlias("barrierSpecParameters")
 public class BarrierSpecParameters implements SpecParameters {
   String barrierRef;
+  ParameterField<List<TaskSelectorYaml>> delegateSelectors;
 }

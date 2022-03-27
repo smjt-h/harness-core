@@ -13,6 +13,7 @@ import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.yaml.YamlSchemaTypes;
@@ -39,6 +40,7 @@ public class FlagConfigurationStepParameters implements SpecParameters {
   @ApiModelProperty(dataType = "[Lio.harness.steps.cf.PatchInstruction;")
   @YamlSchemaTypes(value = {runtime})
   ParameterField<List<PatchInstruction>> instructions;
+  ParameterField<List<TaskSelectorYaml>> delegateSelectors;
 
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> state;
 }
