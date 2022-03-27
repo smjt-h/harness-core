@@ -10,14 +10,13 @@ package io.harness.steps;
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-
 import static io.harness.pms.yaml.YAMLFieldNameConstants.DELEGATE_SELECTORS;
 import static io.harness.pms.yaml.YAMLFieldNameConstants.STAGE;
+
 import static software.wings.beans.LogHelper.COMMAND_UNIT_PLACEHOLDER;
 
 import static java.util.stream.Collectors.toList;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EnvironmentType;
 import io.harness.common.NGTimeConversionHelper;
@@ -40,10 +39,13 @@ import io.harness.delegate.task.TaskParameters;
 import io.harness.encryption.Scope;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
+import io.harness.filters.WithConnectorRef;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logstreaming.LogStreamingHelper;
+import io.harness.plancreator.steps.AbstractStepNode;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
+import io.harness.plancreator.steps.common.WithDelegateSelectors;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.Status;
@@ -53,6 +55,7 @@ import io.harness.pms.contracts.execution.tasks.TaskRequest;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
+import io.harness.pms.sdk.core.steps.io.StepParameters;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.pms.sdk.core.steps.io.StepResponse.StepResponseBuilder;
 import io.harness.pms.sdk.core.steps.io.StepResponseNotifyData;
@@ -61,15 +64,20 @@ import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
+import io.harness.reflection.ReflectionUtils;
 import io.harness.serializer.KryoSerializer;
 import io.harness.tasks.ResponseData;
 import io.harness.tasks.Task;
+import io.harness.yaml.core.StepSpecType;
+import io.harness.yaml.core.failurestrategy.FailureStrategyConfig;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
-
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -79,12 +87,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nonnull;
-
-import io.harness.yaml.core.failurestrategy.FailureStrategyConfig;
 import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 
 @OwnedBy(PIPELINE)
 public class StepUtils {
+  private static Field f;
+
   private StepUtils() {}
 
   public static final String DEFAULT_STEP_TIMEOUT = "10m";
@@ -373,29 +382,74 @@ public class StepUtils {
         .collect(toList());
   }
 
-  public static ParameterField<List<TaskSelectorYaml>> getDelegateSelectorsForNode(PlanCreationContext ctx) {
-    ParameterField<List<TaskSelectorYaml>> delegateSelectors = null;
+  public static SpecParameters getSpecParameterWithDelegateSelector(PlanCreationContext ctx, AbstractStepNode stepElement, SpecParameters specParameters){
+    StepParameters stepParameters = stepElement.getStepSpecType().getStepParameters();
+    ParameterField<List<TaskSelectorYaml>> delegateSelectors;
     try {
-      YamlNode stageNode = YamlUtils.getGivenYamlNodeFromParentPath(ctx.getCurrentField().getNode(), STAGE);
-      YamlField delegateSelectorStageField = stageNode.getField(DELEGATE_SELECTORS);
-      if (delegateSelectorStageField != null) {
-        delegateSelectors = YamlUtils.read(delegateSelectorStageField.getNode().toString(),
-            new TypeReference<ParameterField<List<TaskSelectorYaml>>>() {});
-        return delegateSelectors;
+      Field field = stepParameters.getClass().getSuperclass().getDeclaredField("delegateSelectors");
+      Object delegateSelectorFieldValue = ReflectionUtils.getFieldValue(stepParameters, field);
+      /*if (delegateSelectorFieldValue != null) {
+        return specParameters;
+      }*/
+      if (delegateSelectorsFromFqn(ctx, STAGE) != null) {
+        delegateSelectors = delegateSelectorsFromFqn(ctx, STAGE);
+      } else {
+        delegateSelectors = delegateSelectorsFromFqn(ctx, YAMLFieldNameConstants.PIPELINE);
       }
-      // fetch from parent
-      YamlNode pipelineNode =
-          YamlUtils.getGivenYamlNodeFromParentPath(ctx.getCurrentField().getNode(), YAMLFieldNameConstants.PIPELINE);
-      YamlField delegateSelectorPipelineField = pipelineNode.getField(DELEGATE_SELECTORS);
-      if (delegateSelectorPipelineField != null) {
-        delegateSelectors = YamlUtils.read(delegateSelectorPipelineField.getNode().toString(),
-            new TypeReference<ParameterField<List<TaskSelectorYaml>>>() {});
-        return delegateSelectors;
+      if (delegateSelectors == null) {
+        return specParameters;
       }
-    } catch (IOException e) {
-      throw new InvalidRequestException("Invalid yaml", e);
+      WithDelegateSelectors withDelegateSelectors = (WithDelegateSelectors) stepElement.getStepSpecType();
+      return withDelegateSelectors.getSpecParametersWithDelegateSelector(specParameters, delegateSelectors);
+
+    } catch (Exception e) {
+      throw new InvalidRequestException("Unable to get delegate selector");
     }
-    return delegateSelectors;
+  }
+
+  public static void addDelegateSelectorsToSpecParameters(PlanCreationContext ctx, AbstractStepNode stepElement) {
+    StepParameters stepParameters = stepElement.getStepSpecType().getStepParameters();
+    ParameterField<List<TaskSelectorYaml>> delegateSelectors;
+    try {
+      Field field = stepParameters.getClass().getSuperclass().getDeclaredField("delegateSelectors");
+      Object delegateSelectorFieldValue = ReflectionUtils.getFieldValue(stepParameters, field);
+     /* if (delegateSelectorFieldValue != null) {
+        return;
+        ReflectionUtils.setObjectField(f, resourceTypeManagementJob, currentResourceTypesConfig);
+      }*/
+      if (delegateSelectorsFromFqn(ctx, STAGE) != null) {
+        delegateSelectors = delegateSelectorsFromFqn(ctx, STAGE);
+      } else {
+        delegateSelectors = delegateSelectorsFromFqn(ctx, YAMLFieldNameConstants.PIPELINE);
+      }
+      if (delegateSelectors == null) {
+        return;
+      }
+
+      Field fieldStepElement = stepElement.getClass().getDeclaredField("delegateSelectors");
+      stepElement.getDelegateSelectors()
+      Optional<Method> method = Optional.of(ReflectionUtils.getMethod(stepParameters.getClass(), "getSpecParameters"));
+      method.get().setAccessible(true);
+      SpecParameters specParameters = (SpecParameters) method.get().invoke(stepParameters);
+      Field fieldVa = specParameters.getClass().getSuperclass().getDeclaredField("delegateSelectors");
+      Field fieldVal = specParameters.getClass().getDeclaredField("test");
+      fieldVal.setAccessible(true);
+      //ReflectionUtils.setObjectField(fieldVal, specParameters.getClass().getSuperclass(), delegateSelectors);
+      fieldVal.set(stepElement, "testvalue");
+    } catch (Exception e) {
+      throw new InvalidRequestException("Unable to get delegate selector");
+    }
+  }
+
+  public static ParameterField<List<TaskSelectorYaml>> delegateSelectorsFromFqn(PlanCreationContext ctx, String fqn)
+      throws IOException {
+    YamlNode stageNode = YamlUtils.getGivenYamlNodeFromParentPath(ctx.getCurrentField().getNode(), fqn);
+    YamlField delegateSelectorStageField = stageNode.getField(DELEGATE_SELECTORS);
+    if (delegateSelectorStageField != null) {
+      return YamlUtils.read(delegateSelectorStageField.getNode().toString(),
+          new TypeReference<ParameterField<List<TaskSelectorYaml>>>() {});
+    }
+    return null;
   }
 
   public static List<String> getDelegateSelectorList(ParameterField<List<String>> delegateSelectors) {

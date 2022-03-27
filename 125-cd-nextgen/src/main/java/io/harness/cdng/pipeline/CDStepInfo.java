@@ -53,10 +53,12 @@ public interface CDStepInfo extends StepSpecType, WithStepElementParameters {
     StepElementParametersBuilder stepParametersBuilder =
         CdStepParametersUtils.getStepParameters(stepElementConfig, failRollbackParameters);
     SpecParameters specParameters = getSpecParameters();
+
     // update spec param here
     if (stepElementConfig.getStepSpecType() instanceof WithDelegateSelectors) {
-      ParameterField<List<TaskSelectorYaml>> delegateSelectors = StepUtils.getDelegateSelectorsForNode(ctx);
+      StepUtils.addDelegateSelectorsToSpecParameters(ctx,stepElementConfig);
     }
+    stepParametersBuilder.delegateSelectors(null);
     stepParametersBuilder.spec(specParameters);
     return stepParametersBuilder.build();
   }

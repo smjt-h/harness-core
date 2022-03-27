@@ -32,7 +32,6 @@ public class CdStepParametersUtils {
     StepElementParametersBuilder stepBuilder = StepElementParameters.builder();
     stepBuilder.name(stepNode.getName());
     stepBuilder.identifier(stepNode.getIdentifier());
-    stepBuilder.delegateSelectors(stepNode.getDelegateSelectors());
     stepBuilder.description(stepNode.getDescription());
     stepBuilder.skipCondition(stepNode.getSkipCondition());
     stepBuilder.failureStrategies(stepNode.getFailureStrategies());

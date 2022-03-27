@@ -51,7 +51,8 @@ public interface PMSStepInfo extends StepSpecType, WithStepElementParameters {
 
     SpecParameters specParameters = getSpecParameters();
     if (stepElementConfig.getStepSpecType() instanceof WithDelegateSelectors) {
-      ParameterField<List<TaskSelectorYaml>> delegateSelectors = StepUtils.getDelegateSelectorsForNode(ctx);
+      //specParameters = StepUtils.getSpecParameterWithDelegateSelector(ctx, stepElementConfig, specParameters);
+      StepUtils.addDelegateSelectorsToSpecParameters(ctx,stepElementConfig);
     }
     stepParametersBuilder.spec(specParameters);
     return stepParametersBuilder.build();
