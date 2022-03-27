@@ -163,7 +163,8 @@ public class TerraformApplyStep extends TaskExecutableWithRollbackAndRbac<Terraf
 
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         Collections.singletonList(TerraformCommandUnit.Apply.name()), TaskType.TERRAFORM_TASK_NG.getDisplayName(),
-        StepUtils.getTaskSelectors(stepParameters.getDelegateSelectors()), stepHelper.getEnvironmentType(ambiance));
+        StepUtils.getTaskSelectorsFromYaml(stepParameters.getDelegateSelectors()),
+        stepHelper.getEnvironmentType(ambiance));
   }
 
   private TaskRequest obtainInheritedTask(
@@ -205,7 +206,8 @@ public class TerraformApplyStep extends TaskExecutableWithRollbackAndRbac<Terraf
 
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         Collections.singletonList(TerraformCommandUnit.Apply.name()), TaskType.TERRAFORM_TASK_NG.getDisplayName(),
-        StepUtils.getTaskSelectors(stepParameters.getDelegateSelectors()), stepHelper.getEnvironmentType(ambiance));
+        StepUtils.getTaskSelectorsFromYaml(stepParameters.getDelegateSelectors()),
+        stepHelper.getEnvironmentType(ambiance));
   }
 
   @Override
