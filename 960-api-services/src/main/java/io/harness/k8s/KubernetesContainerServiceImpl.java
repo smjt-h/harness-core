@@ -228,7 +228,6 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
 
   @Override
   public HasMetadata createOrReplaceController(KubernetesConfig kubernetesConfig, HasMetadata definition) {
-    System.out.println("debug");
     String name = definition.getMetadata().getName();
     log.info("Creating {} {}", definition.getKind(), name);
 
