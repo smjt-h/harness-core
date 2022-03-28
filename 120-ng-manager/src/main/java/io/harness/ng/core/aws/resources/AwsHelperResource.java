@@ -33,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(HarnessTeam.CDP)
 @Api("aws")
-@Path("/aws/awsHelper")
+@Path("/aws/aws-helper")
 @Produces({"application/json", "application/yaml"})
 @Consumes({"application/json", "application/yaml"})
 @ApiResponses(value =
@@ -48,22 +48,22 @@ public class AwsHelperResource {
   @Inject NextGenConfiguration configuration;
 
   @GET
-  @Path("getRegions")
-  @ApiOperation(value = "Get all the AWS regions defined in the application", nickname = "getRegionsForAwsHelper")
+  @Path("Regions")
+  @ApiOperation(value = "Get all the AWS regions defined in the application", nickname = "RegionsForAwsHelper")
   public ResponseDTO<Map<String, String>> getRegions() {
     return ResponseDTO.newResponse(configuration.getAwsRegionIdToName());
   }
 
   @GET
-  @Path("getCFCapabilities")
-  @ApiOperation(value = "Get the Cloudformation capabilities", nickname = "getCFCapabilitiesForAwsHelper")
+  @Path("CFCapabilities")
+  @ApiOperation(value = "Get the Cloudformation capabilities", nickname = "CFCapabilitiesForAwsHelper")
   public ResponseDTO<List<String>> getCFCapabilities() {
     return ResponseDTO.newResponse(awsHelperService.getCapabilities());
   }
 
   @GET
-  @Path("getCFStates")
-  @ApiOperation(value = "Get all the Cloudformation states for a stack", nickname = "getCFStatesForAwsHelper")
+  @Path("CFStates")
+  @ApiOperation(value = "Get all the Cloudformation states for a stack", nickname = "CFStatesForAwsHelper")
   public ResponseDTO<Set<String>> getCFStates() {
     return ResponseDTO.newResponse(awsHelperService.getCFStates());
   }
