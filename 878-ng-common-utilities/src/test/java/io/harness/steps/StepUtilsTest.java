@@ -8,7 +8,11 @@
 package io.harness.steps;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
-import static io.harness.rule.OwnerRule.*;
+import static io.harness.rule.OwnerRule.BRIJESH;
+import static io.harness.rule.OwnerRule.JENNY;
+import static io.harness.rule.OwnerRule.PRABU;
+import static io.harness.rule.OwnerRule.SAMARTH;
+import static io.harness.rule.OwnerRule.VAIBHAV_SI;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
@@ -29,7 +33,6 @@ import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.request.ArtifactTaskParameters;
 import io.harness.encryption.Scope;
 import io.harness.logging.CommandExecutionStatus;
-import io.harness.plancreator.execution.StepsExecutionConfig;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
@@ -57,7 +60,6 @@ import software.wings.beans.TaskType;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,7 +69,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Scanner;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
