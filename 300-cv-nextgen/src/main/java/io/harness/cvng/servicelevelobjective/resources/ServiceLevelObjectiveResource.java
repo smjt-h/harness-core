@@ -27,6 +27,7 @@ import io.harness.cvng.servicelevelobjective.beans.ServiceLevelObjectiveDTO;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelObjectiveFilter;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelObjectiveResponse;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelObjectiveService;
+import io.harness.cvng.utils.NGAccessControlClientCheck;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.rest.RestResponse;
@@ -71,6 +72,7 @@ public class ServiceLevelObjectiveResource {
   @Timed
   @ExceptionMetered
   @ApiOperation(value = "saves slo data", nickname = "saveSLOData")
+  @NGAccessControlClientCheck
   public RestResponse<ServiceLevelObjectiveResponse> saveSLOData(
       @ApiParam(required = true) @NotNull @QueryParam("accountId") String accountId,
       @NotNull @Valid @Body ServiceLevelObjectiveDTO serviceLevelObjectiveDTO) {
@@ -172,9 +174,17 @@ public class ServiceLevelObjectiveResource {
   @Path("{identifier}/logs")
   @ApiOperation(value = "get service level objective logs", nickname = "getServiceLevelObjectiveLogs")
   @NGAccessControlCheck(resourceType = SLO, permission = VIEW_PERMISSION)
-  public RestResponse<PageResponse<CVNGLogDTO>> getServiceLevelObjectiveLogs(@BeanParam ProjectParams projectParams,
+  public RestResponse<PageResponse<CVNGLogDTO>> getServiceLevelObjectiveLogs(
+      @NotNull @QueryParam("accountId") @AccountIdentifier String accountId,
+      @NotNull @QueryParam("orgIdentifier") @OrgIdentifier String orgIdentifier,
+      @NotNull @QueryParam("projectIdentifier") @ProjectIdentifier String projectIdentifier,
       @ApiParam(required = true) @NotNull @PathParam("identifier") @ResourceIdentifier String identifier,
       @BeanParam SLILogsFilter sliLogsFilter, @BeanParam PageParams pageParams) {
+    ProjectParams projectParams = ProjectParams.builder()
+                                      .accountIdentifier(accountId)
+                                      .orgIdentifier(orgIdentifier)
+                                      .projectIdentifier(projectIdentifier)
+                                      .build();
     return new RestResponse<>(
         serviceLevelObjectiveService.getCVNGLogs(projectParams, identifier, sliLogsFilter, pageParams));
   }
