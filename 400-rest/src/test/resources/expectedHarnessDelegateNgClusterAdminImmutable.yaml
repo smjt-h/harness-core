@@ -73,9 +73,17 @@ spec:
             path: /api/health
             port: 3460
             scheme: HTTP
-          initialDelaySeconds: 60
+          initialDelaySeconds: 10
           periodSeconds: 10
           failureThreshold: 2
+        startupProbe:
+          httpGet:
+            path: /api/health
+            port: 3460
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 15
         envFrom:
         - secretRef:
             name: harness-delegate-account-token
@@ -102,10 +110,6 @@ spec:
           value: "desc"
         - name: DELEGATE_TAGS
           value: ""
-        - name: DELEGATE_ORG_IDENTIFIER
-          value: "9S5HMP0xROugl3_QgO62rQO"
-        - name: DELEGATE_PROJECT_IDENTIFIER
-          value: "9S5HMP0xROugl3_QgO62rQP"
         - name: NEXT_GEN
           value: "true"
         - name: CLIENT_TOOLS_DOWNLOAD_DISABLED
