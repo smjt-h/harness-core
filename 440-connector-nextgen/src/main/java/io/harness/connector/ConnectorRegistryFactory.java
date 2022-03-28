@@ -11,6 +11,27 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.heartbeat.*;
+import io.harness.connector.heartbeat.ArtifactoryValidationParamsProvider;
+import io.harness.connector.heartbeat.AwsKmsConnectorValidationParamsProvider;
+import io.harness.connector.heartbeat.AwsSecretManagerValidationParamsProvider;
+import io.harness.connector.heartbeat.AwsValidationParamsProvider;
+import io.harness.connector.heartbeat.AzureKeyVaultConnectorValidationParamsProvider;
+import io.harness.connector.heartbeat.AzureValidationParamsProvider;
+import io.harness.connector.heartbeat.CEK8sConnectorValidationParamsProvider;
+import io.harness.connector.heartbeat.CVConnectorParamsProvider;
+import io.harness.connector.heartbeat.ConnectorValidationParamsProvider;
+import io.harness.connector.heartbeat.DockerConnectorValidationParamsProvider;
+import io.harness.connector.heartbeat.GcpKmsConnectorValidationParamsProvider;
+import io.harness.connector.heartbeat.GcpValidationParamsProvider;
+import io.harness.connector.heartbeat.HttpHelmConnectorValidationParamsProvider;
+import io.harness.connector.heartbeat.JiraValidationParamsProvider;
+import io.harness.connector.heartbeat.K8sConnectorValidationParamsProvider;
+import io.harness.connector.heartbeat.NexusValidationParamsProvider;
+import io.harness.connector.heartbeat.NoOpConnectorValidationParamsProvider;
+import io.harness.connector.heartbeat.PhysicalDataCenterConnectorValidationParamsProvider;
+import io.harness.connector.heartbeat.ScmConnectorValidationParamsProvider;
+import io.harness.connector.heartbeat.ServiceNowValidationParamsProvider;
+import io.harness.connector.heartbeat.VaultConnectorValidationParamsProvider;
 import io.harness.connector.mappers.ConnectorDTOToEntityMapper;
 import io.harness.connector.mappers.ConnectorEntityToDTOMapper;
 import io.harness.connector.mappers.appdynamicsmapper.AppDynamicsDTOToEntity;
@@ -21,6 +42,8 @@ import io.harness.connector.mappers.awscodecommit.AwsCodeCommitDTOToEntity;
 import io.harness.connector.mappers.awscodecommit.AwsCodeCommitEntityToDTO;
 import io.harness.connector.mappers.awsmapper.AwsDTOToEntity;
 import io.harness.connector.mappers.awsmapper.AwsEntityToDTO;
+import io.harness.connector.mappers.azuremapper.AzureDTOToEntity;
+import io.harness.connector.mappers.azuremapper.AzureEntityToDTO;
 import io.harness.connector.mappers.bitbucketconnectormapper.BitbucketDTOToEntity;
 import io.harness.connector.mappers.bitbucketconnectormapper.BitbucketEntityToDTO;
 import io.harness.connector.mappers.ceawsmapper.CEAwsDTOToEntity;
@@ -61,6 +84,8 @@ import io.harness.connector.mappers.nexusmapper.NexusDTOToEntity;
 import io.harness.connector.mappers.nexusmapper.NexusEntityToDTO;
 import io.harness.connector.mappers.pagerduty.PagerDutyDTOToEntity;
 import io.harness.connector.mappers.pagerduty.PagerDutyEntityToDTO;
+import io.harness.connector.mappers.pdcconnector.PhysicalDataCenterDTOToEntity;
+import io.harness.connector.mappers.pdcconnector.PhysicalDataCenterEntityToDTO;
 import io.harness.connector.mappers.prometheusmapper.PrometheusDTOToEntity;
 import io.harness.connector.mappers.prometheusmapper.PrometheusEntityToDTO;
 import io.harness.connector.mappers.secretmanagermapper.*;
@@ -75,6 +100,7 @@ import io.harness.connector.task.NotSupportedValidationHandler;
 import io.harness.connector.task.git.GitValidationHandler;
 import io.harness.connector.validator.ArtifactoryConnectionValidator;
 import io.harness.connector.validator.AwsConnectorValidator;
+import io.harness.connector.validator.AzureConnectorValidator;
 import io.harness.connector.validator.CEAwsConnectorValidator;
 import io.harness.connector.validator.CEAzureConnectorValidator;
 import io.harness.connector.validator.CEGcpConnectorValidator;
@@ -88,6 +114,7 @@ import io.harness.connector.validator.HttpHelmRepoConnectionValidator;
 import io.harness.connector.validator.JiraConnectorValidator;
 import io.harness.connector.validator.KubernetesConnectionValidator;
 import io.harness.connector.validator.NexusConnectorValidator;
+import io.harness.connector.validator.PhysicalDataCenterConnectorValidator;
 import io.harness.connector.validator.SecretManagerConnectorValidator;
 import io.harness.connector.validator.ServiceNowConnectorValidator;
 import io.harness.connector.validator.scmValidators.AwsCodeCommitValidator;
@@ -185,6 +212,10 @@ public class ConnectorRegistryFactory {
         new ConnectorRegistrar(ConnectorCategory.CLOUD_PROVIDER, AwsConnectorValidator.class,
             AwsValidationParamsProvider.class, AwsDTOToEntity.class, AwsEntityToDTO.class,
             NotSupportedValidationHandler.class));
+    registrar.put(ConnectorType.AZURE,
+        new ConnectorRegistrar(ConnectorCategory.CLOUD_PROVIDER, AzureConnectorValidator.class,
+            AzureValidationParamsProvider.class, AzureDTOToEntity.class, AzureEntityToDTO.class,
+            NotSupportedValidationHandler.class));
     registrar.put(ConnectorType.CE_AWS,
         new ConnectorRegistrar(ConnectorCategory.CLOUD_COST, CEAwsConnectorValidator.class,
             NoOpConnectorValidationParamsProvider.class, CEAwsDTOToEntity.class, CEAwsEntityToDTO.class,
@@ -245,6 +276,10 @@ public class ConnectorRegistryFactory {
         new ConnectorRegistrar(ConnectorCategory.MONITORING, ErrorTrackingConnectorValidator.class,
             CVConnectorParamsProvider.class, ErrorTrackingDTOToEntity.class, ErrorTrackingEntityToDTO.class,
             NotSupportedValidationHandler.class));
+    registrar.put(ConnectorType.PDC,
+        new ConnectorRegistrar(ConnectorCategory.CLOUD_PROVIDER, PhysicalDataCenterConnectorValidator.class,
+            PhysicalDataCenterConnectorValidationParamsProvider.class, PhysicalDataCenterDTOToEntity.class,
+            PhysicalDataCenterEntityToDTO.class, NotSupportedValidationHandler.class));
   }
 
   public static Class<? extends ConnectionValidator> getConnectorValidator(ConnectorType connectorType) {

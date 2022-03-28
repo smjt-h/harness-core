@@ -1,11 +1,13 @@
 /*
- * Copyright 2021 Harness Inc. All rights reserved.
+ * Copyright 2022 Harness Inc. All rights reserved.
  * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
  * that can be found in the licenses directory at the root of this repository, also available at
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
 package io.harness.cvng.dashboard.services.impl;
+
+import static io.harness.cvng.beans.DataSourceType.ERROR_TRACKING;
 
 import io.harness.cvng.analysis.beans.LiveMonitoringLogAnalysisClusterDTO;
 import io.harness.cvng.analysis.entities.LogAnalysisCluster;
@@ -22,7 +24,6 @@ import io.harness.cvng.core.beans.params.filterParams.LiveMonitoringLogAnalysisF
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
-import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.dashboard.beans.AnalyzedLogDataDTO;
 import io.harness.cvng.dashboard.beans.AnalyzedLogDataDTO.FrequencyDTO;
 import io.harness.cvng.dashboard.beans.AnalyzedLogDataDTO.LogData;
@@ -40,7 +41,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,7 +58,6 @@ public class LogDashboardServiceImpl implements LogDashboardService {
   @Inject private CVConfigService cvConfigService;
   @Inject private CVNGParallelExecutor cvngParallelExecutor;
   @Inject private VerificationTaskService verificationTaskService;
-  @Inject private MonitoredServiceService monitoredServiceService;
 
   @Override
   public PageResponse<AnalyzedLogDataDTO> getAnomalousLogs(String accountId, String projectIdentifier,
@@ -142,6 +141,10 @@ public class LogDashboardServiceImpl implements LogDashboardService {
     } else {
       configs = cvConfigService.list(monitoredServiceParams);
     }
+
+    // Limit to NOT include Error Tracking configs
+    configs = configs.stream().filter(config -> !ERROR_TRACKING.equals(config.getType())).collect(Collectors.toList());
+
     return configs;
   }
 
@@ -315,31 +318,5 @@ public class LogDashboardServiceImpl implements LogDashboardService {
       logDataList.add(data);
     });
     return logDataList;
-  }
-
-  private PageResponse<AnalyzedLogDataDTO> formPageResponse(
-      int page, int size, SortedSet<AnalyzedLogDataDTO> analyzedLogData) {
-    List<AnalyzedLogDataDTO> returnList = new ArrayList<>();
-
-    int totalNumPages = analyzedLogData.size() / size;
-    int startIndex = page * size;
-    Iterator<AnalyzedLogDataDTO> iterator = analyzedLogData.iterator();
-    int i = 0;
-    while (iterator.hasNext()) {
-      AnalyzedLogDataDTO analyzedLogDataDTO = iterator.next();
-      if (i >= startIndex && returnList.size() < size) {
-        returnList.add(analyzedLogDataDTO);
-      }
-      i++;
-    }
-
-    return PageResponse.<AnalyzedLogDataDTO>builder()
-        .pageSize(size)
-        .totalPages(totalNumPages)
-        .totalItems(analyzedLogData.size())
-        .pageIndex(returnList.size() == 0 ? -1 : page)
-        .empty(returnList.size() == 0)
-        .content(returnList)
-        .build();
   }
 }

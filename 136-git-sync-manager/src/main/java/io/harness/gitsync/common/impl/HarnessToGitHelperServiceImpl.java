@@ -9,6 +9,7 @@ package io.harness.gitsync.common.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.exception.SCMExceptionHints.INVALID_SCM_CREDENTIALS;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.UNSYNCED;
 
 import io.harness.annotations.dev.OwnedBy;
@@ -20,9 +21,13 @@ import io.harness.connector.services.ConnectorService;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
+import io.harness.eraro.ErrorCode;
 import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
 import io.harness.eventsframework.schemas.entity.EntityScopeInfo;
+import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.NestedExceptionUtils;
+import io.harness.exception.ScmException;
 import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.ChangeType;
@@ -62,9 +67,11 @@ import io.harness.security.dto.UserPrincipal;
 import io.harness.tasks.DecryptGitApiAccessHelper;
 import io.harness.utils.IdentifierRefHelper;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
@@ -169,7 +176,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
               -> gitBranchSyncService.createBranchSyncEvent(yamlGitConfigDTO.getAccountIdentifier(),
                   yamlGitConfigDTO.getOrganizationIdentifier(), yamlGitConfigDTO.getProjectIdentifier(),
                   yamlGitConfigDTO.getIdentifier(), yamlGitConfigDTO.getRepo(), pushInfo.getBranchName(),
-                  ScmGitUtils.createFilePath(pushInfo.getFolderPath(), pushInfo.getFilePath())));
+                  Arrays.asList(ScmGitUtils.createFilePath(pushInfo.getFolderPath(), pushInfo.getFilePath()))));
     }
   }
 
@@ -248,52 +255,62 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
         entityReference.getProjectIdentifier(), entityReference.getOrgIdentifier(), accountId, yamlGitConfigId);
 
     final InfoForGitPush infoForGitPush = getInfoForGitPush(request, entityDetailDTO, accountId, yamlGitConfig);
+    try {
+      switch (changeType) {
+        case MODIFY:
+          final UpdateFileResponse updateFileResponse =
+              scmOrchestratorService.processScmRequest(scmClientFacilitatorService
+                  -> scmClientFacilitatorService.updateFile(infoForGitPush),
+                  entityReference.getProjectIdentifier(), entityReference.getOrgIdentifier(), accountId);
 
-    switch (changeType) {
-      case MODIFY:
-        final UpdateFileResponse updateFileResponse =
-            scmOrchestratorService.processScmRequest(scmClientFacilitatorService
-                -> scmClientFacilitatorService.updateFile(infoForGitPush),
-                entityReference.getProjectIdentifier(), entityReference.getOrgIdentifier(), accountId);
-        return PushFileResponse.newBuilder()
-            .setAccountId(accountId)
-            .setError(updateFileResponse.getError())
-            .setScmResponseCode(updateFileResponse.getStatus())
-            .setStatus(1)
-            .setIsDefault(request.getBranch().equals(yamlGitConfig.getBranch()))
-            .setDefaultBranchName(yamlGitConfig.getBranch())
-            .setCommitId(updateFileResponse.getCommitId())
-            .build();
-      case ADD:
-        final CreateFileResponse createFileResponse =
-            scmOrchestratorService.processScmRequest(scmClientFacilitatorService
-                -> scmClientFacilitatorService.createFile(infoForGitPush),
-                entityReference.getProjectIdentifier(), entityReference.getOrgIdentifier(), accountId);
-        return PushFileResponse.newBuilder()
-            .setAccountId(accountId)
-            .setError(createFileResponse.getError())
-            .setScmResponseCode(createFileResponse.getStatus())
-            .setStatus(1)
-            .setIsDefault(request.getBranch().equals(yamlGitConfig.getBranch()))
-            .setDefaultBranchName(yamlGitConfig.getBranch())
-            .setCommitId(createFileResponse.getCommitId())
-            .build();
-      case DELETE:
-        final DeleteFileResponse deleteFileResponse =
-            scmOrchestratorService.processScmRequest(scmClientFacilitatorService
-                -> scmClientFacilitatorService.deleteFile(infoForGitPush),
-                entityReference.getProjectIdentifier(), entityReference.getOrgIdentifier(), accountId);
-        return PushFileResponse.newBuilder()
-            .setAccountId(accountId)
-            .setError(deleteFileResponse.getError())
-            .setScmResponseCode(deleteFileResponse.getStatus())
-            .setStatus(1)
-            .setIsDefault(request.getBranch().equals(yamlGitConfig.getBranch()))
-            .setDefaultBranchName(yamlGitConfig.getBranch())
-            .setCommitId(deleteFileResponse.getCommitId())
-            .build();
-      default:
-        throw new UnexpectedException("Unknown change type encountered.");
+          return PushFileResponse.newBuilder()
+              .setAccountId(accountId)
+              .setError(updateFileResponse.getError())
+              .setScmResponseCode(updateFileResponse.getStatus())
+              .setStatus(1)
+              .setIsDefault(request.getBranch().equals(yamlGitConfig.getBranch()))
+              .setDefaultBranchName(yamlGitConfig.getBranch())
+              .setCommitId(updateFileResponse.getCommitId())
+              .build();
+
+        case ADD:
+          final CreateFileResponse createFileResponse =
+              scmOrchestratorService.processScmRequest(scmClientFacilitatorService
+                  -> scmClientFacilitatorService.createFile(infoForGitPush),
+                  entityReference.getProjectIdentifier(), entityReference.getOrgIdentifier(), accountId);
+
+          return PushFileResponse.newBuilder()
+              .setAccountId(accountId)
+              .setError(createFileResponse.getError())
+              .setScmResponseCode(createFileResponse.getStatus())
+              .setStatus(1)
+              .setIsDefault(request.getBranch().equals(yamlGitConfig.getBranch()))
+              .setDefaultBranchName(yamlGitConfig.getBranch())
+              .setCommitId(createFileResponse.getCommitId())
+              .build();
+
+        case DELETE:
+          final DeleteFileResponse deleteFileResponse =
+              scmOrchestratorService.processScmRequest(scmClientFacilitatorService
+                  -> scmClientFacilitatorService.deleteFile(infoForGitPush),
+                  entityReference.getProjectIdentifier(), entityReference.getOrgIdentifier(), accountId);
+
+          return PushFileResponse.newBuilder()
+              .setAccountId(accountId)
+              .setError(deleteFileResponse.getError())
+              .setScmResponseCode(deleteFileResponse.getStatus())
+              .setStatus(1)
+              .setIsDefault(request.getBranch().equals(yamlGitConfig.getBranch()))
+              .setDefaultBranchName(yamlGitConfig.getBranch())
+              .setCommitId(deleteFileResponse.getCommitId())
+              .build();
+
+        default:
+          throw new UnexpectedException("Unknown change type encountered.");
+      }
+    } catch (Exception ex) {
+      processPushFileException(request, ex);
+      throw ex;
     }
   }
 
@@ -325,18 +342,6 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     final ScmConnector connectorConfig = (ScmConnector) connector.get().getConnector().getConnectorConfig();
     connectorConfig.setUrl(yamlGitConfig.getRepo());
 
-    // Incoming commit id could be a conflict resolved commit id for an entity
-    String lastCommitIdForFile = request.getCommitId() == null ? "" : request.getCommitId();
-    // Currently putting this BITBUCKET check to avoid a bug on GITHUB UpdateFile use-case
-    // https://harness.slack.com/archives/C029SDS22FN/p1645792247538309
-    // Once properly handled, this should be removed
-    if (connectorConfig.getConnectorType().equals(ConnectorType.BITBUCKET) && isEmpty(lastCommitIdForFile)
-        && request.getChangeType() != ChangeType.ADD) {
-      GitSyncEntityDTO gitSyncEntityDTO =
-          gitEntityService.get(entityDetailDTO.getEntityRef(), entityDetailDTO.getType(), request.getBranch());
-      lastCommitIdForFile = gitSyncEntityDTO.getLastCommitId();
-    }
-
     return InfoForGitPush.builder()
         .accountId(accountId)
         .orgIdentifier(entityDetailDTO.getEntityRef().getOrgIdentifier())
@@ -350,7 +355,41 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
         .oldFileSha(StringValueUtils.getStringFromStringValue(request.getOldFileSha()))
         .yaml(request.getYaml())
         .scmConnector(connectorConfig)
-        .commitId(lastCommitIdForFile)
+        .commitId(fetchLastCommitIdForFile(request, entityDetailDTO, connectorConfig))
         .build();
+  }
+
+  @VisibleForTesting
+  protected String fetchLastCommitIdForFile(FileInfo request, EntityDetail entityDetailDTO) {
+    // Incoming commit id could be a conflict resolved commit id for an entity
+    String lastCommitIdForFile = request.getCommitId() == null ? "" : request.getCommitId();
+    if (isEmpty(lastCommitIdForFile) && request.getChangeType() != ChangeType.ADD) {
+      // If its saveToNewBranch use-case, then we choose base branch for existing entity commit
+      String branch = request.getIsNewBranch() ? request.getBaseBranch().getValue() : request.getBranch();
+      GitSyncEntityDTO gitSyncEntityDTO =
+          gitEntityService.get(entityDetailDTO.getEntityRef(), entityDetailDTO.getType(), branch);
+      lastCommitIdForFile = gitSyncEntityDTO.getLastCommitId();
+    }
+    return lastCommitIdForFile;
+  }
+
+  @VisibleForTesting
+  protected void processPushFileException(FileInfo request, Exception ex) {
+    if (ExceptionUtils.cause(ErrorCode.SCM_UNAUTHORIZED, ex) != null) {
+      if (request.getIsFullSyncFlow() || request.getPrincipal().hasUserPrincipal()) {
+        throw NestedExceptionUtils.hintWithExplanationException(
+            INVALID_SCM_CREDENTIALS, ex.getMessage(), new ScmException(ErrorCode.SCM_UNAUTHORIZED));
+      }
+    }
+  }
+
+  private String fetchLastCommitIdForFile(
+      FileInfo request, EntityDetail entityDetailDTO, ScmConnector connectorConfig) {
+    // Perform fetch commit id ops for only bitbucket for now
+    if (ConnectorType.BITBUCKET.equals(connectorConfig.getConnectorType())) {
+      return fetchLastCommitIdForFile(request, entityDetailDTO);
+    }
+    // Return dummy commit id in other cases, will not be used anywhere
+    return "";
   }
 }

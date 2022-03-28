@@ -54,6 +54,7 @@ public class IntegrationStageConfig implements StageInfoConfig {
   @YamlSchemaTypes(value = {string})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   ParameterField<List<String>> sharedPaths;
+
   ExecutionElementConfig execution;
   @NotNull
   @JsonTypeInfo(

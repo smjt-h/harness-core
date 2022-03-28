@@ -142,6 +142,9 @@ BAZEL_MODULES="\
   //950-events-framework-monitor:module \
   //950-log-client:module \
   //951-cg-git-sync:module \
+  //951-debezium-service:module \
+  //952-debezium-engine:module \
+  //959-debezium-beans:module \
   //951-ng-audit-commons:module \
   //950-ng-authentication-service:module \
   //950-ng-core:module \
@@ -192,8 +195,8 @@ BAZEL_MODULES="\
   //990-commons-test:module \
   //999-annotations:module \
   //access-control/service:module \
-  //access-control/libraries/80-aggregator:module \
-  //access-control/libraries/90-core:module \
+  //access-control/libs/aggregator:module \
+  //access-control/libs/core:module \
   //access-control/contracts:module \
   //clients/access-control/admin-client:module \
   //clients/access-control/sdk:module \

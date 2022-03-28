@@ -64,15 +64,15 @@
         - name: DELEGATE_PROFILE
           value: "${delegateProfile}"
 </#macro>
+<#macro cgImmutableSpecific>
+        - name: DELEGATE_GROUP_NAME
+          value: "${delegateGroupName}"
+</#macro>
 <#macro ngSpecific>
         - name: DELEGATE_DESCRIPTION
           value: "${delegateDescription}"
         - name: DELEGATE_TAGS
           value: "${delegateTags}"
-        - name: DELEGATE_ORG_IDENTIFIER
-          value: "${delegateOrgIdentifier}"
-        - name: DELEGATE_PROJECT_IDENTIFIER
-          value: "${delegateProjectIdentifier}"
         - name: NEXT_GEN
           value: "true"
 </#macro>
