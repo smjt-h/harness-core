@@ -10,8 +10,10 @@ package io.harness.cdng.aws.service;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.IdentifierRef;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @OwnedBy(CDP)
@@ -29,4 +31,15 @@ public interface AwsHelperResourceService {
    * @return the list of all the cloudformation states
    */
   Set<String> getCFStates();
+
+  /**
+   * Get all the rolesARNs associated with the given computeProviderId and deployment type
+   *
+   * @param awsConnectorRef the IdentifierRef of the aws connector
+   * @param orgIdentifier the org identifier
+   * @param projectIdentifier the project identifier
+   *
+   * @return the list of rolesARNs
+   */
+  Map<String, String> getRolesARNs(IdentifierRef awsConnectorRef, String orgIdentifier, String projectIdentifier);
 }

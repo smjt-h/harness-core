@@ -44,6 +44,7 @@ public class AwsDelegateTask extends AbstractDelegateRunnableTask {
   @Inject private AwsNgConfigMapper awsNgConfigMapper;
   @Inject private NGErrorHelper ngErrorHelper;
   @Inject private AwsS3DelegateTaskHelper awsS3DelegateTaskHelper;
+  @Inject private AwsIAMDelegateTaskHelper awsIAMDelegateTaskHelper;
 
   public AwsDelegateTask(DelegateTaskPackage delegateTaskPackage, ILogStreamingTaskClient logStreamingTaskClient,
       Consumer<DelegateTaskResponse> consumer, BooleanSupplier preExecute) {
@@ -75,6 +76,8 @@ public class AwsDelegateTask extends AbstractDelegateRunnableTask {
         return handleValidateTask(awsTaskParams, encryptionDetails);
       case LIST_S3_BUCKETS:
         return awsS3DelegateTaskHelper.getS3Buckets(awsTaskParams);
+      case LIST_IAM_ROLES:
+        return awsIAMDelegateTaskHelper.getIAMRoleList(awsTaskParams);
       default:
         throw new InvalidRequestException("Task type not identified");
     }

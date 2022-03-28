@@ -7,13 +7,16 @@
 
 package io.harness.ng.core.aws.resources;
 
+import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.IdentifierRef;
 import io.harness.cdng.aws.service.AwsHelperResourceServiceImpl;
 import io.harness.ng.NextGenConfiguration;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.utils.IdentifierRefHelper;
 
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
@@ -23,10 +26,12 @@ import io.swagger.annotations.ApiResponses;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -66,5 +71,17 @@ public class AwsHelperResource {
   @ApiOperation(value = "Get all the Cloudformation states for a stack", nickname = "CFStatesForAwsHelper")
   public ResponseDTO<Set<String>> getCFStates() {
     return ResponseDTO.newResponse(awsHelperService.getCFStates());
+  }
+
+  @GET
+  @Path("getIamRoles")
+  @ApiOperation(value = "Get all the IAM roles", nickname = "getIamRolesForAwsHelper")
+  public ResponseDTO<Map<String, String>> getIamRoles(@NotNull @QueryParam("connectorRef") String awsConnectorRef,
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
+      @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier) {
+    IdentifierRef connectorRef =
+        IdentifierRefHelper.getIdentifierRef(awsConnectorRef, accountId, orgIdentifier, projectIdentifier);
+    return ResponseDTO.newResponse(awsHelperService.getRolesARNs(connectorRef, orgIdentifier, projectIdentifier));
   }
 }
