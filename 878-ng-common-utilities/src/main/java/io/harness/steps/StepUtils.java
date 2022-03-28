@@ -68,8 +68,6 @@ import io.harness.reflection.ReflectionUtils;
 import io.harness.serializer.KryoSerializer;
 import io.harness.tasks.ResponseData;
 import io.harness.tasks.Task;
-import io.harness.yaml.core.StepSpecType;
-import io.harness.yaml.core.failurestrategy.FailureStrategyConfig;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
@@ -426,16 +424,29 @@ public class StepUtils {
         return;
       }
 
-      Field fieldStepElement = stepElement.getClass().getDeclaredField("delegateSelectors");
-      stepElement.getDelegateSelectors()
       Optional<Method> method = Optional.of(ReflectionUtils.getMethod(stepParameters.getClass(), "getSpecParameters"));
       method.get().setAccessible(true);
       SpecParameters specParameters = (SpecParameters) method.get().invoke(stepParameters);
-      Field fieldVa = specParameters.getClass().getSuperclass().getDeclaredField("delegateSelectors");
+
+    /*  Field fieldVa = specParameters.getClass().getSuperclass().getDeclaredField("delegateSelectors");
       Field fieldVal = specParameters.getClass().getDeclaredField("test");
-      fieldVal.setAccessible(true);
-      //ReflectionUtils.setObjectField(fieldVal, specParameters.getClass().getSuperclass(), delegateSelectors);
-      fieldVal.set(stepElement, "testvalue");
+
+      Field f1 = stepElement.getStepSpecType().getStepParameters().getClass().getSuperclass().getDeclaredField("delegateSelectors");
+      f1.setAccessible(true);
+      f1.set(stepElement.getStepSpecType().getStepParameters(), delegateSelectors);
+*/
+      Field f4 = specParameters.getClass().getSuperclass().getDeclaredField("delegateSelectors");
+      f4.setAccessible(true);
+      f4.set(specParameters,delegateSelectors);
+
+      //Field f2 = stepElement.getStepSpecType().getStepParameters().getClass().getDeclaredField("test");
+      //f2.setAccessible(true);
+      //f2.set(stepElement.getStepSpecType().getStepParameters(), "testva");
+      //fieldVal.setAccessible(true);
+      //fieldVa.setAccessible(true);
+      //fieldVal.set(stepElement.getStepSpecType(), "testvalue");
+      //fieldVa.set(specParameters, delegateSelectors);
+      //fieldVa.set(stepElement.getStepSpecType(), delegateSelectors);
     } catch (Exception e) {
       throw new InvalidRequestException("Unable to get delegate selector");
     }
