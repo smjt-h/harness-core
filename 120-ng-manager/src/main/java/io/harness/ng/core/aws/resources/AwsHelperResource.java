@@ -55,33 +55,33 @@ public class AwsHelperResource {
   @GET
   @Path("regions")
   @ApiOperation(value = "Get all the AWS regions defined in the application", nickname = "RegionsForAwsHelper")
-  public ResponseDTO<Map<String, String>> getRegions() {
+  public ResponseDTO<Map<String, String>> listRegions() {
     return ResponseDTO.newResponse(configuration.getAwsRegionIdToName());
   }
 
   @GET
   @Path("cf-capabilities")
   @ApiOperation(value = "Get the Cloudformation capabilities", nickname = "CFCapabilitiesForAwsHelper")
-  public ResponseDTO<List<String>> getCFCapabilities() {
+  public ResponseDTO<List<String>> listCFCapabilities() {
     return ResponseDTO.newResponse(awsHelperService.getCapabilities());
   }
 
   @GET
   @Path("cf-states")
   @ApiOperation(value = "Get all the Cloudformation states for a stack", nickname = "CFStatesForAwsHelper")
-  public ResponseDTO<Set<String>> getCFStates() {
+  public ResponseDTO<Set<String>> listCFStates() {
     return ResponseDTO.newResponse(awsHelperService.getCFStates());
   }
 
   @GET
-  @Path("getIamRoles")
+  @Path("iam-roles")
   @ApiOperation(value = "Get all the IAM roles", nickname = "getIamRolesForAwsHelper")
-  public ResponseDTO<Map<String, String>> getIamRoles(@NotNull @QueryParam("connectorRef") String awsConnectorRef,
-      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
+  public ResponseDTO<Map<String, String>> listIamRoles(@NotNull @QueryParam("connectorRef") String awsConnectorRef,
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier) {
     IdentifierRef connectorRef =
-        IdentifierRefHelper.getIdentifierRef(awsConnectorRef, accountId, orgIdentifier, projectIdentifier);
+        IdentifierRefHelper.getIdentifierRef(awsConnectorRef, accountIdentifier, orgIdentifier, projectIdentifier);
     return ResponseDTO.newResponse(awsHelperService.getRolesARNs(connectorRef, orgIdentifier, projectIdentifier));
   }
 }
