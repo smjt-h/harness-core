@@ -48,21 +48,21 @@ public class AwsHelperResource {
   @Inject NextGenConfiguration configuration;
 
   @GET
-  @Path("Regions")
+  @Path("regions")
   @ApiOperation(value = "Get all the AWS regions defined in the application", nickname = "RegionsForAwsHelper")
   public ResponseDTO<Map<String, String>> getRegions() {
     return ResponseDTO.newResponse(configuration.getAwsRegionIdToName());
   }
 
   @GET
-  @Path("CFCapabilities")
+  @Path("cf-capabilities")
   @ApiOperation(value = "Get the Cloudformation capabilities", nickname = "CFCapabilitiesForAwsHelper")
   public ResponseDTO<List<String>> getCFCapabilities() {
     return ResponseDTO.newResponse(awsHelperService.getCapabilities());
   }
 
   @GET
-  @Path("CFStates")
+  @Path("cf-states")
   @ApiOperation(value = "Get all the Cloudformation states for a stack", nickname = "CFStatesForAwsHelper")
   public ResponseDTO<Set<String>> getCFStates() {
     return ResponseDTO.newResponse(awsHelperService.getCFStates());
