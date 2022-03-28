@@ -46,7 +46,7 @@ public class OrchestrationEndTagsResolveHandler implements OrchestrationEndObser
     if (optional.isPresent()) {
       PipelineExecutionSummaryEntity pipelineExecutionSummaryEntity = optional.get();
       List<NGTag> resolvedTags =
-          (List<NGTag>) pmsEngineExpressionService.resolve(ambiance, pipelineExecutionSummaryEntity.getTags(), true);
+          (List<NGTag>) pmsEngineExpressionService.resolve(ambiance, pipelineExecutionSummaryEntity.getTags());
       Update update = new Update().set(PlanExecutionSummaryKeys.tags, resolvedTags);
       pmsExecutionSummaryService.update(ambiance.getPlanExecutionId(), update);
     }
