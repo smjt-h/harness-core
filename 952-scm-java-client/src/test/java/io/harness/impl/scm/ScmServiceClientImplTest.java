@@ -23,13 +23,16 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.gitsync.GitFileDetails;
+import io.harness.beans.gitsync.GitWebhookDetails;
 import io.harness.category.element.UnitTests;
 import io.harness.constants.Constants;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.exception.ExplanationException;
+import io.harness.exception.UnexpectedException;
 import io.harness.product.ci.scm.proto.Commit;
 import io.harness.product.ci.scm.proto.CreateBranchResponse;
 import io.harness.product.ci.scm.proto.CreateFileResponse;
+import io.harness.product.ci.scm.proto.CreateWebhookResponse;
 import io.harness.product.ci.scm.proto.GetLatestCommitOnFileResponse;
 import io.harness.product.ci.scm.proto.GetLatestCommitResponse;
 import io.harness.product.ci.scm.proto.Provider;
@@ -180,6 +183,18 @@ public class ScmServiceClientImplTest extends CategoryTest {
     assertThat(updateFileResponse.equals(getErrorUpdateFileResponse(conflictCommitId))).isTrue();
   }
 
+  @Test
+  @Owner(developers = OwnerRule.MOHIT_GARG)
+  @Category(UnitTests.class)
+  public void testErrorForCreateWebhookAPI() {
+    when(scmGitProviderHelper.getSlug(any())).thenReturn(slug);
+    when(scmGitProviderMapper.mapToSCMGitProvider(any())).thenReturn(getGitProviderDefault());
+    when(scmServiceClient.getCreateWebhookRequest(any(), any(), any(), any(), any())).thenReturn(any());
+    when(scmBlockingStub.createWebhook(any())).thenReturn(CreateWebhookResponse.newBuilder().setStatus(300).build());
+    assertThatThrownBy(() -> scmServiceClient.createWebhook(scmConnector, getGitWebhookDetails(), scmBlockingStub))
+        .isInstanceOf(UnexpectedException.class);
+  }
+
   private GitFileDetails getGitFileDetailsDefault() {
     return GitFileDetails.builder()
         .filePath(filepath)
@@ -199,5 +214,13 @@ public class ScmServiceClientImplTest extends CategoryTest {
         .setError(Constants.SCM_CONFLICT_ERROR_MESSAGE)
         .setCommitId(commitId)
         .build();
+  }
+
+  private GitWebhookDetails getGitWebhookDetails() {
+    return GitWebhookDetails.builder().build();
+  }
+
+  private Provider getGitProviderDefault() {
+    return Provider.newBuilder().build();
   }
 }
