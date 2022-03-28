@@ -43,6 +43,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @TypeAlias("pipelineMetadata")
 @HarnessEntity(exportable = true)
 @StoreIn(DbAliases.PMS)
+@Deprecated
 public class PipelineMetadata {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()

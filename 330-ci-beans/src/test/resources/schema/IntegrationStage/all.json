@@ -918,6 +918,9 @@
         },
         {
           "type": "object",
+          "required": [
+            "payload"
+          ],
           "properties": {
             "payload": {
               "type": "string"
@@ -1804,7 +1807,8 @@
           "enum": [
             "KubernetesDirect",
             "UseFromStage",
-            "VM"
+            "VM",
+            "KubernetesHosted"
           ]
         }
       },
@@ -1903,6 +1907,9 @@
           "oneOf": [
             {
               "$ref": "#/definitions/K8sDirectInfraYaml"
+            },
+            {
+              "$ref": "#/definitions/K8sHostedInfraYaml"
             },
             {
               "$ref": "#/definitions/UseFromStageInfraYaml"
@@ -2279,7 +2286,8 @@
               "enum": [
                 "KubernetesDirect",
                 "UseFromStage",
-                "VM"
+                "VM",
+                "KubernetesHosted"
               ]
             }
           }
@@ -2372,6 +2380,47 @@
               "minLength": 1
             }
           ]
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "K8sHostedInfraYaml": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Infrastructure"
+        },
+        {
+          "type": "object",
+          "required": [
+            "spec",
+            "type"
+          ],
+          "properties": {
+            "spec": {
+              "$ref": "#/definitions/K8sHostedInfraYamlSpec"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "KubernetesDirect",
+                "UseFromStage",
+                "VM",
+                "KubernetesHosted"
+              ]
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "K8sHostedInfraYamlSpec": {
+      "type": "object",
+      "required": [
+        "identifier"
+      ],
+      "properties": {
+        "identifier": {
+          "type": "string"
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -3176,15 +3225,27 @@
         },
         {
           "type": "object",
+          "required": [
+            "policySets"
+          ],
           "properties": {
             "metadata": {
               "type": "string"
             },
             "policySets": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
             },
             "type": {
               "type": "string"
@@ -5515,6 +5576,7 @@
           "required": [
             "bucket",
             "connectorRef",
+            "region",
             "sourcePath"
           ],
           "properties": {
@@ -5674,7 +5736,8 @@
               "enum": [
                 "KubernetesDirect",
                 "UseFromStage",
-                "VM"
+                "VM",
+                "KubernetesHosted"
               ]
             }
           }

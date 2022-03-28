@@ -290,7 +290,6 @@ public class ConnectorServiceImpl implements ConnectorService {
     validateTheConnectorTypeIsNotChanged(existingConnector.getConnectorType(), connectorInfo.getConnectorType(),
         accountIdentifier, connectorInfo.getOrgIdentifier(), connectorInfo.getProjectIdentifier(),
         connectorInfo.getIdentifier());
-    validateNameIsUnique(connectorInfo, accountIdentifier, existingConnector.getIdentifier());
   }
 
   private void validateNameIsUnique(ConnectorInfoDTO connectorInfo, String accountIdentifier, String identifier) {
@@ -615,8 +614,8 @@ public class ConnectorServiceImpl implements ConnectorService {
   }
 
   @Override
-  public ConnectorCatalogueResponseDTO getConnectorCatalogue() {
-    return defaultConnectorService.getConnectorCatalogue();
+  public ConnectorCatalogueResponseDTO getConnectorCatalogue(String accountIdentifier) {
+    return defaultConnectorService.getConnectorCatalogue(accountIdentifier);
   }
 
   @Override
