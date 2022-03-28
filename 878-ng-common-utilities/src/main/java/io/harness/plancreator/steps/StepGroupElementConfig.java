@@ -10,6 +10,7 @@ package io.harness.plancreator.steps;
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.SwaggerConstants;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.EntityName;
 import io.harness.plancreator.execution.ExecutionWrapperConfig;
@@ -59,4 +60,6 @@ public class StepGroupElementConfig {
 
   List<FailureStrategyConfig> failureStrategies;
   @NotNull @Size(min = 1) List<ExecutionWrapperConfig> steps;
+
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH) ParameterField<List<String>> delegateSelectors;
 }

@@ -10,6 +10,7 @@ package io.harness.steps;
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.pms.yaml.YAMLFieldNameConstants.DELEGATE_SELECTORS;
 
 import static software.wings.beans.LogHelper.COMMAND_UNIT_PLACEHOLDER;
 
@@ -39,6 +40,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logstreaming.LogStreamingHelper;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.Status;
@@ -47,17 +49,23 @@ import io.harness.pms.contracts.execution.tasks.TaskCategory;
 import io.harness.pms.contracts.execution.tasks.TaskRequest;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.StatusUtils;
+import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.pms.sdk.core.steps.io.StepResponse.StepResponseBuilder;
 import io.harness.pms.sdk.core.steps.io.StepResponseNotifyData;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.pms.yaml.YamlField;
+import io.harness.pms.yaml.YamlNode;
+import io.harness.pms.yaml.YamlUtils;
 import io.harness.serializer.KryoSerializer;
 import io.harness.tasks.ResponseData;
 import io.harness.tasks.Task;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -385,5 +393,20 @@ public class StepUtils {
         throw new InvalidRequestException(
             "Unhandled type CommandExecutionStatus: " + commandExecutionStatus, WingsException.USER);
     }
+  }
+
+  public static ParameterField<List<TaskSelectorYaml>> delegateSelectorsFromFqn(PlanCreationContext ctx, String fqn)
+      throws IOException {
+    ParameterField<List<TaskSelectorYaml>> delegateSelectors = null;
+    YamlNode node = YamlUtils.getGivenYamlNodeFromParentPath(ctx.getCurrentField().getNode(), fqn);
+    if (node == null) {
+      return delegateSelectors;
+    }
+    YamlField delegateSelectorStageField = node.getField(DELEGATE_SELECTORS);
+    if (delegateSelectorStageField != null) {
+      return YamlUtils.read(delegateSelectorStageField.getNode().toString(),
+          new TypeReference<ParameterField<List<TaskSelectorYaml>>>() {});
+    }
+    return delegateSelectors;
   }
 }

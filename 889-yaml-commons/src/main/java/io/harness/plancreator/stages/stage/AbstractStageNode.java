@@ -62,6 +62,8 @@ public abstract class AbstractStageNode {
   List<NGVariable> variables;
   Map<String, String> tags;
 
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH) ParameterField<List<String>> delegateSelectors;
+
   @JsonIgnore public abstract String getType();
   @JsonIgnore public abstract StageInfoConfig getStageInfoConfig();
 }
