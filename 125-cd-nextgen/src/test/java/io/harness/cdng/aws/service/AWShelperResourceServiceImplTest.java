@@ -10,7 +10,7 @@ package io.harness.cdng.aws.service;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.rule.OwnerRule.NGONZALEZ;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.powermock.api.mockito.PowerMockito.doReturn;
@@ -66,7 +66,7 @@ public class AWShelperResourceServiceImplTest extends CategoryTest {
     doReturn(mockAwsIAMRolesResponse).when(serviceHelper).getResponseData(any(), any(), anyString());
     IdentifierRef mockIdentifierRef = IdentifierRef.builder().build();
     service.getRolesARNs(mockIdentifierRef, "foo", "bar");
-    assertEquals(2, mockAwsIAMRolesResponse.getRoles().size());
+    assertThat(mockAwsIAMRolesResponse.getRoles().size()).isEqualTo(2);
   }
 
   @Test(expected = AwsIAMRolesException.class)

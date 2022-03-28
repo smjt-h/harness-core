@@ -9,8 +9,8 @@ package io.harness.aws;
 
 import static io.harness.rule.OwnerRule.NGONZALEZ;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.joor.Reflect.on;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -66,7 +66,7 @@ public class AwsClientTest extends CategoryTest {
     doNothing().when(mockTracker).trackCFCall(anyString());
     on(service).set("tracker", mockTracker);
     Map<String, String> map = service.listIAMRoles(any());
-    assertEquals(1, map.size());
+    assertThat(map.size()).isEqualTo(1);
   }
 
   @Test
