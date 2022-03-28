@@ -315,7 +315,7 @@ public class ServiceLevelObjectiveResourceTest extends CvNextGenTestBase {
   @Test
   @Owner(developers = KAPIL)
   @Category(UnitTests.class)
-  public void testGetServiceLevelObjectiveLogs_withMissingLogType() throws IOException {
+  public void testGetServiceLevelObjectiveLogs_withIncorrectLogType() throws IOException {
     Instant startTime = CVNGTestConstants.FIXED_TIME_FOR_TESTS.instant().minusSeconds(5);
     Instant endTime = CVNGTestConstants.FIXED_TIME_FOR_TESTS.instant();
     ServiceLevelObjectiveDTO sloDTO = builderFactory.getServiceLevelObjectiveDTOBuilder().build();
@@ -325,14 +325,15 @@ public class ServiceLevelObjectiveResourceTest extends CvNextGenTestBase {
                               .queryParam("accountId", builderFactory.getContext().getAccountId())
                               .queryParam("orgIdentifier", builderFactory.getContext().getOrgIdentifier())
                               .queryParam("projectIdentifier", builderFactory.getContext().getProjectIdentifier())
+                              .queryParam("logType", "executionlog")
                               .queryParam("startTime", startTime.toEpochMilli())
                               .queryParam("endTime", endTime.toEpochMilli())
                               .queryParam("pageNumber", 0)
                               .queryParam("pageSize", 10);
 
     Response response = webTarget.request(MediaType.APPLICATION_JSON_TYPE).get();
-    assertThat(response.getStatus()).isEqualTo(500);
-    assertThat(response.readEntity(String.class)).contains("java.lang.NullPointerException");
+    assertThat(response.getStatus()).isEqualTo(400);
+    assertThat(response.readEntity(String.class)).contains("Failed to convert query param logType to CVNGLogType");
   }
 
   private static String convertToJson(String yamlString) {
