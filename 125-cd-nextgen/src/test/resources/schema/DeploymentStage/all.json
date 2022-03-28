@@ -6,6 +6,12 @@
     "type"
   ],
   "properties": {
+    "delegateSelectors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "description": {
       "type": "string"
     },
@@ -919,6 +925,12 @@
         "type"
       ],
       "properties": {
+        "delegateSelectors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "description": {
           "type": "string"
         },
@@ -5722,6 +5734,12 @@
         "steps"
       ],
       "properties": {
+        "delegateSelectors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "failureStrategies": {
           "type": "array",
           "items": {
