@@ -9,6 +9,8 @@ package io.harness.serverless;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Objects;
+
 public class ServerlessClient {
   private String serverlessPath;
 
@@ -64,5 +66,18 @@ public class ServerlessClient {
 
   public static String home(String directory) {
     return "HOME=" + directory + " ";
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    ServerlessClient that = (ServerlessClient) o;
+    return Objects.equals(serverlessPath, that.serverlessPath);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(serverlessPath);
   }
 }
