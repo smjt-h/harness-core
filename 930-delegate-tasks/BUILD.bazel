@@ -11,8 +11,7 @@ java_library(
     resource_jars = [
         "//930-delegate-tasks/src/main/proto/io/harness:930_delegate_tasks_java_proto",
     ],
-    resources = [
-    ],
+    resources = glob(["src/main/resources/**/*"]),
     visibility = ["//visibility:public"],
     deps = [
         "//:lombok",
@@ -77,6 +76,7 @@ java_library(
         "@maven//:commons_io_commons_io",
         "@maven//:io_cloudsoft_windows_winrm4j",
         "@maven//:io_cloudsoft_windows_winrm4j_client",
+        "@maven//:io_dropwizard_dropwizard_views_freemarker",
         "@maven//:io_fabric8_fabric8_utils",
         "@maven//:io_fabric8_kubernetes_api",
         "@maven//:io_fabric8_kubernetes_client",
