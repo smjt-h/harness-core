@@ -57,6 +57,7 @@ public class CustomHealthSourceMetricSpecTest extends CvNextGenTestBase {
   String name = "customhealthsource";
   BuilderFactory builderFactory;
   String monitoredServiceIdentifier = generateUuid();
+  String healthSourceIdentifier = generateUuid();
   MetricResponseMapping responseMapping;
   @Inject MetricPackService metricPackService;
 
@@ -87,8 +88,8 @@ public class CustomHealthSourceMetricSpecTest extends CvNextGenTestBase {
     existingCVConfigs.add(existingCVConfig);
 
     HealthSource.CVConfigUpdateResult result = customHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, "1234234_iden", "healthsource",
-        existingCVConfigs, metricPackService);
+        projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, healthSourceIdentifier,
+        "1234234_iden", "healthsource", existingCVConfigs, metricPackService);
 
     MetricPack.MetricDefinition metricDefinition1 =
         MetricPack.MetricDefinition.builder().name("metric1").thresholds(new ArrayList<>()).included(true).build();
@@ -136,8 +137,8 @@ public class CustomHealthSourceMetricSpecTest extends CvNextGenTestBase {
     existingCVConfigs.add(existingCVConfig);
 
     HealthSource.CVConfigUpdateResult result = customHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, "1234234_iden", "healthsource",
-        existingCVConfigs, metricPackService);
+        projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, healthSourceIdentifier,
+        "1234234_iden", "healthsource", existingCVConfigs, metricPackService);
 
     List<CustomHealthMetricCVConfig> deletedConfigs = new ArrayList<>();
     deletedConfigs.add(builderFactory.customHealthMetricCVConfigBuilder("metric_2", false, true, true, responseMapping,
@@ -163,8 +164,8 @@ public class CustomHealthSourceMetricSpecTest extends CvNextGenTestBase {
     existingCVConfigs.add(existingCVConfig);
 
     HealthSource.CVConfigUpdateResult result = customHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, "1234234_iden", "healthsource",
-        existingCVConfigs, metricPackService);
+        projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, healthSourceIdentifier,
+        "1234234_iden", "healthsource", existingCVConfigs, metricPackService);
 
     List<CustomHealthMetricCVConfig> updatedConfigs = new ArrayList<>();
     updatedConfigs.add(builderFactory.customHealthMetricCVConfigBuilder(metricName, false, true, false, responseMapping,
@@ -301,7 +302,7 @@ public class CustomHealthSourceMetricSpecTest extends CvNextGenTestBase {
     List<CustomHealthMetricCVConfig> configs =
         customHealthSourceSpec
             .getCVConfigs(accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef,
-                monitoredServiceIdentifier, identifier, name)
+                monitoredServiceIdentifier, healthSourceIdentifier, identifier, name)
             .values()
             .stream()
             .collect(Collectors.toList());

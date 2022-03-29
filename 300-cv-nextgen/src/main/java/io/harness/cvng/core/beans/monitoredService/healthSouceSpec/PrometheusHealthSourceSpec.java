@@ -54,14 +54,14 @@ public class PrometheusHealthSourceSpec extends MetricHealthSourceSpec {
 
   @Override
   public CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier, String projectIdentifier,
-      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String identifier, String name,
-      List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String healthSourceIdentifier,
+      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
     metricDefinitions.forEach(metricDefinition -> {
       metricDefinition.setServiceIdentifier(serviceRef);
       metricDefinition.setEnvIdentifier(environmentRef);
     });
     List<PrometheusCVConfig> cvConfigsFromThisObj = toCVConfigs(accountId, orgIdentifier, projectIdentifier,
-        environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
+        environmentRef, serviceRef, monitoredServiceIdentifier, healthSourceIdentifier, identifier, name);
     Map<Key, PrometheusCVConfig> existingConfigMap = new HashMap<>();
 
     List<PrometheusCVConfig> existingSDCVConfigs = (List<PrometheusCVConfig>) (List<?>) existingCVConfigs;
@@ -113,7 +113,8 @@ public class PrometheusHealthSourceSpec extends MetricHealthSourceSpec {
   }
 
   private List<PrometheusCVConfig> toCVConfigs(String accountId, String orgIdentifier, String projectIdentifier,
-      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String identifier, String name) {
+      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String healthSourceIdentifier,
+      String identifier, String name) {
     List<PrometheusCVConfig> cvConfigs = new ArrayList<>();
     // One cvConfig per service+environment+groupName+category.
     Map<Key, List<PrometheusMetricDefinition>> keyDefinitionMap = new HashMap<>();
@@ -139,6 +140,7 @@ public class PrometheusHealthSourceSpec extends MetricHealthSourceSpec {
                                         .serviceIdentifier(serviceRef)
                                         .category(category)
                                         .monitoredServiceIdentifier(monitoredServiceIdentifier)
+                                        .healthSourceIdentifier(healthSourceIdentifier)
                                         .build();
 
       cvConfig.populateFromMetricDefinitions(definitionList, category);

@@ -45,6 +45,7 @@ public class StackdriverMetricHealthSourceSpecTest {
   String identifier;
   String name;
   String monitoredServiceIdentifier;
+  String healthSourceIdentifier;
   String metricName;
   BuilderFactory builderFactory;
   StackdriverMetricHealthSourceSpec stackdriverMetricHealthSourceSpec;
@@ -61,6 +62,7 @@ public class StackdriverMetricHealthSourceSpecTest {
     metricName = "sampleMetric";
     monitoredServiceIdentifier = generateUuid();
     identifier = "identifier";
+    healthSourceIdentifier = generateUuid();
     name = "some-name";
     stackdriverMetricHealthSourceSpec =
         StackdriverMetricHealthSourceSpec.builder().connectorRef(connectorIdentifier).build();
@@ -98,7 +100,7 @@ public class StackdriverMetricHealthSourceSpecTest {
 
     HealthSource.CVConfigUpdateResult cvConfigUpdateResult = stackdriverMetricHealthSourceSpec.getCVConfigUpdateResult(
         accountId, orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier,
-        identifier, name, Collections.emptyList(), null);
+        healthSourceIdentifier, identifier, name, Collections.emptyList(), null);
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isNotEmpty();
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
@@ -154,7 +156,7 @@ public class StackdriverMetricHealthSourceSpecTest {
 
     HealthSource.CVConfigUpdateResult cvConfigUpdateResult = stackdriverMetricHealthSourceSpec.getCVConfigUpdateResult(
         accountId, orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier,
-        identifier, name, Collections.emptyList(), null);
+        healthSourceIdentifier, identifier, name, Collections.emptyList(), null);
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isNotEmpty();
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();

@@ -54,11 +54,13 @@ public class ErrorTrackingHealthSourceSpec extends HealthSourceSpec {
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
       String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
-      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+      String healthSourceIdentifier, String identifier, String name, List<CVConfig> existingCVConfigs,
+      MetricPackService metricPackService) {
     Map<ErrorTrackingHealthSourceSpec.Key, ErrorTrackingCVConfig> existingConfigMap =
         getExistingCVConfigMap(existingCVConfigs);
-    Map<ErrorTrackingHealthSourceSpec.Key, ErrorTrackingCVConfig> currentConfigMap = getCurrentCVConfigMap(accountId,
-        orgIdentifier, projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
+    Map<ErrorTrackingHealthSourceSpec.Key, ErrorTrackingCVConfig> currentConfigMap =
+        getCurrentCVConfigMap(accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef,
+            monitoredServiceIdentifier, healthSourceIdentifier, identifier, name);
 
     Set<ErrorTrackingHealthSourceSpec.Key> deleted =
         Sets.difference(existingConfigMap.keySet(), currentConfigMap.keySet());
@@ -84,7 +86,8 @@ public class ErrorTrackingHealthSourceSpec extends HealthSourceSpec {
   }
 
   private List<ErrorTrackingCVConfig> toCVConfigs(String accountId, String orgIdentifier, String projectIdentifier,
-      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String identifier, String name) {
+      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String healthSourceIdentifier,
+      String identifier, String name) {
     List<ErrorTrackingCVConfig> cvConfigs = new ArrayList<>();
     ErrorTrackingCVConfig errorTrackingCVConfig = ErrorTrackingCVConfig.builder()
                                                       .accountId(accountId)
@@ -100,6 +103,7 @@ public class ErrorTrackingHealthSourceSpec extends HealthSourceSpec {
                                                       .query(serviceRef + ":" + environmentRef)
                                                       .category(CVMonitoringCategory.ERRORS)
                                                       .monitoredServiceIdentifier(monitoredServiceIdentifier)
+                                                      .healthSourceIdentifier(healthSourceIdentifier)
                                                       .build();
     cvConfigs.add(errorTrackingCVConfig);
     return cvConfigs;
@@ -117,9 +121,9 @@ public class ErrorTrackingHealthSourceSpec extends HealthSourceSpec {
 
   private Map<ErrorTrackingHealthSourceSpec.Key, ErrorTrackingCVConfig> getCurrentCVConfigMap(String accountId,
       String orgIdentifier, String projectIdentifier, String environmentRef, String serviceRef,
-      String monitoredServiceIdentifier, String identifier, String name) {
+      String monitoredServiceIdentifier, String healthSourceIdentifier, String identifier, String name) {
     List<ErrorTrackingCVConfig> cvConfigsFromThisObj = toCVConfigs(accountId, orgIdentifier, projectIdentifier,
-        environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
+        environmentRef, serviceRef, monitoredServiceIdentifier, healthSourceIdentifier, identifier, name);
     Map<ErrorTrackingHealthSourceSpec.Key, ErrorTrackingCVConfig> currentCVConfigsMap = new HashMap<>();
     for (ErrorTrackingCVConfig cvConfig : cvConfigsFromThisObj) {
       currentCVConfigsMap.put(getKeyFromCVConfig(cvConfig), cvConfig);

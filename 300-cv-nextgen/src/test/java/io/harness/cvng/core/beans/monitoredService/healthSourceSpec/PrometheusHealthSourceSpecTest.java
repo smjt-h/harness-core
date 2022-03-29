@@ -50,6 +50,7 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
   String identifier;
   String name;
   String monitoredServiceIdentifier;
+  String healthSourceIdentifier;
   BuilderFactory builderFactory;
   PrometheusHealthSourceSpec prometheusHealthSourceSpec;
 
@@ -64,6 +65,7 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
     connectorIdentifier = "connectorRef";
     monitoredServiceIdentifier = generateUuid();
     identifier = "identifier";
+    healthSourceIdentifier = generateUuid();
     name = "some-name";
     prometheusHealthSourceSpec = PrometheusHealthSourceSpec.builder().connectorRef(connectorIdentifier).build();
   }
@@ -97,9 +99,9 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
             .build();
     prometheusHealthSourceSpec.setMetricDefinitions(Arrays.asList(metricDefinition));
 
-    CVConfigUpdateResult cvConfigUpdateResult =
-        prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, monitoredServiceIdentifier, identifier, name, Collections.emptyList(), null);
+    CVConfigUpdateResult cvConfigUpdateResult = prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId,
+        orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier,
+        healthSourceIdentifier, identifier, name, Collections.emptyList(), null);
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isNotEmpty();
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
@@ -175,9 +177,9 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
                              .build())
             .build();
     prometheusHealthSourceSpec.setMetricDefinitions(Arrays.asList(metricDefinition, metricDefinition2));
-    CVConfigUpdateResult cvConfigUpdateResult =
-        prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, monitoredServiceIdentifier, identifier, name, Collections.emptyList(), null);
+    CVConfigUpdateResult cvConfigUpdateResult = prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId,
+        orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier,
+        healthSourceIdentifier, identifier, name, Collections.emptyList(), null);
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isNotEmpty();
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
@@ -240,9 +242,9 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
             .build();
     prometheusHealthSourceSpec.setMetricDefinitions(Arrays.asList(metricDefinition2));
 
-    CVConfigUpdateResult cvConfigUpdateResult =
-        prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, monitoredServiceIdentifier, identifier, name, Arrays.asList(createCVConfig()), null);
+    CVConfigUpdateResult cvConfigUpdateResult = prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId,
+        orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier,
+        healthSourceIdentifier, identifier, name, Arrays.asList(createCVConfig()), null);
 
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isEmpty();
@@ -281,9 +283,9 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
             .build();
     prometheusHealthSourceSpec.setMetricDefinitions(Arrays.asList(metricDefinition2));
 
-    CVConfigUpdateResult cvConfigUpdateResult =
-        prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, monitoredServiceIdentifier, identifier, name, Arrays.asList(createCVConfig()), null);
+    CVConfigUpdateResult cvConfigUpdateResult = prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId,
+        orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier,
+        healthSourceIdentifier, identifier, name, Arrays.asList(createCVConfig()), null);
 
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isNotEmpty();
@@ -329,9 +331,9 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
             .build();
     prometheusHealthSourceSpec.setMetricDefinitions(Arrays.asList(metricDefinition));
 
-    CVConfigUpdateResult cvConfigUpdateResult =
-        prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, monitoredServiceIdentifier, identifier, name, Collections.emptyList(), null);
+    CVConfigUpdateResult cvConfigUpdateResult = prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId,
+        orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier,
+        healthSourceIdentifier, identifier, name, Collections.emptyList(), null);
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isNotEmpty();
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
@@ -397,9 +399,9 @@ public class PrometheusHealthSourceSpecTest extends CvNextGenTestBase {
             .build();
     prometheusHealthSourceSpec.setMetricDefinitions(Arrays.asList(metricDefinition));
 
-    CVConfigUpdateResult cvConfigUpdateResult =
-        prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, monitoredServiceIdentifier, identifier, name, Collections.emptyList(), null);
+    CVConfigUpdateResult cvConfigUpdateResult = prometheusHealthSourceSpec.getCVConfigUpdateResult(accountId,
+        orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier,
+        healthSourceIdentifier, identifier, name, Collections.emptyList(), null);
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isNotEmpty();
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();

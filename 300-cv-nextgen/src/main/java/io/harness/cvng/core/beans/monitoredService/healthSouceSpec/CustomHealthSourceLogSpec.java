@@ -42,13 +42,14 @@ public class CustomHealthSourceLogSpec extends HealthSourceSpec {
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
       String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
-      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+      String healthSourceIdentifier, String identifier, String name, List<CVConfig> existingCVConfigs,
+      MetricPackService metricPackService) {
     List<CustomHealthLogCVConfig> existingDBCVConfigs = (List<CustomHealthLogCVConfig>) (List<?>) existingCVConfigs;
     Map<String, CustomHealthLogCVConfig> existingConfigs = new HashMap<>();
     existingDBCVConfigs.forEach(config -> existingConfigs.put(config.getQueryName(), config));
 
     Map<String, CustomHealthLogCVConfig> currentCVConfigs = getCVConfigs(accountId, orgIdentifier, projectIdentifier,
-        environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
+        environmentRef, serviceRef, monitoredServiceIdentifier, healthSourceIdentifier, identifier, name);
 
     Set<String> deleted = Sets.difference(existingConfigs.keySet(), currentCVConfigs.keySet());
     Set<String> added = Sets.difference(currentCVConfigs.keySet(), existingConfigs.keySet());
@@ -68,7 +69,7 @@ public class CustomHealthSourceLogSpec extends HealthSourceSpec {
 
   public Map<String, CustomHealthLogCVConfig> getCVConfigs(String accountId, String orgIdentifier,
       String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
-      String identifier, String name) {
+      String healthSourceIdentifier, String identifier, String name) {
     Map<String, CustomHealthLogCVConfig> cvConfigMap = new HashMap<>();
     logDefinitions.forEach(logDefinition -> {
       String queryName = logDefinition.getQueryName();
@@ -92,6 +93,7 @@ public class CustomHealthSourceLogSpec extends HealthSourceSpec {
               .connectorIdentifier(getConnectorRef())
               .identifier(identifier)
               .monitoredServiceIdentifier(monitoredServiceIdentifier)
+              .healthSourceIdentifier(healthSourceIdentifier)
               .logMessageJsonPath(logDefinition.getLogMessageJsonPath())
               .timestampJsonPath(logDefinition.getTimestampJsonPath())
               .serviceInstanceJsonPath(logDefinition.getServiceInstanceJsonPath())

@@ -66,13 +66,15 @@ public class DynatraceHealthSourceSpec extends MetricHealthSourceSpec {
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
       String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
-      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+      String healthSourceIdentifier, String identifier, String name, List<CVConfig> existingCVConfigs,
+      MetricPackService metricPackService) {
     List<DynatraceCVConfig> cvConfigsFromThisObj = toCVConfigs(ProjectParams.builder()
                                                                    .accountIdentifier(accountId)
                                                                    .orgIdentifier(orgIdentifier)
                                                                    .projectIdentifier(projectIdentifier)
                                                                    .build(),
-        environmentRef, serviceRef, identifier, name, monitoredServiceIdentifier, metricPackService);
+        environmentRef, serviceRef, identifier, name, monitoredServiceIdentifier, healthSourceIdentifier,
+        metricPackService);
     Map<Key, DynatraceCVConfig> existingConfigMap = new HashMap<>();
     List<DynatraceCVConfig> existingDynatraceCVConfig = (List<DynatraceCVConfig>) (List<?>) existingCVConfigs;
     for (DynatraceCVConfig dynatraceCVConfig : existingDynatraceCVConfig) {
@@ -98,7 +100,8 @@ public class DynatraceHealthSourceSpec extends MetricHealthSourceSpec {
   }
 
   private List<DynatraceCVConfig> toCVConfigs(ProjectParams projectParams, String environmentRef, String serviceRef,
-      String identifier, String name, String monitoredServiceIdentifier, MetricPackService metricPackService) {
+      String identifier, String name, String monitoredServiceIdentifier, String healthSourceIdentifier,
+      MetricPackService metricPackService) {
     List<DynatraceCVConfig> cvConfigs = new ArrayList<>();
     // map metric packs to cvConfigs
     CollectionUtils.emptyIfNull(metricPacks).forEach(metricPack -> {
@@ -110,6 +113,7 @@ public class DynatraceHealthSourceSpec extends MetricHealthSourceSpec {
                                        .projectIdentifier(projectParams.getProjectIdentifier())
                                        .identifier(identifier)
                                        .monitoredServiceIdentifier(monitoredServiceIdentifier)
+                                       .healthSourceIdentifier(healthSourceIdentifier)
                                        .connectorIdentifier(getConnectorRef())
                                        .monitoringSourceName(name)
                                        .productName(feature)
@@ -138,6 +142,7 @@ public class DynatraceHealthSourceSpec extends MetricHealthSourceSpec {
                                    .projectIdentifier(projectParams.getProjectIdentifier())
                                    .identifier(identifier)
                                    .monitoredServiceIdentifier(monitoredServiceIdentifier)
+                                   .healthSourceIdentifier(healthSourceIdentifier)
                                    .connectorIdentifier(getConnectorRef())
                                    .monitoringSourceName(name)
                                    .productName(feature)

@@ -58,7 +58,8 @@ public class CustomHealthSourceMetricSpec extends MetricHealthSourceSpec {
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
       String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
-      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+      String healthSourceIdentifier, String identifier, String name, List<CVConfig> existingCVConfigs,
+      MetricPackService metricPackService) {
     List<CustomHealthMetricCVConfig> existingDBCVConfigs =
         (List<CustomHealthMetricCVConfig>) (List<?>) existingCVConfigs;
     Map<Key, CustomHealthMetricCVConfig> existingConfigs = new HashMap<>();
@@ -71,7 +72,7 @@ public class CustomHealthSourceMetricSpec extends MetricHealthSourceSpec {
             config));
 
     Map<Key, CustomHealthMetricCVConfig> currentCVConfigs = getCVConfigs(accountId, orgIdentifier, projectIdentifier,
-        environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
+        environmentRef, serviceRef, monitoredServiceIdentifier, healthSourceIdentifier, identifier, name);
     Set<Key> deleted = Sets.difference(existingConfigs.keySet(), currentCVConfigs.keySet());
     Set<Key> added = Sets.difference(currentCVConfigs.keySet(), existingConfigs.keySet());
     Set<Key> updated = Sets.intersection(existingConfigs.keySet(), currentCVConfigs.keySet());
@@ -95,7 +96,7 @@ public class CustomHealthSourceMetricSpec extends MetricHealthSourceSpec {
 
   public Map<Key, CustomHealthMetricCVConfig> getCVConfigs(String accountId, String orgIdentifier,
       String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
-      String identifier, String name) {
+      String healthSourceIdentifier, String identifier, String name) {
     Map<Key, CustomHealthMetricCVConfig> cvConfigMap = new HashMap<>();
     metricDefinitions.forEach(metricDefinition -> {
       CustomHealthRequestDefinition customHealthDefinition = metricDefinition.getRequestDefinition();
@@ -151,6 +152,7 @@ public class CustomHealthSourceMetricSpec extends MetricHealthSourceSpec {
                                                       .connectorIdentifier(getConnectorRef())
                                                       .monitoringSourceName(name)
                                                       .monitoredServiceIdentifier(monitoredServiceIdentifier)
+                                                      .healthSourceIdentifier(healthSourceIdentifier)
                                                       .build();
       mappedCVConfig.setMetricPack(mappedCVConfig.generateMetricPack(
           metricDefinition.getIdentifier(), metricDefinition.getMetricName(), metricDefinition.getRiskProfile()));

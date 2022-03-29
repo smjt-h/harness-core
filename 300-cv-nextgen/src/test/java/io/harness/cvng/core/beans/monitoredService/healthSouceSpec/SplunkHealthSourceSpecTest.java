@@ -49,6 +49,7 @@ public class SplunkHealthSourceSpecTest extends CvNextGenTestBase {
   String identifier;
   String name;
   String monitoredServiceIdentifier;
+  String healthSourceIdentifier;
   List<SplunkHealthSourceSpec.QueryDTO> queryDTOS;
   BuilderFactory builderFactory;
 
@@ -66,6 +67,7 @@ public class SplunkHealthSourceSpecTest extends CvNextGenTestBase {
     connectorIdentifier = "connectorRef";
     monitoredServiceIdentifier = generateUuid();
     identifier = "identifier";
+    healthSourceIdentifier = generateUuid();
     name = "some-name";
     queryDTOS = Lists.newArrayList(
         SplunkHealthSourceSpec.QueryDTO.builder().name(randomAlphabetic(10)).query(randomAlphabetic(10)).build());
@@ -84,9 +86,9 @@ public class SplunkHealthSourceSpecTest extends CvNextGenTestBase {
   @Owner(developers = ABHIJITH)
   @Category(UnitTests.class)
   public void getCVConfigUpdateResult_forNoExistingConfigs() {
-    HealthSource.CVConfigUpdateResult cvConfigUpdateResult =
-        splunkHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, monitoredServiceIdentifier, identifier, name, new ArrayList<>(), metricPackService);
+    HealthSource.CVConfigUpdateResult cvConfigUpdateResult = splunkHealthSourceSpec.getCVConfigUpdateResult(accountId,
+        orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier,
+        healthSourceIdentifier, identifier, name, new ArrayList<>(), metricPackService);
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
     assertThat(cvConfigUpdateResult.getDeleted()).isEmpty();
     List<CVConfig> added = cvConfigUpdateResult.getAdded();
@@ -105,9 +107,9 @@ public class SplunkHealthSourceSpecTest extends CvNextGenTestBase {
     List<CVConfig> cvConfigs = new ArrayList<>();
     cvConfigs.add(createCVConfig(
         SplunkHealthSourceSpec.QueryDTO.builder().name(randomAlphabetic(10)).query(randomAlphabetic(10)).build()));
-    HealthSource.CVConfigUpdateResult result =
-        splunkHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, monitoredServiceIdentifier, identifier, name, cvConfigs, metricPackService);
+    HealthSource.CVConfigUpdateResult result = splunkHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
+        projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier, healthSourceIdentifier,
+        identifier, name, cvConfigs, metricPackService);
     assertThat(result.getDeleted()).hasSize(1);
     SplunkCVConfig splunkCVConfig = (SplunkCVConfig) result.getDeleted().get(0);
     assertThat(splunkCVConfig.getCategory()).isEqualTo(CVMonitoringCategory.ERRORS);
@@ -120,9 +122,9 @@ public class SplunkHealthSourceSpecTest extends CvNextGenTestBase {
     List<CVConfig> cvConfigs = new ArrayList<>();
     cvConfigs.add(createCVConfig(
         SplunkHealthSourceSpec.QueryDTO.builder().name(randomAlphabetic(10)).query(randomAlphabetic(10)).build()));
-    HealthSource.CVConfigUpdateResult result =
-        splunkHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, monitoredServiceIdentifier, identifier, name, cvConfigs, metricPackService);
+    HealthSource.CVConfigUpdateResult result = splunkHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
+        projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier, healthSourceIdentifier,
+        identifier, name, cvConfigs, metricPackService);
     assertThat(result.getAdded()).hasSize(1);
     SplunkCVConfig splunkCVConfig = (SplunkCVConfig) result.getAdded().get(0);
     assertCommon(splunkCVConfig);
@@ -138,9 +140,9 @@ public class SplunkHealthSourceSpecTest extends CvNextGenTestBase {
                                      .name(queryDTOS.get(0).getName())
                                      .query(randomAlphabetic(10))
                                      .build()));
-    HealthSource.CVConfigUpdateResult result =
-        splunkHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
-            serviceIdentifier, monitoredServiceIdentifier, identifier, name, cvConfigs, metricPackService);
+    HealthSource.CVConfigUpdateResult result = splunkHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
+        projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier, healthSourceIdentifier,
+        identifier, name, cvConfigs, metricPackService);
     assertThat(result.getUpdated()).hasSize(1);
     SplunkCVConfig splunkCVConfig = (SplunkCVConfig) result.getUpdated().get(0);
     assertCommon(splunkCVConfig);

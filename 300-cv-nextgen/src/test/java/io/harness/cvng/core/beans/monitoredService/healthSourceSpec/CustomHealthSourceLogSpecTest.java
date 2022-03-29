@@ -50,6 +50,7 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
   String name = "customhealthlogsource";
   BuilderFactory builderFactory;
   String monitoredServiceIdentifier = generateUuid();
+  String healthSourceIdentifier = generateUuid();
   MetricResponseMapping responseMapping;
   @Inject MetricPackService metricPackService;
 
@@ -83,8 +84,8 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
     existingCVConfigs.add(existingCVConfigMethod);
 
     HealthSource.CVConfigUpdateResult result = customHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, "1234234_iden", "healthsource",
-        existingCVConfigs, metricPackService);
+        projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, healthSourceIdentifier,
+        "1234234_iden", "healthsource", existingCVConfigs, metricPackService);
 
     assertThat(result.getAdded().get(0).toString()).isEqualTo(addedCVConfig.toString());
     assertThat(result.getAdded().size()).isEqualTo(1);
@@ -138,8 +139,8 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
     existingCVConfigs.add(existingCVConfig);
 
     HealthSource.CVConfigUpdateResult result = customHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, "1234234_iden", "healthsource",
-        existingCVConfigs, metricPackService);
+        projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, healthSourceIdentifier,
+        "1234234_iden", "healthsource", existingCVConfigs, metricPackService);
 
     assertThat(result.getUpdated().get(0).toString()).isEqualTo(customHealthLogCVConfig.toString());
     assertThat(result.getAdded().size()).isEqualTo(0);
@@ -178,8 +179,8 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
     existingCVConfigs.add(existingCVConfig);
 
     HealthSource.CVConfigUpdateResult result = customHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, "1234234_iden", "healthsource",
-        existingCVConfigs, metricPackService);
+        projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, healthSourceIdentifier,
+        "1234234_iden", "healthsource", existingCVConfigs, metricPackService);
 
     assertThat(result.getDeleted().get(0).toString()).isEqualTo(existingCVConfig.toString());
     assertThat(result.getAdded().size()).isEqualTo(2);

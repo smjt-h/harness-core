@@ -75,14 +75,18 @@ public class AppDynamicsHealthSourceSpec extends MetricHealthSourceSpec {
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
       String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
-      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
-    List<AppDynamicsCVConfig> cvConfigsFromThisObj = toCVConfigs(accountId, orgIdentifier, projectIdentifier,
-        environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name, metricPackService);
+      String healthSourceIdentifier, String identifier, String name, List<CVConfig> existingCVConfigs,
+      MetricPackService metricPackService) {
+    List<AppDynamicsCVConfig> cvConfigsFromThisObj =
+        toCVConfigs(accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier,
+            healthSourceIdentifier, identifier, name, metricPackService);
+
     Map<Key, AppDynamicsCVConfig> existingConfigMap = new HashMap<>();
     List<AppDynamicsCVConfig> existingAppDCVConfig = (List<AppDynamicsCVConfig>) (List<?>) existingCVConfigs;
     for (AppDynamicsCVConfig appDynamicsCVConfig : existingAppDCVConfig) {
       existingConfigMap.put(getKeyFromCVConfig(appDynamicsCVConfig), appDynamicsCVConfig);
     }
+
     Map<Key, AppDynamicsCVConfig> currentCVConfigsMap = new HashMap<>();
     for (AppDynamicsCVConfig appDynamicsCVConfig : cvConfigsFromThisObj) {
       currentCVConfigsMap.put(getKeyFromCVConfig(appDynamicsCVConfig), appDynamicsCVConfig);
@@ -110,8 +114,8 @@ public class AppDynamicsHealthSourceSpec extends MetricHealthSourceSpec {
   }
 
   private List<AppDynamicsCVConfig> toCVConfigs(String accountId, String orgIdentifier, String projectIdentifier,
-      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String identifier, String name,
-      MetricPackService metricPackService) {
+      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String healthSourceIdentifier,
+      String identifier, String name, MetricPackService metricPackService) {
     List<AppDynamicsCVConfig> cvConfigs = new ArrayList<>();
     CollectionUtils.emptyIfNull(metricPacks).forEach(metricPack -> {
       MetricPack metricPackFromDb =
@@ -124,6 +128,7 @@ public class AppDynamicsHealthSourceSpec extends MetricHealthSourceSpec {
                                                     .connectorIdentifier(getConnectorRef())
                                                     .monitoringSourceName(name)
                                                     .monitoredServiceIdentifier(monitoredServiceIdentifier)
+                                                    .healthSourceIdentifier(healthSourceIdentifier)
                                                     .productName(feature)
                                                     .applicationName(applicationName)
                                                     .tierName(tierName)
@@ -154,6 +159,7 @@ public class AppDynamicsHealthSourceSpec extends MetricHealthSourceSpec {
                                    .envIdentifier(environmentRef)
                                    .serviceIdentifier(serviceRef)
                                    .monitoredServiceIdentifier(monitoredServiceIdentifier)
+                                   .healthSourceIdentifier(healthSourceIdentifier)
                                    .groupName(mdList.get(0).getGroupName())
                                    .category(mdList.get(0).getRiskProfile().getCategory())
                                    .build();

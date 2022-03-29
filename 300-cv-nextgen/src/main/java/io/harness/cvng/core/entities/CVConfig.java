@@ -107,6 +107,7 @@ public abstract class CVConfig
   private String productName;
   // Use FullyQualifiedIdentifier(NameSpace+HealthSource)
   @NotNull @Deprecated private String identifier;
+  private String healthSourceIdentifier;
   @NotNull private String monitoringSourceName;
   private boolean isDemo;
 
