@@ -2077,7 +2077,6 @@ public class PipelineServiceImpl implements PipelineService {
   }
 
   public Set<String> getUserGroups(Pipeline pipeline) {
-    Map<String, Workflow> workflowCache = new HashMap<>();
     if (pipeline.getPipelineStages() == null) {
       return new HashSet<>();
     }
@@ -2091,29 +2090,6 @@ public class PipelineServiceImpl implements PipelineService {
             userGroups.addAll((List<String>) value);
           }
         });
-      } else {
-        String workflowId = (String) stageElement.getProperties().get("workflowId");
-        Workflow workflow = getWorkflow(pipeline, workflowCache, workflowId);
-        workflowCache.put(workflowId, workflow);
-        List<String> userGroupVariableNames = workflow.getOrchestrationWorkflow()
-                                                  .getUserVariables()
-                                                  .stream()
-                                                  .filter(v -> USER_GROUP.equals(v.obtainEntityType()))
-                                                  .map(Variable::getName)
-                                                  .collect(toList());
-        if (isNotEmpty(stageElement.getWorkflowVariables()) && isNotEmpty(userGroupVariableNames)) {
-          stageElement.getWorkflowVariables().forEach((variable, value) -> {
-            if (userGroupVariableNames.contains(variable)) {
-              if (!ExpressionEvaluator.matchesVariablePattern(value)) {
-                if (value.contains(",")) {
-                  userGroups.addAll(Arrays.asList(value.split(",")));
-                } else {
-                  userGroups.add(value);
-                }
-              }
-            }
-          });
-        }
       }
     }
     return userGroups;
@@ -2125,10 +2101,10 @@ public class PipelineServiceImpl implements PipelineService {
     Set<String> parentsToAdd = Sets.difference(currentUserGroups, previousUserGroups);
 
     for (String id : parentsToRemove) {
-      userGroupService.removeParentsReference(id, accountId, appId, pipelineId, EntityType.PIPELINE.name());
+      userGroupService.removeParentsReference(id, accountId, appId, pipelineId);
     }
     for (String id : parentsToAdd) {
-      userGroupService.addParentsReference(id, accountId, appId, pipelineId, EntityType.PIPELINE.name());
+      userGroupService.addParentsReference(id, accountId, appId, pipelineId);
     }
   }
 }
