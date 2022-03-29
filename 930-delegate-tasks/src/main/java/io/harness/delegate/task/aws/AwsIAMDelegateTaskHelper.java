@@ -46,7 +46,7 @@ public class AwsIAMDelegateTaskHelper {
       Map<String, String> roles = awsApiHelperService.listIAMRoles(awsInternalConfig);
       return AwsIAMRolesResponse.builder().roles(roles).commandExecutionStatus(SUCCESS).build();
     } catch (Exception e) {
-      return AwsIAMRolesResponse.builder().commandExecutionStatus(CommandExecutionStatus.FAILURE).roles(null).build();
+      return AwsIAMRolesResponse.builder().commandExecutionStatus(CommandExecutionStatus.FAILURE).build();
     }
   }
 

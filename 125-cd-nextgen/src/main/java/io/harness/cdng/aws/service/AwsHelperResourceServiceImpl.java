@@ -27,7 +27,6 @@ import software.wings.beans.TaskType;
 
 import com.amazonaws.services.cloudformation.model.Capability;
 import com.amazonaws.services.cloudformation.model.StackStatus;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.EnumSet;
@@ -69,25 +68,25 @@ public class AwsHelperResourceServiceImpl implements AwsHelperResourceService {
                                .awsConnector(awsConnector)
                                .encryptionDetails(encryptedData)
                                .build();
-    AwsIAMRolesResponse response = executeSyncTask(params, access, "Failed to get IAM roles");
+    AwsIAMRolesResponse response = executeSyncTask(params, access);
     return response.getRoles();
   }
-  @VisibleForTesting
-  private AwsIAMRolesResponse executeSyncTask(
-      AwsTaskParams awsTaskParams, BaseNGAccess baseNGAccess, String ifFailedMessage) {
+
+  protected AwsIAMRolesResponse executeSyncTask(AwsTaskParams awsTaskParams, BaseNGAccess baseNGAccess) {
     DelegateResponseData responseData =
         serviceHelper.getResponseData(baseNGAccess, awsTaskParams, TaskType.NG_AWS_TASK.name());
-    return getTaskExecutionResponse(responseData, ifFailedMessage);
+    return getTaskExecutionResponse(responseData);
   }
 
-  private AwsIAMRolesResponse getTaskExecutionResponse(DelegateResponseData responseData, String ifFailedMessage) {
+  private AwsIAMRolesResponse getTaskExecutionResponse(DelegateResponseData responseData) {
     if (responseData instanceof ErrorNotifyResponseData) {
       ErrorNotifyResponseData errorNotifyResponseData = (ErrorNotifyResponseData) responseData;
-      throw new AwsIAMRolesException(ifFailedMessage + ": " + errorNotifyResponseData.getErrorMessage());
+      throw new AwsIAMRolesException("Failed to get IAM roles"
+          + " : " + errorNotifyResponseData.getErrorMessage());
     }
     AwsIAMRolesResponse response = (AwsIAMRolesResponse) responseData;
     if (response.getCommandExecutionStatus() != SUCCESS) {
-      throw new AwsIAMRolesException(ifFailedMessage);
+      throw new AwsIAMRolesException("Failed to get IAM roles");
     }
     return response;
   }

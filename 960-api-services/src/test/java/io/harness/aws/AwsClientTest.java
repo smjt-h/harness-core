@@ -78,6 +78,7 @@ public class AwsClientTest extends CategoryTest {
     service.listIAMRoles(any());
     verify(awsApiHelperService, times(1)).handleAmazonServiceException(any());
   }
+
   @Test
   @Owner(developers = NGONZALEZ)
   @Category(UnitTests.class)

@@ -9,7 +9,6 @@ package io.harness.exception;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.eraro.ErrorCode.AWS_IAM_ERROR;
-import static io.harness.eraro.ErrorCode.BUCKET_SERVER_ERROR;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.eraro.Level;
@@ -27,18 +26,18 @@ public class AwsIAMRolesException extends WingsException {
 
   @SuppressWarnings("squid:CallToDeprecatedMethod")
   public AwsIAMRolesException(String message, Throwable cause) {
-    super(message, cause, BUCKET_SERVER_ERROR, Level.ERROR, null, null);
+    super(message, cause, AWS_IAM_ERROR, Level.ERROR, null, null);
     super.param(MESSAGE_ARG, message);
   }
 
   @SuppressWarnings("squid:CallToDeprecatedMethod")
   public AwsIAMRolesException(String message, EnumSet<ReportTarget> reportTargets) {
-    super(message, null, BUCKET_SERVER_ERROR, Level.ERROR, reportTargets, null);
+    super(message, null, AWS_IAM_ERROR, Level.ERROR, reportTargets, null);
     super.param(MESSAGE_ARG, message);
   }
 
   public AwsIAMRolesException(String message, Throwable cause, EnumSet<WingsException.ReportTarget> reportTargets) {
-    super(message, cause, BUCKET_SERVER_ERROR, Level.ERROR, reportTargets, null);
+    super(message, cause, AWS_IAM_ERROR, Level.ERROR, reportTargets, null);
     super.param(MESSAGE_ARG, message);
   }
 }
