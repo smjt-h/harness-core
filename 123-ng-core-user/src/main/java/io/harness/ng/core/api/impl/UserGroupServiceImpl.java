@@ -222,6 +222,7 @@ public class UserGroupServiceImpl implements UserGroupService {
     if (isNotEmpty(userGroupFilterDTO.getUserIdentifierFilter())) {
       criteria.and(UserGroupKeys.users).in(userGroupFilterDTO.getUserIdentifierFilter());
     }
+    log.info("PL-24041: criteria: " + criteria);
     return userGroupRepository.findAll(criteria, Pageable.unpaged()).getContent();
   }
 

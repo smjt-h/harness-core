@@ -67,6 +67,7 @@ public class NotificationSettingsServiceImpl implements NotificationSettingsServ
   }
 
   private List<UserGroupDTO> getUserGroups(List<NotificationRequest.UserGroup> userGroups, String accountIdentifier) {
+    log.info("PL-24041: userGroups: " + userGroups);
     if (isEmpty(userGroups)) {
       return new ArrayList<>();
     }
@@ -84,12 +85,14 @@ public class NotificationSettingsServiceImpl implements NotificationSettingsServ
               .collect(Collectors.toList());
 
       for (UserGroupFilterDTO filterDTO : userGroupFilterDTO) {
+        log.info("PL-24041: userGroupFilterDTO: " + userGroupFilterDTO);
         userGroupDTOS.addAll(getResponse(userGroupClient.getFilteredUserGroups(filterDTO)));
       }
 
     } catch (Exception ex) {
       log.error("Error while fetching user groups.", ex);
     }
+    log.info("PL-24041: userGroupDTOS: " + userGroupDTOS);
     return userGroupDTOS;
   }
 

@@ -80,6 +80,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.data.domain.Page;
@@ -111,6 +112,7 @@ import retrofit2.http.Body;
       , @Content(mediaType = "application/yaml", schema = @Schema(implementation = ErrorDTO.class))
     })
 @NextGenManagerAuth
+@Slf4j
 public class UserGroupResource {
   private final UserGroupService userGroupService;
   private final AccessControlClient accessControlClient;
@@ -312,12 +314,14 @@ public class UserGroupResource {
   public ResponseDTO<List<UserGroupDTO>>
   list(@RequestBody(
       description = "User Group Filter", required = true) @Body @NotNull UserGroupFilterDTO userGroupFilterDTO) {
+    log.info("PL-24041: Received userGroupFilterDTO: " + userGroupFilterDTO);
     accessControlClient.checkForAccessOrThrow(
         ResourceScope.of(userGroupFilterDTO.getAccountIdentifier(), userGroupFilterDTO.getOrgIdentifier(),
             userGroupFilterDTO.getProjectIdentifier()),
         Resource.of(USERGROUP, null), VIEW_USERGROUP_PERMISSION);
     List<UserGroupDTO> userGroups =
         userGroupService.list(userGroupFilterDTO).stream().map(UserGroupMapper::toDTO).collect(Collectors.toList());
+    log.info("PL-24041: userGroups: " + userGroups);
     return ResponseDTO.newResponse(userGroups);
   }
 
