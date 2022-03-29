@@ -97,15 +97,6 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.TimeLimiter;
 import com.google.common.util.concurrent.UncheckedTimeoutException;
 import com.google.inject.Inject;
-import io.fabric8.istio.api.networking.v1alpha3.Destination;
-import io.fabric8.istio.api.networking.v1alpha3.DestinationRule;
-import io.fabric8.istio.api.networking.v1alpha3.DestinationRuleBuilder;
-import io.fabric8.istio.api.networking.v1alpha3.DestinationRuleFluent;
-import io.fabric8.istio.api.networking.v1alpha3.HTTPRouteDestination;
-import io.fabric8.istio.api.networking.v1alpha3.VirtualService;
-import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceBuilder;
-import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceFluent.SpecNested;
-import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceSpecFluent.HttpNested;
 import io.fabric8.kubernetes.api.KubernetesHelper;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
@@ -115,6 +106,9 @@ import io.fabric8.kubernetes.api.model.EnvVarBuilder;
 import io.fabric8.kubernetes.api.model.EnvVarSource;
 import io.fabric8.kubernetes.api.model.EnvVarSourceBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.HorizontalPodAutoscaler;
+import io.fabric8.kubernetes.api.model.HorizontalPodAutoscalerBuilder;
+import io.fabric8.kubernetes.api.model.HorizontalPodAutoscalerSpecBuilder;
 import io.fabric8.kubernetes.api.model.LabelSelectorBuilder;
 import io.fabric8.kubernetes.api.model.LoadBalancerIngress;
 import io.fabric8.kubernetes.api.model.LoadBalancerStatus;
@@ -130,11 +124,6 @@ import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
-import io.fabric8.kubernetes.api.model.apps.StatefulSet;
-import io.fabric8.kubernetes.api.model.apps.StatefulSetSpec;
-import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
-import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscalerBuilder;
-import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscalerSpecBuilder;
 import io.fabric8.kubernetes.api.model.extensions.DaemonSet;
 import io.fabric8.kubernetes.api.model.extensions.DaemonSetSpec;
 import io.fabric8.kubernetes.api.model.extensions.Deployment;
@@ -144,6 +133,8 @@ import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.api.model.extensions.IngressRule;
 import io.fabric8.kubernetes.api.model.extensions.ReplicaSet;
 import io.fabric8.kubernetes.api.model.extensions.ReplicaSetSpec;
+import io.fabric8.kubernetes.api.model.extensions.StatefulSet;
+import io.fabric8.kubernetes.api.model.extensions.StatefulSetSpec;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
@@ -161,6 +152,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
+import me.snowdrop.istio.api.IstioResource;
+import me.snowdrop.istio.api.networking.v1alpha3.Destination;
+import me.snowdrop.istio.api.networking.v1alpha3.DestinationRule;
+import me.snowdrop.istio.api.networking.v1alpha3.DestinationRuleBuilder;
+import me.snowdrop.istio.api.networking.v1alpha3.DestinationRuleFluent;
+import me.snowdrop.istio.api.networking.v1alpha3.DestinationWeight;
+import me.snowdrop.istio.api.networking.v1alpha3.VirtualService;
+import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceBuilder;
+import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceFluent.SpecNested;
+import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceSpecFluent.HttpNested;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.mongodb.morphia.annotations.Transient;
@@ -444,8 +445,8 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
       }
 
       // Create new autoscaler
-      HasMetadata hpa = prepareHorizontalPodAutoscaler(setupParams, containerServiceName, controller.getKind(),
-          controller.getApiVersion(), controllerLabels, executionLogCallback);
+      HorizontalPodAutoscaler hpa = prepareHorizontalPodAutoscaler(setupParams, containerServiceName,
+          controller.getKind(), controller.getApiVersion(), controllerLabels, executionLogCallback);
 
       commandExecutionDataBuilder.autoscalerYaml(toYaml(hpa));
 
@@ -834,28 +835,19 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
       String virtualServiceName, Service service, Map<String, Integer> activeControllers, String containerServiceName,
       ExecutionLogCallback executionLogCallback, StringBuilder summaryOutput) {
     if (setupParams.isUseIstioRouteRule() && service != null) {
-      // Todo : find out generic way of creating istio resource rather than casting them and calli resource specific api
-      List<HasMetadata> istioResourcesDefinition = createVirtualServiceAndDestinationRuleDefinition(
+      List<IstioResource> istioResourcesDefinition = createVirtualServiceAndDestinationRuleDefinition(
           setupParams, virtualServiceName, service.getMetadata().getLabels(), activeControllers, executionLogCallback);
-      for (HasMetadata r : istioResourcesDefinition) {
-        if (r instanceof VirtualService) {
-          kubernetesContainerService.createOrReplaceFabric8IstioVirtualService(kubernetesConfig, (VirtualService) r);
-        } else if (r instanceof DestinationRule) {
-          kubernetesContainerService.createOrReplaceFabric8IstioDestinationRule(kubernetesConfig, (DestinationRule) r);
-        } else {
-          throw new InvalidArgumentsException(
-              format("%s should either be VirtualService or DestinationRule", r.getFullResourceName()), USER);
-        }
+      for (IstioResource r : istioResourcesDefinition) {
+        kubernetesContainerService.createOrReplaceIstioResource(kubernetesConfig, r);
         summaryOutput.append(format("%nIstio %s: %s", r.getKind(), r.getMetadata().getName()));
         if (StringUtils.equals(r.getKind(), "VirtualService")) {
-          printVirtualServiceRouteWeights(
-              (VirtualService) r, getPrefixFromControllerName(containerServiceName), executionLogCallback);
+          printVirtualServiceRouteWeights(r, getPrefixFromControllerName(containerServiceName), executionLogCallback);
         }
       }
     } else {
       try {
         VirtualService virtualService =
-            kubernetesContainerService.getFabric8IstioVirtualService(kubernetesConfig, virtualServiceName);
+            kubernetesContainerService.getIstioVirtualService(kubernetesConfig, virtualServiceName);
         if (virtualService != null
             && virtualService.getMetadata().getLabels().containsKey(HARNESS_KUBERNETES_MANAGED_LABEL_KEY)) {
           executionLogCallback.saveExecutionLog("Deleting Istio VirtualService" + virtualServiceName);
@@ -863,7 +855,7 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
         }
 
         DestinationRule destinationRule =
-            kubernetesContainerService.getFabric8IstioDestinationRule(kubernetesConfig, virtualServiceName);
+            kubernetesContainerService.getIstioDestinationRule(kubernetesConfig, virtualServiceName);
         if (destinationRule != null
             && destinationRule.getMetadata().getLabels().containsKey(HARNESS_KUBERNETES_MANAGED_LABEL_KEY)) {
           executionLogCallback.saveExecutionLog("Deleting Istio DestinationRule" + virtualServiceName);
@@ -1045,7 +1037,7 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
   }
 
   private String getAutoscalerYaml(KubernetesConfig kubernetesConfig, String containerServiceName) {
-    HasMetadata hpa = getAutoscaler(kubernetesConfig, containerServiceName);
+    HorizontalPodAutoscaler hpa = getAutoscaler(kubernetesConfig, containerServiceName);
     if (hpa != null) {
       try {
         return toYaml(hpa);
@@ -1144,7 +1136,6 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
             .withName(name)
             .withApiVersion(apiVersion)
             .endScaleTargetRef();
-
     return new HorizontalPodAutoscalerBuilder()
         .withNewMetadata()
         .withAnnotations(harnessAnnotations)
@@ -1156,7 +1147,7 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
         .build();
   }
 
-  private List<HasMetadata> createVirtualServiceAndDestinationRuleDefinition(KubernetesSetupParams setupParams,
+  private List<IstioResource> createVirtualServiceAndDestinationRuleDefinition(KubernetesSetupParams setupParams,
       String kubernetesServiceName, Map<String, String> labels, Map<String, Integer> activeControllers,
       ExecutionLogCallback executionLogCallback) {
     SpecNested<VirtualServiceBuilder> virtualServiceSpecNested =
@@ -1195,7 +1186,7 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
       Destination destination = new Destination();
       destination.setHost(kubernetesServiceName);
       destination.setSubset(String.valueOf(currentRevision));
-      HTTPRouteDestination destinationWeight = new HTTPRouteDestination();
+      DestinationWeight destinationWeight = new DestinationWeight();
       destinationWeight.setWeight(100);
       destinationWeight.setDestination(destination);
 
@@ -1211,7 +1202,7 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
             Destination destination = new Destination();
             destination.setHost(kubernetesServiceName);
             destination.setSubset(revision.get().toString());
-            HTTPRouteDestination destinationWeight = new HTTPRouteDestination();
+            DestinationWeight destinationWeight = new DestinationWeight();
             destinationWeight.setWeight(weight);
             destinationWeight.setDestination(destination);
             virtualServiceHttpNested.addToRoute(destinationWeight);
@@ -1232,8 +1223,8 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
 
     virtualServiceHttpNested.endHttp();
 
-    HasMetadata virtualService = virtualServiceSpecNested.endSpec().build();
-    HasMetadata destinationRule = destinationRuleSpecNested.endSpec().build();
+    IstioResource virtualService = virtualServiceSpecNested.endSpec().build();
+    IstioResource destinationRule = destinationRuleSpecNested.endSpec().build();
     executionLogCallback.saveExecutionLog("Creating istio VirtualService:\n\n" + toDisplayYaml(virtualService));
     executionLogCallback.saveExecutionLog("Creating istio DestinationRule:\n\n" + toDisplayYaml(destinationRule));
     return asList(virtualService, destinationRule);
@@ -1397,7 +1388,8 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
 
   private void rollbackAutoscaler(
       ExecutionLogCallback executionLogCallback, KubernetesConfig kubernetesConfig, String autoscalerYaml) {
-    HasMetadata hpa = kubernetesContainerService.createOrReplaceAutoscaler(kubernetesConfig, autoscalerYaml);
+    HorizontalPodAutoscaler hpa =
+        kubernetesContainerService.createOrReplaceAutoscaler(kubernetesConfig, autoscalerYaml);
     if (hpa != null) {
       String hpaName = hpa.getMetadata().getName();
       executionLogCallback.saveExecutionLog("Rolled back horizontal pod autoscaler " + hpaName);
@@ -1509,7 +1501,7 @@ public class KubernetesSetupCommandUnit extends ContainerSetupCommandUnit {
             kubernetesResource.getMetadata().getLabels().get(K8sConstants.HARNESS_KUBERNETES_REVISION_LABEL_KEY));
   }
 
-  private HasMetadata getAutoscaler(KubernetesConfig kubernetesConfig, String name) {
+  private HorizontalPodAutoscaler getAutoscaler(KubernetesConfig kubernetesConfig, String name) {
     return kubernetesContainerService.getAutoscaler(kubernetesConfig, name, KUBERNETES_V1.getVersionName());
   }
 
