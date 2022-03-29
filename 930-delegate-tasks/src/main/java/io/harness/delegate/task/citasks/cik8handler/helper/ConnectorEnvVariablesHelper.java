@@ -66,10 +66,13 @@ public class ConnectorEnvVariablesHelper {
       String usernameEnvVarName = connectorDetails.getEnvToSecretsMap().get(EnvVariableEnum.ARTIFACTORY_USERNAME);
       String passwordEnvVarName = connectorDetails.getEnvToSecretsMap().get(EnvVariableEnum.ARTIFACTORY_PASSWORD);
       String endpointEnvVarName = connectorDetails.getEnvToSecretsMap().get(EnvVariableEnum.ARTIFACTORY_ENDPOINT);
+      String userName = FieldWithPlainTextOrSecretValueHelper.getSecretAsStringFromPlainTextOrSecretRef(
+              usernamePasswordAuthDTO.getUsername(), usernamePasswordAuthDTO.getUsernameRef());
+
       if (isNotBlank(usernameEnvVarName)) {
         secretData.put(usernameEnvVarName,
             getVariableSecret(usernameEnvVarName + connectorDetails.getIdentifier(),
-                encodeBase64(usernamePasswordAuthDTO.getUsername())));
+                encodeBase64(userName)));
       }
 
       if (usernamePasswordAuthDTO == null || usernamePasswordAuthDTO.getPasswordRef() == null
@@ -197,9 +200,11 @@ public class ConnectorEnvVariablesHelper {
       String usernameEnvVarName = connectorDetails.getEnvToSecretsMap().get(EnvVariableEnum.DOCKER_USERNAME);
       String passwordEnvVarName = connectorDetails.getEnvToSecretsMap().get(EnvVariableEnum.DOCKER_PASSWORD);
       if (isNotBlank(usernameEnvVarName)) {
+        String userName = FieldWithPlainTextOrSecretValueHelper.getSecretAsStringFromPlainTextOrSecretRef(
+                dockerUserNamePasswordDTO.getUsername(), dockerUserNamePasswordDTO.getUsernameRef());
         secretData.put(usernameEnvVarName,
             getVariableSecret(usernameEnvVarName + connectorDetails.getIdentifier(),
-                encodeBase64(dockerUserNamePasswordDTO.getUsername())));
+                encodeBase64(userName)));
       }
 
       if (dockerUserNamePasswordDTO == null || dockerUserNamePasswordDTO.getPasswordRef() == null

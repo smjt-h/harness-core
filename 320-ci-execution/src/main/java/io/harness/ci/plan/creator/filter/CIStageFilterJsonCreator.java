@@ -146,7 +146,7 @@ public class CIStageFilterJsonCreator extends GenericStageFilterJsonCreator {
           + YAMLFieldNameConstants.SPEC + PATH_CONNECTOR + ciCodeBase.getConnectorRef();
 
       result.add(convertToEntityDetailProtoDTO(accountIdentifier, orgIdentifier, projectIdentifier,
-          fullQualifiedDomainName, ParameterField.createValueField(ciCodeBase.getConnectorRef().getValue()),
+          fullQualifiedDomainName,ciCodeBase.getConnectorRef(),
           EntityTypeProtoEnum.CONNECTORS));
     }
 
