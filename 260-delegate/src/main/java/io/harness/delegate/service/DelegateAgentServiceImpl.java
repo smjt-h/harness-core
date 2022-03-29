@@ -1820,7 +1820,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private void setSwitchStorage(boolean useCdn) {
     boolean usingCdn = delegateConfiguration.isUseCdn();
     if (usingCdn != useCdn) {
-      log.info("Switch storage - usingCdn: [{}], useCdn: [{}]", usingCdn, useCdn);
+      log.debug("Switch storage - usingCdn: [{}], useCdn: [{}]", usingCdn, useCdn);
       switchStorage.set(true);
     }
   }
