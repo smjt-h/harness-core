@@ -41,6 +41,7 @@ import io.harness.delegate.task.serverless.response.ServerlessGitFetchResponse;
 import io.harness.git.model.FetchFilesResult;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
+import io.harness.logging.LogLevel;
 import io.harness.secret.SecretSanitizerThreadLocal;
 import io.harness.serverless.ServerlessCommandUnitConstants;
 
@@ -144,6 +145,7 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
       executionLogCallback.saveExecutionLog(msg, ERROR, CommandExecutionStatus.FAILURE);
       throw e;
     }
+    executionLogCallback.saveExecutionLog("Done..\n", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
     return filesResult;
   }
 
