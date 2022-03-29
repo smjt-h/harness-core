@@ -26,9 +26,12 @@ import io.harness.cdng.provision.terraform.TerraformApplyStepInfo;
 import io.harness.cdng.provision.terraform.TerraformDestroyStepInfo;
 import io.harness.cdng.provision.terraform.TerraformPlanStepInfo;
 import io.harness.cdng.provision.terraform.steps.rolllback.TerraformRollbackStepInfo;
+import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.plancreator.steps.common.StepElementParameters.StepElementParametersBuilder;
 import io.harness.plancreator.steps.common.WithStepElementParameters;
+import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.steps.io.StepParameters;
+import io.harness.steps.StepUtils;
 import io.harness.yaml.core.StepSpecType;
 
 import io.swagger.annotations.ApiModel;
@@ -42,10 +45,11 @@ import io.swagger.annotations.ApiModel;
 @OwnedBy(HarnessTeam.CDC)
 public interface CDStepInfo extends StepSpecType, WithStepElementParameters {
   default StepParameters getStepParameters(
-      CdAbstractStepNode stepElementConfig, OnFailRollbackParameters failRollbackParameters) {
+          CdAbstractStepNode stepElementConfig, OnFailRollbackParameters failRollbackParameters, PlanCreationContext ctx) {
     StepElementParametersBuilder stepParametersBuilder =
         CdStepParametersUtils.getStepParameters(stepElementConfig, failRollbackParameters);
-    stepParametersBuilder.spec(getSpecParameters());
+    SpecParameters specParameters = StepUtils.getSpecParametersWithDelegateSelector(getSpecParameters(),ctx);
+    stepParametersBuilder.spec(specParameters);
     return stepParametersBuilder.build();
   }
 }
