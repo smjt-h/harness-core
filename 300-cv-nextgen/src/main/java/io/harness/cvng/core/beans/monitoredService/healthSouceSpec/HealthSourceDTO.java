@@ -50,12 +50,11 @@ public class HealthSourceDTO {
     CVConfig baseCVConfig = cvConfigs.get(0);
     CVConfigToHealthSourceTransformer<CVConfig, HealthSourceSpec> cvConfigToHealthSourceTransformer =
         dataSourceTypeToHealthSourceTransformerMap.get(baseCVConfig.getType());
-    Pair<String, String> nameSpaceAndIdentifier =
-        HealthSourceService.getNameSpaceAndIdentifier(baseCVConfig.getFullyQualifiedIdentifier());
+
     return HealthSource.builder()
         .name(baseCVConfig.getMonitoringSourceName())
         .type(dataSourceTypeMonitoredServiceDataSourceTypeMap.get(baseCVConfig.getType()))
-        .identifier(nameSpaceAndIdentifier.getValue())
+        .identifier(baseCVConfig.getHealthSourceIdentifier())
         .spec(cvConfigToHealthSourceTransformer.transform(cvConfigs))
         .build();
   }

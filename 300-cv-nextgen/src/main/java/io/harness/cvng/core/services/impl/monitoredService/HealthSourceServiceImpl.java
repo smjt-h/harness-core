@@ -196,14 +196,12 @@ public class HealthSourceServiceImpl implements HealthSourceService {
     List<CVConfig> cvConfigList = cvConfigService.list(projectParams, identifiers);
     Map<String, List<CVConfig>> cvConfigMap = cvConfigList.stream().collect(groupingBy(CVConfig::getIdentifier));
     for (Map.Entry<String, List<CVConfig>> cvConfig : cvConfigMap.entrySet()) {
-      Pair<String, String> nameSpaceAndIdentifier =
-          HealthSourceService.getNameSpaceAndIdentifier(cvConfig.getValue().get(0).getFullyQualifiedIdentifier());
+      String nameSpace = cvConfig.getValue().get(0).getMonitoredServiceIdentifier();
       HealthSource healthSource =
           HealthSourceDTO.toHealthSource(cvConfig.getValue(), dataSourceTypeToHealthSourceTransformerMap);
-      Set<HealthSource> healthSourceSet =
-          healthSourceMap.getOrDefault(nameSpaceAndIdentifier.getKey(), new HashSet<>());
+      Set<HealthSource> healthSourceSet = healthSourceMap.getOrDefault(nameSpace, new HashSet<>());
       healthSourceSet.add(healthSource);
-      healthSourceMap.put(nameSpaceAndIdentifier.getKey(), healthSourceSet);
+      healthSourceMap.put(nameSpace, healthSourceSet);
     }
     return healthSourceMap;
   }
