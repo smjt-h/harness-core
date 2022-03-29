@@ -8,7 +8,9 @@
 package io.harness.steps.http;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.beans.FeatureName.NOT_FOLLOW_REDIRECT_HTTP;
 
+import io.harness.account.AccountClient;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.common.NGTimeConversionHelper;
 import io.harness.data.structure.EmptyPredicate;
@@ -32,12 +34,14 @@ import io.harness.pms.contracts.execution.failure.FailureInfo;
 import io.harness.pms.contracts.execution.tasks.TaskRequest;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
+import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.pms.sdk.core.steps.io.StepResponse.StepOutcome;
 import io.harness.pms.sdk.core.steps.io.StepResponse.StepResponseBuilder;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
+import io.harness.remote.client.RestClientUtils;
 import io.harness.serializer.KryoSerializer;
 import io.harness.steps.StepSpecTypeConstants;
 import io.harness.steps.StepUtils;
@@ -60,6 +64,7 @@ public class HttpStep extends TaskExecutableWithRollback<HttpStepResponse> {
 
   @Inject private KryoSerializer kryoSerializer;
   @Inject private LogStreamingStepClientFactory logStreamingStepClientFactory;
+  @Inject private AccountClient accountClient;
 
   @Override
   public Class<StepElementParameters> getStepParametersClass() {
@@ -95,6 +100,11 @@ public class HttpStep extends TaskExecutableWithRollback<HttpStepResponse> {
     if (httpStepParameters.getRequestBody() != null) {
       httpTaskParametersNgBuilder.body(httpStepParameters.getRequestBody().getValue());
     }
+
+    boolean ignoreRedirectForCapability = RestClientUtils.getResponse(
+        accountClient.isFeatureFlagEnabled(NOT_FOLLOW_REDIRECT_HTTP.name(), AmbianceUtils.getAccountId(ambiance)));
+
+    httpTaskParametersNgBuilder.ignoreRedirectForCapability(ignoreRedirectForCapability);
 
     final TaskData taskData =
         TaskData.builder()

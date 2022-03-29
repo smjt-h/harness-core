@@ -12,6 +12,7 @@ import static io.harness.expression.Expression.ALLOW_SECRETS;
 
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.ExecutionCapabilityDemander;
+import io.harness.delegate.beans.executioncapability.HttpConnectionExecutionCapability;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.mixin.HttpConnectionExecutionCapabilityGenerator;
 import io.harness.expression.Expression;
@@ -33,10 +34,15 @@ public class HttpTaskParametersNg implements TaskParameters, ExecutionCapability
   int socketTimeoutMillis;
   boolean useProxy;
   boolean isCertValidationRequired;
+  boolean ignoreRedirectForCapability;
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
-    return Collections.singletonList(HttpConnectionExecutionCapabilityGenerator.buildHttpConnectionExecutionCapability(
-        url, QUERY, maskingEvaluator));
+    HttpConnectionExecutionCapability httpConnectionExecutionCapability =
+        HttpConnectionExecutionCapabilityGenerator.buildHttpConnectionExecutionCapability(url, QUERY, maskingEvaluator);
+    if (ignoreRedirectForCapability) {
+      httpConnectionExecutionCapability.setIgnoreRedirect(true);
+    }
+    return Collections.singletonList(httpConnectionExecutionCapability);
   }
 }
