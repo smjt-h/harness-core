@@ -98,6 +98,7 @@ import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.microsoft.azure.storage.StorageException;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -105,8 +106,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.security.InvalidKeyException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -799,11 +802,7 @@ public class SecretManagerImpl implements SecretManager, EncryptedSettingAttribu
                                                 .equal(null)
                                                 .asList();
     for (EncryptedData encryptedData : encryptedDataList) {
-      try {
-        deleteSecret(accountId, encryptedData.getUuid(), new HashMap<>(), true);
-      } catch (SecretManagementException e) {
-        log.error("Could not delete secret due to the following error: {}", e.getMessage(), e);
-      }
+      deleteSecret(accountId, encryptedData.getUuid(), new HashMap<>(), true);
     }
   }
 

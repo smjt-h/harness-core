@@ -17,6 +17,7 @@ import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.awskmsconnector.AwsKmsConnectorDTO;
 import io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerDTO;
 import io.harness.delegate.beans.connector.azureblobconnector.AzureBlobConnectorDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.beans.connector.azurekeyvaultconnector.AzureKeyVaultConnectorDTO;
 import io.harness.delegate.beans.connector.ceawsconnector.CEAwsConnectorDTO;
 import io.harness.delegate.beans.connector.ceazure.CEAzureConnectorDTO;
@@ -36,6 +37,7 @@ import io.harness.delegate.beans.connector.localconnector.LocalConnectorDTO;
 import io.harness.delegate.beans.connector.newrelic.NewRelicConnectorDTO;
 import io.harness.delegate.beans.connector.nexusconnector.NexusConnectorDTO;
 import io.harness.delegate.beans.connector.pagerduty.PagerDutyConnectorDTO;
+import io.harness.delegate.beans.connector.pdcconnector.PhysicalDataCenterConnectorDTO;
 import io.harness.delegate.beans.connector.prometheusconnector.PrometheusConnectorDTO;
 import io.harness.delegate.beans.connector.scm.awscodecommit.AwsCodeCommitConnectorDTO;
 import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketConnectorDTO;
@@ -74,6 +76,7 @@ import java.util.List;
       @JsonSubTypes.Type(value = AzureBlobConnectorDTO.class, name = "AzureBlob"),
       @JsonSubTypes.Type(value = GcpConnectorDTO.class, name = "Gcp"),
       @JsonSubTypes.Type(value = AwsConnectorDTO.class, name = "Aws"),
+      @JsonSubTypes.Type(value = AzureConnectorDTO.class, name = "Azure"),
       @JsonSubTypes.Type(value = CEAwsConnectorDTO.class, name = "CEAws"),
       @JsonSubTypes.Type(value = ArtifactoryConnectorDTO.class, name = "Artifactory"),
       @JsonSubTypes.Type(value = JiraConnectorDTO.class, name = "Jira"),
@@ -89,7 +92,8 @@ import java.util.List;
       @JsonSubTypes.Type(value = PagerDutyConnectorDTO.class, name = "PagerDuty"),
       @JsonSubTypes.Type(value = CustomHealthConnectorDTO.class, name = "CustomHealth"),
       @JsonSubTypes.Type(value = ServiceNowConnectorDTO.class, name = "ServiceNow"),
-      @JsonSubTypes.Type(value = ErrorTrackingConnectorDTO.class, name = "ErrorTracking")
+      @JsonSubTypes.Type(value = ErrorTrackingConnectorDTO.class, name = "ErrorTracking"),
+      @JsonSubTypes.Type(value = PhysicalDataCenterConnectorDTO.class, name = "Pdc")
 })
 @OwnedBy(DX)
 @Schema(name = "ConnectorConfig", description = "This is the view of the ConnectorConfig entity defined in Harness")

@@ -7,10 +7,13 @@
 
 package io.harness.ngmigration.service;
 
+import static java.lang.String.format;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.MigratedEntityMapping;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ngmigration.beans.BaseEntityInput;
 import io.harness.ngmigration.beans.BaseInputDefinition;
@@ -20,6 +23,7 @@ import io.harness.ngmigration.beans.MigratorInputType;
 import io.harness.ngmigration.beans.NgEntityDetail;
 import io.harness.ngmigration.client.NGClient;
 import io.harness.ngmigration.client.PmsClient;
+import io.harness.ngmigration.expressions.MigratorExpressionUtils;
 import io.harness.plancreator.pipeline.PipelineConfig;
 import io.harness.plancreator.pipeline.PipelineInfoConfig;
 import io.harness.plancreator.stages.StageElementWrapperConfig;
@@ -58,6 +62,7 @@ import retrofit2.Response;
 public class PipelineMigrationService implements NgMigrationService {
   @Inject private PipelineService pipelineService;
   @Inject private WorkflowMigrationService workflowMigrationService;
+  @Inject private MigratorExpressionUtils migratorExpressionUtils;
 
   @Override
   public MigratedEntityMapping generateMappingEntity(NGYamlFile yamlFile) {
@@ -111,7 +116,12 @@ public class PipelineMigrationService implements NgMigrationService {
 
   @Override
   public DiscoveryNode discover(String accountId, String appId, String entityId) {
-    return discover(pipelineService.getPipeline(appId, entityId));
+    Pipeline pipeline = pipelineService.getPipeline(appId, entityId);
+    if (pipeline == null) {
+      throw new InvalidRequestException(
+          format("Pipeline with id:[%s] in application with id:[%s] doesn't exist", entityId, appId));
+    }
+    return discover(pipeline);
   }
 
   @Override
@@ -140,6 +150,7 @@ public class PipelineMigrationService implements NgMigrationService {
   public List<NGYamlFile> getYamls(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,
       Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId, Map<CgEntityId, NgEntityDetail> migratedEntities) {
     Pipeline pipeline = (Pipeline) entities.get(entityId).getEntity();
+    migratorExpressionUtils.render(pipeline);
     String name = pipeline.getName();
     String identifier = MigratorUtility.generateIdentifier(pipeline.getName());
     String projectIdentifier = inputDTO.getProjectIdentifier();

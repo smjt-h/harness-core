@@ -36,6 +36,8 @@ public enum ConnectorType implements EntitySubtype {
   //  @JsonProperty("CustomSecretManager") CUSTOM("CustomSecretManager"),
   @JsonProperty("Gcp") GCP("Gcp"),
   @JsonProperty("Aws") AWS("Aws"),
+  @JsonProperty("Azure") AZURE("Azure"),
+  @JsonProperty("Pdc") PDC("Pdc"),
   @JsonProperty("Artifactory") ARTIFACTORY("Artifactory"),
   @JsonProperty("Jira") JIRA("Jira"),
   @JsonProperty("Nexus") NEXUS("Nexus"),

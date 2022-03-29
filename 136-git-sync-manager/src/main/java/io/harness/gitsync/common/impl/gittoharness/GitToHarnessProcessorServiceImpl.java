@@ -10,6 +10,7 @@ package io.harness.gitsync.common.impl.gittoharness;
 import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.gitsync.common.beans.GitToHarnessProcessingStepStatus.DONE;
 import static io.harness.gitsync.common.beans.GitToHarnessProcessingStepStatus.ERROR;
 import static io.harness.gitsync.common.beans.GitToHarnessProcessingStepStatus.IN_PROGRESS;
@@ -23,6 +24,8 @@ import io.harness.Microservice;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
+import io.harness.exception.InvalidRequestException;
+import io.harness.exception.UnexpectedException;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.ChangeSet;
 import io.harness.gitsync.ChangeSets;
@@ -47,9 +50,11 @@ import io.harness.gitsync.common.beans.GitToHarnessProgressStatus;
 import io.harness.gitsync.common.beans.MsvcProcessingFailureStage;
 import io.harness.gitsync.common.dtos.ChangeSetWithYamlStatusDTO;
 import io.harness.gitsync.common.dtos.GitSyncEntityDTO;
+import io.harness.gitsync.common.dtos.RepoProviders;
 import io.harness.gitsync.common.helper.GitChangeSetMapper;
 import io.harness.gitsync.common.helper.GitConnectivityExceptionHelper;
 import io.harness.gitsync.common.helper.GitSyncGrpcClientUtils;
+import io.harness.gitsync.common.helper.RepoProviderHelper;
 import io.harness.gitsync.common.service.GitEntityService;
 import io.harness.gitsync.common.service.GitToHarnessProgressService;
 import io.harness.gitsync.common.service.YamlGitConfigService;
@@ -419,6 +424,10 @@ public class GitToHarnessProcessorServiceImpl implements GitToHarnessProcessorSe
 
   private void updateCommit(String commitId, String accountId, String branchName, String repoUrl,
       List<GitToHarnessProcessingResponse> gitToHarnessProcessingResponses, List<ChangeSet> invalidChangeSets) {
+    if (commitId == null) {
+      throw new InvalidRequestException(
+          String.format("Found null commitId while saving the commit for repo %s and branch %s", repoUrl, branchName));
+    }
     GitToHarnessProcessingStepStatus status = getStatus(gitToHarnessProcessingResponses);
     if (status == DONE) {
       GitCommitDTO gitCommitDTO = GitCommitDTO.builder()
@@ -520,10 +529,12 @@ public class GitToHarnessProcessorServiceImpl implements GitToHarnessProcessorSe
 
   private GitSyncErrorDTO buildGitSyncErrorDTO(GitToHarnessProcessingInfo gitToHarnessProcessingInfo,
       String errorMessage, ChangeSet changeSet, List<Scope> scopes) {
+    RepoProviders repoProviderType = getRepoProviderType(gitToHarnessProcessingInfo.getYamlGitConfigs());
     return GitSyncErrorDTO.builder()
         .accountIdentifier(gitToHarnessProcessingInfo.getAccountId())
         .repoUrl(gitToHarnessProcessingInfo.getRepoUrl())
         .branchName(gitToHarnessProcessingInfo.getBranchName())
+        .repoProvider(repoProviderType)
         .scopes(scopes)
         .errorType(GitSyncErrorType.GIT_TO_HARNESS)
         .status(GitSyncErrorStatus.ACTIVE)
@@ -537,6 +548,14 @@ public class GitToHarnessProcessorServiceImpl implements GitToHarnessProcessorSe
                                     .commitMessage(gitToHarnessProcessingInfo.getCommitMessage())
                                     .build())
         .build();
+  }
+
+  private RepoProviders getRepoProviderType(List<YamlGitConfigDTO> yamlGitConfigs) {
+    if (isEmpty(yamlGitConfigs)) {
+      throw new UnexpectedException("The git sync configs cannot be null when figuring out the repo provider");
+    }
+    final YamlGitConfigDTO yamlGitConfigDTO = yamlGitConfigs.get(0);
+    return RepoProviderHelper.getRepoProviderFromConnectorType(yamlGitConfigDTO.getGitConnectorType());
   }
 
   private Map<FileProcessingResponseDTO, ChangeSet> getFileProcessingResponseToChangeSetMap(
@@ -553,10 +572,12 @@ public class GitToHarnessProcessorServiceImpl implements GitToHarnessProcessorSe
 
   private Set<String> getFilePathsWithoutError(List<GitToHarnessProcessingResponse> gitToHarnessProcessingResponses) {
     List<FileProcessingResponseDTO> fileResponses = new ArrayList<>();
-    gitToHarnessProcessingResponses.stream()
-        .map(GitToHarnessProcessingResponse::getProcessingResponse)
-        .map(GitToHarnessProcessingResponseDTO::getFileResponses)
-        .forEach(fileProcessingResponseDTO -> fileResponses.addAll(fileProcessingResponseDTO));
+    for (GitToHarnessProcessingResponse gitToHarnessProcessingResponse : emptyIfNull(gitToHarnessProcessingResponses)) {
+      GitToHarnessProcessingResponseDTO processingResponse = gitToHarnessProcessingResponse.getProcessingResponse();
+      if (processingResponse != null && isNotEmpty(processingResponse.getFileResponses())) {
+        fileResponses.addAll(processingResponse.getFileResponses());
+      }
+    }
     return fileResponses.stream()
         .filter(fileResponse -> fileResponse.getFileProcessingStatus() == FileProcessingStatus.SUCCESS)
         .map(FileProcessingResponseDTO::getFilePath)
