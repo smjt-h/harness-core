@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.docker.ArtifactMetaInfo;
 
 import software.wings.beans.AzureContainerRegistry;
 import software.wings.beans.AzureImageDefinition;
@@ -196,6 +197,9 @@ public interface BuildSourceService {
     throw new UnsupportedOperationException();
   }
 
+  default ArtifactMetaInfo getMetaInfo(ArtifactStream artifactStream, List<String> buildNos) {
+    throw new UnsupportedOperationException();
+  }
   /**
    * Gets last successful build.
    *

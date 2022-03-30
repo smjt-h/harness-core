@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.artifacts.docker.beans.DockerInternalConfig;
+import io.harness.docker.ArtifactMetaInfo;
 
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,8 @@ public interface DockerRegistryService {
    * @return the builds
    */
   List<Map<String, String>> getLabels(DockerInternalConfig dockerConfig, String imageName, List<String> tags);
+
+  ArtifactMetaInfo getMetaInfo(DockerInternalConfig dockerConfig, String imageName, List<String> buildNos);
 
   /**
    * Gets last successful build.

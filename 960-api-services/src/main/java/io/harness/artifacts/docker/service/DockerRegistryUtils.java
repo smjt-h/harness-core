@@ -16,6 +16,7 @@ import io.harness.artifacts.docker.DockerRegistryRestClient;
 import io.harness.artifacts.docker.beans.DockerImageManifestResponse;
 import io.harness.artifacts.docker.beans.DockerInternalConfig;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.docker.ArtifactMetaInfo;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidArtifactServerException;
 import io.harness.exception.NestedExceptionUtils;
@@ -91,6 +92,50 @@ public class DockerRegistryUtils {
       labelsList.add(labels);
     }
     return labelsList;
+  }
+
+  public ArtifactMetaInfo getMetaInfo(DockerInternalConfig dockerConfig, DockerRegistryRestClient registryRestClient,
+      Function<Headers, String> getTokenFn, String authHeader, String imageName, List<String> tags) {
+    ArtifactMetaInfo am = new ArtifactMetaInfo();
+    am.setSHA("");
+
+    try {
+      String tag = tags.get(0);
+      Response<DockerImageManifestResponse> response =
+          registryRestClient.getImageManifest(authHeader, imageName, tag).execute();
+      if (DockerRegistryUtils.fallbackToTokenAuth(response.code(), dockerConfig)) { // unauthorized
+        if (getTokenFn == null) {
+          // We don't want to retry if getTokenFn is null.
+          throw NestedExceptionUtils.hintWithExplanationException("Invalid Credentials",
+              "Check if the provided credentials are correct",
+              new InvalidArtifactServerException("Invalid Docker Registry credentials", USER));
+        }
+        String token = getTokenFn.apply(response.headers());
+        authHeader = "Bearer " + token;
+        response = registryRestClient.getImageManifest(authHeader, imageName, tag).execute();
+        if (response.code() == 401) {
+          // Unauthorized even after retry.
+          throw NestedExceptionUtils.hintWithExplanationException("Invalid Credentials",
+              "Check if the provided credentials are correct",
+              new InvalidArtifactServerException("Invalid Docker Registry credentials", USER));
+        }
+      }
+      if (!isSuccessful(response)) {
+        throw NestedExceptionUtils.hintWithExplanationException(
+            "Failed to fetch details for image. Check if the image details are correct",
+            "Check if the image exists, the permissions are scoped for the authenticated user & check if the right connector chosen for fetching tags for the image",
+            new InvalidArtifactServerException(response.message(), USER));
+      }
+
+      checkValidImage(imageName, response);
+      am.setSHA(response.raw().headers().value(4));
+      return am;
+
+    } catch (Exception e) {
+      // Ignore error until we understand why fetching labels is failing sometimes.
+      log.error("Failed to fetch docker image SHA Digest ", e);
+      return am;
+    }
   }
 
   private static Map<String, String> getSingleTagLabels(DockerInternalConfig dockerConfig,

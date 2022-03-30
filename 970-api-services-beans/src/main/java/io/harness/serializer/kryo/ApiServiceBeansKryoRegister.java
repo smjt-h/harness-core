@@ -28,6 +28,7 @@ import io.harness.beans.NGInstanceUnitType;
 import io.harness.container.ContainerInfo;
 import io.harness.delegate.beans.artifact.ArtifactFileMetadata;
 import io.harness.deployment.InstanceDetails;
+import io.harness.docker.ArtifactMetaInfo;
 import io.harness.ecs.EcsContainerDetails;
 import io.harness.exception.HelmClientException;
 import io.harness.git.UsernamePasswordAuthRequest;
@@ -401,5 +402,6 @@ public class ApiServiceBeansKryoRegister implements KryoRegistrar {
     kryo.register(BuildDetails.class, 97110);
     kryo.register(BuildDetails.BuildStatus.class, 97111);
     kryo.register(ArtifactFileMetadata.class, 97112);
+    kryo.register(ArtifactMetaInfo.class, 97113);
   }
 }

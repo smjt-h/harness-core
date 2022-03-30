@@ -23,6 +23,7 @@ import io.harness.artifacts.docker.DockerRegistryRestClient;
 import io.harness.artifacts.docker.beans.DockerInternalConfig;
 import io.harness.artifacts.docker.client.DockerRestClientFactory;
 import io.harness.context.MdcGlobalContextData;
+import io.harness.docker.ArtifactMetaInfo;
 import io.harness.exception.ArtifactServerException;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidArtifactServerException;
@@ -221,6 +222,18 @@ public class DockerRegistryServiceImpl implements DockerRegistryService {
     String authHeader = Credentials.basic(dockerConfig.getUsername(), dockerConfig.getPassword());
     Function<Headers, String> getToken = headers -> getToken(dockerConfig, headers, registryRestClient);
     return dockerRegistryUtils.getLabels(dockerConfig, registryRestClient, getToken, authHeader, imageName, buildNos);
+  }
+
+  @Override
+  public ArtifactMetaInfo getMetaInfo(DockerInternalConfig dockerConfig, String imageName, List<String> buildNos) {
+    if (!dockerConfig.hasCredentials()) {
+      return dockerPublicRegistryProcessor.getMetaInfo(dockerConfig, imageName, buildNos);
+    }
+
+    DockerRegistryRestClient registryRestClient = dockerRestClientFactory.getDockerRegistryRestClient(dockerConfig);
+    String authHeader = Credentials.basic(dockerConfig.getUsername(), dockerConfig.getPassword());
+    Function<Headers, String> getToken = headers -> getToken(dockerConfig, headers, registryRestClient);
+    return dockerRegistryUtils.getMetaInfo(dockerConfig, registryRestClient, getToken, authHeader, imageName, buildNos);
   }
 
   @Override

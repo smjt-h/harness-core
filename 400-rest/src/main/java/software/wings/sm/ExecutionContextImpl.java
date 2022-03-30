@@ -114,13 +114,7 @@ import software.wings.beans.customdeployment.CustomDeploymentTypeDTO;
 import software.wings.common.InfrastructureConstants;
 import software.wings.common.RancherK8sClusterProcessor;
 import software.wings.common.VariableProcessor;
-import software.wings.expression.ArtifactLabelEvaluator;
-import software.wings.expression.ManagerExpressionEvaluator;
-import software.wings.expression.SecretFunctor;
-import software.wings.expression.ShellScriptFunctor;
-import software.wings.expression.SubstitutionFunctor;
-import software.wings.expression.SweepingOutputFunctor;
-import software.wings.expression.SweepingOutputSecretManagerFunctor;
+import software.wings.expression.*;
 import software.wings.infra.InfrastructureDefinition;
 import software.wings.service.impl.AppLogContext;
 import software.wings.service.impl.PipelineWorkflowExecutionLogContext;
@@ -268,6 +262,12 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
                            .buildSourceService(buildSourceService)
                            .artifactStream(artifactStream)
                            .build();
+      artifact.artifactMetaData = ArtifactMetaEvaluator.builder()
+                                      .buildNo(artifact.getBuildNo())
+                                      .buildSourceService(buildSourceService)
+                                      .artifactStream(artifactStream)
+                                      .build();
+
       map.put(rollbackArtifact ? ROLLBACK_ARTIFACT : ARTIFACT, artifact);
       String artifactFileName = null;
       if (isNotEmpty(artifact.getArtifactFiles())) {

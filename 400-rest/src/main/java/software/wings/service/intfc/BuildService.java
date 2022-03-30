@@ -13,6 +13,7 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.docker.ArtifactMetaInfo;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.AzureConfig;
@@ -288,6 +289,11 @@ public interface BuildService<T> {
   }
 
   default List<Map<String, String>> getLabels(ArtifactStreamAttributes artifactStreamAttributes, List<String> buildNos,
+      T dockerConfig, List<EncryptedDataDetail> encryptionDetails) {
+    throw new UnsupportedOperationException();
+  }
+
+  default ArtifactMetaInfo getMetaInfo(ArtifactStreamAttributes artifactStreamAttributes, List<String> buildNos,
       T dockerConfig, List<EncryptedDataDetail> encryptionDetails) {
     throw new UnsupportedOperationException();
   }
