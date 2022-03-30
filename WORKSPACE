@@ -1022,8 +1022,8 @@ go_repository(
 go_repository(
     name = "com_github_drone_go_scm",
     importpath = "github.com/drone/go-scm",
-    sum = "h1:SGB8TnE/85rklK+Gb3ZRTHQRt2atSCFHgtDKNqPwBQU=",
-    version = "v1.20.0",
+    sum = "h1:B7KaHTDwWTRG9Pp6lqCS4iTgU6DbfbNIKYBFGNZ9wHc=",
+    version = "v1.20.1-0.20220330113153-e53d749e6165",
 )
 
 go_repository(
@@ -4731,7 +4731,7 @@ plain_artifacts = [
     "net.jodah:expiringmap:0.5.7",
     "net.jodah:failsafe:2.2.0",
     "net.minidev:accessors-smart:1.2",
-    "net.minidev:json-smart:2.3",
+    "net.minidev:json-smart:2.4.1",
     "net.openhft:affinity:3.2.2",
     "net.openhft:chronicle-bytes:2.19.0",
     "net.openhft:chronicle-core:2.19.0",

@@ -9,6 +9,7 @@ package io.harness.cdng.envGroup.resource;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.ng.core.utils.NGUtils.validate;
+import static io.harness.pms.rbac.NGResourceType.ENVIRONMENT;
 import static io.harness.utils.PageUtils.getNGPageResponse;
 import static io.harness.utils.PageUtils.getPageRequest;
 
@@ -19,9 +20,13 @@ import static org.apache.commons.lang3.StringUtils.isNumeric;
 import io.harness.NGCommonEntityConstants;
 import io.harness.NGResourceFilterConstants;
 import io.harness.accesscontrol.AccountIdentifier;
+import io.harness.accesscontrol.NGAccessControlCheck;
 import io.harness.accesscontrol.OrgIdentifier;
 import io.harness.accesscontrol.ProjectIdentifier;
 import io.harness.accesscontrol.ResourceIdentifier;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
+import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SortOrder;
@@ -29,8 +34,10 @@ import io.harness.cdng.envGroup.beans.EnvironmentGroupEntity;
 import io.harness.cdng.envGroup.beans.EnvironmentGroupEntity.EnvironmentGroupKeys;
 import io.harness.cdng.envGroup.mappers.EnvironmentGroupMapper;
 import io.harness.cdng.envGroup.services.EnvironmentGroupService;
+import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.interceptor.GitEntityDeleteInfoDTO;
 import io.harness.gitsync.interceptor.GitEntityFindInfoDTO;
+import io.harness.gitsync.interceptor.GitEntityUpdateInfoDTO;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.ErrorDTO;
@@ -43,6 +50,8 @@ import io.harness.ng.core.environment.dto.EnvironmentResponse;
 import io.harness.ng.core.environment.mappers.EnvironmentMapper;
 import io.harness.ng.core.environment.services.EnvironmentService;
 import io.harness.ng.core.utils.CoreCriteriaUtils;
+import io.harness.pms.rbac.NGResourceType;
+import io.harness.rbac.CDNGRbacPermissions;
 import io.harness.security.annotations.NextGenManagerAuth;
 
 import com.google.common.collect.ImmutableList;
@@ -66,6 +75,7 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -114,6 +124,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 public class EnvironmentGroupResource {
   private final EnvironmentGroupService environmentGroupService;
   private final EnvironmentService environmentService;
+  private final AccessControlClient accessControlClient;
   public static final String ENVIRONMENT_GROUP_PARAM_MESSAGE = "Environment Group Identifier for the entity";
 
   @GET
@@ -125,9 +136,11 @@ public class EnvironmentGroupResource {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(responseCode = "default", description = "The saved Environment Group")
       })
+  @NGAccessControlCheck(resourceType = NGResourceType.ENVIRONMENT_GROUP,
+      permission = CDNGRbacPermissions.ENVIRONMENT_GROUP_VIEW_PERMISSION)
   public ResponseDTO<EnvironmentGroupResponse>
   get(@Parameter(description = ENVIRONMENT_GROUP_PARAM_MESSAGE) @NotNull @PathParam(
-          NGCommonEntityConstants.ENVIRONMENT_GROUP_KEY) String envGroupId,
+          NGCommonEntityConstants.ENVIRONMENT_GROUP_KEY) @ResourceIdentifier String envGroupId,
       @Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountId,
       @Parameter(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) @NotNull @QueryParam(
@@ -137,7 +150,6 @@ public class EnvironmentGroupResource {
       @Parameter(description = "Specify whether Environment is deleted or not") @QueryParam(
           NGCommonEntityConstants.DELETED_KEY) @DefaultValue("false") boolean deleted,
       @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
-    // TODO: NEED TO ADD RBAC
     Optional<EnvironmentGroupEntity> environmentGroupEntity =
         environmentGroupService.get(accountId, orgIdentifier, projectIdentifier, envGroupId, deleted);
 
@@ -151,7 +163,6 @@ public class EnvironmentGroupResource {
     return null;
   }
 
-  // Api to create an Environment Group
   @POST
   @ApiOperation(value = "Create an Environment Group", nickname = "createEnvironmentGroup")
   @Operation(operationId = "postEnvironmentGroup", summary = "Create an Environment Group",
@@ -161,6 +172,8 @@ public class EnvironmentGroupResource {
             description =
                 "If the YAML is valid, returns created Environment Group. If not, it sends what is wrong with the YAML")
       })
+  @NGAccessControlCheck(resourceType = NGResourceType.ENVIRONMENT_GROUP,
+      permission = CDNGRbacPermissions.ENVIRONMENT_GROUP_CREATE_PERMISSION)
   public ResponseDTO<EnvironmentGroupResponse>
   create(@NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @Parameter(
              description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) String accountId,
@@ -173,11 +186,14 @@ public class EnvironmentGroupResource {
               "Environment Group YAML to be created. The Account, Org,  and Project identifiers inside the YAML should match the query parameters.")
       @NotNull String yaml,
       @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
-    // TODO(PRASHANTSHARMA): need to add rbac and also check the validity of env identifiers passed in yaml
     EnvironmentGroupEntity entity =
         EnvironmentGroupMapper.toEnvironmentEntity(accountId, orgIdentifier, projectIdentifier, yaml);
     // Validate the fields of the Entity
     validate(entity);
+
+    // validate view permissions for each environment linked with environment group
+    validatePermissionForEnvironment(entity);
+
     EnvironmentGroupEntity savedEntity = environmentGroupService.create(entity);
 
     // fetching Environments from list of identifiers
@@ -206,6 +222,8 @@ public class EnvironmentGroupResource {
       @Parameter(description = "The word to be searched and included in the list response") @QueryParam(
           NGResourceFilterConstants.SEARCH_TERM_KEY) String searchTerm,
       @BeanParam PageRequest pageRequest, @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgIdentifier, projectIdentifier),
+        Resource.of(NGResourceType.ENVIRONMENT_GROUP, null), CDNGRbacPermissions.ENVIRONMENT_GROUP_VIEW_PERMISSION);
     Criteria criteria = CoreCriteriaUtils.createCriteriaForGetList(accountId, orgIdentifier, projectIdentifier, false);
 
     if (isEmpty(pageRequest.getSortOrders())) {
@@ -230,10 +248,12 @@ public class EnvironmentGroupResource {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(responseCode = "default", description = "Returns true if the Environment Group is deleted")
       })
+  @NGAccessControlCheck(resourceType = NGResourceType.ENVIRONMENT_GROUP,
+      permission = CDNGRbacPermissions.ENVIRONMENT_GROUP_DELETE_PERMISSION)
   public ResponseDTO<EnvironmentGroupDeleteResponse>
   delete(@HeaderParam(IF_MATCH) String ifMatch,
       @Parameter(description = ENVIRONMENT_GROUP_PARAM_MESSAGE) @PathParam(
-          NGCommonEntityConstants.ENVIRONMENT_GROUP_KEY) String envGroupId,
+          NGCommonEntityConstants.ENVIRONMENT_GROUP_KEY) @ResourceIdentifier String envGroupId,
       @Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountId,
       @Parameter(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) @NotNull @QueryParam(
@@ -241,11 +261,59 @@ public class EnvironmentGroupResource {
       @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectIdentifier,
       @BeanParam GitEntityDeleteInfoDTO entityDeleteInfo) {
-    // TODO: set up usages of env group as well as env linked with it. RBAC
+    // TODO: set up usages of env group as well as env linked with it
     log.info(String.format("Delete Environment group Api %s", envGroupId));
     EnvironmentGroupEntity deletedEntity = environmentGroupService.delete(
         accountId, orgIdentifier, projectIdentifier, envGroupId, isNumeric(ifMatch) ? parseLong(ifMatch) : null);
     return ResponseDTO.newResponse(EnvironmentGroupMapper.toDeleteResponseWrapper(deletedEntity));
+  }
+
+  @PUT
+  @Path("/{envGroupIdentifier}")
+  @ApiOperation(value = "Update an Environment Group by Identifier", nickname = "updateEnvironmentGroup")
+  @Operation(operationId = "updateEnvironmentGroup", summary = "Update an Environment Group by Identifier",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(responseCode = "default", description = "Returns the updated Environment Group")
+      })
+  public ResponseDTO<EnvironmentGroupResponse>
+  update(@HeaderParam(IF_MATCH) String ifMatch,
+      @Parameter(description = ENVIRONMENT_GROUP_PARAM_MESSAGE) @NotNull @PathParam(
+          NGCommonEntityConstants.ENVIRONMENT_GROUP_KEY) String envGroupId,
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @Parameter(
+          description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) String accountId,
+      @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) @OrgIdentifier @Parameter(
+          description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) String orgIdentifier,
+      @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier @Parameter(
+          description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) String projectIdentifier,
+      @RequestBody(required = true,
+          description =
+              "Environment Group YAML to be updated. The Account, Org, and Project identifiers inside the YAML should match the query parameters.")
+      @NotNull String yaml,
+      @BeanParam GitEntityUpdateInfoDTO gitEntityInfo) {
+    log.info(String.format("Updating Environment Group with identifier %s in project %s, org %s, account %s",
+        envGroupId, projectIdentifier, orgIdentifier, accountId));
+    EnvironmentGroupEntity requestedEntity =
+        EnvironmentGroupMapper.toEnvironmentEntity(accountId, orgIdentifier, projectIdentifier, yaml);
+    // Validate the fields of the Entity
+    validate(requestedEntity);
+
+    // Validating if identifier is same passed in yaml and path param
+    if (!envGroupId.equals(requestedEntity.getIdentifier())) {
+      throw new InvalidRequestException("Updating of Environment Group Identifier is not supported");
+    }
+
+    // updating the version if any
+    requestedEntity.setVersion(isNumeric(ifMatch) ? parseLong(ifMatch) : null);
+
+    EnvironmentGroupEntity updatedEntity = environmentGroupService.update(requestedEntity);
+
+    // fetching Environments from list of identifiers
+    List<EnvironmentResponse> envResponseList = getEnvironmentResponses(updatedEntity);
+
+    return ResponseDTO.newResponse(updatedEntity.getVersion().toString(),
+        EnvironmentGroupMapper.toResponseWrapper(updatedEntity, envResponseList));
   }
 
   private List<EnvironmentResponse> getEnvironmentResponses(EnvironmentGroupEntity groupEntity) {
@@ -257,5 +325,16 @@ public class EnvironmentGroupResource {
     envResponseList = EnvironmentMapper.toResponseWrapper(envList);
 
     return envResponseList;
+  }
+
+  private void validatePermissionForEnvironment(EnvironmentGroupEntity envGroup) {
+    String accountId = envGroup.getAccountId();
+    String orgId = envGroup.getOrgIdentifier();
+    String projectId = envGroup.getProjectIdentifier();
+
+    List<String> envIdentifiers = envGroup.getEnvIdentifiers();
+    envIdentifiers.forEach(envId
+        -> accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgId, projectId),
+            Resource.of(ENVIRONMENT, envId), CDNGRbacPermissions.ENVIRONMENT_VIEW_PERMISSION));
   }
 }
