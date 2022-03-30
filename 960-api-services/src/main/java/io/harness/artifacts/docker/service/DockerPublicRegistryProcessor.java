@@ -21,6 +21,7 @@ import io.harness.artifacts.docker.beans.DockerPublicImageTagResponse;
 import io.harness.artifacts.docker.client.DockerRestClientFactory;
 import io.harness.artifacts.docker.service.DockerRegistryServiceImpl.DockerRegistryToken;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.docker.ArtifactMetaInfo;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidArtifactServerException;
 import io.harness.exception.NestedExceptionUtils;
@@ -209,6 +210,12 @@ public class DockerPublicRegistryProcessor {
     DockerRegistryRestClient registryRestClient = dockerRestClientFactory.getDockerRegistryRestClient(dockerConfig);
     Function<Headers, String> getToken = headers -> getToken(headers, registryRestClient);
     return dockerRegistryUtils.getLabels(dockerConfig, registryRestClient, getToken, "", imageName, buildNos);
+  }
+
+  public ArtifactMetaInfo getMetaInfo(DockerInternalConfig dockerConfig, String imageName, List<String> buildNos) {
+    DockerRegistryRestClient registryRestClient = dockerRestClientFactory.getDockerRegistryRestClient(dockerConfig);
+    Function<Headers, String> getToken = headers -> getToken(headers, registryRestClient);
+    return dockerRegistryUtils.getMetaInfo(dockerConfig, registryRestClient, getToken, "", imageName, buildNos);
   }
 
   private String getToken(Headers headers, DockerRegistryRestClient registryRestClient) {

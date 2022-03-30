@@ -16,6 +16,7 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.EmbeddedUser;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.artifact.ArtifactFileMetadata;
+import io.harness.docker.ArtifactMetaInfo;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.MongoIndex;
@@ -24,6 +25,7 @@ import io.harness.mongo.index.SortCompoundMongoIndex;
 import software.wings.beans.Base;
 import software.wings.beans.Service;
 import software.wings.expression.ArtifactLabelEvaluator;
+import software.wings.expression.ArtifactMetaEvaluator;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -127,6 +129,7 @@ public class Artifact extends Base {
   private Map<String, String> metadata = new HashMap<>();
   private Map<String, String> labels = new HashMap<>();
   @Transient @JsonIgnore public ArtifactLabelEvaluator label;
+  @Transient @JsonIgnore public ArtifactMetaEvaluator artifactMetaData;
   @NotEmpty private String displayName;
   private String revision;
   private List<String> serviceIds = new ArrayList<>();
@@ -364,6 +367,7 @@ public class Artifact extends Base {
     private Map<String, String> metadata = new HashMap<>();
     private Map<String, String> labels = new HashMap<>();
     private ArtifactLabelEvaluator label;
+    private ArtifactMetaEvaluator artifactMetaData;
     private String displayName;
     private String revision;
     private List<String> serviceIds = new ArrayList<>();
@@ -484,6 +488,10 @@ public class Artifact extends Base {
       this.label = label;
       return this;
     }
+    public Builder withArtifactMetaEvaluator(ArtifactMetaEvaluator artifactMetaData) {
+      this.artifactMetaData = artifactMetaData;
+      return this;
+    }
 
     public Builder withLastUpdatedAt(long lastUpdatedAt) {
       this.lastUpdatedAt = lastUpdatedAt;
@@ -527,6 +535,7 @@ public class Artifact extends Base {
           .withMetadata(metadata)
           .withLabels(labels)
           .withLabel(label)
+          .withArtifactMetaEvaluator(artifactMetaData)
           .withDisplayName(displayName)
           .withRevision(revision)
           .withServiceIds(serviceIds)
@@ -557,6 +566,7 @@ public class Artifact extends Base {
       artifact.setMetadata(metadata);
       artifact.setLabels(labels);
       artifact.setLabel(label);
+      artifact.setArtifactMetaData(artifactMetaData);
       artifact.setDisplayName(displayName);
       artifact.setRevision(revision);
       artifact.setServiceIds(serviceIds);

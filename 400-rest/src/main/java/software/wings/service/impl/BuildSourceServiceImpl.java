@@ -36,6 +36,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.DelegateTask;
 import io.harness.delegate.beans.TaskData;
+import io.harness.docker.ArtifactMetaInfo;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ff.FeatureFlagService;
 import io.harness.security.encryption.EncryptedDataDetail;
@@ -369,6 +370,38 @@ public class BuildSourceServiceImpl implements BuildSourceService {
 
     return getBuildService(settingAttribute, appId)
         .getLabels(artifactStreamAttributes, buildNos, settingValue, encryptedDataDetails);
+  }
+  @Override
+  public ArtifactMetaInfo getMetaInfo(ArtifactStream artifactStream, List<String> buildNos) {
+    String appId = artifactStream.fetchAppId();
+    String artifactStreamId = artifactStream.getUuid();
+    String settingId = artifactStream.getSettingId();
+
+    if (!DOCKER.name().equals(artifactStream.getArtifactStreamType())) {
+      ArtifactMetaInfo am = new ArtifactMetaInfo();
+      return am;
+    }
+
+    SettingAttribute settingAttribute = settingsService.get(settingId);
+    if (settingAttribute == null) {
+      log.warn("Artifact server: [{}] was deleted for artifact stream: [{}]", settingId, artifactStreamId);
+      //      return Collections.emptyList();
+      ArtifactMetaInfo am = new ArtifactMetaInfo();
+      return am;
+    }
+
+    SettingValue settingValue = getSettingValue(settingAttribute);
+    List<EncryptedDataDetail> encryptedDataDetails = getEncryptedDataDetails((EncryptableSetting) settingValue);
+
+    ArtifactStreamAttributes artifactStreamAttributes;
+    if (!GLOBAL_APP_ID.equals(appId)) {
+      Service service = artifactStreamServiceBindingService.getService(appId, artifactStream.getUuid(), true);
+      artifactStreamAttributes = getArtifactStreamAttributes(artifactStream, service);
+    } else {
+      artifactStreamAttributes = artifactStream.fetchArtifactStreamAttributes(featureFlagService);
+    }
+    return getBuildService(settingAttribute, appId)
+        .getMetaInfo(artifactStreamAttributes, buildNos, settingValue, encryptedDataDetails);
   }
 
   private ArtifactStreamAttributes getArtifactStreamAttributes(ArtifactStream artifactStream, Service service) {

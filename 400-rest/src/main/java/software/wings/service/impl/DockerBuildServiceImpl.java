@@ -19,6 +19,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.artifacts.docker.service.DockerRegistryService;
+import io.harness.docker.ArtifactMetaInfo;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.security.encryption.EncryptedDataDetail;
@@ -135,6 +136,14 @@ public class DockerBuildServiceImpl implements DockerBuildService {
       DockerConfig dockerConfig, List<EncryptedDataDetail> encryptionDetails) {
     encryptionService.decrypt(dockerConfig, encryptionDetails, false);
     return dockerRegistryService.getLabels(DockerConfigToInternalMapper.toDockerInternalConfig(dockerConfig),
+        artifactStreamAttributes.getImageName(), buildNos);
+  }
+
+  @Override
+  public ArtifactMetaInfo getMetaInfo(ArtifactStreamAttributes artifactStreamAttributes, List<String> buildNos,
+      DockerConfig dockerConfig, List<EncryptedDataDetail> encryptionDetails) {
+    encryptionService.decrypt(dockerConfig, encryptionDetails, false);
+    return dockerRegistryService.getMetaInfo(DockerConfigToInternalMapper.toDockerInternalConfig(dockerConfig),
         artifactStreamAttributes.getImageName(), buildNos);
   }
 }
