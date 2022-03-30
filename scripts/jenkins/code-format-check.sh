@@ -82,7 +82,7 @@ if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
   git status
   git add .
   git commit -m "Pushing Code Format changes for Java files automatically."
-  git push origin "<+trigger.sourceBranch>"
+  git push origin ${SOURCE_BRANCH}
 
   exit 1
 fi
