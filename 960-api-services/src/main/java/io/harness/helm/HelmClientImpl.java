@@ -176,8 +176,12 @@ public class HelmClientImpl implements HelmClient {
     logHelmCommandInExecutionLogs(releaseHistory, helmCommandData.getLogCallback());
     releaseHistory = applyKubeConfigToCommand(releaseHistory, kubeConfigLocation);
 
+    LogOutputStream errorStream = helmCommandData.getLogCallback() != null
+        ? new ErrorActivityOutputStream(helmCommandData.getLogCallback())
+        : new LogErrorStream();
+
     if (!isErrorFrameworkEnabled) {
-      return executeHelmCLICommand(releaseHistory);
+      return executeHelmCLICommandErrorStream(releaseHistory, errorStream);
     }
 
     String errorMessagePrefix = "Failed in release history step. Executed command: ";
@@ -396,6 +400,12 @@ public class HelmClientImpl implements HelmClient {
   @VisibleForTesting
   HelmCliResponse executeHelmCLICommand(String command) throws IOException, InterruptedException, TimeoutException {
     return executeHelmCLICommand(command, DEFAULT_HELM_COMMAND_TIMEOUT, null);
+  }
+
+  @VisibleForTesting
+  HelmCliResponse executeHelmCLICommandErrorStream(String command, OutputStream errorStream)
+      throws IOException, InterruptedException, TimeoutException {
+    return executeHelmCLICommand(command, DEFAULT_HELM_COMMAND_TIMEOUT, errorStream);
   }
 
   @VisibleForTesting
