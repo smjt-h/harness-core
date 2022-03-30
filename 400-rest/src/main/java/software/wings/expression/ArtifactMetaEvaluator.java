@@ -18,7 +18,7 @@ import software.wings.beans.artifact.ArtifactStream;
 import software.wings.delegatetasks.buildsource.ArtifactStreamLogContext;
 import software.wings.service.intfc.BuildSourceService;
 
-import java.util.*;
+import java.util.Collections;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
