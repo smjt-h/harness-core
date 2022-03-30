@@ -8,41 +8,38 @@
 package io.harness.cdng.envGroup.services;
 
 import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.name.Named;
-import com.google.protobuf.StringValue;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.envGroup.beans.EnvironmentGroupEntity;
-import io.harness.eventsframework.protohelper.IdentifierRefProtoDTOHelper;
-import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
-import io.harness.eventsframework.schemas.entity.EntityTypeProtoEnum;
-import io.harness.eventsframework.schemas.entity.IdentifierRefProtoDTO;
-import io.harness.eventsframework.schemas.entitysetupusage.EntityDetailWithSetupUsageDetailProtoDTO;
-import io.harness.eventsframework.schemas.entitysetupusage.EntitySetupUsageCreateV2DTO;
-import io.harness.exception.InvalidRequestException;
 import io.harness.eventsframework.EventsFrameworkConstants;
 import io.harness.eventsframework.EventsFrameworkMetadataConstants;
 import io.harness.eventsframework.api.EventsFrameworkDownException;
 import io.harness.eventsframework.api.Producer;
 import io.harness.eventsframework.entity_crud.EntityChangeDTO;
 import io.harness.eventsframework.producer.Message;
-import io.harness.ng.core.entitysetupusage.dto.SetupUsageDetailType;
+import io.harness.eventsframework.protohelper.IdentifierRefProtoDTOHelper;
+import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
+import io.harness.eventsframework.schemas.entity.EntityTypeProtoEnum;
+import io.harness.eventsframework.schemas.entity.IdentifierRefProtoDTO;
+import io.harness.eventsframework.schemas.entitysetupusage.EntitySetupUsageCreateV2DTO;
+import io.harness.exception.InvalidRequestException;
 import io.harness.repositories.envGroup.EnvironmentGroupRepository;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.google.protobuf.StringValue;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
-
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 @Singleton
@@ -54,7 +51,10 @@ public class EnvironmentGroupServiceImpl implements EnvironmentGroupService {
   private IdentifierRefProtoDTOHelper identifierRefProtoDTOHelper;
 
   @Inject
-  public EnvironmentGroupServiceImpl(EnvironmentGroupRepository environmentRepository, @Named(EventsFrameworkConstants.ENTITY_CRUD) Producer eventProducer, @Named(EventsFrameworkConstants.SETUP_USAGE) Producer setupUsagesEventProducer, IdentifierRefProtoDTOHelper identifierRefProtoDTOHelper) {
+  public EnvironmentGroupServiceImpl(EnvironmentGroupRepository environmentRepository,
+      @Named(EventsFrameworkConstants.ENTITY_CRUD) Producer eventProducer,
+      @Named(EventsFrameworkConstants.SETUP_USAGE) Producer setupUsagesEventProducer,
+      IdentifierRefProtoDTOHelper identifierRefProtoDTOHelper) {
     this.environmentRepository = environmentRepository;
     this.eventProducer = eventProducer;
     this.setupUsagesEventProducer = setupUsagesEventProducer;
@@ -71,7 +71,8 @@ public class EnvironmentGroupServiceImpl implements EnvironmentGroupService {
   @Override
   public EnvironmentGroupEntity create(EnvironmentGroupEntity entity) {
     EnvironmentGroupEntity savedEntity = environmentRepository.create(entity);
-    publishEvent(savedEntity.getAccountIdentifier(),savedEntity.getOrgIdentifier(),savedEntity.getProjectIdentifier(),savedEntity.getIdentifier(),EventsFrameworkMetadataConstants.CREATE_ACTION);
+    publishEvent(savedEntity.getAccountIdentifier(), savedEntity.getOrgIdentifier(), savedEntity.getProjectIdentifier(),
+        savedEntity.getIdentifier(), EventsFrameworkMetadataConstants.CREATE_ACTION);
     setupUsagesForEnvironmentList(entity);
     return savedEntity;
   }
@@ -103,6 +104,10 @@ public class EnvironmentGroupServiceImpl implements EnvironmentGroupService {
       EnvironmentGroupEntity deletedEntity = environmentRepository.deleteEnvGroup(entityWithDelete);
 
       if (deletedEntity.getDeleted()) {
+        publishEvent(deletedEntity.getAccountIdentifier(), deletedEntity.getOrgIdentifier(),
+            deletedEntity.getProjectIdentifier(), deletedEntity.getIdentifier(),
+            EventsFrameworkMetadataConstants.DELETE_ACTION);
+        setupUsagesForEnvironmentList(deletedEntity);
         return deletedEntity;
       } else {
         throw new InvalidRequestException(
@@ -144,18 +149,19 @@ public class EnvironmentGroupServiceImpl implements EnvironmentGroupService {
                                                .withEnvIdentifiers(requestedEntity.getEnvIdentifiers())
                                                .withTags(requestedEntity.getTags())
                                                .withYaml(requestedEntity.getYaml());
-    EnvironmentGroupEntity savedEntity =  environmentRepository.update(updatedEntity, originalEntity);
-    publishEvent(savedEntity.getAccountIdentifier(),savedEntity.getOrgIdentifier(),savedEntity.getProjectIdentifier(),savedEntity.getIdentifier(),EventsFrameworkMetadataConstants.UPDATE_ACTION);
+    EnvironmentGroupEntity savedEntity = environmentRepository.update(updatedEntity, originalEntity);
+    publishEvent(savedEntity.getAccountIdentifier(), savedEntity.getOrgIdentifier(), savedEntity.getProjectIdentifier(),
+        savedEntity.getIdentifier(), EventsFrameworkMetadataConstants.UPDATE_ACTION);
     setupUsagesForEnvironmentList(savedEntity);
     return savedEntity;
   }
 
   private void publishEvent(
-          String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier, String action) {
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier, String action) {
     try {
       EntityChangeDTO.Builder environmentChangeEvent = EntityChangeDTO.newBuilder()
-              .setAccountIdentifier(StringValue.of(accountIdentifier))
-              .setIdentifier(StringValue.of(identifier));
+                                                           .setAccountIdentifier(StringValue.of(accountIdentifier))
+                                                           .setIdentifier(StringValue.of(identifier));
       if (isNotBlank(orgIdentifier)) {
         environmentChangeEvent.setOrgIdentifier(StringValue.of(orgIdentifier));
       }
@@ -163,49 +169,60 @@ public class EnvironmentGroupServiceImpl implements EnvironmentGroupService {
         environmentChangeEvent.setProjectIdentifier(StringValue.of(projectIdentifier));
       }
       eventProducer.send(
-              Message.newBuilder()
-                      .putAllMetadata(ImmutableMap.of("accountId", accountIdentifier,
-                              EventsFrameworkMetadataConstants.ENTITY_TYPE, EntityTypeProtoEnum.ENVIRONMENT_GROUP.name(),
-                              EventsFrameworkMetadataConstants.ACTION, action))
-                      .setData(environmentChangeEvent.build().toByteString())
-                      .build());
+          Message.newBuilder()
+              .putAllMetadata(
+                  ImmutableMap.of("accountId", accountIdentifier, EventsFrameworkMetadataConstants.ENTITY_TYPE,
+                      EntityTypeProtoEnum.ENVIRONMENT_GROUP.name(), EventsFrameworkMetadataConstants.ACTION, action))
+              .setData(environmentChangeEvent.build().toByteString())
+              .build());
     } catch (EventsFrameworkDownException e) {
       log.error("Failed to send event to events framework Environment Group Identifier: {}", identifier, e);
     }
   }
 
   private void setupUsagesForEnvironmentList(EnvironmentGroupEntity envGroupEntity) {
-    List<EntityDetailProtoDTO> referredEntities = getEnvReferredEntities(envGroupEntity);
     EntityDetailProtoDTO envGroupDetails =
-            EntityDetailProtoDTO.newBuilder()
-                    .setIdentifierRef(identifierRefProtoDTOHelper.createIdentifierRefProtoDTO(envGroupEntity.getAccountId(),
-                            envGroupEntity.getOrgIdentifier(), envGroupEntity.getProjectIdentifier(),
-                            envGroupEntity.getIdentifier()))
-                    .setType(EntityTypeProtoEnum.ENVIRONMENT_GROUP)
-                    .setName(envGroupEntity.getName())
-                    .build();
+        EntityDetailProtoDTO.newBuilder()
+            .setIdentifierRef(identifierRefProtoDTOHelper.createIdentifierRefProtoDTO(envGroupEntity.getAccountId(),
+                envGroupEntity.getOrgIdentifier(), envGroupEntity.getProjectIdentifier(),
+                envGroupEntity.getIdentifier()))
+            .setType(EntityTypeProtoEnum.ENVIRONMENT_GROUP)
+            .setName(envGroupEntity.getName())
+            .build();
 
-      EntitySetupUsageCreateV2DTO entityReferenceDTO =
-              EntitySetupUsageCreateV2DTO.newBuilder()
-                      .setAccountIdentifier(envGroupEntity.getAccountId())
-                      .setReferredByEntity(envGroupDetails)
-                      .addAllReferredEntities(referredEntities)
-                      .setDeleteOldReferredByRecords(true)
-                      .build();
+    EntitySetupUsageCreateV2DTO.Builder entityReferenceDTO = EntitySetupUsageCreateV2DTO.newBuilder()
+                                                                 .setAccountIdentifier(envGroupEntity.getAccountId())
+                                                                 .setReferredByEntity(envGroupDetails)
+                                                                 .setDeleteOldReferredByRecords(true);
 
-      setupUsagesEventProducer.send(
-              Message.newBuilder()
-                      .putAllMetadata(ImmutableMap.of("accountId", envGroupEntity.getAccountId(),
-                              EventsFrameworkMetadataConstants.REFERRED_ENTITY_TYPE, EntityTypeProtoEnum.ENVIRONMENT.name(),
-                              EventsFrameworkMetadataConstants.ACTION, EventsFrameworkMetadataConstants.FLUSH_CREATE_ACTION))
-                      .setData(entityReferenceDTO.toByteString())
-                      .build());
+    // if envGroup is non  deleted, then add all the referred environment entities in env group
+    if (!envGroupEntity.getDeleted()) {
+      List<EntityDetailProtoDTO> referredEntities = getEnvReferredEntities(envGroupEntity);
+      entityReferenceDTO.addAllReferredEntities(referredEntities);
+    }
 
+    setupUsagesEventProducer.send(
+        Message.newBuilder()
+            .putAllMetadata(ImmutableMap.of("accountId", envGroupEntity.getAccountId(),
+                EventsFrameworkMetadataConstants.REFERRED_ENTITY_TYPE, EntityTypeProtoEnum.ENVIRONMENT.name(),
+                EventsFrameworkMetadataConstants.ACTION, EventsFrameworkMetadataConstants.FLUSH_CREATE_ACTION))
+            .setData(entityReferenceDTO.build().toByteString())
+            .build());
   }
-
 
   private List<EntityDetailProtoDTO> getEnvReferredEntities(EnvironmentGroupEntity entity) {
     List<String> envIdentifiers = entity.getEnvIdentifiers();
-    return envIdentifiers.stream().map(env -> EntityDetailProtoDTO.newBuilder().setIdentifierRef(IdentifierRefProtoDTO.newBuilder().setAccountIdentifier(StringValue.of(entity.getAccountId())).setOrgIdentifier(StringValue.of(entity.getOrgIdentifier())).setProjectIdentifier(StringValue.of(entity.getProjectIdentifier())).setIdentifier(StringValue.of(env)).build()).setType(EntityTypeProtoEnum.ENVIRONMENT).build()).collect(Collectors.toList());
+    return envIdentifiers.stream()
+        .map(env
+            -> EntityDetailProtoDTO.newBuilder()
+                   .setIdentifierRef(IdentifierRefProtoDTO.newBuilder()
+                                         .setAccountIdentifier(StringValue.of(entity.getAccountId()))
+                                         .setOrgIdentifier(StringValue.of(entity.getOrgIdentifier()))
+                                         .setProjectIdentifier(StringValue.of(entity.getProjectIdentifier()))
+                                         .setIdentifier(StringValue.of(env))
+                                         .build())
+                   .setType(EntityTypeProtoEnum.ENVIRONMENT)
+                   .build())
+        .collect(Collectors.toList());
   }
 }

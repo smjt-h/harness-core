@@ -10,7 +10,11 @@ package io.harness.ng.core.entitysetupusage.event;
 import static io.harness.NGConstants.BRANCH;
 import static io.harness.NGConstants.REPO;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.REFERRED_ENTITY_TYPE;
-import static io.harness.eventsframework.schemas.entity.EntityTypeProtoEnum.*;
+import static io.harness.eventsframework.schemas.entity.EntityTypeProtoEnum.CONNECTORS;
+import static io.harness.eventsframework.schemas.entity.EntityTypeProtoEnum.ENVIRONMENT;
+import static io.harness.eventsframework.schemas.entity.EntityTypeProtoEnum.ENVIRONMENT_GROUP;
+import static io.harness.eventsframework.schemas.entity.EntityTypeProtoEnum.SECRETS;
+import static io.harness.eventsframework.schemas.entity.EntityTypeProtoEnum.SERVICE;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
