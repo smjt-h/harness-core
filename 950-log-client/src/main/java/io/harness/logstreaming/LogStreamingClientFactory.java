@@ -42,9 +42,6 @@ public class LogStreamingClientFactory implements Provider<LogStreamingClient> {
 
   private String logStreamingServiceBaseUrl;
 
-
-
-
   public LogStreamingClientFactory(String logStreamingServiceBaseUrl) {
     this.logStreamingServiceBaseUrl = logStreamingServiceBaseUrl;
   }

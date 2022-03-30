@@ -39,10 +39,6 @@ public class DefaultCatalog extends CatalogImpl {
     super("");
   }
 
-
-
-
-
   @Override
   public final List<Schema> getSchemas() {
     return Arrays.<Schema>asList(Public.PUBLIC);
