@@ -103,6 +103,16 @@ import io.harness.connector.mappers.secretmanagermapper.AwsSecretManagerDTOToEnt
 import io.harness.connector.mappers.secretmanagermapper.AwsSecretManagerEntityToDTO;
 import io.harness.connector.mappers.secretmanagermapper.LocalDTOToEntity;
 import io.harness.connector.mappers.secretmanagermapper.LocalEntityToDTO;
+import io.harness.connector.mappers.secretmanagermapper.AzureBlobDTOToEntity;
+import io.harness.connector.mappers.secretmanagermapper.AzureBlobEntityToDTO;
+import io.harness.connector.mappers.secretmanagermapper.AzureKeyVaultDTOToEntity;
+import io.harness.connector.mappers.secretmanagermapper.AzureKeyVaultEntityToDTO;
+import io.harness.connector.mappers.secretmanagermapper.GcpKmsDTOToEntity;
+import io.harness.connector.mappers.secretmanagermapper.GcpKmsEntityToDTO;
+import io.harness.connector.mappers.secretmanagermapper.LocalDTOToEntity;
+import io.harness.connector.mappers.secretmanagermapper.LocalEntityToDTO;
+import io.harness.connector.mappers.secretmanagermapper.VaultDTOToEntity;
+import io.harness.connector.mappers.secretmanagermapper.VaultEntityToDTO;
 import io.harness.connector.mappers.servicenow.ServiceNowDTOtoEntity;
 import io.harness.connector.mappers.servicenow.ServiceNowEntityToDTO;
 import io.harness.connector.mappers.splunkconnectormapper.SplunkDTOToEntity;
