@@ -57,12 +57,12 @@ public class UpdateCvConfigPerpetualTasksMigration implements CVNGMigration {
                              .accountId(cvConfig.getAccountId())
                              .orgIdentifier(cvConfig.getOrgIdentifier())
                              .projectIdentifier(cvConfig.getProjectIdentifier())
-                             .monitoringSourceIdentifier(cvConfig.getIdentifier())
+                             .monitoringSourceIdentifier(cvConfig.getFullyQualifiedIdentifier())
                              .connectorIdentifier(cvConfig.getConnectorIdentifier())
                              .build());
         String dataCollectionWorkerId = monitoringSourcePerpetualTaskService.getLiveMonitoringWorkerId(
             cvConfig.getAccountId(), cvConfig.getOrgIdentifier(), cvConfig.getProjectIdentifier(),
-            cvConfig.getConnectorIdentifier(), cvConfig.getIdentifier());
+            cvConfig.getConnectorIdentifier(), cvConfig.getFullyQualifiedIdentifier());
         hPersistence.update(hPersistence.createQuery(DataCollectionTask.class, excludeAuthority)
                                 .filter(DataCollectionTaskKeys.dataCollectionWorkerId, cvConfig.getUuid())
                                 .field(DataCollectionTaskKeys.status)

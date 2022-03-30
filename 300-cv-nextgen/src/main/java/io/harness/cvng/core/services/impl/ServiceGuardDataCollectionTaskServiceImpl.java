@@ -107,7 +107,7 @@ public class ServiceGuardDataCollectionTaskServiceImpl implements DataCollection
   private DataCollectionTask getDataCollectionTask(CVConfig cvConfig, Instant startTime, Instant endTime) {
     String dataCollectionWorkerId = monitoringSourcePerpetualTaskService.getLiveMonitoringWorkerId(
         cvConfig.getAccountId(), cvConfig.getOrgIdentifier(), cvConfig.getProjectIdentifier(),
-        cvConfig.getConnectorIdentifier(), cvConfig.getIdentifier());
+        cvConfig.getConnectorIdentifier(), cvConfig.getFullyQualifiedIdentifier());
     return ServiceGuardDataCollectionTask.builder()
         .accountId(cvConfig.getAccountId())
         .type(SERVICE_GUARD)

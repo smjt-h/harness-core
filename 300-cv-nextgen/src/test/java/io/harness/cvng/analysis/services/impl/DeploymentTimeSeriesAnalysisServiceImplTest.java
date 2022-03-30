@@ -286,7 +286,7 @@ public class DeploymentTimeSeriesAnalysisServiceImplTest extends CvNextGenTestBa
     verificationJobService.create(accountId, createCanaryVerificationJobDTO());
     VerificationJobInstance verificationJobInstance = createVerificationJobInstance();
     CVConfig cvConfig = verificationJobInstance.getCvConfigMap().values().iterator().next();
-    List<String> healthSourceIdentifiersFilter = Arrays.asList(cvConfig.getIdentifier());
+    List<String> healthSourceIdentifiersFilter = Arrays.asList(cvConfig.getFullyQualifiedIdentifier());
     String verificationJobInstanceId = verificationJobInstanceService.create(verificationJobInstance);
     String verificationTaskId = verificationTaskService.createDeploymentVerificationTask(
         accountId, cvConfig.getUuid(), verificationJobInstanceId, cvConfig.getType());

@@ -289,7 +289,7 @@ public class VerificationJobInstanceServiceImpl implements VerificationJobInstan
     return verificationJobInstance.getCvConfigMap()
         .values()
         .stream()
-        .filter(cvConfig -> filterIdentifiers.contains(cvConfig.getIdentifier()))
+        .filter(cvConfig -> filterIdentifiers.contains(cvConfig.getFullyQualifiedIdentifier()))
         .map(cvConfig -> cvConfig.getUuid())
         .collect(Collectors.toList());
   }
@@ -632,7 +632,7 @@ public class VerificationJobInstanceServiceImpl implements VerificationJobInstan
         dataCollectionTasks.add(DeploymentDataCollectionTask.builder()
                                     .verificationTaskId(verificationTaskId)
                                     .dataCollectionWorkerId(getDataCollectionWorkerId(verificationJobInstance,
-                                        cvConfig.getIdentifier(), cvConfig.getConnectorIdentifier()))
+                                        cvConfig.getFullyQualifiedIdentifier(), cvConfig.getConnectorIdentifier()))
                                     .startTime(preDeploymentTimeRange.get().getStartTime())
                                     .endTime(preDeploymentTimeRange.get().getEndTime())
                                     .validAfter(preDeploymentTimeRange.get().getEndTime().plus(
@@ -657,7 +657,7 @@ public class VerificationJobInstanceServiceImpl implements VerificationJobInstan
                 .type(Type.DEPLOYMENT)
                 .verificationTaskId(verificationTaskId)
                 .dataCollectionWorkerId(getDataCollectionWorkerId(
-                    verificationJobInstance, cvConfig.getIdentifier(), cvConfig.getConnectorIdentifier()))
+                    verificationJobInstance, cvConfig.getFullyQualifiedIdentifier(), cvConfig.getConnectorIdentifier()))
                 .startTime(timeRange.getStartTime())
                 .endTime(timeRange.getEndTime())
                 .validAfter(timeRange.getEndTime().plus(verificationJobInstance.getDataCollectionDelay()))

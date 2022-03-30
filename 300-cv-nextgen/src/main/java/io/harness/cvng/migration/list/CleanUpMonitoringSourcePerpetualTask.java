@@ -31,7 +31,7 @@ public class CleanUpMonitoringSourcePerpetualTask implements CVNGMigration {
   public void migrate() {
     Set<String> identifiersSet = new HashSet<>();
     hPersistence.createQuery(CVConfig.class).asList().forEach(cvConfig -> {
-      identifiersSet.add(cvConfig.getIdentifier());
+      identifiersSet.add(cvConfig.getFullyQualifiedIdentifier());
     });
 
     List<MonitoringSourcePerpetualTask> monitoringSourcePerpetualTaskList =

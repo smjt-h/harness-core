@@ -438,7 +438,7 @@ public class TimeSeriesDashboardServiceImplTest extends CvNextGenTestBase {
         .thenReturn(getTimeSeriesRecords(cvConfigId, true));
     AppDynamicsCVConfig cvConfig = new AppDynamicsCVConfig();
     cvConfig.setUuid(cvConfigId);
-    List<String> healthSourceIdentifiers = Arrays.asList(cvConfig.getIdentifier());
+    List<String> healthSourceIdentifiers = Arrays.asList(cvConfig.getFullyQualifiedIdentifier());
     Map<String, DataSourceType> cvConfigToDataSourceTypeMap = new HashMap<>();
     cvConfigToDataSourceTypeMap.put(cvConfigId, APP_DYNAMICS);
     when(cvConfigService.list(monitoredServiceParams, healthSourceIdentifiers)).thenReturn(Arrays.asList(cvConfig));
@@ -489,7 +489,7 @@ public class TimeSeriesDashboardServiceImplTest extends CvNextGenTestBase {
         .thenReturn(getTimeSeriesRecords(cvConfigId, true));
     AppDynamicsCVConfig cvConfig = new AppDynamicsCVConfig();
     cvConfig.setUuid(cvConfigId);
-    List<String> healthSourceIdentifiers = Arrays.asList(cvConfig.getIdentifier());
+    List<String> healthSourceIdentifiers = Arrays.asList(cvConfig.getFullyQualifiedIdentifier());
     Map<String, DataSourceType> cvConfigToDataSourceTypeMap = new HashMap<>();
     cvConfigToDataSourceTypeMap.put(cvConfigId, APP_DYNAMICS);
     when(cvConfigService.list(monitoredServiceParams, healthSourceIdentifiers)).thenReturn(Arrays.asList(cvConfig));
@@ -798,7 +798,7 @@ public class TimeSeriesDashboardServiceImplTest extends CvNextGenTestBase {
         .thenReturn(getTimeSeriesRecords(cvConfigId, true));
     AppDynamicsCVConfig cvConfig = new AppDynamicsCVConfig();
     cvConfig.setUuid(cvConfigId);
-    List<String> healthSourceIdentifiers = Arrays.asList(cvConfig.getIdentifier());
+    List<String> healthSourceIdentifiers = Arrays.asList(cvConfig.getFullyQualifiedIdentifier());
     Map<String, DataSourceType> cvConfigToDataSourceTypeMap = new HashMap<>();
     cvConfigToDataSourceTypeMap.put(cvConfigId, APP_DYNAMICS);
     monitoredServiceParams.setMonitoredServiceIdentifier(null);

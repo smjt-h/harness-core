@@ -183,7 +183,7 @@ public class StackdriverLogHealthSourceSpecTest extends CvNextGenTestBase {
     assertThat(cvConfig.getConnectorIdentifier()).isEqualTo(connectorIdentifier);
     assertThat(cvConfig.getEnvIdentifier()).isEqualTo(envIdentifier);
     assertThat(cvConfig.getServiceIdentifier()).isEqualTo(serviceIdentifier);
-    assertThat(cvConfig.getIdentifier()).isEqualTo(identifier);
+    assertThat(cvConfig.getFullyQualifiedIdentifier()).isEqualTo(identifier);
     assertThat(cvConfig.getMonitoredServiceIdentifier()).isEqualTo(monitoredServiceIdentifier);
     assertThat(cvConfig.getProductName()).isEqualTo(feature);
     assertThat(cvConfig.getMonitoringSourceName()).isEqualTo(name);

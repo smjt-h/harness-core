@@ -223,7 +223,7 @@ public class HealthSourceServiceImplTest extends CvNextGenTestBase {
         HealthSourceService.getNameSpacedIdentifier(nameSpaceIdentifier, healthSource.getIdentifier()));
     assertThat(cvConfigs.size()).isEqualTo(1);
     AppDynamicsCVConfig cvConfig = (AppDynamicsCVConfig) cvConfigs.get(0);
-    assertThat(cvConfig.getIdentifier())
+    assertThat(cvConfig.getFullyQualifiedIdentifier())
         .isEqualTo(HealthSourceService.getNameSpacedIdentifier(nameSpaceIdentifier, "new-identifier"));
     assertThat(cvConfig.getMonitoringSourceName()).isEqualTo("new-name");
     assertThat(cvConfig.getMetricPack().getCategory()).isEqualTo(CVMonitoringCategory.ERRORS);
@@ -257,7 +257,7 @@ public class HealthSourceServiceImplTest extends CvNextGenTestBase {
 
     for (CVConfig cvConfig : cvConfigs) {
       AppDynamicsCVConfig appdCVConfig = (AppDynamicsCVConfig) cvConfig;
-      assertThat(appdCVConfig.getIdentifier())
+      assertThat(appdCVConfig.getFullyQualifiedIdentifier())
           .isEqualTo(HealthSourceService.getNameSpacedIdentifier(nameSpaceIdentifier, "new-identifier"));
       assertThat(appdCVConfig.getMonitoringSourceName()).isEqualTo("new-name");
       assertThat(appdCVConfig.getProductName()).isEqualTo("new-feature");
@@ -313,7 +313,7 @@ public class HealthSourceServiceImplTest extends CvNextGenTestBase {
     assertThat(cvConfig.getTierName()).isEqualTo(appTierName);
     assertThat(cvConfig.getApplicationName()).isEqualTo(applicationName);
     assertThat(cvConfig.getMonitoredServiceIdentifier()).isEqualTo(monitoredServiceIdentifier);
-    assertThat(cvConfig.getIdentifier())
+    assertThat(cvConfig.getFullyQualifiedIdentifier())
         .isEqualTo(HealthSourceService.getNameSpacedIdentifier(nameSpaceIdentifier, identifier));
   }
 }

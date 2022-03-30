@@ -403,7 +403,7 @@ public class CVConfigServiceImpl implements CVConfigService {
       return cvConfigs;
     }
     return cvConfigs.stream()
-        .filter(cvConfig -> monitoringSources.contains(cvConfig.getIdentifier()))
+        .filter(cvConfig -> monitoringSources.contains(cvConfig.getFullyQualifiedIdentifier()))
         .collect(Collectors.toList());
   }
   @Override

@@ -112,7 +112,7 @@ public class SLIDataCollectionTaskServiceTest extends CvNextGenTestBase {
     fakeNow = clock.instant();
     dataCollectionWorkerId = monitoringSourcePerpetualTaskService.getLiveMonitoringWorkerId(cvConfig.getAccountId(),
         cvConfig.getOrgIdentifier(), cvConfig.getProjectIdentifier(), cvConfig.getConnectorIdentifier(),
-        cvConfig.getIdentifier());
+        cvConfig.getFullyQualifiedIdentifier());
   }
 
   @Test

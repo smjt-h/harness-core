@@ -49,7 +49,7 @@ public class CleanupDeprecatedDocuments implements CVNGMigration {
       if (isOldCVConfig(cvConfig)) {
         cvConfigService.delete(cvConfig.getUuid());
         monitoringSourcePerpetualTaskService.deleteTask(cvConfig.getAccountId(), cvConfig.getOrgIdentifier(),
-            cvConfig.getProjectIdentifier(), cvConfig.getIdentifier());
+            cvConfig.getProjectIdentifier(), cvConfig.getFullyQualifiedIdentifier());
         log.info("Deleted CVConfig job source: {}", cvConfig);
       } else {
         log.info("CVConfig belong to monitored service", cvConfig);
@@ -58,7 +58,7 @@ public class CleanupDeprecatedDocuments implements CVNGMigration {
   }
 
   private boolean isOldCVConfig(CVConfig cvConfig) {
-    return !cvConfig.getIdentifier().contains("/");
+    return !cvConfig.getFullyQualifiedIdentifier().contains("/");
   }
 
   @Override

@@ -11,6 +11,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.migration.list.AddDeploymentMonitoringSourcePerpetualTask;
 import io.harness.cvng.migration.list.AddEnvRefsToMonitoredServiceMigration;
+import io.harness.cvng.migration.list.AddFullyQualifiedIdentifierToCVConfig;
 import io.harness.cvng.migration.list.AddMetricIdentifierInCVConfigsAndMetricPacks;
 import io.harness.cvng.migration.list.AddMetricIdentifierToTimeSeriesThreshold;
 import io.harness.cvng.migration.list.AddMonitoredServiceToActivityMigration;
@@ -103,6 +104,7 @@ public class CVNGBackgroundMigrationList {
         .add(Pair.of(41, AddMetricIdentifierToTimeSeriesThreshold.class))
         .add(Pair.of(42, AddMonitoredServiceToWebhookMigration.class))
         .add(Pair.of(43, AddTaskInfoToVerificationTask.class))
+        .add(Pair.of(44, AddFullyQualifiedIdentifierToCVConfig.class))
 
         .build();
   }

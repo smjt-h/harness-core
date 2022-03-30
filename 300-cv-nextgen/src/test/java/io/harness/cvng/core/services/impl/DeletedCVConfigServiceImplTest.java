@@ -141,24 +141,26 @@ public class DeletedCVConfigServiceImplTest extends CvNextGenTestBase {
     CVConfig cvConfig = createCVConfig();
     DeletedCVConfig saved = save(createDeletedCVConfig(cvConfig));
     monitoringSourcePerpetualTaskService.createTask(accountId, cvConfig.getOrgIdentifier(),
-        cvConfig.getProjectIdentifier(), cvConfig.getConnectorIdentifier(), cvConfig.getIdentifier(), false);
+        cvConfig.getProjectIdentifier(), cvConfig.getConnectorIdentifier(), cvConfig.getFullyQualifiedIdentifier(),
+        false);
     List<MonitoringSourcePerpetualTask> monitoringSourcePerpetualTasks =
         hPersistence.createQuery(MonitoringSourcePerpetualTask.class)
-            .filter(MonitoringSourcePerpetualTaskKeys.monitoringSourceIdentifier, cvConfig.getIdentifier())
+            .filter(
+                MonitoringSourcePerpetualTaskKeys.monitoringSourceIdentifier, cvConfig.getFullyQualifiedIdentifier())
             .asList();
     assertThat(monitoringSourcePerpetualTasks).hasSize(2);
     deletedCVConfigServiceWithMocks.triggerCleanup(saved);
-    monitoringSourcePerpetualTasks =
-        hPersistence.createQuery(MonitoringSourcePerpetualTask.class)
-            .filter(MonitoringSourcePerpetualTaskKeys.monitoringSourceIdentifier, cvConfig.getIdentifier())
-            .asList();
+    monitoringSourcePerpetualTasks = hPersistence.createQuery(MonitoringSourcePerpetualTask.class)
+                                         .filter(MonitoringSourcePerpetualTaskKeys.monitoringSourceIdentifier,
+                                             cvConfig.getFullyQualifiedIdentifier())
+                                         .asList();
     assertThat(monitoringSourcePerpetualTasks).hasSize(2);
     cvConfigService.delete(cvConfig.getUuid());
     deletedCVConfigServiceWithMocks.triggerCleanup(saved);
-    monitoringSourcePerpetualTasks =
-        hPersistence.createQuery(MonitoringSourcePerpetualTask.class)
-            .filter(MonitoringSourcePerpetualTaskKeys.monitoringSourceIdentifier, cvConfig.getIdentifier())
-            .asList();
+    monitoringSourcePerpetualTasks = hPersistence.createQuery(MonitoringSourcePerpetualTask.class)
+                                         .filter(MonitoringSourcePerpetualTaskKeys.monitoringSourceIdentifier,
+                                             cvConfig.getFullyQualifiedIdentifier())
+                                         .asList();
     assertThat(monitoringSourcePerpetualTasks).hasSize(0);
   }
 

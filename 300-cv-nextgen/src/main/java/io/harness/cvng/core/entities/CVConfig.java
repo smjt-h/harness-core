@@ -107,9 +107,26 @@ public abstract class CVConfig
   private String productName;
   // Use FullyQualifiedIdentifier(NameSpace+HealthSource)
   @NotNull @Deprecated private String identifier;
+  @NotNull private String fullyQualifiedIdentifier;
   private String healthSourceIdentifier;
   @NotNull private String monitoringSourceName;
   private boolean isDemo;
+
+  public void setIdentifier(String identifier) {
+    this.identifier = identifier;
+    this.fullyQualifiedIdentifier = identifier;
+  }
+
+  public abstract static class CVConfigBuilder<C extends CVConfig, B extends CVConfigBuilder<C, B>> {
+    private String identifier;
+    private String fullyQualifiedIdentifier;
+
+    public B identifier(String identifier) {
+      this.identifier = identifier;
+      this.fullyQualifiedIdentifier = identifier;
+      return self();
+    }
+  }
 
   public String getFullyQualifiedIdentifier() {
     return identifier;

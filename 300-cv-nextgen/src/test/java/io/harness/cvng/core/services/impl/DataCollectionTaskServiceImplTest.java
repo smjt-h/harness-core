@@ -152,7 +152,7 @@ public class DataCollectionTaskServiceImplTest extends CvNextGenTestBase {
     fakeNow = clock.instant();
     dataCollectionWorkerId = monitoringSourcePerpetualTaskService.getLiveMonitoringWorkerId(cvConfig.getAccountId(),
         cvConfig.getOrgIdentifier(), cvConfig.getProjectIdentifier(), cvConfig.getConnectorIdentifier(),
-        cvConfig.getIdentifier());
+        cvConfig.getFullyQualifiedIdentifier());
   }
 
   @Test
@@ -533,8 +533,8 @@ public class DataCollectionTaskServiceImplTest extends CvNextGenTestBase {
     assertThat(nextTask.getStartTime()).isEqualTo(dataCollectionTask.getEndTime());
     assertThat(nextTask.getEndTime()).isEqualTo(dataCollectionTask.getEndTime().plus(5, ChronoUnit.MINUTES));
     assertThat(nextTask.getDataCollectionWorkerId())
-        .isEqualTo(monitoringSourcePerpetualTaskService.getLiveMonitoringWorkerId(
-            accountId, orgIdentifier, projectIdentifier, cvConfig.getConnectorIdentifier(), cvConfig.getIdentifier()));
+        .isEqualTo(monitoringSourcePerpetualTaskService.getLiveMonitoringWorkerId(accountId, orgIdentifier,
+            projectIdentifier, cvConfig.getConnectorIdentifier(), cvConfig.getFullyQualifiedIdentifier()));
     assertThat(nextTask.getValidAfter())
         .isEqualTo(dataCollectionTask.getEndTime().plus(5, ChronoUnit.MINUTES).plus(DATA_COLLECTION_DELAY));
   }
@@ -549,8 +549,8 @@ public class DataCollectionTaskServiceImplTest extends CvNextGenTestBase {
                                           .dataCollectionTaskId(dataCollectionTask.getUuid())
                                           .build();
     CVConfig cvConfig = cvConfigService.get(cvConfigId);
-    cvConfigService.setHealthMonitoringFlag(
-        accountId, orgIdentifier, projectIdentifier, Collections.singletonList(cvConfig.getIdentifier()), false);
+    cvConfigService.setHealthMonitoringFlag(accountId, orgIdentifier, projectIdentifier,
+        Collections.singletonList(cvConfig.getFullyQualifiedIdentifier()), false);
     dataCollectionTaskService.updateTaskStatus(result);
     DataCollectionTask nextTask = hPersistence.createQuery(DataCollectionTask.class)
                                       .filter(DataCollectionTaskKeys.accountId, accountId)
@@ -594,8 +594,8 @@ public class DataCollectionTaskServiceImplTest extends CvNextGenTestBase {
     assertThat(nextTask.getStartTime()).isEqualTo(expectedStartTime);
     assertThat(nextTask.getEndTime()).isEqualTo(expectedStartTime.plus(5, ChronoUnit.MINUTES));
     assertThat(nextTask.getDataCollectionWorkerId())
-        .isEqualTo(monitoringSourcePerpetualTaskService.getLiveMonitoringWorkerId(
-            accountId, orgIdentifier, projectIdentifier, cvConfig.getConnectorIdentifier(), cvConfig.getIdentifier()));
+        .isEqualTo(monitoringSourcePerpetualTaskService.getLiveMonitoringWorkerId(accountId, orgIdentifier,
+            projectIdentifier, cvConfig.getConnectorIdentifier(), cvConfig.getFullyQualifiedIdentifier()));
     assertThat(nextTask.getValidAfter())
         .isEqualTo(expectedStartTime.plus(5, ChronoUnit.MINUTES).plus(DATA_COLLECTION_DELAY));
   }
@@ -795,8 +795,8 @@ public class DataCollectionTaskServiceImplTest extends CvNextGenTestBase {
     assertThat(savedTask.getVerificationTaskId())
         .isEqualTo(verificationTaskService.getServiceGuardVerificationTaskId(accountId, cvConfigId));
     assertThat(savedTask.getDataCollectionWorkerId())
-        .isEqualTo(monitoringSourcePerpetualTaskService.getLiveMonitoringWorkerId(
-            accountId, orgIdentifier, projectIdentifier, cvConfig.getConnectorIdentifier(), cvConfig.getIdentifier()));
+        .isEqualTo(monitoringSourcePerpetualTaskService.getLiveMonitoringWorkerId(accountId, orgIdentifier,
+            projectIdentifier, cvConfig.getConnectorIdentifier(), cvConfig.getFullyQualifiedIdentifier()));
   }
 
   @Test
@@ -937,8 +937,8 @@ public class DataCollectionTaskServiceImplTest extends CvNextGenTestBase {
     assertThat(savedTask.getEndTime()).isEqualTo(cvConfig.getFirstTimeDataCollectionTimeRange().getEndTime());
     assertThat(savedTask.getStartTime()).isEqualTo(cvConfig.getFirstTimeDataCollectionTimeRange().getStartTime());
     assertThat(savedTask.getDataCollectionWorkerId())
-        .isEqualTo(monitoringSourcePerpetualTaskService.getLiveMonitoringWorkerId(
-            accountId, orgIdentifier, projectIdentifier, cvConfig.getConnectorIdentifier(), cvConfig.getIdentifier()));
+        .isEqualTo(monitoringSourcePerpetualTaskService.getLiveMonitoringWorkerId(accountId, orgIdentifier,
+            projectIdentifier, cvConfig.getConnectorIdentifier(), cvConfig.getFullyQualifiedIdentifier()));
   }
 
   @Test
