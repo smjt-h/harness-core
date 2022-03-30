@@ -26,6 +26,7 @@ import static software.wings.utils.WingsTestConstants.ACCESS_KEY;
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
 import static software.wings.utils.WingsTestConstants.SECRET_KEY;
 import static software.wings.utils.WingsTestConstants.SETTING_NAME;
+import static software.wings.utils.WingsTestConstants.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -1238,12 +1239,13 @@ public class SettingValidationServiceTest extends WingsBaseTest {
     settingAttribute.setValue(createSmtpConfig());
     settingAttribute.setName(NG_SMTP_SETTINGS_PREFIX + "dummy");
     when(secretManager.getEncryptionDetails(any(), any(), any())).thenReturn(null);
-    when(delegateService.executeTask(any(DelegateTask.class))).thenThrow(new NoEligibleDelegatesInAccountException());
+    when(delegateService.executeTask(any(DelegateTask.class)))
+        .thenThrow(new NoEligibleDelegatesInAccountException(String.format(", id: %s", UUID)));
     try {
       settingValidationService.validateConnectivity(settingAttribute);
       fail("The delegate task executed should have thrown error.");
     } catch (NoEligibleDelegatesInAccountException e) {
-      assertThat(e.getMessage()).isEqualTo("No eligible delegates to execute task");
+      assertThat(e.getMessage()).isEqualTo("No eligible delegates to execute task, id: UUID");
     }
     ArgumentCaptor<DelegateTask> taskArgumentCaptor = ArgumentCaptor.forClass(DelegateTask.class);
     verify(delegateService, times(1)).executeTask(taskArgumentCaptor.capture());
