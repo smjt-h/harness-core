@@ -21,19 +21,24 @@ import io.harness.cdng.envGroup.beans.EnvironmentGroupEntity;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.encryption.ScopeHelper;
 import io.harness.exception.InvalidRequestException;
+import io.harness.gitsync.sdk.EntityGitDetailsMapper;
 import io.harness.ng.core.EntityDetail;
+import io.harness.ng.core.envGroup.dto.EnvironmentGroupDeleteResponse;
 import io.harness.ng.core.envGroup.dto.EnvironmentGroupResponse;
 import io.harness.ng.core.envGroup.dto.EnvironmentGroupResponseDTO;
+import io.harness.ng.core.environment.dto.EnvironmentResponse;
 import io.harness.pms.yaml.YamlUtils;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import lombok.experimental.UtilityClass;
 
 @OwnedBy(PIPELINE)
 @UtilityClass
 public class EnvironmentGroupMapper {
-  public EnvironmentGroupResponseDTO writeDTO(EnvironmentGroupEntity envGroup) {
+  public EnvironmentGroupResponseDTO writeDTO(
+      EnvironmentGroupEntity envGroup, List<EnvironmentResponse> envResponseList) {
     return EnvironmentGroupResponseDTO.builder()
         .accountId(envGroup.getAccountId())
         .orgIdentifier(envGroup.getOrgIdentifier())
@@ -46,14 +51,27 @@ public class EnvironmentGroupMapper {
         .tags(convertToMap(envGroup.getTags()))
         .version(envGroup.getVersion())
         .envIdentifiers(envGroup.getEnvIdentifiers())
+        .gitDetails(EntityGitDetailsMapper.mapEntityGitDetails(envGroup))
+        .envResponse(CollectionUtils.emptyIfNull(envResponseList))
         .build();
   }
 
-  public EnvironmentGroupResponse toResponseWrapper(EnvironmentGroupEntity envGroup) {
+  public EnvironmentGroupResponse toResponseWrapper(
+      EnvironmentGroupEntity envGroup, List<EnvironmentResponse> envResponseList) {
     return EnvironmentGroupResponse.builder()
-        .environment(writeDTO(envGroup))
+        .environment(writeDTO(envGroup, envResponseList))
         .createdAt(envGroup.getCreatedAt())
         .lastModifiedAt(envGroup.getLastModifiedAt())
+        .build();
+  }
+
+  public EnvironmentGroupDeleteResponse toDeleteResponseWrapper(EnvironmentGroupEntity envGroup) {
+    return EnvironmentGroupDeleteResponse.builder()
+        .accountId(envGroup.getAccountId())
+        .orgIdentifier(envGroup.getOrgIdentifier())
+        .projectIdentifier(envGroup.getProjectIdentifier())
+        .identifier(envGroup.getIdentifier())
+        .deleted(envGroup.getDeleted())
         .build();
   }
 

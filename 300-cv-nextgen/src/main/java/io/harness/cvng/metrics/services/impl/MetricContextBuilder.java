@@ -10,9 +10,13 @@ package io.harness.cvng.metrics.services.impl;
 import io.harness.cvng.analysis.entities.LearningEngineTask;
 import io.harness.cvng.cdng.entities.CVNGStepTask;
 import io.harness.cvng.core.entities.DataCollectionTask;
+import io.harness.cvng.core.entities.VerificationTask;
 import io.harness.cvng.metrics.beans.AccountMetricContext;
+import io.harness.cvng.metrics.beans.AnalysisStateMachineContext;
 import io.harness.cvng.metrics.beans.DataCollectionTaskMetricContext;
 import io.harness.cvng.metrics.beans.LETaskMetricContext;
+import io.harness.cvng.metrics.beans.VerificationTaskMetricContext;
+import io.harness.cvng.statemachine.entities.AnalysisOrchestrator;
 import io.harness.cvng.statemachine.entities.AnalysisStateMachine;
 import io.harness.cvng.verificationjob.entities.VerificationJobInstance;
 import io.harness.metrics.AutoMetricContext;
@@ -40,7 +44,12 @@ public class MetricContextBuilder {
         -> new LETaskMetricContext(
             learningEngineTask.getAccountId(), learningEngineTask.getType().toString().toLowerCase()));
     addToObjContextMap(AnalysisStateMachine.class,
-        analysisStateMachine -> new AccountMetricContext(analysisStateMachine.getAccountId()));
+        analysisStateMachine
+        -> new AnalysisStateMachineContext(
+            analysisStateMachine.getAccountId(), analysisStateMachine.getCurrentState().getType()));
+    addToObjContextMap(AnalysisOrchestrator.class,
+        analysisOrchestrator -> new AccountMetricContext(analysisOrchestrator.getAccountId()));
+    addToObjContextMap(VerificationTask.class, VerificationTaskMetricContext::new);
   }
 
   private static <T> void addToObjContextMap(Class<T> clazz, ObjectContextBuilder<T> objectContextBuilder) {

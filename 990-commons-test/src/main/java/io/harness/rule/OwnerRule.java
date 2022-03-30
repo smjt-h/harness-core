@@ -147,6 +147,7 @@ public class OwnerRule implements TestRule {
   public static final String PRASHANT = "prashant.pal";
   public static final String PRASHANTSHARMA = "prashant.sharma";
   public static final String PRATEEK = "prateek.barapatre";
+  public static final String PRATYUSH = "goel.pratyush";
   public static final String PRAVEEN = "praveen.sugavanam";
   public static final String PUNEET = "puneet.saraswat";
   public static final String RAGHU = "raghu";
@@ -248,6 +249,7 @@ public class OwnerRule implements TestRule {
   public static final String BUHA = "aleksa.buha";
   public static final String SATYAM_GOEL = "satyam.goel";
   public static final String DEV_MITTAL = "devki.mittal";
+  public static final String HEN = "hen.amar";
   @Deprecated public static final String UNKNOWN = "unknown";
 
   private static UserInfoBuilder defaultUserInfo(String user) {
@@ -324,6 +326,7 @@ public class OwnerRule implements TestRule {
           .put(PRANJAL, defaultUserInfo(PRANJAL).slack("UBV049Q5B").team(SWAT).build())
           .put(PRASHANT, defaultUserInfo(PRASHANT).slack("UJLBB7ULT").team(CDC).build())
           .put(PRATEEK, defaultUserInfo(PRATEEK).slack("U02LG0DA988").team(PL).build())
+          .put(PRATYUSH, defaultUserInfo(PRATYUSH).slack("U02U8PM4NG2").team(CDP).build())
           .put(PRAVEEN, defaultUserInfo(PRAVEEN).slack("UAQH9QHSB").team(CV).build())
           .put(PUNEET, defaultUserInfo(PUNEET).slack("U8PMB1XKM").team(CE).build())
           .put(PRASHANTSHARMA, defaultUserInfo(PRASHANTSHARMA).slack("U015LRWKR6X").team(PL).build())
@@ -427,6 +430,7 @@ public class OwnerRule implements TestRule {
           .put(VAIBHAV_KUMAR, defaultUserInfo(VAIBHAV_KUMAR).slack("U02UYG4J2SU").team(CDP).build())
           .put(BUHA, defaultUserInfo(BUHA).slack("U02V35N54R0").team(CDP).build())
           .put(DEV_MITTAL, defaultUserInfo(DEV_MITTAL).slack("U032JRFUZT2").team(CI).build())
+          .put(HEN, defaultUserInfo(HEN).slack("U02MD3UMWUA").team(CI).build())
           .build();
 
   private static String prDeveloperId = findDeveloperId(System.getenv(GHPRB_PULL_AUTHOR_EMAIL));

@@ -938,11 +938,11 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
       WorkflowCreator workflowCreator = abstractWorkflowFactory.getWorkflowCreatorFactory(category).getWorkflowCreator(
           orchestrationWorkflow.getOrchestrationWorkflowType());
       workflow = workflowCreator.createWorkflow(workflow);
-      if (isEmpty(orchestrationWorkflow.getNotificationRules())) {
+      if (isEmpty(orchestrationWorkflow.getNotificationRules()) && !workflow.isSyncFromGit()) {
         createDefaultNotificationRule(workflow);
       }
       if (orchestrationWorkflow.getOrchestrationWorkflowType() != BUILD
-          && orchestrationWorkflow instanceof CanaryOrchestrationWorkflow) {
+          && orchestrationWorkflow instanceof CanaryOrchestrationWorkflow && !workflow.isSyncFromGit()) {
         CanaryOrchestrationWorkflow canaryOrchestrationWorkflow = (CanaryOrchestrationWorkflow) orchestrationWorkflow;
         if (isEmpty(canaryOrchestrationWorkflow.getFailureStrategies())) {
           createDefaultFailureStrategy(workflow);
@@ -2830,8 +2830,9 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
         // Set default artifact as last collected artifact.
         String artifactStreamId = artifactVariable.getAllowedList().get(0);
         ArtifactStream artifactStream = artifactStreamService.get(artifactStreamId);
-        ArtifactStreamSummaryBuilder artifactStreamSummaryBuilder =
-            ArtifactStreamSummary.builder().artifactStreamId(artifactStreamId);
+        ArtifactStreamSummaryBuilder artifactStreamSummaryBuilder = ArtifactStreamSummary.builder()
+                                                                        .artifactStreamId(artifactStreamId)
+                                                                        .artifactStreamName(artifactStream.getName());
         if (artifactStream != null) {
           Artifact artifact = artifactService.fetchLastCollectedApprovedArtifactSorted(artifactStream);
           if (artifact != null) {
@@ -2848,12 +2849,16 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
           : null;
       ArtifactSummary artifactSummary =
           (artifact != null) ? ArtifactStreamServiceImpl.prepareSummaryFromArtifact(artifact) : null;
+      Map<String, String> artifactStreamIdToNameMap =
+          artifactStreamService.getArtifactStreamNames(appId, new HashSet<>(artifactVariable.getAllowedList()));
       artifactVariable.setArtifactStreamSummaries(artifactVariable.getAllowedList()
                                                       .stream()
                                                       .map(artifactStreamId -> {
                                                         ArtifactStreamSummaryBuilder artifactStreamSummaryBuilder =
-                                                            ArtifactStreamSummary.builder().artifactStreamId(
-                                                                artifactStreamId);
+                                                            ArtifactStreamSummary.builder()
+                                                                .artifactStreamId(artifactStreamId)
+                                                                .artifactStreamName(
+                                                                    artifactStreamIdToNameMap.get(artifactStreamId));
                                                         if (artifactSummary != null) {
                                                           artifactStreamSummaryBuilder.defaultArtifact(artifactSummary);
                                                         }

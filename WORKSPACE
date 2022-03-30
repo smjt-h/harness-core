@@ -1022,8 +1022,8 @@ go_repository(
 go_repository(
     name = "com_github_drone_go_scm",
     importpath = "github.com/drone/go-scm",
-    sum = "h1:SGB8TnE/85rklK+Gb3ZRTHQRt2atSCFHgtDKNqPwBQU=",
-    version = "v1.20.0",
+    sum = "h1:Q8qc0DfuZmPLYacWV3F9Hnx7c/Q8alUWh4ERpI9SKCc=",
+    version = "v1.20.1-0.20220328110014-0c095d260cdf",
 )
 
 go_repository(
@@ -4460,7 +4460,7 @@ plain_artifacts = [
     "com.graphql-java:java-dataloader:2.1.1",
     "com.hazelcast:hazelcast-aws:2.4",
     "com.hazelcast:hazelcast-kubernetes:1.5.3",
-    "com.hazelcast:hazelcast:3.12.8",
+    "com.hazelcast:hazelcast:5.1",
     "com.healthmarketscience.sqlbuilder:sqlbuilder:3.0.0",
     "com.hierynomus:asn-one:0.4.0",
     "com.hierynomus:smbj:0.9.0",

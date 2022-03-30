@@ -15,6 +15,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.interceptor.GitSyncConstants;
+import io.harness.utils.FilePathUtils;
 
 import java.util.regex.Pattern;
 import lombok.experimental.UtilityClass;
@@ -47,7 +48,7 @@ public class GitSyncFilePathUtils {
   }
 
   public static String formatFilePath(String path) {
-    return addStartingSlashIfMissing(path);
+    return FilePathUtils.addStartingSlashIfMissing(path);
   }
 
   private static String getGitFolderPath(String folderPath) {
@@ -71,9 +72,12 @@ public class GitSyncFilePathUtils {
     return path;
   }
 
-  private static String addStartingSlashIfMissing(String path) {
-    if (path.charAt(0) != '/') {
-      return "/" + path;
+  public static String getFilePathWithoutStartingSlash(String path) {
+    if (isEmpty(path)) {
+      throw new InvalidRequestException("File Path cannot be empty");
+    }
+    if (path.charAt(0) == '/') {
+      return path.substring(1);
     }
     return path;
   }

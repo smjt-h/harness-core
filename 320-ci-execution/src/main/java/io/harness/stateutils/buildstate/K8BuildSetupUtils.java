@@ -20,6 +20,7 @@ import static io.harness.common.CIExecutionConstants.BUILD_NUMBER_ATTR;
 import static io.harness.common.CIExecutionConstants.HARNESS_ACCOUNT_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_BUILD_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_CI_INDIRECT_LOG_UPLOAD_FF;
+import static io.harness.common.CIExecutionConstants.HARNESS_EXECUTION_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_LOG_PREFIX_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_ORG_ID_VARIABLE;
 import static io.harness.common.CIExecutionConstants.HARNESS_PIPELINE_ID_VARIABLE;
@@ -36,6 +37,7 @@ import static io.harness.common.CIExecutionConstants.PIPELINE_ID_ATTR;
 import static io.harness.common.CIExecutionConstants.POD_MAX_WAIT_UNTIL_READY_SECS;
 import static io.harness.common.CIExecutionConstants.PROJECT_ID_ATTR;
 import static io.harness.common.CIExecutionConstants.STAGE_ID_ATTR;
+import static io.harness.common.CIExecutionConstants.STAGE_NAME_ATTR;
 import static io.harness.common.CIExecutionConstants.TI_SERVICE_ENDPOINT_VARIABLE;
 import static io.harness.common.CIExecutionConstants.TI_SERVICE_TOKEN_VARIABLE;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -142,16 +144,29 @@ public class K8BuildSetupUtils {
     K8PodDetails k8PodDetails = (K8PodDetails) executionSweepingOutputResolver.resolve(
         ambiance, RefObjectUtils.getSweepingOutputRefObject(ContextElement.podDetails));
 
-    NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
+    CIK8InitializeTaskParams initializeTaskParams = null;
     Infrastructure infrastructure = initializeStepInfo.getInfrastructure();
 
-    if (infrastructure == null || ((K8sDirectInfraYaml) infrastructure).getSpec() == null) {
+    if (infrastructure == null) {
       throw new CIStageExecutionException("Input infrastructure can not be empty");
     }
 
-    K8sDirectInfraYaml k8sDirectInfraYaml = (K8sDirectInfraYaml) infrastructure;
+    if (infrastructure.getType() == Infrastructure.Type.KUBERNETES_DIRECT) {
+      initializeTaskParams = buildDirectCIK8InitializeTaskParams(initializeStepInfo, logPrefix, ambiance);
+    } else {
+      initializeTaskParams = buildHostedCIK8InitializeTaskParams(initializeStepInfo, logPrefix, ambiance);
+    }
 
-    final String clusterName = k8sDirectInfraYaml.getSpec().getConnectorRef().getValue();
+    return initializeTaskParams;
+  }
+
+  private CIK8InitializeTaskParams buildDirectCIK8InitializeTaskParams(
+      InitializeStepInfo initializeStepInfo, String logPrefix, Ambiance ambiance) {
+    K8sDirectInfraYaml k8sDirectInfraYaml = (K8sDirectInfraYaml) initializeStepInfo.getInfrastructure();
+
+    K8PodDetails k8PodDetails = (K8PodDetails) executionSweepingOutputResolver.resolve(
+        ambiance, RefObjectUtils.getSweepingOutputRefObject(ContextElement.podDetails));
+
     Map<String, String> annotations = resolveMapParameter(
         "annotations", "K8BuildInfra", "stageSetup", k8sDirectInfraYaml.getSpec().getAnnotations(), false);
     Map<String, String> labels =
@@ -167,20 +182,64 @@ public class K8BuildSetupUtils {
       serviceAccountName = resolveStringParameter;
     }
 
+    String runtime = null;
+
     List<PodToleration> podTolerations = getPodTolerations(k8sDirectInfraYaml.getSpec().getTolerations());
+    NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
 
     PodSetupInfo podSetupInfo = getPodSetupInfo((K8BuildJobEnvInfo) initializeStepInfo.getBuildJobEnvInfo());
 
-    ConnectorDetails k8sConnector = connectorUtils.getConnectorDetails(ngAccess, clusterName);
     CIK8PodParams<CIK8ContainerParams> podParams = getPodParams(ngAccess, k8PodDetails, initializeStepInfo, false,
-        initializeStepInfo.getCiCodebase(), initializeStepInfo.isSkipGitClone(), logPrefix, ambiance, annotations,
-        labels, stageRunAsUser, serviceAccountName, nodeSelector, podTolerations, podSetupInfo.getVolumes());
+        logPrefix, ambiance, annotations, labels, stageRunAsUser, serviceAccountName, nodeSelector, podTolerations,
+        podSetupInfo.getVolumes(), runtime, k8sDirectInfraYaml.getSpec().getNamespace().getValue());
 
     log.info("Created pod params for pod name [{}]", podSetupInfo.getName());
+
+    final String clusterName = k8sDirectInfraYaml.getSpec().getConnectorRef().getValue();
+    ConnectorDetails k8sConnector = connectorUtils.getConnectorDetails(ngAccess, clusterName);
+
     return CIK8InitializeTaskParams.builder()
         .k8sConnector(k8sConnector)
         .cik8PodParams(podParams)
         .podMaxWaitUntilReadySecs(getPodWaitUntilReadTimeout(k8sDirectInfraYaml))
+        .build();
+  }
+  private CIK8InitializeTaskParams buildHostedCIK8InitializeTaskParams(
+      InitializeStepInfo initializeStepInfo, String logPrefix, Ambiance ambiance) {
+    K8PodDetails k8PodDetails = (K8PodDetails) executionSweepingOutputResolver.resolve(
+        ambiance, RefObjectUtils.getSweepingOutputRefObject(ContextElement.podDetails));
+
+    Map<String, String> annotations = null;
+    Map<String, String> labels = null;
+    Map<String, String> nodeSelector = null;
+    Integer stageRunAsUser = null;
+    String resolveStringParameter = null;
+    String serviceAccountName = null;
+    String runtime = "gvisor";
+    String namespace = "default";
+
+    if (resolveStringParameter != null && !resolveStringParameter.equals(UNRESOLVED_PARAMETER)) {
+      serviceAccountName = resolveStringParameter;
+    }
+
+    List<PodToleration> podTolerations = null;
+    NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
+
+    PodSetupInfo podSetupInfo = getPodSetupInfo((K8BuildJobEnvInfo) initializeStepInfo.getBuildJobEnvInfo());
+
+    CIK8PodParams<CIK8ContainerParams> podParams = getPodParams(ngAccess, k8PodDetails, initializeStepInfo, false,
+        logPrefix, ambiance, annotations, labels, stageRunAsUser, serviceAccountName, nodeSelector, podTolerations,
+        podSetupInfo.getVolumes(), runtime, namespace);
+
+    log.info("Created pod params for pod name [{}]", podSetupInfo.getName());
+
+    final String clusterName = "hosted-cluster";
+    ConnectorDetails k8sConnector = connectorUtils.getConnectorDetails(ngAccess, clusterName);
+
+    return CIK8InitializeTaskParams.builder()
+        .k8sConnector(k8sConnector)
+        .cik8PodParams(podParams)
+        .podMaxWaitUntilReadySecs(POD_MAX_WAIT_UNTIL_READY_SECS)
         .build();
   }
 
@@ -205,17 +264,18 @@ public class K8BuildSetupUtils {
   }
 
   public CIK8PodParams<CIK8ContainerParams> getPodParams(NGAccess ngAccess, K8PodDetails k8PodDetails,
-      InitializeStepInfo initializeStepInfo, boolean usePVC, CodeBase ciCodebase, boolean skipGitClone,
-      String logPrefix, Ambiance ambiance, Map<String, String> annotations, Map<String, String> labels,
-      Integer stageRunAsUser, String serviceAccountName, Map<String, String> nodeSelector,
-      List<PodToleration> podTolerations, List<PodVolume> podVolumes) {
+      InitializeStepInfo initializeStepInfo, boolean usePVC, String logPrefix, Ambiance ambiance,
+      Map<String, String> annotations, Map<String, String> labels, Integer stageRunAsUser, String serviceAccountName,
+      Map<String, String> nodeSelector, List<PodToleration> podTolerations, List<PodVolume> podVolumes, String runtime,
+      String namespace) {
     PodSetupInfo podSetupInfo = getPodSetupInfo((K8BuildJobEnvInfo) initializeStepInfo.getBuildJobEnvInfo());
     ConnectorDetails harnessInternalImageConnector = null;
     if (isNotEmpty(ciExecutionServiceConfig.getDefaultInternalImageConnector())) {
       harnessInternalImageConnector = connectorUtils.getDefaultInternalConnector(ngAccess);
     }
-
-    ConnectorDetails gitConnector = codebaseUtils.getGitConnector(ngAccess, ciCodebase, skipGitClone);
+    CodeBase ciCodebase = initializeStepInfo.getCiCodebase();
+    ConnectorDetails gitConnector =
+        codebaseUtils.getGitConnector(ngAccess, ciCodebase, initializeStepInfo.isSkipGitClone());
     Map<String, String> gitEnvVars = codebaseUtils.getGitEnvVariables(gitConnector, ciCodebase);
     Map<String, String> runtimeCodebaseVars = codebaseUtils.getRuntimeCodebaseVars(ambiance);
 
@@ -242,10 +302,9 @@ public class K8BuildSetupUtils {
 
     Infrastructure infrastructure = initializeStepInfo.getInfrastructure();
 
-    if (infrastructure == null || ((K8sDirectInfraYaml) infrastructure).getSpec() == null) {
+    if (infrastructure == null) {
       throw new CIStageExecutionException("Input infrastructure can not be empty");
     }
-    K8sDirectInfraYaml k8sDirectInfraYaml = (K8sDirectInfraYaml) infrastructure;
 
     List<String> containerNames = containerParamsList.stream().map(CIK8ContainerParams::getName).collect(toList());
     containerNames.add(setupAddOnContainerParams.getName());
@@ -273,7 +332,7 @@ public class K8BuildSetupUtils {
 
     return CIK8PodParams.<CIK8ContainerParams>builder()
         .name(podSetupInfo.getName())
-        .namespace((String) k8sDirectInfraYaml.getSpec().getNamespace().fetchFinalValue())
+        .namespace(namespace)
         .labels(buildLabels)
         .serviceAccountName(serviceAccountName)
         .annotations(annotations)
@@ -285,6 +344,7 @@ public class K8BuildSetupUtils {
         .tolerations(podTolerations)
         .nodeSelector(nodeSelector)
         .volumes(podVolumes)
+        .runtime(runtime)
         .build();
   }
 
@@ -559,6 +619,7 @@ public class K8BuildSetupUtils {
     final String pipelineID = ambiance.getMetadata().getPipelineIdentifier();
     final int buildNumber = ambiance.getMetadata().getRunSequence();
     final String stageID = k8PodDetails.getStageID();
+    final String executionID = ambiance.getPlanExecutionId();
 
     // Add git connector environment variables
     envVars.putAll(gitEnvVars);
@@ -580,6 +641,7 @@ public class K8BuildSetupUtils {
     envVars.put(HARNESS_PIPELINE_ID_VARIABLE, pipelineID);
     envVars.put(HARNESS_BUILD_ID_VARIABLE, String.valueOf(buildNumber));
     envVars.put(HARNESS_STAGE_ID_VARIABLE, stageID);
+    envVars.put(HARNESS_EXECUTION_ID_VARIABLE, executionID);
     envVars.put(HARNESS_LOG_PREFIX_VARIABLE, logPrefix);
     return envVars;
   }
@@ -592,6 +654,7 @@ public class K8BuildSetupUtils {
     final String pipelineExecutionID = ambiance.getPlanExecutionId();
     final int buildNumber = ambiance.getMetadata().getRunSequence();
     final String stageID = k8PodDetails.getStageID();
+    final String stageName = k8PodDetails.getStageName();
 
     Map<String, String> labels = new HashMap<>();
     if (isLabelAllowed(accountID)) {
@@ -611,6 +674,9 @@ public class K8BuildSetupUtils {
     }
     if (isLabelAllowed(stageID)) {
       labels.put(STAGE_ID_ATTR, stageID);
+    }
+    if (isLabelAllowed(stageName)) {
+      labels.put(STAGE_NAME_ATTR, stageName);
     }
     if (isLabelAllowed(String.valueOf(buildNumber))) {
       labels.put(BUILD_NUMBER_ATTR, String.valueOf(buildNumber));
