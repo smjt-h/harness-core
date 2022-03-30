@@ -7,19 +7,16 @@
 
 package io.harness.batch.processing.cloudevents.aws.ecs.service.tasklet;
 
-import static io.harness.rule.OwnerRule.HITESH;
-
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.then;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anySet;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
+import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ecs.model.Attribute;
+import com.amazonaws.services.ecs.model.ContainerInstance;
+import com.amazonaws.services.ecs.model.ContainerInstanceStatus;
+import com.amazonaws.services.ecs.model.DesiredStatus;
+import com.amazonaws.services.ecs.model.LaunchType;
+import com.amazonaws.services.ecs.model.Resource;
+import com.amazonaws.services.ecs.model.Service;
+import com.amazonaws.services.ecs.model.Task;
+import com.google.common.collect.ImmutableList;
 import io.harness.CategoryTest;
 import io.harness.batch.processing.billing.timeseries.data.InstanceUtilizationData;
 import io.harness.batch.processing.billing.timeseries.service.impl.UtilizationDataServiceImpl;
@@ -45,32 +42,6 @@ import io.harness.ccm.commons.entities.billing.CECluster;
 import io.harness.ccm.health.LastReceivedPublishedMessageDao;
 import io.harness.ccm.setup.CECloudAccountDao;
 import io.harness.rule.Owner;
-
-import software.wings.beans.AwsCrossAccountAttributes;
-import software.wings.beans.SettingAttribute;
-import software.wings.beans.ce.CEAwsConfig;
-import software.wings.service.intfc.instance.CloudToHarnessMappingService;
-import software.wings.settings.SettingValue;
-
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ecs.model.Attribute;
-import com.amazonaws.services.ecs.model.ContainerInstance;
-import com.amazonaws.services.ecs.model.ContainerInstanceStatus;
-import com.amazonaws.services.ecs.model.DesiredStatus;
-import com.amazonaws.services.ecs.model.LaunchType;
-import com.amazonaws.services.ecs.model.Resource;
-import com.amazonaws.services.ecs.model.Service;
-import com.amazonaws.services.ecs.model.Task;
-import com.google.common.collect.ImmutableList;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -85,6 +56,33 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.scope.context.StepContext;
 import org.springframework.batch.repeat.RepeatStatus;
+import software.wings.beans.AwsCrossAccountAttributes;
+import software.wings.beans.SettingAttribute;
+import software.wings.beans.ce.CEAwsConfig;
+import software.wings.service.intfc.instance.CloudToHarnessMappingService;
+import software.wings.settings.SettingValue;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static io.harness.rule.OwnerRule.HITESH;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.any;
+import static org.mockito.BDDMockito.anySet;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.mock;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.verify;
+import static org.mockito.BDDMockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AwsECSClusterDataSyncTaskletTest extends CategoryTest {
@@ -103,6 +101,11 @@ public class AwsECSClusterDataSyncTaskletTest extends CategoryTest {
   @Mock private NGConnectorHelper ngConnectorHelper;
   @Mock private LastReceivedPublishedMessageDao lastReceivedPublishedMessageDao;
 
+  private static final String accountId = "accountId";
+  private static final String settingId = "settingId";
+  private static final Instant instant = Instant.now().truncatedTo(ChronoUnit.HOURS);
+  private static final long startTime = instant.minus(1, ChronoUnit.HOURS).toEpochMilli();
+  private static final long endTime = instant.toEpochMilli();
   private final String REGION = "us-east-1";
   private final String ACCOUNT_ID = "accountId";
   private final String INFRA_ACCOUNT_ID = "infraAccountId";
@@ -120,12 +123,6 @@ public class AwsECSClusterDataSyncTaskletTest extends CategoryTest {
   private final String SERVICE_NAME = "ce-fargate";
   private final String DEPLOYMENT_ID = "ecs-svc/7379042797953014107";
   private final String EC2_INSTANCE_ID = "i-0f0afe3d9df9b095c";
-
-  private static final String accountId = "accountId";
-  private static final String settingId = "settingId";
-  private static final Instant instant = Instant.now().truncatedTo(ChronoUnit.HOURS);
-  private static final long startTime = instant.minus(1, ChronoUnit.HOURS).toEpochMilli();
-  private static final long endTime = instant.toEpochMilli();
 
   private MetricValue getMetricValue(String metricName, String statistic, long startTime, double value) {
     return MetricValue.builder()
@@ -228,7 +225,7 @@ public class AwsECSClusterDataSyncTaskletTest extends CategoryTest {
         .when(cloudToHarnessMappingService)
         .listSettingAttributesCreatedInDuration(any(), any(), any());
 
-    Mockito.doReturn(emptyList()).when(ngConnectorHelper).getNextGenConnectors(any());
+    Mockito.doReturn(emptyList()).when(ngConnectorHelper).getNextGenConnectors(any(), any(), any(), any());
 
     RepeatStatus execute = awsECSClusterDataSyncTasklet.execute(null, chunkContext);
     assertThat(execute).isNull();
