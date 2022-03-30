@@ -45,8 +45,8 @@ public class AwsCFGetTemplateParamsRequest extends AwsCFRequest {
 
   @Builder
   public AwsCFGetTemplateParamsRequest(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String data,
-      String region, String type, String sourceRepoSettingId, String sourceRepoBranch, String templatePath,
-      List<EncryptedDataDetail> sourceRepoEncryptionDetails, GitFileConfig gitFileConfig, GitConfig gitConfig) {
+                                       String region, String type, String sourceRepoSettingId, String sourceRepoBranch, String templatePath,
+                                       List<EncryptedDataDetail> sourceRepoEncryptionDetails, GitFileConfig gitFileConfig, GitConfig gitConfig) {
     super(awsConfig, encryptionDetails, GET_TEMPLATE_PARAMETERS, region);
     this.data = data;
     this.type = type;
@@ -58,10 +58,11 @@ public class AwsCFGetTemplateParamsRequest extends AwsCFRequest {
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
     List<ExecutionCapability> capabilities =
-        new ArrayList<>(super.fetchRequiredExecutionCapabilities(maskingEvaluator));
+            new ArrayList<>(super.fetchRequiredExecutionCapabilities(maskingEvaluator));
     if (gitConfig != null && isNotEmpty(gitConfig.getDelegateSelectors())) {
       capabilities.add(SelectorCapability.builder().selectors(new HashSet<>(gitConfig.getDelegateSelectors())).build());
     }
     return capabilities;
   }
 }
+

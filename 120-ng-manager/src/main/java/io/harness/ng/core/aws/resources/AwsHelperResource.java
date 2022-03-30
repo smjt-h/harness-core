@@ -12,6 +12,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.aws.service.AwsHelperResourceServiceImpl;
+import io.harness.connector.ConnectorInfoDTO;
 import io.harness.ng.NextGenConfiguration;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
@@ -29,12 +30,14 @@ import java.util.Set;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.wings.service.impl.aws.model.AwsCFTemplateParamsData;
 
 @OwnedBy(HarnessTeam.CDP)
 @Api("aws")
@@ -59,6 +62,47 @@ public class AwsHelperResource {
     return ResponseDTO.newResponse(configuration.getAwsRegionIdToName());
   }
 
+  @POST
+  @Path("cf-paramters")
+  @ApiOperation(value = "", nickname = "")
+  public ResponseDTO<List<AwsCFTemplateParamsData>> listCFParameterKeys(
+          @QueryParam("type") @NotEmpty String type,
+          @QueryParam("region") @NotEmpty String region,
+          @QueryParam("sourceRepoSettingId") String sourceRepoSettingId,
+          @QueryParam("path") String templatePath,
+          @QueryParam("commitId") String commitId,
+          @QueryParam("branch") String sourceRepoBranch,
+          @QueryParam("useBranch") Boolean useBranch,
+          @QueryParam("repoName") String repoName,
+          @QueryParam("connectorRef") @NotNull  String awsConnectorRef,
+          @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
+          @QueryParam(NGCommonEntityConstants.ORG_KEY) @NotNull String orgIdentifier,
+          @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @NotNull String projectIdentifier,
+          String data
+  ) {
+    IdentifierRef connectorRef =
+            IdentifierRefHelper.getIdentifierRef(awsConnectorRef, accountIdentifier, orgIdentifier, projectIdentifier);
+
+
+    List<AwsCFTemplateParamsData> keys = awsHelperService.awsCFParameterKeys(
+            type,
+            region,
+            sourceRepoSettingId,
+            templatePath,
+            commitId,
+            sourceRepoBranch,
+            connectorRef,
+            orgIdentifier,
+            projectIdentifier,
+            data,
+            connectorDTO
+    );
+
+    return ResponseDTO.newResponse(keys);
+  }
+
+
+
   @GET
   @Path("cf-capabilities")
   @ApiOperation(value = "Get the Cloudformation capabilities", nickname = "CFCapabilitiesForAwsHelper")
@@ -71,17 +115,5 @@ public class AwsHelperResource {
   @ApiOperation(value = "Get all the Cloudformation states for a stack", nickname = "CFStatesForAwsHelper")
   public ResponseDTO<Set<String>> listCFStates() {
     return ResponseDTO.newResponse(awsHelperService.getCFStates());
-  }
-
-  @GET
-  @Path("iam-roles")
-  @ApiOperation(value = "Get all the IAM roles", nickname = "getIamRolesForAwsHelper")
-  public ResponseDTO<Map<String, String>> listIamRoles(@NotNull @QueryParam("connectorRef") String awsConnectorRef,
-      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
-      @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
-      @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier) {
-    IdentifierRef connectorRef =
-        IdentifierRefHelper.getIdentifierRef(awsConnectorRef, accountIdentifier, orgIdentifier, projectIdentifier);
-    return ResponseDTO.newResponse(awsHelperService.getRolesARNs(connectorRef, orgIdentifier, projectIdentifier));
   }
 }

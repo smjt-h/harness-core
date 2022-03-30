@@ -11,6 +11,8 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
+import io.harness.connector.ConnectorInfoDTO;
+import software.wings.service.impl.aws.model.AwsCFTemplateParamsData;
 
 import java.util.List;
 import java.util.Map;
@@ -42,4 +44,28 @@ public interface AwsHelperResourceService {
    * @return the list of rolesARNs
    */
   Map<String, String> getRolesARNs(IdentifierRef awsConnectorRef, String orgIdentifier, String projectIdentifier);
+
+
+  /**
+   * Get all parameter keys for a cloudformation template
+   *
+   * @param type
+   * @param region
+   * @param sourceRepoSettingId
+   * @param templatePath
+   * @param commitId
+   * @param sourceRepoBranch
+   * @param awsConnectorRef
+   * @param orgIdentifier
+   * @param projectIdentifier
+   * @param data
+   * @param connectorDTO
+   *
+   * @return the list of Cloudformation param keys
+   */
+  List<AwsCFTemplateParamsData> awsCFParameterKeys(
+          String type, String region, String sourceRepoSettingId, String templatePath, String commitId,
+          String sourceRepoBranch, IdentifierRef awsConnectorRef, String orgIdentifier, String projectIdentifier,
+          String data, ConnectorInfoDTO connectorDTO
+  );
 }
