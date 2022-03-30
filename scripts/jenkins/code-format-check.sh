@@ -72,8 +72,18 @@ bazel run //:buildifier
 git diff --exit-code
 
 if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
-  echo "There are changes identified due to code format issue"
-  echo "Please rerun code-formatter and update the PR to fix it"
+  echo "There are changes identified in JAVA files due to code format issue. Those issues have been solved and pushed back to your PR. Please re-trigger the Code Format check from Github."
+  echo "Following JAVA files have been modified by clang-format..."
+
+  git remote set-url origin https://${BOT_USER}:${BOT_PWD}@github.com/harness/harness-core.git; git remote -v && git branch
+  git config --global user.name "${BOT_USER}"
+  git config --global user.email "${BOT_EMAIL}"
+
+  git status
+  git add .
+  git commit -m "Pushing Code Format changes for Java files automatically."
+  git push origin "<+trigger.sourceBranch>"
+
   exit 1
 fi
 
