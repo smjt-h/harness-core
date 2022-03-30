@@ -10,9 +10,12 @@ package io.harness.cdng.envGroup.services;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
+import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.IdentifierRef;
 import io.harness.cdng.envGroup.beans.EnvironmentGroupEntity;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.eventsframework.EventsFrameworkConstants;
 import io.harness.eventsframework.EventsFrameworkMetadataConstants;
 import io.harness.eventsframework.api.EventsFrameworkDownException;
@@ -25,6 +28,10 @@ import io.harness.eventsframework.schemas.entity.EntityTypeProtoEnum;
 import io.harness.eventsframework.schemas.entity.IdentifierRefProtoDTO;
 import io.harness.eventsframework.schemas.entitysetupusage.EntitySetupUsageCreateV2DTO;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.UnexpectedException;
+import io.harness.ng.core.EntityDetail;
+import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
+import io.harness.ng.core.entitysetupusage.service.EntitySetupUsageService;
 import io.harness.repositories.envGroup.EnvironmentGroupRepository;
 
 import com.google.common.collect.ImmutableMap;
@@ -32,7 +39,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.protobuf.StringValue;
-
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -46,19 +53,21 @@ import org.springframework.data.mongodb.core.query.Criteria;
 @Slf4j
 public class EnvironmentGroupServiceImpl implements EnvironmentGroupService {
   private final EnvironmentGroupRepository environmentRepository;
-  private Producer eventProducer;
-  private Producer setupUsagesEventProducer;
-  private IdentifierRefProtoDTOHelper identifierRefProtoDTOHelper;
+  private final Producer eventProducer;
+  private final Producer setupUsagesEventProducer;
+  private final IdentifierRefProtoDTOHelper identifierRefProtoDTOHelper;
+  private final EntitySetupUsageService entitySetupUsageService;
 
   @Inject
   public EnvironmentGroupServiceImpl(EnvironmentGroupRepository environmentRepository,
       @Named(EventsFrameworkConstants.ENTITY_CRUD) Producer eventProducer,
       @Named(EventsFrameworkConstants.SETUP_USAGE) Producer setupUsagesEventProducer,
-      IdentifierRefProtoDTOHelper identifierRefProtoDTOHelper) {
+      IdentifierRefProtoDTOHelper identifierRefProtoDTOHelper, EntitySetupUsageService entitySetupUsageService) {
     this.environmentRepository = environmentRepository;
     this.eventProducer = eventProducer;
     this.setupUsagesEventProducer = setupUsagesEventProducer;
     this.identifierRefProtoDTOHelper = identifierRefProtoDTOHelper;
+    this.entitySetupUsageService = entitySetupUsageService;
   }
 
   @Override
@@ -94,6 +103,10 @@ public class EnvironmentGroupServiceImpl implements EnvironmentGroupService {
               projectIdentifier, orgIdentifier));
     }
     EnvironmentGroupEntity existingEntity = envGroupEntity.get();
+
+    // Check the usages of environment group
+    checkThatEnvironmentGroupIsNotReferredByOthers(existingEntity);
+
     if (version != null && !version.equals(existingEntity.getVersion())) {
       throw new InvalidRequestException(
           format("Environment Group [%s] under Project[%s], Organization [%s] is not on the correct version.",
@@ -224,5 +237,32 @@ public class EnvironmentGroupServiceImpl implements EnvironmentGroupService {
                    .setType(EntityTypeProtoEnum.ENVIRONMENT)
                    .build())
         .collect(Collectors.toList());
+  }
+
+  private void checkThatEnvironmentGroupIsNotReferredByOthers(EnvironmentGroupEntity envGroupEntity) {
+    List<EntityDetail> referredByEntities;
+    IdentifierRef identifierRef = IdentifierRef.builder()
+                                      .accountIdentifier(envGroupEntity.getAccountId())
+                                      .orgIdentifier(envGroupEntity.getOrgIdentifier())
+                                      .projectIdentifier(envGroupEntity.getProjectIdentifier())
+                                      .identifier(envGroupEntity.getIdentifier())
+                                      .build();
+    try {
+      Page<EntitySetupUsageDTO> entitySetupUsageDTOS = entitySetupUsageService.listAllEntityUsage(0, 10,
+          envGroupEntity.getAccountId(), identifierRef.getFullyQualifiedName(), EntityType.ENVIRONMENT_GROUP, "");
+      referredByEntities = entitySetupUsageDTOS.stream()
+                               .map(EntitySetupUsageDTO::getReferredByEntity)
+                               .collect(Collectors.toCollection(LinkedList::new));
+    } catch (Exception ex) {
+      log.info("Encountered exception while requesting the Entity Reference records of [{}], with exception",
+          envGroupEntity.getIdentifier(), ex);
+      throw new UnexpectedException(
+          "Error while deleting the Environment Group as was not able to check entity reference records.");
+    }
+    if (EmptyPredicate.isNotEmpty(referredByEntities)) {
+      throw new InvalidRequestException(String.format(
+          "Could not delete the Environment Group %s as it is referenced by other entities - " + referredByEntities,
+          envGroupEntity.getIdentifier()));
+    }
   }
 }
