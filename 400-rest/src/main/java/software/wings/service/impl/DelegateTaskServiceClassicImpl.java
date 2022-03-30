@@ -443,7 +443,7 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
           addToTaskActivityLog(task, NO_ELIGIBLE_DELEGATES);
           delegateSelectionLogsService.logNoEligibleDelegatesToExecuteTask(task);
           delegateMetricsService.recordDelegateTaskMetrics(task, DELEGATE_TASK_NO_ELIGIBLE_DELEGATES);
-          throw new NoEligibleDelegatesInAccountException(String.format(", id: %s ", task.getUuid()));
+          throw new NoEligibleDelegatesInAccountException();
         }
         // shuffle the eligible delegates to evenly distribute the load
         Collections.shuffle(eligibleListOfDelegates);
