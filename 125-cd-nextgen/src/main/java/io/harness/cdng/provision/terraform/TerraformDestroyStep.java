@@ -28,6 +28,7 @@ import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.UnitProgress;
 import io.harness.ng.core.EntityDetail;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.rollback.TaskExecutableWithRollbackAndRbac;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -164,7 +165,8 @@ public class TerraformDestroyStep extends TaskExecutableWithRollbackAndRbac<Terr
 
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         Collections.singletonList(TerraformCommandUnit.Destroy.name()), TaskType.TERRAFORM_TASK_NG.getDisplayName(),
-        StepUtils.getTaskSelectorsFromYaml(parameters.getDelegateSelectors()), stepHelper.getEnvironmentType(ambiance));
+        TaskSelectorYaml.toTaskSelector(parameters.getDelegateSelectors().getValue()),
+        stepHelper.getEnvironmentType(ambiance));
   }
 
   private TaskRequest obtainInheritedTask(
@@ -206,7 +208,8 @@ public class TerraformDestroyStep extends TaskExecutableWithRollbackAndRbac<Terr
 
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         Collections.singletonList(TerraformCommandUnit.Destroy.name()), TaskType.TERRAFORM_TASK_NG.getDisplayName(),
-        StepUtils.getTaskSelectorsFromYaml(parameters.getDelegateSelectors()), stepHelper.getEnvironmentType(ambiance));
+        TaskSelectorYaml.toTaskSelector(parameters.getDelegateSelectors().getValue()),
+        stepHelper.getEnvironmentType(ambiance));
   }
 
   private TaskRequest obtainLastApplyTask(
@@ -249,7 +252,8 @@ public class TerraformDestroyStep extends TaskExecutableWithRollbackAndRbac<Terr
 
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         Collections.singletonList(TerraformCommandUnit.Destroy.name()), TaskType.TERRAFORM_TASK_NG.getDisplayName(),
-        StepUtils.getTaskSelectorsFromYaml(parameters.getDelegateSelectors()), stepHelper.getEnvironmentType(ambiance));
+        TaskSelectorYaml.toTaskSelector(parameters.getDelegateSelectors().getValue()),
+        stepHelper.getEnvironmentType(ambiance));
   }
 
   @Override

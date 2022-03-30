@@ -379,13 +379,6 @@ public class StepUtils {
         .collect(Collectors.toList());
   }
 
-  public static List<TaskSelector> getTaskSelectorsFromYaml(ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
-    return getDelegateSelectorListFromTaskSelectorYaml(delegateSelectors)
-        .stream()
-        .map(delegateSelector -> TaskSelector.newBuilder().setSelector(delegateSelector).build())
-        .collect(toList());
-  }
-
   public static Status getStepStatus(CommandExecutionStatus commandExecutionStatus) {
     if (commandExecutionStatus == null) {
       return null;
