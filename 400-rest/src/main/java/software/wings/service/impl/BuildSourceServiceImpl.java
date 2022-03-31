@@ -378,16 +378,13 @@ public class BuildSourceServiceImpl implements BuildSourceService {
     String settingId = artifactStream.getSettingId();
 
     if (!DOCKER.name().equals(artifactStream.getArtifactStreamType())) {
-      ArtifactMetaInfo am = new ArtifactMetaInfo();
-      return am;
+      return new ArtifactMetaInfo();
     }
 
     SettingAttribute settingAttribute = settingsService.get(settingId);
     if (settingAttribute == null) {
       log.warn("Artifact server: [{}] was deleted for artifact stream: [{}]", settingId, artifactStreamId);
-      //      return Collections.emptyList();
-      ArtifactMetaInfo am = new ArtifactMetaInfo();
-      return am;
+      return new ArtifactMetaInfo();
     }
 
     SettingValue settingValue = getSettingValue(settingAttribute);
