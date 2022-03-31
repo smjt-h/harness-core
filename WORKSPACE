@@ -20,7 +20,7 @@ http_archive(
     urls = [
         "http://jfrogdev.dev.harness.io:80/artifactory/protobuf-github/archive/v3.14.0.tar.gz",
         #"https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz",
-        #"https://github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz",
+        #"https://github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz", 
     ],
 )
 
