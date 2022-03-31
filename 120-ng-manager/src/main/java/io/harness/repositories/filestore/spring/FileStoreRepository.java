@@ -12,9 +12,10 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotation.HarnessRepo;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.core.entities.NGFile;
+import io.harness.repositories.filestore.custom.FileStoreRepositoryCustom;
 
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 @OwnedBy(CDP)
 @HarnessRepo
-public interface FileStoreRepository extends PagingAndSortingRepository<NGFile, String> {}
+public interface FileStoreRepository extends PagingAndSortingRepository<NGFile, String>, FileStoreRepositoryCustom {}
