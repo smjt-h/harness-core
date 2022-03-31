@@ -14,7 +14,6 @@ import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.rule.Owner;
 import io.harness.serializer.ClassResolver;
 import io.harness.serializer.HKryo;
-import io.harness.serializer.KryoSerializer;
 import io.harness.serializer.OrdinalBackwardEnumNameSerializer;
 
 import software.wings.WingsBaseTest;
