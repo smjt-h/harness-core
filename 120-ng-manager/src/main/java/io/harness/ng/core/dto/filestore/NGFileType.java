@@ -11,4 +11,4 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
 
-@OwnedBy(CDP) public enum NGFileType {}
+@OwnedBy(CDP) public enum NGFileType { MANIFEST_FILE }

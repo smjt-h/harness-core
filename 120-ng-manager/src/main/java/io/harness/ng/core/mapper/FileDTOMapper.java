@@ -19,13 +19,38 @@ import lombok.experimental.UtilityClass;
 @OwnedBy(CDP)
 @UtilityClass
 public class FileDTOMapper {
-  // add all other methods for mapping
-
-  public NGFile getNGFileFromDTO(FileDTO dto, NGBaseFile baseFile) {
-    return NGFile.builder().build();
+  public NGFile getNGFileFromDTO(FileDTO fileDto, NGBaseFile baseFile) {
+    return NGFile.builder()
+        .accountIdentifier(fileDto.getAccountIdentifier())
+        .orgIdentifier(fileDto.getOrgIdentifier())
+        .projectIdentifier(fileDto.getProjectIdentifier())
+        .identifier(fileDto.getIdentifier())
+        .name(fileDto.getName())
+        .type(fileDto.getType())
+        .description(fileDto.getDescription())
+        .tags(fileDto.getTags())
+        .entityId(fileDto.getEntityId())
+        .entityType(fileDto.getEntityType())
+        .fileUuid(baseFile.getFileUuid())
+        .fileName(baseFile.getFileName())
+        .checksumType(baseFile.getChecksumType())
+        .checksum(baseFile.getChecksum())
+        .size(baseFile.getSize())
+        .build();
   }
 
   public FileDTO getFileDTOFromNGFile(NGFile ngFile) {
-    return FileDTO.builder().build();
+    return FileDTO.builder()
+        .accountIdentifier(ngFile.getAccountIdentifier())
+        .orgIdentifier(ngFile.getOrgIdentifier())
+        .projectIdentifier(ngFile.getProjectIdentifier())
+        .identifier(ngFile.getIdentifier())
+        .name(ngFile.getName())
+        .type(ngFile.getType())
+        .description(ngFile.getDescription())
+        .tags(ngFile.getTags())
+        .entityType(ngFile.getEntityType())
+        .entityId(ngFile.getEntityId())
+        .build();
   }
 }

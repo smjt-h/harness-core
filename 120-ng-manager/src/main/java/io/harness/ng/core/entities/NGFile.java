@@ -26,17 +26,20 @@ import io.harness.ng.core.dto.filestore.NGFileType;
 import io.harness.persistence.PersistentEntity;
 import io.harness.persistence.UuidAware;
 
+import software.wings.beans.EntityType;
+
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Singular;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.FieldNameConstants;
+import lombok.experimental.SuperBuilder;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 import org.springframework.data.annotation.CreatedDate;
@@ -45,7 +48,7 @@ import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
-@Builder
+@SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @FieldNameConstants(innerTypeName = "NGFiles")
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -64,7 +67,7 @@ public class NGFile
                  .field(NGFiles.orgIdentifier)
                  .field(NGFiles.projectIdentifier)
                  .field(NGFiles.identifier)
-                 .field(NGFiles.fileType)
+                 .field(NGFiles.type)
                  .unique(true)
                  .collation(
                      Collation.builder().locale(CollationLocale.ENGLISH).strength(CollationStrength.PRIMARY).build())
@@ -74,7 +77,6 @@ public class NGFile
                 .field(NGFiles.accountIdentifier)
                 .field(NGFiles.orgIdentifier)
                 .field(NGFiles.projectIdentifier)
-                .field(NGFiles.parentIdentifier)
                 .build())
         .build();
   }
@@ -83,14 +85,15 @@ public class NGFile
   @CreatedDate Long createdAt;
   @LastModifiedDate Long lastModifiedAt;
 
-  @NotNull String accountIdentifier;
+  @NotEmpty String accountIdentifier;
   @EntityIdentifier(allowBlank = true) String orgIdentifier;
   @EntityIdentifier(allowBlank = true) String projectIdentifier;
-  @NotNull String parentIdentifier;
 
   @EntityIdentifier String identifier;
   @NGEntityName String name;
+  @NotNull NGFileType type;
   @NotNull @Size(max = 1024) String description;
   @NotNull @Singular @Size(max = 128) List<NGTag> tags;
-  NGFileType fileType;
+  @NotNull EntityType entityType;
+  @NotEmpty String entityId;
 }

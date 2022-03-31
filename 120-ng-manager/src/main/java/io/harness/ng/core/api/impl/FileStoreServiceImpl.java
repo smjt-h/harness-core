@@ -12,10 +12,12 @@ import static io.harness.delegate.beans.FileBucket.CONFIGS;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.UUIDGenerator;
+import io.harness.delegate.beans.FileUploadLimit;
 import io.harness.file.beans.NGBaseFile;
 import io.harness.ng.core.api.FileStoreService;
 import io.harness.ng.core.dto.filestore.FileDTO;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
+import io.harness.stream.BoundedInputStream;
 
 import software.wings.service.intfc.FileService;
 
@@ -30,11 +32,14 @@ import javax.validation.Valid;
 public class FileStoreServiceImpl implements FileStoreService {
   private final FileService fileService;
   private final FileStoreRepository fileStoreRepository;
+  private final FileUploadLimit fileUploadLimit;
 
   @Inject
-  public FileStoreServiceImpl(FileService fileService, FileStoreRepository fileStoreRepository) {
+  public FileStoreServiceImpl(
+      FileService fileService, FileStoreRepository fileStoreRepository, FileUploadLimit fileUploadLimit) {
     this.fileService = fileService;
     this.fileStoreRepository = fileStoreRepository;
+    this.fileUploadLimit = fileUploadLimit;
   }
 
   @Override
@@ -45,7 +50,7 @@ public class FileStoreServiceImpl implements FileStoreService {
     baseFile.setAccountId(fileDto.getAccountIdentifier());
     baseFile.setFileUuid(UUIDGenerator.generateUuid());
     String fileId = fileService.saveFile(
-        baseFile, new ByteArrayInputStream(fileDto.getContent().getBytes(StandardCharsets.UTF_8)), CONFIGS);
+        baseFile, new BoundedInputStream(fileDto.getContent(), fileUploadLimit.getEncryptedFileLimit()), CONFIGS);
     // use mapper to create NGFile from fileDto and NGBaseFile
     // save NGFile into nfFile by using fileStoreRepository or fileStoreRepositoryCustom
     return null;
