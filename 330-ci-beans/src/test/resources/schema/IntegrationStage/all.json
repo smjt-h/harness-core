@@ -241,6 +241,25 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "ApprovalStageConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/StageInfoConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "execution"
+          ],
+          "properties": {
+            "execution": {
+              "$ref": "#/definitions/ExecutionElementConfig"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "ApproverInputInfo": {
       "type": "object",
       "properties": {
@@ -405,22 +424,6 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
-    "BuildNumberDetails": {
-      "type": "object",
-      "required": [
-        "uuid"
-      ],
-      "properties": {
-        "buildNumber": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "uuid": {
-          "type": "string"
-        }
-      },
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
     "BuildSpec": {
       "type": "object",
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -428,17 +431,8 @@
     "CIExecutionArgs": {
       "type": "object",
       "properties": {
-        "branch": {
-          "type": "string"
-        },
-        "buildNumberDetails": {
-          "$ref": "#/definitions/BuildNumberDetails"
-        },
         "executionSource": {
           "$ref": "#/definitions/ExecutionSource"
-        },
-        "inputSet": {
-          "$ref": "#/definitions/InputSet"
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1392,6 +1386,18 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "FeatureFlagStageConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/StageInfoConfig"
+        },
+        {
+          "type": "object",
+          "properties": { }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "FlagConfigurationStepInfo": {
       "allOf": [
         {
@@ -1826,10 +1832,11 @@
           "type": "object",
           "required": [
             "accountId",
-            "buildJobEnvInfo",
             "executionElementConfig",
+            "executionSource",
             "infrastructure",
-            "skipGitClone"
+            "skipGitClone",
+            "stageElementConfig"
           ],
           "properties": {
             "accountId": {
@@ -1844,11 +1851,17 @@
             "executionElementConfig": {
               "$ref": "#/definitions/ExecutionElementConfig"
             },
+            "executionSource": {
+              "$ref": "#/definitions/ExecutionSource"
+            },
             "infrastructure": {
               "$ref": "#/definitions/Infrastructure"
             },
             "skipGitClone": {
               "type": "boolean"
+            },
+            "stageElementConfig": {
+              "$ref": "#/definitions/StageElementConfig"
             },
             "timeout": {
               "type": "integer",
@@ -1857,20 +1870,6 @@
           }
         }
       ],
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
-    "InputSet": {
-      "type": "object",
-      "discriminator": "type",
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "Manual",
-            "Webhook"
-          ]
-        }
-      },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
     "InputSetValidator": {
@@ -2544,14 +2543,7 @@
       "type": "object",
       "properties": {
         "cpu": {
-          "oneOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ]
+          "type": "string"
         },
         "memory": {
           "type": "string",
@@ -4847,6 +4839,67 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "StageElementConfig": {
+      "type": "object",
+      "required": [
+        "identifier",
+        "name"
+      ],
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "failureStrategies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FailureStrategyConfig"
+          }
+        },
+        "identifier": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][0-9a-zA-Z_$]{0,63}$"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][-0-9a-zA-Z_\\s]{0,63}$"
+        },
+        "spec": {
+          "$ref": "#/definitions/StageInfoConfig"
+        },
+        "tags": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "template": {
+          "$ref": "#/definitions/TemplateLinkConfig"
+        },
+        "type": {
+          "type": "string"
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NGVariable"
+          }
+        },
+        "when": {
+          "$ref": "#/definitions/StageWhenCondition"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "StageInfoConfig": {
+      "type": "object",
+      "discriminator": "type",
+      "properties": {
+        "execution": {
+          "$ref": "#/definitions/ExecutionElementConfig"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "StageRollbackFailureActionConfig": {
       "allOf": [
         {
@@ -5478,6 +5531,25 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "TemplateLinkConfig": {
+      "type": "object",
+      "required": [
+        "templateRef"
+      ],
+      "properties": {
+        "templateInputs": {
+          "$ref": "#/definitions/JsonNode"
+        },
+        "templateRef": {
+          "type": "string"
+        },
+        "versionLabel": {
+          "type": "string",
+          "pattern": "^[0-9a-zA-Z][^\\s]{0,63}$"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "Toleration": {
       "type": "object",
       "properties": {
@@ -6003,22 +6075,6 @@
           "type": "string"
         }
       },
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
-    "WebhookTriggerExecutionInputSet": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/InputSet"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "payload": {
-              "type": "string"
-            }
-          }
-        }
-      ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
     "WeightedVariation": {

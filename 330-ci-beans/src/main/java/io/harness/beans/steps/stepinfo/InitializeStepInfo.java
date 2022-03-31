@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.CI;
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.environment.BuildJobEnvInfo;
+import io.harness.beans.execution.ExecutionSource;
 import io.harness.beans.steps.CIStepInfo;
 import io.harness.beans.steps.CIStepInfoType;
 import io.harness.beans.steps.TypeInfo;
@@ -20,6 +21,7 @@ import io.harness.beans.yaml.extended.infrastrucutre.K8sDirectInfraYaml;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.filters.WithConnectorRef;
 import io.harness.plancreator.execution.ExecutionElementConfig;
+import io.harness.plancreator.stages.stage.StageElementConfig;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
@@ -67,8 +69,9 @@ public class InitializeStepInfo implements CIStepInfo, WithConnectorRef {
   @NotNull @EntityIdentifier private String identifier;
   private String name;
   @Min(MIN_RETRY) @Max(MAX_RETRY) private int retry;
-
-  @NotNull BuildJobEnvInfo buildJobEnvInfo;
+  BuildJobEnvInfo buildJobEnvInfo;
+  private ExecutionSource executionSource;
+  StageElementConfig stageElementConfig;
   @NotNull String accountId;
   @NotNull ExecutionElementConfig executionElementConfig;
   CodeBase ciCodebase;
@@ -77,10 +80,12 @@ public class InitializeStepInfo implements CIStepInfo, WithConnectorRef {
 
   @Builder
   @ConstructorProperties({"accountId", "timeout", "identifier", "name", "retry", "buildJobEnvInfo",
-      "executionElementConfig", "usePVC", "ciCodebase", "skipGitClone", "infrastructure", "runAsUser"})
+      "stageElementConfig", "executionElementConfig", "executionSource", "usePVC", "ciCodebase", "skipGitClone",
+      "infrastructure", "runAsUser"})
   public InitializeStepInfo(String accountId, int timeout, String identifier, String name, Integer retry,
-      BuildJobEnvInfo buildJobEnvInfo, ExecutionElementConfig executionElementConfig, boolean usePVC,
-      CodeBase ciCodebase, boolean skipGitClone, Infrastructure infrastructure) {
+      StageElementConfig stageElementConfig, ExecutionElementConfig executionElementConfig, boolean usePVC,
+      BuildJobEnvInfo buildJobEnvInfo, ExecutionSource executionSource, CodeBase ciCodebase, boolean skipGitClone,
+      Infrastructure infrastructure) {
     this.accountId = accountId;
     this.timeout = timeout;
     this.identifier = identifier;
@@ -88,6 +93,8 @@ public class InitializeStepInfo implements CIStepInfo, WithConnectorRef {
     this.retry = Optional.ofNullable(retry).orElse(DEFAULT_RETRY);
 
     this.buildJobEnvInfo = buildJobEnvInfo;
+    this.stageElementConfig = stageElementConfig;
+    this.executionSource = executionSource;
     this.executionElementConfig = executionElementConfig;
     this.ciCodebase = ciCodebase;
     this.skipGitClone = skipGitClone;

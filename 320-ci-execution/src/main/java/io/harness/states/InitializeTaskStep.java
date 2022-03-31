@@ -20,11 +20,13 @@ import io.harness.EntityType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.beans.dependencies.ServiceDependency;
+import io.harness.beans.environment.BuildJobEnvInfo;
 import io.harness.beans.environment.K8BuildJobEnvInfo;
 import io.harness.beans.environment.VmBuildJobInfo;
 import io.harness.beans.environment.pod.PodSetupInfo;
 import io.harness.beans.environment.pod.container.ContainerDefinitionInfo;
 import io.harness.beans.environment.pod.container.ContainerImageDetails;
+import io.harness.beans.executionargs.CIExecutionArgs;
 import io.harness.beans.outcomes.DependencyOutcome;
 import io.harness.beans.outcomes.LiteEnginePodDetailsOutcome;
 import io.harness.beans.outcomes.VmDetailsOutcome;
@@ -32,6 +34,7 @@ import io.harness.beans.steps.stepinfo.InitializeStepInfo;
 import io.harness.beans.sweepingoutputs.StepLogKeyDetails;
 import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.K8sDirectInfraYaml;
+import io.harness.ci.integrationstage.BuildJobEnvInfoBuilder;
 import io.harness.ci.integrationstage.IntegrationStageUtils;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.TaskData;
@@ -97,7 +100,7 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
   public static final String TASK_TYPE_INITIALIZATION_PHASE = "INITIALIZATION_PHASE";
   public static final String LE_STATUS_TASK_TYPE = "CI_LE_STATUS";
   public static final Long TASK_BUFFER_TIMEOUT_MILLIS = 30 * 1000L;
-
+  @Inject private BuildJobEnvInfoBuilder buildJobEnvInfoBuilder;
   @Inject private BuildSetupUtils buildSetupUtils;
   @Inject private ExecutionSweepingOutputService executionSweepingOutputResolver;
   @Inject private KryoSerializer kryoSerializer;
@@ -124,6 +127,14 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
     }
 
     InitializeStepInfo initializeStepInfo = (InitializeStepInfo) stepElementParameters.getSpec();
+
+    BuildJobEnvInfo buildJobEnvInfo = buildJobEnvInfoBuilder.getCIBuildJobEnvInfo(
+        initializeStepInfo.getStageElementConfig(), initializeStepInfo.getInfrastructure(),
+        CIExecutionArgs.builder().executionSource(initializeStepInfo.getExecutionSource()).build(),
+        initializeStepInfo.getExecutionElementConfig().getSteps(), accountIdentifier);
+
+    initializeStepInfo.setBuildJobEnvInfo(buildJobEnvInfo);
+
     List<EntityDetail> connectorsEntityDetails =
         getConnectorIdentifiers(initializeStepInfo, accountIdentifier, projectIdentifier, orgIdentifier);
 
@@ -135,14 +146,21 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
   @Override
   public TaskRequest obtainTaskAfterRbac(
       Ambiance ambiance, StepElementParameters stepElementParameters, StepInputPackage inputPackage) {
-    InitializeStepInfo stepParameters = (InitializeStepInfo) stepElementParameters.getSpec();
+    InitializeStepInfo initializeStepInfo = (InitializeStepInfo) stepElementParameters.getSpec();
 
     Map<String, String> taskIds = new HashMap<>();
     String logPrefix = getLogPrefix(ambiance);
-    Map<String, String> stepLogKeys = getStepLogKeys(stepParameters, ambiance, logPrefix);
+    Map<String, String> stepLogKeys = getStepLogKeys(initializeStepInfo, ambiance, logPrefix);
+
+    BuildJobEnvInfo buildJobEnvInfo = buildJobEnvInfoBuilder.getCIBuildJobEnvInfo(
+        initializeStepInfo.getStageElementConfig(), initializeStepInfo.getInfrastructure(),
+        CIExecutionArgs.builder().executionSource(initializeStepInfo.getExecutionSource()).build(),
+        initializeStepInfo.getExecutionElementConfig().getSteps(), AmbianceUtils.getAccountId(ambiance));
+
+    initializeStepInfo.setBuildJobEnvInfo(buildJobEnvInfo);
 
     CIInitializeTaskParams buildSetupTaskParams =
-        buildSetupUtils.getBuildSetupTaskParams(stepParameters, ambiance, taskIds, logPrefix, stepLogKeys);
+        buildSetupUtils.getBuildSetupTaskParams(initializeStepInfo, ambiance, taskIds, logPrefix, stepLogKeys);
     log.info("Created params for build task: {}", buildSetupTaskParams);
 
     return StepUtils.prepareTaskRequest(

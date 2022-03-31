@@ -67,7 +67,6 @@ import io.harness.beans.yaml.extended.volumes.HostPathYaml;
 import io.harness.beans.yaml.extended.volumes.HostPathYaml.HostPathYamlSpec;
 import io.harness.beans.yaml.extended.volumes.PersistentVolumeClaimYaml;
 import io.harness.beans.yaml.extended.volumes.PersistentVolumeClaimYaml.PersistentVolumeClaimYamlSpec;
-import io.harness.ci.beans.entities.BuildNumberDetails;
 import io.harness.common.CIExecutionConstants;
 import io.harness.connector.ConnectorDTO;
 import io.harness.connector.ConnectorInfoDTO;
@@ -1205,7 +1204,6 @@ public class CIExecutionPlanTestHelper {
   public CIExecutionArgs getCIExecutionArgs() {
     return CIExecutionArgs.builder()
         .executionSource(ManualExecutionSource.builder().branch(REPO_BRANCH).build())
-        .buildNumberDetails(BuildNumberDetails.builder().buildNumber(BUILD_NUMBER).build())
         .build();
   }
 
@@ -1216,10 +1214,7 @@ public class CIExecutionPlanTestHelper {
 
     WebhookEvent webhookEvent = PRWebhookEvent.builder().baseAttributes(core).repository(repo).build();
     ExecutionSource prExecutionSource = WebhookExecutionSource.builder().webhookEvent(webhookEvent).build();
-    return CIExecutionArgs.builder()
-        .buildNumberDetails(BuildNumberDetails.builder().buildNumber(BUILD_NUMBER).build())
-        .executionSource(prExecutionSource)
-        .build();
+    return CIExecutionArgs.builder().executionSource(prExecutionSource).build();
   }
 
   public Map<String, String> getPRCIExecutionArgsEnvVars() {
@@ -1246,10 +1241,7 @@ public class CIExecutionPlanTestHelper {
 
     WebhookEvent webhookEvent = BranchWebhookEvent.builder().baseAttributes(core).repository(repo).build();
     ExecutionSource prExecutionSource = WebhookExecutionSource.builder().webhookEvent(webhookEvent).build();
-    return CIExecutionArgs.builder()
-        .buildNumberDetails(BuildNumberDetails.builder().buildNumber(BUILD_NUMBER).build())
-        .executionSource(prExecutionSource)
-        .build();
+    return CIExecutionArgs.builder().executionSource(prExecutionSource).build();
   }
 
   public Map<String, String> getBranchCIExecutionArgsEnvVars() {

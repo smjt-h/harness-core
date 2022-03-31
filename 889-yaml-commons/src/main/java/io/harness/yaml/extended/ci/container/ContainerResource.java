@@ -45,10 +45,7 @@ public class ContainerResource {
     @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
     @Pattern(regexp = ResourceValidatorConstants.STORAGE_PATTERN)
     private ParameterField<String> memory;
-    @YamlSchemaTypes(value = {number})
-    @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
-    @Min(0)
-    private ParameterField<String> cpu;
+    @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) @Min(0) private ParameterField<String> cpu;
 
     @Builder
     @JsonCreator

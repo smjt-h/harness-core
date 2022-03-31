@@ -78,9 +78,8 @@ public class CIStepGroupUtils {
 
     List<ExecutionWrapperConfig> executionSections = integrationStageConfig.getExecution().getSteps();
 
-    log.info(
-        "Creating CI execution wrapper step info with initialize step for integration stage {} and build number {}",
-        stageElementConfig.getIdentifier(), ciExecutionArgs.getBuildNumberDetails().getBuildNumber());
+    log.info("Creating CI execution wrapper step info with initialize step for integration stage {}",
+        stageElementConfig.getIdentifier());
 
     List<ExecutionWrapperConfig> initializeExecutionSections = new ArrayList<>();
     boolean gitClone = RunTimeInputHandler.resolveGitClone(integrationStageConfig.getCloneCodebase());
@@ -100,9 +99,6 @@ public class CIStepGroupUtils {
       // Also execute each step individually on main engine
       mainEngineExecutionSections.addAll(initializeExecutionSections);
     }
-
-    log.info("Creation execution section for BuildId {} with lite engine step",
-        ciExecutionArgs.getBuildNumberDetails().getBuildNumber());
 
     return mainEngineExecutionSections;
   }
@@ -132,10 +128,6 @@ public class CIStepGroupUtils {
     }
   }
 
-  private boolean isLiteEngineStep(ExecutionWrapperConfig executionWrapper) {
-    return !isCIManagerStep(executionWrapper);
-  }
-
   private ParameterField<Timeout> getTimeout(Infrastructure infrastructure) {
     if (infrastructure == null) {
       throw new CIStageExecutionException("Input infrastructure can not be empty");
@@ -155,33 +147,6 @@ public class CIStepGroupUtils {
     } else {
       return ParameterField.createValueField(Timeout.fromString("10m"));
     }
-  }
-
-  private boolean containsManagerStep(List<ExecutionWrapperConfig> executionSections) {
-    return executionSections.stream().anyMatch(this::isCIManagerStep);
-  }
-
-  private boolean isCIManagerStep(ExecutionWrapperConfig executionWrapperConfig) {
-    if (executionWrapperConfig != null) {
-      if (executionWrapperConfig.getStep() != null && !executionWrapperConfig.getStep().isNull()) {
-        StepElementConfig stepElementConfig = IntegrationStageUtils.getStepElementConfig(executionWrapperConfig);
-        if (stepElementConfig.getStepSpecType() instanceof CIStepInfo) {
-          CIStepInfo ciStepInfo = (CIStepInfo) stepElementConfig.getStepSpecType();
-          return ciStepInfo.getNonYamlInfo().getStepInfoType().getCiStepExecEnvironment() == CI_MANAGER;
-        } else {
-          throw new InvalidRequestException("Non CIStepInfo is not supported");
-        }
-      } else if (executionWrapperConfig.getParallel() != null && !executionWrapperConfig.getParallel().isNull()) {
-        ParallelStepElementConfig parallelStepElementConfig =
-            IntegrationStageUtils.getParallelStepElementConfig(executionWrapperConfig);
-
-        CIStepExecEnvironment ciStepExecEnvironment = validateAndFetchParallelStepsType(parallelStepElementConfig);
-        return ciStepExecEnvironment == CI_MANAGER;
-      } else {
-        throw new InvalidRequestException("Only Parallel or StepElement is supported");
-      }
-    }
-    return false;
   }
 
   private CIStepExecEnvironment validateAndFetchParallelStepsType(ParallelStepElementConfig parallel) {

@@ -141,9 +141,6 @@ public class K8BuildSetupUtils {
 
   public CIK8InitializeTaskParams getCIk8BuildTaskParams(InitializeStepInfo initializeStepInfo, Ambiance ambiance,
       Map<String, String> taskIds, String logPrefix, Map<String, String> stepLogKeys) {
-    K8PodDetails k8PodDetails = (K8PodDetails) executionSweepingOutputResolver.resolve(
-        ambiance, RefObjectUtils.getSweepingOutputRefObject(ContextElement.podDetails));
-
     CIK8InitializeTaskParams initializeTaskParams = null;
     Infrastructure infrastructure = initializeStepInfo.getInfrastructure();
 

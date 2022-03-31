@@ -31,9 +31,6 @@ public class InitializeStepGenerator {
   InitializeStepInfo createInitializeStepInfo(ExecutionElementConfig executionElement, CodeBase ciCodebase,
       StageElementConfig stageElementConfig, CIExecutionArgs ciExecutionArgs, Infrastructure infrastructure,
       String accountId) {
-    BuildJobEnvInfo buildJobEnvInfo = buildJobEnvInfoBuilder.getCIBuildJobEnvInfo(
-        stageElementConfig, infrastructure, ciExecutionArgs, executionElement.getSteps(), accountId);
-
     IntegrationStageConfig integrationStageConfig = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
 
     boolean gitClone = RunTimeInputHandler.resolveGitClone(integrationStageConfig.getCloneCodebase());
@@ -44,7 +41,6 @@ public class InitializeStepGenerator {
         .infrastructure(infrastructure)
         .ciCodebase(ciCodebase)
         .skipGitClone(!gitClone)
-        .buildJobEnvInfo(buildJobEnvInfo)
         .executionElementConfig(executionElement)
         .timeout(buildJobEnvInfoBuilder.getTimeout(infrastructure))
         .build();
