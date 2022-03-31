@@ -13,9 +13,13 @@ import static io.harness.rule.OwnerRule.PRASHANTSHARMA;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 import io.harness.CategoryTest;
+import io.harness.account.AccountClient;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
@@ -32,6 +36,8 @@ import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.tasks.TaskRequest;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.remote.client.RestClientUtils;
+import io.harness.rest.RestResponse;
 import io.harness.rule.Owner;
 import io.harness.steps.StepUtils;
 
@@ -50,19 +56,22 @@ import org.junit.runner.RunWith;
 import org.mockito.BDDMockito;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import retrofit2.Call;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({StepUtils.class})
+@PrepareForTest({StepUtils.class, RestClientUtils.class})
 public class HttpStepTest extends CategoryTest {
   @Inject private StepElementParameters stepElementParameters;
   @Inject private Ambiance ambiance;
   ParameterField<List<TaskSelectorYaml>> delegateSelectors;
   @InjectMocks private HttpStepParameters httpStepParameters;
 
+  @Mock private AccountClient accountClient;
   @Mock private LogStreamingStepClientFactory logStreamingStepClientFactory;
   @Mock private ILogStreamingStepClient iLogStreamingStepClient;
   @Mock private NGLogCallback ngLogCallback;
@@ -202,11 +211,20 @@ public class HttpStepTest extends CategoryTest {
         .hasMessage("Assertion provided is not a valid expression");
   }
 
+  private void mockForFeatureFlag(Boolean ff) {
+    Call<RestResponse<Boolean>> requestCall = mock(Call.class);
+    doReturn(requestCall).when(accountClient).isFeatureFlagEnabled(anyString(), anyString());
+    PowerMockito.mockStatic(RestClientUtils.class);
+    Mockito.when(RestClientUtils.getResponse(requestCall)).thenReturn(ff);
+  }
+
   @Test
   @Owner(developers = PRASHANTSHARMA)
   @Category(UnitTests.class)
   public void testObtainTask() {
     PowerMockito.mockStatic(StepUtils.class);
+    mockForFeatureFlag(false);
+
     BDDMockito.given(StepUtils.prepareTaskRequestWithTaskSelector(any(), any(), any(), any()))
         .willReturn(TaskRequest.newBuilder().build());
     ambiance = Ambiance.newBuilder().build();
@@ -223,6 +241,7 @@ public class HttpStepTest extends CategoryTest {
                                 .spec(httpStepParameters)
                                 .timeout(ParameterField.createValueField("20m"))
                                 .build();
+
     assertThat(httpStep.obtainTask(ambiance, stepElementParameters, null)).isEqualTo(TaskRequest.newBuilder().build());
 
     // adding headers
