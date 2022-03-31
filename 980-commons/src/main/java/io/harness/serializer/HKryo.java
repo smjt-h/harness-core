@@ -103,6 +103,7 @@ public class HKryo extends Kryo {
     getFieldSerializerConfig().setCachedFieldNameStrategy(FieldSerializer.CachedFieldNameStrategy.EXTENDED);
     getFieldSerializerConfig().setCopyTransient(false);
     setRegistrationRequired(true);
+    addDefaultSerializer(Enum.class, OrdinalBackwardEnumNameSerializer.class);
 
     register(byte[].class, 10);
     register(char[].class, 11);
