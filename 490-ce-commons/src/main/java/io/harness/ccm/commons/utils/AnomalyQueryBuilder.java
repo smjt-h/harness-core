@@ -23,11 +23,11 @@ import io.harness.ccm.commons.entities.CCMTimeFilter;
 import io.harness.exception.InvalidRequestException;
 import io.harness.timescaledb.tables.records.AnomaliesRecord;
 
-import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.Condition;
 import org.jooq.OrderField;

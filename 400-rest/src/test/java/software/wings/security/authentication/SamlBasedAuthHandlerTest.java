@@ -33,7 +33,6 @@ import io.harness.ng.core.account.AuthenticationMechanism;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptedDataDetail;
 
-import org.apache.commons.codec.binary.Base64;
 import software.wings.WingsBaseTest;
 import software.wings.beans.Account;
 import software.wings.beans.User;
@@ -49,13 +48,13 @@ import com.coveo.saml.SamlClient;
 import com.coveo.saml.SamlException;
 import com.coveo.saml.SamlResponse;
 import com.google.inject.Inject;
-
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -379,7 +378,7 @@ public class SamlBasedAuthHandlerTest extends WingsBaseTest {
   public void
   testUserGroupsExtractionForAzureShouldSucceed()
       throws IOException, SamlException, XMLParserException, UnmarshallingException, InitializationException,
-          IllegalArgumentException {
+             IllegalArgumentException {
     String samlResponseString =
         IOUtils.toString(getClass().getResourceAsStream("/SamlResponse-2.txt"), Charset.defaultCharset());
     final String accountId = "kmpySmUISimoRrJL6NL73w";
@@ -420,8 +419,9 @@ public class SamlBasedAuthHandlerTest extends WingsBaseTest {
     assertThat(groups.size()).isGreaterThan(150);
   }
 
-  private Assertion getSamlAssertion(String samlResponse)
-      throws IOException, XMLParserException, UnmarshallingException, InitializationException, IllegalArgumentException {
+  private Assertion getSamlAssertion(String samlResponse) throws IOException, XMLParserException, UnmarshallingException
+                                                                 ,
+                                                                 InitializationException, IllegalArgumentException {
     InitializationService.initialize();
     SAMLConfigurationInitializer samlInitializer = new SAMLConfigurationInitializer();
     samlInitializer.init();

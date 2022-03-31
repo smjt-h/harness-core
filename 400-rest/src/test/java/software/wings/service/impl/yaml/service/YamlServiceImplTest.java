@@ -76,7 +76,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.omg.CORBA.INVALID_ACTIVITY;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,6 +84,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
+import org.omg.CORBA.INVALID_ACTIVITY;
 
 @Slf4j
 public class YamlServiceImplTest extends WingsBaseTest {
