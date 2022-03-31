@@ -83,7 +83,6 @@ import software.wings.security.AppFilter;
 import software.wings.security.AppPermissionSummary;
 import software.wings.security.AppPermissionSummary.EnvInfo;
 import software.wings.security.AppPermissionSummaryForUI;
-import software.wings.security.ExecutableElementInfo;
 import software.wings.security.JWT_CATEGORY;
 import software.wings.security.PermissionAttribute;
 import software.wings.security.PermissionAttribute.Action;
@@ -1281,49 +1280,5 @@ public class AuthServiceImpl implements AuthService {
         throw new AccessDeniedException("Not authorized to update the app", USER);
       }
     }
-  }
-
-  @Override
-  public void authorize(Set<String> envIds, String appId, ExecutableElementInfo executableElementInfo) {
-    // not authorizing action since it will be authorized by other filter before this.
-    final User user = UserThreadLocal.get();
-    if (user == null) {
-      return;
-    }
-    final UserRequestContext userRequestContext = user.getUserRequestContext();
-    if (userRequestContext == null) {
-      return;
-    }
-    final Optional<Map<String, AppPermissionSummary>> appPermissionSummaryMap =
-        Optional.ofNullable(userRequestContext.getUserPermissionInfo())
-            .map(UserPermissionInfo::getAppPermissionMapInternal);
-    if (!appPermissionSummaryMap.isPresent()) {
-      return;
-    }
-    final AppPermissionSummary appPermissionSummary = appPermissionSummaryMap.get().get(appId);
-    if (appPermissionSummary == null) {
-      return;
-    }
-    final Map<ExecutableElementInfo, Set<String>> envPipelineDeployPermissions =
-        appPermissionSummary.getEnvExecutableElementDeployPermissions();
-    if (envPipelineDeployPermissions == null) {
-      return;
-    }
-    if (!envPipelineDeployPermissions.containsKey(executableElementInfo)) {
-      log.error("User not authorized for executable element {}", executableElementInfo);
-      throw new InvalidRequestException(String.format("User not authorized to deploy %s : %s",
-                                            executableElementInfo.getEntityType(), executableElementInfo.getEntityId()),
-          USER);
-    }
-    final Set<String> envDeployPerms = envPipelineDeployPermissions.get(executableElementInfo);
-    envIds.forEach(envId -> {
-      if (!envDeployPerms.contains(envId)) {
-        log.error("User not authorized for envId {}", envId);
-        throw new InvalidRequestException(
-            String.format("User not authorized to deploy %s : %s to environment %s",
-                executableElementInfo.getEntityType(), executableElementInfo.getEntityId(), envId),
-            USER);
-      }
-    });
   }
 }

@@ -12,7 +12,6 @@ import io.harness.morphia.MorphiaRegistrarHelperPut;
 
 import software.wings.security.AppFilter;
 import software.wings.security.EnvFilter;
-import software.wings.security.ExecutableElementsFilter;
 import software.wings.security.GenericEntityFilter;
 import software.wings.security.ScopedEntity;
 import software.wings.security.WorkflowFilter;
@@ -31,6 +30,5 @@ public class RbacCoreMorphiaRegistrar implements MorphiaRegistrar {
     w.put("security.GenericEntityFilter", GenericEntityFilter.class);
     w.put("security.AppFilter", AppFilter.class);
     w.put("security.WorkflowFilter", WorkflowFilter.class);
-    w.put("security.ExecutableElementsFilter", ExecutableElementsFilter.class);
   }
 }
