@@ -523,6 +523,42 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "Capabilities": {
+      "type": "object",
+      "properties": {
+        "add": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
+        "drop": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "Clause": {
       "type": "object",
       "required": [
@@ -1810,7 +1846,8 @@
           "enum": [
             "KubernetesDirect",
             "UseFromStage",
-            "VM"
+            "VM",
+            "KubernetesHosted"
           ]
         }
       },
@@ -1915,6 +1952,9 @@
               "$ref": "#/definitions/K8sDirectInfraYaml"
             },
             {
+              "$ref": "#/definitions/K8sHostedInfraYaml"
+            },
+            {
               "$ref": "#/definitions/UseFromStageInfraYaml"
             },
             {
@@ -1947,21 +1987,6 @@
             },
             {
               "type": "string"
-            }
-          ]
-        },
-        "volumes": {
-          "oneOf": [
-            {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/CIVolume"
-              }
-            },
-            {
-              "type": "string",
-              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-              "minLength": 1
             }
           ]
         }
@@ -2365,7 +2390,8 @@
               "enum": [
                 "KubernetesDirect",
                 "UseFromStage",
-                "VM"
+                "VM",
+                "KubernetesHosted"
               ]
             }
           }
@@ -2393,8 +2419,32 @@
             }
           ]
         },
+        "automountServiceAccountToken": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
         "connectorRef": {
           "type": "string"
+        },
+        "containerSecurityContext": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/SecurityContext"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
         },
         "initTimeout": {
           "type": "string"
@@ -2430,6 +2480,9 @@
             }
           ]
         },
+        "priorityClassName": {
+          "type": "string"
+        },
         "runAsUser": {
           "oneOf": [
             {
@@ -2458,6 +2511,62 @@
               "minLength": 1
             }
           ]
+        },
+        "volumes": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CIVolume"
+              }
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "K8sHostedInfraYaml": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Infrastructure"
+        },
+        {
+          "type": "object",
+          "required": [
+            "spec",
+            "type"
+          ],
+          "properties": {
+            "spec": {
+              "$ref": "#/definitions/K8sHostedInfraYamlSpec"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "KubernetesDirect",
+                "UseFromStage",
+                "VM",
+                "KubernetesHosted"
+              ]
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "K8sHostedInfraYamlSpec": {
+      "type": "object",
+      "required": [
+        "identifier"
+      ],
+      "properties": {
+        "identifier": {
+          "type": "string"
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -3130,7 +3239,9 @@
                   "type": "boolean"
                 },
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
                 }
               ]
             },
@@ -3778,7 +3889,9 @@
                   "type": "boolean"
                 },
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
                 }
               ]
             },
@@ -3948,7 +4061,9 @@
                   "type": "boolean"
                 },
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
                 }
               ]
             },
@@ -4224,6 +4339,92 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "SecurityContext": {
+      "type": "object",
+      "properties": {
+        "allowPrivilegeEscalation": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
+        "capabilities": {
+          "$ref": "#/definitions/Capabilities"
+        },
+        "privileged": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
+        "procMount": {
+          "type": "string"
+        },
+        "readOnlyRootFilesystem": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
+        "runAsGroup": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "format": "int32"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
+        "runAsNonRoot": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
+        "runAsUser": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "format": "int32"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "SecurityStepInfo": {
       "allOf": [
         {
@@ -4267,7 +4468,9 @@
                   "type": "boolean"
                 },
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
                 }
               ]
             },
@@ -4397,8 +4600,14 @@
                 "$ref": "#/definitions/ServiceNowField"
               }
             },
+            "templateName": {
+              "type": "string"
+            },
             "ticketType": {
               "type": "string"
+            },
+            "useServiceNowTemplate": {
+              "type": "boolean"
             }
           }
         }
@@ -4458,11 +4667,17 @@
                 "$ref": "#/definitions/ServiceNowField"
               }
             },
+            "templateName": {
+              "type": "string"
+            },
             "ticketNumber": {
               "type": "string"
             },
             "ticketType": {
               "type": "string"
+            },
+            "useServiceNowTemplate": {
+              "type": "boolean"
             }
           }
         }
@@ -5801,7 +6016,8 @@
               "enum": [
                 "KubernetesDirect",
                 "UseFromStage",
-                "VM"
+                "VM",
+                "KubernetesHosted"
               ]
             }
           }

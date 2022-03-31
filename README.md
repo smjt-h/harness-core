@@ -203,7 +203,7 @@ cd to `harness-core` directory
 
 3. Start Delegate
 
-   * `java -Xmx4096m -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:mygclogfilename.gc -XX:+UseParallelGC -XX:MaxGCPauseMillis=500 -jar ~/.bazel-dirs/bin/260-delegate/module_deploy.jar 260-delegate/config-delegate.yml &`
+   * `java -Xmx1536m -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:mygclogfilename.gc -XX:+UseParallelGC -XX:MaxGCPauseMillis=500 -jar ~/.bazel-dirs/bin/260-delegate/module_deploy.jar 260-delegate/config-delegate.yml &`
 
 4. Start Verification service (Optional)
 
@@ -336,6 +336,7 @@ While running an app from pre checked in configs, Add JAVA_HOME as an environmen
 ### Show current git branch in command prompt
 
 If you are using zsh (which is default on MacOS Catalina and later), basic git integration comes out of the box.
+  
 
 If you are using bash, add the following to your `~/.bash_profile` to display the current git branch in the command prompt:
 

@@ -179,6 +179,7 @@ public class OwnerRule implements TestRule {
   public static final String TEJAS = "tejas.tiwari";
   public static final String UJJAWAL = "ujjawal.prasad";
   public static final String UTKARSH = "utkarsh.gupta";
+  public static final String UTKARSH_CHOUBEY = "utkarsh.choubey";
   public static final String UTSAV = "utsav.krishnan";
   public static final String VAIBHAV_KUMAR = "vaibhav.kumar";
   public static final String VAIBHAV_SI = "vaibhav.si";
@@ -249,6 +250,7 @@ public class OwnerRule implements TestRule {
   public static final String BUHA = "aleksa.buha";
   public static final String SATYAM_GOEL = "satyam.goel";
   public static final String DEV_MITTAL = "devki.mittal";
+  public static final String HEN = "hen.amar";
   @Deprecated public static final String UNKNOWN = "unknown";
 
   private static UserInfoBuilder defaultUserInfo(String user) {
@@ -429,6 +431,8 @@ public class OwnerRule implements TestRule {
           .put(VAIBHAV_KUMAR, defaultUserInfo(VAIBHAV_KUMAR).slack("U02UYG4J2SU").team(CDP).build())
           .put(BUHA, defaultUserInfo(BUHA).slack("U02V35N54R0").team(CDP).build())
           .put(DEV_MITTAL, defaultUserInfo(DEV_MITTAL).slack("U032JRFUZT2").team(CI).build())
+          .put(HEN, defaultUserInfo(HEN).slack("U02MD3UMWUA").team(CI).build())
+          .put(UTKARSH_CHOUBEY, defaultUserInfo(UTKARSH_CHOUBEY).slack("U035N036PBQ").team(CDC).build())
           .build();
 
   private static String prDeveloperId = findDeveloperId(System.getenv(GHPRB_PULL_AUTHOR_EMAIL));

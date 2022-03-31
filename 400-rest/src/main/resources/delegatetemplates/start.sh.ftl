@@ -142,8 +142,10 @@ WATCHER_STORAGE_URL=${watcherStorageUrl}
 REMOTE_WATCHER_LATEST=$(curl $MANAGER_PROXY_CURL -ks $WATCHER_STORAGE_URL/${watcherCheckLocation})
 if [[ $DEPLOY_MODE != "KUBERNETES" ]]; then
 REMOTE_WATCHER_URL=$WATCHER_STORAGE_URL/$(echo $REMOTE_WATCHER_LATEST | cut -d " " -f2)
+<#if useCdn == "true">
 else
 REMOTE_WATCHER_URL=${remoteWatcherUrlCdn}/$(echo $REMOTE_WATCHER_LATEST | cut -d " " -f2)
+</#if>
 fi
 REMOTE_WATCHER_VERSION=$(echo $REMOTE_WATCHER_LATEST | cut -d " " -f1)
 
@@ -205,7 +207,7 @@ if ! `grep doUpgrade config-watcher.yml > /dev/null`; then
 fi
 if ! `grep upgradeCheckLocation config-watcher.yml > /dev/null`; then
   echo "upgradeCheckLocation: ${watcherStorageUrl}/${watcherCheckLocation}" >> config-watcher.yml
-else
+elif [[ "$(grep upgradeCheckLocation config-watcher.yml | cut -d ' ' -f 2)" != "${watcherStorageUrl}/${watcherCheckLocation}" ]]; then
   sed -i.bak "s|^upgradeCheckLocation:.*$|upgradeCheckLocation: ${watcherStorageUrl}/${watcherCheckLocation}|" config-watcher.yml
 fi
 if ! `grep upgradeCheckIntervalSeconds config-watcher.yml > /dev/null`; then
@@ -213,7 +215,7 @@ if ! `grep upgradeCheckIntervalSeconds config-watcher.yml > /dev/null`; then
 fi
 if ! `grep delegateCheckLocation config-watcher.yml > /dev/null`; then
   echo "delegateCheckLocation: ${delegateStorageUrl}/${delegateCheckLocation}" >> config-watcher.yml
-else
+elif [[ "$(grep delegateCheckLocation config-watcher.yml | cut -d ' ' -f 2)" != "${delegateStorageUrl}/${delegateCheckLocation}" ]]; then
   sed -i.bak "s|^delegateCheckLocation:.*$|delegateCheckLocation: ${delegateStorageUrl}/${delegateCheckLocation}|" config-watcher.yml
 fi
 if ! `grep fileHandlesMonitoringEnabled config-watcher.yml > /dev/null`; then

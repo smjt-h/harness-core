@@ -80,9 +80,11 @@ import io.harness.delegate.beans.ci.pod.CIK8ContainerParams;
 import io.harness.delegate.beans.ci.pod.CIK8PodParams;
 import io.harness.delegate.beans.ci.pod.CIK8ServicePodParams;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
+import io.harness.delegate.beans.ci.pod.ContainerCapabilities;
 import io.harness.delegate.beans.ci.pod.ContainerParams;
 import io.harness.delegate.beans.ci.pod.ContainerResourceParams;
 import io.harness.delegate.beans.ci.pod.ContainerSecrets;
+import io.harness.delegate.beans.ci.pod.ContainerSecurityContext;
 import io.harness.delegate.beans.ci.pod.EmptyDirVolume;
 import io.harness.delegate.beans.ci.pod.EncryptedVariableWithType;
 import io.harness.delegate.beans.ci.pod.EnvVariableEnum;
@@ -155,6 +157,7 @@ import io.harness.delegate.beans.connector.k8Connector.K8sValidationParams;
 import io.harness.delegate.beans.connector.k8Connector.KubernetesConnectionTaskParams;
 import io.harness.delegate.beans.connector.k8Connector.KubernetesConnectionTaskResponse;
 import io.harness.delegate.beans.connector.nexusconnector.NexusValidationParams;
+import io.harness.delegate.beans.connector.pdcconnector.PhysicalDataCenterConnectorValidationParams;
 import io.harness.delegate.beans.connector.scm.ScmValidationParams;
 import io.harness.delegate.beans.connector.servicenow.ServiceNowConnectionTaskParams;
 import io.harness.delegate.beans.connector.servicenow.ServiceNowValidationParams;
@@ -524,6 +527,7 @@ import software.wings.service.impl.appdynamics.AppdynamicsMetricDataValue;
 import software.wings.service.impl.appdynamics.AppdynamicsTier;
 import software.wings.service.impl.aws.model.AwsAmiPreDeploymentData;
 import software.wings.service.impl.aws.model.AwsAsgGetRunningCountData;
+import software.wings.service.impl.aws.model.AwsCFTemplateParamsData;
 import software.wings.service.impl.aws.model.AwsLambdaVpcConfig;
 import software.wings.service.impl.aws.model.AwsSubnet;
 import software.wings.service.impl.aws.model.AwsVPC;
@@ -1130,5 +1134,9 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(EmptyDirVolume.class, 543486);
     kryo.register(HostPathVolume.class, 543487);
     kryo.register(PVCVolume.class, 543488);
+    kryo.register(AwsCFTemplateParamsData.class, 5478);
+    kryo.register(PhysicalDataCenterConnectorValidationParams.class, 543489);
+    kryo.register(ContainerSecurityContext.class, 543490);
+    kryo.register(ContainerCapabilities.class, 543491);
   }
 }
