@@ -106,13 +106,6 @@ public class AppPermissionSummary {
     private String envType;
   }
 
-  @Data
-  @Builder
-  public static class ExecutableElementInfo {
-    private String entityType;
-    private String entityId;
-  }
-
   @Builder
   public AppPermissionSummary(boolean canCreateService, boolean canCreateProvisioner, boolean canCreateEnvironment,
       boolean canCreateWorkflow, boolean canCreateTemplatizedWorkflow, boolean canCreatePipeline,

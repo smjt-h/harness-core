@@ -18,7 +18,7 @@ import software.wings.beans.Pipeline;
 import software.wings.beans.User;
 import software.wings.beans.Workflow;
 import software.wings.beans.security.UserGroup;
-import software.wings.security.AppPermissionSummary;
+import software.wings.security.ExecutableElementInfo;
 import software.wings.security.PermissionAttribute;
 import software.wings.security.PermissionAttribute.Action;
 import software.wings.security.UserPermissionInfo;
@@ -171,5 +171,5 @@ public interface AuthService {
 
   void auditUnsuccessfulLoginToNg(String accountId, User user);
 
-  void authorize(Set<String> envIds, String appId, AppPermissionSummary.ExecutableElementInfo executableElementInfo);
+  void authorize(Set<String> envIds, String appId, ExecutableElementInfo executableElementInfo);
 }

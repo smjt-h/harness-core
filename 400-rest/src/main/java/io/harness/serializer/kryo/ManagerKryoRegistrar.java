@@ -525,6 +525,7 @@ import software.wings.security.AccountPermissionSummary;
 import software.wings.security.AppPermissionSummary;
 import software.wings.security.AppPermissionSummary.EnvInfo;
 import software.wings.security.AppPermissionSummaryForUI;
+import software.wings.security.ExecutableElementInfo;
 import software.wings.security.UserPermissionInfo;
 import software.wings.security.UserRestrictionInfo;
 import software.wings.security.authentication.TwoFactorAuthenticationMechanism;
@@ -1451,7 +1452,7 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(AccountPermissionSummary.class, 7404);
     kryo.register(WhitelistStatus.class, 7405);
     kryo.register(ApiKeyEntry.class, 7406);
-    kryo.register(AppPermissionSummary.ExecutableElementInfo.class, 7407);
+    kryo.register(ExecutableElementInfo.class, 7407);
 
     kryo.register(GcbTaskParams.class, 7408);
     kryo.register(GcbState.GcbDelegateResponse.class, 7409);

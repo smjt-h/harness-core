@@ -83,6 +83,7 @@ import software.wings.security.AppFilter;
 import software.wings.security.AppPermissionSummary;
 import software.wings.security.AppPermissionSummary.EnvInfo;
 import software.wings.security.AppPermissionSummaryForUI;
+import software.wings.security.ExecutableElementInfo;
 import software.wings.security.JWT_CATEGORY;
 import software.wings.security.PermissionAttribute;
 import software.wings.security.PermissionAttribute.Action;
@@ -1283,8 +1284,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public void authorize(
-      Set<String> envIds, String appId, AppPermissionSummary.ExecutableElementInfo executableElementInfo) {
+  public void authorize(Set<String> envIds, String appId, ExecutableElementInfo executableElementInfo) {
     // not authorizing action since it will be authorized by other filter before this.
     final User user = UserThreadLocal.get();
     if (user == null) {
@@ -1304,7 +1304,7 @@ public class AuthServiceImpl implements AuthService {
     if (appPermissionSummary == null) {
       return;
     }
-    final Map<AppPermissionSummary.ExecutableElementInfo, Set<String>> envPipelineDeployPermissions =
+    final Map<ExecutableElementInfo, Set<String>> envPipelineDeployPermissions =
         appPermissionSummary.getEnvExecutableElementDeployPermissions();
     if (envPipelineDeployPermissions == null) {
       return;

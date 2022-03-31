@@ -104,6 +104,7 @@ import software.wings.security.AppPermissionSummary.EnvInfo;
 import software.wings.security.AppPermissionSummaryForUI;
 import software.wings.security.AppPermissionSummaryForUI.AppPermissionSummaryForUIBuilder;
 import software.wings.security.EnvFilter;
+import software.wings.security.ExecutableElementInfo;
 import software.wings.security.ExecutableElementsFilter;
 import software.wings.security.Filter;
 import software.wings.security.GenericEntityFilter;
@@ -745,7 +746,7 @@ public class AuthHandler {
               buildActionPipelineMap(finalAppPermissionSummary.getDeploymentPermissions(), pipelineIdActionMap);
           finalAppPermissionSummary.setDeploymentPermissions(actionEntityIdMap);
 
-          Map<AppPermissionSummary.ExecutableElementInfo, Set<String>> envDeploymentPermissionMap =
+          Map<ExecutableElementInfo, Set<String>> envDeploymentPermissionMap =
               appPermissionSummary.getEnvExecutableElementDeployPermissions();
           if (isEmpty(envDeploymentPermissionMap)) {
             envDeploymentPermissionMap = new HashMap<>();
@@ -764,7 +765,7 @@ public class AuthHandler {
   }
 
   private void buildPipelineEnvMap(List<Base> pipelines, List<Base> environments, EnvFilter filter,
-      Map<AppPermissionSummary.ExecutableElementInfo, Set<String>> permission) {
+      Map<ExecutableElementInfo, Set<String>> permission) {
     if (isEmpty(pipelines)) {
       return;
     }
@@ -792,11 +793,8 @@ public class AuthHandler {
     final GenericEntityFilter executableElementFilter = executableElementsFilter.getFilter();
     final Set<String> pipelineIdsByEntityFilter = getPipelineIdsByEntityFilter(pipelines, executableElementFilter);
     pipelineIdsByEntityFilter.forEach(pipelineId -> {
-      final AppPermissionSummary.ExecutableElementInfo executableElementInfo =
-          AppPermissionSummary.ExecutableElementInfo.builder()
-              .entityId(pipelineId)
-              .entityType(executableElementFilterType)
-              .build();
+      final ExecutableElementInfo executableElementInfo =
+          ExecutableElementInfo.builder().entityId(pipelineId).entityType(executableElementFilterType).build();
       if (permission.containsKey(executableElementInfo)) {
         permission.get(executableElementInfo).addAll(envIds);
       } else {
@@ -806,7 +804,7 @@ public class AuthHandler {
   }
 
   private void buildWorkflowEnvMap(List<Base> workflows, List<Base> environments, EnvFilter filter,
-      Map<AppPermissionSummary.ExecutableElementInfo, Set<String>> permission) {
+      Map<ExecutableElementInfo, Set<String>> permission) {
     if (isEmpty(workflows)) {
       return;
     }
@@ -832,11 +830,8 @@ public class AuthHandler {
     final Set<String> workflowIdsByEntityFilter = getWorkflowIdsByEntityFilter(workflows, executableElementFilter);
     final Set<String> envIds = getEnvIdsByFilter(environments, filter);
     workflowIdsByEntityFilter.forEach(workflowId -> {
-      final AppPermissionSummary.ExecutableElementInfo executableElementInfo =
-          AppPermissionSummary.ExecutableElementInfo.builder()
-              .entityId(workflowId)
-              .entityType(executableElementFilterType)
-              .build();
+      final ExecutableElementInfo executableElementInfo =
+          ExecutableElementInfo.builder().entityId(workflowId).entityType(executableElementFilterType).build();
       if (permission.containsKey(executableElementInfo)) {
         permission.get(executableElementInfo).addAll(envIds);
       } else {
