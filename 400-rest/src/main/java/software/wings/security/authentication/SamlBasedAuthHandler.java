@@ -311,7 +311,7 @@ public class SamlBasedAuthHandler implements AuthHandler {
   private String getEmailIdFromSamlResponseString(String samlResponseString, SamlSettings samlSettings)
       throws SamlException {
     SamlClient samlClient = samlClientService.getSamlClient(samlSettings);
-    SamlResponse samlResponse = samlClient.decodeAndValidateSamlResponse(samlResponseString);
+    SamlResponse samlResponse = samlClient.decodeAndValidateSamlResponse(samlResponseString, getMethod);
     return samlResponse.getNameID();
   }
 
@@ -375,7 +375,7 @@ public class SamlBasedAuthHandler implements AuthHandler {
         SamlSettings samlSettings = samlSettingsIterator.next();
         try {
           SamlClient samlClient = samlClientService.getSamlClient(samlSettings);
-          SamlResponse samlResponse = samlClient.decodeAndValidateSamlResponse(samlResponseString);
+          SamlResponse samlResponse = samlClient.decodeAndValidateSamlResponse(samlResponseString, getMethod);
           Assertion samlAssertionValue = samlResponse.getAssertion();
           List<AttributeStatement> attributeStatements = samlAssertionValue.getAttributeStatements();
           final String userIdAttr = samlSettings.getUserIdAttr() != null ? samlSettings.getUserIdAttr() : USER_ID_ATTR;
