@@ -4394,6 +4394,7 @@
             "Kubernetes",
             "NativeHelm",
             "Ssh",
+            "WinRm",
             "DeploymentTemplate"
           ]
         }
@@ -4444,6 +4445,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/SshServiceSpec"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "WinRm"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/WinRmServiceSpec"
               }
             }
           }
