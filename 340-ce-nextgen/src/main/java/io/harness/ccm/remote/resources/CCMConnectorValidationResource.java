@@ -19,7 +19,6 @@ import io.harness.ccm.utils.LogAccountIdentifier;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.ConnectorValidationResult;
 import io.harness.delegate.beans.connector.ConnectorType;
-import io.harness.exception.exceptionmanager.ExceptionManager;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.security.annotations.NextGenManagerAuth;
 
