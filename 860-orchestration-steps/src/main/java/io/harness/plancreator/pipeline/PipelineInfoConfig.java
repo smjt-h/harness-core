@@ -15,6 +15,7 @@ import io.harness.data.validator.EntityName;
 import io.harness.notification.bean.NotificationRules;
 import io.harness.plancreator.flowcontrol.FlowControlConfig;
 import io.harness.plancreator.stages.StageElementWrapperConfig;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.validator.NGRegexValidatorConstants;
@@ -77,5 +78,6 @@ public class PipelineInfoConfig {
 
   boolean allowStageExecutions;
 
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH) ParameterField<List<String>> delegateSelectors;
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
+  ParameterField<List<TaskSelectorYaml>> delegateSelectors;
 }
