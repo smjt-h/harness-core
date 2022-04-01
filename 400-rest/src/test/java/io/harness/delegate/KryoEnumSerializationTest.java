@@ -13,7 +13,6 @@ import io.harness.connector.ConnectorInfoDTO;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.rule.Owner;
 import io.harness.serializer.ClassResolver;
-import io.harness.serializer.HKryo;
 import io.harness.serializer.OrdinalBackwardEnumNameSerializer;
 
 import software.wings.WingsBaseTest;
@@ -58,7 +57,7 @@ public class KryoEnumSerializationTest extends WingsBaseTest {
   @Owner(developers = RAGHU)
   @Category(UnitTests.class)
   public void testWriteNameReadOrdinal() {
-    HKryo kryo = new HKryo(new ClassResolver());
+    Kryo kryo = new Kryo(new ClassResolver(), new MapReferenceResolver(), new DefaultStreamFactory());
     kryo.addDefaultSerializer(Enum.class, OrdinalBackwardEnumNameSerializer.class);
     kryo.register(ConnectorInfoDTO.class, 500);
     kryo.register(ConnectorType.class, 501);
@@ -72,7 +71,7 @@ public class KryoEnumSerializationTest extends WingsBaseTest {
                                             .build();
 
     byte[] serializedBytes = toBytes(kryo, connectorInfoDTO);
-    kryo = new HKryo(new ClassResolver());
+    kryo = new Kryo(new ClassResolver(), new MapReferenceResolver(), new DefaultStreamFactory());
     kryo.register(ConnectorInfoDTO.class, 500);
     kryo.register(ConnectorType.class, 501);
     ConnectorInfoDTO deserialized = (ConnectorInfoDTO) toObject(kryo, serializedBytes);
