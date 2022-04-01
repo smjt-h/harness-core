@@ -36,7 +36,7 @@ public class ServerlessDelegateTaskHelper {
   @Inject private Map<String, ServerlessCommandTaskHandler> commandTaskTypeToTaskHandlerMap;
   @Inject private ServerlessInfraConfigHelper serverlessInfraConfigHelper;
 
-  private static final String WORKING_DIR_BASE = "./repository/serverless/";
+  private static final String WORKING_DIR_BASE = "./repository/harnessFolder/serverless/";
 
   public ServerlessCommandResponse getServerlessCommandResponse(
       ServerlessCommandRequest serverlessCommandRequest, ILogStreamingTaskClient iLogStreamingTaskClient) {

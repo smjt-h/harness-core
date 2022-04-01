@@ -20,6 +20,7 @@ import lombok.Value;
 public class ServerlessAwsLambdaManifestConfig implements ServerlessManifestConfig {
   @Expression(ALLOW_SECRETS) String manifestContent;
   String manifestPath;
+  String configOverridePath;
   GitStoreDelegateConfig gitStoreDelegateConfig;
 
   @Override

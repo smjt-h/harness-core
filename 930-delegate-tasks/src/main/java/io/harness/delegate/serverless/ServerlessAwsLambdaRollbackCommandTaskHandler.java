@@ -7,14 +7,10 @@
 
 package io.harness.delegate.serverless;
 
-import static io.harness.data.structure.UUIDGenerator.convertBase64UuidToCanonicalForm;
-import static io.harness.data.structure.UUIDGenerator.generateUuid;
-
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
-import io.harness.delegate.beans.serverless.ServerlessAwsLambdaFunction;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaManifestSchema;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaRollbackResult;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaRollbackResult.ServerlessAwsLambdaRollbackResultBuilder;
@@ -23,9 +19,11 @@ import io.harness.delegate.task.serverless.request.ServerlessCommandRequest;
 import io.harness.delegate.task.serverless.request.ServerlessRollbackRequest;
 import io.harness.delegate.task.serverless.response.ServerlessCommandResponse;
 import io.harness.delegate.task.serverless.response.ServerlessRollbackResponse;
+import io.harness.delegate.task.serverless.response.ServerlessRollbackResponse.ServerlessRollbackResponseBuilder;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
+import io.harness.logging.LogLevel;
 import io.harness.serverless.ServerlessCliResponse;
 import io.harness.serverless.ServerlessClient;
 import io.harness.serverless.ServerlessCommandUnitConstants;
@@ -33,8 +31,6 @@ import io.harness.serverless.model.ServerlessAwsLambdaConfig;
 import io.harness.serverless.model.ServerlessDelegateTaskParams;
 
 import com.google.inject.Inject;
-import java.nio.file.Paths;
-import java.util.List;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -83,12 +79,7 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
     init(serverlessRollbackRequest, initLogCallback, serverlessDelegateTaskParams);
     LogCallback rollbackLogCallback = serverlessTaskHelperBase.getLogCallback(
         iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true, commandUnitsProgress);
-    ServerlessAwsLambdaRollbackResult serverlessAwsLambdaRollbackResult =
-        rollback(serverlessRollbackRequest, rollbackLogCallback, serverlessDelegateTaskParams);
-    return ServerlessRollbackResponse.builder()
-        .serverlessRollbackResult(serverlessAwsLambdaRollbackResult)
-        .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
-        .build();
+    return rollback(serverlessRollbackRequest, rollbackLogCallback, serverlessDelegateTaskParams);
   }
 
   private void init(ServerlessRollbackRequest serverlessRollbackRequest, LogCallback executionLogCallback,
@@ -99,8 +90,7 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
         (ServerlessAwsLambdaManifestConfig) serverlessRollbackRequest.getServerlessManifestConfig();
     serverlessTaskHelperBase.fetchManifestFilesAndWriteToDirectory(serverlessManifestConfig,
         serverlessRollbackRequest.getAccountId(), executionLogCallback, serverlessDelegateTaskParams);
-    serverlessTaskHelperBase.replaceManifestWithRenderedContent(
-        serverlessDelegateTaskParams, serverlessManifestConfig, serverlessManifestConfig.getManifestContent());
+    serverlessTaskHelperBase.replaceManifestWithRenderedContent(serverlessDelegateTaskParams, serverlessManifestConfig);
     serverlessAwsLambdaConfig = (ServerlessAwsLambdaConfig) serverlessInfraConfigHelper.createServerlessConfig(
         serverlessRollbackRequest.getServerlessInfraConfig());
     serverlessClient = ServerlessClient.client(serverlessDelegateTaskParams.getServerlessClientPath());
@@ -108,31 +98,36 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
         serverlessDelegateTaskParams, executionLogCallback, true, timeoutInMillis);
     serverlessManifestSchema = serverlessAwsCommandTaskHelper.parseServerlessManifest(serverlessManifestConfig);
     serverlessAwsCommandTaskHelper.installPlugins(serverlessManifestSchema, serverlessDelegateTaskParams,
-        executionLogCallback, serverlessClient, timeoutInMillis);
+        executionLogCallback, serverlessClient, timeoutInMillis, serverlessManifestConfig);
+    executionLogCallback.saveExecutionLog("Done..\n", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
   }
 
-  private ServerlessAwsLambdaRollbackResult rollback(ServerlessRollbackRequest serverlessRollbackRequest,
+  private ServerlessRollbackResponse rollback(ServerlessRollbackRequest serverlessRollbackRequest,
       LogCallback executionLogCallback, ServerlessDelegateTaskParams serverlessDelegateTaskParams) throws Exception {
     executionLogCallback.saveExecutionLog("Rollback..\n");
     ServerlessCliResponse response;
     ServerlessAwsLambdaRollbackConfig serverlessAwsLambdaRollbackConfig =
         (ServerlessAwsLambdaRollbackConfig) serverlessRollbackRequest.getServerlessRollbackConfig();
     response = serverlessAwsCommandTaskHelper.rollback(serverlessClient, serverlessDelegateTaskParams,
-        executionLogCallback, serverlessAwsLambdaRollbackConfig, serverlessAwsLambdaInfraConfig, timeoutInMillis);
+        executionLogCallback, serverlessAwsLambdaRollbackConfig, timeoutInMillis, serverlessManifestConfig,
+        serverlessAwsLambdaInfraConfig);
     ServerlessAwsLambdaRollbackResultBuilder serverlessAwsLambdaRollbackResultBuilder =
         ServerlessAwsLambdaRollbackResult.builder();
     serverlessAwsLambdaRollbackResultBuilder.service(serverlessManifestSchema.getService());
     serverlessAwsLambdaRollbackResultBuilder.region(serverlessAwsLambdaInfraConfig.getRegion());
     serverlessAwsLambdaRollbackResultBuilder.stage(serverlessAwsLambdaInfraConfig.getStage());
+    ServerlessRollbackResponseBuilder serverlessRollbackResponseBuilder = ServerlessRollbackResponse.builder();
     if (response.getCommandExecutionStatus() == CommandExecutionStatus.SUCCESS) {
-      String outputDirectory =
-          Paths.get(serverlessDelegateTaskParams.getWorkingDirectory(), "/.serverless/").toString();
-      List<ServerlessAwsLambdaFunction> serverlessAwsLambdaFunctions =
-          serverlessAwsCommandTaskHelper.fetchFunctionOutputFromCloudFormationTemplate(outputDirectory);
-      serverlessAwsLambdaRollbackResultBuilder.functions(serverlessAwsLambdaFunctions);
+      serverlessAwsLambdaRollbackResultBuilder.rollbackTimeStamp(
+          serverlessAwsLambdaRollbackConfig.getPreviousVersionTimeStamp());
+      executionLogCallback.saveExecutionLog("Done..\n", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
+      serverlessRollbackResponseBuilder.commandExecutionStatus(CommandExecutionStatus.SUCCESS);
     } else {
       // todo: set error message and error handling
+      executionLogCallback.saveExecutionLog("Failed..\n", LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+      serverlessRollbackResponseBuilder.commandExecutionStatus(CommandExecutionStatus.FAILURE);
     }
-    return serverlessAwsLambdaRollbackResultBuilder.build();
+    serverlessRollbackResponseBuilder.serverlessRollbackResult(serverlessAwsLambdaRollbackResultBuilder.build());
+    return serverlessRollbackResponseBuilder.build();
   }
 }

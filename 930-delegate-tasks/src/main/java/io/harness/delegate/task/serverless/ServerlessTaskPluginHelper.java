@@ -9,6 +9,7 @@ package io.harness.delegate.task.serverless;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.logging.LogCallback;
 import io.harness.serverless.PluginCommand;
 import io.harness.serverless.ServerlessCliResponse;
@@ -26,9 +27,12 @@ import org.zeroturnaround.exec.ProcessResult;
 @Singleton
 public class ServerlessTaskPluginHelper {
   public ServerlessCliResponse installServerlessPlugin(ServerlessDelegateTaskParams serverlessDelegateTaskParams,
-      ServerlessClient serverlessClient, String pluginName, LogCallback executionLogCallback, long timeoutInMillis)
-      throws Exception {
+      ServerlessClient serverlessClient, String pluginName, LogCallback executionLogCallback, long timeoutInMillis,
+      String ConfigOverridePath) throws Exception {
     PluginCommand command = serverlessClient.plugin().pluginName(pluginName);
+    if (EmptyPredicate.isNotEmpty(ConfigOverridePath)) {
+      command.config(ConfigOverridePath);
+    }
     return ServerlessCommandTaskHelper.executeCommand(
         command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true, timeoutInMillis);
   }

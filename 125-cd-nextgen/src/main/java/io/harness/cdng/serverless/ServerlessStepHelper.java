@@ -15,11 +15,14 @@ import io.harness.delegate.beans.serverless.ServerlessDeployResult;
 import io.harness.delegate.beans.serverless.ServerlessRollbackResult;
 import io.harness.delegate.task.serverless.ServerlessDeployConfig;
 import io.harness.delegate.task.serverless.ServerlessManifestConfig;
+import io.harness.git.model.FetchFilesResult;
 import io.harness.pms.contracts.ambiance.Ambiance;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.validator.constraints.NotEmpty;
 
 @OwnedBy(HarnessTeam.CDP)
@@ -35,5 +38,6 @@ public interface ServerlessStepHelper {
 
   List<ServerInstanceInfo> getServerlessDeployFunctionInstanceInfo(ServerlessDeployResult serverlessDeployResult);
 
-  List<ServerInstanceInfo> getServerlessRollbackFunctionInstanceInfo(ServerlessRollbackResult serverlessRollbackResult);
+  Optional<Pair<String, String>> getManifestFileContent(
+      Map<String, FetchFilesResult> fetchFilesResultMap, ManifestOutcome manifestOutcome);
 }

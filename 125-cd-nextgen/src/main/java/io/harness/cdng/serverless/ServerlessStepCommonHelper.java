@@ -82,6 +82,7 @@ import software.wings.beans.TaskType;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.*;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.validator.constraints.NotEmpty;
@@ -94,6 +95,10 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
   @Inject private ServerlessEntityHelper serverlessEntityHelper;
   @Inject private KryoSerializer kryoSerializer;
   @Inject private StepHelper stepHelper;
+  private static final String ARTIFACT_PATH = "<+artifact.path>";
+  private static final String SERVERLESS_YAML_REGEX = ".*serverless\\.yaml";
+  private static final String SERVERLESS_YML_REGEX = ".*serverless\\.yml";
+  private static final String SERVERLESS_JSON_REGEX = ".*serverless\\.json";
 
   public TaskChainResponse startChainLink(
       Ambiance ambiance, StepElementParameters stepElementParameters, ServerlessStepHelper serverlessStepHelper) {
@@ -111,14 +116,14 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
 
   public TaskChainResponse executeNextLink(ServerlessStepExecutor serverlessStepExecutor, Ambiance ambiance,
       StepElementParameters stepElementParameters, PassThroughData passThroughData,
-      ThrowingSupplier<ResponseData> responseDataSupplier) throws Exception {
+      ThrowingSupplier<ResponseData> responseDataSupplier, ServerlessStepHelper serverlessStepHelper) throws Exception {
     ServerlessStepPassThroughData serverlessStepPassThroughData = (ServerlessStepPassThroughData) passThroughData;
     ResponseData responseData = responseDataSupplier.get();
     UnitProgressData unitProgressData = null;
     try {
       ServerlessGitFetchResponse serverlessGitFetchResponse = (ServerlessGitFetchResponse) responseData;
       return handleServerlessGitFetchFilesResponse(serverlessGitFetchResponse, serverlessStepExecutor, ambiance,
-          stepElementParameters, serverlessStepPassThroughData);
+          stepElementParameters, serverlessStepPassThroughData, serverlessStepHelper);
     } catch (Exception e) {
       return TaskChainResponse.builder()
           .chainEnd(true)
@@ -212,7 +217,7 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
 
   private TaskChainResponse handleServerlessGitFetchFilesResponse(ServerlessGitFetchResponse serverlessGitFetchResponse,
       ServerlessStepExecutor serverlessStepExecutor, Ambiance ambiance, StepElementParameters stepElementParameters,
-      ServerlessStepPassThroughData serverlessStepPassThroughData) {
+      ServerlessStepPassThroughData serverlessStepPassThroughData, ServerlessStepHelper serverlessStepHelper) {
     if (serverlessGitFetchResponse.getTaskStatus() != TaskStatus.SUCCESS) {
       ServerlessGitFetchFailurePassThroughData serverlessGitFetchFailurePassThroughData =
           ServerlessGitFetchFailurePassThroughData.builder()
@@ -225,8 +230,8 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
           .build();
     }
     Map<String, FetchFilesResult> fetchFilesResultMap = serverlessGitFetchResponse.getFilesFromMultipleRepo();
-    Optional<Pair<String, String>> manifestFilePathContent =
-        getManifestFileContent(fetchFilesResultMap, serverlessStepPassThroughData.getServerlessManifestOutcome());
+    Optional<Pair<String, String>> manifestFilePathContent = getManifestFileContent(
+        fetchFilesResultMap, serverlessStepPassThroughData.getServerlessManifestOutcome(), serverlessStepHelper);
     if (!manifestFilePathContent.isPresent()) {
       throw new GeneralException("Found No Manifest Content from serverless git fetch task");
     }
@@ -304,10 +309,10 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
   }
 
   public static StepResponse.StepResponseBuilder getFailureResponseBuilder(
-      ServerlessDeployResponse serverlessDeployResponse, StepResponse.StepResponseBuilder stepResponseBuilder) {
+      ServerlessCommandResponse serverlessCommandResponse, StepResponse.StepResponseBuilder stepResponseBuilder) {
     stepResponseBuilder.status(Status.FAILED)
         .failureInfo(FailureInfo.newBuilder()
-                         .setErrorMessage(ServerlessStepCommonHelper.getErrorMessage(serverlessDeployResponse))
+                         .setErrorMessage(ServerlessStepCommonHelper.getErrorMessage(serverlessCommandResponse))
                          .build());
     return stepResponseBuilder;
   }
@@ -316,17 +321,9 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
     return serverlessCommandResponse.getErrorMessage() == null ? "" : serverlessCommandResponse.getErrorMessage();
   }
 
-  private Optional<Pair<String, String>> getManifestFileContent(
-      Map<String, FetchFilesResult> fetchFilesResultMap, ManifestOutcome manifestOutcome) {
-    StoreConfig store = manifestOutcome.getStore();
-    if (ManifestStoreType.isInGitSubset(store.getKind())) {
-      FetchFilesResult fetchFilesResult = fetchFilesResultMap.get(manifestOutcome.getIdentifier());
-      if (EmptyPredicate.isNotEmpty(fetchFilesResult.getFiles())) {
-        GitFile gitFile = fetchFilesResult.getFiles().get(0);
-        return Optional.of(ImmutablePair.of(gitFile.getFilePath(), gitFile.getFileContent()));
-      }
-    }
-    return Optional.empty();
+  private Optional<Pair<String, String>> getManifestFileContent(Map<String, FetchFilesResult> fetchFilesResultMap,
+      ManifestOutcome manifestOutcome, ServerlessStepHelper serverlessStepHelper) {
+    return serverlessStepHelper.getManifestFileContent(fetchFilesResultMap, manifestOutcome);
   }
 
   private TaskChainResponse getGitFetchFileTaskResponse(Ambiance ambiance, boolean shouldOpenLogStream,
@@ -384,6 +381,9 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
     if (isEmpty(manifestFileContent)) {
       return manifestFileContent;
     }
+    if (manifestFileContent.contains(ARTIFACT_PATH)) {
+      manifestFileContent = manifestFileContent.replace(ARTIFACT_PATH, "artifactFile");
+    }
     return engineExpressionService.renderExpression(ambiance, manifestFileContent);
   }
 
@@ -408,10 +408,6 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
       ServerlessDeployResponse serverlessDeployResponse = (ServerlessDeployResponse) serverlessCommandResponse;
       return serverlessStepHelper.getServerlessDeployFunctionInstanceInfo(
           serverlessDeployResponse.getServerlessDeployResult());
-    } else if (serverlessCommandResponse instanceof ServerlessRollbackResponse) {
-      ServerlessRollbackResponse serverlessRollbackResponse = (ServerlessRollbackResponse) serverlessCommandResponse;
-      return serverlessStepHelper.getServerlessRollbackFunctionInstanceInfo(
-          serverlessRollbackResponse.getServerlessRollbackResult());
     }
     throw new GeneralException("Invalid serverless command response instance");
   }
@@ -432,5 +428,18 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
     }
     return folderPaths;
     // todo: add error handling
+  }
+
+  public String getManifestDefaultFileName(String manifestFilePath) {
+    if (Pattern.matches(SERVERLESS_YAML_REGEX, manifestFilePath)) {
+      return "serverless.yaml";
+    } else if (Pattern.matches(SERVERLESS_YML_REGEX, manifestFilePath)) {
+      return "serverless.yml";
+    } else if (Pattern.matches(SERVERLESS_JSON_REGEX, manifestFilePath)) {
+      return "serverless.json";
+    } else {
+      // todo handle it
+      throw new GeneralException("Invalid serverless file name");
+    }
   }
 }

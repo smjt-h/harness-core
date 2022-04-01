@@ -131,7 +131,7 @@ public class ServerlessAwsLambdaDeployStep
       throws Exception {
     log.info("Calling executeNextLink");
     return serverlessStepCommonHelper.executeNextLink(
-        this, ambiance, stepParameters, passThroughData, responseSupplier);
+        this, ambiance, stepParameters, passThroughData, responseSupplier, serverlessAwsLambdaStepHelper);
   }
 
   @Override

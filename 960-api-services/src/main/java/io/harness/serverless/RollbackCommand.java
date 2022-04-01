@@ -12,11 +12,26 @@ import org.apache.commons.lang3.StringUtils;
 public class RollbackCommand extends AbstractExecutable {
   private ServerlessClient client;
   private String timeStamp;
+  private String config;
+  private String stage;
+  private String region;
   public RollbackCommand(ServerlessClient client) {
     this.client = client;
   }
   public RollbackCommand timeStamp(String timeStamp) {
     this.timeStamp = timeStamp;
+    return this;
+  }
+  public RollbackCommand config(String config) {
+    this.config = config;
+    return this;
+  }
+  public RollbackCommand stage(String stage) {
+    this.stage = stage;
+    return this;
+  }
+  public RollbackCommand region(String region) {
+    this.region = region;
     return this;
   }
   @Override
@@ -25,6 +40,15 @@ public class RollbackCommand extends AbstractExecutable {
     command.append(client.command()).append("rollback ");
     if (StringUtils.isNotBlank(this.timeStamp)) {
       command.append(ServerlessClient.option(Option.timestamp, this.timeStamp));
+    }
+    if (StringUtils.isNotBlank(this.region)) {
+      command.append(ServerlessClient.option(Option.region, this.region));
+    }
+    if (StringUtils.isNotBlank(this.stage)) {
+      command.append(ServerlessClient.option(Option.stage, this.stage));
+    }
+    if (StringUtils.isNotBlank(this.config)) {
+      command.append(ServerlessClient.option(Option.config, this.config));
     }
     return command.toString().trim();
   }

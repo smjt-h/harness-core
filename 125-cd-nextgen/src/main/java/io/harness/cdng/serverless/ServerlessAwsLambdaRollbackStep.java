@@ -20,6 +20,7 @@ import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
+import io.harness.delegate.beans.serverless.ServerlessAwsLambdaRollbackResult;
 import io.harness.delegate.task.serverless.ServerlessAwsLambdaRollbackConfig;
 import io.harness.delegate.task.serverless.ServerlessCommandType;
 import io.harness.delegate.task.serverless.ServerlessManifestConfig;
@@ -40,6 +41,7 @@ import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.data.OptionalSweepingOutput;
+import io.harness.pms.sdk.core.plan.creation.yaml.StepOutcomeGroup;
 import io.harness.pms.sdk.core.resolver.RefObjectUtils;
 import io.harness.pms.sdk.core.resolver.outcome.OutcomeService;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
@@ -177,12 +179,24 @@ public class ServerlessAwsLambdaRollbackStep extends TaskExecutableWithRollbackA
                                           .build())
                          .build();
     } else {
-      List<ServerInstanceInfo> functionInstanceInfos =
-          serverlessStepCommonHelper.getFunctionInstanceInfo(rollbackResponse, serverlessAwsLambdaStepHelper);
-      StepResponse.StepOutcome stepOutcome =
-          instanceInfoService.saveServerInstancesIntoSweepingOutput(ambiance, functionInstanceInfos);
-
-      stepResponse = stepResponseBuilder.status(Status.SUCCEEDED).stepOutcome(stepOutcome).build();
+      ServerlessAwsLambdaRollbackResult serverlessAwsLambdaRollbackResult =
+          (ServerlessAwsLambdaRollbackResult) rollbackResponse.getServerlessRollbackResult();
+      ServerlessAwsLambdaRollbackOutcome serverlessAwsLambdaRollbackOutcome =
+          ServerlessAwsLambdaRollbackOutcome.builder()
+              .stage(serverlessAwsLambdaRollbackResult.getStage())
+              .rollbackTimeStamp(serverlessAwsLambdaRollbackResult.getRollbackTimeStamp())
+              .region(serverlessAwsLambdaRollbackResult.getRegion())
+              .service(serverlessAwsLambdaRollbackResult.getService())
+              .build();
+      executionSweepingOutputService.consume(ambiance,
+          OutcomeExpressionConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK_OUTCOME, serverlessAwsLambdaRollbackOutcome,
+          StepOutcomeGroup.STEP.name());
+      stepResponse = stepResponseBuilder.status(Status.SUCCEEDED)
+                         .stepOutcome(StepResponse.StepOutcome.builder()
+                                          .name(OutcomeExpressionConstants.OUTPUT)
+                                          .outcome(serverlessAwsLambdaRollbackOutcome)
+                                          .build())
+                         .build();
     }
     return stepResponse;
   }

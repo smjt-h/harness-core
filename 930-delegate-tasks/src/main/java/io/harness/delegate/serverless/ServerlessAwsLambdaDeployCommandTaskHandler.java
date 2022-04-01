@@ -20,6 +20,7 @@ import io.harness.delegate.task.serverless.request.ServerlessCommandRequest;
 import io.harness.delegate.task.serverless.request.ServerlessDeployRequest;
 import io.harness.delegate.task.serverless.response.ServerlessCommandResponse;
 import io.harness.delegate.task.serverless.response.ServerlessDeployResponse;
+import io.harness.delegate.task.serverless.response.ServerlessDeployResponse.ServerlessDeployResponseBuilder;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
@@ -53,7 +54,6 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
   private ServerlessAwsLambdaInfraConfig serverlessAwsLambdaInfraConfig;
   private long timeoutInMillis;
   private String previousDeployTimeStamp;
-  private static final String ARTIFACT_DIRECTORY = "./artifact/serverless/";
 
   @Override
   protected ServerlessCommandResponse executeTaskInternal(ServerlessCommandRequest serverlessCommandRequest,
@@ -86,12 +86,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
 
     LogCallback deployLogCallback = serverlessTaskHelperBase.getLogCallback(
         iLogStreamingTaskClient, ServerlessCommandUnitConstants.deploy.toString(), true, commandUnitsProgress);
-    ServerlessAwsLambdaDeployResult serverlessAwsLambdaDeployResult =
-        deploy(serverlessDeployRequest, deployLogCallback, serverlessDelegateTaskParams);
-    return ServerlessDeployResponse.builder()
-        .serverlessDeployResult(serverlessAwsLambdaDeployResult)
-        .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
-        .build();
+    return deploy(serverlessDeployRequest, deployLogCallback, serverlessDelegateTaskParams);
   }
 
   private void init(ServerlessDeployRequest serverlessDeployRequest, LogCallback executionLogCallback,
@@ -102,11 +97,9 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
         (ServerlessAwsLambdaManifestConfig) serverlessDeployRequest.getServerlessManifestConfig();
     serverlessTaskHelperBase.fetchManifestFilesAndWriteToDirectory(serverlessManifestConfig,
         serverlessDeployRequest.getAccountId(), executionLogCallback, serverlessDelegateTaskParams);
-    String updatedManifestContent =
-        serverlessTaskHelperBase.fetchArtifact(serverlessDeployRequest.getServerlessArtifactConfig(),
-            executionLogCallback, ARTIFACT_DIRECTORY, serverlessManifestConfig);
-    serverlessTaskHelperBase.replaceManifestWithRenderedContent(
-        serverlessDelegateTaskParams, serverlessManifestConfig, updatedManifestContent);
+    serverlessTaskHelperBase.fetchArtifact(serverlessDeployRequest.getServerlessArtifactConfig(), executionLogCallback,
+        serverlessDelegateTaskParams.getWorkingDirectory());
+    serverlessTaskHelperBase.replaceManifestWithRenderedContent(serverlessDelegateTaskParams, serverlessManifestConfig);
     serverlessAwsLambdaConfig = (ServerlessAwsLambdaConfig) serverlessInfraConfigHelper.createServerlessConfig(
         serverlessDeployRequest.getServerlessInfraConfig());
     serverlessClient = ServerlessClient.client(serverlessDelegateTaskParams.getServerlessClientPath());
@@ -114,9 +107,9 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
         serverlessDelegateTaskParams, executionLogCallback, true, timeoutInMillis);
     serverlessManifestSchema = serverlessAwsCommandTaskHelper.parseServerlessManifest(serverlessManifestConfig);
     serverlessAwsCommandTaskHelper.installPlugins(serverlessManifestSchema, serverlessDelegateTaskParams,
-        executionLogCallback, serverlessClient, timeoutInMillis);
+        executionLogCallback, serverlessClient, timeoutInMillis, serverlessManifestConfig);
     response = serverlessAwsCommandTaskHelper.deployList(serverlessClient, serverlessDelegateTaskParams,
-        executionLogCallback, serverlessAwsLambdaInfraConfig, timeoutInMillis);
+        executionLogCallback, serverlessAwsLambdaInfraConfig, timeoutInMillis, serverlessManifestConfig);
     if (response.getCommandExecutionStatus() == CommandExecutionStatus.SUCCESS) {
       Optional<String> previousVersionTimeStamp =
           serverlessAwsCommandTaskHelper.getPreviousVersionTimeStamp(response.getOutput());
@@ -125,30 +118,36 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
     executionLogCallback.saveExecutionLog("Done..\n", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
   }
 
-  private ServerlessAwsLambdaDeployResult deploy(ServerlessDeployRequest serverlessDeployRequest,
+  private ServerlessDeployResponse deploy(ServerlessDeployRequest serverlessDeployRequest,
       LogCallback executionLogCallback, ServerlessDelegateTaskParams serverlessDelegateTaskParams) throws Exception {
     executionLogCallback.saveExecutionLog("Deploying..\n");
     ServerlessCliResponse response;
     ServerlessAwsLambdaDeployConfig serverlessAwsLambdaDeployConfig =
         (ServerlessAwsLambdaDeployConfig) serverlessDeployRequest.getServerlessDeployConfig();
-    response = serverlessAwsCommandTaskHelper.deploy(serverlessClient, serverlessDelegateTaskParams,
-        executionLogCallback, serverlessAwsLambdaDeployConfig, serverlessAwsLambdaInfraConfig, timeoutInMillis);
+    response =
+        serverlessAwsCommandTaskHelper.deploy(serverlessClient, serverlessDelegateTaskParams, executionLogCallback,
+            serverlessAwsLambdaDeployConfig, serverlessAwsLambdaInfraConfig, timeoutInMillis, serverlessManifestConfig);
     ServerlessAwsLambdaDeployResultBuilder serverlessAwsLambdaDeployResultBuilder =
         ServerlessAwsLambdaDeployResult.builder();
     serverlessAwsLambdaDeployResultBuilder.service(serverlessManifestSchema.getService());
     serverlessAwsLambdaDeployResultBuilder.region(serverlessAwsLambdaInfraConfig.getRegion());
     serverlessAwsLambdaDeployResultBuilder.stage(serverlessAwsLambdaInfraConfig.getStage());
     serverlessAwsLambdaDeployResultBuilder.previousVersionTimeStamp(previousDeployTimeStamp);
+    ServerlessDeployResponseBuilder serverlessDeployResponseBuilder = ServerlessDeployResponse.builder();
     if (response.getCommandExecutionStatus() == CommandExecutionStatus.SUCCESS) {
       String outputDirectory =
           Paths.get(serverlessDelegateTaskParams.getWorkingDirectory(), "/.serverless/").toString();
       List<ServerlessAwsLambdaFunction> serverlessAwsLambdaFunctions =
           serverlessAwsCommandTaskHelper.fetchFunctionOutputFromCloudFormationTemplate(outputDirectory);
       serverlessAwsLambdaDeployResultBuilder.functions(serverlessAwsLambdaFunctions);
+      executionLogCallback.saveExecutionLog("Done..\n", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
+      serverlessDeployResponseBuilder.commandExecutionStatus(CommandExecutionStatus.SUCCESS);
     } else {
       // todo: set error message and error handling
+      executionLogCallback.saveExecutionLog("Failed..\n", LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+      serverlessDeployResponseBuilder.commandExecutionStatus(CommandExecutionStatus.FAILURE);
     }
-    executionLogCallback.saveExecutionLog("Done..\n", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
-    return serverlessAwsLambdaDeployResultBuilder.build();
+    serverlessDeployResponseBuilder.serverlessDeployResult(serverlessAwsLambdaDeployResultBuilder.build());
+    return serverlessDeployResponseBuilder.build();
   }
 }

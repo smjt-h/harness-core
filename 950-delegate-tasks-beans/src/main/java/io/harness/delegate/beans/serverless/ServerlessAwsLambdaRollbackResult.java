@@ -22,5 +22,5 @@ public class ServerlessAwsLambdaRollbackResult implements ServerlessRollbackResu
   private String region;
   private String stage;
   private String errorMessage;
-  private List<ServerlessAwsLambdaFunction> functions;
+  private String rollbackTimeStamp;
 }

@@ -53,7 +53,7 @@ public class ServerlessAwsLambdaRollbackStepInfo
 
   @Override
   public String getFacilitatorType() {
-    return OrchestrationFacilitatorType.TASK_CHAIN;
+    return OrchestrationFacilitatorType.TASK;
   }
 
   @Override

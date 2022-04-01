@@ -185,7 +185,7 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
 
   private FetchFilesResult fetchManifestFileFromRepo(GitStoreDelegateConfig gitStoreDelegateConfig, String folderPath,
       String filePath, String accountId, GitConfigDTO gitConfigDTO, LogCallback executionLogCallback) {
-    filePath = serverlessGitFetchTaskHelper.getCompleteFilePath(folderPath, filePath);
+    filePath = ServerlessGitFetchTaskHelper.getCompleteFilePath(folderPath, filePath);
     List<String> filePaths = Collections.singletonList(filePath);
     FetchFilesResult fetchFilesResult =
         serverlessGitFetchTaskHelper.fetchFileFromRepo(gitStoreDelegateConfig, filePaths, accountId, gitConfigDTO);

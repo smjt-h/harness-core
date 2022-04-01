@@ -66,31 +66,45 @@ public class ServerlessAwsCommandTaskHelper {
   public ServerlessCliResponse deploy(ServerlessClient serverlessClient,
       ServerlessDelegateTaskParams serverlessDelegateTaskParams, LogCallback executionLogCallback,
       ServerlessAwsLambdaDeployConfig serverlessAwsLambdaDeployConfig,
-      ServerlessAwsLambdaInfraConfig serverlessAwsLambdaInfraConfig, long timeoutInMillis) throws Exception {
+      ServerlessAwsLambdaInfraConfig serverlessAwsLambdaInfraConfig, long timeoutInMillis,
+      ServerlessAwsLambdaManifestConfig serverlessAwsLambdaManifestConfig) throws Exception {
     DeployCommand command = serverlessClient.deploy()
                                 .options(serverlessAwsLambdaDeployConfig.getCommandOptions())
                                 .region(serverlessAwsLambdaInfraConfig.getRegion())
                                 .stage(serverlessAwsLambdaInfraConfig.getStage());
+    if (EmptyPredicate.isNotEmpty(serverlessAwsLambdaManifestConfig.getConfigOverridePath())) {
+      command.config(serverlessAwsLambdaManifestConfig.getConfigOverridePath());
+    }
     return ServerlessCommandTaskHelper.executeCommand(
         command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true, timeoutInMillis);
   }
 
   public ServerlessCliResponse deployList(ServerlessClient serverlessClient,
       ServerlessDelegateTaskParams serverlessDelegateTaskParams, LogCallback executionLogCallback,
-      ServerlessAwsLambdaInfraConfig serverlessAwsLambdaInfraConfig, long timeoutInMillis) throws Exception {
+      ServerlessAwsLambdaInfraConfig serverlessAwsLambdaInfraConfig, long timeoutInMillis,
+      ServerlessAwsLambdaManifestConfig serverlessAwsLambdaManifestConfig) throws Exception {
     DeployListCommand command = serverlessClient.deployList()
                                     .region(serverlessAwsLambdaInfraConfig.getRegion())
                                     .stage(serverlessAwsLambdaInfraConfig.getStage());
+    if (EmptyPredicate.isNotEmpty(serverlessAwsLambdaManifestConfig.getConfigOverridePath())) {
+      command.config(serverlessAwsLambdaManifestConfig.getConfigOverridePath());
+    }
     return ServerlessCommandTaskHelper.executeCommand(
         command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true, timeoutInMillis);
   }
 
   public ServerlessCliResponse rollback(ServerlessClient serverlessClient,
       ServerlessDelegateTaskParams serverlessDelegateTaskParams, LogCallback executionLogCallback,
-      ServerlessAwsLambdaRollbackConfig serverlessAwsLambdaRollbackConfig,
-      ServerlessAwsLambdaInfraConfig serverlessAwsLambdaInfraConfig, long timeoutInMillis) throws Exception {
-    RollbackCommand command =
-        serverlessClient.rollback().timeStamp(serverlessAwsLambdaRollbackConfig.getPreviousVersionTimeStamp());
+      ServerlessAwsLambdaRollbackConfig serverlessAwsLambdaRollbackConfig, long timeoutInMillis,
+      ServerlessAwsLambdaManifestConfig serverlessAwsLambdaManifestConfig,
+      ServerlessAwsLambdaInfraConfig serverlessAwsLambdaInfraConfig) throws Exception {
+    RollbackCommand command = serverlessClient.rollback()
+                                  .timeStamp(serverlessAwsLambdaRollbackConfig.getPreviousVersionTimeStamp())
+                                  .stage(serverlessAwsLambdaInfraConfig.getStage())
+                                  .region(serverlessAwsLambdaInfraConfig.getRegion());
+    if (EmptyPredicate.isNotEmpty(serverlessAwsLambdaManifestConfig.getConfigOverridePath())) {
+      command.config(serverlessAwsLambdaManifestConfig.getConfigOverridePath());
+    }
     return ServerlessCommandTaskHelper.executeCommand(
         command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true, timeoutInMillis);
   }
@@ -104,13 +118,14 @@ public class ServerlessAwsCommandTaskHelper {
 
   public boolean installPlugins(ServerlessAwsLambdaManifestSchema serverlessAwsLambdaManifestSchema,
       ServerlessDelegateTaskParams serverlessDelegateTaskParams, LogCallback executionLogCallback,
-      ServerlessClient serverlessClient, long timeoutInMillis) throws Exception {
+      ServerlessClient serverlessClient, long timeoutInMillis,
+      ServerlessAwsLambdaManifestConfig serverlessAwsLambdaManifestConfig) throws Exception {
     ServerlessCliResponse response;
     if (EmptyPredicate.isNotEmpty(serverlessAwsLambdaManifestSchema.getPlugins())) {
       List<String> plugins = serverlessAwsLambdaManifestSchema.getPlugins();
       for (String plugin : plugins) {
-        response = serverlessTaskPluginHelper.installServerlessPlugin(
-            serverlessDelegateTaskParams, serverlessClient, plugin, executionLogCallback, timeoutInMillis);
+        response = serverlessTaskPluginHelper.installServerlessPlugin(serverlessDelegateTaskParams, serverlessClient,
+            plugin, executionLogCallback, timeoutInMillis, serverlessAwsLambdaManifestConfig.getConfigOverridePath());
         if (response.getCommandExecutionStatus() != CommandExecutionStatus.SUCCESS) {
           // todo: error handling
         }
