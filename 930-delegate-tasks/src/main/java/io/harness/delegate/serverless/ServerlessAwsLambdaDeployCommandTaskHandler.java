@@ -7,9 +7,6 @@
 
 package io.harness.delegate.serverless;
 
-import static io.harness.data.structure.UUIDGenerator.convertBase64UuidToCanonicalForm;
-import static io.harness.data.structure.UUIDGenerator.generateUuid;
-
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
@@ -26,6 +23,7 @@ import io.harness.delegate.task.serverless.response.ServerlessDeployResponse;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
+import io.harness.logging.LogLevel;
 import io.harness.serverless.ServerlessCliResponse;
 import io.harness.serverless.ServerlessClient;
 import io.harness.serverless.ServerlessCommandUnitConstants;
@@ -124,6 +122,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
           serverlessAwsCommandTaskHelper.getPreviousVersionTimeStamp(response.getOutput());
       previousDeployTimeStamp = previousVersionTimeStamp.orElse(null);
     }
+    executionLogCallback.saveExecutionLog("Done..\n", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
   }
 
   private ServerlessAwsLambdaDeployResult deploy(ServerlessDeployRequest serverlessDeployRequest,
@@ -149,6 +148,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
     } else {
       // todo: set error message and error handling
     }
+    executionLogCallback.saveExecutionLog("Done..\n", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
     return serverlessAwsLambdaDeployResultBuilder.build();
   }
 }

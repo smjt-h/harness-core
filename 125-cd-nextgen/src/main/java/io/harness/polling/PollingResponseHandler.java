@@ -271,7 +271,11 @@ public class PollingResponseHandler {
         polledResponseResultBuilder.type(NEXUS3);
         break;
       case ARTIFACTORY_REGISTRY:
-        polledResponseResultBuilder.name(((ArtifactoryRegistryArtifactInfo) artifactInfo).getArtifactPath());
+        if (((ArtifactoryRegistryArtifactInfo) artifactInfo).getRepositoryFormat().equals("generic")) {
+          polledResponseResultBuilder.name(((ArtifactoryRegistryArtifactInfo) artifactInfo).getArtifactDirectory());
+        } else {
+          polledResponseResultBuilder.name(((ArtifactoryRegistryArtifactInfo) artifactInfo).getArtifactPath());
+        }
         polledResponseResultBuilder.type(ARTIFACTORY);
         break;
       default:

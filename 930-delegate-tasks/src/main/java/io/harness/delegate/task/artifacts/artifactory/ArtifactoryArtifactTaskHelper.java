@@ -117,6 +117,8 @@ public class ArtifactoryArtifactTaskHelper {
 
   public ArtifactTaskResponse getGenericArtifactCollectResponse(
           ArtifactTaskParameters artifactTaskParameters, LogCallback executionLogCallback) {
+    ArtifactoryGenericArtifactDelegateRequest attributes =
+            (ArtifactoryGenericArtifactDelegateRequest) artifactTaskParameters.getAttributes();
     ArtifactTaskResponse artifactTaskResponse;
     switch (artifactTaskParameters.getArtifactTaskType()) {
       case GET_LAST_SUCCESSFUL_BUILD:
@@ -142,7 +144,7 @@ public class ArtifactoryArtifactTaskHelper {
         break;
       case GET_BUILDS:
         saveLogs(executionLogCallback, "Fetching artifact details");
-        artifactTaskResponse = fetchFileBuilds(artifactTaskParameters, executionLogCallback);
+        artifactTaskResponse = getSuccessTaskResponse(artifactoryArtifactTaskHandler.getBuilds(attributes));
         saveLogs(executionLogCallback,
                 "Fetched " + artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().size()
                         + " artifacts");
@@ -190,9 +192,9 @@ public class ArtifactoryArtifactTaskHelper {
             Collections.singletonList(artifactoryGenericArtifactDelegateResponse));
   }
 
-  public ArtifactTaskResponse fetchFileBuilds(ArtifactTaskParameters params, LogCallback executionLogCallback) {
-    ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest =
-            (ArtifactoryGenericArtifactDelegateRequest) params.getAttributes();
+  public ArtifactTaskExecutionResponse fetchFileBuilds(ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest,
+                                                       LogCallback executionLogCallback) {
+
     artifactoryArtifactTaskHandler.decryptRequestDTOs(artifactoryGenericArtifactDelegateRequest);
     ArtifactoryConfigRequest artifactoryConfigRequest = artifactoryRequestMapper.toArtifactoryRequest(
             artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
@@ -207,10 +209,7 @@ public class ArtifactoryArtifactTaskHelper {
     List<BuildDetails> buildDetails = artifactoryNgService.getArtifactList(artifactoryConfigRequest,
             artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, MAX_NO_OF_TAGS_PER_ARTIFACT);
 
-    return ArtifactTaskResponse.builder()
-            .artifactTaskExecutionResponse(ArtifactTaskExecutionResponse.builder().buildDetails(buildDetails).build())
-            .commandExecutionStatus(SUCCESS)
-            .build();
+    return ArtifactTaskExecutionResponse.builder().buildDetails(buildDetails).build();
   }
 
   private ArtifactTaskResponse getSuccessTaskResponse(ArtifactTaskExecutionResponse taskExecutionResponse) {
