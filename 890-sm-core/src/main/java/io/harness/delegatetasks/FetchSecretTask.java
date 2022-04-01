@@ -9,6 +9,7 @@ package io.harness.delegatetasks;
 
 import static io.harness.eraro.ErrorCode.SECRET_MANAGEMENT_ERROR;
 import static io.harness.exception.WingsException.USER;
+import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 import static io.harness.security.encryption.SecretManagerType.CUSTOM;
 import static io.harness.security.encryption.SecretManagerType.KMS;
 import static io.harness.security.encryption.SecretManagerType.VAULT;
@@ -20,6 +21,7 @@ import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.task.AbstractDelegateRunnableTask;
+import io.harness.delegate.task.TaskLogContext;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.encryptors.CustomEncryptor;
 import io.harness.encryptors.CustomEncryptorsRegistry;
@@ -28,6 +30,7 @@ import io.harness.encryptors.KmsEncryptorsRegistry;
 import io.harness.encryptors.VaultEncryptor;
 import io.harness.encryptors.VaultEncryptorsRegistry;
 import io.harness.exception.SecretManagementDelegateException;
+import io.harness.logging.AccountLogContext;
 import io.harness.security.encryption.EncryptedRecord;
 import io.harness.security.encryption.EncryptionConfig;
 
@@ -54,21 +57,24 @@ public class FetchSecretTask extends AbstractDelegateRunnableTask {
 
   @Override
   public DelegateResponseData run(TaskParameters parameters) {
-    FetchSecretTaskParameters fetchSecretTaskParameters = (FetchSecretTaskParameters) parameters;
-    EncryptionConfig config = fetchSecretTaskParameters.getEncryptionConfig();
-    EncryptedRecord record = fetchSecretTaskParameters.getEncryptedRecord();
-    if (KMS == config.getType()) {
-      return runKmsTask(record, config);
+    try (TaskLogContext ignore = new TaskLogContext(getTaskId(), OVERRIDE_ERROR);
+         AccountLogContext ignore2 = new AccountLogContext(getAccountId(), OVERRIDE_ERROR)) {
+      FetchSecretTaskParameters fetchSecretTaskParameters = (FetchSecretTaskParameters) parameters;
+      EncryptionConfig config = fetchSecretTaskParameters.getEncryptionConfig();
+      EncryptedRecord record = fetchSecretTaskParameters.getEncryptedRecord();
+      if (KMS == config.getType()) {
+        return runKmsTask(record, config);
+      }
+      if (VAULT == config.getType()) {
+        return runVaultTask(record, config);
+      }
+      if (CUSTOM == config.getType()) {
+        return runCustomTask(record, config);
+      }
+      throw new SecretManagementDelegateException(SECRET_MANAGEMENT_ERROR,
+          String.format("Encryptor for fetch secret task for encryption config %s not configured", config.getName()),
+          USER);
     }
-    if (VAULT == config.getType()) {
-      return runVaultTask(record, config);
-    }
-    if (CUSTOM == config.getType()) {
-      return runCustomTask(record, config);
-    }
-    throw new SecretManagementDelegateException(SECRET_MANAGEMENT_ERROR,
-        String.format("Encryptor for fetch secret task for encryption config %s not configured", config.getName()),
-        USER);
   }
 
   private FetchSecretTaskResponse runKmsTask(EncryptedRecord record, EncryptionConfig config) {
