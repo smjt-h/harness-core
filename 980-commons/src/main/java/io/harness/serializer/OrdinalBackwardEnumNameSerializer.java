@@ -34,11 +34,13 @@ public class OrdinalBackwardEnumNameSerializer extends Serializer<Enum> {
   public Enum read(Kryo kryo, Input input, Class<Enum> type) {
     try {
       int ordinal = input.readVarInt(true);
-      if (ordinal == NULL)
+      if (ordinal == NULL) {
         return null;
+      }
       ordinal--;
-      if (ordinal < 0 || ordinal > enumConstants.length - 1)
+      if (ordinal < 0 || ordinal > enumConstants.length - 1) {
         throw new KryoException("Invalid ordinal for enum \"" + type.getName() + "\": " + ordinal);
+      }
       Object constant = enumConstants[ordinal];
       return (Enum) constant;
     } catch (Exception ordinalException) {
