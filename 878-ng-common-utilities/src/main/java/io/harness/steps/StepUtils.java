@@ -11,6 +11,8 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.pms.yaml.YAMLFieldNameConstants.DELEGATE_SELECTORS;
+import static io.harness.pms.yaml.YAMLFieldNameConstants.STAGE;
+import static io.harness.pms.yaml.YAMLFieldNameConstants.STEP_GROUP;
 
 import static software.wings.beans.LogHelper.COMMAND_UNIT_PLACEHOLDER;
 
@@ -18,6 +20,7 @@ import static java.util.stream.Collectors.toList;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EnvironmentType;
+import io.harness.beans.FeatureName;
 import io.harness.common.NGTimeConversionHelper;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.data.structure.EmptyPredicate;
@@ -38,9 +41,11 @@ import io.harness.delegate.task.TaskParameters;
 import io.harness.encryption.Scope;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
+import io.harness.ff.FeatureFlagServiceImpl;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logstreaming.LogStreamingHelper;
 import io.harness.plancreator.steps.TaskSelectorYaml;
+import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.Status;
@@ -54,18 +59,22 @@ import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.pms.sdk.core.steps.io.StepResponse.StepResponseBuilder;
 import io.harness.pms.sdk.core.steps.io.StepResponseNotifyData;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
+import io.harness.reflection.ReflectionUtils;
 import io.harness.serializer.KryoSerializer;
 import io.harness.tasks.ResponseData;
 import io.harness.tasks.Task;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -79,6 +88,8 @@ import org.apache.commons.collections4.ListUtils;
 
 @OwnedBy(PIPELINE)
 public class StepUtils {
+  @Inject private static FeatureFlagServiceImpl featureFlagService;
+
   private StepUtils() {}
 
   public static final String DEFAULT_STEP_TIMEOUT = "10m";
@@ -408,5 +419,39 @@ public class StepUtils {
           new TypeReference<ParameterField<List<TaskSelectorYaml>>>() {});
     }
     return delegateSelectors;
+  }
+
+  public static SpecParameters getSpecParametersWithDelegateSelector(
+      SpecParameters specParameters, PlanCreationContext ctx, String accountId) {
+    if (!featureFlagService.isEnabled(FeatureName.DELEGATE_SCOPING_NG, accountId)) {
+      return specParameters;
+    }
+    Field field = ReflectionUtils.getFieldByName(specParameters.getClass(), "delegateSelectors");
+    if (field == null) {
+      return specParameters;
+    }
+    // if delegate selector value available at step level, then it gets precedence,
+    Object delegateSelectorFieldValue = ReflectionUtils.getFieldValue(specParameters, field);
+    if (delegateSelectorFieldValue != null) {
+      return specParameters;
+    }
+    // if selectors not available at step level, then go up the hierarchy (Step Group -> Stage -> pipeline)
+    try {
+      ParameterField<List<TaskSelectorYaml>> delegateSelectors = delegateSelectorsFromFqn(ctx, STEP_GROUP);
+      if (delegateSelectors == null) {
+        delegateSelectors = delegateSelectorsFromFqn(ctx, STAGE);
+      }
+      if (delegateSelectors == null) {
+        delegateSelectors = delegateSelectorsFromFqn(ctx, YAMLFieldNameConstants.PIPELINE);
+      }
+      if (delegateSelectors == null) {
+        return specParameters;
+      }
+      // Field delegateSelectorsField = ReflectionUtils.getFieldByName(specParameters.getClass(), "delegateSelectors");
+      ReflectionUtils.setObjectField(field, specParameters, delegateSelectors);
+
+    } catch (Exception e) {
+    }
+    return specParameters;
   }
 }
