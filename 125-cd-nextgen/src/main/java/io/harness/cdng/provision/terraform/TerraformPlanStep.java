@@ -13,6 +13,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.common.ParameterFieldHelper;
+import io.harness.delegate.TaskSelector;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.task.terraform.TFTaskType;
 import io.harness.delegate.task.terraform.TerraformCommand;
@@ -148,10 +149,13 @@ public class TerraformPlanStep extends TaskExecutableWithRollbackAndRbac<Terrafo
             .parameters(new Object[] {builder.build()})
             .build();
 
+    List<TaskSelector> taskSelectors = planStepParameters.getDelegateSelectors() != null
+        ? TaskSelectorYaml.toTaskSelector(planStepParameters.getDelegateSelectors().getValue())
+        : Collections.emptyList();
+
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         Collections.singletonList(TerraformCommandUnit.Plan.name()), TaskType.TERRAFORM_TASK_NG.getDisplayName(),
-        TaskSelectorYaml.toTaskSelector(planStepParameters.getDelegateSelectors().getValue()),
-        stepHelper.getEnvironmentType(ambiance));
+        taskSelectors, stepHelper.getEnvironmentType(ambiance));
   }
 
   @Override

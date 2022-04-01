@@ -16,6 +16,7 @@ import io.harness.beans.IdentifierRef;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.common.ParameterFieldHelper;
+import io.harness.delegate.TaskSelector;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.task.terraform.TFTaskType;
 import io.harness.delegate.task.terraform.TerraformCommand;
@@ -161,11 +162,12 @@ public class TerraformApplyStep extends TaskExecutableWithRollbackAndRbac<Terraf
             .timeout(StepUtils.getTimeoutMillis(stepElementParameters.getTimeout(), TerraformConstants.DEFAULT_TIMEOUT))
             .parameters(new Object[] {builder.build()})
             .build();
-
+    List<TaskSelector> taskSelectors = stepParameters.getDelegateSelectors() != null
+        ? TaskSelectorYaml.toTaskSelector(stepParameters.getDelegateSelectors().getValue())
+        : Collections.emptyList();
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         Collections.singletonList(TerraformCommandUnit.Apply.name()), TaskType.TERRAFORM_TASK_NG.getDisplayName(),
-        TaskSelectorYaml.toTaskSelector(stepParameters.getDelegateSelectors().getValue()),
-        stepHelper.getEnvironmentType(ambiance));
+        taskSelectors, stepHelper.getEnvironmentType(ambiance));
   }
 
   private TaskRequest obtainInheritedTask(
@@ -204,11 +206,13 @@ public class TerraformApplyStep extends TaskExecutableWithRollbackAndRbac<Terraf
             .timeout(StepUtils.getTimeoutMillis(stepElementParameters.getTimeout(), TerraformConstants.DEFAULT_TIMEOUT))
             .parameters(new Object[] {builder.build()})
             .build();
+    List<TaskSelector> taskSelectors = stepParameters.getDelegateSelectors() != null
+        ? TaskSelectorYaml.toTaskSelector(stepParameters.getDelegateSelectors().getValue())
+        : Collections.emptyList();
 
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         Collections.singletonList(TerraformCommandUnit.Apply.name()), TaskType.TERRAFORM_TASK_NG.getDisplayName(),
-        TaskSelectorYaml.toTaskSelector(stepParameters.getDelegateSelectors().getValue()),
-        stepHelper.getEnvironmentType(ambiance));
+        taskSelectors, stepHelper.getEnvironmentType(ambiance));
   }
 
   @Override
