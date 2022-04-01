@@ -138,7 +138,7 @@ public class PipelineYamlDtoMapperTest extends CategoryTest {
   @Test
   @Owner(developers = JENNY)
   @Category(UnitTests.class)
-  public void testToDtoForDelegateSelectorsAtPipelineAndStage() {
+  public void testToDtoForDelegateSelectorsAtPipeline() {
     PipelineEntity pipelineEntity =
         PipelineEntity.builder().yaml(correctYamlWithPipelineLevelDelegateSelectors).build();
     PipelineConfig pipelineConfig = PipelineYamlDtoMapper.toDto(pipelineEntity);
@@ -146,7 +146,8 @@ public class PipelineYamlDtoMapperTest extends CategoryTest {
     assertThat(pipelineInfoConfig.getDelegateSelectors()).isNotNull();
     assertThat(pipelineInfoConfig.getDelegateSelectors().getValue()).hasSize(1);
     assertThat(pipelineInfoConfig.getDelegateSelectors().getValue().get(0));
-    assertThat(pipelineInfoConfig.getDelegateSelectors().getValue().get(0)).isEqualTo("sel_pipeline");
+    assertThat(pipelineInfoConfig.getDelegateSelectors().getValue().get(0).getDelegateSelectors())
+        .isEqualTo("sel_pipeline");
     assertThat(pipelineInfoConfig.getStages()).hasSize(1);
   }
 
@@ -165,14 +166,16 @@ public class PipelineYamlDtoMapperTest extends CategoryTest {
   @Test
   @Owner(developers = JENNY)
   @Category(UnitTests.class)
-  public void testToDtoForMoreThanOneDelegateSelectorsAtPipelineAndStage() {
+  public void testToDtoForMoreThanOneDelegateSelectorsAtPipeline() {
     PipelineEntity pipelineEntity =
         PipelineEntity.builder().yaml(correctYamlWithPipelineLevelDelegateSelectorsMoreThanOne).build();
     PipelineConfig pipelineConfig = PipelineYamlDtoMapper.toDto(pipelineEntity);
     PipelineInfoConfig pipelineInfoConfig = pipelineConfig.getPipelineInfoConfig();
     assertThat(pipelineInfoConfig.getDelegateSelectors()).isNotNull();
     assertThat(pipelineInfoConfig.getDelegateSelectors().getValue()).hasSize(2);
-    assertThat(pipelineInfoConfig.getDelegateSelectors().getValue().get(0)).isEqualTo("sel_pipeline");
-    assertThat(pipelineInfoConfig.getDelegateSelectors().getValue().get(1)).isEqualTo("sel2_pipeline");
+    assertThat(pipelineInfoConfig.getDelegateSelectors().getValue().get(0).getDelegateSelectors())
+        .isEqualTo("sel_pipeline");
+    assertThat(pipelineInfoConfig.getDelegateSelectors().getValue().get(1).getDelegateSelectors())
+        .isEqualTo("sel2_pipeline");
   }
 }
