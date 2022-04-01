@@ -120,6 +120,8 @@ import io.harness.delegate.beans.connector.appdynamicsconnector.AppDynamicsConne
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryValidationParams;
 import io.harness.delegate.beans.connector.awscodecommitconnector.AwsCodeCommitTaskParams;
 import io.harness.delegate.beans.connector.awscodecommitconnector.AwsCodeCommitValidationParams;
+import io.harness.delegate.beans.connector.awsconnector.AwsCFTaskParamsRequest;
+import io.harness.delegate.beans.connector.awsconnector.AwsCFTaskResponse;
 import io.harness.delegate.beans.connector.awsconnector.AwsDelegateTaskResponse;
 import io.harness.delegate.beans.connector.awsconnector.AwsIAMRolesResponse;
 import io.harness.delegate.beans.connector.awsconnector.AwsS3BucketResponse;
@@ -1142,5 +1144,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(CloudformationCommandUnit.class, 543491);
     kryo.register(CloudformationTaskType.class, 543492);
     kryo.register(AwsIAMRolesResponse.class, 543493);
+    kryo.register(AwsCFTaskParamsRequest.class, 543494);
+    kryo.register(AwsCFTaskResponse.class, 543495);
   }
 }

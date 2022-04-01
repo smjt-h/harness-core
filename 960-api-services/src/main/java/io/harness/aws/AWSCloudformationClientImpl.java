@@ -40,6 +40,9 @@ import com.amazonaws.services.cloudformation.model.DescribeStackResourcesRequest
 import com.amazonaws.services.cloudformation.model.DescribeStackResourcesResult;
 import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
 import com.amazonaws.services.cloudformation.model.DescribeStacksResult;
+import com.amazonaws.services.cloudformation.model.GetTemplateSummaryRequest;
+import com.amazonaws.services.cloudformation.model.GetTemplateSummaryResult;
+import com.amazonaws.services.cloudformation.model.ParameterDeclaration;
 import com.amazonaws.services.cloudformation.model.Stack;
 import com.amazonaws.services.cloudformation.model.StackEvent;
 import com.amazonaws.services.cloudformation.model.StackResource;
@@ -242,6 +245,36 @@ public class AWSCloudformationClientImpl implements AWSCloudformationClient {
     }
   }
 
+  @Override
+  public List<ParameterDeclaration> getParamsData(
+      AwsInternalConfig awsConfig, String region, String data, String type, String gitDataFile) {
+    try (CloseableAmazonWebServiceClient<AmazonCloudFormationClient> closeableAmazonCloudFormationClient =
+             new CloseableAmazonWebServiceClient(getAmazonCloudFormationClient(Regions.fromName(region), awsConfig))) {
+      GetTemplateSummaryRequest request = new GetTemplateSummaryRequest();
+      if ("s3".equalsIgnoreCase(type)) {
+        request.withTemplateURL(normalizeS3TemplatePath(data));
+      } else if ("git".equalsIgnoreCase(type)) {
+        request.withTemplateBody(gitDataFile);
+      } else {
+        request.withTemplateBody(data);
+      }
+      tracker.trackCFCall("Get Template Summary");
+      GetTemplateSummaryResult result = closeableAmazonCloudFormationClient.getClient().getTemplateSummary(request);
+      List<ParameterDeclaration> parameters = result.getParameters();
+      if (isNotEmpty(parameters)) {
+        return parameters;
+      }
+    } catch (AmazonServiceException amazonServiceException) {
+      awsApiHelperService.handleAmazonServiceException(amazonServiceException);
+    } catch (AmazonClientException amazonClientException) {
+      awsApiHelperService.handleAmazonClientException(amazonClientException);
+    } catch (Exception e) {
+      log.error("Exception getParamsData", e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+    }
+    return emptyList();
+  }
+
   @VisibleForTesting
   AmazonCloudFormationClient getAmazonCloudFormationClient(Regions region, AwsInternalConfig awsConfig) {
     AmazonCloudFormationClientBuilder builder = AmazonCloudFormationClientBuilder.standard().withRegion(region);
@@ -269,5 +302,13 @@ public class AWSCloudformationClientImpl implements AWSCloudformationClient {
   }
   private String getStatusReason(String reason) {
     return isNotEmpty(reason) ? reason : StringUtils.EMPTY;
+  }
+
+  private String normalizeS3TemplatePath(String s3Path) {
+    String normalizedS3TemplatePath = s3Path;
+    if (isNotEmpty(normalizedS3TemplatePath) && normalizedS3TemplatePath.contains("+")) {
+      normalizedS3TemplatePath = s3Path.replaceAll("\\+", "%20");
+    }
+    return normalizedS3TemplatePath;
   }
 }

@@ -598,7 +598,8 @@ public enum ErrorCode {
   INVALID_ARTIFACTORY_REGISTRY_REQUEST,
   INVALID_NEXUS_REGISTRY_REQUEST,
   ENTITY_NOT_FOUND(NOT_FOUND),
-  AWS_IAM_ERROR;
+  AWS_IAM_ERROR,
+  AWS_CF_ERROR;
 
   private Status status = BAD_REQUEST;
   private String description;
