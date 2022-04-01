@@ -12,7 +12,9 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidArgumentsException;
@@ -61,9 +63,21 @@ public class BuildTriggerHelper {
   public Optional<String> fetchPipelineForTrigger(NGTriggerEntity ngTriggerEntity) {
     PMSPipelineResponseDTO response = NGRestUtils.getResponse(pipelineServiceClient.getPipelineByIdentifier(
         ngTriggerEntity.getTargetIdentifier(), ngTriggerEntity.getAccountId(), ngTriggerEntity.getOrgIdentifier(),
-        ngTriggerEntity.getProjectIdentifier(), null, null, false));
+        ngTriggerEntity.getProjectIdentifier(), null, null, false, false));
 
     return response != null ? Optional.of(response.getYamlPipeline()) : Optional.empty();
+  }
+
+  public Optional<String> fetchTemplatesResolvedPipelineYamlForTrigger(NGTriggerEntity ngTriggerEntity) {
+    PMSPipelineResponseDTO response = NGRestUtils.getResponse(pipelineServiceClient.getPipelineByIdentifier(
+        ngTriggerEntity.getTargetIdentifier(), ngTriggerEntity.getAccountId(), ngTriggerEntity.getOrgIdentifier(),
+        ngTriggerEntity.getProjectIdentifier(), null, null, false, true));
+
+    if (response != null && isNotEmpty(response.getYamlPipeline())
+        && isEmpty(response.getResolvedTemplatesPipelineYaml())) {
+      throw new InvalidRequestException("Template Inputs are not correctly set in pipeline.");
+    }
+    return response != null ? Optional.of(response.getResolvedTemplatesPipelineYaml()) : Optional.empty();
   }
 
   public Map<String, JsonNode> fetchTriggerBuildSpecMap(NGTriggerEntity ngTriggerEntity) throws IOException {
