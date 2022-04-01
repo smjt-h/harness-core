@@ -50,7 +50,7 @@ public interface AwsHelperResourceService {
    *
    * @param type Where the template is stored (GIT, S3, or inline)
    * @param region AWS region
-   * @param fetchType For GIT, the fetchType, (branch or commit)
+   * @param isBranch For GIT, the fetchType, (branch or commit)
    * @param branch The branch reference for GIT
    * @param filePath The file path for the template
    * @param commitId The commit id for GIT
@@ -60,6 +60,6 @@ public interface AwsHelperResourceService {
    *
    * @return the list of Cloudformation param keys
    */
-  List<AwsCFTemplateParamsData> awsCFParameterKeys(String type, String region, Boolean isBranch, String branch,
+  List<AwsCFTemplateParamsData> awsCFParameterKeys(String type, String region, boolean isBranch, String branch,
       String filePath, String commitId, IdentifierRef awsConnectorRef, String data, String connectorDTO);
 }

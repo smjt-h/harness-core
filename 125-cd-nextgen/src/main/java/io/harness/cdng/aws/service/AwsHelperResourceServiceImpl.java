@@ -83,7 +83,7 @@ public class AwsHelperResourceServiceImpl implements AwsHelperResourceService {
     return response.getRoles();
   }
 
-  public List<AwsCFTemplateParamsData> awsCFParameterKeys(String type, String region, Boolean isBranch, String branch,
+  public List<AwsCFTemplateParamsData> awsCFParameterKeys(String type, String region, boolean isBranch, String branch,
       String templatePath, String commitId, IdentifierRef awsConnectorRef, String dataInput, String connectorDTO) {
     GitStoreDelegateConfig gitStoreDelegateConfig = null;
     BaseNGAccess access = serviceHelper.getBaseNGAccess(awsConnectorRef.getAccountIdentifier(),
@@ -92,8 +92,8 @@ public class AwsHelperResourceServiceImpl implements AwsHelperResourceService {
     if (CloudFormationSourceType.UNKNOWN.toString().equalsIgnoreCase(type)) {
       throw new InvalidRequestException("Unknown source type");
     } else if (CloudFormationSourceType.GIT.toString().equalsIgnoreCase(type)) {
-      if (isEmpty(branch) && isEmpty(commitId)) {
-        throw new InvalidRequestException("Empty Fields Connector Id or both Branch and commitID");
+      if (isEmpty(connectorDTO) || (isEmpty(branch) && isEmpty(commitId))) {
+        throw new InvalidRequestException("Missing connector ID or branch and commid ID");
       }
       FetchType fetchType = isBranch ? FetchType.BRANCH : FetchType.COMMIT;
 

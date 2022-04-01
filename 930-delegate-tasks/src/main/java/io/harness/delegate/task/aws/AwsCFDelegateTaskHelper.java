@@ -67,6 +67,7 @@ public class AwsCFDelegateTaskHelper {
       FetchFilesResult gitFetchFilesResult = ngGitService.fetchFilesByPath(
           gitStoreDelegateConfig, awsTaskParams.getAccountId(), sshSessionConfig, gitConfigDTO);
       if (gitFetchFilesResult.getFiles().size() > 1) {
+        log.error("more than 1 file found in git repository");
         return AwsCFTaskResponse.builder().commandExecutionStatus(CommandExecutionStatus.FAILURE).build();
       }
       gitFileContent = gitFetchFilesResult.getFiles().get(0).getFileContent();
@@ -93,6 +94,7 @@ public class AwsCFDelegateTaskHelper {
           .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
           .build();
     } catch (Exception e) {
+      log.error("error while retrieving parameters from cloudformation template ", e.getMessage());
       return AwsCFTaskResponse.builder().commandExecutionStatus(CommandExecutionStatus.FAILURE).build();
     }
   }
