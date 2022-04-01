@@ -120,6 +120,9 @@ import io.harness.delegate.beans.FileMetadata;
 import io.harness.delegate.beans.K8sConfigDetails;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.events.DelegateGroupDeleteEvent;
+import io.harness.delegate.events.DelegateGroupUpsertEvent;
+import io.harness.delegate.events.DelegateRegisterEvent;
+import io.harness.delegate.events.DelegateUnregisterEvent;
 import io.harness.delegate.service.intfc.DelegateNgTokenService;
 import io.harness.delegate.service.intfc.DelegateRingService;
 import io.harness.delegate.task.DelegateLogContext;
@@ -666,11 +669,6 @@ public class DelegateServiceImpl implements DelegateService {
       throw new InvalidRequestException("Delegate Size must be provided.", USER);
     }
 
-    // TODO: ARPIT uncomment it when NG delegateToken goes in prod
-    //    if(delegateSetupDetails.getTokenName() == null) {
-    //      throw new InvalidRequestException("Delegate Token must be provided.", USER);
-    //    }
-
     K8sConfigDetails k8sConfigDetails = delegateSetupDetails.getK8sConfigDetails();
     if (k8sConfigDetails == null || k8sConfigDetails.getK8sPermissionType() == null) {
       throw new InvalidRequestException("K8s permission type must be provided.", USER);
@@ -680,6 +678,10 @@ public class DelegateServiceImpl implements DelegateService {
 
     if (!KUBERNETES.equals(delegateSetupDetails.getDelegateType())) {
       throw new InvalidRequestException("Delegate type must be KUBERNETES.");
+    }
+
+    if (isEmpty(delegateSetupDetails.getTokenName())) {
+      throw new InvalidRequestException("Delegate Token must be provided.", USER);
     }
   }
 
@@ -1074,6 +1076,7 @@ public class DelegateServiceImpl implements DelegateService {
   @Override
   public DelegateScripts getDelegateScriptsNg(String accountId, String version, String managerHost,
       String verificationHost, String delegateType) throws IOException {
+    Optional<String> delegateTokenName = getDelegateTokenNameFromGlobalContext();
     ImmutableMap<String, String> scriptParams = getJarAndScriptRunTimeParamMap(
         TemplateParameters.builder()
             .accountId(accountId)
@@ -1082,7 +1085,7 @@ public class DelegateServiceImpl implements DelegateService {
             .verificationHost(verificationHost)
             .logStreamingServiceBaseUrl(mainConfiguration.getLogStreamingServiceConfig().getBaseUrl())
             .delegateXmx(getDelegateXmx(delegateType))
-            .delegateTokenName(getDelegateTokenNameFromGlobalContext())
+            .delegateTokenName(delegateTokenName.orElse(null))
             .build(),
         true);
 
@@ -1109,6 +1112,7 @@ public class DelegateServiceImpl implements DelegateService {
   @Override
   public DelegateScripts getDelegateScripts(String accountId, String version, String managerHost,
       String verificationHost, String delegateName) throws IOException {
+    Optional<String> delegateTokenName = getDelegateTokenNameFromGlobalContext();
     ImmutableMap<String, String> scriptParams = getJarAndScriptRunTimeParamMap(
         TemplateParameters.builder()
             .accountId(accountId)
@@ -1116,7 +1120,7 @@ public class DelegateServiceImpl implements DelegateService {
             .managerHost(managerHost)
             .verificationHost(verificationHost)
             .logStreamingServiceBaseUrl(mainConfiguration.getLogStreamingServiceConfig().getBaseUrl())
-            .delegateTokenName(getDelegateTokenNameFromGlobalContext())
+            .delegateTokenName(delegateTokenName.orElse(null))
             .delegateName(StringUtils.defaultString(delegateName))
             .build(),
         false);
@@ -1139,15 +1143,6 @@ public class DelegateServiceImpl implements DelegateService {
       delegateScripts.setSetupProxyScript(processTemplate(scriptParams, "setup-proxy.sh.ftl"));
     }
     return delegateScripts;
-  }
-
-  private String getDelegateTokenNameFromGlobalContext() {
-    DelegateTokenGlobalContextData delegateTokenGlobalContextData =
-        GlobalContextManager.get(DelegateTokenGlobalContextData.TOKEN_NAME);
-    if (delegateTokenGlobalContextData != null) {
-      return delegateTokenGlobalContextData.getTokenName();
-    }
-    return null;
   }
 
   @Override
@@ -1243,7 +1238,6 @@ public class DelegateServiceImpl implements DelegateService {
               .put("verificationHostAndPort", templateParameters.getVerificationHost())
               .put("watcherStorageUrl", watcherStorageUrl)
               .put("watcherCheckLocation", watcherCheckLocation)
-              .put("remoteWatcherUrlCdn", infraDownloadService.getCdnWatcherBaseUrl())
               .put("delegateStorageUrl", delegateStorageUrl)
               .put("delegateCheckLocation", delegateCheckLocation)
               .put("deployMode", mainConfiguration.getDeployMode().name())
@@ -1288,7 +1282,13 @@ public class DelegateServiceImpl implements DelegateService {
       }
 
       params.put("useCdn", String.valueOf(useCDN));
-      params.put("cdnUrl", cdnConfig.getUrl());
+      if (useCDN) {
+        params.put("cdnUrl", cdnConfig.getUrl());
+        params.put("remoteWatcherUrlCdn", infraDownloadService.getCdnWatcherBaseUrl());
+      } else {
+        params.put("cdnUrl", EMPTY);
+        params.put("remoteWatcherUrlCdn", EMPTY);
+      }
 
       if (isNotBlank(templateParameters.getDelegateXmx())) {
         params.put("delegateXmx", templateParameters.getDelegateXmx());
@@ -1311,22 +1311,10 @@ public class DelegateServiceImpl implements DelegateService {
       params.put(ALPN_JAR_PATH, jreConfig.getAlpnJarPath());
       params.put("enableCE", String.valueOf(templateParameters.isCeEnabled()));
 
-      if (isNotBlank(templateParameters.getDelegateOrgIdentifier())) {
-        params.put("delegateOrgIdentifier", templateParameters.getDelegateOrgIdentifier());
-      } else {
-        params.put("delegateOrgIdentifier", EMPTY);
-      }
-
       if (isNotBlank(templateParameters.getDelegateTags())) {
         params.put("delegateTags", templateParameters.getDelegateTags());
       } else {
         params.put("delegateTags", EMPTY);
-      }
-
-      if (isNotBlank(templateParameters.getDelegateProjectIdentifier())) {
-        params.put("delegateProjectIdentifier", templateParameters.getDelegateProjectIdentifier());
-      } else {
-        params.put("delegateProjectIdentifier", EMPTY);
       }
 
       if (isNotBlank(templateParameters.getDelegateDescription())) {
@@ -2021,9 +2009,6 @@ public class DelegateServiceImpl implements DelegateService {
 
     log.info("Delegate saved: {}", savedDelegate);
 
-    auditServiceHelper.reportForAuditingUsingAccountId(
-        accountId, savedDelegate, savedDelegate, Type.DELEGATE_REGISTRATION);
-
     // When polling is enabled for delegate, do not perform these event publishing
     if (isDelegateWithoutPollingEnabled(delegate)) {
       eventEmitter.send(Channel.DELEGATES,
@@ -2066,6 +2051,7 @@ public class DelegateServiceImpl implements DelegateService {
                                     .filter(DelegateKeys.accountId, accountId)
                                     .filter(DelegateKeys.uuid, delegateId)
                                     .project(DelegateKeys.ip, true)
+                                    .project(DelegateKeys.ng, true)
                                     .project(DelegateKeys.hostName, true)
                                     .project(DelegateKeys.owner, true)
                                     .project(DelegateKeys.delegateGroupName, true)
@@ -2098,9 +2084,8 @@ public class DelegateServiceImpl implements DelegateService {
     persistence.delete(persistence.createQuery(Delegate.class)
                            .filter(DelegateKeys.accountId, accountId)
                            .filter(DelegateKeys.uuid, delegateId));
+    sendDelegateDeleteAuditEvent(existingDelegate, accountId);
     log.info("Delegate: {} deleted.", delegateId);
-    auditServiceHelper.reportDeleteForAuditingUsingAccountId(accountId, existingDelegate);
-    log.info("Auditing deleting of Delegate for accountId={}", accountId);
   }
 
   @Override
@@ -2382,16 +2367,25 @@ public class DelegateServiceImpl implements DelegateService {
           upsertDelegateGroup(delegateParams.getDelegateGroupName(), delegateParams.getAccountId(), null);
       delegateGroupId = delegateGroup.getUuid();
     }
+    DelegateSetupDetails delegateSetupDetails = DelegateSetupDetails.builder()
+                                                    .name(delegateParams.getHostName())
+                                                    .orgIdentifier(delegateParams.getOrgIdentifier())
+                                                    .projectIdentifier(delegateParams.getProjectIdentifier())
+                                                    .description(delegateParams.getDescription())
+                                                    .delegateType(delegateParams.getDelegateType())
+                                                    .build();
 
     String delegateGroupName = delegateParams.getDelegateGroupName();
+
+    // old ng delegates will be using accountKey as token, and hence we don't have org/project identifiers from the
+    // global context thread
+    String orgIdentifier = delegateParams.getOrgIdentifier() != null
+        ? delegateParams.getOrgIdentifier()
+        : getOrgIdentifierUsingTokenFromGlobalContext(delegateParams.getAccountId()).orElse(null);
+    String projectIdentifier = delegateParams.getProjectIdentifier() != null
+        ? delegateParams.getProjectIdentifier()
+        : getProjectIdentifierUsingTokenFromGlobalContext(delegateParams.getAccountId()).orElse(null);
     if (delegateParams.isNg()) {
-      DelegateSetupDetails delegateSetupDetails = DelegateSetupDetails.builder()
-                                                      .name(delegateParams.getDelegateName())
-                                                      .orgIdentifier(delegateParams.getOrgIdentifier())
-                                                      .projectIdentifier(delegateParams.getProjectIdentifier())
-                                                      .description(delegateParams.getDescription())
-                                                      .delegateType(delegateParams.getDelegateType())
-                                                      .build();
       final DelegateGroup delegateGroup =
           upsertDelegateGroup(delegateParams.getDelegateName(), delegateParams.getAccountId(), delegateSetupDetails);
       delegateGroupId = delegateGroup.getUuid();
@@ -2404,8 +2398,7 @@ public class DelegateServiceImpl implements DelegateService {
               .set(DelegateGroupKeys.tags, new HashSet<>(delegateParams.getTags())));
     }
 
-    final DelegateEntityOwner owner =
-        DelegateEntityOwnerHelper.buildOwner(delegateParams.getOrgIdentifier(), delegateParams.getProjectIdentifier());
+    final DelegateEntityOwner owner = DelegateEntityOwnerHelper.buildOwner(orgIdentifier, projectIdentifier);
 
     final String delegateProfileId = delegateParams.getDelegateProfileId();
     try {
@@ -2413,6 +2406,7 @@ public class DelegateServiceImpl implements DelegateService {
     } catch (InvalidRequestException e) {
       log.warn("No delegate configuration (profile) with id {} exists: {}", delegateProfileId, e);
     }
+    Optional<String> delegateTokenName = getDelegateTokenNameFromGlobalContext();
 
     final Delegate delegate = Delegate.builder()
                                   .uuid(delegateParams.getDelegateId())
@@ -2439,7 +2433,7 @@ public class DelegateServiceImpl implements DelegateService {
                                   .sampleDelegate(delegateParams.isSampleDelegate())
                                   .currentlyExecutingDelegateTasks(delegateParams.getCurrentlyExecutingDelegateTasks())
                                   .ceEnabled(delegateParams.isCeEnabled())
-                                  .delegateTokenName(getDelegateTokenNameFromGlobalContext())
+                                  .delegateTokenName(delegateTokenName.orElse(null))
                                   .build();
 
     if (ECS.equals(delegateParams.getDelegateType())) {
@@ -2450,7 +2444,7 @@ public class DelegateServiceImpl implements DelegateService {
       }
       return delegateRegisterResponse;
     } else {
-      return registerResponseFromDelegate(upsertDelegateOperation(existingDelegate, delegate));
+      return registerResponseFromDelegate(upsertDelegateOperation(existingDelegate, delegate, delegateSetupDetails));
     }
   }
 
@@ -2467,6 +2461,9 @@ public class DelegateServiceImpl implements DelegateService {
 
     return delegateQuery.project(DelegateKeys.status, true)
         .project(DelegateKeys.delegateProfileId, true)
+        .project(DelegateKeys.ng, true)
+        .project(DelegateKeys.hostName, true)
+        .project(DelegateKeys.owner, true)
         .project(DelegateKeys.description, true)
         .get();
   }
@@ -2479,6 +2476,7 @@ public class DelegateServiceImpl implements DelegateService {
     if (existingDelegate != null) {
       log.info("Removing delegate instance {} from delegate {}", request.getHostName(), request.getDelegateId());
       persistence.delete(existingDelegate);
+      sendUnregisterDelegateAuditEvent(existingDelegate, accountId);
     } else {
       log.warn("Delegate instance {} doesn't exist for {}, nothing to remove", request.getHostName(),
           request.getDelegateId());
@@ -2489,6 +2487,12 @@ public class DelegateServiceImpl implements DelegateService {
 
   @VisibleForTesting
   Delegate upsertDelegateOperation(Delegate existingDelegate, Delegate delegate) {
+    return upsertDelegateOperation(existingDelegate, delegate, null);
+  }
+
+  @VisibleForTesting
+  Delegate upsertDelegateOperation(
+      Delegate existingDelegate, Delegate delegate, DelegateSetupDetails delegateSetupDetails) {
     long delegateHeartbeat = delegate.getLastHeartBeat();
     long now = clock.millis();
     long skew = Math.abs(now - delegateHeartbeat);
@@ -2510,6 +2514,8 @@ public class DelegateServiceImpl implements DelegateService {
       createAuditHeaderForDelegateRegistration(delegate.getHostName());
 
       registeredDelegate = add(delegate);
+      sendRegisterDelegateAuditEvent(delegate, delegateSetupDetails, delegate.getAccountId());
+
       sendTelemetryTrackEvents(
           delegate.getAccountId(), delegate.getDelegateType(), delegate.isNg(), DELEGATE_REGISTERED_EVENT);
     } else {
@@ -3717,10 +3723,9 @@ public class DelegateServiceImpl implements DelegateService {
     }
     checkUniquenessOfDelegateName(accountId, delegateSetupDetails.getName(), true);
 
-    // TODO: Arpit uncomment it when ng delegate token feature is rolled out
-    //    if(delegateSetupDetails.getTokenName() == null) {
-    //      throw new InvalidRequestException("Delegate Token must be provided.", USER);
-    //    }
+    if (isEmpty(delegateSetupDetails.getTokenName())) {
+      throw new InvalidRequestException("Delegate Token must be provided.", USER);
+    }
   }
 
   @Override
@@ -3746,6 +3751,7 @@ public class DelegateServiceImpl implements DelegateService {
       validateDelegateSetupDetails(accountId, delegateSetupDetails, KUBERNETES);
     }
     DelegateGroup delegateGroup = upsertDelegateGroup(delegateSetupDetails.getName(), accountId, delegateSetupDetails);
+    sendNewDelegateGroupAuditEvent(delegateSetupDetails, delegateGroup, accountId);
     return delegateGroup.getUuid();
   }
 
@@ -3786,8 +3792,6 @@ public class DelegateServiceImpl implements DelegateService {
               .delegateName(delegateSetupDetails.getName())
               .delegateType(KUBERNETES)
               .ciEnabled(isCiEnabled)
-              .delegateOrgIdentifier(delegateSetupDetails.getOrgIdentifier())
-              .delegateProjectIdentifier(delegateSetupDetails.getProjectIdentifier())
               .delegateDescription(delegateSetupDetails.getDescription())
               .delegateSize(sizeDetails.getSize().name())
               .delegateReplicas(sizeDetails.getReplicas())
@@ -3850,9 +3854,6 @@ public class DelegateServiceImpl implements DelegateService {
                     ? String.join(",", delegateSetupDetails.getTags())
                     : "")
             .delegateDescription(delegateSetupDetails != null ? delegateSetupDetails.getDescription() : null)
-            .delegateOrgIdentifier(delegateSetupDetails != null ? delegateSetupDetails.getOrgIdentifier() : null)
-            .delegateProjectIdentifier(
-                delegateSetupDetails != null ? delegateSetupDetails.getProjectIdentifier() : null)
             .delegateNamespace(delegateSetupDetails != null && delegateSetupDetails.getK8sConfigDetails() != null
                     ? delegateSetupDetails.getK8sConfigDetails().getNamespace()
                     : EMPTY)
@@ -3927,5 +3928,116 @@ public class DelegateServiceImpl implements DelegateService {
       return true;
     }
     return existingOwner.getIdentifier().equals(owner.getIdentifier());
+  }
+
+  private void sendUnregisterDelegateAuditEvent(Delegate delegate, String accountId) {
+    if (delegate.isNg()) {
+      String orgIdentifier = delegate.getOwner() != null
+          ? DelegateEntityOwnerHelper.extractOrgIdFromOwnerIdentifier(delegate.getOwner().getIdentifier())
+          : null;
+
+      String projectIdentifier = delegate.getOwner() != null
+          ? DelegateEntityOwnerHelper.extractProjectIdFromOwnerIdentifier(delegate.getOwner().getIdentifier())
+          : null;
+      outboxService.save(DelegateUnregisterEvent.builder()
+                             .accountIdentifier(accountId)
+                             .orgIdentifier(orgIdentifier)
+                             .projectIdentifier(projectIdentifier)
+                             .delegateSetupDetails(DelegateSetupDetails.builder().name(delegate.getHostName()).build())
+                             .build());
+    } else {
+      auditServiceHelper.reportDeleteForAuditingUsingAccountId(accountId, delegate);
+    }
+  }
+
+  private void sendRegisterDelegateAuditEvent(
+      Delegate delegate, DelegateSetupDetails delegateSetupDetails, String accountId) {
+    if (delegate.isNg()) {
+      if (delegateSetupDetails != null) {
+        outboxService.save(DelegateRegisterEvent.builder()
+                               .accountIdentifier(accountId)
+                               .orgIdentifier(delegateSetupDetails.getOrgIdentifier())
+                               .projectIdentifier(delegateSetupDetails.getProjectIdentifier())
+                               .delegateSetupDetails(delegateSetupDetails)
+                               .build());
+      } else {
+        log.info("DelegateSetupDetails empty while DelegateAuditEvent");
+      }
+    } else {
+      auditServiceHelper.reportForAuditingUsingAccountId(
+          delegate.getAccountId(), delegate, delegate, Type.DELEGATE_REGISTRATION);
+    }
+  }
+
+  private void sendDelegateDeleteAuditEvent(Delegate delegate, String accountId) {
+    if (delegate.isNg()) {
+      String orgIdentifier = delegate.getOwner() != null
+          ? DelegateEntityOwnerHelper.extractOrgIdFromOwnerIdentifier(delegate.getOwner().getIdentifier())
+          : null;
+
+      String projectIdentifier = delegate.getOwner() != null
+          ? DelegateEntityOwnerHelper.extractProjectIdFromOwnerIdentifier(delegate.getOwner().getIdentifier())
+          : null;
+      outboxService.save(DelegateUnregisterEvent.builder()
+                             .accountIdentifier(accountId)
+                             .orgIdentifier(orgIdentifier)
+                             .projectIdentifier(projectIdentifier)
+                             .delegateSetupDetails(DelegateSetupDetails.builder().name(delegate.getHostName()).build())
+                             .build());
+    } else {
+      auditServiceHelper.reportDeleteForAuditingUsingAccountId(accountId, delegate);
+    }
+  }
+
+  private void sendNewDelegateGroupAuditEvent(
+      DelegateSetupDetails delegateSetupDetails, DelegateGroup delegateGroup, String accountId) {
+    if (delegateGroup.isNg()) {
+      outboxService.save(
+          DelegateGroupUpsertEvent.builder()
+              .accountIdentifier(accountId)
+              .orgIdentifier(delegateSetupDetails != null ? delegateSetupDetails.getOrgIdentifier() : null)
+              .projectIdentifier(delegateSetupDetails != null ? delegateSetupDetails.getProjectIdentifier() : null)
+              .delegateGroupId(delegateGroup.getUuid())
+              .delegateSetupDetails(delegateSetupDetails)
+              .build());
+    } else {
+      if (delegateGroup != null) {
+        auditServiceHelper.reportForAuditingUsingAccountId(
+            delegateGroup.getAccountId(), delegateGroup, delegateGroup, Type.DELEGATE_GROUP);
+      }
+    }
+  }
+  private Optional<String> getDelegateTokenNameFromGlobalContext() {
+    DelegateTokenGlobalContextData delegateTokenGlobalContextData =
+        GlobalContextManager.get(DelegateTokenGlobalContextData.TOKEN_NAME);
+    if (delegateTokenGlobalContextData != null) {
+      return Optional.ofNullable(delegateTokenGlobalContextData.getTokenName());
+    }
+    return Optional.empty();
+  }
+
+  private Optional<String> getOrgIdentifierUsingTokenFromGlobalContext(String accountId) {
+    Optional<String> delegateTokenName = getDelegateTokenNameFromGlobalContext();
+    if (delegateTokenName.isPresent()) {
+      DelegateTokenDetails delegateTokenDetails =
+          delegateNgTokenService.getDelegateToken(accountId, delegateTokenName.get());
+      return delegateTokenDetails != null ? Optional.ofNullable(
+                 DelegateEntityOwnerHelper.extractOrgIdFromOwnerIdentifier(delegateTokenDetails.getOwnerIdentifier()))
+                                          : Optional.empty();
+    }
+    return Optional.empty();
+  }
+
+  private Optional<String> getProjectIdentifierUsingTokenFromGlobalContext(String accountId) {
+    Optional<String> delegateTokenName = getDelegateTokenNameFromGlobalContext();
+    if (delegateTokenName.isPresent()) {
+      DelegateTokenDetails delegateTokenDetails =
+          delegateNgTokenService.getDelegateToken(accountId, delegateTokenName.get());
+      return delegateTokenDetails != null
+          ? Optional.ofNullable(
+              DelegateEntityOwnerHelper.extractProjectIdFromOwnerIdentifier(delegateTokenDetails.getOwnerIdentifier()))
+          : Optional.empty();
+    }
+    return Optional.empty();
   }
 }

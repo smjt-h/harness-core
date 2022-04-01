@@ -5,16 +5,18 @@
           value: ${watcherStorageUrl}
         - name: WATCHER_CHECK_LOCATION
           value: ${watcherCheckLocation}
-        - name: REMOTE_WATCHER_URL_CDN
-          value: ${remoteWatcherUrlCdn}
         - name: DELEGATE_STORAGE_URL
           value: ${delegateStorageUrl}
         - name: DELEGATE_CHECK_LOCATION
           value: ${delegateCheckLocation}
         - name: HELM_DESIRED_VERSION
           value: ""
+        <#if useCdn == "true">
         - name: CDN_URL
-          value: ${cdnUrl}
+          value: "${cdnUrl}"
+        - name: REMOTE_WATCHER_URL_CDN
+          value: "${remoteWatcherUrlCdn}"
+        </#if>
         - name: JRE_VERSION
           value: ${jreVersion}
         - name: HELM3_PATH
@@ -73,10 +75,6 @@
           value: "${delegateDescription}"
         - name: DELEGATE_TAGS
           value: "${delegateTags}"
-        - name: DELEGATE_ORG_IDENTIFIER
-          value: "${delegateOrgIdentifier}"
-        - name: DELEGATE_PROJECT_IDENTIFIER
-          value: "${delegateProjectIdentifier}"
         - name: NEXT_GEN
           value: "true"
 </#macro>

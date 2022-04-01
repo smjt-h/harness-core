@@ -8,7 +8,6 @@
 package io.harness.ci.integrationstage;
 
 import static io.harness.beans.serializer.RunTimeInputHandler.UNRESOLVED_PARAMETER;
-import static io.harness.beans.serializer.RunTimeInputHandler.resolveBooleanParameter;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveIntegerParameter;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveMapParameter;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveStringParameter;
@@ -54,6 +53,8 @@ import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
 import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
 import io.harness.beans.sweepingoutputs.StageInfraDetails.Type;
+import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
+import io.harness.beans.yaml.extended.infrastrucutre.K8sDirectInfraYaml;
 import io.harness.beans.yaml.extended.volumes.CIVolume;
 import io.harness.beans.yaml.extended.volumes.EmptyDirYaml;
 import io.harness.beans.yaml.extended.volumes.HostPathYaml;
@@ -120,11 +121,12 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
 
   @Override
   public BuildJobEnvInfo getInitializeStepInfoBuilder(StageElementConfig stageElementConfig,
-      CIExecutionArgs ciExecutionArgs, List<ExecutionWrapperConfig> steps, String accountId) {
+      Infrastructure infrastructure, CIExecutionArgs ciExecutionArgs, List<ExecutionWrapperConfig> steps,
+      String accountId) {
     String uniqueStageExecutionIdentifier = generatePodName(stageElementConfig.getIdentifier());
     return K8BuildJobEnvInfo.builder()
-        .podsSetupInfo(getCIPodsSetupInfo(
-            stageElementConfig, ciExecutionArgs, steps, true, uniqueStageExecutionIdentifier, accountId))
+        .podsSetupInfo(getCIPodsSetupInfo(stageElementConfig, infrastructure, ciExecutionArgs, steps, true,
+            uniqueStageExecutionIdentifier, accountId))
         .workDir(STEP_WORK_DIR)
         .stepConnectorRefs(getStepConnectorRefs(stageElementConfig))
         .build();
@@ -157,8 +159,8 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
   }
 
   private K8BuildJobEnvInfo.PodsSetupInfo getCIPodsSetupInfo(StageElementConfig stageElementConfig,
-      CIExecutionArgs ciExecutionArgs, List<ExecutionWrapperConfig> steps, boolean isFirstPod, String podName,
-      String accountId) {
+      Infrastructure infrastructure, CIExecutionArgs ciExecutionArgs, List<ExecutionWrapperConfig> steps,
+      boolean isFirstPod, String podName, String accountId) {
     List<PodSetupInfo> pods = new ArrayList<>();
 
     Set<Integer> usedPorts = new HashSet<>();
@@ -178,7 +180,12 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
     List<String> serviceIdList = CIServiceBuilder.getServiceIdList(stageElementConfig);
     List<Integer> serviceGrpcPortList = CIServiceBuilder.getServiceGrpcPortList(stageElementConfig);
     IntegrationStageConfig integrationStageConfig = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
-    List<PodVolume> volumes = convertVolumes(integrationStageConfig.getVolumes().getValue());
+
+    if (((K8sDirectInfraYaml) infrastructure).getSpec() == null) {
+      throw new CIStageExecutionException("Input infrastructure can not be empty");
+    }
+    K8sDirectInfraYaml k8sDirectInfraYaml = (K8sDirectInfraYaml) infrastructure;
+    List<PodVolume> volumes = convertVolumes(k8sDirectInfraYaml.getSpec().getVolumes().getValue());
 
     if (integrationStageConfig.getSharedPaths().isExpression()) {
       ExceptionUtility.throwUnresolvedExpressionException(integrationStageConfig.getSharedPaths().getExpressionValue(),
@@ -352,6 +359,10 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
     envVarMap.putAll(PluginSettingUtils.getPluginCompatibleEnvVariables(stepInfo, identifier, timeout, Type.K8));
     Integer runAsUser = resolveIntegerParameter(stepInfo.getRunAsUser(), null);
 
+    Boolean privileged = null;
+    if (CIStepInfoUtils.getPrivilegedMode(stepInfo) != null) {
+      privileged = CIStepInfoUtils.getPrivilegedMode(stepInfo).getValue();
+    }
     return ContainerDefinitionInfo.builder()
         .name(containerName)
         .commands(StepContainerUtils.getCommand())
@@ -370,7 +381,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
         .stepIdentifier(identifier)
         .stepName(stepName)
         .imagePullPolicy(RunTimeInputHandler.resolveImagePullPolicy(CIStepInfoUtils.getImagePullPolicy(stepInfo)))
-        .privileged(resolveBooleanParameter(CIStepInfoUtils.getPrivilegedMode(stepInfo), false))
+        .privileged(privileged)
         .runAsUser(runAsUser)
         .build();
   }
@@ -397,7 +408,6 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
     if (!isEmpty(envvars)) {
       stepEnvVars.putAll(envvars);
     }
-    boolean privileged = resolveBooleanParameter(runStepInfo.getPrivileged(), false);
     Integer runAsUser = resolveIntegerParameter(runStepInfo.getRunAsUser(), null);
 
     return ContainerDefinitionInfo.builder()
@@ -417,7 +427,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
         .ports(Collections.singletonList(port))
         .containerType(CIContainerType.RUN)
         .stepName(name)
-        .privileged(privileged)
+        .privileged(runStepInfo.getPrivileged().getValue())
         .runAsUser(runAsUser)
         .imagePullPolicy(RunTimeInputHandler.resolveImagePullPolicy(runStepInfo.getImagePullPolicy()))
         .build();
@@ -445,7 +455,6 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
     if (!isEmpty(envvars)) {
       stepEnvVars.putAll(envvars);
     }
-    boolean privileged = resolveBooleanParameter(runTestsStepInfo.getPrivileged(), false);
     Integer runAsUser = resolveIntegerParameter(runTestsStepInfo.getRunAsUser(), null);
 
     return ContainerDefinitionInfo.builder()
@@ -465,7 +474,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
             getStepContainerResource(runTestsStepInfo.getResources(), "RunTests", identifier, accountId))
         .ports(Collections.singletonList(port))
         .containerType(CIContainerType.TEST_INTELLIGENCE)
-        .privileged(privileged)
+        .privileged(runTestsStepInfo.getPrivileged().getValue())
         .runAsUser(runAsUser)
         .imagePullPolicy(RunTimeInputHandler.resolveImagePullPolicy(runTestsStepInfo.getImagePullPolicy()))
         .build();
@@ -484,7 +493,6 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
       envVarMap.putAll(pluginStepInfo.getEnvVariables());
     }
 
-    boolean privileged = resolveBooleanParameter(pluginStepInfo.getPrivileged(), false);
     Integer runAsUser = resolveIntegerParameter(pluginStepInfo.getRunAsUser(), null);
 
     return ContainerDefinitionInfo.builder()
@@ -506,7 +514,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
         .ports(Collections.singletonList(port))
         .containerType(CIContainerType.PLUGIN)
         .stepName(name)
-        .privileged(privileged)
+        .privileged(pluginStepInfo.getPrivileged().getValue())
         .runAsUser(runAsUser)
         .imagePullPolicy(RunTimeInputHandler.resolveImagePullPolicy(pluginStepInfo.getImagePullPolicy()))
         .build();
