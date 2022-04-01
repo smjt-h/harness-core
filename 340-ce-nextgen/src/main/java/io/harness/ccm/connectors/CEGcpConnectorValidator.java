@@ -117,6 +117,7 @@ public class CEGcpConnectorValidator extends io.harness.ccm.connectors.AbstractC
       String projectId, String datasetId, String gcpTableName, String impersonatedServiceAccount) {
     boolean isTablePresent = false;
     final List<ErrorDetail> errorList = new ArrayList<>();
+    Table tableGranularData = null;
     ServiceAccountCredentials sourceCredentials = getGcpCredentials(GCP_CREDENTIALS_PATH);
     Credentials credentials = getGcpImpersonatedCredentials(sourceCredentials, impersonatedServiceAccount);
     BigQuery bigQuery;
@@ -146,9 +147,13 @@ public class CEGcpConnectorValidator extends io.harness.ccm.connectors.AbstractC
             .build();
       } else {
         // 2. Check presence of table "gcp_billing_export_v1_*"
-        log.info("dataset {} is present", datasetId);
+        log.info("dataset {} is present in gcp project {}", datasetId, projectId);
         if (!isEmpty(gcpTableName)) {
-          isTablePresent = true;
+          TableId tableIdBq = TableId.of(projectId, datasetId, gcpTableName);
+          tableGranularData = bigQuery.getTable(tableIdBq);
+          if (tableGranularData != null) {
+            isTablePresent = true;
+          }
         } else {
           Page<Table> tableList = dataset.list(BigQuery.TableListOption.pageSize(1000));
           for (Table table : tableList.getValues()) {
@@ -174,10 +179,8 @@ public class CEGcpConnectorValidator extends io.harness.ccm.connectors.AbstractC
               .testedAt(Instant.now().toEpochMilli())
               .build();
         } else {
-          log.info("table {} is present", gcpTableName);
+          log.info("table {} is present in GCP project {} in Dataset {}", gcpTableName, projectId, datasetId);
           // Check when this table was last modified on
-          TableId tableIdBq = TableId.of(projectId, datasetId, gcpTableName);
-          Table tableGranularData = bigQuery.getTable(tableIdBq);
           Long lastModifiedTime = tableGranularData.getLastModifiedTime();
           lastModifiedTime = lastModifiedTime != null ? lastModifiedTime : tableGranularData.getCreationTime();
           // Check for data at source only when 24 hrs have elapsed since connector last modified at
