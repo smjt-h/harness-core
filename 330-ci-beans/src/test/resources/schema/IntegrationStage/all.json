@@ -529,6 +529,42 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "Capabilities": {
+      "type": "object",
+      "properties": {
+        "add": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
+        "drop": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "Clause": {
       "type": "object",
       "required": [
@@ -1959,21 +1995,6 @@
               "type": "string"
             }
           ]
-        },
-        "volumes": {
-          "oneOf": [
-            {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/CIVolume"
-              }
-            },
-            {
-              "type": "string",
-              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-              "minLength": 1
-            }
-          ]
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2410,8 +2431,32 @@
             }
           ]
         },
+        "automountServiceAccountToken": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
         "connectorRef": {
           "type": "string"
+        },
+        "containerSecurityContext": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/SecurityContext"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
         },
         "initTimeout": {
           "type": "string"
@@ -2447,6 +2492,9 @@
             }
           ]
         },
+        "priorityClassName": {
+          "type": "string"
+        },
         "runAsUser": {
           "oneOf": [
             {
@@ -2467,6 +2515,21 @@
               "type": "array",
               "items": {
                 "$ref": "#/definitions/Toleration"
+              }
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
+        "volumes": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CIVolume"
               }
             },
             {
@@ -3188,7 +3251,9 @@
                   "type": "boolean"
                 },
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
                 }
               ]
             },
@@ -3836,7 +3901,9 @@
                   "type": "boolean"
                 },
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
                 }
               ]
             },
@@ -4006,7 +4073,9 @@
                   "type": "boolean"
                 },
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
                 }
               ]
             },
@@ -4282,6 +4351,92 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "SecurityContext": {
+      "type": "object",
+      "properties": {
+        "allowPrivilegeEscalation": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
+        "capabilities": {
+          "$ref": "#/definitions/Capabilities"
+        },
+        "privileged": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
+        "procMount": {
+          "type": "string"
+        },
+        "readOnlyRootFilesystem": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
+        "runAsGroup": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "format": "int32"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
+        "runAsNonRoot": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
+        "runAsUser": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "format": "int32"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "SecurityStepInfo": {
       "allOf": [
         {
@@ -4325,7 +4480,9 @@
                   "type": "boolean"
                 },
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
                 }
               ]
             },
@@ -4455,8 +4612,14 @@
                 "$ref": "#/definitions/ServiceNowField"
               }
             },
+            "templateName": {
+              "type": "string"
+            },
             "ticketType": {
               "type": "string"
+            },
+            "useServiceNowTemplate": {
+              "type": "boolean"
             }
           }
         }
@@ -4516,11 +4679,17 @@
                 "$ref": "#/definitions/ServiceNowField"
               }
             },
+            "templateName": {
+              "type": "string"
+            },
             "ticketNumber": {
               "type": "string"
             },
             "ticketType": {
               "type": "string"
+            },
+            "useServiceNowTemplate": {
+              "type": "boolean"
             }
           }
         }

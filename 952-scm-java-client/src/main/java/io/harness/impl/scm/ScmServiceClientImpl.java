@@ -120,14 +120,11 @@ public class ScmServiceClientImpl implements ScmServiceClient {
     if (ScmResponseStatusUtils.isSuccessResponse(createFileResponse.getStatus())
         && isEmpty(createFileResponse.getCommitId())) {
       // In case commit id is empty for any reason, we treat this as an error case even if file got created on git
-      createFileResponse = CreateFileResponse.newBuilder()
-                               .setStatus(Constants.SCM_INTERNAL_SERVER_ERROR_CODE)
-                               .setError(Constants.SCM_INTERNAL_SERVER_ERROR_MESSAGE)
-                               .build();
+      return CreateFileResponse.newBuilder()
+          .setStatus(Constants.SCM_INTERNAL_SERVER_ERROR_CODE)
+          .setError(Constants.SCM_INTERNAL_SERVER_ERROR_MESSAGE)
+          .build();
     }
-
-    ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
-        createFileResponse.getStatus(), createFileResponse.getError());
     return createFileResponse;
   }
 
@@ -166,14 +163,11 @@ public class ScmServiceClientImpl implements ScmServiceClient {
     if (ScmResponseStatusUtils.isSuccessResponse(updateFileResponse.getStatus())
         && isEmpty(updateFileResponse.getCommitId())) {
       // In case commit id is empty for any reason, we treat this as an error case even if file got updated on git
-      updateFileResponse = UpdateFileResponse.newBuilder()
-                               .setStatus(Constants.SCM_INTERNAL_SERVER_ERROR_CODE)
-                               .setError(Constants.SCM_INTERNAL_SERVER_ERROR_MESSAGE)
-                               .build();
+      return UpdateFileResponse.newBuilder()
+          .setStatus(Constants.SCM_INTERNAL_SERVER_ERROR_CODE)
+          .setError(Constants.SCM_INTERNAL_SERVER_ERROR_MESSAGE)
+          .build();
     }
-
-    ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
-        updateFileResponse.getStatus(), updateFileResponse.getError());
     return updateFileResponse;
   }
 
@@ -196,12 +190,7 @@ public class ScmServiceClientImpl implements ScmServiceClient {
                                                                       .build())
                                                     .build();
 
-    DeleteFileResponse deleteFileResponse =
-        ScmGrpcClientUtils.retryAndProcessException(scmBlockingStub::deleteFile, deleteFileRequest);
-
-    ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
-        deleteFileResponse.getStatus(), deleteFileResponse.getError());
-    return deleteFileResponse;
+    return ScmGrpcClientUtils.retryAndProcessException(scmBlockingStub::deleteFile, deleteFileRequest);
   }
 
   @Override
@@ -612,10 +601,14 @@ public class ScmServiceClientImpl implements ScmServiceClient {
     Provider gitProvider = scmGitProviderMapper.mapToSCMGitProvider(scmConnector);
     CreateWebhookRequest createWebhookRequest =
         getCreateWebhookRequest(slug, gitProvider, gitWebhookDetails, scmConnector, null);
-    return ScmGrpcClientUtils.retryAndProcessException(scmBlockingStub::createWebhook, createWebhookRequest);
+    CreateWebhookResponse createWebhookResponse =
+        ScmGrpcClientUtils.retryAndProcessException(scmBlockingStub::createWebhook, createWebhookRequest);
+    ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
+        createWebhookResponse.getStatus(), createWebhookResponse.getError());
+    return createWebhookResponse;
   }
 
-  public CreateWebhookResponse createWebhook(ScmConnector scmConnector, GitWebhookDetails gitWebhookDetails,
+  private CreateWebhookResponse createWebhook(ScmConnector scmConnector, GitWebhookDetails gitWebhookDetails,
       SCMGrpc.SCMBlockingStub scmBlockingStub, WebhookResponse exisitingWebhook) {
     String slug = scmGitProviderHelper.getSlug(scmConnector);
     Provider gitProvider = scmGitProviderMapper.mapToSCMGitProvider(scmConnector);

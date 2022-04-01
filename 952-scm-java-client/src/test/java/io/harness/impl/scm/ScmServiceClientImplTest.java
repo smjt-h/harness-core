@@ -9,6 +9,8 @@ package io.harness.impl.scm;
 
 import static io.harness.constants.Constants.SCM_CONFLICT_ERROR_CODE;
 import static io.harness.constants.Constants.SCM_CONFLICT_ERROR_MESSAGE;
+import static io.harness.constants.Constants.SCM_INTERNAL_SERVER_ERROR_CODE;
+import static io.harness.constants.Constants.SCM_INTERNAL_SERVER_ERROR_MESSAGE;
 import static io.harness.delegate.beans.connector.ConnectorType.BITBUCKET;
 import static io.harness.delegate.beans.connector.ConnectorType.GITHUB;
 import static io.harness.rule.OwnerRule.MEET;
@@ -17,19 +19,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.gitsync.GitFileDetails;
+import io.harness.beans.gitsync.GitWebhookDetails;
 import io.harness.category.element.UnitTests;
 import io.harness.constants.Constants;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
-import io.harness.exception.ExplanationException;
+import io.harness.exception.UnexpectedException;
 import io.harness.product.ci.scm.proto.Commit;
 import io.harness.product.ci.scm.proto.CreateBranchResponse;
 import io.harness.product.ci.scm.proto.CreateFileResponse;
+import io.harness.product.ci.scm.proto.CreateWebhookRequest;
+import io.harness.product.ci.scm.proto.CreateWebhookResponse;
 import io.harness.product.ci.scm.proto.GetLatestCommitOnFileResponse;
 import io.harness.product.ci.scm.proto.GetLatestCommitResponse;
 import io.harness.product.ci.scm.proto.Provider;
@@ -46,12 +52,13 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @OwnedBy(HarnessTeam.PL)
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({SCMGrpc.SCMBlockingStub.class, Provider.class})
+@PrepareForTest({SCMGrpc.SCMBlockingStub.class, Provider.class, ScmGitWebhookHelper.class})
 public class ScmServiceClientImplTest extends CategoryTest {
   @InjectMocks ScmServiceClientImpl scmServiceClient;
   @Mock ScmGitProviderHelper scmGitProviderHelper;
@@ -73,6 +80,7 @@ public class ScmServiceClientImplTest extends CategoryTest {
   String fileContent = "fileContent";
   String userEmail = "userEmail";
   String userName = "userName";
+  String target = "target";
 
   @Before
   public void setup() {
@@ -144,10 +152,11 @@ public class ScmServiceClientImplTest extends CategoryTest {
     when(scmGitProviderHelper.getSlug(any())).thenReturn(slug);
     when(scmBlockingStub.createFile(any()))
         .thenReturn(CreateFileResponse.newBuilder().setStatus(200).setCommitId("").build());
-
-    assertThatThrownBy(() -> scmServiceClient.createFile(scmConnector, getGitFileDetailsDefault(), scmBlockingStub))
-        .isInstanceOf(ExplanationException.class)
-        .hasMessage("Faced internal server error on SCM, couldn't complete operation");
+    CreateFileResponse createFileResponse =
+        scmServiceClient.createFile(scmConnector, getGitFileDetailsDefault(), scmBlockingStub);
+    assertThat(createFileResponse).isNotNull();
+    assertThat(createFileResponse.getStatus() == SCM_INTERNAL_SERVER_ERROR_CODE).isTrue();
+    assertThat(createFileResponse.getError().equals(SCM_INTERNAL_SERVER_ERROR_MESSAGE)).isTrue();
   }
 
   @Test
@@ -158,10 +167,11 @@ public class ScmServiceClientImplTest extends CategoryTest {
     when(scmGitProviderHelper.getSlug(any())).thenReturn(slug);
     when(scmBlockingStub.updateFile(any()))
         .thenReturn(UpdateFileResponse.newBuilder().setStatus(200).setCommitId("").build());
-
-    assertThatThrownBy(() -> scmServiceClient.updateFile(scmConnector, getGitFileDetailsDefault(), scmBlockingStub))
-        .isInstanceOf(ExplanationException.class)
-        .hasMessage("Faced internal server error on SCM, couldn't complete operation");
+    UpdateFileResponse updateFileResponse =
+        scmServiceClient.updateFile(scmConnector, getGitFileDetailsDefault(), scmBlockingStub);
+    assertThat(updateFileResponse).isNotNull();
+    assertThat(updateFileResponse.getStatus() == SCM_INTERNAL_SERVER_ERROR_CODE).isTrue();
+    assertThat(updateFileResponse.getError().equals(SCM_INTERNAL_SERVER_ERROR_MESSAGE)).isTrue();
   }
 
   @Test
@@ -178,6 +188,22 @@ public class ScmServiceClientImplTest extends CategoryTest {
         scmServiceClient.updateFile(scmConnector, getGitFileDetailsDefault(), scmBlockingStub);
     assertThat(updateFileResponse).isNotNull();
     assertThat(updateFileResponse.equals(getErrorUpdateFileResponse(conflictCommitId))).isTrue();
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.MOHIT_GARG)
+  @Category(UnitTests.class)
+  public void testErrorForCreateWebhookAPI() {
+    PowerMockito.mockStatic(ScmGitWebhookHelper.class);
+    ScmServiceClientImpl scmService = spy(scmServiceClient);
+
+    when(scmGitProviderHelper.getSlug(any())).thenReturn(slug);
+    when(scmGitProviderMapper.mapToSCMGitProvider(any())).thenReturn(getGitProviderDefault());
+    when(ScmGitWebhookHelper.getCreateWebhookRequest(any(), any(), any(), any()))
+        .thenReturn(CreateWebhookRequest.newBuilder().build());
+    when(scmBlockingStub.createWebhook(any())).thenReturn(CreateWebhookResponse.newBuilder().setStatus(300).build());
+    assertThatThrownBy(() -> scmService.createWebhook(scmConnector, getGitWebhookDetails(), scmBlockingStub))
+        .isInstanceOf(UnexpectedException.class);
   }
 
   private GitFileDetails getGitFileDetailsDefault() {
@@ -199,5 +225,13 @@ public class ScmServiceClientImplTest extends CategoryTest {
         .setError(Constants.SCM_CONFLICT_ERROR_MESSAGE)
         .setCommitId(commitId)
         .build();
+  }
+
+  private GitWebhookDetails getGitWebhookDetails() {
+    return GitWebhookDetails.builder().target(target).build();
+  }
+
+  private Provider getGitProviderDefault() {
+    return Provider.newBuilder().build();
   }
 }
