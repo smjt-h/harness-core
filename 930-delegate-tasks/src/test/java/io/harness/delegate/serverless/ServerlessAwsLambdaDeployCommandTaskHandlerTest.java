@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static io.harness.rule.OwnerRule.ABOSII;
+import static io.harness.rule.OwnerRule.PIYUSH_BHUWALKA;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
@@ -92,7 +92,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
     }
 
     @Test
-    @Owner(developers = ABOSII)
+    @Owner(developers = PIYUSH_BHUWALKA)
     @Category(UnitTests.class)
     public void executeTaskInternalTest() throws Exception{
 

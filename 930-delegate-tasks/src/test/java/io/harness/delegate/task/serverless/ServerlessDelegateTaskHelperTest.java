@@ -49,6 +49,7 @@ import java.util.Optional;
 
 import static io.harness.data.structure.UUIDGenerator.convertBase64UuidToCanonicalForm;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
+import static io.harness.rule.OwnerRule.PIYUSH_BHUWALKA;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
@@ -74,7 +75,7 @@ public class ServerlessDelegateTaskHelperTest extends CategoryTest {
 
 
     @Test
-    @Owner(developers = BRETT)
+    @Owner(developers = PIYUSH_BHUWALKA)
     @Category(UnitTests.class)
     public void getServerlessCommandResponseTest() throws Exception{
 

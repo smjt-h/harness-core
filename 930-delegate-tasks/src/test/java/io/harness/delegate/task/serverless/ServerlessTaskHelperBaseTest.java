@@ -7,7 +7,6 @@
 
 package io.harness.delegate.task.serverless;
 
-import com.google.inject.Inject;
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifactory.ArtifactoryConfigRequest;
@@ -16,45 +15,17 @@ import io.harness.category.element.UnitTests;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.service.git.NGGitService;
 import io.harness.connector.task.git.GitDecryptionHelper;
-import io.harness.delegate.beans.DelegateResponseData;
-import io.harness.delegate.beans.connector.ConnectorConfigDTO;
 import io.harness.delegate.beans.connector.artifactoryconnector.*;
-import io.harness.delegate.beans.connector.scm.ScmConnector;
-import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
-import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
-import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
-import io.harness.delegate.beans.logstreaming.NGDelegateLogCallback;
-import io.harness.delegate.beans.serverless.ServerlessAwsLambdaManifestSchema;
-import io.harness.delegate.beans.storeconfig.FetchType;
-import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
-import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.artifactory.ArtifactoryRequestMapper;
 import io.harness.delegate.task.git.ScmFetchFilesHelperNG;
-import io.harness.delegate.task.serverless.*;
-import io.harness.delegate.task.serverless.request.ServerlessCommandRequest;
-import io.harness.delegate.task.serverless.request.ServerlessDeployRequest;
-import io.harness.delegate.task.serverless.request.ServerlessGitFetchRequest;
-import io.harness.delegate.task.serverless.response.ServerlessGitFetchResponse;
 import io.harness.encryption.SecretRefData;
-import io.harness.git.model.FetchFilesResult;
-import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.security.encryption.SecretDecryptionService;
-import io.harness.serverless.ServerlessCliResponse;
-import io.harness.serverless.ServerlessClient;
-import io.harness.serverless.ServerlessCommandUnitConstants;
-import io.harness.serverless.model.ServerlessAwsLambdaConfig;
-import io.harness.serverless.model.ServerlessDelegateTaskParams;
-import lombok.SneakyThrows;
-import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -70,11 +41,10 @@ import java.util.*;
 
 import static io.harness.data.structure.UUIDGenerator.convertBase64UuidToCanonicalForm;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
+import static io.harness.rule.OwnerRule.PIYUSH_BHUWALKA;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.rule.OwnerRule.BRETT;
-import static org.assertj.core.api.Assertions.in;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -120,7 +90,7 @@ public class ServerlessTaskHelperBaseTest extends CategoryTest{
     ServerlessManifestConfig serverlessManifestConfig = ServerlessAwsLambdaManifestConfig.builder().manifestContent(manifestContent).build();
 
     @Test
-    @Owner(developers = BRETT)
+    @Owner(developers = PIYUSH_BHUWALKA)
     @Category(UnitTests.class)
     public void fetchArtifactTest() throws Exception{
 

@@ -27,9 +27,9 @@ import org.mockito.junit.MockitoRule;
 import java.util.Arrays;
 import java.util.Optional;
 
+import static io.harness.rule.OwnerRule.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.rule.OwnerRule.BRETT;
 import static org.mockito.Mockito.doReturn;
 
 @OwnedBy(CDP)
@@ -46,7 +46,7 @@ public class ServerlessAwsCommandTaskHelperTest extends CategoryTest {
     @Mock ServerlessClient serverlessClient;
 
     @Test
-    @Owner(developers = BRETT)
+    @Owner(developers = PIYUSH_BHUWALKA)
     @Category(UnitTests.class)
     public void testGetPreviousVersionTimeStamp() {
         String output = "Warning: Invalid configuration encountered\n" +
@@ -72,7 +72,7 @@ public class ServerlessAwsCommandTaskHelperTest extends CategoryTest {
     }
 
     @Test
-    @Owner(developers = BRETT)
+    @Owner(developers = PIYUSH_BHUWALKA)
     @Category(UnitTests.class)
     public void installPluginsSuccessTest() throws Exception{
 

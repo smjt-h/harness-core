@@ -33,7 +33,7 @@ public class ServerlessInstallationCapabilityCheckTest extends CategoryTest {
     ExecutionCapability executionCapability = ServerlessInstallationCapability.builder().criteria("a").build();
 
     @Test
-    @Owner(developers = OwnerRule.YOGESH)
+    @Owner(developers = OwnerRule.PIYUSH_BHUWALKA)
     @Category(UnitTests.class)
     public void performCapabilityCheckTest() {
         CapabilityResponse capabilityResponse = serverlessInstallationCapabilityCheck.performCapabilityCheck(executionCapability);
