@@ -14,6 +14,7 @@ import io.harness.artifactory.service.ArtifactoryRegistryService;
 import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.artifacts.comparator.BuildDetailsInternalComparatorDescending;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
 import io.harness.delegate.task.artifacts.DelegateArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.mappers.ArtifactoryRequestResponseMapper;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
@@ -31,13 +32,15 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__({ @Inject }))
 @OwnedBy(HarnessTeam.CDP)
 public class ArtifactoryArtifactTaskHandler
-    extends DelegateArtifactTaskHandler<ArtifactoryDockerArtifactDelegateRequest> {
+    extends DelegateArtifactTaskHandler<ArtifactSourceDelegateRequest> {
   private final ArtifactoryRegistryService artifactoryRegistryService;
   private final SecretDecryptionService secretDecryptionService;
+  private final ArtifactoryArtifactTaskHelper artifactoryArtifactTaskHelper;
 
   @Override
   public ArtifactTaskExecutionResponse getLastSuccessfulBuild(
-      ArtifactoryDockerArtifactDelegateRequest attributesRequest) {
+          ArtifactSourceDelegateRequest artifactSourceDelegateRequest) {
+    ArtifactoryDockerArtifactDelegateRequest attributesRequest = (ArtifactoryDockerArtifactDelegateRequest) artifactSourceDelegateRequest;
     BuildDetailsInternal lastSuccessfulBuild;
     ArtifactoryConfigRequest artifactoryConfig =
         ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest);
@@ -61,22 +64,29 @@ public class ArtifactoryArtifactTaskHandler
   }
 
   @Override
-  public ArtifactTaskExecutionResponse getBuilds(ArtifactoryDockerArtifactDelegateRequest attributesRequest) {
-    List<BuildDetailsInternal> builds = artifactoryRegistryService.getBuilds(
-        ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest),
-        attributesRequest.getRepositoryName(), attributesRequest.getArtifactPath(),
-        attributesRequest.getRepositoryFormat(), ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT);
-    List<ArtifactoryDockerArtifactDelegateResponse> artifactoryDockerArtifactDelegateResponseList =
-        builds.stream()
-            .sorted(new BuildDetailsInternalComparatorDescending())
-            .map(build -> ArtifactoryRequestResponseMapper.toArtifactoryDockerResponse(build, attributesRequest))
-            .collect(Collectors.toList());
-    return getSuccessTaskExecutionResponse(artifactoryDockerArtifactDelegateResponseList);
+  public ArtifactTaskExecutionResponse getBuilds(ArtifactSourceDelegateRequest artifactSourceDelegateRequest) {
+
+    if(artifactSourceDelegateRequest instanceof ArtifactoryGenericArtifactDelegateRequest) {
+      return artifactoryArtifactTaskHelper.fetchFileBuilds((ArtifactoryGenericArtifactDelegateRequest) artifactSourceDelegateRequest, null);
+    } else {
+      ArtifactoryDockerArtifactDelegateRequest attributesRequest = (ArtifactoryDockerArtifactDelegateRequest) artifactSourceDelegateRequest;
+      List<BuildDetailsInternal> builds = artifactoryRegistryService.getBuilds(
+              ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest),
+              attributesRequest.getRepositoryName(), attributesRequest.getArtifactPath(),
+              attributesRequest.getRepositoryFormat(), ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT);
+      List<ArtifactoryDockerArtifactDelegateResponse> artifactoryDockerArtifactDelegateResponseList =
+              builds.stream()
+                      .sorted(new BuildDetailsInternalComparatorDescending())
+                      .map(build -> ArtifactoryRequestResponseMapper.toArtifactoryDockerResponse(build, attributesRequest))
+                      .collect(Collectors.toList());
+      return getSuccessTaskExecutionResponse(artifactoryDockerArtifactDelegateResponseList);
+    }
   }
 
   @Override
   public ArtifactTaskExecutionResponse validateArtifactServer(
-      ArtifactoryDockerArtifactDelegateRequest attributesRequest) {
+          ArtifactSourceDelegateRequest artifactSourceDelegateRequest) {
+    ArtifactoryDockerArtifactDelegateRequest attributesRequest = (ArtifactoryDockerArtifactDelegateRequest) artifactSourceDelegateRequest;
     boolean isServerValidated = artifactoryRegistryService.validateCredentials(
         ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest));
     return ArtifactTaskExecutionResponse.builder().isArtifactServerValid(isServerValidated).build();
@@ -104,16 +114,20 @@ public class ArtifactoryArtifactTaskHandler
     return EmptyPredicate.isNotEmpty(artifactDelegateRequest.getTagRegex());
   }
 
-  public void decryptRequestDTOs(ArtifactoryDockerArtifactDelegateRequest artifactoryRequest) {
-    if (artifactoryRequest.getArtifactoryConnectorDTO().getAuth() != null) {
-      secretDecryptionService.decrypt(artifactoryRequest.getArtifactoryConnectorDTO().getAuth().getCredentials(),
-          artifactoryRequest.getEncryptedDataDetails());
+  public void decryptRequestDTOs(ArtifactSourceDelegateRequest artifactoryRequest) {
+    if (artifactoryRequest instanceof ArtifactoryGenericArtifactDelegateRequest) {
+      ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest = (ArtifactoryGenericArtifactDelegateRequest) artifactoryRequest;
+      if (artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO().getAuth() != null) {
+        secretDecryptionService.decrypt(artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO().getAuth().getCredentials(),
+                artifactoryGenericArtifactDelegateRequest.getEncryptedDataDetails());
+      }
+    } else {
+      ArtifactoryDockerArtifactDelegateRequest artifactoryDockerArtifactDelegateRequest = (ArtifactoryDockerArtifactDelegateRequest) artifactoryRequest;
+      if (artifactoryDockerArtifactDelegateRequest.getArtifactoryConnectorDTO().getAuth() != null) {
+        secretDecryptionService.decrypt(artifactoryDockerArtifactDelegateRequest.getArtifactoryConnectorDTO().getAuth().getCredentials(),
+                artifactoryDockerArtifactDelegateRequest.getEncryptedDataDetails());
+      }
     }
   }
-  public void decryptRequestDTOs(ArtifactoryGenericArtifactDelegateRequest artifactoryRequest) {
-    if (artifactoryRequest.getArtifactoryConnectorDTO().getAuth() != null) {
-      secretDecryptionService.decrypt(artifactoryRequest.getArtifactoryConnectorDTO().getAuth().getCredentials(),
-          artifactoryRequest.getEncryptedDataDetails());
-    }
-  }
+
 }
