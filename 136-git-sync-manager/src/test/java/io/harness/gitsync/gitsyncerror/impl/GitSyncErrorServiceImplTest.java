@@ -9,6 +9,7 @@ package io.harness.gitsync.gitsyncerror.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.rule.OwnerRule.BHAVYA;
+import static io.harness.rule.OwnerRule.MEET;
 import static io.harness.rule.OwnerRule.PHOENIKX;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -187,7 +188,17 @@ public class GitSyncErrorServiceImplTest extends GitSyncTestBase {
     Optional<GitSyncErrorDTO> savedError =
         gitSyncErrorService.getGitToHarnessError(accountId, commitId, repoUrl, branch, "filePath");
     assertThat(savedError.isPresent()).isEqualTo(true);
-    assertThat(savedError.get()).isEqualTo(dto);
+    GitSyncErrorDTO expectedDTO = buildDTOWithEntityUrl("filePath", Collections.singletonList(scope));
+    assertThat(savedError.get()).isEqualTo(expectedDTO);
+  }
+
+  private GitSyncErrorDTO buildDTOWithEntityUrl(String filePath, List<Scope> singletonList) {
+    additionalErrorDetailsDTO = GitToHarnessErrorDetailsDTO.builder()
+                                    .gitCommitId(commitId)
+                                    .commitMessage(commitMessage)
+                                    .entityUrl("repo/blob/branch/filePath")
+                                    .build();
+    return buildDTO(filePath, additionalErrorDetailsDTO, singletonList);
   }
 
   @Test
@@ -346,5 +357,20 @@ public class GitSyncErrorServiceImplTest extends GitSyncTestBase {
     PageResponse<GitSyncErrorDTO> gitSyncErrorList = gitSyncErrorService.listConnectivityErrors(
         accountId, orgId, projectId, null, new PageRequest(0, 10, new ArrayList<>()));
     assertThat(gitSyncErrorList.getContent()).isEmpty();
+  }
+
+  @Test
+  @Owner(developers = MEET)
+  @Category(UnitTests.class)
+  public void testRemoveScope() {
+    long createdAt = OffsetDateTime.now().minusDays(12).toInstant().toEpochMilli();
+    Scope scope1 = Scope.of(accountId, "org1", "proj1");
+    gitSyncErrorRepository.save(build("filepath1", additionalErrorDetails, createdAt, Arrays.asList(scope1, scope)));
+    gitSyncErrorService.removeScope(accountId, orgId, projectId);
+    assertThat(
+        gitSyncErrorRepository.findByAccountIdentifierAndCompleteFilePathAndErrorType(accountId, "filepath1", errorType)
+            .getScopes()
+            .contains(scope))
+        .isFalse();
   }
 }

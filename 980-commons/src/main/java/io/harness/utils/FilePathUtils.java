@@ -46,12 +46,26 @@ public class FilePathUtils {
     return path;
   }
 
+  public static String updatePathWithForwardSlash(String filePath) {
+    if (filePath.charAt(0) != '/') {
+      return "/" + filePath;
+    }
+    return filePath;
+  }
+
   // ---------------------------------- PRIVATE METHODS ----------------------------
 
   // Remove starting and ending backslashes
   private String trimPath(String path) {
     path = path.replaceAll("^/+", "");
     path = path.replaceAll("/+$", "");
+    return path;
+  }
+
+  public static String addStartingSlashIfMissing(String path) {
+    if (path.charAt(0) != '/') {
+      return "/" + path;
+    }
     return path;
   }
 }

@@ -14,8 +14,10 @@ import static io.harness.beans.serializer.RunTimeInputHandler.resolveJsonNodeMap
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveListParameter;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveMapParameter;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveStringParameter;
+import static io.harness.common.CIExecutionConstants.AWS_ROLE_ARN;
 import static io.harness.common.CIExecutionConstants.PLUGIN_ACCESS_KEY;
 import static io.harness.common.CIExecutionConstants.PLUGIN_ARTIFACT_FILE_VALUE;
+import static io.harness.common.CIExecutionConstants.PLUGIN_ASSUME_ROLE;
 import static io.harness.common.CIExecutionConstants.PLUGIN_JSON_KEY;
 import static io.harness.common.CIExecutionConstants.PLUGIN_PASSW;
 import static io.harness.common.CIExecutionConstants.PLUGIN_SECRET_KEY;
@@ -65,6 +67,7 @@ public class PluginSettingUtils {
   public static final String PLUGIN_DOCKERFILE = "PLUGIN_DOCKERFILE";
   public static final String PLUGIN_CONTEXT = "PLUGIN_CONTEXT";
   public static final String PLUGIN_TARGET = "PLUGIN_TARGET";
+  public static final String PLUGIN_STRIP_PREFIX = "PLUGIN_STRIP_PREFIX";
   public static final String PLUGIN_CACHE_REPO = "PLUGIN_CACHE_REPO";
   public static final String PLUGIN_ENABLE_CACHE = "PLUGIN_ENABLE_CACHE";
   public static final String PLUGIN_BUILD_ARGS = "PLUGIN_BUILD_ARGS";
@@ -132,11 +135,16 @@ public class PluginSettingUtils {
     Map<EnvVariableEnum, String> map = new HashMap<>();
     switch (stepInfo.getNonYamlInfo().getStepInfoType()) {
       case ECR:
+        map.put(EnvVariableEnum.AWS_ACCESS_KEY, PLUGIN_ACCESS_KEY);
+        map.put(EnvVariableEnum.AWS_SECRET_KEY, PLUGIN_SECRET_KEY);
+        map.put(EnvVariableEnum.AWS_CROSS_ACCOUNT_ROLE_ARN, AWS_ROLE_ARN);
+        return map;
       case RESTORE_CACHE_S3:
       case SAVE_CACHE_S3:
       case UPLOAD_S3:
         map.put(EnvVariableEnum.AWS_ACCESS_KEY, PLUGIN_ACCESS_KEY);
         map.put(EnvVariableEnum.AWS_SECRET_KEY, PLUGIN_SECRET_KEY);
+        map.put(EnvVariableEnum.AWS_CROSS_ACCOUNT_ROLE_ARN, PLUGIN_ASSUME_ROLE);
         return map;
       case GCR:
       case RESTORE_CACHE_GCS:
@@ -538,7 +546,6 @@ public class PluginSettingUtils {
         resolveStringParameter("sourcePath", "S3Upload", identifier, stepInfo.getSourcePath(), true));
 
     String target = resolveStringParameter("target", "S3Upload", identifier, stepInfo.getTarget(), false);
-
     if (target != null && !target.equals(UNRESOLVED_PARAMETER)) {
       setOptionalEnvironmentVariable(map, PLUGIN_TARGET, target);
     }
@@ -552,6 +559,13 @@ public class PluginSettingUtils {
     if (region != null && !region.equals(UNRESOLVED_PARAMETER)) {
       setOptionalEnvironmentVariable(map, PLUGIN_REGION, region);
     }
+
+    String stripPrefix =
+        resolveStringParameter("stripPrefix", "S3Upload", identifier, stepInfo.getStripPrefix(), false);
+    if (stripPrefix != null && !stripPrefix.equals(UNRESOLVED_PARAMETER)) {
+      setOptionalEnvironmentVariable(map, PLUGIN_STRIP_PREFIX, stripPrefix);
+    }
+
     setOptionalEnvironmentVariable(map, PLUGIN_ARTIFACT_FILE, PLUGIN_ARTIFACT_FILE_VALUE);
 
     return map;

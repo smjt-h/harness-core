@@ -395,8 +395,11 @@ public class AuthenticationFilter implements ContainerRequestFilter {
           log.info("Received delegate-mtls-authority header via REST: '{}'", delegateMtlsAuthority);
         }
 
-        authService.validateDelegateToken(
-            accountId, substringAfter(containerRequestContext.getHeaderString(HttpHeaders.AUTHORIZATION), "Delegate "));
+        String delegateId = containerRequestContext.getHeaderString("delegateId");
+
+        authService.validateDelegateToken(accountId,
+            substringAfter(containerRequestContext.getHeaderString(HttpHeaders.AUTHORIZATION), "Delegate "), delegateId,
+            true);
       } else {
         throw new IllegalStateException("Invalid header:" + header);
       }

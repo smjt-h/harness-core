@@ -99,6 +99,7 @@ import software.wings.service.impl.analysis.AnalysisContext.AnalysisContextKeys;
 import software.wings.service.impl.analysis.MLAnalysisType;
 
 import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.github.dirkraft.dropwizard.fileassets.FileAssetsBundle;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -199,6 +200,7 @@ public class VerificationServiceApplication extends Application<VerificationServ
         new JsonSubtypeResolver(bootstrap.getObjectMapper().getSubtypeResolver()));
     bootstrap.getObjectMapper().setConfig(
         bootstrap.getObjectMapper().getSerializationConfig().withView(JsonViews.Public.class));
+    bootstrap.getObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     bootstrap.setMetricRegistry(metricRegistry);
 
     log.info("bootstrapping done.");
@@ -422,7 +424,7 @@ public class VerificationServiceApplication extends Application<VerificationServ
     registerWorkflowIterator(injector, workflowVerificationExecutor, new WorkflowFeedbackAnalysisJob(),
         AnalysisContextKeys.feedbackIteration, MLAnalysisType.LOG_ML, ofSeconds(30), 4);
     registerWorkflowDataCollectionIterator(injector, workflowVerificationExecutor, new WorkflowDataCollectionJob(),
-        AnalysisContextKeys.workflowDataCollectionIteration, ofSeconds(30), 4);
+        AnalysisContextKeys.workflowDataCollectionIteration, ofSeconds(60), 4);
 
     ScheduledThreadPoolExecutor cvTaskWorkflowExecutor = new ScheduledThreadPoolExecutor(
         5, new ThreadFactoryBuilder().setNameFormat("Iterator-cvTask-Workflow-verification").build());

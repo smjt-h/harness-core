@@ -24,7 +24,7 @@ import io.harness.beans.dependencies.DependencyElement;
 import io.harness.beans.environment.pod.container.ContainerDefinitionInfo;
 import io.harness.beans.environment.pod.container.ContainerImageDetails;
 import io.harness.beans.quantity.unit.DecimalQuantityUnit;
-import io.harness.beans.quantity.unit.MemoryQuantityUnit;
+import io.harness.beans.quantity.unit.StorageQuantityUnit;
 import io.harness.beans.serializer.RunTimeInputHandler;
 import io.harness.beans.stages.IntegrationStageConfig;
 import io.harness.ci.config.CIExecutionServiceConfig;
@@ -50,12 +50,13 @@ public class CIServiceBuilder {
       StageElementConfig stageElementConfig, PortFinder portFinder, CIExecutionServiceConfig ciExecutionServiceConfig) {
     List<ContainerDefinitionInfo> containerDefinitionInfos = new ArrayList<>();
     IntegrationStageConfig integrationStage = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
-    if (isEmpty(integrationStage.getServiceDependencies())) {
+    if (integrationStage.getServiceDependencies() == null
+        || isEmpty(integrationStage.getServiceDependencies().getValue())) {
       return containerDefinitionInfos;
     }
 
     int serviceIdx = 0;
-    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies()) {
+    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies().getValue()) {
       if (dependencyElement == null) {
         continue;
       }
@@ -150,7 +151,7 @@ public class CIServiceBuilder {
         String memoryQuantity = RunTimeInputHandler.resolveStringParameter(
             "memory", "Service", identifier, resource.getLimits().getMemory(), false);
         if (isNotEmpty(memoryQuantity) && !UNRESOLVED_PARAMETER.equals(memoryQuantity)) {
-          memory = QuantityUtils.getMemoryQuantityValueInUnit(memoryQuantity, MemoryQuantityUnit.Mi);
+          memory = QuantityUtils.getStorageQuantityValueInUnit(memoryQuantity, StorageQuantityUnit.Mi);
         }
       }
     }
@@ -166,11 +167,11 @@ public class CIServiceBuilder {
     List<String> serviceIdList = new ArrayList<>();
     IntegrationStageConfig integrationStage = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
 
-    if (isEmpty(integrationStage.getServiceDependencies())) {
+    if (isEmpty(integrationStage.getServiceDependencies().getValue())) {
       return serviceIdList;
     }
 
-    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies()) {
+    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies().getValue()) {
       if (dependencyElement == null) {
         continue;
       }
@@ -186,11 +187,11 @@ public class CIServiceBuilder {
     List<Integer> grpcPortList = new ArrayList<>();
     IntegrationStageConfig integrationStage = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
 
-    if (isEmpty(integrationStage.getServiceDependencies())) {
+    if (isEmpty(integrationStage.getServiceDependencies().getValue())) {
       return grpcPortList;
     }
 
-    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies()) {
+    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies().getValue()) {
       if (dependencyElement == null) {
         continue;
       }

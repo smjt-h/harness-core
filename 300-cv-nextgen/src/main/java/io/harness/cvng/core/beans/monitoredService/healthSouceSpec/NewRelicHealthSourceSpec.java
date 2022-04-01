@@ -39,7 +39,7 @@ import org.apache.commons.collections4.CollectionUtils;
 @SuperBuilder
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class NewRelicHealthSourceSpec extends HealthSourceSpec {
+public class NewRelicHealthSourceSpec extends MetricHealthSourceSpec {
   String applicationName;
   String applicationId;
   String feature;
@@ -141,6 +141,7 @@ public class NewRelicHealthSourceSpec extends HealthSourceSpec {
                                               .groupName(definitionList.get(0).getGroupName())
                                               .category(definitionList.get(0).getRiskProfile().getCategory())
                                               .monitoredServiceIdentifier(monitoredServiceIdentifier)
+                                              .customQuery(true)
                                               .build();
       newRelicCVConfig.populateFromMetricDefinitions(
           newRelicMetricDefinitions, newRelicMetricDefinitions.get(0).getRiskProfile().getCategory());
@@ -158,6 +159,11 @@ public class NewRelicHealthSourceSpec extends HealthSourceSpec {
         .serviceIdentifier(cvConfig.getServiceIdentifier())
         .metricPack(cvConfig.getMetricPack())
         .build();
+  }
+
+  @Override
+  public List<? extends HealthSourceMetricDefinition> getMetricDefinitions() {
+    return this.newRelicMetricDefinitions;
   }
 
   @Data

@@ -7,6 +7,7 @@
 
 package io.harness.grpc.auth;
 
+import io.harness.delegate.DelegateAgentCommonVariables;
 import io.harness.security.TokenGenerator;
 
 import com.google.inject.Singleton;
@@ -28,6 +29,7 @@ public class DelegateAuthCallCredentials extends CallCredentials {
       Metadata.Key.of("accountId", Metadata.ASCII_STRING_MARSHALLER);
   static final Metadata.Key<String> DELEGATE_MTLS_AUTHORITY_METADATA_KEY =
       Metadata.Key.of("delegate-mtls-authority", Metadata.ASCII_STRING_MARSHALLER);
+  static final Metadata.Key<String> DELEGATE_ID = Metadata.Key.of("delegateId", Metadata.ASCII_STRING_MARSHALLER);
 
   private final TokenGenerator tokenGenerator;
   private final String accountId;
@@ -55,6 +57,7 @@ public class DelegateAuthCallCredentials extends CallCredentials {
       headers.put(ACCOUNT_ID_METADATA_KEY, accountId);
       headers.put(TOKEN_METADATA_KEY, token);
       headers.put(DELEGATE_MTLS_AUTHORITY_METADATA_KEY, "grpc DelegateAuthCallCredentials");
+      headers.put(DELEGATE_ID, DelegateAgentCommonVariables.getDelegateId());
       applier.apply(headers);
     }
   }

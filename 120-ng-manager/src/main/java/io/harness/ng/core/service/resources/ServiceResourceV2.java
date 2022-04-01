@@ -36,6 +36,7 @@ import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.OrgAndProjectValidationHelper;
@@ -46,10 +47,12 @@ import io.harness.ng.core.service.dto.ServiceRequestDTO;
 import io.harness.ng.core.service.dto.ServiceResponse;
 import io.harness.ng.core.service.entity.ServiceEntity;
 import io.harness.ng.core.service.entity.ServiceEntity.ServiceEntityKeys;
+import io.harness.ng.core.service.mappers.NGServiceEntityMapper;
 import io.harness.ng.core.service.mappers.ServiceElementMapper;
 import io.harness.ng.core.service.mappers.ServiceFilterHelper;
 import io.harness.ng.core.service.services.ServiceEntityManagementService;
 import io.harness.ng.core.service.services.ServiceEntityService;
+import io.harness.ng.core.service.yaml.NGServiceConfig;
 import io.harness.pms.rbac.NGResourceType;
 import io.harness.rbac.CDNGRbacUtility;
 import io.harness.security.annotations.NextGenManagerAuth;
@@ -76,6 +79,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -157,6 +161,13 @@ public class ServiceResourceV2 {
     String version = "0";
     if (serviceEntity.isPresent()) {
       version = serviceEntity.get().getVersion().toString();
+      if (EmptyPredicate.isEmpty(serviceEntity.get().getYaml())) {
+        NGServiceConfig ngServiceConfig = NGServiceEntityMapper.toNGServiceConfig(serviceEntity.get());
+        serviceEntity.get().setYaml(NGServiceEntityMapper.toYaml(ngServiceConfig));
+      }
+    } else {
+      throw new NotFoundException(String.format("Service with identifier [%s] in project [%s], org [%s] not found",
+          serviceIdentifier, projectIdentifier, orgIdentifier));
     }
     return ResponseDTO.newResponse(version, serviceEntity.map(ServiceElementMapper::toResponseWrapper).orElse(null));
   }
@@ -331,9 +342,14 @@ public class ServiceResourceV2 {
     } else {
       pageRequest = PageUtils.getPageRequest(page, size, sort);
     }
-    Page<ServiceResponse> serviceList =
-        serviceEntityService.list(criteria, pageRequest).map(ServiceElementMapper::toResponseWrapper);
-    return ResponseDTO.newResponse(getNGPageResponse(serviceList));
+    Page<ServiceEntity> serviceEntities = serviceEntityService.list(criteria, pageRequest);
+    serviceEntities.forEach(serviceEntity -> {
+      if (EmptyPredicate.isEmpty(serviceEntity.getYaml())) {
+        NGServiceConfig ngServiceConfig = NGServiceEntityMapper.toNGServiceConfig(serviceEntity);
+        serviceEntity.setYaml(NGServiceEntityMapper.toYaml(ngServiceConfig));
+      }
+    });
+    return ResponseDTO.newResponse(getNGPageResponse(serviceEntities.map(ServiceElementMapper::toResponseWrapper)));
   }
 
   @GET
@@ -373,9 +389,8 @@ public class ServiceResourceV2 {
     }
     List<ServiceResponse> serviceList = serviceEntityService.listRunTimePermission(criteria)
                                             .stream()
-                                            .map(ServiceElementMapper::toResponseWrapper)
+                                            .map(ServiceElementMapper::toAccessListResponseWrapper)
                                             .collect(Collectors.toList());
-
     List<PermissionCheckDTO> permissionCheckDTOS =
         serviceList.stream().map(CDNGRbacUtility::serviceResponseToPermissionCheckDTO).collect(Collectors.toList());
     List<AccessControlDTO> accessControlList =

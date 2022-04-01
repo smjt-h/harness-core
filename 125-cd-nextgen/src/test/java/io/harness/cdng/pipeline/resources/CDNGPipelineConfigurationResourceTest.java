@@ -48,7 +48,7 @@ public class CDNGPipelineConfigurationResourceTest extends CategoryTest {
         cdngPipelineConfigurationResource.getExecutionStrategyList().getData();
 
     assertThat(executionStrategyResponse).isNotNull();
-    assertThat(executionStrategyResponse.keySet().size()).isEqualTo(3);
+    assertThat(executionStrategyResponse.keySet().size()).isEqualTo(4);
 
     assertThat(executionStrategyResponse.get(ServiceDefinitionType.KUBERNETES))
         .isEqualTo(Lists.newArrayList(ExecutionStrategyType.ROLLING, ExecutionStrategyType.BLUE_GREEN,
@@ -58,6 +58,9 @@ public class CDNGPipelineConfigurationResourceTest extends CategoryTest {
         .isEqualTo(Lists.newArrayList(ExecutionStrategyType.ROLLING, ExecutionStrategyType.DEFAULT));
 
     assertThat(executionStrategyResponse.get(ServiceDefinitionType.SSH))
+        .isEqualTo(Lists.newArrayList(ExecutionStrategyType.DEFAULT));
+
+    assertThat(executionStrategyResponse.get(ServiceDefinitionType.WINRM))
         .isEqualTo(Lists.newArrayList(ExecutionStrategyType.DEFAULT));
 
     /*
@@ -75,11 +78,11 @@ public class CDNGPipelineConfigurationResourceTest extends CategoryTest {
   @Owner(developers = SAHIL)
   @Category(UnitTests.class)
   public void testGetServiceDefinitionTypes() {
-    when(pipelineService.getServiceDefinitionTypes()).thenReturn(Arrays.asList(ServiceDefinitionType.values()));
+    when(pipelineService.getServiceDefinitionTypes(null)).thenReturn(Arrays.asList(ServiceDefinitionType.values()));
     List<ServiceDefinitionType> serviceDefinitionTypes =
-        cdngPipelineConfigurationResource.getServiceDefinitionTypes().getData();
+        cdngPipelineConfigurationResource.getServiceDefinitionTypes(null).getData();
 
     assertThat(serviceDefinitionTypes).isNotNull();
-    assertThat(serviceDefinitionTypes.size()).isEqualTo(3);
+    assertThat(serviceDefinitionTypes.size()).isEqualTo(4);
   }
 }

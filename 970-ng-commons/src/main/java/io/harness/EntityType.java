@@ -109,6 +109,9 @@ public enum EntityType {
   SERVICE(ModuleType.CORE, EntityTypeConstants.SERVICE, IdentifierRef.class, EntityYamlRootNames.SERVICE),
   @JsonProperty(EntityTypeConstants.ENVIRONMENT)
   ENVIRONMENT(ModuleType.CORE, EntityTypeConstants.ENVIRONMENT, IdentifierRef.class, EntityYamlRootNames.ENVIRONMENT),
+  @JsonProperty(EntityTypeConstants.ENVIRONMENT_GROUP)
+  ENVIRONMENT_GROUP(ModuleType.CORE, EntityTypeConstants.ENVIRONMENT_GROUP, IdentifierRef.class,
+      EntityYamlRootNames.ENVIRONMENT_GROUP),
   @JsonProperty(EntityTypeConstants.INPUT_SETS)
   INPUT_SETS(ModuleType.CORE, EntityTypeConstants.INPUT_SETS, InputSetReference.class, EntityYamlRootNames.INPUT_SET,
       EntityYamlRootNames.OVERLAY_INPUT_SET),
@@ -163,6 +166,12 @@ public enum EntityType {
   @JsonProperty(EntityTypeConstants.SERVICENOW_APPROVAL)
   SERVICENOW_APPROVAL_STEP(ModuleType.CD, EntityTypeConstants.SERVICENOW_APPROVAL, IdentifierRef.class,
       EntityYamlRootNames.SERVICENOW_APPROVAL),
+  @JsonProperty(EntityTypeConstants.SERVICENOW_CREATE)
+  SERVICENOW_CREATE_STEP(ModuleType.PMS, EntityTypeConstants.SERVICENOW_CREATE, IdentifierRef.class,
+      EntityYamlRootNames.SERVICENOW_CREATE),
+  @JsonProperty(EntityTypeConstants.SERVICENOW_UPDATE)
+  SERVICENOW_UPDATE_STEP(ModuleType.PMS, EntityTypeConstants.SERVICENOW_UPDATE, IdentifierRef.class,
+      EntityYamlRootNames.SERVICENOW_UPDATE),
   @JsonProperty(EntityTypeConstants.OPAPOLICIES)
   OPAPOLICIES(ModuleType.CORE, EntityTypeConstants.OPAPOLICIES, IdentifierRef.class, EntityYamlRootNames.OPAPOLICY),
   POLICY_STEP(ModuleType.PMS, EntityTypeConstants.POLICY_STEP, IdentifierRef.class, EntityYamlRootNames.POLICY_STEP),

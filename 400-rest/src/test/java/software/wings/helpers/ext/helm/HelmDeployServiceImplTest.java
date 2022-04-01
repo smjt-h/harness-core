@@ -63,6 +63,7 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.category.element.UnitTests;
 import io.harness.concurent.HTimeLimiterMocker;
 import io.harness.container.ContainerInfo;
+import io.harness.delegate.task.helm.CustomManifestFetchTaskHelper;
 import io.harness.delegate.task.helm.HelmChartInfo;
 import io.harness.delegate.task.helm.HelmCommandFlag;
 import io.harness.delegate.task.helm.HelmCommandResponse;
@@ -164,6 +165,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
   @Mock private KubernetesContainerService kubernetesContainerService;
   @Mock private HelmHelper helmHelper;
   @Mock private ScmFetchFilesHelper scmFetchFilesHelper;
+  @Mock private CustomManifestFetchTaskHelper customManifestFetchTaskHelper;
   @InjectMocks private HelmDeployServiceImpl helmDeployService;
 
   @Captor private ArgumentCaptor<HelmCommandFlag> commandFlagCaptor;
@@ -1149,7 +1151,8 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
   private void successWhenHelm3PresentInClientTools() throws InterruptedException, IOException, TimeoutException {
     doReturn("/client-tools/helm").when(k8sGlobalConfigService).getHelmPath(V3);
 
-    HelmCommandResponse helmCommandResponse = helmDeployService.ensureHelm3Installed(null);
+    HelmCommandResponse helmCommandResponse =
+        helmDeployService.ensureHelm3Installed(HelmInstallCommandRequest.builder().helmVersion(V3).build());
 
     assertThat(helmCommandResponse.getCommandExecutionStatus()).isEqualTo(SUCCESS);
   }
@@ -1157,7 +1160,8 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
   private void failureWhenHelm3AbsentInClientTools() throws InterruptedException, IOException, TimeoutException {
     doReturn("").when(k8sGlobalConfigService).getHelmPath(V3);
 
-    HelmCommandResponse helmCommandResponse = helmDeployService.ensureHelm3Installed(null);
+    HelmCommandResponse helmCommandResponse =
+        helmDeployService.ensureHelm3Installed(HelmInstallCommandRequest.builder().helmVersion(V3).build());
 
     assertThat(helmCommandResponse.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.FAILURE);
   }
@@ -1427,7 +1431,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
     String chartLocation = "/chart";
     String output = "cli failed";
     List<String> valueOverrides = emptyList();
-    doReturn(HelmCliResponse.builder().commandExecutionStatus(FAILURE).output(output).build())
+    doReturn(HelmCliResponse.builder().commandExecutionStatus(FAILURE).errorStreamOutput(output).build())
         .when(helmClient)
         .renderChart(HelmCommandDataMapper.getHelmCommandData(helmInstallCommandRequest), chartLocation, namespace,
             valueOverrides, false);
@@ -1795,11 +1799,14 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
     FileIo.createDirectoryIfDoesNotExist(workingDirPath);
     FileIo.createDirectoryIfDoesNotExist(manifestDirPath);
     Files.createFile(Paths.get(manifestDirPath, "test.yaml"));
-    doNothing().when(helmTaskHelper).downloadAndUnzipCustomSourceManifestFiles(anyString(), anyString(), anyString());
+    doNothing()
+        .when(customManifestFetchTaskHelper)
+        .downloadAndUnzipCustomSourceManifestFiles(anyString(), anyString(), anyString());
 
     helmDeployService.fetchCustomSourceManifest(request);
 
-    verify(helmTaskHelper, times(1)).downloadAndUnzipCustomSourceManifestFiles(anyString(), anyString(), anyString());
+    verify(customManifestFetchTaskHelper, times(1))
+        .downloadAndUnzipCustomSourceManifestFiles(anyString(), anyString(), anyString());
     File workingDir = new File(workingDirPath);
     assertThat(workingDir.exists());
     assertThat(workingDir.list()).hasSize(1);

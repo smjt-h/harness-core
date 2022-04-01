@@ -8,6 +8,7 @@
 package io.harness.cvng;
 
 import static io.harness.AuthorizationServiceHeader.BEARER;
+import static io.harness.AuthorizationServiceHeader.CV_NEXT_GEN;
 import static io.harness.AuthorizationServiceHeader.DEFAULT;
 import static io.harness.AuthorizationServiceHeader.IDENTITY_SERVICE;
 import static io.harness.cvng.cdng.services.impl.CVNGNotifyEventListener.CVNG_ORCHESTRATION;
@@ -20,6 +21,7 @@ import static com.google.inject.matcher.Matchers.not;
 import static java.time.Duration.ofMinutes;
 import static java.time.Duration.ofSeconds;
 
+import io.harness.AccessControlClientModule;
 import io.harness.ModuleType;
 import io.harness.PipelineServiceUtilityModule;
 import io.harness.annotations.dev.HarnessTeam;
@@ -148,7 +150,6 @@ import io.harness.security.NextGenAuthenticationFilter;
 import io.harness.security.annotations.NextGenManagerAuth;
 import io.harness.serializer.CVNGStepRegistrar;
 import io.harness.serializer.CvNextGenRegistrars;
-import io.harness.serializer.JsonSubtypeResolver;
 import io.harness.serializer.KryoRegistrar;
 import io.harness.serializer.PipelineServiceUtilAdviserRegistrar;
 import io.harness.serializer.PrimaryVersionManagerRegistrars;
@@ -186,6 +187,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import io.serializer.HObjectMapper;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
@@ -257,8 +259,9 @@ public class VerificationApplication extends Application<VerificationConfigurati
   }
 
   public static void configureObjectMapper(final ObjectMapper mapper) {
-    mapper.setSubtypeResolver(new JsonSubtypeResolver(mapper.getSubtypeResolver()));
+    HObjectMapper.configureObjectMapperForNG(mapper);
   }
+
   private void createConsumerThreadsToListenToEvents(Injector injector) {
     new Thread(injector.getInstance(EntityCRUDStreamConsumer.class)).start();
     new Thread(injector.getInstance(DeploymentChangeEventConsumer.class)).start();
@@ -370,6 +373,8 @@ public class VerificationApplication extends Application<VerificationConfigurati
     });
 
     modules.add(MorphiaModule.getInstance());
+    modules.add(AccessControlClientModule.getInstance(
+        configuration.getAccessControlClientConfiguration(), CV_NEXT_GEN.getServiceId()));
     modules.add(new CVServiceModule(configuration));
     modules.add(new PersistentLockModule());
     modules.add(new EventsFrameworkModule(configuration.getEventsFrameworkConfiguration()));

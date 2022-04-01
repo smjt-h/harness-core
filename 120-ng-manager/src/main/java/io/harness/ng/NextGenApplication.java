@@ -39,6 +39,9 @@ import io.harness.cache.CacheModule;
 import io.harness.cdng.creator.CDNGModuleInfoProvider;
 import io.harness.cdng.creator.CDNGPlanCreatorProvider;
 import io.harness.cdng.creator.filters.CDNGFilterCreationResponseMerger;
+import io.harness.cdng.envGroup.beans.EnvironmentGroupConfig;
+import io.harness.cdng.envGroup.beans.EnvironmentGroupEntity;
+import io.harness.cdng.gitSync.EnvironmentGroupEntityGitSyncHelper;
 import io.harness.cdng.licenserestriction.ServiceRestrictionsUsageImpl;
 import io.harness.cdng.orchestration.NgStepRegistrar;
 import io.harness.cdng.pipeline.executions.CdngOrchestrationExecutionEventHandlerRegistrar;
@@ -126,6 +129,7 @@ import io.harness.pms.expressions.functors.ImagePullSecretFunctor;
 import io.harness.pms.governance.EnvironmentRefExpansionHandler;
 import io.harness.pms.governance.ServiceRefExpansionHandler;
 import io.harness.pms.listener.NgOrchestrationNotifyEventListener;
+import io.harness.pms.redisConsumer.PipelineExecutionSummaryCDRedisEventConsumer;
 import io.harness.pms.sdk.PmsSdkConfiguration;
 import io.harness.pms.sdk.PmsSdkInitHelper;
 import io.harness.pms.sdk.PmsSdkModule;
@@ -172,7 +176,6 @@ import io.harness.threading.ExecutorModule;
 import io.harness.threading.ThreadPool;
 import io.harness.token.remote.TokenClient;
 import io.harness.tracing.MongoRedisTracer;
-import io.harness.utils.NGObjectMapperHelper;
 import io.harness.waiter.NotifierScheduledExecutorService;
 import io.harness.waiter.NotifyEvent;
 import io.harness.waiter.NotifyQueuePublisherRegister;
@@ -207,6 +210,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import io.serializer.HObjectMapper;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.integration.SwaggerConfiguration;
@@ -286,7 +290,7 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
   }
 
   public static void configureObjectMapper(final ObjectMapper mapper) {
-    NGObjectMapperHelper.configureNGObjectMapper(mapper);
+    HObjectMapper.configureObjectMapperForNG(mapper);
     mapper.registerModule(new PmsBeansJacksonModule());
   }
 
@@ -488,6 +492,13 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
                                           .entityClass(Connector.class)
                                           .entityHelperClass(ConnectorGitSyncHelper.class)
                                           .build());
+
+    gitSyncEntitiesConfigurations.add(GitSyncEntitiesConfiguration.builder()
+                                          .entityType(EntityType.ENVIRONMENT_GROUP)
+                                          .yamlClass(EnvironmentGroupConfig.class)
+                                          .entityClass(EnvironmentGroupEntity.class)
+                                          .entityHelperClass(EnvironmentGroupEntityGitSyncHelper.class)
+                                          .build());
     final GitSdkConfiguration gitSdkConfiguration = config.getGitSdkConfiguration();
     return GitSyncSdkConfiguration.builder()
         .gitSyncSortOrder(sortOrder)
@@ -556,6 +567,8 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
     pipelineEventConsumerController.register(injector.getInstance(NodeAdviseEventRedisConsumer.class), 2);
     pipelineEventConsumerController.register(injector.getInstance(NodeResumeEventRedisConsumer.class), 2);
     pipelineEventConsumerController.register(injector.getInstance(CreatePartialPlanRedisConsumer.class), 2);
+    pipelineEventConsumerController.register(
+        injector.getInstance(PipelineExecutionSummaryCDRedisEventConsumer.class), 1);
   }
 
   private void registerYamlSdk(Injector injector) {
@@ -706,7 +719,7 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
     OpenAPI oas = new OpenAPI();
     Info info =
         new Info()
-            .title("CD NextGen API Reference")
+            .title("Harness NextGen Software Delivery Platform API Reference")
             .description(
                 "This is the Open Api Spec 3 for the NextGen Manager. This is under active development. Beware of the breaking change with respect to the generated code stub")
             .termsOfService("https://harness.io/terms-of-use/")

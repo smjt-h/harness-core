@@ -32,6 +32,7 @@ import static io.harness.validation.Validator.notNullCheck;
 import static software.wings.beans.TaskType.CUSTOM_MANIFEST_FETCH_TASK;
 import static software.wings.beans.TaskType.GIT_FETCH_FILES_TASK;
 import static software.wings.beans.TaskType.PCF_COMMAND_TASK;
+import static software.wings.service.impl.artifact.ArtifactServiceImpl.metadataOnlyBehindFlag;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -282,8 +283,8 @@ public class PcfSetupState extends State {
     List<EncryptedDataDetail> encryptedDataDetails =
         secretManager.getEncryptionDetails(pcfConfig, context.getAppId(), context.getWorkflowExecutionId());
 
-    PcfManifestsPackage pcfManifestsPackage =
-        pcfStateHelper.generateManifestMap(context, appManifestMap, serviceElement, activityId);
+    PcfManifestsPackage pcfManifestsPackage = pcfStateHelper.generateManifestMap(
+        context, appManifestMap, serviceElement, activityId, pcfConfig.getAccountId());
 
     String applicationManifestYmlContent = pcfManifestsPackage.getManifestYml();
     String pcfAppNameSuffix = generateAppNamePrefix(context, app, serviceElement, env, pcfManifestsPackage, pcfConfig);
@@ -508,7 +509,8 @@ public class PcfSetupState extends State {
       case ARTIFACTORY:
       case NEXUS:
       case S3:
-        return artifactStream.isMetadataOnly();
+        return metadataOnlyBehindFlag(
+            featureFlagService, artifactStream.getAccountId(), artifactStream.isMetadataOnly());
       default:
         return false;
     }

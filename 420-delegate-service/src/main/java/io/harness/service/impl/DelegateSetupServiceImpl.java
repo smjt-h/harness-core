@@ -35,11 +35,17 @@ import io.harness.delegate.beans.DelegateInsightsDetails;
 import io.harness.delegate.beans.DelegateInstanceStatus;
 import io.harness.delegate.beans.DelegateProfile;
 import io.harness.delegate.beans.DelegateProfile.DelegateProfileKeys;
+import io.harness.delegate.beans.DelegateSetupDetails;
+import io.harness.delegate.beans.DelegateToken;
+import io.harness.delegate.beans.DelegateToken.DelegateTokenKeys;
+import io.harness.delegate.beans.DelegateTokenStatus;
+import io.harness.delegate.events.DelegateGroupUpsertEvent;
 import io.harness.delegate.filter.DelegateFilterPropertiesDTO;
 import io.harness.delegate.utils.DelegateEntityOwnerHelper;
 import io.harness.exception.InvalidRequestException;
 import io.harness.filter.dto.FilterDTO;
 import io.harness.filter.service.FilterService;
+import io.harness.outbox.api.OutboxService;
 import io.harness.persistence.HPersistence;
 import io.harness.service.intfc.DelegateCache;
 import io.harness.service.intfc.DelegateInsightsService;
@@ -51,14 +57,18 @@ import software.wings.service.impl.DelegateConnectionDao;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.executable.ValidateOnExecution;
@@ -77,7 +87,10 @@ public class DelegateSetupServiceImpl implements DelegateSetupService {
   @Inject private DelegateInsightsService delegateInsightsService;
   @Inject private DelegateConnectionDao delegateConnectionDao;
   @Inject private FilterService filterService;
+  @Inject private OutboxService outboxService;
   private static final Duration HEARTBEAT_EXPIRY_TIME = ofMinutes(5);
+  // grpc heartbeat thread is scheduled at 5 mins, hence we are allowing a gap of 15 mins
+  private static final long MAX_GRPC_HB_TIMEOUT = TimeUnit.MINUTES.toMillis(15);
 
   @Override
   public long getDelegateGroupCount(
@@ -389,6 +402,10 @@ public class DelegateSetupServiceImpl implements DelegateSetupService {
       groupDelegates = emptyList();
     }
 
+    List<String> delegateTokensNameList = new ArrayList<>();
+    groupDelegates.forEach(delegate -> delegateTokensNameList.add(delegate.getDelegateTokenName()));
+    Map<String, Boolean> delegateTokenStatusMap = isDelegateTokenActive(accountId, delegateTokensNameList);
+
     String delegateType = delegateGroup != null ? delegateGroup.getDelegateType() : null;
     String groupName = delegateGroup != null ? delegateGroup.getName() : null;
     String delegateDescription = delegateGroup != null ? delegateGroup.getDescription() : null;
@@ -396,23 +413,41 @@ public class DelegateSetupServiceImpl implements DelegateSetupService {
     String delegateGroupIdentifier = delegateGroup != null ? delegateGroup.getIdentifier() : null;
     Set<String> groupCustomSelectors = delegateGroup != null ? delegateGroup.getTags() : null;
 
+    // pick any connected delegateId to check whether grpc is active or not
+    AtomicReference<String> delegateId = new AtomicReference<>();
+
     long lastHeartBeat = groupDelegates.stream().mapToLong(Delegate::getLastHeartBeat).max().orElse(0);
     AtomicInteger countOfDelegatesConnected = new AtomicInteger();
+    AtomicBoolean isDelegateTokenActiveAtGroupLevel = new AtomicBoolean(true);
     List<DelegateGroupListing.DelegateInner> delegateInstanceDetails =
         groupDelegates.stream()
             .map(delegate -> {
-              countOfDelegatesConnected.addAndGet(
-                  (delegate.getLastHeartBeat() > System.currentTimeMillis() - HEARTBEAT_EXPIRY_TIME.toMillis()) ? 1
-                                                                                                                : 0);
+              boolean isDelegateConnected =
+                  delegate.getLastHeartBeat() > System.currentTimeMillis() - HEARTBEAT_EXPIRY_TIME.toMillis();
+              countOfDelegatesConnected.addAndGet(isDelegateConnected ? 1 : 0);
+
+              String delegateTokenName = delegate.getDelegateTokenName();
+
+              // TODO: Arpit, fetch the tokenStatus from cache instead of db
+              boolean isTokenActive = true;
+              if (delegateTokenName != null && delegateTokenStatusMap.containsKey(delegateTokenName)) {
+                isTokenActive = delegateTokenStatusMap.get(delegateTokenName);
+              }
+              // if delegate token is not active, then token at group level will not be active
+              isDelegateTokenActiveAtGroupLevel.compareAndSet(!isTokenActive, false);
+              if (isDelegateConnected) {
+                delegateId.set(delegate.getUuid());
+              }
               return DelegateGroupListing.DelegateInner.builder()
                   .uuid(delegate.getUuid())
                   .lastHeartbeat(delegate.getLastHeartBeat())
-                  .activelyConnected(
-                      delegate.getLastHeartBeat() > System.currentTimeMillis() - HEARTBEAT_EXPIRY_TIME.toMillis())
+                  .activelyConnected(isDelegateConnected)
                   .hostName(delegate.getHostName())
+                  .tokenActive(isTokenActive)
                   .build();
             })
             .collect(Collectors.toList());
+
     String connectivityStatus = GROUP_STATUS_PARTIALLY_CONNECTED;
     if (countOfDelegatesConnected.get() == 0) {
       connectivityStatus = GROUP_STATUS_DISCONNECTED;
@@ -433,8 +468,17 @@ public class DelegateSetupServiceImpl implements DelegateSetupService {
         .lastHeartBeat(lastHeartBeat)
         .delegateInstanceDetails(delegateInstanceDetails)
         .connectivityStatus(connectivityStatus)
+        .grpcActive(delegateId.get() == null || isGrpcActive(accountId, delegateId.get()))
         .activelyConnected(!connectivityStatus.equals(GROUP_STATUS_DISCONNECTED))
+        .tokenActive(isDelegateTokenActiveAtGroupLevel.get())
         .build();
+  }
+
+  private boolean isGrpcActive(String accountId, String delegateId) {
+    return delegateConnectionDao.list(accountId, delegateId)
+        .stream()
+        .anyMatch(delegateConnection
+            -> delegateConnection.getLastGrpcHeartbeat() > System.currentTimeMillis() - MAX_GRPC_HB_TIMEOUT);
   }
 
   @Override
@@ -524,5 +568,50 @@ public class DelegateSetupServiceImpl implements DelegateSetupService {
         .stream()
         .map(key -> (String) key.getId())
         .collect(toList());
+  }
+
+  @Override
+  public DelegateGroup updateDelegateGroupTags(
+      String accountId, String orgId, String projectId, String delegateGroupName, List<String> tags) {
+    DelegateEntityOwner owner = DelegateEntityOwnerHelper.buildOwner(orgId, projectId);
+
+    Query<DelegateGroup> updateQuery = persistence.createQuery(DelegateGroup.class)
+                                           .filter(DelegateGroupKeys.accountId, accountId)
+                                           .filter(DelegateGroupKeys.name, delegateGroupName)
+                                           .filter(DelegateGroupKeys.owner, owner)
+                                           .filter(DelegateGroupKeys.ng, true);
+
+    final UpdateOperations<DelegateGroup> updateOperations = persistence.createUpdateOperations(DelegateGroup.class);
+    setUnset(updateOperations, DelegateGroupKeys.tags, tags);
+
+    DelegateGroup updatedDelegateGroup =
+        persistence.findAndModify(updateQuery, updateOperations, HPersistence.returnNewOptions);
+    delegateCache.invalidateDelegateGroupCacheByIdentifier(accountId, owner, delegateGroupName);
+
+    outboxService.save(
+        DelegateGroupUpsertEvent.builder()
+            .accountIdentifier(accountId)
+            .orgIdentifier(orgId)
+            .projectIdentifier(projectId)
+            .delegateGroupId(updatedDelegateGroup.getUuid())
+            .delegateSetupDetails(DelegateSetupDetails.builder().identifier(updatedDelegateGroup.getUuid()).build())
+            .build());
+    log.info("Updating tags for delegate group: {} tags:{}", delegateGroupName, String.valueOf(tags.toString()));
+    return updatedDelegateGroup;
+  }
+
+  private Map<String, Boolean> isDelegateTokenActive(String accountId, List<String> tokensNameList) {
+    Map<String, Boolean> delegateTokenStatusMap = new HashMap<>();
+    List<DelegateToken> delegateTokens = persistence.createQuery(DelegateToken.class)
+                                             .filter(DelegateTokenKeys.accountId, accountId)
+                                             .field(DelegateTokenKeys.name)
+                                             .in(tokensNameList)
+                                             .project(DelegateTokenKeys.name, true)
+                                             .project(DelegateTokenKeys.status, true)
+                                             .asList();
+    delegateTokens.forEach(delegateToken
+        -> delegateTokenStatusMap.put(
+            delegateToken.getName(), DelegateTokenStatus.ACTIVE.equals(delegateToken.getStatus())));
+    return delegateTokenStatusMap;
   }
 }

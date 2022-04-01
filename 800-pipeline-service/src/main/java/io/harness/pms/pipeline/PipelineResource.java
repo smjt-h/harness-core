@@ -23,6 +23,7 @@ import io.harness.accesscontrol.ResourceIdentifier;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.ExecutionNode;
 import io.harness.engine.executions.node.NodeExecutionService;
+import io.harness.exception.EntityNotFoundException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.filter.dto.FilterPropertiesDTO;
 import io.harness.git.model.ChangeType;
@@ -33,6 +34,7 @@ import io.harness.gitsync.interceptor.GitEntityUpdateInfoDTO;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.ng.core.template.TemplateMergeResponseDTO;
 import io.harness.notification.bean.NotificationRules;
 import io.harness.plancreator.steps.http.PmsAbstractStepNode;
 import io.harness.pms.annotations.PipelineServiceAuth;
@@ -106,6 +108,12 @@ import org.springframework.data.mongodb.core.query.Criteria;
       @Content(mediaType = "application/json", schema = @Schema(implementation = FailureDTO.class))
       , @Content(mediaType = "application/yaml", schema = @Schema(implementation = FailureDTO.class))
     })
+@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found",
+    content =
+    {
+      @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class))
+      , @Content(mediaType = "application/yaml", schema = @Schema(implementation = ErrorDTO.class))
+    })
 @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error",
     content =
     {
@@ -150,7 +158,7 @@ public class PipelineResource implements YamlSchemaResource {
   @POST
   @Path("/v2")
   @ApiOperation(value = "Create a Pipeline", nickname = "createPipelineV2")
-  @Operation(operationId = "postPipelineV2", summary = "Create a Pipeline API (V2 Version)",
+  @Operation(operationId = "postPipelineV2", summary = "Create a Pipeline API With Governance Checks",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -233,7 +241,11 @@ public class PipelineResource implements YamlSchemaResource {
           NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectId,
       @Parameter(description = PipelineResourceConstants.PIPELINE_ID_PARAM_MESSAGE, required = true) @PathParam(
           NGCommonEntityConstants.PIPELINE_KEY) @ResourceIdentifier String pipelineId,
-      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo,
+      @Parameter(
+          description =
+              "This is a boolean value. If true, returns Templates resolved Pipeline YAML in the response else returns null.")
+      @QueryParam("getTemplatesResolvedPipeline") @DefaultValue("false") boolean getTemplatesResolvedPipeline) {
     log.info(String.format("Retrieving pipeline with identifier %s in project %s, org %s, account %s", pipelineId,
         projectId, orgId, accountId));
 
@@ -245,8 +257,20 @@ public class PipelineResource implements YamlSchemaResource {
 
     PMSPipelineResponseDTO pipeline = PMSPipelineDtoMapper.writePipelineDto(pipelineEntity.orElseThrow(
         ()
-            -> new InvalidRequestException(
+            -> new EntityNotFoundException(
                 String.format("Pipeline with the given ID: %s does not exist or has been deleted", pipelineId))));
+
+    if (getTemplatesResolvedPipeline) {
+      try {
+        String templateResolvedPipelineYaml = "";
+        TemplateMergeResponseDTO templateMergeResponseDTO =
+            pipelineTemplateHelper.resolveTemplateRefsInPipeline(pipelineEntity.get());
+        templateResolvedPipelineYaml = templateMergeResponseDTO.getMergedPipelineYaml();
+        pipeline.setResolvedTemplatesPipelineYaml(templateResolvedPipelineYaml);
+      } catch (Exception e) {
+        log.info("Cannot get resolved templates pipeline YAML");
+      }
+    }
 
     return ResponseDTO.newResponse(version, pipeline);
   }
@@ -290,7 +314,7 @@ public class PipelineResource implements YamlSchemaResource {
   @PUT
   @Path("/v2/{pipelineIdentifier}")
   @ApiOperation(value = "Update a Pipeline", nickname = "putPipelineV2")
-  @Operation(operationId = "updatePipelineV2", summary = "Updates a Pipeline by identifier (V2 Version)",
+  @Operation(operationId = "updatePipelineV2", summary = "Updates a Pipeline by identifier with Governance checks",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -431,7 +455,7 @@ public class PipelineResource implements YamlSchemaResource {
     PMSPipelineSummaryResponseDTO pipelineSummary = PMSPipelineDtoMapper.preparePipelineSummary(
         pmsPipelineService.get(accountId, orgId, projectId, pipelineId, false)
             .orElseThrow(()
-                             -> new InvalidRequestException(String.format(
+                             -> new EntityNotFoundException(String.format(
                                  "Pipeline with the given ID: %s does not exist or has been deleted", pipelineId))));
 
     return ResponseDTO.newResponse(pipelineSummary);
@@ -481,6 +505,7 @@ public class PipelineResource implements YamlSchemaResource {
   @GET
   @Path("/notification")
   @ApiOperation(value = "Get Notification Schema", nickname = "getNotificationSchema")
+  @Hidden
   public ResponseDTO<NotificationRules> getNotificationSchema() {
     return ResponseDTO.newResponse(NotificationRules.builder().build());
   }
@@ -547,6 +572,7 @@ public class PipelineResource implements YamlSchemaResource {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(responseCode = "default", description = "Refresh the feature flag cache")
       })
+  @Hidden
   public ResponseDTO<Boolean>
   refreshFFCache(@NotNull @Parameter(description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE,
       required = true) @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountId) {
@@ -611,7 +637,7 @@ public class PipelineResource implements YamlSchemaResource {
       pmsPipelineService.validatePipelineYamlAndSetTemplateRefIfAny(pipelineEntity, false);
       return ResponseDTO.newResponse(pipelineEntity.getIdentifier());
     } else {
-      throw new InvalidRequestException(
+      throw new EntityNotFoundException(
           String.format("Pipeline with the given ID: %s does not exist or has been deleted", pipelineId));
     }
   }

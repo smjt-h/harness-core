@@ -11,7 +11,7 @@ import static io.harness.NGConstants.HARNESS_BLUE;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.resourcegroup.remote.dto.ResourceGroupDTO;
+import io.harness.resourcegroup.v1.remote.dto.ResourceGroupDTO;
 
 import lombok.experimental.UtilityClass;
 
@@ -22,7 +22,6 @@ public class ResourceGroupConfigMapper {
     ResourceGroupDTO dto = ResourceGroupDTO.builder()
                                .identifier(config.getIdentifier())
                                .name(config.getName())
-                               .fullScopeSelected(config.isFullScopeSelected())
                                .tags(config.getTags())
                                .resourceSelectors(config.getResourceSelectors())
                                .description(config.getDescription())
@@ -36,7 +35,6 @@ public class ResourceGroupConfigMapper {
     return ResourceGroupConfig.builder()
         .identifier(dto.getIdentifier())
         .name(dto.getName())
-        .fullScopeSelected(dto.isFullScopeSelected())
         .tags(dto.getTags())
         .resourceSelectors(dto.getResourceSelectors())
         .allowedScopeLevels(dto.getAllowedScopeLevels())

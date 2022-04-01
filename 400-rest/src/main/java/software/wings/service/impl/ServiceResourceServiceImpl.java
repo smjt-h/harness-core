@@ -1138,6 +1138,27 @@ public class ServiceResourceServiceImpl implements ServiceResourceService, DataP
   }
 
   @Override
+  public Map<String, String> getServiceNamesWithAccountId(String accountId, @Nonnull Set<String> serviceIds) {
+    if (isEmpty(serviceIds)) {
+      return Collections.emptyMap();
+    }
+    List<Service> serviceList = wingsPersistence.createQuery(Service.class)
+                                    .field(ServiceKeys.accountId)
+                                    .equal(accountId)
+                                    .field(ServiceKeys.uuid)
+                                    .in(serviceIds)
+                                    .project(ServiceKeys.name, true)
+                                    .project(ServiceKeys.uuid, true)
+                                    .asList();
+
+    Map<String, String> mapServiceIdToServiceName = new HashMap<>();
+    for (Service service : serviceList) {
+      mapServiceIdToServiceName.put(service.getUuid(), service.getName());
+    }
+    return mapServiceIdToServiceName;
+  }
+
+  @Override
   public Service getServiceByName(String appId, String serviceName) {
     return getServiceByName(appId, serviceName, true);
   }
@@ -2914,6 +2935,10 @@ public class ServiceResourceServiceImpl implements ServiceResourceService, DataP
 
   private HelmVersion getHelmVersionWithDefault(Service service) {
     if (service.getHelmVersion() != null) {
+      if (service.getHelmVersion() == HelmVersion.V3
+          && featureFlagService.isEnabled(FeatureName.HELM_VERSION_3_8_0, service.getAccountId())) {
+        return HelmVersion.V380;
+      }
       return service.getHelmVersion();
     } else {
       return getDefaultHelmVersion(service.getDeploymentType());

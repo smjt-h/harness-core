@@ -7,6 +7,7 @@
 
 package io.harness.gitsync.core.impl;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.SYNCED;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.SYNCING;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.UNSYNCED;
@@ -35,6 +36,7 @@ import io.harness.gitsync.gitsyncerror.service.GitSyncErrorService;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.util.Arrays;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,7 +95,7 @@ public class BranchSyncEventYamlChangeSetHandler implements YamlChangeSetHandler
       log.info("Starting branch sync for the branch [{}]", branch);
       GitToHarnessProcessMsvcStepResponse gitToHarnessProcessMsvcStepResponse =
           gitBranchSyncService.processBranchSyncEvent(yamlGitConfigDTOList.get(0), yamlChangeSetDTO.getBranch(),
-              yamlChangeSetDTO.getAccountId(), branchSyncMetadata.getFileToBeExcluded(),
+              yamlChangeSetDTO.getAccountId(), getFilesToBeExcluded(branchSyncMetadata),
               yamlChangeSetDTO.getChangesetId(), gitToHarnessProgressRecord.getUuid());
       if (gitToHarnessProcessMsvcStepResponse.getGitToHarnessProgressStatus().isSuccessStatus()) {
         gitBranchService.updateBranchSyncStatus(yamlChangeSetDTO.getAccountId(), repoURL, branch, SYNCED);
@@ -108,7 +110,7 @@ public class BranchSyncEventYamlChangeSetHandler implements YamlChangeSetHandler
     } catch (Exception ex) {
       log.error("Error encountered while syncing the branch [{}]", branch, ex);
       String gitConnectivityErrorMessage = GitConnectivityExceptionHelper.getErrorMessage(ex);
-      if (!gitConnectivityErrorMessage.isEmpty()) {
+      if (isNotEmpty(gitConnectivityErrorMessage)) {
         recordConnectivityErrors(accountIdentifier, repoURL, gitConnectivityErrorMessage);
       }
       gitBranchService.updateBranchSyncStatus(yamlChangeSetDTO.getAccountId(), repoURL, branch, SYNCED);
@@ -120,6 +122,13 @@ public class BranchSyncEventYamlChangeSetHandler implements YamlChangeSetHandler
           gitToHarnessProgressRecord.getUuid(), GitToHarnessProgressStatus.ERROR);
       return YamlChangeSetStatus.FAILED_WITH_RETRY;
     }
+  }
+
+  private List<String> getFilesToBeExcluded(BranchSyncMetadata branchSyncMetadata) {
+    if (isNotEmpty(branchSyncMetadata.getFileToBeExcluded())) {
+      return Arrays.asList(branchSyncMetadata.getFileToBeExcluded());
+    }
+    return branchSyncMetadata.getFilesToBeExcluded();
   }
 
   private void recordConnectivityErrors(String accountId, String repo, String errorMessage) {

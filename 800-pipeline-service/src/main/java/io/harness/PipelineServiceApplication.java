@@ -124,6 +124,7 @@ import io.harness.pms.sdk.execution.events.orchestrationevent.OrchestrationEvent
 import io.harness.pms.sdk.execution.events.plan.CreatePartialPlanRedisConsumer;
 import io.harness.pms.sdk.execution.events.progress.ProgressEventRedisConsumer;
 import io.harness.pms.serializer.jackson.PmsBeansJacksonModule;
+import io.harness.pms.tags.OrchestrationEndTagsResolveHandler;
 import io.harness.pms.triggers.scheduled.ScheduledTriggerHandler;
 import io.harness.pms.triggers.webhook.service.TriggerWebhookExecutionService;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
@@ -147,12 +148,14 @@ import io.harness.steps.barriers.event.BarrierPositionHelperEventHandler;
 import io.harness.steps.barriers.service.BarrierServiceImpl;
 import io.harness.steps.resourcerestraint.ResourceRestraintInitializer;
 import io.harness.steps.resourcerestraint.service.ResourceRestraintPersistenceMonitor;
+import io.harness.telemetry.TelemetryReporter;
+import io.harness.telemetry.filter.APIAuthTelemetryFilter;
+import io.harness.telemetry.filter.APIAuthTelemetryResponseFilter;
 import io.harness.threading.ExecutorModule;
 import io.harness.threading.ThreadPool;
 import io.harness.timeout.TimeoutEngine;
 import io.harness.token.remote.TokenClient;
 import io.harness.tracing.MongoRedisTracer;
-import io.harness.utils.NGObjectMapperHelper;
 import io.harness.waiter.NotifierScheduledExecutorService;
 import io.harness.waiter.NotifyEvent;
 import io.harness.waiter.NotifyQueuePublisherRegister;
@@ -188,6 +191,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import io.serializer.HObjectMapper;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 import io.swagger.v3.oas.integration.SwaggerConfiguration;
 import io.swagger.v3.oas.integration.api.OpenAPIConfiguration;
@@ -264,7 +268,7 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
   }
 
   public static void configureObjectMapper(final ObjectMapper mapper) {
-    NGObjectMapperHelper.configureNGObjectMapper(mapper);
+    HObjectMapper.configureObjectMapperForNG(mapper);
     mapper.registerModule(new PmsBeansJacksonModule());
     mapper.registerModule(new PipelineServiceJacksonModule());
   }
@@ -330,8 +334,9 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     registerJerseyProviders(environment, injector);
     registerManagedBeans(environment, injector);
     registerAuthFilters(appConfig, environment, injector);
+    registerAPIAuthTelemetryFilters(appConfig, environment, injector);
     registerHealthCheck(environment, injector);
-    registerObservers(injector);
+    registerObservers(appConfig, injector);
     registerRequestContextFilter(environment);
     registerOasResource(appConfig, environment, injector);
     intializeSdkInstanceCacheSync(injector);
@@ -429,7 +434,7 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
         .scannerClass("io.swagger.v3.jaxrs2.integration.JaxrsAnnotationScanner");
   }
 
-  private static void registerObservers(Injector injector) {
+  private static void registerObservers(PipelineServiceConfiguration appConfig, Injector injector) {
     PmsGraphStepDetailsServiceImpl pmsGraphStepDetailsService =
         (PmsGraphStepDetailsServiceImpl) injector.getInstance(Key.get(PmsGraphStepDetailsService.class));
     pmsGraphStepDetailsService.getStepDetailsUpdateObserverSubject().register(
@@ -458,21 +463,22 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     nodeExecutionService.getStepStatusUpdateSubject().register(injector.getInstance(Key.get(BarrierDropper.class)));
     nodeExecutionService.getStepStatusUpdateSubject().register(
         injector.getInstance(Key.get(NodeExecutionStatusUpdateEventHandler.class)));
-    nodeExecutionService.getStepStatusUpdateSubject().register(
-        injector.getInstance(Key.get(OrchestrationLogPublisher.class)));
 
     nodeExecutionService.getStepStatusUpdateSubject().register(
         injector.getInstance(Key.get(TimeoutInstanceRemover.class)));
 
-    // NodeUpdateObservers
-    nodeExecutionService.getNodeUpdateObserverSubject().register(
-        injector.getInstance(Key.get(OrchestrationLogPublisher.class)));
+    if (!appConfig.getOrchestrationLogConfiguration().isReduceOrchestrationLog()) {
+      nodeExecutionService.getNodeUpdateObserverSubject().register(
+          injector.getInstance(Key.get(OrchestrationLogPublisher.class)));
+      nodeExecutionService.getNodeExecutionStartSubject().register(
+          injector.getInstance(Key.get(OrchestrationLogPublisher.class)));
+      nodeExecutionService.getStepStatusUpdateSubject().register(
+          injector.getInstance(Key.get(OrchestrationLogPublisher.class)));
+    }
 
     // NodeExecutionStartObserver
     nodeExecutionService.getNodeExecutionStartSubject().register(
         injector.getInstance(Key.get(StageStartNotificationHandler.class)));
-    nodeExecutionService.getNodeExecutionStartSubject().register(
-        injector.getInstance(Key.get(OrchestrationLogPublisher.class)));
 
     PlanStatusEventEmitterHandler planStatusEventEmitterHandler =
         injector.getInstance(Key.get(PlanStatusEventEmitterHandler.class));
@@ -511,6 +517,8 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     planExecutionStrategy.getOrchestrationEndSubject().register(
         injector.getInstance(Key.get(InstrumentationPipelineEndEventHandler.class)));
     planExecutionStrategy.getOrchestrationEndSubject().register(
+        injector.getInstance(Key.get(OrchestrationEndTagsResolveHandler.class)));
+    planExecutionStrategy.getOrchestrationEndSubject().register(
         injector.getInstance(Key.get(PipelineStatusUpdateEventHandler.class)));
 
     HMongoTemplate mongoTemplate = (HMongoTemplate) injector.getInstance(MongoTemplate.class);
@@ -538,6 +546,25 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     serviceToSecretMapping.put(AuthorizationServiceHeader.DEFAULT.getServiceId(), config.getNgManagerServiceSecret());
     environment.jersey().register(new NextGenAuthenticationFilter(predicate, null, serviceToSecretMapping,
         injector.getInstance(Key.get(TokenClient.class, Names.named("PRIVILEGED")))));
+  }
+
+  /**------------------API auth telemetry -----------------------------------------------*/
+  private void registerAPIAuthTelemetryFilters(
+      PipelineServiceConfiguration configuration, Environment environment, Injector injector) {
+    if (configuration.getSegmentConfiguration() != null && configuration.getSegmentConfiguration().isEnabled()) {
+      registerAPIAuthTelemetryFilter(environment, injector);
+      registerAPIAuthTelemetryResponseFilter(environment, injector);
+    }
+  }
+
+  private void registerAPIAuthTelemetryFilter(Environment environment, Injector injector) {
+    TelemetryReporter telemetryReporter = injector.getInstance(TelemetryReporter.class);
+    environment.jersey().register(new APIAuthTelemetryFilter(telemetryReporter));
+  }
+
+  private void registerAPIAuthTelemetryResponseFilter(Environment environment, Injector injector) {
+    TelemetryReporter telemetryReporter = injector.getInstance(TelemetryReporter.class);
+    environment.jersey().register(new APIAuthTelemetryResponseFilter(telemetryReporter));
   }
 
   /**------------------Health Check -----------------------------------------------*/

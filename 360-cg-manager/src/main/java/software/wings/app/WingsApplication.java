@@ -17,6 +17,7 @@ import static io.harness.eventsframework.EventsFrameworkConstants.ENTITY_CRUD;
 import static io.harness.lock.mongo.MongoPersistentLocker.LOCKS_STORE;
 import static io.harness.logging.LoggingInitializer.initializeLogging;
 import static io.harness.microservice.NotifyEngineTarget.GENERAL;
+import static io.harness.persistence.HPersistence.ANALYTICS_STORE_NAME;
 import static io.harness.time.DurationUtils.durationTillDayTime;
 import static io.harness.waiter.OrchestrationNotifyEventListener.ORCHESTRATION;
 
@@ -129,6 +130,7 @@ import io.harness.perpetualtask.instancesync.AzureVMSSInstanceSyncPerpetualTaskC
 import io.harness.perpetualtask.instancesync.AzureWebAppInstanceSyncPerpetualTaskClient;
 import io.harness.perpetualtask.instancesync.ContainerInstanceSyncPerpetualTaskClient;
 import io.harness.perpetualtask.instancesync.PcfInstanceSyncPerpetualTaskClient;
+import io.harness.perpetualtask.instancesync.PdcPerpetualTaskServiceClient;
 import io.harness.perpetualtask.instancesync.SpotinstAmiInstanceSyncPerpetualTaskClient;
 import io.harness.perpetualtask.internal.PerpetualTaskRecordHandler;
 import io.harness.perpetualtask.k8s.watch.K8sWatchPerpetualTaskServiceClient;
@@ -294,6 +296,7 @@ import software.wings.yaml.gitSync.GitChangeSetRunnable;
 import software.wings.yaml.gitSync.GitSyncEntitiesExpiryHandler;
 
 import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.Annotated;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
@@ -431,6 +434,7 @@ public class WingsApplication extends Application<MainConfiguration> {
   }
 
   public static void configureObjectMapper(final ObjectMapper mapper) {
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     mapper.addMixIn(AssetsConfiguration.class, AssetsConfigurationMixin.class);
     final AnnotationAwareJsonSubtypeResolver subtypeResolver =
         AnnotationAwareJsonSubtypeResolver.newInstance(mapper.getSubtypeResolver());
@@ -661,6 +665,7 @@ public class WingsApplication extends Application<MainConfiguration> {
     }
 
     registerStores(configuration, injector);
+    registerDataStores(injector);
     if (configuration.getMongoConnectionFactory().getTraceMode() == TraceMode.ENABLED) {
       registerQueryTracer(injector);
     }
@@ -1009,6 +1014,8 @@ public class WingsApplication extends Application<MainConfiguration> {
     clientRegistry.registerClient(
         PerpetualTaskType.AWS_SSH_INSTANCE_SYNC, injector.getInstance(AwsSshPerpetualTaskServiceClient.class));
     clientRegistry.registerClient(
+        PerpetualTaskType.PDC_INSTANCE_SYNC, injector.getInstance(PdcPerpetualTaskServiceClient.class));
+    clientRegistry.registerClient(
         PerpetualTaskType.AWS_AMI_INSTANCE_SYNC, injector.getInstance(AwsAmiInstanceSyncPerpetualTaskClient.class));
     clientRegistry.registerClient(PerpetualTaskType.AWS_CODE_DEPLOY_INSTANCE_SYNC,
         injector.getInstance(AwsCodeDeployInstanceSyncPerpetualTaskClient.class));
@@ -1101,6 +1108,13 @@ public class WingsApplication extends Application<MainConfiguration> {
         && !configuration.getEventsMongo().getUri().equals(configuration.getMongoConnectionFactory().getUri())) {
       persistence.register(Store.builder().name("events").build(), configuration.getEventsMongo().getUri());
     }
+  }
+
+  private void registerDataStores(Injector injector) {
+    AdvancedDatastore analyticsDataStore =
+        injector.getInstance(Key.get(AdvancedDatastore.class, Names.named("analyticsDatabase")));
+    final HPersistence persistence = injector.getInstance(HPersistence.class);
+    persistence.registerDatastore(ANALYTICS_STORE_NAME, analyticsDataStore);
   }
 
   private void registerAuditResponseFilter(Environment environment, Injector injector) {
