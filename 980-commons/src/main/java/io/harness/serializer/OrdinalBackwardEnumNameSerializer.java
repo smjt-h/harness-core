@@ -41,8 +41,7 @@ public class OrdinalBackwardEnumNameSerializer extends Serializer<Enum> {
       if (ordinal < 0 || ordinal > enumConstants.length - 1) {
         throw new KryoException("Invalid ordinal for enum \"" + type.getName() + "\": " + ordinal);
       }
-      Object constant = enumConstants[ordinal];
-      return (Enum) constant;
+      return (Enum) enumConstants[ordinal];
     } catch (Exception ordinalException) {
       String name = kryo.readObject(input, String.class, stringSerializer);
       try {
