@@ -81,6 +81,7 @@ public class HealthSourceDTOTest extends CvNextGenTestBase {
         .envIdentifier(builderFactory.getContext().getEnvIdentifier())
         .identifier(monitoringServiceIdentifier + "/" + healthSourceIdentifier)
         .monitoringSourceName(healthSourceIdentifier)
+        .healthSourceIdentifier(healthSourceIdentifier)
         .metricPack(
             MetricPack.builder().identifier(CVNextGenConstants.CUSTOM_PACK_IDENTIFIER).dataCollectionDsl("dsl").build())
         .applicationName(generateUuid())

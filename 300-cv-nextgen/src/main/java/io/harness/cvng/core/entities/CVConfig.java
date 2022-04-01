@@ -129,7 +129,10 @@ public abstract class CVConfig
   }
 
   public String getFullyQualifiedIdentifier() {
-    return identifier;
+    if (fullyQualifiedIdentifier.isEmpty()) {
+      return identifier;
+    }
+    return fullyQualifiedIdentifier;
   }
 
   public abstract boolean isSLIEnabled();

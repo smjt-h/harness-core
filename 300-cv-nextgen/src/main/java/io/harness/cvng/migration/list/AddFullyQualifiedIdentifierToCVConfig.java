@@ -9,6 +9,7 @@ package io.harness.cvng.migration.list;
 
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.CVConfig.CVConfigKeys;
+import io.harness.cvng.core.services.api.monitoredService.HealthSourceService;
 import io.harness.cvng.migration.CVNGMigration;
 import io.harness.cvng.migration.beans.ChecklistItem;
 import io.harness.persistence.HIterator;
@@ -33,7 +34,9 @@ public class AddFullyQualifiedIdentifierToCVConfig implements CVNGMigration {
         CVConfig cvConfig = iterator.next();
         UpdateResults updateResults = hPersistence.update(cvConfig,
             hPersistence.createUpdateOperations(CVConfig.class)
-                .set(CVConfigKeys.fullyQualifiedIdentifier, cvConfig.getIdentifier()));
+                .set(CVConfigKeys.fullyQualifiedIdentifier, cvConfig.getIdentifier())
+                .set(CVConfigKeys.healthSourceIdentifier,
+                    HealthSourceService.getNameSpaceAndIdentifier(cvConfig.getIdentifier()).getValue()));
         log.info("Updated CVConfig {}", updateResults);
       }
     }
