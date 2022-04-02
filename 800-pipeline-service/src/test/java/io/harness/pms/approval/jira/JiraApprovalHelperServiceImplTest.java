@@ -31,6 +31,7 @@ import io.harness.engine.pms.tasks.NgDelegate2TaskExecutor;
 import io.harness.exception.HarnessJiraException;
 import io.harness.logstreaming.ILogStreamingStepClient;
 import io.harness.logstreaming.LogStreamingStepClientFactory;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.gitsync.PmsGitSyncHelper;
 import io.harness.pms.yaml.ParameterField;
@@ -138,7 +139,7 @@ public class JiraApprovalHelperServiceImplTest extends CategoryTest {
     JiraApprovalInstance instance =
         JiraApprovalInstance.builder()
             .issueKey("issueKey")
-            .delegateSelectors(ParameterField.<List<String>>builder().build())
+            .delegateSelectors(ParameterField.<List<TaskSelectorYaml>>builder().build())
             .connectorRef("connectorRed")
             .approvalCriteria(
                 CriteriaSpecWrapperDTO.builder().criteriaSpecDTO(KeyValuesCriteriaSpecDTO.builder().build()).build())

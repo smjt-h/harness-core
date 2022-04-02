@@ -15,6 +15,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.common.ParameterFieldHelper;
+import io.harness.delegate.TaskSelector;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.task.terraform.TFTaskType;
 import io.harness.delegate.task.terraform.TerraformCommand;
@@ -28,6 +29,7 @@ import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.UnitProgress;
 import io.harness.ng.core.EntityDetail;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.rollback.TaskExecutableWithRollbackAndRbac;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -162,9 +164,13 @@ public class TerraformDestroyStep extends TaskExecutableWithRollbackAndRbac<Terr
             .parameters(new Object[] {builder.build()})
             .build();
 
+    List<TaskSelector> taskSelectors = parameters.getDelegateSelectors() != null
+        ? TaskSelectorYaml.toTaskSelector(parameters.getDelegateSelectors().getValue())
+        : Collections.emptyList();
+
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         Collections.singletonList(TerraformCommandUnit.Destroy.name()), TaskType.TERRAFORM_TASK_NG.getDisplayName(),
-        StepUtils.getTaskSelectors(parameters.getDelegateSelectors()), stepHelper.getEnvironmentType(ambiance));
+        taskSelectors, stepHelper.getEnvironmentType(ambiance));
   }
 
   private TaskRequest obtainInheritedTask(
@@ -204,9 +210,13 @@ public class TerraformDestroyStep extends TaskExecutableWithRollbackAndRbac<Terr
             .parameters(new Object[] {builder.build()})
             .build();
 
+    List<TaskSelector> taskSelectors = parameters.getDelegateSelectors() != null
+        ? TaskSelectorYaml.toTaskSelector(parameters.getDelegateSelectors().getValue())
+        : Collections.emptyList();
+
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         Collections.singletonList(TerraformCommandUnit.Destroy.name()), TaskType.TERRAFORM_TASK_NG.getDisplayName(),
-        StepUtils.getTaskSelectors(parameters.getDelegateSelectors()), stepHelper.getEnvironmentType(ambiance));
+        taskSelectors, stepHelper.getEnvironmentType(ambiance));
   }
 
   private TaskRequest obtainLastApplyTask(
@@ -246,10 +256,13 @@ public class TerraformDestroyStep extends TaskExecutableWithRollbackAndRbac<Terr
             .timeout(StepUtils.getTimeoutMillis(stepElementParameters.getTimeout(), TerraformConstants.DEFAULT_TIMEOUT))
             .parameters(new Object[] {builder.build()})
             .build();
+    List<TaskSelector> taskSelectors = parameters.getDelegateSelectors() != null
+        ? TaskSelectorYaml.toTaskSelector(parameters.getDelegateSelectors().getValue())
+        : Collections.emptyList();
 
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         Collections.singletonList(TerraformCommandUnit.Destroy.name()), TaskType.TERRAFORM_TASK_NG.getDisplayName(),
-        StepUtils.getTaskSelectors(parameters.getDelegateSelectors()), stepHelper.getEnvironmentType(ambiance));
+        taskSelectors, stepHelper.getEnvironmentType(ambiance));
   }
 
   @Override

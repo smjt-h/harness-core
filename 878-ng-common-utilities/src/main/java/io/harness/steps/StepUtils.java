@@ -80,6 +80,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import org.apache.commons.collections4.ListUtils;
 
@@ -378,6 +379,17 @@ public class StepUtils {
       return new ArrayList<>();
     }
     return delegateSelectors.getValue();
+  }
+
+  public static List<String> getDelegateSelectorListFromTaskSelectorYaml(
+      ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
+    if (ParameterField.isNull(delegateSelectors) || delegateSelectors.getValue() == null) {
+      return new ArrayList<>();
+    }
+    return delegateSelectors.getValue()
+        .stream()
+        .map(TaskSelectorYaml::getDelegateSelectors)
+        .collect(Collectors.toList());
   }
 
   public static Status getStepStatus(CommandExecutionStatus commandExecutionStatus) {

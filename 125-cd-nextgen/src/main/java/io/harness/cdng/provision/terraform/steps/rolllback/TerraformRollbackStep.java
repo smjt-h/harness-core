@@ -30,6 +30,7 @@ import io.harness.expression.ExpressionEvaluatorUtils;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.UnitProgress;
 import io.harness.persistence.HIterator;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.rollback.TaskExecutableWithRollbackAndRbac;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -164,9 +165,11 @@ public class TerraformRollbackStep extends TaskExecutableWithRollbackAndRbac<Ter
               .parameters(new Object[] {builder.build()})
               .build();
 
-      ParameterField<List<String>> delegateSelectors = stepParametersSpec.getDelegateSelectors();
+      ParameterField<List<TaskSelectorYaml>> delegateSelectors = stepParametersSpec.getDelegateSelectors();
 
-      List<TaskSelector> taskSelectors = StepUtils.getTaskSelectors(delegateSelectors);
+      List<TaskSelector> taskSelectors = delegateSelectors != null
+          ? TaskSelectorYaml.toTaskSelector(delegateSelectors.getValue())
+          : Collections.emptyList();
 
       return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
           Collections.singletonList(TerraformCommandUnit.Rollback.name()), TaskType.TERRAFORM_TASK_NG.getDisplayName(),

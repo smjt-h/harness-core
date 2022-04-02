@@ -13,6 +13,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.common.ParameterFieldHelper;
+import io.harness.delegate.TaskSelector;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.task.terraform.TFTaskType;
 import io.harness.delegate.task.terraform.TerraformCommand;
@@ -26,6 +27,7 @@ import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.UnitProgress;
 import io.harness.ng.core.EntityDetail;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.rollback.TaskExecutableWithRollbackAndRbac;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -147,9 +149,13 @@ public class TerraformPlanStep extends TaskExecutableWithRollbackAndRbac<Terrafo
             .parameters(new Object[] {builder.build()})
             .build();
 
+    List<TaskSelector> taskSelectors = planStepParameters.getDelegateSelectors() != null
+        ? TaskSelectorYaml.toTaskSelector(planStepParameters.getDelegateSelectors().getValue())
+        : Collections.emptyList();
+
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         Collections.singletonList(TerraformCommandUnit.Plan.name()), TaskType.TERRAFORM_TASK_NG.getDisplayName(),
-        StepUtils.getTaskSelectors(planStepParameters.getDelegateSelectors()), stepHelper.getEnvironmentType(ambiance));
+        taskSelectors, stepHelper.getEnvironmentType(ambiance));
   }
 
   @Override
