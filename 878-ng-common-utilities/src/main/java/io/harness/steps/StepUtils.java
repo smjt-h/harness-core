@@ -20,7 +20,6 @@ import static java.util.stream.Collectors.toList;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EnvironmentType;
-import io.harness.beans.FeatureName;
 import io.harness.common.NGTimeConversionHelper;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.data.structure.EmptyPredicate;
@@ -41,7 +40,6 @@ import io.harness.delegate.task.TaskParameters;
 import io.harness.encryption.Scope;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
-import io.harness.ff.FeatureFlagServiceImpl;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logstreaming.LogStreamingHelper;
 import io.harness.plancreator.steps.TaskSelectorYaml;
@@ -70,7 +68,6 @@ import io.harness.tasks.Task;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
 import java.io.IOException;
@@ -88,8 +85,6 @@ import org.apache.commons.collections4.ListUtils;
 
 @OwnedBy(PIPELINE)
 public class StepUtils {
-  @Inject private static FeatureFlagServiceImpl featureFlagService;
-
   private StepUtils() {}
 
   public static final String DEFAULT_STEP_TIMEOUT = "10m";
@@ -422,10 +417,7 @@ public class StepUtils {
   }
 
   public static SpecParameters getSpecParametersWithDelegateSelector(
-      SpecParameters specParameters, PlanCreationContext ctx, String accountId) {
-    if (!featureFlagService.isEnabled(FeatureName.DELEGATE_SCOPING_NG, accountId)) {
-      return specParameters;
-    }
+      SpecParameters specParameters, PlanCreationContext ctx) {
     Field field = ReflectionUtils.getFieldByName(specParameters.getClass(), "delegateSelectors");
     if (field == null) {
       return specParameters;

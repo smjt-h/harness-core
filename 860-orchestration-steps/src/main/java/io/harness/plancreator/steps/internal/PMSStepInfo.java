@@ -44,8 +44,7 @@ public interface PMSStepInfo extends StepSpecType, WithStepElementParameters {
       PmsAbstractStepNode stepElementConfig, OnFailRollbackParameters failRollbackParameters, PlanCreationContext ctx) {
     StepElementParametersBuilder stepParametersBuilder =
         StepParametersUtils.getStepParameters(stepElementConfig, failRollbackParameters);
-    SpecParameters specParameters = StepUtils.getSpecParametersWithDelegateSelector(
-        getSpecParameters(), ctx, ctx.getMetadata().getAccountIdentifier());
+    SpecParameters specParameters = StepUtils.getSpecParametersWithDelegateSelector(getSpecParameters(), ctx);
     stepParametersBuilder.spec(specParameters);
     return stepParametersBuilder.build();
   }

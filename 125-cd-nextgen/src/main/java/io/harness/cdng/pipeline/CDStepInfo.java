@@ -48,8 +48,7 @@ public interface CDStepInfo extends StepSpecType, WithStepElementParameters {
       CdAbstractStepNode stepElementConfig, OnFailRollbackParameters failRollbackParameters, PlanCreationContext ctx) {
     StepElementParametersBuilder stepParametersBuilder =
         CdStepParametersUtils.getStepParameters(stepElementConfig, failRollbackParameters);
-    SpecParameters specParameters = StepUtils.getSpecParametersWithDelegateSelector(
-        getSpecParameters(), ctx, ctx.getMetadata().getAccountIdentifier());
+    SpecParameters specParameters = StepUtils.getSpecParametersWithDelegateSelector(getSpecParameters(), ctx);
     stepParametersBuilder.spec(specParameters);
     return stepParametersBuilder.build();
   }
