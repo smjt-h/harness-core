@@ -81,11 +81,3 @@ find . \( -iname "*.proto" -a -not -regex ".*/target/.*" \) |\
     grep -v src/main/proto/log_analysis_record.proto |\
     grep -v src/main/proto/time_series_record.proto |\
     while read file; do validate_proto "$file"; done
-
-ISSUES=`buf check lint`
-
-if [ ! -z "${ISSUES}" ]
-then
-  echo $ISSUES
-  exit 1
-fi
