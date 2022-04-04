@@ -41,14 +41,17 @@ import io.harness.pms.yaml.YamlUtils;
 import io.harness.waiter.WaitNotifyEngine;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -197,7 +200,7 @@ public class PlanCreatorMergeService {
   private PlanCreationBlobResponse createPlanForDependencies(Map<String, PlanCreatorServiceInfo> services,
       PlanCreationBlobResponse.Builder responseBuilder, YamlField fullYamlField) {
     PlanCreationBlobResponse.Builder currIterationResponseBuilder = PlanCreationBlobResponse.newBuilder();
-    CompletableFutures<PlanCreationResponse> completableFutures = new CompletableFutures<>(executor);
+    CompletableFutures<List<PlanCreationResponse>> completableFutures = new CompletableFutures<>(executor);
     PlanCreationContextValue metadata = responseBuilder.getContextMap().get("metadata");
     try (AutoLogContext ignore = PlanCreatorUtils.autoLogContext(metadata.getMetadata(),
              metadata.getAccountIdentifier(), metadata.getOrgIdentifier(), metadata.getProjectIdentifier())) {
@@ -212,7 +215,11 @@ public class PlanCreatorMergeService {
       // Collecting results for all completable futures at one go, thus it will wait till all dependencies are resolved.
       List<ErrorResponse> errorResponses;
       try {
-        List<PlanCreationResponse> planCreationResponses = completableFutures.allOf().get(5, TimeUnit.MINUTES);
+        List<PlanCreationResponse> planCreationResponses = completableFutures.allOf()
+                                                               .get(5, TimeUnit.MINUTES)
+                                                               .stream()
+                                                               .flatMap(List::stream)
+                                                               .collect(Collectors.toList());
         errorResponses = planCreationResponses.stream()
                              .filter(resp -> resp.getResponseCase() == PlanCreationResponse.ResponseCase.ERRORRESPONSE)
                              .map(PlanCreationResponse::getErrorResponse)
@@ -234,7 +241,7 @@ public class PlanCreatorMergeService {
 
   // Sending all dependencies in batch manner in async fashion
   private void executeCreatePlanInBatchDependency(PlanCreationBlobResponse.Builder responseBuilder,
-      CompletableFutures<PlanCreationResponse> completableFutures,
+      CompletableFutures<List<PlanCreationResponse>> completableFutures,
       Map<Map.Entry<String, PlanCreatorServiceInfo>, List<Map.Entry<String, String>>> serviceToDependencyMap) {
     for (Map.Entry<Map.Entry<String, PlanCreatorServiceInfo>, List<Map.Entry<String, String>>> serviceDependencyEntry :
         serviceToDependencyMap.entrySet()) {
@@ -294,22 +301,25 @@ public class PlanCreatorMergeService {
   }
 
   // Sending batch dependency requests for a single service in a async fashion.
-  private void executeDependenciesAsync(CompletableFutures<PlanCreationResponse> completableFutures,
+  private void executeDependenciesAsync(CompletableFutures<List<PlanCreationResponse>> completableFutures,
       Map.Entry<String, PlanCreatorServiceInfo> serviceInfo, Dependencies batchDependency,
       Map<String, PlanCreationContextValue> contextMap) {
     completableFutures.supplyAsync(() -> {
       try {
-        return serviceInfo.getValue().getPlanCreationClient().createPlan(
-            PlanCreationBlobRequest.newBuilder().setDeps(batchDependency).putAllContext(contextMap).build());
+        List<PlanCreationResponse> planCreationResponses = new ArrayList<>();
+        serviceInfo.getValue().getPlanCreationClient().createPlan(
+                PlanCreationBlobRequest.newBuilder().setDeps(batchDependency).putAllContext(contextMap).build()).forEachRemaining(p -> p!=null? planCreationResponses.add(p),);
+        return planCreationResponses;
       } catch (StatusRuntimeException ex) {
         log.error(
             String.format("Error connecting with service: [%s]. Is this service Running?", serviceInfo.getKey()), ex);
-        return PlanCreationResponse.newBuilder()
-            .setErrorResponse(
-                ErrorResponse.newBuilder()
-                    .addMessages(String.format("Error connecting with service: [%s]", serviceInfo.getKey()))
-                    .build())
-            .build();
+        return Lists.newArrayList(
+            PlanCreationResponse.newBuilder()
+                .setErrorResponse(
+                    ErrorResponse.newBuilder()
+                        .addMessages(String.format("Error connecting with service: [%s]", serviceInfo.getKey()))
+                        .build())
+                .build());
       }
     });
   }

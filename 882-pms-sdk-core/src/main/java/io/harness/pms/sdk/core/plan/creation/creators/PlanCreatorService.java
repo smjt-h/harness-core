@@ -27,6 +27,7 @@ import io.harness.pms.contracts.plan.FilterCreationBlobRequest;
 import io.harness.pms.contracts.plan.FilterCreationBlobResponse;
 import io.harness.pms.contracts.plan.FilterCreationResponse;
 import io.harness.pms.contracts.plan.PlanCreationBlobRequest;
+import io.harness.pms.contracts.plan.PlanCreationBlobResponse;
 import io.harness.pms.contracts.plan.PlanCreationContextValue;
 import io.harness.pms.contracts.plan.PlanCreationServiceGrpc.PlanCreationServiceImplBase;
 import io.harness.pms.contracts.plan.VariablesCreationBlobRequest;
@@ -36,6 +37,7 @@ import io.harness.pms.gitsync.PmsGitSyncBranchContextGuard;
 import io.harness.pms.gitsync.PmsGitSyncHelper;
 import io.harness.pms.plan.creation.PlanCreatorUtils;
 import io.harness.pms.sdk.core.pipeline.filters.FilterCreatorService;
+import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.sdk.core.plan.creation.PlanCreationResponseBlobHelper;
 import io.harness.pms.sdk.core.plan.creation.beans.MergePlanCreationResponse;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
@@ -58,6 +60,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
+import org.jooq.Merge;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 @Slf4j
@@ -93,7 +96,7 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
              metadata.getAccountIdentifier(), metadata.getOrgIdentifier(), metadata.getProjectIdentifier())) {
       try {
         MergePlanCreationResponse finalResponse =
-            createPlanForDependenciesRecursive(request.getDeps(), request.getContextMap());
+            createPlanForDependenciesRecursive(request.getDeps(), request.getContextMap(), responseObserver);
         planCreationResponse = getPlanCreationResponseFromFinalResponse(finalResponse);
       } catch (Exception ex) {
         log.error(ExceptionUtils.getMessage(ex), ex);
@@ -114,8 +117,9 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
     responseObserver.onCompleted();
   }
 
-  private MergePlanCreationResponse createPlanForDependenciesRecursive(
-      Dependencies initialDependencies, Map<String, PlanCreationContextValue> context) {
+  private MergePlanCreationResponse createPlanForDependenciesRecursive(Dependencies initialDependencies,
+      Map<String, PlanCreationContextValue> context,
+      StreamObserver<io.harness.pms.contracts.plan.PlanCreationResponse> responseObserver) {
     // TODO: Add patch version before sending the response back
     MergePlanCreationResponse finalResponse = MergePlanCreationResponse.builder().build();
     if (EmptyPredicate.isEmpty(planCreators) || EmptyPredicate.isEmpty(initialDependencies.getDependenciesMap())) {
@@ -128,7 +132,7 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
              pmsGitSyncHelper.createGitSyncBranchContextGuardFromBytes(ctx.getGitSyncBranchContext(), true)) {
       Dependencies dependencies = initialDependencies.toBuilder().build();
       while (!dependencies.getDependenciesMap().isEmpty()) {
-        dependencies = createPlanForDependencies(ctx, finalResponse, dependencies);
+        dependencies = createPlanForDependencies(ctx, finalResponse, dependencies, responseObserver);
         PlanCreatorServiceHelper.removeInitialDependencies(dependencies, initialDependencies);
       }
       log.info("[PMS_PlanCreatorService_Time] RecursiveDependencies total time took {}ms for dependencies size {}",
@@ -143,8 +147,8 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
     return finalResponse;
   }
 
-  public Dependencies createPlanForDependencies(
-      PlanCreationContext ctx, MergePlanCreationResponse finalResponse, Dependencies dependencies) {
+  public Dependencies createPlanForDependencies(PlanCreationContext ctx, MergePlanCreationResponse finalResponse,
+      Dependencies dependencies, StreamObserver<io.harness.pms.contracts.plan.PlanCreationResponse> responseObserver) {
     if (EmptyPredicate.isEmpty(dependencies.getDependenciesMap())) {
       return dependencies;
     }
@@ -164,7 +168,7 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
     dependenciesList.forEach(key -> completableFutures.supplyAsync(() -> {
       try {
         return createPlanForDependencyInternal(currentYaml, fullField.fromYamlPath(key.getValue()), ctx,
-            dependencies.getDependencyMetadataMap().get(key.getKey()));
+            dependencies.getDependencyMetadataMap().get(key.getKey()), responseObserver);
       } catch (IOException e) {
         throw new InvalidRequestException("Unable to parse the field in the path:" + key.getValue());
       }
@@ -236,8 +240,9 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
 
   // Method to create plan for single dependency
   // Dependency passed from parent to its children plan creator
-  private PlanCreationResponse createPlanForDependencyInternal(
-      String currentYaml, YamlField field, PlanCreationContext ctx, Dependency dependency) {
+  private PlanCreationResponse createPlanForDependencyInternal(String currentYaml, YamlField field,
+      PlanCreationContext ctx, Dependency dependency,
+      StreamObserver<io.harness.pms.contracts.plan.PlanCreationResponse> responseObserver) {
     String fullyQualifiedName = YamlUtils.getFullyQualifiedName(field.getNode());
     try (AutoLogContext ignore =
              PlanCreatorUtils.autoLogContext(ctx.getMetadata().getMetadata(), ctx.getMetadata().getAccountIdentifier(),
@@ -257,6 +262,16 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
           PlanCreationResponse planForField = planCreator.createPlanForField(
               PlanCreationContext.cloneWithCurrentField(ctx, field, currentYaml, dependency), obj);
           PlanCreatorServiceHelper.decorateNodesWithStageFqn(field, planForField);
+          if (planForField.getPlanNode() != null) {
+            PlanNode planNode = planForField.getPlanNode();
+            MergePlanCreationResponse mergePlanCreationResponse = MergePlanCreationResponse.builder().build();
+            mergePlanCreationResponse.addNode(planNode);
+            responseObserver.onNext(
+                io.harness.pms.contracts.plan.PlanCreationResponse.newBuilder()
+                    .setBlobResponse(planCreationResponseBlobHelper.toBlobResponse(mergePlanCreationResponse))
+                    .build());
+            planForField.setPlanNode(null);
+          }
           return planForField;
         } catch (Exception ex) {
           log.error(format("Error creating plan for node: %s", fullyQualifiedName), ex);

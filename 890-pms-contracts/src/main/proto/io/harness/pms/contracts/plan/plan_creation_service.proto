@@ -17,7 +17,7 @@ import "io/harness/pms/contracts/triggers/trigger_payload.proto";
 import "970-ng-commons/src/main/proto/io/harness/eventsframework/schemas/entity/entity_detail.proto";
 
 service PlanCreationService {
-  rpc createPlan(PlanCreationBlobRequest) returns (PlanCreationResponse);
+  rpc createPlan(PlanCreationBlobRequest) returns (stream PlanCreationResponse);
   rpc createFilter(FilterCreationBlobRequest) returns (FilterCreationResponse);
   rpc createVariablesYaml(VariablesCreationBlobRequest) returns (VariablesCreationResponse);
 }
