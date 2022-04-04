@@ -3,6 +3,7 @@ FROM ubuntu:20.04
 RUN apt-get update && \
     apt-get -y upgrade && \
     apt-get -y install curl unzip gnupg2 locales && \
+    apt-get -y install --only-upgrade openssl && \
     locale-gen en_US.UTF-8 && \
     export LANG=en_US.UTF-8 && \
     apt-get clean
