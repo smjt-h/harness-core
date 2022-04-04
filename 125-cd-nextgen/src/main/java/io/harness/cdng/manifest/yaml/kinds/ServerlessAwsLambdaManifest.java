@@ -60,8 +60,6 @@ public class ServerlessAwsLambdaManifest implements ManifestAttributes, Visitabl
   // For Visitor Framework Impl
   String metadata;
 
-  // todo: check usage of ServerlessAwsManifestVisitorHelper and ServerlessAwsManifestStepParameters
-
   @Override
   public String getKind() {
     return ManifestType.ServerlessAwsLambda;

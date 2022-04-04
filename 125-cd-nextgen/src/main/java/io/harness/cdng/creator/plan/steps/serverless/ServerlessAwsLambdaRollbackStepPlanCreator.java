@@ -52,5 +52,4 @@ public class ServerlessAwsLambdaRollbackStepPlanCreator
 
     return stepParameters;
   }
-  // todo: check function
 }

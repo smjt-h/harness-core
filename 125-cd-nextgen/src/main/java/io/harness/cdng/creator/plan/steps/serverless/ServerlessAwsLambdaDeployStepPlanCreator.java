@@ -36,5 +36,4 @@ public class ServerlessAwsLambdaDeployStepPlanCreator
       PlanCreationContext ctx, ServerlessAwsLambdaDeployStepNode stepElement) {
     return super.createPlanForField(ctx, stepElement);
   }
-  // todo: check for function getStepParameters()
 }

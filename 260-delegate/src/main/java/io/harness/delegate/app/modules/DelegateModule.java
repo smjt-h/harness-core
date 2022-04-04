@@ -213,6 +213,7 @@ import io.harness.delegate.task.scm.ScmPushTask;
 import io.harness.delegate.task.serverless.ServerlessCommandTask;
 import io.harness.delegate.task.serverless.ServerlessCommandType;
 import io.harness.delegate.task.serverless.ServerlessGitFetchTask;
+import io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaRuntimeExceptionHandler;
 import io.harness.delegate.task.servicenow.ServiceNowTaskNG;
 import io.harness.delegate.task.servicenow.ServiceNowValidationHandler;
 import io.harness.delegate.task.servicenow.connection.ServiceNowTestConnectionTaskNG;
@@ -1734,6 +1735,7 @@ public class DelegateModule extends AbstractModule {
         exception -> exceptionHandlerMapBinder.addBinding(exception).to(TerraformRuntimeExceptionHandler.class));
     KubernetesCliRuntimeExceptionHandler.exceptions().forEach(
         exception -> exceptionHandlerMapBinder.addBinding(exception).to(KubernetesCliRuntimeExceptionHandler.class));
-    // todos: add exception handler
+    ServerlessAwsLambdaRuntimeExceptionHandler.exceptions().forEach(exception
+        -> exceptionHandlerMapBinder.addBinding(exception).to(ServerlessAwsLambdaRuntimeExceptionHandler.class));
   }
 }

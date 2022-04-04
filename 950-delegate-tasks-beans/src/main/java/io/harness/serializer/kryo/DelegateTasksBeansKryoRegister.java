@@ -1199,7 +1199,5 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(ServerlessRollbackResult.class, 563528);
     kryo.register(ServerlessAwsLambdaRollbackResult.class, 563529);
     kryo.register(ServerlessInstallationCapability.class, 563530);
-
-    // todo: may need to add more classes and confirm numbers
   }
 }

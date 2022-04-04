@@ -62,7 +62,6 @@ public class InfrastructureMapper {
             .infrastructureKey(InfrastructureKey.generate(
                 service, environmentOutcome, k8sGcpInfrastructure.getInfrastructureKeyValues()))
             .build();
-      // todo: check calling of this function
       case InfrastructureKind.SERVERLESS_AWS_LAMBDA:
         ServerlessAwsLambdaInfrastructure serverlessAwsLambdaInfrastructure =
             (ServerlessAwsLambdaInfrastructure) infrastructure;

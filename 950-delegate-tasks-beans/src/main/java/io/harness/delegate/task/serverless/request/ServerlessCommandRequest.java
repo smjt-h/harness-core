@@ -89,7 +89,6 @@ public interface ServerlessCommandRequest extends TaskParameters, ExecutionCapab
       }
     }
     capabilities.add(ServerlessInstallationCapability.builder().build());
-    // todo:sls installation capability
     return capabilities;
   }
 }

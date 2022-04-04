@@ -81,7 +81,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
       throw new InvalidArgumentsException(
           Pair.of("ServerlessDeployConfig", "Must be instance of ServerlessAwsLambdaDeployConfig"));
     }
-    // todo: instance check for other configs
+
     timeoutInMillis = serverlessDeployRequest.getTimeoutIntervalInMin() * 60000;
     serverlessAwsLambdaInfraConfig =
         (ServerlessAwsLambdaInfraConfig) serverlessDeployRequest.getServerlessInfraConfig();

@@ -447,7 +447,6 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
     } else if (Pattern.matches(SERVERLESS_JSON_REGEX, manifestFilePath)) {
       return "serverless.json";
     } else {
-      // todo handle it
       throw new GeneralException("Invalid serverless file name");
     }
   }
