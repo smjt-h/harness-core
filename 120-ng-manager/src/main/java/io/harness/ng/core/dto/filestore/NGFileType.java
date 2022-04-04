@@ -7,4 +7,4 @@
 
 package io.harness.ng.core.dto.filestore;
 
-public enum NGFileType { FILE, DIRECTORY }
+public enum NGFileType { FILE, FOLDER }

@@ -23,16 +23,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonSubTypes({
-  @JsonSubTypes.Type(value = DirectoryNodeDTO.class, name = "DirectoryNode")
-  , @JsonSubTypes.Type(value = FileNodeDTO.class, name = "FileNodeDTO")
+  @JsonSubTypes.Type(value = FolderNodeDTO.class, name = "FolderNode")
+  , @JsonSubTypes.Type(value = FileNodeDTO.class, name = "FileNode")
 })
 @OwnedBy(HarnessTeam.CDP)
-@Schema(name = "NodeDTO", description = "This is the view of the file node entity defined in Harness")
-public abstract class NodeDTO {
+@Schema(name = "FileStoreNode", description = "This is the view of the file store node entity defined in Harness")
+public abstract class FileStoreNodeDTO {
   protected NGFileType type;
-  protected List<NodeDTO> children = new ArrayList<>();
+  protected List<FileStoreNodeDTO> children = new ArrayList<>();
 
-  protected NodeDTO(NGFileType type) {
+  protected FileStoreNodeDTO(NGFileType type) {
     this.type = type;
   }
 }

@@ -17,10 +17,10 @@ import io.harness.file.beans.NGBaseFile;
 import io.harness.ng.core.api.FileStoreService;
 import io.harness.ng.core.dto.filestore.FileDTO;
 import io.harness.ng.core.dto.filestore.NGFileType;
-import io.harness.ng.core.dto.filestore.node.DirectoryNodeDTO;
-import io.harness.ng.core.dto.filestore.node.NodeDTO;
+import io.harness.ng.core.dto.filestore.node.FileStoreNodeDTO;
+import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 import io.harness.ng.core.entities.NGFile;
-import io.harness.ng.core.mapper.NodeDTOMapper;
+import io.harness.ng.core.mapper.FileStoreNodeDTOMapper;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
 import io.harness.stream.BoundedInputStream;
 
@@ -29,11 +29,11 @@ import software.wings.service.intfc.FileService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 @Singleton
 @OwnedBy(CDP)
@@ -84,34 +84,36 @@ public class FileStoreServiceImpl implements FileStoreService {
     return false;
   }
 
-  public DirectoryNodeDTO list(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, DirectoryNodeDTO directoryNode) {
-    return populateDirectoryNode(directoryNode, accountIdentifier, orgIdentifier, projectIdentifier);
+  @Override
+  public FolderNodeDTO listFolderNodes(@NotNull String accountIdentifier, String orgIdentifier,
+      String projectIdentifier, @Valid FolderNodeDTO folderNode) {
+    return populateFolderNode(folderNode, accountIdentifier, orgIdentifier, projectIdentifier);
   }
 
-  private DirectoryNodeDTO populateDirectoryNode(
-      DirectoryNodeDTO directoryNode, String accountIdentifier, String orgIdentifier, String projectIdentifier) {
-    List<NodeDTO> directoryChildren = listDirectoryChildren(
-        accountIdentifier, orgIdentifier, projectIdentifier, directoryNode.getDirectoryIdentifier());
-    for (NodeDTO node : directoryChildren) {
-      directoryNode.addChild(node);
+  private FolderNodeDTO populateFolderNode(
+      FolderNodeDTO folderNode, String accountIdentifier, String orgIdentifier, String projectIdentifier) {
+    List<FileStoreNodeDTO> fileStoreNodes =
+        listFolderChildren(accountIdentifier, orgIdentifier, projectIdentifier, folderNode.getFolderIdentifier());
+    for (FileStoreNodeDTO node : fileStoreNodes) {
+      folderNode.addChild(node);
     }
-    return directoryNode;
+    return folderNode;
   }
 
-  private List<NodeDTO> listDirectoryChildren(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, String directoryIdentifier) {
-    return listFilesByParentIdentifier(accountIdentifier, orgIdentifier, projectIdentifier, directoryIdentifier)
+  private List<FileStoreNodeDTO> listFolderChildren(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String folderIdentifier) {
+    return listFilesByParentIdentifier(accountIdentifier, orgIdentifier, projectIdentifier, folderIdentifier)
         .stream()
         .filter(Objects::nonNull)
         .map(ngFile
-            -> ngFile.getType() == NGFileType.DIRECTORY ? NodeDTOMapper.getDirectoryNodeDTO(ngFile)
-                                                        : NodeDTOMapper.getFileNodeDTO(ngFile))
+            -> ngFile.getType() == NGFileType.FOLDER ? FileStoreNodeDTOMapper.getFolderNodeDTO(ngFile)
+                                                     : FileStoreNodeDTOMapper.getFileNodeDTO(ngFile))
         .collect(Collectors.toList());
   }
 
   private List<NGFile> listFilesByParentIdentifier(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String parentIdentifier) {
-    return Collections.emptyList();
+    return fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndParentIdentifier(
+        accountIdentifier, orgIdentifier, projectIdentifier, parentIdentifier);
   }
 }

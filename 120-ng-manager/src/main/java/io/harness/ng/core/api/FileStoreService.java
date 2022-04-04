@@ -8,6 +8,7 @@
 package io.harness.ng.core.api;
 
 import io.harness.ng.core.dto.filestore.FileDTO;
+import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 
 import java.io.InputStream;
 import javax.validation.Valid;
@@ -52,4 +53,16 @@ public interface FileStoreService {
    * @return whether file is successfully deleted
    */
   boolean delete(String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier);
+
+  /**
+   * Get the list of folder nodes.
+   *
+   * @param accountIdentifier the account identifier
+   * @param orgIdentifier the organization identifier
+   * @param projectIdentifier the project identifier
+   * @param folderNode the folder node for which to return the list of nodes
+   * @return the folder populated with nodes
+   */
+  FolderNodeDTO listFolderNodes(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, FolderNodeDTO folderNode);
 }

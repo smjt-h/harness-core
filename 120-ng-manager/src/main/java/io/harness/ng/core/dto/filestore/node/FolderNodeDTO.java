@@ -23,19 +23,19 @@ import lombok.Value;
 @EqualsAndHashCode(callSuper = false)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @OwnedBy(CDP)
-@Schema(name = "DirectoryNode", description = "This contains directory details")
-public class DirectoryNodeDTO extends NodeDTO {
-  @NotNull String directoryIdentifier;
-  @NotNull String directoryName;
+@Schema(name = "FolderNode", description = "This contains folder details")
+public class FolderNodeDTO extends FileStoreNodeDTO {
+  @NotNull String folderIdentifier;
+  @NotNull String folderName;
 
   @Builder
-  public DirectoryNodeDTO(String directoryIdentifier, String directoryName) {
-    super(NGFileType.DIRECTORY);
-    this.directoryIdentifier = directoryIdentifier;
-    this.directoryName = directoryName;
+  public FolderNodeDTO(String folderIdentifier, String folderName) {
+    super(NGFileType.FOLDER);
+    this.folderIdentifier = folderIdentifier;
+    this.folderName = folderName;
   }
 
-  public NodeDTO addChild(NodeDTO child) {
+  public FileStoreNodeDTO addChild(FileStoreNodeDTO child) {
     children.add(child);
     return child;
   }

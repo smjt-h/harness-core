@@ -10,20 +10,20 @@ package io.harness.ng.core.mapper;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.ng.core.dto.filestore.node.DirectoryNodeDTO;
 import io.harness.ng.core.dto.filestore.node.FileNodeDTO;
+import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 import io.harness.ng.core.entities.NGFile;
 
 import lombok.experimental.UtilityClass;
 
 @OwnedBy(CDP)
 @UtilityClass
-public class NodeDTOMapper {
+public class FileStoreNodeDTOMapper {
   public FileNodeDTO getFileNodeDTO(NGFile ngFile) {
-    return FileNodeDTO.builder().fileIdentifier(ngFile.getUuid()).fileName(ngFile.getName()).build();
+    return FileNodeDTO.builder().fileIdentifier(ngFile.getIdentifier()).fileName(ngFile.getName()).build();
   }
 
-  public DirectoryNodeDTO getDirectoryNodeDTO(NGFile ngFile) {
-    return DirectoryNodeDTO.builder().directoryIdentifier(ngFile.getUuid()).directoryName(ngFile.getName()).build();
+  public FolderNodeDTO getFolderNodeDTO(NGFile ngFile) {
+    return FolderNodeDTO.builder().folderIdentifier(ngFile.getIdentifier()).folderName(ngFile.getName()).build();
   }
 }

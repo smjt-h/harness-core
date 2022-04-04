@@ -14,8 +14,12 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.core.entities.NGFile;
 import io.harness.repositories.filestore.custom.FileStoreRepositoryCustom;
 
+import java.util.List;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 @OwnedBy(CDP)
 @HarnessRepo
-public interface FileStoreRepository extends PagingAndSortingRepository<NGFile, String>, FileStoreRepositoryCustom {}
+public interface FileStoreRepository extends PagingAndSortingRepository<NGFile, String>, FileStoreRepositoryCustom {
+  List<NGFile> findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndParentIdentifier(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String parentIdentifier);
+}

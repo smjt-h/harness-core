@@ -24,7 +24,7 @@ import lombok.Value;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @OwnedBy(CDP)
 @Schema(name = "FileNode", description = "This contains file details")
-public class FileNodeDTO extends NodeDTO {
+public class FileNodeDTO extends FileStoreNodeDTO {
   @NotNull String fileIdentifier;
   @NotNull String fileName;
 
