@@ -51,7 +51,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 @OwnedBy(HarnessTeam.CDP)
 @Singleton
 public class ServerlessAwsLambdaStepHelper implements ServerlessStepHelper {
-  @Inject private ServerlessStepCommonHelper serverlessStepCommonHelper;
+  @Inject private ServerlessStepUtils serverlessStepUtils;
 
   @Override
   public ManifestOutcome getServerlessManifestOutcome(@NotEmpty Collection<ManifestOutcome> manifestOutcomes) {
@@ -107,7 +107,7 @@ public class ServerlessAwsLambdaStepHelper implements ServerlessStepHelper {
           .manifestContent(manifestFileOverrideContent)
           .configOverridePath(getConfigOverridePath(manifestOutcome))
           .gitStoreDelegateConfig(
-              serverlessStepCommonHelper.getGitStoreDelegateConfig(ambiance, gitStoreConfig, manifestOutcome))
+              serverlessStepUtils.getGitStoreDelegateConfig(ambiance, gitStoreConfig, manifestOutcome))
           .build();
     }
     throw new UnsupportedOperationException(
@@ -144,7 +144,7 @@ public class ServerlessAwsLambdaStepHelper implements ServerlessStepHelper {
           GitFile gitFile = fetchFilesResult.getFiles().get(0);
           String filePath = getConfigOverridePath(manifestOutcome);
           if (EmptyPredicate.isEmpty(filePath)) {
-            filePath = serverlessStepCommonHelper.getManifestDefaultFileName(gitFile.getFilePath());
+            filePath = serverlessStepUtils.getManifestDefaultFileName(gitFile.getFilePath());
           }
           return Optional.of(ImmutablePair.of(filePath, gitFile.getFileContent()));
         }

@@ -32,6 +32,8 @@ import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.serverless.model.ServerlessDelegateTaskParams;
 import io.harness.shell.SshSessionConfig;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.File;
@@ -59,6 +61,7 @@ public class ServerlessTaskHelperBase {
   private static final String ARTIFACTORY_ARTIFACT_PATH = "artifactPath";
   private static final String ARTIFACTORY_ARTIFACT_NAME = "artifactName";
   private static final String ARTIFACT_FILE_NAME = "artifactFile";
+  private static final String ARTIFACT_DIR_NAME = "harnessArtifact";
 
   public LogCallback getLogCallback(ILogStreamingTaskClient logStreamingTaskClient, String commandUnitName,
       boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress) {
@@ -88,6 +91,8 @@ public class ServerlessTaskHelperBase {
       } else {
         GitConfigDTO gitConfigDTO = ScmConnectorMapper.toGitConfigDTO(gitStoreDelegateConfig.getGitConfigDTO());
         gitDecryptionHelper.decryptGitConfig(gitConfigDTO, gitStoreDelegateConfig.getEncryptedDataDetails());
+        ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+            gitConfigDTO, gitStoreDelegateConfig.getEncryptedDataDetails());
         SshSessionConfig sshSessionConfig = gitDecryptionHelper.getSSHSessionConfig(
             gitStoreDelegateConfig.getSshKeySpecDTO(), gitStoreDelegateConfig.getEncryptedDataDetails());
         ngGitService.downloadFiles(gitStoreDelegateConfig, workingDirectory, accountId, sshSessionConfig, gitConfigDTO);
@@ -114,12 +119,15 @@ public class ServerlessTaskHelperBase {
     if (serverlessArtifactConfig instanceof ServerlessArtifactoryArtifactConfig) {
       ServerlessArtifactoryArtifactConfig serverlessArtifactoryArtifactConfig =
           (ServerlessArtifactoryArtifactConfig) serverlessArtifactConfig;
-      fetchArtifactoryArtifact(serverlessArtifactoryArtifactConfig, logCallback, workingDirectory);
+      String artifactoryDirectory = Paths.get(workingDirectory, ARTIFACT_DIR_NAME).toString();
+      createDirectoryIfDoesNotExist(artifactoryDirectory);
+      waitForDirectoryToBeAccessibleOutOfProcess(artifactoryDirectory, 10);
+      fetchArtifactoryArtifact(serverlessArtifactoryArtifactConfig, logCallback, artifactoryDirectory);
     }
   }
 
   public void fetchArtifactoryArtifact(ServerlessArtifactoryArtifactConfig artifactoryArtifactConfig,
-      LogCallback logCallback, String workingDirectory) throws IOException {
+      LogCallback logCallback, String artifactoryDirectory) throws IOException {
     if (EmptyPredicate.isEmpty(artifactoryArtifactConfig.getArtifactPath())) {
       // todo: handle it
     }
@@ -127,6 +135,8 @@ public class ServerlessTaskHelperBase {
         (ArtifactoryConnectorDTO) artifactoryArtifactConfig.getConnectorDTO().getConnectorConfig();
     secretDecryptionService.decrypt(
         artifactoryConnectorDTO.getAuth().getCredentials(), artifactoryArtifactConfig.getEncryptedDataDetails());
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+        artifactoryConnectorDTO, artifactoryArtifactConfig.getEncryptedDataDetails());
     ArtifactoryConfigRequest artifactoryConfigRequest =
         artifactoryRequestMapper.toArtifactoryRequest(artifactoryConnectorDTO);
     Map<String, String> artifactMetadata = new HashMap<>();
@@ -135,7 +145,7 @@ public class ServerlessTaskHelperBase {
             .toString();
     artifactMetadata.put(ARTIFACTORY_ARTIFACT_PATH, artifactPath);
     artifactMetadata.put(ARTIFACTORY_ARTIFACT_NAME, artifactPath);
-    String artifactFilePath = Paths.get(workingDirectory, ARTIFACT_FILE_NAME).toAbsolutePath().toString();
+    String artifactFilePath = Paths.get(artifactoryDirectory, ARTIFACT_FILE_NAME).toAbsolutePath().toString();
     File artifactFile = new File(artifactFilePath);
     try (InputStream artifactInputStream = artifactoryNgService.downloadArtifacts(artifactoryConfigRequest,
              artifactoryArtifactConfig.getRepositoryName(), artifactMetadata, ARTIFACTORY_ARTIFACT_PATH,

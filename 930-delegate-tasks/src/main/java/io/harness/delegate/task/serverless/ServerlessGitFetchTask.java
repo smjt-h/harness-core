@@ -44,6 +44,8 @@ import io.harness.logging.LogLevel;
 import io.harness.secret.SecretSanitizerThreadLocal;
 import io.harness.serverless.ServerlessCommandUnitConstants;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.inject.Inject;
 import java.nio.file.NoSuchFileException;
 import java.util.Collections;
@@ -101,8 +103,10 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
           .build();
 
     } catch (Exception e) {
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
       log.error("Exception in Git Fetch Files Task", e);
-      throw new TaskNGDataException(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress), e);
+      throw new TaskNGDataException(
+          UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress), sanitizedException);
     }
   }
 
@@ -124,6 +128,8 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
     } else {
       gitConfigDTO = ScmConnectorMapper.toGitConfigDTO(gitStoreDelegateConfig.getGitConfigDTO());
       gitDecryptionHelper.decryptGitConfig(gitConfigDTO, gitStoreDelegateConfig.getEncryptedDataDetails());
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+          gitConfigDTO, gitStoreDelegateConfig.getEncryptedDataDetails());
     }
     FetchFilesResult filesResult = null;
     try {

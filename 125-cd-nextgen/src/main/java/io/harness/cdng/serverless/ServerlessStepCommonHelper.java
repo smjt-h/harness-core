@@ -12,7 +12,6 @@ import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.eraro.ErrorCode.GENERAL_ERROR;
 import static io.harness.exception.WingsException.USER;
-import static io.harness.k8s.manifest.ManifestHelper.normalizeFolderPath;
 import static io.harness.steps.StepUtils.prepareCDTaskRequest;
 
 import static java.lang.String.format;
@@ -40,7 +39,6 @@ import io.harness.data.structure.HarnessStringUtils;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
-import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.exception.TaskNGDataException;
 import io.harness.delegate.task.git.TaskStatus;
 import io.harness.delegate.task.serverless.ServerlessArtifactConfig;
@@ -87,27 +85,23 @@ import software.wings.beans.TaskType;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.validator.constraints.NotEmpty;
 
 @OwnedBy(HarnessTeam.CDP)
 @Singleton
-public class ServerlessStepCommonHelper extends CDStepHelper {
+public class ServerlessStepCommonHelper extends ServerlessStepUtils {
   @Inject private OutcomeService outcomeService;
   @Inject private EngineExpressionService engineExpressionService;
   @Inject private ServerlessEntityHelper serverlessEntityHelper;
   @Inject private KryoSerializer kryoSerializer;
   @Inject private StepHelper stepHelper;
   private static final String ARTIFACT_PATH = "<+artifact.path>";
-  private static final String SERVERLESS_YAML_REGEX = ".*serverless\\.yaml";
-  private static final String SERVERLESS_YML_REGEX = ".*serverless\\.yml";
-  private static final String SERVERLESS_JSON_REGEX = ".*serverless\\.json";
+  private static final String ARTIFACT_ACTUAL_PATH = "harnessArtifact/artifactFile";
 
   public TaskChainResponse startChainLink(
       Ambiance ambiance, StepElementParameters stepElementParameters, ServerlessStepHelper serverlessStepHelper) {
@@ -376,22 +370,12 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
         .build();
   }
 
-  public GitStoreDelegateConfig getGitStoreDelegateConfig(
-      Ambiance ambiance, GitStoreConfig gitStoreConfig, ManifestOutcome manifestOutcome) {
-    String connectorId = gitStoreConfig.getConnectorRef().getValue();
-    String validationMessage = format("Serverless manifest with Id [%s]", manifestOutcome.getIdentifier());
-    ConnectorInfoDTO connectorDTO = getConnectorDTO(connectorId, ambiance);
-    validateManifest(gitStoreConfig.getKind(), connectorDTO, validationMessage);
-    List<String> gitPaths = getFolderPathsForManifest(gitStoreConfig);
-    return getGitStoreDelegateConfig(gitStoreConfig, connectorDTO, manifestOutcome, gitPaths, ambiance);
-  }
-
   public String renderManifestContent(Ambiance ambiance, String manifestFileContent) {
     if (isEmpty(manifestFileContent)) {
       return manifestFileContent;
     }
     if (manifestFileContent.contains(ARTIFACT_PATH)) {
-      manifestFileContent = manifestFileContent.replace(ARTIFACT_PATH, "harness/artifactFile");
+      manifestFileContent = manifestFileContent.replace(ARTIFACT_PATH, ARTIFACT_ACTUAL_PATH);
     }
     return engineExpressionService.renderExpression(ambiance, manifestFileContent);
   }
@@ -424,30 +408,5 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
   private ConnectorInfoDTO getConnectorDTO(String connectorId, Ambiance ambiance) {
     NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
     return serverlessEntityHelper.getConnectorInfoDTO(connectorId, ngAccess);
-  }
-
-  private List<String> getFolderPathsForManifest(GitStoreConfig gitStoreConfig) {
-    List<String> folderPaths = new ArrayList<>();
-
-    List<String> paths = getParameterFieldValue(gitStoreConfig.getPaths());
-    if (!paths.isEmpty()) {
-      folderPaths.add(normalizeFolderPath(paths.get(0)));
-    } else {
-      folderPaths.add(normalizeFolderPath(getParameterFieldValue(gitStoreConfig.getFolderPath())));
-    }
-    return folderPaths;
-    // todo: add error handling
-  }
-
-  public String getManifestDefaultFileName(String manifestFilePath) {
-    if (Pattern.matches(SERVERLESS_YAML_REGEX, manifestFilePath)) {
-      return "serverless.yaml";
-    } else if (Pattern.matches(SERVERLESS_YML_REGEX, manifestFilePath)) {
-      return "serverless.yml";
-    } else if (Pattern.matches(SERVERLESS_JSON_REGEX, manifestFilePath)) {
-      return "serverless.json";
-    } else {
-      throw new GeneralException("Invalid serverless file name");
-    }
   }
 }
