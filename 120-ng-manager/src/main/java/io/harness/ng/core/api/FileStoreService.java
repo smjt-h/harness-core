@@ -9,6 +9,7 @@ package io.harness.ng.core.api;
 
 import io.harness.ng.core.dto.filestore.FileDTO;
 
+import java.io.InputStream;
 import javax.validation.Valid;
 
 public interface FileStoreService {
@@ -16,9 +17,10 @@ public interface FileStoreService {
    * Create file.
    *
    * @param fileDto the file DTO object
+   * @param content file content
    * @return created file DTO object
    */
-  FileDTO create(@Valid FileDTO fileDto);
+  FileDTO create(@Valid FileDTO fileDto, InputStream content);
 
   /**
    * Get a file.
@@ -35,9 +37,10 @@ public interface FileStoreService {
    * Update file.
    *
    * @param fileDto the file DTO
+   * @param content file content
    * @return updated file DTO
    */
-  FileDTO update(@Valid FileDTO fileDto);
+  FileDTO update(@Valid FileDTO fileDto, InputStream content);
 
   /**
    * Delete file.

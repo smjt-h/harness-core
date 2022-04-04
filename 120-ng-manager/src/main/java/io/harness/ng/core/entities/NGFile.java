@@ -22,6 +22,7 @@ import io.harness.ng.core.NGAccountAccess;
 import io.harness.ng.core.NGOrgAccess;
 import io.harness.ng.core.NGProjectAccess;
 import io.harness.ng.core.common.beans.NGTag;
+import io.harness.ng.core.dto.filestore.FileUsage;
 import io.harness.ng.core.dto.filestore.NGFileType;
 import io.harness.persistence.PersistentEntity;
 import io.harness.persistence.UuidAware;
@@ -66,17 +67,19 @@ public class NGFile
                  .field(NGFiles.accountIdentifier)
                  .field(NGFiles.orgIdentifier)
                  .field(NGFiles.projectIdentifier)
+                 .field(NGFiles.parentIdentifier)
                  .field(NGFiles.identifier)
-                 .field(NGFiles.type)
                  .unique(true)
                  .collation(
                      Collation.builder().locale(CollationLocale.ENGLISH).strength(CollationStrength.PRIMARY).build())
                  .build(),
             CompoundMongoIndex.builder()
-                .name("list_keys_idx")
+                .name("list_files_idx")
                 .field(NGFiles.accountIdentifier)
                 .field(NGFiles.orgIdentifier)
                 .field(NGFiles.projectIdentifier)
+                .field(NGFiles.identifier)
+                .field(NGFiles.parentIdentifier)
                 .build())
         .build();
   }
@@ -91,9 +94,12 @@ public class NGFile
 
   @EntityIdentifier String identifier;
   @NGEntityName String name;
-  @NotNull NGFileType type;
   @NotNull @Size(max = 1024) String description;
   @NotNull @Singular @Size(max = 128) List<NGTag> tags;
+  @NotEmpty String parentId;
+  @NotNull FileUsage fileUsage;
+  @NotNull NGFileType type;
+  @NotEmpty String parentIdentifier;
   @NotNull EntityType entityType;
   @NotEmpty String entityId;
 }

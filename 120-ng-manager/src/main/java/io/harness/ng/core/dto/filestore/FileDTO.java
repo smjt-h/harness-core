@@ -49,33 +49,42 @@ public class FileDTO {
   @Schema(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE)
   private String projectIdentifier;
 
-  @FormDataParam("identifier")
   @NotNull
   @EntityIdentifier
   @Schema(description = "Identifier of the File")
+  @FormDataParam("identifier")
   private String identifier;
-  @FormDataParam("name") @NotNull @NGEntityName @Schema(description = "Name of the File") private String name;
-  @FormDataParam("type") @NotNull @Schema(description = "This specifies the type of File") private NGFileType type;
-  @FormDataParam("description") @Schema(description = "Description of the File") private String description;
-  @FormDataParam("tags") @Schema(description = "Tags") private List<NGTag> tags;
-  @FormDataParam("entityType") @NotNull @Schema(description = "Content of the File") private EntityType entityType;
-  @FormDataParam("entityId") @NotEmpty @Schema(description = "Content of the File") private String entityId;
-  @FormDataParam("content") @Schema(description = "Content of the File") private InputStream content;
+
+  @NotNull @NGEntityName @Schema(description = "Name of the File") @FormDataParam("name") private String name;
+  @NotNull
+  @Schema(description = "This specifies the file usage")
+  @FormDataParam("fileUsage")
+  private FileUsage fileUsage;
+  @NotNull @Schema(description = "This specifies the type of the File") @FormDataParam("type") private NGFileType type;
+  @NotNull
+  @Schema(description = "This specifies parent identifier")
+  @FormDataParam("parentIdentifier")
+  private String parentIdentifier;
+  @Schema(description = "Description of the File") @FormDataParam("description") private String description;
+  @Schema(description = "Tags") @FormDataParam("tags") private List<NGTag> tags;
+  @NotNull @Schema(description = "Content of the File") @FormDataParam("entityType") private EntityType entityType;
+  @NotEmpty @Schema(description = "Content of the File") @FormDataParam("entityId") private String entityId;
 
   @Builder
   public FileDTO(String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier,
-      String name, NGFileType type, String description, List<NGTag> tags, EntityType entityType, String entityId,
-      InputStream content) {
+      String name, FileUsage fileUsage, NGFileType type, String parentIdentifier, String description, List<NGTag> tags,
+      EntityType entityType, String entityId) {
     this.accountIdentifier = accountIdentifier;
     this.orgIdentifier = orgIdentifier;
     this.projectIdentifier = projectIdentifier;
     this.identifier = identifier;
     this.name = name;
+    this.fileUsage = fileUsage;
     this.type = type;
+    this.parentIdentifier = parentIdentifier;
     this.description = description;
     this.tags = tags;
     this.entityType = entityType;
     this.entityId = entityId;
-    this.content = content;
   }
 }
