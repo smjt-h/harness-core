@@ -12,7 +12,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.manifest.yaml.ManifestOutcome;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.serverless.ServerlessDeployResult;
-import io.harness.delegate.beans.serverless.ServerlessRollbackResult;
 import io.harness.delegate.task.serverless.ServerlessDeployConfig;
 import io.harness.delegate.task.serverless.ServerlessManifestConfig;
 import io.harness.git.model.FetchFilesResult;

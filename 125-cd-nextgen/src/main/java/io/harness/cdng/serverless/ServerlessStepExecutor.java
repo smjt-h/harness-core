@@ -15,8 +15,6 @@ import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.sdk.core.steps.executables.TaskChainResponse;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 public interface ServerlessStepExecutor {
   TaskChainResponse executeServerlessTask(ManifestOutcome serverlessManifestOutcome, Ambiance ambiance,
       StepElementParameters stepParameters, ServerlessExecutionPassThroughData executionPassThroughData,

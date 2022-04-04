@@ -26,33 +26,38 @@ import io.harness.cdng.expressions.CDExpressionResolveFunctor;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.manifest.ManifestStoreType;
 import io.harness.cdng.manifest.steps.ManifestsOutcome;
-import io.harness.cdng.manifest.yaml.*;
+import io.harness.cdng.manifest.yaml.GitStoreConfig;
+import io.harness.cdng.manifest.yaml.ManifestOutcome;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
-import io.harness.cdng.serverless.beans.*;
+import io.harness.cdng.serverless.beans.ServerlessAwsLambdaStepExecutorParams;
+import io.harness.cdng.serverless.beans.ServerlessExecutionPassThroughData;
+import io.harness.cdng.serverless.beans.ServerlessGitFetchFailurePassThroughData;
+import io.harness.cdng.serverless.beans.ServerlessStepExceptionPassThroughData;
+import io.harness.cdng.serverless.beans.ServerlessStepExecutorParams;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.connector.ConnectorInfoDTO;
-import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.HarnessStringUtils;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
-import io.harness.delegate.beans.serverless.ServerlessAwsLambdaDeployResult;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.exception.TaskNGDataException;
 import io.harness.delegate.task.git.TaskStatus;
-import io.harness.delegate.task.serverless.*;
+import io.harness.delegate.task.serverless.ServerlessArtifactConfig;
+import io.harness.delegate.task.serverless.ServerlessDeployConfig;
+import io.harness.delegate.task.serverless.ServerlessGitFetchFileConfig;
+import io.harness.delegate.task.serverless.ServerlessInfraConfig;
+import io.harness.delegate.task.serverless.ServerlessManifestConfig;
 import io.harness.delegate.task.serverless.request.ServerlessCommandRequest;
 import io.harness.delegate.task.serverless.request.ServerlessGitFetchRequest;
 import io.harness.delegate.task.serverless.response.ServerlessCommandResponse;
 import io.harness.delegate.task.serverless.response.ServerlessDeployResponse;
 import io.harness.delegate.task.serverless.response.ServerlessGitFetchResponse;
-import io.harness.delegate.task.serverless.response.ServerlessRollbackResponse;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.GeneralException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.expression.ExpressionEvaluatorUtils;
 import io.harness.git.model.FetchFilesResult;
-import io.harness.git.model.GitFile;
 import io.harness.ng.core.NGAccess;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.StepElementParameters;
@@ -72,6 +77,7 @@ import io.harness.pms.sdk.core.resolver.outcome.OutcomeService;
 import io.harness.pms.sdk.core.steps.executables.TaskChainResponse;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
+import io.harness.pms.sdk.core.steps.io.StepResponse.StepResponseBuilder;
 import io.harness.serializer.KryoSerializer;
 import io.harness.steps.StepHelper;
 import io.harness.supplier.ThrowingSupplier;
@@ -81,9 +87,12 @@ import software.wings.beans.TaskType;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.validator.constraints.NotEmpty;
 
@@ -308,8 +317,8 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
         .build();
   }
 
-  public static StepResponse.StepResponseBuilder getFailureResponseBuilder(
-      ServerlessCommandResponse serverlessCommandResponse, StepResponse.StepResponseBuilder stepResponseBuilder) {
+  public static StepResponseBuilder getFailureResponseBuilder(
+      ServerlessCommandResponse serverlessCommandResponse, StepResponseBuilder stepResponseBuilder) {
     stepResponseBuilder.status(Status.FAILED)
         .failureInfo(FailureInfo.newBuilder()
                          .setErrorMessage(ServerlessStepCommonHelper.getErrorMessage(serverlessCommandResponse))
@@ -382,7 +391,7 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
       return manifestFileContent;
     }
     if (manifestFileContent.contains(ARTIFACT_PATH)) {
-      manifestFileContent = manifestFileContent.replace(ARTIFACT_PATH, "artifactFile");
+      manifestFileContent = manifestFileContent.replace(ARTIFACT_PATH, "harness/artifactFile");
     }
     return engineExpressionService.renderExpression(ambiance, manifestFileContent);
   }

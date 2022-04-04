@@ -10,7 +10,6 @@ package io.harness.serverless;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.TimeoutException;
-import org.zeroturnaround.exec.ProcessResult;
 
 public interface Executable {
   String command();

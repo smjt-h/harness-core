@@ -18,7 +18,6 @@ import io.harness.cdng.manifest.yaml.ManifestOutcome;
 import io.harness.cdng.serverless.beans.ServerlessExecutionPassThroughData;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.data.structure.EmptyPredicate;
-import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaRollbackResult;
 import io.harness.delegate.task.serverless.ServerlessAwsLambdaRollbackConfig;
@@ -47,12 +46,12 @@ import io.harness.pms.sdk.core.resolver.outcome.OutcomeService;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
+import io.harness.pms.sdk.core.steps.io.StepResponse.StepResponseBuilder;
 import io.harness.steps.StepHelper;
 import io.harness.supplier.ThrowingSupplier;
 
 import com.google.inject.Inject;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
@@ -153,7 +152,7 @@ public class ServerlessAwsLambdaRollbackStep extends TaskExecutableWithRollbackA
     StepResponse stepResponse = null;
     try {
       ServerlessRollbackResponse rollbackResponse = (ServerlessRollbackResponse) responseDataSupplier.get();
-      StepResponse.StepResponseBuilder stepResponseBuilder =
+      StepResponseBuilder stepResponseBuilder =
           StepResponse.builder().unitProgressList(rollbackResponse.getUnitProgressData().getUnitProgresses());
 
       stepResponse = generateStepResponse(ambiance, rollbackResponse, stepResponseBuilder);
@@ -168,8 +167,8 @@ public class ServerlessAwsLambdaRollbackStep extends TaskExecutableWithRollbackA
     return stepResponse;
   }
 
-  private StepResponse generateStepResponse(Ambiance ambiance, ServerlessRollbackResponse rollbackResponse,
-      StepResponse.StepResponseBuilder stepResponseBuilder) {
+  private StepResponse generateStepResponse(
+      Ambiance ambiance, ServerlessRollbackResponse rollbackResponse, StepResponseBuilder stepResponseBuilder) {
     StepResponse stepResponse = null;
 
     if (rollbackResponse.getCommandExecutionStatus() != CommandExecutionStatus.SUCCESS) {

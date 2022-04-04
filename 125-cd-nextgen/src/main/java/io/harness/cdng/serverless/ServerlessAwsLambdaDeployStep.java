@@ -15,7 +15,11 @@ import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.instance.info.InstanceInfoService;
 import io.harness.cdng.manifest.yaml.ManifestOutcome;
 import io.harness.cdng.serverless.ServerlessAwsLambdaRollbackDataOutcome.ServerlessAwsLambdaRollbackDataOutcomeBuilder;
-import io.harness.cdng.serverless.beans.*;
+import io.harness.cdng.serverless.beans.ServerlessAwsLambdaStepExecutorParams;
+import io.harness.cdng.serverless.beans.ServerlessExecutionPassThroughData;
+import io.harness.cdng.serverless.beans.ServerlessGitFetchFailurePassThroughData;
+import io.harness.cdng.serverless.beans.ServerlessStepExceptionPassThroughData;
+import io.harness.cdng.serverless.beans.ServerlessStepExecutorParams;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
@@ -43,6 +47,7 @@ import io.harness.pms.sdk.core.steps.executables.TaskChainResponse;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
 import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
+import io.harness.pms.sdk.core.steps.io.StepResponse.StepResponseBuilder;
 import io.harness.supplier.ThrowingSupplier;
 import io.harness.tasks.ResponseData;
 
@@ -168,7 +173,7 @@ public class ServerlessAwsLambdaDeployStep
     }
     serverlessRollbackDataOutcomeBuilder.previousVersionTimeStamp(
         serverlessAwsLambdaStepHelper.getPreviousVersion(serverlessDeployResponse));
-    StepResponse.StepResponseBuilder stepResponseBuilder =
+    StepResponseBuilder stepResponseBuilder =
         StepResponse.builder().unitProgressList(serverlessDeployResponse.getUnitProgressData().getUnitProgresses());
     if (serverlessDeployResponse.getCommandExecutionStatus() != CommandExecutionStatus.SUCCESS) {
       executionSweepingOutputService.consume(ambiance,

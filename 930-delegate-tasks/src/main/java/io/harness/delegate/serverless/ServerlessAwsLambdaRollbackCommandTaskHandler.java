@@ -14,7 +14,12 @@ import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaManifestSchema;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaRollbackResult;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaRollbackResult.ServerlessAwsLambdaRollbackResultBuilder;
-import io.harness.delegate.task.serverless.*;
+import io.harness.delegate.task.serverless.ServerlessAwsCommandTaskHelper;
+import io.harness.delegate.task.serverless.ServerlessAwsLambdaInfraConfig;
+import io.harness.delegate.task.serverless.ServerlessAwsLambdaManifestConfig;
+import io.harness.delegate.task.serverless.ServerlessAwsLambdaRollbackConfig;
+import io.harness.delegate.task.serverless.ServerlessInfraConfigHelper;
+import io.harness.delegate.task.serverless.ServerlessTaskHelperBase;
 import io.harness.delegate.task.serverless.request.ServerlessCommandRequest;
 import io.harness.delegate.task.serverless.request.ServerlessRollbackRequest;
 import io.harness.delegate.task.serverless.response.ServerlessCommandResponse;
@@ -36,8 +41,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 
 @OwnedBy(HarnessTeam.CDP)
-@Slf4j
 @NoArgsConstructor
+@Slf4j
 public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCommandTaskHandler {
   @Inject private ServerlessTaskHelperBase serverlessTaskHelperBase;
   @Inject private ServerlessInfraConfigHelper serverlessInfraConfigHelper;

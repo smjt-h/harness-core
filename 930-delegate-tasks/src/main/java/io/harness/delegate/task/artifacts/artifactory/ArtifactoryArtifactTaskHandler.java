@@ -7,6 +7,8 @@
 
 package io.harness.delegate.task.artifacts.artifactory;
 
+import static io.harness.artifactory.service.ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifactory.ArtifactoryConfigRequest;
@@ -14,8 +16,8 @@ import io.harness.artifactory.ArtifactoryNgService;
 import io.harness.artifactory.service.ArtifactoryRegistryService;
 import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.artifacts.comparator.BuildDetailsInternalComparatorDescending;
-import io.harness.delegate.task.artifactory.ArtifactoryRequestMapper;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.delegate.task.artifactory.ArtifactoryRequestMapper;
 import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
 import io.harness.delegate.task.artifacts.DelegateArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.mappers.ArtifactoryRequestResponseMapper;
@@ -23,24 +25,21 @@ import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse
 import io.harness.logging.LogCallback;
 import io.harness.security.encryption.SecretDecryptionService;
 
+import software.wings.helpers.ext.jenkins.BuildDetails;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import software.wings.helpers.ext.jenkins.BuildDetails;
-
-import static io.harness.artifactory.service.ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT;
 
 @Singleton
 @AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__({ @Inject }))
 @OwnedBy(HarnessTeam.CDP)
-public class ArtifactoryArtifactTaskHandler
-    extends DelegateArtifactTaskHandler<ArtifactSourceDelegateRequest> {
+public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<ArtifactSourceDelegateRequest> {
   private final ArtifactoryRegistryService artifactoryRegistryService;
   private final SecretDecryptionService secretDecryptionService;
   private ArtifactoryNgService artifactoryNgService;
@@ -51,8 +50,9 @@ public class ArtifactoryArtifactTaskHandler
 
   @Override
   public ArtifactTaskExecutionResponse getLastSuccessfulBuild(
-          ArtifactSourceDelegateRequest artifactSourceDelegateRequest) {
-    ArtifactoryDockerArtifactDelegateRequest attributesRequest = (ArtifactoryDockerArtifactDelegateRequest) artifactSourceDelegateRequest;
+      ArtifactSourceDelegateRequest artifactSourceDelegateRequest) {
+    ArtifactoryDockerArtifactDelegateRequest attributesRequest =
+        (ArtifactoryDockerArtifactDelegateRequest) artifactSourceDelegateRequest;
     BuildDetailsInternal lastSuccessfulBuild;
     ArtifactoryConfigRequest artifactoryConfig =
         ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest);
@@ -77,28 +77,29 @@ public class ArtifactoryArtifactTaskHandler
 
   @Override
   public ArtifactTaskExecutionResponse getBuilds(ArtifactSourceDelegateRequest artifactSourceDelegateRequest) {
-
-    if(artifactSourceDelegateRequest instanceof ArtifactoryGenericArtifactDelegateRequest) {
+    if (artifactSourceDelegateRequest instanceof ArtifactoryGenericArtifactDelegateRequest) {
       return fetchFileBuilds((ArtifactoryGenericArtifactDelegateRequest) artifactSourceDelegateRequest, null);
     } else {
-      ArtifactoryDockerArtifactDelegateRequest attributesRequest = (ArtifactoryDockerArtifactDelegateRequest) artifactSourceDelegateRequest;
+      ArtifactoryDockerArtifactDelegateRequest attributesRequest =
+          (ArtifactoryDockerArtifactDelegateRequest) artifactSourceDelegateRequest;
       List<BuildDetailsInternal> builds = artifactoryRegistryService.getBuilds(
-              ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest),
-              attributesRequest.getRepositoryName(), attributesRequest.getArtifactPath(),
-              attributesRequest.getRepositoryFormat(), ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT);
+          ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest),
+          attributesRequest.getRepositoryName(), attributesRequest.getArtifactPath(),
+          attributesRequest.getRepositoryFormat(), ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT);
       List<ArtifactoryDockerArtifactDelegateResponse> artifactoryDockerArtifactDelegateResponseList =
-              builds.stream()
-                      .sorted(new BuildDetailsInternalComparatorDescending())
-                      .map(build -> ArtifactoryRequestResponseMapper.toArtifactoryDockerResponse(build, attributesRequest))
-                      .collect(Collectors.toList());
+          builds.stream()
+              .sorted(new BuildDetailsInternalComparatorDescending())
+              .map(build -> ArtifactoryRequestResponseMapper.toArtifactoryDockerResponse(build, attributesRequest))
+              .collect(Collectors.toList());
       return getSuccessTaskExecutionResponse(artifactoryDockerArtifactDelegateResponseList);
     }
   }
 
   @Override
   public ArtifactTaskExecutionResponse validateArtifactServer(
-          ArtifactSourceDelegateRequest artifactSourceDelegateRequest) {
-    ArtifactoryDockerArtifactDelegateRequest attributesRequest = (ArtifactoryDockerArtifactDelegateRequest) artifactSourceDelegateRequest;
+      ArtifactSourceDelegateRequest artifactSourceDelegateRequest) {
+    ArtifactoryDockerArtifactDelegateRequest attributesRequest =
+        (ArtifactoryDockerArtifactDelegateRequest) artifactSourceDelegateRequest;
     boolean isServerValidated = artifactoryRegistryService.validateCredentials(
         ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest));
     return ArtifactTaskExecutionResponse.builder().isArtifactServerValid(isServerValidated).build();
@@ -128,36 +129,40 @@ public class ArtifactoryArtifactTaskHandler
 
   public void decryptRequestDTOs(ArtifactSourceDelegateRequest artifactoryRequest) {
     if (artifactoryRequest instanceof ArtifactoryGenericArtifactDelegateRequest) {
-      ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest = (ArtifactoryGenericArtifactDelegateRequest) artifactoryRequest;
+      ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest =
+          (ArtifactoryGenericArtifactDelegateRequest) artifactoryRequest;
       if (artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO().getAuth() != null) {
-        secretDecryptionService.decrypt(artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO().getAuth().getCredentials(),
-                artifactoryGenericArtifactDelegateRequest.getEncryptedDataDetails());
+        secretDecryptionService.decrypt(
+            artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO().getAuth().getCredentials(),
+            artifactoryGenericArtifactDelegateRequest.getEncryptedDataDetails());
       }
     } else {
-      ArtifactoryDockerArtifactDelegateRequest artifactoryDockerArtifactDelegateRequest = (ArtifactoryDockerArtifactDelegateRequest) artifactoryRequest;
+      ArtifactoryDockerArtifactDelegateRequest artifactoryDockerArtifactDelegateRequest =
+          (ArtifactoryDockerArtifactDelegateRequest) artifactoryRequest;
       if (artifactoryDockerArtifactDelegateRequest.getArtifactoryConnectorDTO().getAuth() != null) {
-        secretDecryptionService.decrypt(artifactoryDockerArtifactDelegateRequest.getArtifactoryConnectorDTO().getAuth().getCredentials(),
-                artifactoryDockerArtifactDelegateRequest.getEncryptedDataDetails());
+        secretDecryptionService.decrypt(
+            artifactoryDockerArtifactDelegateRequest.getArtifactoryConnectorDTO().getAuth().getCredentials(),
+            artifactoryDockerArtifactDelegateRequest.getEncryptedDataDetails());
       }
     }
   }
 
-  private ArtifactTaskExecutionResponse fetchFileBuilds(ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest,
-                                                       LogCallback executionLogCallback) {
-
+  private ArtifactTaskExecutionResponse fetchFileBuilds(
+      ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest,
+      LogCallback executionLogCallback) {
     decryptRequestDTOs(artifactoryGenericArtifactDelegateRequest);
     ArtifactoryConfigRequest artifactoryConfigRequest = artifactoryRequestMapper.toArtifactoryRequest(
-            artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
+        artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
     String artifactDirectory = artifactoryGenericArtifactDelegateRequest.getArtifactDirectory();
     if (artifactDirectory.isEmpty()) {
       saveLogs(executionLogCallback,
-              "Artifact Directory is Empty, assuming Artifacts are present in root of the repository");
+          "Artifact Directory is Empty, assuming Artifacts are present in root of the repository");
       artifactDirectory = DEFAULT_ARTIFACT_DIRECTORY;
     }
     String filePath = Paths.get(artifactDirectory, DEFAULT_ARTIFACT_FILTER).toString();
 
     List<BuildDetails> buildDetails = artifactoryNgService.getArtifactList(artifactoryConfigRequest,
-            artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, MAX_NO_OF_TAGS_PER_ARTIFACT);
+        artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, MAX_NO_OF_TAGS_PER_ARTIFACT);
 
     return ArtifactTaskExecutionResponse.builder().buildDetails(buildDetails).build();
   }

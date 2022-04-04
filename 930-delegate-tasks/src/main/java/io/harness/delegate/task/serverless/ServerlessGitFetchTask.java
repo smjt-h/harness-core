@@ -34,7 +34,6 @@ import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.exception.TaskNGDataException;
 import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
-import io.harness.delegate.task.git.GitFetchResponse;
 import io.harness.delegate.task.git.TaskStatus;
 import io.harness.delegate.task.serverless.request.ServerlessGitFetchRequest;
 import io.harness.delegate.task.serverless.response.ServerlessGitFetchResponse;
@@ -47,7 +46,11 @@ import io.harness.serverless.ServerlessCommandUnitConstants;
 
 import com.google.inject.Inject;
 import java.nio.file.NoSuchFileException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
@@ -189,6 +192,7 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
     List<String> filePaths = Collections.singletonList(filePath);
     FetchFilesResult fetchFilesResult =
         serverlessGitFetchTaskHelper.fetchFileFromRepo(gitStoreDelegateConfig, filePaths, accountId, gitConfigDTO);
+    // todo: add exception handler for above
     serverlessGitFetchTaskHelper.printFileNames(executionLogCallback, filePaths);
     return fetchFilesResult;
   }

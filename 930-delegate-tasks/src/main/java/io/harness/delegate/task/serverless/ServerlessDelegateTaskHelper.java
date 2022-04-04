@@ -9,7 +9,9 @@ package io.harness.delegate.task.serverless;
 
 import static io.harness.data.structure.UUIDGenerator.convertBase64UuidToCanonicalForm;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
-import static io.harness.filesystem.FileIo.*;
+import static io.harness.filesystem.FileIo.createDirectoryIfDoesNotExist;
+import static io.harness.filesystem.FileIo.deleteDirectoryAndItsContentIfExists;
+import static io.harness.filesystem.FileIo.waitForDirectoryToBeAccessibleOutOfProcess;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -20,7 +22,6 @@ import io.harness.delegate.exception.TaskNGDataException;
 import io.harness.delegate.serverless.ServerlessCommandTaskHandler;
 import io.harness.delegate.task.serverless.request.ServerlessCommandRequest;
 import io.harness.delegate.task.serverless.response.ServerlessCommandResponse;
-import io.harness.serverless.ServerlessGlobalConfigService;
 import io.harness.serverless.model.ServerlessDelegateTaskParams;
 
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
@@ -36,7 +37,7 @@ public class ServerlessDelegateTaskHelper {
   @Inject private Map<String, ServerlessCommandTaskHandler> commandTaskTypeToTaskHandlerMap;
   @Inject private ServerlessInfraConfigHelper serverlessInfraConfigHelper;
 
-  private static final String WORKING_DIR_BASE = "./repository/harnessFolder/serverless/";
+  private static final String WORKING_DIR_BASE = "./repository/serverless/";
 
   public ServerlessCommandResponse getServerlessCommandResponse(
       ServerlessCommandRequest serverlessCommandRequest, ILogStreamingTaskClient iLogStreamingTaskClient) {
@@ -78,6 +79,7 @@ public class ServerlessDelegateTaskHelper {
 
   private void decryptRequestDTOs(ServerlessCommandRequest serverlessCommandRequest) {
     serverlessInfraConfigHelper.decryptServerlessInfraConfig(serverlessCommandRequest.getServerlessInfraConfig());
+
     // todo: have to add more decrypting capabaility for others
   }
 

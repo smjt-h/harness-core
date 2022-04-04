@@ -11,6 +11,7 @@ import static io.harness.k8s.kubectl.Utils.executeCommand;
 
 import io.harness.capability.CapabilityParameters;
 import io.harness.capability.CapabilitySubjectPermission;
+import io.harness.capability.CapabilitySubjectPermission.CapabilitySubjectPermissionBuilder;
 import io.harness.delegate.beans.executioncapability.CapabilityResponse;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.ServerlessInstallationCapability;
@@ -31,7 +32,7 @@ public class ServerlessInstallationCapabilityCheck implements CapabilityCheck, P
 
   @Override
   public CapabilitySubjectPermission performCapabilityCheckWithProto(CapabilityParameters parameters) {
-    CapabilitySubjectPermission.CapabilitySubjectPermissionBuilder builder = CapabilitySubjectPermission.builder();
+    CapabilitySubjectPermissionBuilder builder = CapabilitySubjectPermission.builder();
 
     return builder
         .permissionResult(executeCommand(serverlessVersionCommand, 2)

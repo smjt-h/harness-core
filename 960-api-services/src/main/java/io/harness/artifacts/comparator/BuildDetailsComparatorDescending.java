@@ -10,7 +10,6 @@ package io.harness.artifacts.comparator;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifact.ComparatorUtils;
-import io.harness.artifacts.beans.BuildDetailsInternal;
 
 import software.wings.helpers.ext.jenkins.BuildDetails;
 

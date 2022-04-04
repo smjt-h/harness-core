@@ -7,8 +7,9 @@
 
 package io.harness.delegate.task.artifacts;
 
-import static java.util.Objects.isNull;
 import static software.wings.utils.RepositoryType.generic;
+
+import static java.util.Objects.isNull;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -97,7 +98,6 @@ public class ArtifactDelegateRequestUtils {
       String repositoryFormat, String artifactRepositoryUrl, String tag, String tagRegex, String connectorRef,
       ArtifactoryConnectorDTO artifactoryConnectorDTO, List<EncryptedDataDetail> encryptedDataDetails,
       ArtifactSourceType sourceType) {
-
     if ((!isNull(repositoryFormat)) && repositoryFormat.equals(generic.name())) {
       String artifactDirectory = artifactPath;
       if (artifactDirectory.isEmpty()) {

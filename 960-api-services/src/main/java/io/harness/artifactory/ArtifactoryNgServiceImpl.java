@@ -17,7 +17,6 @@ import io.harness.artifacts.comparator.BuildDetailsComparatorDescending;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.ArtifactoryRegistryException;
 import io.harness.exception.NestedExceptionUtils;
-import io.harness.expression.RegexFunctor;
 
 import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.utils.RepositoryType;
@@ -54,12 +53,11 @@ public class ArtifactoryNgServiceImpl implements ArtifactoryNgService {
   @Override
   public BuildDetails getLatestArtifact(ArtifactoryConfigRequest artifactoryConfig, String repositoryName,
       String artifactDirectory, String artifactPathFilter, String artifactPath, int maxVersions) {
-
     if (EmptyPredicate.isEmpty(artifactPath) && EmptyPredicate.isEmpty(artifactPathFilter)) {
       throw NestedExceptionUtils.hintWithExplanationException(
-              "Please check ArtifactPath/ArtifactPathFilter field in Artifactory artifact configuration.",
-              "Both Artifact Path and Artifact Path Filter cannot be empty",
-              new ArtifactoryRegistryException("Could not find an artifact"));
+          "Please check ArtifactPath/ArtifactPathFilter field in Artifactory artifact configuration.",
+          "Both Artifact Path and Artifact Path Filter cannot be empty",
+          new ArtifactoryRegistryException("Could not find an artifact"));
     } else if (EmptyPredicate.isEmpty(artifactPathFilter)) {
       artifactPathFilter = artifactPath;
     }
@@ -69,9 +67,7 @@ public class ArtifactoryNgServiceImpl implements ArtifactoryNgService {
     List<BuildDetails> buildDetails =
         artifactoryClient.getArtifactList(artifactoryConfig, repositoryName, filePath, maxVersions);
 
-    buildDetails = buildDetails.stream()
-                       .sorted(new BuildDetailsComparatorDescending())
-                       .collect(Collectors.toList());
+    buildDetails = buildDetails.stream().sorted(new BuildDetailsComparatorDescending()).collect(Collectors.toList());
     if (buildDetails.isEmpty()) {
       throw NestedExceptionUtils.hintWithExplanationException(
           "Please check ArtifactPathFilter field in Artifactory artifact configuration.",
