@@ -60,7 +60,7 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
   @Inject private FeatureFlagService featureFlagService;
 
   private static final String SELECTED = "Selected";
-  private static final String NON_SELECTED = "Non Selected";
+  private static final String NON_SELECTED = "Not Selected";
   private static final String ASSIGNED = "Assigned";
   private static final String REJECTED = "Rejected";
   private static final String BROADCAST = "Broadcast";
