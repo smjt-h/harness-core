@@ -2367,13 +2367,6 @@ public class DelegateServiceImpl implements DelegateService {
           upsertDelegateGroup(delegateParams.getDelegateGroupName(), delegateParams.getAccountId(), null);
       delegateGroupId = delegateGroup.getUuid();
     }
-    DelegateSetupDetails delegateSetupDetails = DelegateSetupDetails.builder()
-                                                    .name(delegateParams.getHostName())
-                                                    .orgIdentifier(delegateParams.getOrgIdentifier())
-                                                    .projectIdentifier(delegateParams.getProjectIdentifier())
-                                                    .description(delegateParams.getDescription())
-                                                    .delegateType(delegateParams.getDelegateType())
-                                                    .build();
 
     String delegateGroupName = delegateParams.getDelegateGroupName();
 
@@ -2385,6 +2378,15 @@ public class DelegateServiceImpl implements DelegateService {
     String projectIdentifier = delegateParams.getProjectIdentifier() != null
         ? delegateParams.getProjectIdentifier()
         : getProjectIdentifierUsingTokenFromGlobalContext(delegateParams.getAccountId()).orElse(null);
+
+    DelegateSetupDetails delegateSetupDetails = DelegateSetupDetails.builder()
+                                                    .name(delegateParams.getHostName())
+                                                    .orgIdentifier(orgIdentifier)
+                                                    .projectIdentifier(projectIdentifier)
+                                                    .description(delegateParams.getDescription())
+                                                    .delegateType(delegateParams.getDelegateType())
+                                                    .build();
+
     if (delegateParams.isNg()) {
       final DelegateGroup delegateGroup =
           upsertDelegateGroup(delegateParams.getDelegateName(), delegateParams.getAccountId(), delegateSetupDetails);
