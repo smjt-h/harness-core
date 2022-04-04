@@ -1238,7 +1238,8 @@ public class SettingValidationServiceTest extends WingsBaseTest {
     settingAttribute.setValue(createSmtpConfig());
     settingAttribute.setName(NG_SMTP_SETTINGS_PREFIX + "dummy");
     when(secretManager.getEncryptionDetails(any(), any(), any())).thenReturn(null);
-    when(delegateService.executeTask(any(DelegateTask.class))).thenThrow(new NoEligibleDelegatesInAccountException());
+    when(delegateService.executeTask(any(DelegateTask.class)))
+        .thenThrow(new NoEligibleDelegatesInAccountException("no delegates"));
     try {
       settingValidationService.validateConnectivity(settingAttribute);
       fail("The delegate task executed should have thrown error.");

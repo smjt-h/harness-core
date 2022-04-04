@@ -29,6 +29,7 @@ import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 
 import software.wings.WingsBaseTest;
+import software.wings.beans.EligibleDelegates;
 import software.wings.beans.TaskType;
 import software.wings.service.intfc.AssignDelegateService;
 
@@ -99,7 +100,7 @@ public class DelegateMetricsServiceTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testRecordMetrics_saveDelegateTask() {
     Mockito.when(assignDelegateService.getEligibleDelegatesToExecuteTask(anyObject()))
-        .thenReturn(Lists.newArrayList("delegateId1"));
+        .thenReturn(EligibleDelegates.builder().eligibleDelegateIds(Lists.newArrayList("delegateId1")).build());
     Mockito.when(assignDelegateService.getConnectedDelegateList(anyObject(), anyObject()))
         .thenReturn(Lists.newArrayList("delegateId1"));
     delegateTaskServiceClassic.processDelegateTask(createDefaultDelegateTask(), DelegateTask.Status.QUEUED);

@@ -126,6 +126,7 @@ import io.harness.version.VersionInfoManager;
 import io.harness.waiter.WaitNotifyEngine;
 
 import software.wings.app.MainConfiguration;
+import software.wings.beans.EligibleDelegates;
 import software.wings.beans.ExecutionCredential;
 import software.wings.beans.GitConfig;
 import software.wings.beans.GitValidationParameters;
@@ -437,15 +438,16 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
         generateCapabilitiesForTask(task);
         convertToExecutionCapability(task);
 
-        List<String> eligibleListOfDelegates = assignDelegateService.getEligibleDelegatesToExecuteTask(task);
+        EligibleDelegates eligibleDelegates = assignDelegateService.getEligibleDelegatesToExecuteTask(task);
         delegateSelectionLogsService.logDelegateTaskInfo(task);
-        if (eligibleListOfDelegates.isEmpty()) {
+        if (isEmpty(eligibleDelegates.getEligibleDelegateIds())) {
           addToTaskActivityLog(task, NO_ELIGIBLE_DELEGATES);
           delegateSelectionLogsService.logNoEligibleDelegatesToExecuteTask(task);
           delegateMetricsService.recordDelegateTaskMetrics(task, DELEGATE_TASK_NO_ELIGIBLE_DELEGATES);
-          throw new NoEligibleDelegatesInAccountException();
+          throw new NoEligibleDelegatesInAccountException(eligibleDelegates.getReasonForNoDelegates());
         }
         // shuffle the eligible delegates to evenly distribute the load
+        List<String> eligibleListOfDelegates = eligibleDelegates.getEligibleDelegateIds();
         Collections.shuffle(eligibleListOfDelegates);
         task.setBroadcastToDelegateIds(
             Lists.newArrayList(getDelegateIdForFirstBroadcast(task, eligibleListOfDelegates)));

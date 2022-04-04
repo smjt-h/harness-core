@@ -14,10 +14,10 @@ import io.harness.beans.DelegateTask;
 import io.harness.delegate.beans.Delegate;
 import io.harness.delegate.task.TaskFailureReason;
 
+import software.wings.beans.EligibleDelegates;
 import software.wings.delegatetasks.validation.DelegateConnectionResult;
 
 import java.util.List;
-import java.util.Map;
 
 @OwnedBy(DEL)
 public interface AssignDelegateService {
@@ -42,11 +42,9 @@ public interface AssignDelegateService {
 
   boolean noInstalledDelegates(String accountId);
 
-  List<String> getEligibleDelegatesToExecuteTask(DelegateTask task);
+  EligibleDelegates getEligibleDelegatesToExecuteTask(DelegateTask task);
 
   List<String> getConnectedDelegateList(List<String> delegates, DelegateTask delegateTask);
-
-  boolean canAssignTask(String delegateId, DelegateTask task, Map<String, List<String>> nonAssignableDelegates);
 
   List<Delegate> fetchActiveDelegates(String accountId);
 }
