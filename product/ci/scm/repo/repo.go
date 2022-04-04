@@ -65,23 +65,44 @@ func CreateWebhook(ctx context.Context, request *pb.CreateWebhookRequest, log *z
 		return nil, fmt.Errorf("there is no logic to convertEnumsToStrings, for this provider %s", gitclient.GetProvider(*request.GetProvider()))
 	}
 
-	hook, response, err := client.Repositories.CreateHook(ctx, request.GetSlug(), &inputParams)
-	if err != nil {
-		log.Errorw("CreateWebhook failure", "provider", gitclient.GetProvider(*request.GetProvider()), "slug", request.GetSlug(), "name", request.GetName(), "target", request.GetTarget(),
-			"elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
-		// this is a hard error with no response
-		if response == nil {
+	var hook *scm.Hook
+	var response *scm.Response
+	switch client.Driver {
+	case scm.DriverAzure:
+		// iterate through the events and create a hook for each one
+		var createdEvents []string
+		for _, event := range inputParams.NativeEvents {
+			// create webhook with a single event
+			tmpInputParams := inputParams
+			tmpInputParams.NativeEvents = []string{event}
+			hook, response, err = client.Repositories.CreateHook(ctx, request.GetSlug(), &tmpInputParams)
+			if err != nil {
+				providerFail := processCreateHookResponse(response, err, log, request, start)
+				if providerFail != nil {
+					// return http response from git provider, do not attempt to create any more hooks
+					return providerFail, nil
+				}
+				// SCM hard failure, do not attempt to create any more hooks
+				return nil, err
+			}
+			createdEvents = append(createdEvents, hook.Events...)
+			hook.Events = createdEvents
+			log.Infow("CreateWebhook success", "slug", request.GetSlug(), "name", request.GetName(), "target", request.GetTarget(), "azure event", event, "elapsed_time_ms", utils.TimeSince(start))
+		}
+		log.Infow("CreateWebhook success", "slug", request.GetSlug(), "name", request.GetName(), "target", request.GetTarget(), "all azure events", createdEvents, "elapsed_time_ms", utils.TimeSince(start))
+	default:
+		hook, response, err = client.Repositories.CreateHook(ctx, request.GetSlug(), &inputParams)
+		if err != nil {
+			providerFail := processCreateHookResponse(response, err, log, request, start)
+			if providerFail != nil {
+				// return http response from git provider
+				return providerFail, nil
+			}
+			// SCM hard failure
 			return nil, err
 		}
-		// this is an error from the git provider, e.g. the hook exists.
-		out = &pb.CreateWebhookResponse{
-			Status: int32(response.Status),
-			Error:  err.Error(),
-		}
-		return out, nil
+		log.Infow("CreateWebhook success", "slug", request.GetSlug(), "name", request.GetName(), "target", request.GetTarget(), "elapsed_time_ms", utils.TimeSince(start))
 	}
-	log.Infow("CreateWebhook success", "slug", request.GetSlug(), "name", request.GetName(), "target", request.GetTarget(), "elapsed_time_ms", utils.TimeSince(start))
-
 	out = &pb.CreateWebhookResponse{
 		Webhook: &pb.WebhookResponse{
 			Id:         hook.ID,
@@ -101,6 +122,23 @@ func CreateWebhook(ctx context.Context, request *pb.CreateWebhookRequest, log *z
 	}
 	out.Webhook.NativeEvents = nativeEvents
 	return out, nil
+}
+
+// processCreateHookResponse, decides wether to fail hard, or return the http status
+func processCreateHookResponse(response *scm.Response, err error, log *zap.SugaredLogger, request *pb.CreateWebhookRequest, start time.Time) (returnVal *pb.CreateWebhookResponse) {
+	if err != nil {
+		log.Errorw("CreateWebhook failure", "provider", gitclient.GetProvider(*request.GetProvider()), "slug", request.GetSlug(), "name", request.GetName(), "target", request.GetTarget(),
+			"elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
+		if response != nil {
+			// this is an error from the git provider, e.g. the hook exists. Return the http status
+			returnVal = &pb.CreateWebhookResponse{
+				Status: int32(response.Status),
+				Error:  err.Error(),
+			}
+			return returnVal
+		}
+	}
+	return returnVal
 }
 
 func DeleteWebhook(ctx context.Context, request *pb.DeleteWebhookRequest, log *zap.SugaredLogger) (out *pb.DeleteWebhookResponse, err error) {
@@ -203,10 +241,6 @@ func nativeEventsFromStrings(sliceOfStrings []string, p pb.Provider) (nativeEven
 		gitlabEvents := convertStringsToGitlabEnum(sliceOfStrings)
 		nativeEvents = &pb.NativeEvents{NativeEvents: &gitlabEvents}
 	case *pb.Provider_Azure:
-		// Azure only allows a single event type per webhook
-		if len(sliceOfStrings) != 1 {
-			return nil, fmt.Errorf("azure only supports a single event type per webhook")
-		}
 		azureEvents := convertStringsToAzureEnum(sliceOfStrings)
 		nativeEvents = &pb.NativeEvents{NativeEvents: &azureEvents}
 	default:
@@ -328,35 +362,37 @@ func convertBitbucketCloudEnumToStrings(enums *pb.BitbucketCloudWebhookEvents) (
 }
 
 func convertAzureEnumToStrings(enums *pb.AzureWebhookEvents) (strings []string) {
-	switch enums.GetEvents() {
-	case pb.AzureWebhookEvent_AZURE_PUSH:
-		strings = append(strings, "git.push")
-	case pb.AzureWebhookEvent_AZURE_PULLREQUEST_CREATED:
-		strings = append(strings, "git.pullrequest.created")
-	case pb.AzureWebhookEvent_AZURE_PULLREQUEST_UPDATED:
-		strings = append(strings, "git.pullrequest.updated")
-	case pb.AzureWebhookEvent_AZURE_PULLREQUEST_MERGED:
-		strings = append(strings, "git.pullrequest.merged")
+	for _, e := range enums.GetEvents() {
+		switch e {
+		case pb.AzureWebhookEvent_AZURE_PUSH:
+			strings = append(strings, "git.push")
+		case pb.AzureWebhookEvent_AZURE_PULLREQUEST_CREATED:
+			strings = append(strings, "git.pullrequest.created")
+		case pb.AzureWebhookEvent_AZURE_PULLREQUEST_UPDATED:
+			strings = append(strings, "git.pullrequest.updated")
+		case pb.AzureWebhookEvent_AZURE_PULLREQUEST_MERGED:
+			strings = append(strings, "git.pullrequest.merged")
+		}
 	}
 	return strings
 }
 
 func convertStringsToAzureEnum(strings []string) (enums pb.NativeEvents_Azure) {
-	var array []pb.AzureWebhookEvent
+	var events []pb.AzureWebhookEvent
 	for _, e := range strings {
 		switch e {
 		case "git.push":
-			array = append(array, pb.AzureWebhookEvent_AZURE_PUSH)
+			events = append(events, pb.AzureWebhookEvent_AZURE_PUSH)
 		case "git.pullrequest.created":
-			array = append(array, pb.AzureWebhookEvent_AZURE_PULLREQUEST_CREATED)
+			events = append(events, pb.AzureWebhookEvent_AZURE_PULLREQUEST_CREATED)
 		case "git.pullrequest.updated":
-			array = append(array, pb.AzureWebhookEvent_AZURE_PULLREQUEST_UPDATED)
+			events = append(events, pb.AzureWebhookEvent_AZURE_PULLREQUEST_UPDATED)
 		case "git.pullrequest.merged":
-			array = append(array, pb.AzureWebhookEvent_AZURE_PULLREQUEST_MERGED)
+			events = append(events, pb.AzureWebhookEvent_AZURE_PULLREQUEST_MERGED)
 		}
 	}
 
-	enums.Azure = &pb.AzureWebhookEvents{Events: array[0]}
+	enums.Azure = &pb.AzureWebhookEvents{Events: events}
 	return enums
 }
 

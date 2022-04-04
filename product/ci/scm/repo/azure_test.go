@@ -34,7 +34,7 @@ func TestCreateListAndDeleteWebhookAzure(t *testing.T) {
 		NativeEvents: &pb.NativeEvents{
 			NativeEvents: &pb.NativeEvents_Azure{
 				Azure: &pb.AzureWebhookEvents{
-					Events: pb.AzureWebhookEvent_AZURE_PULLREQUEST_CREATED,
+					Events: []pb.AzureWebhookEvent{pb.AzureWebhookEvent_AZURE_PULLREQUEST_CREATED},
 				},
 			},
 		},
@@ -55,7 +55,7 @@ func TestCreateListAndDeleteWebhookAzure(t *testing.T) {
 
 	assert.Nil(t, err, "no errors")
 	assert.Equal(t, int32(200), got.Status, "Correct http response")
-	assert.Equal(t, pb.AzureWebhookEvent_AZURE_PULLREQUEST_CREATED, got.GetWebhook().GetNativeEvents().GetAzure().GetEvents(), "created a webhook 'asdas' event")
+	assert.Equal(t, 1, len(got.GetWebhook().GetNativeEvents().GetAzure().GetEvents()), "created a webhook 'pull request created' event")
 
 	list := &pb.ListWebhooksRequest{
 		Slug: repoID,
