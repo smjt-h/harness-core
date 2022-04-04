@@ -10,23 +10,31 @@ package io.harness.delegate.task.artifacts.artifactory;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifactory.ArtifactoryConfigRequest;
+import io.harness.artifactory.ArtifactoryNgService;
 import io.harness.artifactory.service.ArtifactoryRegistryService;
 import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.artifacts.comparator.BuildDetailsInternalComparatorDescending;
+import io.harness.delegate.task.artifactory.ArtifactoryRequestMapper;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
 import io.harness.delegate.task.artifacts.DelegateArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.mappers.ArtifactoryRequestResponseMapper;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
+import io.harness.logging.LogCallback;
 import io.harness.security.encryption.SecretDecryptionService;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import software.wings.helpers.ext.jenkins.BuildDetails;
+
+import static io.harness.artifactory.service.ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT;
 
 @Singleton
 @AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__({ @Inject }))
@@ -35,7 +43,11 @@ public class ArtifactoryArtifactTaskHandler
     extends DelegateArtifactTaskHandler<ArtifactSourceDelegateRequest> {
   private final ArtifactoryRegistryService artifactoryRegistryService;
   private final SecretDecryptionService secretDecryptionService;
-  private final ArtifactoryArtifactTaskHelper artifactoryArtifactTaskHelper;
+  private ArtifactoryNgService artifactoryNgService;
+  private ArtifactoryRequestMapper artifactoryRequestMapper;
+
+  static final String DEFAULT_ARTIFACT_FILTER = "*";
+  static final String DEFAULT_ARTIFACT_DIRECTORY = "/";
 
   @Override
   public ArtifactTaskExecutionResponse getLastSuccessfulBuild(
@@ -67,7 +79,7 @@ public class ArtifactoryArtifactTaskHandler
   public ArtifactTaskExecutionResponse getBuilds(ArtifactSourceDelegateRequest artifactSourceDelegateRequest) {
 
     if(artifactSourceDelegateRequest instanceof ArtifactoryGenericArtifactDelegateRequest) {
-      return artifactoryArtifactTaskHelper.fetchFileBuilds((ArtifactoryGenericArtifactDelegateRequest) artifactSourceDelegateRequest, null);
+      return fetchFileBuilds((ArtifactoryGenericArtifactDelegateRequest) artifactSourceDelegateRequest, null);
     } else {
       ArtifactoryDockerArtifactDelegateRequest attributesRequest = (ArtifactoryDockerArtifactDelegateRequest) artifactSourceDelegateRequest;
       List<BuildDetailsInternal> builds = artifactoryRegistryService.getBuilds(
@@ -130,4 +142,29 @@ public class ArtifactoryArtifactTaskHandler
     }
   }
 
+  private ArtifactTaskExecutionResponse fetchFileBuilds(ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest,
+                                                       LogCallback executionLogCallback) {
+
+    decryptRequestDTOs(artifactoryGenericArtifactDelegateRequest);
+    ArtifactoryConfigRequest artifactoryConfigRequest = artifactoryRequestMapper.toArtifactoryRequest(
+            artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
+    String artifactDirectory = artifactoryGenericArtifactDelegateRequest.getArtifactDirectory();
+    if (artifactDirectory.isEmpty()) {
+      saveLogs(executionLogCallback,
+              "Artifact Directory is Empty, assuming Artifacts are present in root of the repository");
+      artifactDirectory = DEFAULT_ARTIFACT_DIRECTORY;
+    }
+    String filePath = Paths.get(artifactDirectory, DEFAULT_ARTIFACT_FILTER).toString();
+
+    List<BuildDetails> buildDetails = artifactoryNgService.getArtifactList(artifactoryConfigRequest,
+            artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, MAX_NO_OF_TAGS_PER_ARTIFACT);
+
+    return ArtifactTaskExecutionResponse.builder().buildDetails(buildDetails).build();
+  }
+
+  private void saveLogs(LogCallback executionLogCallback, String message) {
+    if (executionLogCallback != null) {
+      executionLogCallback.saveExecutionLog(message);
+    }
+  }
 }
