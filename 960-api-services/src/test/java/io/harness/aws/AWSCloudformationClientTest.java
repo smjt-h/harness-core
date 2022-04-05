@@ -9,6 +9,7 @@ package io.harness.aws;
 
 import static io.harness.rule.OwnerRule.NGONZALEZ;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.joor.Reflect.on;
 import static org.mockito.Matchers.any;
@@ -57,6 +58,7 @@ import org.mockito.MockitoAnnotations;
 
 public class AWSCloudformationClientTest extends CategoryTest {
   @Mock private AwsApiHelperService awsApiHelperService;
+  @Mock private AwsCloudformationPrintHelper awsCloudformationPrintHelper;
   @InjectMocks private AWSCloudformationClientImpl mockCFAWSClient;
   @Mock private LogCallback logCallback;
 
@@ -239,14 +241,20 @@ public class AWSCloudformationClientTest extends CategoryTest {
     AWSCloudformationClientImpl service = spy(new AWSCloudformationClientImpl());
     doReturn(mockClient).when(service).getAmazonCloudFormationClient(any(), any());
     doReturn(mockWaiter).when(service).getAmazonCloudFormationWaiter(any());
+    doReturn(emptyList()).when(service).getAllStackResources(any(), any(), any());
     doReturn(mockWaiterStack).when(mockWaiter).stackDeleteComplete();
     doReturn(true).when(future).isDone();
     doReturn(future).when(mockWaiterStack).runAsync(any(), any());
-    service.stackDeletionCompleted(
-        request, AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build(), region, logCallback);
+    AwsCallTracker mockTracker = mock(AwsCallTracker.class);
+    doNothing().when(mockTracker).trackCFCall(anyString());
+    on(service).set("tracker", mockTracker);
+    on(service).set("awsCloudformationPrintHelper", awsCloudformationPrintHelper);
+    service.waitForStackDeletionCompleted(request,
+        AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build(), region, logCallback, 1000L);
     verify(mockWaiterStack).runAsync(any(), any());
     verify(mockWaiter).stackDeleteComplete();
   }
+
   @Test
   @Owner(developers = NGONZALEZ)
   @Category(UnitTests.class)

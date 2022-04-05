@@ -31,27 +31,25 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @OwnedBy(HarnessTeam.CDP)
-@RecasterAlias("io.harness.cdng.provision.cloudformation.CreateStackStepConfiguration")
-
+@RecasterAlias("io.harness.cdng.provision.cloudformation.CloudformationCreateStackStepConfiguration")
 public class CloudformationCreateStackStepConfiguration {
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> stackName;
-  @NotNull @JsonProperty("templateFile") CloudformationTemplateFilesWrapper templateFilesWrapper;
-  @JsonProperty("parameters") ParameterField<List<CloudformationParametersFilesWrapper>> parametersFilesWrapper;
+  @NotNull CloudformationTemplateFile templateFile;
+  @JsonProperty("parameters") List<CloudformationParametersFileSpec> parametersFilesSpecs;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> connectorRef;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> region;
-  @JsonProperty("awsRoleARN") ParameterField<CloudformationAwsRoleARN> awsRoleARN;
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> roleArn;
   @YamlSchemaTypes(value = {string})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
-  @JsonProperty("awsCapabilities")
-  ParameterField<List<String>> awsCapabilities;
-  List<NGVariable> tags;
-  @JsonProperty("cloudformationSkipWaitForResources") ParameterField<Boolean> cloudformationSkipWaitForResources;
-  @JsonProperty("cloudformationSkipWaitForResourcesTimeout")
-  ParameterField<Integer> cloudformationSkipWaitForResourcesTimeout;
-  @JsonProperty("skipBasedOnStackStatuses") ParameterField<List<String>> skipBasedOnStackStatuses;
+  ParameterField<List<String>> capabilities;
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> tags;
+  @YamlSchemaTypes(value = {string})
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
+  ParameterField<List<String>> skipOnStackStatuses;
+  List<NGVariable> parameterOverrides;
 
   void validateParams() {
-    Validator.notNullCheck("AWS connectorRef is null", connectorRef);
-    Validator.notNullCheck("AWS region  is null", region);
+    Validator.notNullCheck("AWS connector is null", connectorRef);
+    Validator.notNullCheck("AWS region is null", region);
   }
 }

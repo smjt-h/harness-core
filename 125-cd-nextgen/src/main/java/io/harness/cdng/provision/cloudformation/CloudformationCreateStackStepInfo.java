@@ -42,7 +42,7 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("cloudformationCreateStackStepInfo")
 @JsonTypeName(StepSpecTypeConstants.CLOUDFORMATION_CREATE_STACK)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@RecasterAlias("io.harness.cdng.provision.cloudformation.CreateStackStepInfo")
+@RecasterAlias("io.harness.cdng.provision.cloudformation.CloudformationCreateStackStepInfo")
 public class CloudformationCreateStackStepInfo
     extends CloudformationCreateStackBaseStepInfo implements CDStepInfo, Visitable, WithConnectorRef {
   @NotNull @JsonProperty("configuration") CloudformationCreateStackStepConfiguration cloudformationStepConfiguration;
@@ -59,14 +59,18 @@ public class CloudformationCreateStackStepInfo
   public Map<String, ParameterField<String>> extractConnectorRefs() {
     Map<String, ParameterField<String>> connectorRefMap = new HashMap<>();
     // Extract connector refs from the step configuration
-    if (cloudformationStepConfiguration.getTemplateFilesWrapper().getTemplateFile().getSpec().getType()
-        == CloudformationTemplateFileTypes.Remote) {
+    if (cloudformationStepConfiguration.getTemplateFile().getSpec().getType().equals(
+            CloudformationTemplateFileTypes.Remote)) {
       RemoteCloudformationTemplateFileSpec remoteTemplateFile =
-          (RemoteCloudformationTemplateFileSpec) cloudformationStepConfiguration.getTemplateFilesWrapper()
-              .getTemplateFile()
-              .getSpec();
+          (RemoteCloudformationTemplateFileSpec) cloudformationStepConfiguration.getTemplateFile().getSpec();
       connectorRefMap.put("configuration.spec.templateFile.store.spec.connectorRef",
           remoteTemplateFile.getStore().getSpec().getConnectorReference());
+
+      cloudformationStepConfiguration.getParametersFilesSpecs().forEach(cloudformationParametersFileSpec -> {
+        connectorRefMap.put("configuration.spec.parameters." + cloudformationParametersFileSpec.getIdentifier()
+                + ".store.spec.connectorRef",
+            cloudformationParametersFileSpec.getStore().getSpec().getConnectorReference());
+      });
     }
     return connectorRefMap;
   }

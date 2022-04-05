@@ -8,11 +8,8 @@
 package io.harness.aws;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.threading.Morpheus.sleep;
 
-import static java.lang.String.format;
 import static java.time.Duration.ofSeconds;
 import static java.util.Collections.emptyList;
 
@@ -57,7 +54,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 
 @OwnedBy(CDP)
 @Singleton
@@ -65,6 +61,7 @@ import org.apache.commons.lang3.StringUtils;
 
 public class AWSCloudformationClientImpl implements AWSCloudformationClient {
   @Inject AwsApiHelperService awsApiHelperService;
+  @Inject AwsCloudformationPrintHelper awsCloudformationPrintHelper;
   @Inject private AwsCallTracker tracker;
 
   @Override
@@ -210,8 +207,9 @@ public class AWSCloudformationClientImpl implements AWSCloudformationClient {
   }
 
   @Override
-  public void stackDeletionCompleted(DescribeStacksRequest describeStacksRequest, AwsInternalConfig awsConfig,
-      String region, LogCallback logCallback) {
+  public void waitForStackDeletionCompleted(DescribeStacksRequest describeStacksRequest, AwsInternalConfig awsConfig,
+      String region, LogCallback logCallback, long stackEventsTs) {
+    long lastStackEventsTs = stackEventsTs;
     try (CloseableAmazonWebServiceClient<AmazonCloudFormationClient> closeableAmazonCloudFormationClient =
              new CloseableAmazonWebServiceClient(getAmazonCloudFormationClient(Regions.fromName(region), awsConfig))) {
       AmazonCloudFormationWaiters waiter = getAmazonCloudFormationWaiter(closeableAmazonCloudFormationClient);
@@ -224,13 +222,19 @@ public class AWSCloudformationClientImpl implements AWSCloudformationClient {
         }
         @Override
         public void onWaitFailure(Exception e) {
-          logCallback.saveExecutionLog("Stack deletion failed");
+          logCallback.saveExecutionLog(String.format("Stack deletion failed: %s", e.getMessage()));
         }
       });
       while (!future.isDone()) {
-        printStackEvents(region, describeStacksRequest.getStackName(), awsConfig, logCallback);
         sleep(ofSeconds(10));
+        List<StackEvent> stackEvents = getAllStackEvents(
+            region, new DescribeStackEventsRequest().withStackName(describeStacksRequest.getStackName()), awsConfig);
+        lastStackEventsTs = awsCloudformationPrintHelper.printStackEvents(stackEvents, lastStackEventsTs, logCallback);
       }
+      future.get();
+      List<StackResource> stackResources = getAllStackResources(
+          region, new DescribeStackResourcesRequest().withStackName(describeStacksRequest.getStackName()), awsConfig);
+      awsCloudformationPrintHelper.printStackResources(stackResources, logCallback);
     } catch (AmazonServiceException amazonServiceException) {
       awsApiHelperService.handleAmazonServiceException(amazonServiceException);
     } catch (WaiterUnrecoverableException | WaiterTimedOutException waiterUnrecoverableException) {
@@ -252,22 +256,5 @@ public class AWSCloudformationClientImpl implements AWSCloudformationClient {
   AmazonCloudFormationWaiters getAmazonCloudFormationWaiter(
       CloseableAmazonWebServiceClient<AmazonCloudFormationClient> closeableAmazonCloudFormationClient) {
     return new AmazonCloudFormationWaiters(closeableAmazonCloudFormationClient.getClient());
-  }
-  public void printStackEvents(String region, String stackId, AwsInternalConfig awsConfig, LogCallback callback) {
-    if (isEmpty(stackId)) {
-      return;
-    }
-    DescribeStackResourcesRequest describeStackEventsRequest =
-        new DescribeStackResourcesRequest().withStackName(stackId);
-    List<StackResource> stackResources = getAllStackResources(region, describeStackEventsRequest, awsConfig);
-    callback.saveExecutionLog("******************** Cloud Formation Resources ********************");
-    callback.saveExecutionLog("********[Status] [Type] [Logical Id] [Status Reason] ***********");
-    stackResources.forEach(resource
-        -> callback.saveExecutionLog(format("[%s] [%s] [%s] [%s] [%s]", resource.getResourceStatus(),
-            resource.getResourceType(), resource.getLogicalResourceId(),
-            getStatusReason(resource.getResourceStatusReason()), resource.getPhysicalResourceId())));
-  }
-  private String getStatusReason(String reason) {
-    return isNotEmpty(reason) ? reason : StringUtils.EMPTY;
   }
 }

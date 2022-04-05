@@ -8,24 +8,20 @@
 package io.harness.delegate.task.cloudformation.handlers;
 
 import static io.harness.logging.LogLevel.ERROR;
-import static io.harness.logging.LogLevel.INFO;
 
 import io.harness.aws.beans.AwsInternalConfig;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
-import io.harness.delegate.task.cloudformation.CloudformationBaseHelper;
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGParameters;
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGResponse;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 
 import com.amazonaws.services.cloudformation.model.Stack;
-import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 public class CloudformationDeleteStackTaskHandler extends CloudformationAbstractTaskHandler {
-  @Inject CloudformationBaseHelper cloudformationBaseHelper;
   @Override
   public CloudformationTaskNGResponse executeTaskInternal(
       CloudformationTaskNGParameters taskNGParameters, String delegateId, String taskId, LogCallback logCallback)
@@ -33,31 +29,17 @@ public class CloudformationDeleteStackTaskHandler extends CloudformationAbstract
     AwsConnectorDTO awsConnectorDTO = taskNGParameters.getAwsConnector();
     AwsInternalConfig awsInternalConfig = cloudformationBaseHelper.getAwsInternalConfig(
         awsConnectorDTO, taskNGParameters.getRegion(), taskNGParameters.getEncryptedDataDetails());
-    Optional<Stack> existingStack = cloudformationBaseHelper.getIfStackExists(taskNGParameters.getCustomStackName(),
-        taskNGParameters.getStackNameSuffix(), awsInternalConfig, taskNGParameters.getRegion());
-    String stackId;
+    Optional<Stack> existingStack =
+        getIfStackExists(taskNGParameters.getStackName(), awsInternalConfig, taskNGParameters.getRegion());
     if (existingStack.isPresent()) {
-      stackId = existingStack.get().getStackId();
+      return deleteStack(taskNGParameters, logCallback, awsInternalConfig, existingStack.get().getStackId(),
+          existingStack.get().getStackId());
     } else {
-      logCallback.saveExecutionLog("Stack does not exist", ERROR, CommandExecutionStatus.FAILURE);
+      logCallback.saveExecutionLog("Stack does not exist", ERROR);
       return CloudformationTaskNGResponse.builder()
-          .commandExecutionStatus(CommandExecutionStatus.FAILURE)
+          .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
           .errorMessage("Stack does not exist")
           .build();
     }
-    try {
-      cloudformationBaseHelper.deleteStack(taskNGParameters.getRegion(), awsInternalConfig, stackId,
-          taskNGParameters.getCloudFormationRoleArn(), (int) taskNGParameters.getTimeoutInMs());
-      cloudformationBaseHelper.waitForStackToBeDeleted(
-          taskNGParameters.getRegion(), awsInternalConfig, stackId, logCallback);
-    } catch (Exception e) {
-      logCallback.saveExecutionLog("Stack deletion failed", ERROR, CommandExecutionStatus.FAILURE);
-      return CloudformationTaskNGResponse.builder()
-          .commandExecutionStatus(CommandExecutionStatus.FAILURE)
-          .errorMessage("Stack deletion failed")
-          .build();
-    }
-    logCallback.saveExecutionLog("Stack deleted", INFO, CommandExecutionStatus.SUCCESS);
-    return CloudformationTaskNGResponse.builder().commandExecutionStatus(CommandExecutionStatus.SUCCESS).build();
   }
 }

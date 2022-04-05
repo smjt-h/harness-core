@@ -28,13 +28,12 @@ import lombok.NoArgsConstructor;
 @RecasterAlias("io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepParameters")
 public class CloudformationDeleteStackStepParameters
     extends CloudformationDeleteStackBaseStepInfo implements SpecParameters {
-  @NonNull CloudformationDeleteStackStepConfigurationParameters configuration;
+  @NonNull CloudformationDeleteStackStepConfiguration configuration;
 
   @Builder(builderMethodName = "infoBuilder")
-  public CloudformationDeleteStackStepParameters(ParameterField<String> provisionerIdentifier,
-      ParameterField<List<String>> delegateSelectors,
-      @NonNull CloudformationDeleteStackStepConfigurationParameters configuration) {
-    super(provisionerIdentifier, delegateSelectors);
+  public CloudformationDeleteStackStepParameters(ParameterField<List<String>> delegateSelectors,
+      @NonNull CloudformationDeleteStackStepConfiguration configuration) {
+    super(delegateSelectors);
     this.configuration = configuration;
   }
 }

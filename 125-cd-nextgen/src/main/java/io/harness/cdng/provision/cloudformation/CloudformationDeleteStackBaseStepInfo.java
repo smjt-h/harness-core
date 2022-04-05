@@ -9,6 +9,7 @@ package io.harness.cdng.provision.cloudformation;
 
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
 
+import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
@@ -17,7 +18,6 @@ import io.harness.yaml.YamlSchemaTypes;
 
 import io.swagger.annotations.ApiModelProperty;
 import java.util.List;
-import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,10 +30,8 @@ import org.springframework.data.annotation.TypeAlias;
 @NoArgsConstructor
 @AllArgsConstructor
 @TypeAlias("cloudformationDeleteStackBaseStepInfo")
+@RecasterAlias("io.harness.cdng.provision.cloudformation.CloudformationDeleteStackBaseStepInfo")
 public class CloudformationDeleteStackBaseStepInfo {
-  @NotNull
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
-  private ParameterField<String> provisionerIdentifier;
   @YamlSchemaTypes(value = {runtime})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   private ParameterField<List<String>> delegateSelectors;

@@ -26,7 +26,7 @@ public class CloudformationConfigDAL {
   @Inject private HPersistence persistence;
   @Inject private EngineExpressionService engineExpressionService;
 
-  void saveCloudformationStack(@NonNull CloudformationConfig config) {
+  void saveCloudformationConfig(@NonNull CloudformationConfig config) {
     CloudformationConfig secretsRevertedConfig =
         (CloudformationConfig) EngineExpressionSecretUtils.revertSecrets(config);
     persistence.save(secretsRevertedConfig);

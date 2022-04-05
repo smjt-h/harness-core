@@ -9,23 +9,18 @@ package io.harness.cdng.provision.cloudformation;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
-import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.EXTERNAL_PROPERTY;
-import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
-
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
+import io.harness.data.validator.EntityIdentifier;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import javax.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @OwnedBy(CDP)
-@JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
-@JsonSubTypes({
-  @JsonSubTypes.
-  Type(value = InlineCloudformationParametersFileSpec.class, name = CloudformationParametersFileTypes.Inline)
-  ,
-      @JsonSubTypes.Type(
-          value = RemoteCloudformationParametersFileSpec.class, name = CloudformationParametersFileTypes.Remote),
-})
-public interface CloudformationParametersFileSpec {
-  String getType();
+@Data
+@NoArgsConstructor
+public class CloudformationParametersFileSpec {
+  @NotNull @EntityIdentifier String identifier;
+  @NotNull StoreConfigWrapper store;
 }

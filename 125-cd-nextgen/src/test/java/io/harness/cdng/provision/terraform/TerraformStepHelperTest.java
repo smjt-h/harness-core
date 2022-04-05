@@ -33,6 +33,7 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.cdng.CDStepHelper;
 import io.harness.cdng.fileservice.FileServiceClientFactory;
 import io.harness.cdng.k8s.K8sStepHelper;
 import io.harness.cdng.manifest.yaml.ArtifactoryStorageConfigDTO;
@@ -119,6 +120,7 @@ public class TerraformStepHelperTest extends CategoryTest {
   @Mock private FileServiceClientFactory mockFileService;
   @Mock private SecretManagerClientService mockSecretManagerClientService;
   @Mock private TerraformConfigDAL terraformConfigDAL;
+  @Mock private CDStepHelper cdStepHelper;
   @InjectMocks private TerraformStepHelper helper;
 
   private Ambiance getAmbiance() {
@@ -306,6 +308,7 @@ public class TerraformStepHelperTest extends CategoryTest {
     RemoteTerraformVarFileSpec remoteVarFiles =
         TerraformStepDataGenerator.generateRemoteVarFileSpec(StoreConfigType.GIT, gitStoreVarFiles);
     Map<String, TerraformVarFile> varFilesMap = TerraformStepDataGenerator.generateVarFileSpecs(remoteVarFiles, true);
+    doNothing().when(cdStepHelper).validateGitStoreConfig(any());
     doReturn(
         ConnectorInfoDTO.builder().connectorConfig(GitConfigDTO.builder().gitAuthType(GitAuthType.SSH).build()).build())
         .when(mockK8sStepHelper)
@@ -456,6 +459,7 @@ public class TerraformStepHelperTest extends CategoryTest {
                                             .name("connectorName")
                                             .connectorConfig(artifactoryConnectorDTO)
                                             .build();
+    doNothing().when(cdStepHelper).validateGitStoreConfig(any());
     when(mockK8sStepHelper.getConnector(anyString(), any()))
         .thenReturn(connectorInfoDTO, connectorInfoDTO,
             ConnectorInfoDTO.builder()
@@ -545,6 +549,7 @@ public class TerraformStepHelperTest extends CategoryTest {
     doReturn(Collections.emptyList())
         .when(mockGitConfigAuthenticationInfoHelper)
         .getEncryptedDataDetails(any(), any(), any());
+    doNothing().when(cdStepHelper).validateGitStoreConfig(any());
 
     List<TerraformVarFileConfig> varFileConfigs = new LinkedList<>();
 

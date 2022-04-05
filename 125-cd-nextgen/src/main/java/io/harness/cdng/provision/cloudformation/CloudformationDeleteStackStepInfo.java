@@ -42,18 +42,15 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("cloudformationDeleteStackStepInfo")
 @JsonTypeName(StepSpecTypeConstants.CLOUDFORMATION_DELETE_STACK)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@RecasterAlias("io.harness.cdng.provision.cloudformation.DeleteStackBaseStepInfo")
+@RecasterAlias("io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepInfo")
 public class CloudformationDeleteStackStepInfo
     extends CloudformationDeleteStackBaseStepInfo implements CDStepInfo, Visitable, WithConnectorRef {
-  @NotNull
-  @JsonProperty("configuration")
-  CloudformationDeleteStackStepConfigurationParameters cloudformationStepConfiguration;
+  @NotNull @JsonProperty("configuration") CloudformationDeleteStackStepConfiguration cloudformationStepConfiguration;
 
   @Builder(builderMethodName = "infoBuilder")
-  public CloudformationDeleteStackStepInfo(ParameterField<String> provisionerIdentifier,
-      ParameterField<List<String>> delegateSelector,
-      CloudformationDeleteStackStepConfigurationParameters cloudformationStepConfiguration) {
-    super(provisionerIdentifier, delegateSelector);
+  public CloudformationDeleteStackStepInfo(ParameterField<List<String>> delegateSelector,
+      CloudformationDeleteStackStepConfiguration cloudformationStepConfiguration) {
+    super(delegateSelector);
     this.cloudformationStepConfiguration = cloudformationStepConfiguration;
   }
 
@@ -61,9 +58,10 @@ public class CloudformationDeleteStackStepInfo
   public Map<String, ParameterField<String>> extractConnectorRefs() {
     validateSpecParameters();
     Map<String, ParameterField<String>> connectorRefMap = new HashMap<>();
-    if (cloudformationStepConfiguration.getType() == CloudformationStepConfigurationType.INLINE) {
-      connectorRefMap.put(
-          "configuration.spec.connectorRef", cloudformationStepConfiguration.getSpec().getConnectorRef());
+    if (cloudformationStepConfiguration.getType().equals(CloudformationDeleteStackStepConfigurationTypes.Inline)) {
+      connectorRefMap.put("configuration.spec.connectorRef",
+          ((InlineCloudformationDeleteStackStepConfiguration) cloudformationStepConfiguration.getSpec())
+              .getConnectorRef());
     }
     return connectorRefMap;
   }
@@ -83,7 +81,6 @@ public class CloudformationDeleteStackStepInfo
     validateSpecParameters();
     return CloudformationDeleteStackStepParameters.infoBuilder()
         .delegateSelectors(getDelegateSelectors())
-        .provisionerIdentifier(getProvisionerIdentifier())
         .configuration(cloudformationStepConfiguration)
         .build();
   }

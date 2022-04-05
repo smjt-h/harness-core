@@ -7,12 +7,17 @@
 
 package io.harness.cdng.provision.cloudformation;
 
+import static io.harness.common.ParameterFieldHelper.getParameterFieldValue;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
+import static java.lang.String.format;
+
 import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.common.resources.AwsResourceServiceHelper;
-import io.harness.common.ParameterFieldHelper;
+import io.harness.cdng.provision.cloudformation.beans.CloudFormationInheritOutput;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
@@ -21,6 +26,7 @@ import io.harness.delegate.task.cloudformation.CloudformationTaskNGParameters;
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGParameters.CloudformationTaskNGParametersBuilder;
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGResponse;
 import io.harness.delegate.task.cloudformation.CloudformationTaskType;
+import io.harness.exception.InvalidRequestException;
 import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.UnitProgress;
@@ -60,7 +66,7 @@ public class CloudformationDeleteStackStep extends TaskExecutableWithRollbackAnd
                                                .setType(ExecutionNodeType.CLOUDFORMATION_DELETE_STACK.getYamlType())
                                                .setStepCategory(StepCategory.STEP)
                                                .build();
-  @Inject private CloudformationStepHelper helper;
+  @Inject private CloudformationStepHelper cloudFormationStepHelper;
   @Inject private AwsResourceServiceHelper awsHelper;
   @Inject private KryoSerializer kryoSerializer;
   @Inject private PipelineRbacHelper pipelineRbacHelper;
@@ -76,8 +82,10 @@ public class CloudformationDeleteStackStep extends TaskExecutableWithRollbackAnd
 
     CloudformationDeleteStackStepParameters parameters =
         (CloudformationDeleteStackStepParameters) stepParameters.getSpec();
-    if (parameters.configuration.getType() == CloudformationStepConfigurationType.INLINE) {
-      String connectorRef = parameters.getConfiguration().getSpec().getConnectorRef().getValue();
+    if (parameters.getConfiguration().getType().equals(CloudformationDeleteStackStepConfigurationTypes.Inline)) {
+      String connectorRef = ((InlineCloudformationDeleteStackStepConfiguration) parameters.getConfiguration().getSpec())
+                                .getConnectorRef()
+                                .getValue();
       IdentifierRef identifierRef =
           IdentifierRefHelper.getIdentifierRef(connectorRef, accountId, orgIdentifier, projectIdentifier);
       EntityDetail entityDetail = EntityDetail.builder().type(EntityType.CONNECTORS).entityRef(identifierRef).build();
@@ -90,8 +98,6 @@ public class CloudformationDeleteStackStep extends TaskExecutableWithRollbackAnd
   public StepResponse handleTaskResultWithSecurityContext(Ambiance ambiance, StepElementParameters stepParameters,
       ThrowingSupplier<CloudformationTaskNGResponse> responseDataSupplier) throws Exception {
     log.info("Handling Task Result With Security Context for the DeleteStack Step");
-    CloudformationDeleteStackStepParameters parameters =
-        (CloudformationDeleteStackStepParameters) stepParameters.getSpec();
     StepResponseBuilder builder = StepResponse.builder();
     CloudformationTaskNGResponse response = responseDataSupplier.get();
     List<UnitProgress> unitProgresses = response.getUnitProgressData() == null
@@ -100,9 +106,6 @@ public class CloudformationDeleteStackStep extends TaskExecutableWithRollbackAnd
     builder.unitProgressList(unitProgresses);
     if (CommandExecutionStatus.SUCCESS == response.getCommandExecutionStatus()) {
       builder.status(Status.SUCCEEDED);
-      cloudformationConfigDAL.deleteCloudformationStack(ambiance,
-          helper.generateFullIdentifier(
-              ParameterFieldHelper.getParameterFieldValue(parameters.getProvisionerIdentifier()), ambiance));
     } else {
       builder.status(Status.FAILED);
     }
@@ -114,32 +117,58 @@ public class CloudformationDeleteStackStep extends TaskExecutableWithRollbackAnd
       Ambiance ambiance, StepElementParameters stepParameters, StepInputPackage inputPackage) {
     CloudformationDeleteStackStepParameters parameters =
         (CloudformationDeleteStackStepParameters) stepParameters.getSpec();
-    CloudformationDeleteStackStepConfigurationSpec configuration = parameters.getConfiguration().getSpec();
     log.info("Starting execution Obtain Task after Rbac for the DeleteStack Step");
-    parameters.getConfiguration().getSpec().validateParams();
     String accountId = AmbianceUtils.getAccountId(ambiance);
     String orgIdentifier = AmbianceUtils.getOrgIdentifier(ambiance);
     String projectIdentifier = AmbianceUtils.getProjectIdentifier(ambiance);
 
-    String entityId = helper.generateFullIdentifier(
-        ParameterFieldHelper.getParameterFieldValue(parameters.getProvisionerIdentifier()), ambiance);
+    String connectorRef;
+    String region;
+    String roleArn;
+    String stackName;
+    if (parameters.getConfiguration().getType().equals(CloudformationDeleteStackStepConfigurationTypes.Inline)) {
+      InlineCloudformationDeleteStackStepConfiguration configuration =
+          (InlineCloudformationDeleteStackStepConfiguration) parameters.getConfiguration().getSpec();
+      configuration.validateParams();
+
+      connectorRef = getParameterFieldValue(configuration.getConnectorRef());
+      region = getParameterFieldValue(configuration.getRegion());
+      roleArn = getParameterFieldValue(configuration.getRoleArn());
+      stackName = getParameterFieldValue(configuration.getStackName());
+    } else if (parameters.getConfiguration().getType().equals(
+                   CloudformationDeleteStackStepConfigurationTypes.Inherited)) {
+      CloudFormationInheritOutput cloudFormationInheritOutput =
+          cloudFormationStepHelper.getSavedCloudFormationInheritOutput(
+              getParameterFieldValue(
+                  ((InheritedCloudformationDeleteStackStepConfiguration) parameters.getConfiguration().getSpec())
+                      .getProvisionerIdentifier()),
+              ambiance);
+
+      connectorRef = cloudFormationInheritOutput.getConnectorRef();
+      region = cloudFormationInheritOutput.getRegion();
+      roleArn = cloudFormationInheritOutput.getRoleArn();
+      stackName = cloudFormationInheritOutput.getStackName();
+    } else {
+      String errorMessage = format("Invalid configuration type: %s ", parameters.getConfiguration().getType());
+      log.error(errorMessage);
+      throw new InvalidRequestException(errorMessage);
+    }
+
     CloudformationTaskNGParametersBuilder builder = CloudformationTaskNGParameters.builder();
-    ConnectorInfoDTO connectorIntoDTO = helper.getConnectorDTO(configuration.getConnectorRef().getValue(), ambiance);
-    AwsConnectorDTO connectorDTO = (AwsConnectorDTO) connectorIntoDTO.getConnectorConfig();
-    if (configuration.getRoleArn().getValue() != null) {
-      builder.cloudFormationRoleArn(helper.renderValue(ambiance, configuration.getRoleArn().getValue()));
+    ConnectorInfoDTO connectorInfoDTO = cloudFormationStepHelper.getConnectorDTO(connectorRef, ambiance);
+    AwsConnectorDTO connectorDTO = (AwsConnectorDTO) connectorInfoDTO.getConnectorConfig();
+    if (isNotEmpty(roleArn)) {
+      builder.cloudFormationRoleArn(cloudFormationStepHelper.renderValue(ambiance, roleArn));
     }
     BaseNGAccess baseNGAccess = awsHelper.getBaseNGAccess(accountId, orgIdentifier, projectIdentifier);
     List<EncryptedDataDetail> encryptionDetails = awsHelper.getAwsEncryptionDetails(connectorDTO, baseNGAccess);
     builder.accountId(accountId)
-        .entityId(entityId)
         .taskType(CloudformationTaskType.DELETE_STACK)
         .cfCommandUnit(CloudformationCommandUnit.DeleteStack)
         .awsConnector(connectorDTO)
-        .region(configuration.getRegion().getValue())
+        .region(region)
         .encryptedDataDetails(encryptionDetails)
-        .stackNameSuffix(accountId + orgIdentifier + projectIdentifier) // <===== TODO: This is a temporal hack
-        .customStackName(configuration.getStackName().getValue());
+        .stackName(stackName);
 
     TaskData taskData =
         TaskData.builder()

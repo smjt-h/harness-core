@@ -7,7 +7,7 @@
 
 package io.harness.cdng.provision.cloudformation;
 
-import static io.harness.rule.OwnerRule.NAMAN_TALAYCHA;
+import static io.harness.common.ParameterFieldHelper.getParameterFieldValue;
 import static io.harness.rule.OwnerRule.NGONZALEZ;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,8 +16,6 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepConfigurationParameters.CloudformationDeleteStackStepConfigurationParametersBuilder;
-import io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepConfigurationSpec.CloudformationDeleteStackStepConfigurationSpecBuilder;
 import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.yaml.ParameterField;
@@ -37,15 +35,8 @@ public class CloudformationDeleteStackStepInfoTest extends CategoryTest {
     CloudformationDeleteStackStepInfo cloudformationDeleteStackStepInfo = new CloudformationDeleteStackStepInfo();
     Assertions.assertThatThrownBy(cloudformationDeleteStackStepInfo::validateSpecParameters)
         .hasMessageContaining("CloudformationStepConfiguration is null");
-    CloudformationDeleteStackStepConfigurationParametersBuilder cloudformationDeleteStackStepConfigurationParameters =
-        new CloudformationDeleteStackStepConfigurationParametersBuilder();
-    cloudformationDeleteStackStepConfigurationParameters.type(CloudformationStepConfigurationType.INLINE);
-    CloudformationDeleteStackStepConfigurationSpecBuilder cloudformationDeleteStackStepConfigurationSpec =
-        new CloudformationDeleteStackStepConfigurationSpecBuilder();
     cloudformationDeleteStackStepInfo.setCloudformationStepConfiguration(
-        cloudformationDeleteStackStepConfigurationParameters
-            .spec(cloudformationDeleteStackStepConfigurationSpec.build())
-            .build());
+        CloudformationDeleteStackStepConfiguration.builder().build());
     cloudformationDeleteStackStepInfo.validateSpecParameters();
   }
 
@@ -55,9 +46,9 @@ public class CloudformationDeleteStackStepInfoTest extends CategoryTest {
   public void testExtractConnectorRef() {
     CloudformationDeleteStackStepInfo cloudformationDeleteStackStepInfo = new CloudformationDeleteStackStepInfo();
     cloudformationDeleteStackStepInfo.setCloudformationStepConfiguration(
-        new CloudformationDeleteStackStepConfigurationParametersBuilder()
-            .type(CloudformationStepConfigurationType.INLINE)
-            .spec(new CloudformationDeleteStackStepConfigurationSpecBuilder()
+        CloudformationDeleteStackStepConfiguration.builder()
+            .type(CloudformationDeleteStackStepConfigurationTypes.Inline)
+            .spec(InlineCloudformationDeleteStackStepConfiguration.builder()
                       .connectorRef(ParameterField.createValueField("connectorRef"))
                       .build())
             .build());
@@ -67,23 +58,26 @@ public class CloudformationDeleteStackStepInfoTest extends CategoryTest {
   }
 
   @Test
-  @Owner(developers = NAMAN_TALAYCHA)
+  @Owner(developers = NGONZALEZ)
   @Category(UnitTests.class)
   public void testGetSpecParameters() {
     CloudformationDeleteStackStepInfo cloudformationDeleteStackStepInfo = new CloudformationDeleteStackStepInfo();
     cloudformationDeleteStackStepInfo.setCloudformationStepConfiguration(
-        new CloudformationDeleteStackStepConfigurationParametersBuilder()
-            .type(CloudformationStepConfigurationType.INLINE)
-            .spec(new CloudformationDeleteStackStepConfigurationSpecBuilder()
+        CloudformationDeleteStackStepConfiguration.builder()
+            .type(CloudformationDeleteStackStepConfigurationTypes.Inline)
+            .spec(InlineCloudformationDeleteStackStepConfiguration.builder()
                       .connectorRef(ParameterField.createValueField("connectorRef"))
                       .build())
             .build());
     SpecParameters specParameters = cloudformationDeleteStackStepInfo.getSpecParameters();
     CloudformationDeleteStackStepParameters stepParams = (CloudformationDeleteStackStepParameters) specParameters;
     assertThat(stepParams).isNotNull();
-    assertThat(stepParams.getConfiguration().getSpec().getConnectorRef())
-        .isEqualTo(ParameterField.createValueField("connectorRef"));
-    assertThat(stepParams.getConfiguration().getType()).isEqualTo(CloudformationStepConfigurationType.INLINE);
+    assertThat(getParameterFieldValue(
+                   ((InlineCloudformationDeleteStackStepConfiguration) stepParams.getConfiguration().getSpec())
+                       .getConnectorRef()))
+        .isEqualTo("connectorRef");
+    assertThat(stepParams.getConfiguration().getType())
+        .isEqualTo(CloudformationDeleteStackStepConfigurationTypes.Inline);
   }
 
   @Test

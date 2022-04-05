@@ -23,13 +23,10 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.common.resources.AwsResourceServiceHelper;
-import io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepConfigurationParameters.CloudformationDeleteStackStepConfigurationParametersBuilder;
-import io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepConfigurationSpec.CloudformationDeleteStackStepConfigurationSpecBuilder;
-import io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepParameters.CloudformationDeleteStackStepParametersBuilder;
 import io.harness.connector.ConnectorInfoDTO;
-import io.harness.connector.ConnectorInfoDTO.ConnectorInfoDTOBuilder;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.connector.ConnectorType;
+import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGParameters;
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGResponse;
@@ -49,6 +46,7 @@ import io.harness.rule.Owner;
 import io.harness.steps.StepHelper;
 import io.harness.steps.StepUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -87,38 +85,6 @@ public class CloudformationDeleteStackStepTest extends CategoryTest {
   @InjectMocks private CloudformationDeleteStackStep cloudformationDeleteStackStep;
   @Captor ArgumentCaptor<List<EntityDetail>> captor;
 
-  private Ambiance getAmbiance() {
-    return Ambiance.newBuilder()
-        .putSetupAbstractions("accountId", ACCOUNT_TEST_ID)
-        .putSetupAbstractions("projectIdentifier", PROJECT_TEST_ID)
-        .putSetupAbstractions("orgIdentifier", ORG_TEST_ID)
-        .build();
-  }
-  private EnumMap<CommandExecutionStatus, Status> createStatusMap() {
-    EnumMap<CommandExecutionStatus, Status> statusMap = new EnumMap<>(CommandExecutionStatus.class);
-    statusMap.put(CommandExecutionStatus.FAILURE, Status.FAILED);
-    statusMap.put(CommandExecutionStatus.SUCCESS, Status.SUCCEEDED);
-    return statusMap;
-  }
-
-  private StepElementParameters createDeleteStackStep() {
-    CloudformationDeleteStackStepParametersBuilder parameters = CloudformationDeleteStackStepParameters.infoBuilder();
-    CloudformationDeleteStackStepConfigurationParametersBuilder configuration =
-        CloudformationDeleteStackStepConfigurationParameters.builder();
-    configuration.type(CloudformationStepConfigurationType.INLINE);
-    CloudformationDeleteStackStepConfigurationSpecBuilder spec =
-        CloudformationDeleteStackStepConfigurationSpec.builder();
-
-    spec.connectorRef(ParameterField.createValueField(CONNECTOR_TEST_ID))
-        .stackName(ParameterField.createValueField(STACK_TEST_ID))
-        .region(ParameterField.createValueField(REGION))
-        .roleArn(ParameterField.createValueField(ROLE_ARN));
-
-    configuration.spec(spec.build());
-    parameters.configuration(configuration.build());
-    return StepElementParameters.builder().spec(parameters.build()).build();
-  }
-
   @Test
   @Owner(developers = NGONZALEZ)
   @Category(UnitTests.class)
@@ -145,12 +111,15 @@ public class CloudformationDeleteStackStepTest extends CategoryTest {
     StepElementParameters stepElementParameters = createDeleteStackStep();
     doReturn(ACCOUNT_TEST_ID + "/" + ORG_TEST_ID + "/" + PROJECT_TEST_ID)
         .when(cloudformationStepHelper)
-        .generateFullIdentifier(any(), any());
-    ConnectorInfoDTOBuilder connectorInfoDTOBuilder = ConnectorInfoDTO.builder();
-    connectorInfoDTOBuilder.connectorType(ConnectorType.AWS).identifier(CONNECTOR_TEST_ID);
-    doReturn(connectorInfoDTOBuilder.build()).when(cloudformationStepHelper).getConnectorDTO(any(), any());
+        .generateIdentifier(any(), any());
+    ConnectorInfoDTO connectorInfoDTO = ConnectorInfoDTO.builder()
+                                            .connectorType(ConnectorType.AWS)
+                                            .identifier(CONNECTOR_TEST_ID)
+                                            .connectorConfig(AwsConnectorDTO.builder().build())
+                                            .build();
+    doReturn(connectorInfoDTO).when(cloudformationStepHelper).getConnectorDTO(any(), any());
     doReturn(ROLE_ARN).when(cloudformationStepHelper).renderValue(any(), any());
-    doReturn(null).when(awsHelper).getAwsEncryptionDetails(any(), any());
+    doReturn(new ArrayList<>()).when(awsHelper).getAwsEncryptionDetails(any(), any());
     mockStatic(StepUtils.class);
     PowerMockito.when(StepUtils.prepareCDTaskRequest(any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(TaskRequest.newBuilder().build());
@@ -176,7 +145,7 @@ public class CloudformationDeleteStackStepTest extends CategoryTest {
     StepElementParameters stepElementParameters = createDeleteStackStep();
     doReturn(ACCOUNT_TEST_ID + "/" + ORG_TEST_ID + "/" + PROJECT_TEST_ID)
         .when(cloudformationStepHelper)
-        .generateFullIdentifier(any(), any());
+        .generateIdentifier(any(), any());
     List<UnitProgress> unitProgresses = Collections.singletonList(UnitProgress.newBuilder().build());
     UnitProgressData unitProgressData = UnitProgressData.builder().unitProgresses(unitProgresses).build();
     List<CommandExecutionStatus> statuses =
@@ -194,7 +163,6 @@ public class CloudformationDeleteStackStepTest extends CategoryTest {
       assertThat(stepResponse.getStatus()).isEqualTo(statusMap.get(status));
       assertThat(stepResponse.getStepOutcomes()).isNotNull();
     }
-    verify(cloudformationConfigDAL, times(1)).deleteCloudformationStack(any(), any());
   }
 
   @Test
@@ -202,5 +170,38 @@ public class CloudformationDeleteStackStepTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testGetStepParametersClass() {
     assertThat(cloudformationDeleteStackStep.getStepParametersClass()).isEqualTo(StepElementParameters.class);
+  }
+
+  private Ambiance getAmbiance() {
+    return Ambiance.newBuilder()
+        .putSetupAbstractions("accountId", ACCOUNT_TEST_ID)
+        .putSetupAbstractions("projectIdentifier", PROJECT_TEST_ID)
+        .putSetupAbstractions("orgIdentifier", ORG_TEST_ID)
+        .build();
+  }
+  private EnumMap<CommandExecutionStatus, Status> createStatusMap() {
+    EnumMap<CommandExecutionStatus, Status> statusMap = new EnumMap<>(CommandExecutionStatus.class);
+    statusMap.put(CommandExecutionStatus.FAILURE, Status.FAILED);
+    statusMap.put(CommandExecutionStatus.SUCCESS, Status.SUCCEEDED);
+    return statusMap;
+  }
+
+  private StepElementParameters createDeleteStackStep() {
+    InlineCloudformationDeleteStackStepConfiguration spec =
+        InlineCloudformationDeleteStackStepConfiguration.builder()
+            .connectorRef(ParameterField.createValueField(CONNECTOR_TEST_ID))
+            .stackName(ParameterField.createValueField(STACK_TEST_ID))
+            .region(ParameterField.createValueField(REGION))
+            .roleArn(ParameterField.createValueField(ROLE_ARN))
+            .build();
+    CloudformationDeleteStackStepConfiguration configuration =
+        CloudformationDeleteStackStepConfiguration.builder()
+            .spec(spec)
+            .type(CloudformationDeleteStackStepConfigurationTypes.Inline)
+            .build();
+
+    return StepElementParameters.builder()
+        .spec(CloudformationDeleteStackStepParameters.infoBuilder().configuration(configuration).build())
+        .build();
   }
 }

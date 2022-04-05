@@ -609,15 +609,6 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
-    "CloudformationAwsRoleARN": {
-      "type": "object",
-      "properties": {
-        "roleArn": {
-          "type": "string"
-        }
-      },
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
     "CloudformationCreateStackStepConfiguration": {
       "type": "object",
       "required": [
@@ -626,7 +617,7 @@
         "templateFile"
       ],
       "properties": {
-        "awsCapabilities": {
+        "capabilities": {
           "oneOf": [
             {
               "type": "array",
@@ -639,31 +630,10 @@
             }
           ]
         },
-        "awsRoleARN": {
-          "$ref": "#/definitions/ParameterFieldCloudformationAwsRoleARN"
-        },
-        "cloudformationSkipWaitForResources": {
-          "$ref": "#/definitions/ParameterFieldBoolean"
-        },
-        "cloudformationSkipWaitForResourcesTimeout": {
-          "$ref": "#/definitions/ParameterFieldInteger"
-        },
         "connectorRef": {
           "type": "string"
         },
-        "parameters": {
-          "$ref": "#/definitions/ParameterFieldListCloudformationParametersFilesWrapper"
-        },
-        "region": {
-          "type": "string"
-        },
-        "skipBasedOnStackStatuses": {
-          "$ref": "#/definitions/ParameterFieldListString"
-        },
-        "stackName": {
-          "type": "string"
-        },
-        "tags": {
+        "parameterOverrides": {
           "type": "array",
           "items": {
             "oneOf": [
@@ -679,8 +649,39 @@
             ]
           }
         },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CloudformationParametersFileSpec"
+          }
+        },
+        "region": {
+          "type": "string"
+        },
+        "roleArn": {
+          "type": "string"
+        },
+        "skipOnStackStatuses": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "stackName": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "string"
+        },
         "templateFile": {
-          "$ref": "#/definitions/CloudformationTemplateFilesWrapper"
+          "$ref": "#/definitions/CloudformationTemplateFile"
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -726,40 +727,58 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
-    "CloudformationDeleteStackStepConfigurationParameters": {
+    "CloudformationDeleteStackStepConfiguration": {
       "type": "object",
+      "required": [
+        "spec",
+        "type"
+      ],
       "properties": {
-        "spec": {
-          "$ref": "#/definitions/CloudformationDeleteStackStepConfigurationSpec"
-        },
         "type": {
-          "type": "string",
-          "enum": [
-            "Inline",
-            "InheritFromIdentifier"
-          ]
+          "type": "string"
         }
       },
-      "$schema": "http://json-schema.org/draft-07/schema#"
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Inherited"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/InheritedCloudformationDeleteStackStepConfiguration"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Inline"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/InlineCloudformationDeleteStackStepConfiguration"
+              }
+            }
+          }
+        }
+      ]
     },
     "CloudformationDeleteStackStepConfigurationSpec": {
       "type": "object",
-      "required": [
-        "connectorRef",
-        "region",
-        "stackName"
-      ],
+      "discriminator": "type",
       "properties": {
-        "connectorRef": {
-          "type": "string"
-        },
-        "region": {
-          "type": "string"
-        },
-        "roleArn": {
-          "type": "string"
-        },
-        "stackName": {
+        "type": {
           "type": "string"
         }
       },
@@ -773,12 +792,11 @@
         {
           "type": "object",
           "required": [
-            "configuration",
-            "provisionerIdentifier"
+            "configuration"
           ],
           "properties": {
             "configuration": {
-              "$ref": "#/definitions/CloudformationDeleteStackStepConfigurationParameters"
+              "$ref": "#/definitions/CloudformationDeleteStackStepConfiguration"
             },
             "delegateSelectors": {
               "oneOf": [
@@ -797,53 +815,24 @@
             },
             "metadata": {
               "type": "string"
-            },
-            "provisionerIdentifier": {
-              "type": "string"
             }
           }
         }
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
-    "CloudformationParametersFile": {
+    "CloudformationParametersFileSpec": {
       "type": "object",
       "required": [
         "identifier",
-        "spec",
-        "type"
+        "store"
       ],
       "properties": {
         "identifier": {
           "type": "string"
         },
-        "spec": {
-          "$ref": "#/definitions/CloudformationParametersFileSpec"
-        },
-        "type": {
-          "type": "string"
-        }
-      },
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
-    "CloudformationParametersFileSpec": {
-      "type": "object",
-      "discriminator": "type",
-      "properties": {
-        "type": {
-          "type": "string"
-        }
-      },
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
-    "CloudformationParametersFilesWrapper": {
-      "type": "object",
-      "required": [
-        "templateFile"
-      ],
-      "properties": {
-        "templateFile": {
-          "$ref": "#/definitions/CloudformationParametersFile"
+        "store": {
+          "$ref": "#/definitions/StoreConfigWrapper"
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -851,14 +840,10 @@
     "CloudformationTemplateFile": {
       "type": "object",
       "required": [
-        "identifier",
         "spec",
         "type"
       ],
       "properties": {
-        "identifier": {
-          "type": "string"
-        },
         "type": {
           "type": "string"
         }
@@ -896,6 +881,22 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "S3URL"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/S3UrlCloudformationTemplateFileSpec"
+              }
+            }
+          }
         }
       ]
     },
@@ -905,18 +906,6 @@
       "properties": {
         "type": {
           "type": "string"
-        }
-      },
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
-    "CloudformationTemplateFilesWrapper": {
-      "type": "object",
-      "required": [
-        "templateFile"
-      ],
-      "properties": {
-        "templateFile": {
-          "$ref": "#/definitions/CloudformationTemplateFile"
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2321,15 +2310,48 @@
         }
       ]
     },
-    "InlineCloudformationParametersFileSpec": {
+    "InheritedCloudformationDeleteStackStepConfiguration": {
       "allOf": [
         {
-          "$ref": "#/definitions/CloudformationParametersFileSpec"
+          "$ref": "#/definitions/CloudformationDeleteStackStepConfigurationSpec"
         },
         {
           "type": "object",
+          "required": [
+            "provisionerIdentifier"
+          ],
           "properties": {
-            "content": {
+            "provisionerIdentifier": {
+              "type": "string"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "InlineCloudformationDeleteStackStepConfiguration": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/CloudformationDeleteStackStepConfigurationSpec"
+        },
+        {
+          "type": "object",
+          "required": [
+            "connectorRef",
+            "region",
+            "stackName"
+          ],
+          "properties": {
+            "connectorRef": {
+              "type": "string"
+            },
+            "region": {
+              "type": "string"
+            },
+            "roleArn": {
+              "type": "string"
+            },
+            "stackName": {
               "type": "string"
             }
           }
@@ -2344,8 +2366,11 @@
         },
         {
           "type": "object",
+          "required": [
+            "templateBody"
+          ],
           "properties": {
-            "content": {
+            "templateBody": {
               "type": "string"
             }
           }
@@ -3886,121 +3911,6 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
-    "ParameterFieldCloudformationAwsRoleARN": {
-      "type": "object",
-      "properties": {
-        "expression": {
-          "type": "boolean"
-        },
-        "expressionValue": {
-          "type": "string"
-        },
-        "inputSetValidator": {
-          "$ref": "#/definitions/InputSetValidator"
-        },
-        "jsonResponseField": {
-          "type": "boolean"
-        },
-        "responseField": {
-          "type": "string"
-        },
-        "typeString": {
-          "type": "boolean"
-        },
-        "value": {
-          "$ref": "#/definitions/CloudformationAwsRoleARN"
-        }
-      },
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
-    "ParameterFieldInteger": {
-      "type": "object",
-      "properties": {
-        "expression": {
-          "type": "boolean"
-        },
-        "expressionValue": {
-          "type": "string"
-        },
-        "inputSetValidator": {
-          "$ref": "#/definitions/InputSetValidator"
-        },
-        "jsonResponseField": {
-          "type": "boolean"
-        },
-        "responseField": {
-          "type": "string"
-        },
-        "typeString": {
-          "type": "boolean"
-        },
-        "value": {
-          "type": "integer",
-          "format": "int32"
-        }
-      },
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
-    "ParameterFieldListCloudformationParametersFilesWrapper": {
-      "type": "object",
-      "properties": {
-        "expression": {
-          "type": "boolean"
-        },
-        "expressionValue": {
-          "type": "string"
-        },
-        "inputSetValidator": {
-          "$ref": "#/definitions/InputSetValidator"
-        },
-        "jsonResponseField": {
-          "type": "boolean"
-        },
-        "responseField": {
-          "type": "string"
-        },
-        "typeString": {
-          "type": "boolean"
-        },
-        "value": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CloudformationParametersFilesWrapper"
-          }
-        }
-      },
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
-    "ParameterFieldListString": {
-      "type": "object",
-      "properties": {
-        "expression": {
-          "type": "boolean"
-        },
-        "expressionValue": {
-          "type": "string"
-        },
-        "inputSetValidator": {
-          "$ref": "#/definitions/InputSetValidator"
-        },
-        "jsonResponseField": {
-          "type": "boolean"
-        },
-        "responseField": {
-          "type": "string"
-        },
-        "typeString": {
-          "type": "boolean"
-        },
-        "value": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
     "ParameterFieldString": {
       "type": "object",
       "properties": {
@@ -4553,6 +4463,67 @@
             },
             "region": {
               "type": "string"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "S3UrlCloudformationTemplateFileSpec": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/CloudformationTemplateFileSpec"
+        },
+        {
+          "type": "object",
+          "required": [
+            "templateUrl"
+          ],
+          "properties": {
+            "templateUrl": {
+              "type": "string"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "S3UrlStoreConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/StoreConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "connectorRef",
+            "region",
+            "urls"
+          ],
+          "properties": {
+            "connectorRef": {
+              "type": "string"
+            },
+            "metadata": {
+              "type": "string"
+            },
+            "region": {
+              "type": "string"
+            },
+            "urls": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
             }
           }
         }
@@ -6132,7 +6103,8 @@
             "Http",
             "S3",
             "Gcs",
-            "Artifactory"
+            "Artifactory",
+            "S3Url"
           ]
         }
       },
@@ -6262,6 +6234,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/S3StoreConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "S3Url"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/S3UrlStoreConfig"
               }
             }
           }

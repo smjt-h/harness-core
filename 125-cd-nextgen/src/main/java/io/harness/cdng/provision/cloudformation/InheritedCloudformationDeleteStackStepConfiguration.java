@@ -7,24 +7,27 @@
 
 package io.harness.cdng.provision.cloudformation;
 
-import static io.harness.annotations.dev.HarnessTeam.CDP;
-
+import io.harness.annotation.RecasterAlias;
+import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
 import io.harness.pms.yaml.ParameterField;
 
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@OwnedBy(CDP)
 @Data
-@NoArgsConstructor
-public class InlineCloudformationParametersFileSpec implements CloudformationParametersFileSpec {
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> content;
+@Builder
+@OwnedBy(HarnessTeam.CDP)
+@RecasterAlias("io.harness.cdng.provision.cloudformation.InheritedCloudformationDeleteStackStepConfiguration")
+public class InheritedCloudformationDeleteStackStepConfiguration
+    implements CloudformationDeleteStackStepConfigurationSpec {
+  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> provisionerIdentifier;
 
   @Override
   public String getType() {
-    return CloudformationParametersFileTypes.Inline;
+    return CloudformationDeleteStackStepConfigurationTypes.Inherited;
   }
 }

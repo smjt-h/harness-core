@@ -7,15 +7,7 @@
 
 package io.harness.cdng.provision.cloudformation;
 
-import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
-
-import javax.validation.constraints.NotNull;
-
-public class RemoteCloudformationParametersFileSpec implements CloudformationTemplateFileSpec {
-  @NotNull StoreConfigWrapper store;
-
-  @Override
-  public String getType() {
-    return CloudformationParametersFileTypes.Remote;
-  }
+public interface CloudformationDeleteStackStepConfigurationTypes {
+  String Inline = "Inline";
+  String Inherited = "Inherited";
 }

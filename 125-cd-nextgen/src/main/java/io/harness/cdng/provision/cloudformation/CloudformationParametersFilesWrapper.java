@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @OwnedBy(CDP)
 @Data
 @NoArgsConstructor
-@RecasterAlias("io.harness.cdng.provision.cloudformation.ParametersFilesWrapper")
+@RecasterAlias("io.harness.cdng.provision.cloudformation.CloudformationParametersFilesWrapper")
 public class CloudformationParametersFilesWrapper {
   @NotNull CloudformationParametersFile templateFile;
 }

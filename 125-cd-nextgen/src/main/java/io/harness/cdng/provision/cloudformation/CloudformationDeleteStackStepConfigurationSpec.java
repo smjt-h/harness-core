@@ -7,33 +7,25 @@
 
 package io.harness.cdng.provision.cloudformation;
 
-import io.harness.annotation.RecasterAlias;
-import io.harness.annotations.dev.HarnessTeam;
+import static io.harness.annotations.dev.HarnessTeam.CDP;
+
+import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.EXTERNAL_PROPERTY;
+import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
+
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.SwaggerConstants;
-import io.harness.pms.yaml.ParameterField;
-import io.harness.validation.Validator;
 
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.NotNull;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Data;
-import lombok.experimental.FieldDefaults;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-@Data
-@Builder
-@FieldDefaults(level = AccessLevel.PRIVATE)
-@OwnedBy(HarnessTeam.CDP)
-@RecasterAlias("io.harness.cdng.provision.cloudformation.DeleteStackStepConfiguration")
-public class CloudformationDeleteStackStepConfigurationSpec {
-  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> stackName;
-  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> connectorRef;
-  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> region;
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> roleArn;
-  void validateParams() {
-    Validator.notNullCheck("AWS connectorRef is null", connectorRef);
-    Validator.notNullCheck("AWS region is null", region);
-    Validator.notNullCheck("StackName is null", stackName);
-  }
+@OwnedBy(CDP)
+@JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
+@JsonSubTypes({
+  @JsonSubTypes.Type(value = InlineCloudformationDeleteStackStepConfiguration.class,
+      name = CloudformationDeleteStackStepConfigurationTypes.Inline)
+  ,
+      @JsonSubTypes.Type(value = InheritedCloudformationDeleteStackStepConfiguration.class,
+          name = CloudformationDeleteStackStepConfigurationTypes.Inherited),
+})
+public interface CloudformationDeleteStackStepConfigurationSpec {
+  String getType();
 }

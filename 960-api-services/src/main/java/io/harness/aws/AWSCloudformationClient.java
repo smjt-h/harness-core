@@ -42,6 +42,6 @@ public interface AWSCloudformationClient {
   DescribeStacksResult describeStacks(
       String region, DescribeStacksRequest describeStacksRequest, AwsInternalConfig awsConfig);
 
-  void stackDeletionCompleted(
-      DescribeStacksRequest describeStacksRequest, AwsInternalConfig awsConfig, String region, LogCallback logCallback);
+  void waitForStackDeletionCompleted(DescribeStacksRequest describeStacksRequest, AwsInternalConfig awsConfig,
+      String region, LogCallback logCallback, long stackEventsTs);
 }
