@@ -169,7 +169,7 @@ public class DeploymentAuthHandler {
       //                ExecutableElementsFilter.FilterType.WORKFLOW);
       //      }
     }
-    Pipeline pipeline = pipelineService.getPipeline(appId, workflowOrPipelineId);
+    Pipeline pipeline = pipelineService.readPipeline(appId, workflowOrPipelineId, true);
     if (pipeline != null) {
       authorizePipelineExecution(appId, workflowOrPipelineId);
       if (featureFlagService.isEnabled(PIPELINE_PER_ENV_DEPLOYMENT_PERMISSION, pipeline.getAccountId())) {

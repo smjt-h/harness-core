@@ -35,6 +35,7 @@ import software.wings.graphql.schema.type.QLAppFilterType;
 import software.wings.graphql.schema.type.permissions.QLActions;
 import software.wings.graphql.schema.type.permissions.QLAppPermission;
 import software.wings.graphql.schema.type.permissions.QLExecutableElementFilterInput;
+import software.wings.graphql.schema.type.permissions.QLExecutableElementFilterType;
 import software.wings.graphql.schema.type.permissions.QLPermissionType;
 import software.wings.graphql.schema.type.permissions.QLUserGroupPermissions;
 import software.wings.service.intfc.InfrastructureProvisionerService;
@@ -370,6 +371,10 @@ public class UserGroupPermissionValidator {
       if (applications.getFilterType().equals(QLAppFilterType.EXCLUDE_SELECTED) && executableElementFilter != null) {
         throw new InvalidRequestException(
             "Both exclude selected and execultable element filter can't be set at same time");
+      }
+      if (executableElementFilter != null
+          && !QLExecutableElementFilterType.ALL.equals(executableElementFilter.getExecutableElementFilterType())) {
+        checkPipelineExists(executableElementFilter.getIds(), accountId);
       }
     }
   }
