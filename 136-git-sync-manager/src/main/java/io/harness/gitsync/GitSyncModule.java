@@ -23,7 +23,12 @@ import io.harness.app.PrimaryVersionManagerModule;
 import io.harness.cistatus.service.GithubService;
 import io.harness.cistatus.service.GithubServiceImpl;
 import io.harness.gitsync.client.GitSyncSdkGrpcClientModule;
+import io.harness.gitsync.common.dtos.RepoProviders;
+import io.harness.gitsync.common.dtos.ScmAPI;
 import io.harness.gitsync.common.events.FullSyncMessageListener;
+import io.harness.gitsync.common.helper.scmerrorhandling.ScmAPIErrorHandler;
+import io.harness.gitsync.common.helper.scmerrorhandling.bitbucket.BitbucketUpsertWebhookScmAPIErrorHandler;
+import io.harness.gitsync.common.helper.scmerrorhandling.github.GithubUpsertWebhookScmAPIErrorHandler;
 import io.harness.gitsync.common.impl.FullSyncTriggerServiceImpl;
 import io.harness.gitsync.common.impl.GitBranchServiceImpl;
 import io.harness.gitsync.common.impl.GitBranchSyncServiceImpl;
@@ -83,6 +88,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import java.util.Arrays;
@@ -90,6 +97,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.commons.lang3.tuple.Pair;
 
 @OwnedBy(DX)
 public class GitSyncModule extends AbstractModule {
@@ -172,6 +180,16 @@ public class GitSyncModule extends AbstractModule {
     Multibinder<MessageListener> fullSyncMessageListener =
         Multibinder.newSetBinder(binder(), MessageListener.class, Names.named(GIT_FULL_SYNC_STREAM));
     fullSyncMessageListener.addBinding().to(FullSyncMessageListener.class);
+  }
+
+  private void bindScmAPIErrorHandlers() {
+    MapBinder<Pair<ScmAPI, RepoProviders>, ScmAPIErrorHandler> mapBinder = MapBinder.newMapBinder(
+        binder(), new TypeLiteral<Pair<ScmAPI, RepoProviders>>() {}, new TypeLiteral<ScmAPIErrorHandler>() {});
+
+    mapBinder.addBinding(Pair.of(ScmAPI.UPSERT_WEBHOOK, RepoProviders.GITHUB))
+        .to(GithubUpsertWebhookScmAPIErrorHandler.class);
+    mapBinder.addBinding(Pair.of(ScmAPI.UPSERT_WEBHOOK, RepoProviders.BITBUCKET))
+        .to(BitbucketUpsertWebhookScmAPIErrorHandler.class);
   }
 
   private void registerRequiredBindings() {

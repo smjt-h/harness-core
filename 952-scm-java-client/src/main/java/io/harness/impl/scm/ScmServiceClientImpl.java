@@ -603,8 +603,6 @@ public class ScmServiceClientImpl implements ScmServiceClient {
         getCreateWebhookRequest(slug, gitProvider, gitWebhookDetails, scmConnector, null);
     CreateWebhookResponse createWebhookResponse =
         ScmGrpcClientUtils.retryAndProcessException(scmBlockingStub::createWebhook, createWebhookRequest);
-    ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
-        createWebhookResponse.getStatus(), createWebhookResponse.getError());
     return createWebhookResponse;
   }
 
@@ -668,8 +666,6 @@ public class ScmServiceClientImpl implements ScmServiceClient {
     }
     CreateWebhookResponse createWebhookResponse =
         createWebhook(scmConnector, gitWebhookDetails, scmBlockingStub, existingWebhook);
-    ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
-        createWebhookResponse.getStatus(), createWebhookResponse.getError());
     return createWebhookResponse;
   }
 

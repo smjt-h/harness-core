@@ -31,10 +31,12 @@ import io.harness.gitsync.common.dtos.CreatePRDTO;
 import io.harness.gitsync.common.dtos.GitDiffResultFileListDTO;
 import io.harness.gitsync.common.dtos.GitFileChangeDTO;
 import io.harness.gitsync.common.dtos.GitFileContent;
+import io.harness.gitsync.common.dtos.ScmAPI;
 import io.harness.gitsync.common.helper.FileBatchResponseMapper;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.helper.PRFileListMapper;
 import io.harness.gitsync.common.helper.UserProfileHelper;
+import io.harness.gitsync.common.helper.scmerrorhandling.ScmAPIErrorHandlerManager;
 import io.harness.gitsync.common.service.YamlGitConfigService;
 import io.harness.impl.ScmResponseStatusUtils;
 import io.harness.ng.userprofile.commons.SCMType;
@@ -243,6 +245,7 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
   @Override
   public CreateWebhookResponse upsertWebhook(
       UpsertWebhookRequestDTO upsertWebhookRequestDTO, String target, GitWebhookTaskType gitWebhookTaskType) {
+    CreateWebhookResponse createWebhookResponse;
     final ScmConnector decryptedConnector =
         gitSyncConnectorHelper.getDecryptedConnector(upsertWebhookRequestDTO.getAccountIdentifier(),
             upsertWebhookRequestDTO.getOrgIdentifier(), upsertWebhookRequestDTO.getProjectIdentifier(),
@@ -250,10 +253,14 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
     GitWebhookDetails gitWebhookDetails =
         GitWebhookDetails.builder().hookEventType(upsertWebhookRequestDTO.getHookEventType()).target(target).build();
     if (gitWebhookTaskType.equals(GitWebhookTaskType.CREATE)) {
-      return scmClient.createWebhook(decryptedConnector, gitWebhookDetails);
+      createWebhookResponse = scmClient.createWebhook(decryptedConnector, gitWebhookDetails);
     } else {
-      return scmClient.upsertWebhook(decryptedConnector, gitWebhookDetails);
+      createWebhookResponse = scmClient.upsertWebhook(decryptedConnector, gitWebhookDetails);
     }
+
+    ScmAPIErrorHandlerManager.processAndThrowError(ScmAPI.UPSERT_WEBHOOK, decryptedConnector.getConnectorType(),
+        createWebhookResponse.getStatus(), createWebhookResponse.getError());
+    return createWebhookResponse;
   }
 
   @Override
