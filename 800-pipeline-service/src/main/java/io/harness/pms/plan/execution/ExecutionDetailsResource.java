@@ -20,8 +20,12 @@ import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.exception.InvalidRequestException;
+import io.harness.execution.StagesExecutionMetadata;
 import io.harness.filter.dto.FilterPropertiesDTO;
 import io.harness.gitsync.interceptor.GitEntityFindInfoDTO;
+import io.harness.gitsync.interceptor.GitEntityInfo;
+import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.gitsync.sdk.EntityGitDetails;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
@@ -29,8 +33,12 @@ import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.template.TemplateInputsErrorResponseDTO;
 import io.harness.pms.annotations.PipelineServiceAuth;
 import io.harness.pms.execution.ExecutionStatus;
+import io.harness.pms.gitsync.PmsGitSyncBranchContextGuard;
 import io.harness.pms.gitsync.PmsGitSyncHelper;
+import io.harness.pms.helpers.YamlExpressionResolveHelper;
+import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetTemplateResponseDTOPMS;
 import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetYamlWithTemplateDTO;
+import io.harness.pms.ngpipeline.inputset.helpers.ValidateAndMergeHelper;
 import io.harness.pms.pipeline.PipelineEntity.PipelineEntityKeys;
 import io.harness.pms.pipeline.PipelineResourceConstants;
 import io.harness.pms.pipeline.mappers.ExecutionGraphMapper;
@@ -41,6 +49,7 @@ import io.harness.pms.plan.execution.beans.dto.PipelineExecutionFilterProperties
 import io.harness.pms.plan.execution.beans.dto.PipelineExecutionSummaryDTO;
 import io.harness.pms.plan.execution.service.PMSExecutionService;
 import io.harness.pms.rbac.PipelineRbacPermissions;
+import io.harness.repositories.executions.PmsExecutionSummaryRespository;
 import io.harness.utils.PageUtils;
 
 import com.google.inject.Inject;
@@ -54,7 +63,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
@@ -107,6 +119,9 @@ public class ExecutionDetailsResource {
   @Inject private final PMSExecutionService pmsExecutionService;
   @Inject private final AccessControlClient accessControlClient;
   @Inject private final PmsGitSyncHelper pmsGitSyncHelper;
+  @Inject private final PmsExecutionSummaryRespository pmsExecutionSummaryRespository;
+  @Inject private final YamlExpressionResolveHelper yamlExpressionResolveHelper;
+  @Inject private final ValidateAndMergeHelper validateAndMergeHelper;
 
   @POST
   @Path("/summary")
@@ -278,6 +293,7 @@ public class ExecutionDetailsResource {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(responseCode = "default", description = "Return the Input Set YAML used for given Plan Execution")
       })
+  @Deprecated
   public String
   getInputsetYaml(@NotNull @Parameter(description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE, required = true)
                   @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountId,
@@ -313,7 +329,8 @@ public class ExecutionDetailsResource {
       @QueryParam("resolveExpressions") @DefaultValue("false") boolean resolveExpressions,
       @Parameter(description = "Plan Execution Id for which we want to get the Input Set YAML",
           required = true) @PathParam(NGCommonEntityConstants.PLAN_KEY) String planExecutionId) {
-    return ResponseDTO.newResponse(pmsExecutionService.getInputSetYamlWithTemplate(
-        accountId, orgId, projectId, planExecutionId, false, resolveExpressions));
+    InputSetYamlWithTemplateDTO fullRerunExecutionInfo = pmsExecutionService.getFullRerunExecutionInfo(
+        accountId, orgId, projectId, planExecutionId, false, resolveExpressions);
+    return ResponseDTO.newResponse(fullRerunExecutionInfo);
   }
 }

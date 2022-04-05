@@ -36,6 +36,7 @@ import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.governance.GovernanceMetadata;
 import io.harness.pms.contracts.plan.ExecutionTriggerInfo;
 import io.harness.pms.execution.ExecutionStatus;
+import io.harness.pms.gitsync.PmsGitSyncHelper;
 import io.harness.pms.plan.execution.beans.dto.GraphLayoutNodeDTO;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -229,5 +230,10 @@ public class PipelineExecutionSummaryEntity implements PersistentEntity, UuidAwa
 
   public boolean isStagesExecutionAllowed() {
     return allowStagesExecution != null && allowStagesExecution;
+  }
+
+  public EntityGitDetails getEntityGitDetailsUsingHelper(PmsGitSyncHelper pmsGitSyncHelper) {
+    return entityGitDetails == null ? pmsGitSyncHelper.getEntityGitDetailsFromBytes(gitSyncBranchContext)
+                                    : entityGitDetails;
   }
 }

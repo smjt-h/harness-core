@@ -25,6 +25,8 @@ import io.harness.execution.StagesExecutionMetadata;
 import io.harness.filter.FilterType;
 import io.harness.filter.dto.FilterDTO;
 import io.harness.filter.service.FilterService;
+import io.harness.gitsync.interceptor.GitEntityInfo;
+import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.gitsync.sdk.EntityGitDetails;
 import io.harness.interrupts.Interrupt;
 import io.harness.ng.core.common.beans.NGTag.NGTagKeys;
@@ -33,9 +35,11 @@ import io.harness.pms.contracts.interrupts.IssuedBy;
 import io.harness.pms.contracts.interrupts.ManualIssuer;
 import io.harness.pms.execution.ExecutionStatus;
 import io.harness.pms.filter.utils.ModuleInfoFilterUtils;
+import io.harness.pms.gitsync.PmsGitSyncBranchContextGuard;
 import io.harness.pms.gitsync.PmsGitSyncHelper;
 import io.harness.pms.helpers.TriggeredByHelper;
 import io.harness.pms.helpers.YamlExpressionResolveHelper;
+import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetTemplateResponseDTOPMS;
 import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetYamlWithTemplateDTO;
 import io.harness.pms.ngpipeline.inputset.helpers.ValidateAndMergeHelper;
 import io.harness.pms.pipeline.PipelineEntity;
@@ -351,5 +355,60 @@ public class PMSExecutionServiceImpl implements PMSExecutionService {
   public long getCountOfExecutions(Criteria criteria) {
     Pageable pageRequest = PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, PlanExecutionSummaryKeys.startTs));
     return pmsExecutionSummaryRespository.findAll(criteria, pageRequest).getTotalElements();
+  }
+
+  @Override
+  public InputSetYamlWithTemplateDTO getFullRerunExecutionInfo(String accountId, String orgId, String projectId,
+      String planExecutionId, boolean pipelineDeleted, boolean resolveExpressions) {
+    Optional<PipelineExecutionSummaryEntity> pipelineExecutionSummaryEntityOptional =
+        pmsExecutionSummaryRespository
+            .findByAccountIdAndOrgIdentifierAndProjectIdentifierAndPlanExecutionIdAndPipelineDeletedNot(
+                accountId, orgId, projectId, planExecutionId, true);
+    if (!pipelineExecutionSummaryEntityOptional.isPresent()) {
+      throw new InvalidRequestException(
+          "Invalid request : Input Set did not exist or pipeline execution has been deleted");
+    }
+    PipelineExecutionSummaryEntity executionSummaryEntity = pipelineExecutionSummaryEntityOptional.get();
+    String pipelineIdentifier = executionSummaryEntity.getPipelineIdentifier();
+
+    // get data from existing execution
+    String runtimeInputYAML = executionSummaryEntity.getInputSetYaml();
+    String runtimeInputTemplateDuringExecution = executionSummaryEntity.getPipelineTemplate();
+    Map<String, String> expressionValuesDuringExecution = null;
+    if (resolveExpressions && EmptyPredicate.isNotEmpty(runtimeInputYAML)) {
+      runtimeInputYAML = yamlExpressionResolveHelper.resolveExpressionsInYaml(runtimeInputYAML, planExecutionId);
+    }
+    StagesExecutionMetadata stagesExecutionMetadata = executionSummaryEntity.getStagesExecutionMetadata();
+    if (stagesExecutionMetadata != null) {
+      expressionValuesDuringExecution = stagesExecutionMetadata.getExpressionValues();
+    }
+
+    // get data for new execution
+    List<String> stageIdentifiers =
+        stagesExecutionMetadata == null ? Collections.emptyList() : stagesExecutionMetadata.getStageIdentifiers();
+
+    EntityGitDetails entityGitDetails = executionSummaryEntity.getEntityGitDetailsUsingHelper(pmsGitSyncHelper);
+    GitSyncBranchContext gitSyncBranchContext =
+        GitSyncBranchContext.builder()
+            .gitBranchInfo(GitEntityInfo.builder()
+                               .branch(entityGitDetails.getBranch())
+                               .yamlGitConfigId(entityGitDetails.getRepoIdentifier())
+                               .build())
+            .build();
+    InputSetTemplateResponseDTOPMS responseForNewExecution;
+    try (PmsGitSyncBranchContextGuard ignored = new PmsGitSyncBranchContextGuard(gitSyncBranchContext, true)) {
+      responseForNewExecution = validateAndMergeHelper.getInputSetTemplateResponseDTO(
+          accountId, orgId, projectId, pipelineIdentifier, stageIdentifiers);
+    }
+    InputSetYamlWithTemplateDTO inputSetYamlWithTemplateDTO =
+        InputSetYamlWithTemplateDTO.builder()
+            .inputSetTemplateYaml(runtimeInputTemplateDuringExecution)
+            .inputSetYaml(runtimeInputYAML)
+            .expressionValues(expressionValuesDuringExecution)
+            .latestTemplateYaml(responseForNewExecution.getInputSetTemplateYaml())
+            .replacedExpressions(responseForNewExecution.getReplacedExpressions())
+            .modules(responseForNewExecution.getModules())
+            .hasInputSets(responseForNewExecution.getHasInputSets())
+            .build();
   }
 }
