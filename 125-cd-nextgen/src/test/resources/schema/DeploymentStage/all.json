@@ -4193,7 +4193,8 @@
           "enum": [
             "Kubernetes",
             "NativeHelm",
-            "Ssh"
+            "Ssh",
+            "DeploymentTemplate"
           ]
         }
       },
@@ -4243,6 +4244,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/SshServiceSpec"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "DeploymentTemplate"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/DeploymentTemplateServiceSpec"
               }
             }
           }
@@ -4937,6 +4954,22 @@
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
     "SshServiceSpec": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ServiceSpec"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "metadata": {
+              "type": "string"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "DeploymentTemplateServiceSpec": {
       "allOf": [
         {
           "$ref": "#/definitions/ServiceSpec"
