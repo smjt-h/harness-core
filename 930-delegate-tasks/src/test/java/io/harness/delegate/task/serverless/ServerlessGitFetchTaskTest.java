@@ -7,7 +7,12 @@
 
 package io.harness.delegate.task.serverless;
 
-import com.google.inject.Inject;
+import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.rule.OwnerRule.PIYUSH_BHUWALKA;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
+
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
@@ -35,6 +40,15 @@ import io.harness.git.GitClientV2;
 import io.harness.git.model.FetchFilesResult;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.SecretDecryptionService;
+
+import com.google.inject.Inject;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.joor.Reflect;
@@ -45,88 +59,98 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
-
-import static io.harness.rule.OwnerRule.PIYUSH_BHUWALKA;
-import static org.assertj.core.api.Assertions.assertThat;
-import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static org.mockito.Mockito.*;
-
 @OwnedBy(CDP)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ServerlessGitFetchTaskTest extends CategoryTest {
+  final DelegateTaskPackage delegateTaskPackage =
+      DelegateTaskPackage.builder().data(TaskData.builder().build()).build();
+  @Mock ServerlessGitFetchTaskHelper serverlessGitFetchTaskHelper;
+  @Mock GitAuthenticationDTO gitAuthenticationDTO = GitHTTPAuthenticationDTO.builder().build();
+  @Mock BooleanSupplier preExecute;
+  @Mock Consumer<DelegateTaskResponse> consumer;
+  @Mock ILogStreamingTaskClient logStreamingTaskClient;
+  @Mock GitDecryptionHelper gitDecryptionHelper;
+  @Mock GitClientV2 gitClientV2;
+  @Mock ITaskProgressClient taskProgressClient;
+  @Mock ExecutorService executorService;
+  @Mock GitFetchFilesTaskHelper gitFetchFilesTaskHelper;
+  @Mock ScmFetchFilesHelperNG scmFetchFilesHelper;
+  @Mock NGGitService ngGitService;
+  @Mock SecretDecryptionService secretDecryptionService;
+  @Inject
+  @InjectMocks
+  ServerlessGitFetchTask serverlessGitFetchTask =
+      new ServerlessGitFetchTask(delegateTaskPackage, logStreamingTaskClient, consumer, preExecute);
 
-    final DelegateTaskPackage delegateTaskPackage =
-            DelegateTaskPackage.builder().data(TaskData.builder().build()).build();
-    @Mock ServerlessGitFetchTaskHelper serverlessGitFetchTaskHelper;
-    @Mock GitAuthenticationDTO gitAuthenticationDTO = GitHTTPAuthenticationDTO.builder().build();
-    @Mock BooleanSupplier preExecute;
-    @Mock Consumer<DelegateTaskResponse> consumer;
-    @Mock ILogStreamingTaskClient logStreamingTaskClient;
-    @Mock GitDecryptionHelper gitDecryptionHelper;
-    @Mock GitClientV2 gitClientV2;
-    @Mock ITaskProgressClient taskProgressClient;
-    @Mock ExecutorService executorService;
-    @Mock GitFetchFilesTaskHelper gitFetchFilesTaskHelper;
-    @Mock ScmFetchFilesHelperNG scmFetchFilesHelper;
-    @Mock NGGitService ngGitService;
-    @Mock SecretDecryptionService secretDecryptionService;
-    @Inject
-    @InjectMocks ServerlessGitFetchTask serverlessGitFetchTask = new ServerlessGitFetchTask(delegateTaskPackage,
-            logStreamingTaskClient, consumer, preExecute);
+  String identifier = "iden";
+  String manifestType = "serverless-lambda";
+  String url = "url";
+  GitConnectionType gitConnectionType = GitConnectionType.ACCOUNT;
+  ScmConnector scmConnector = GitConfigDTO.builder()
+                                  .url(url)
+                                  .gitAuthType(GitAuthType.HTTP)
+                                  .gitAuth(gitAuthenticationDTO)
+                                  .validationRepo("asfd")
+                                  .branchName("asfdf")
+                                  .executeOnDelegate(false)
+                                  .delegateSelectors(Collections.emptySet())
+                                  .gitConnectionType(gitConnectionType)
+                                  .build();
+  String branch = "bran";
+  String path = "path/";
+  String accountId = "account";
+  String configOverridePath = "override/";
+  GitStoreDelegateConfig gitStoreDelegateConfig = GitStoreDelegateConfig.builder()
+                                                      .gitConfigDTO(scmConnector)
+                                                      .fetchType(FetchType.BRANCH)
+                                                      .branch(branch)
+                                                      .optimizedFilesFetch(true)
+                                                      .path(path)
+                                                      .build();
+  ServerlessGitFetchFileConfig serverlessGitFetchFileConfig = ServerlessGitFetchFileConfig.builder()
+                                                                  .identifier(identifier)
+                                                                  .manifestType(manifestType)
+                                                                  .configOverridePath(configOverridePath)
+                                                                  .gitStoreDelegateConfig(gitStoreDelegateConfig)
+                                                                  .build();
+  String activityId = "activityid";
+  TaskParameters taskParameters = ServerlessGitFetchRequest.builder()
+                                      .activityId(activityId)
+                                      .accountId(accountId)
+                                      .serverlessGitFetchFileConfig(serverlessGitFetchFileConfig)
+                                      .shouldOpenLogStream(true)
+                                      .closeLogStream(true)
+                                      .build();
 
-    String identifier = "iden";
-    String manifestType = "serverless-lambda";
-    String url = "url";
-    GitConnectionType gitConnectionType = GitConnectionType.ACCOUNT;
-    ScmConnector scmConnector = GitConfigDTO.builder().url(url).gitAuthType(GitAuthType.HTTP).gitAuth(gitAuthenticationDTO)
-            .validationRepo("asfd").branchName("asfdf").executeOnDelegate(false).delegateSelectors(Collections.emptySet()).gitConnectionType(gitConnectionType).build();
-    String branch = "bran";
-    String path = "path/";
-    String accountId = "account";
-    String configOverridePath = "override/";
-    GitStoreDelegateConfig gitStoreDelegateConfig = GitStoreDelegateConfig.builder().gitConfigDTO(scmConnector).
-            fetchType(FetchType.BRANCH).branch(branch).optimizedFilesFetch(true).path(path).build();
-    ServerlessGitFetchFileConfig serverlessGitFetchFileConfig = ServerlessGitFetchFileConfig.builder().identifier(identifier)
-            .manifestType(manifestType).configOverridePath(configOverridePath).gitStoreDelegateConfig(gitStoreDelegateConfig).build();
-    String activityId = "activityid";
-    TaskParameters taskParameters = ServerlessGitFetchRequest.builder().activityId(activityId).accountId(accountId).
-            serverlessGitFetchFileConfig(serverlessGitFetchFileConfig).shouldOpenLogStream(true).closeLogStream(true).build();
+  @Before
+  public void setup() {
+    MockitoAnnotations.initMocks(this);
+    Reflect.on(serverlessGitFetchTask).set("serverlessGitFetchTaskHelper", serverlessGitFetchTaskHelper);
+    Reflect.on(serverlessGitFetchTaskHelper).set("gitDecryptionHelper", gitDecryptionHelper);
+    Reflect.on(serverlessGitFetchTaskHelper).set("gitClientV2", gitClientV2);
+    Reflect.on(serverlessGitFetchTaskHelper).set("gitFetchFilesTaskHelper", gitFetchFilesTaskHelper);
+    Reflect.on(serverlessGitFetchTaskHelper).set("scmFetchFilesHelper", scmFetchFilesHelper);
+    Reflect.on(serverlessGitFetchTaskHelper).set("ngGitService", ngGitService);
+    Reflect.on(serverlessGitFetchTaskHelper).set("secretDecryptionService", secretDecryptionService);
+    doReturn(taskProgressClient).when(logStreamingTaskClient).obtainTaskProgressClient();
+    doReturn(executorService).when(logStreamingTaskClient).obtainTaskProgressExecutor();
+  }
 
-    @Before
-    public void setup() {
-        MockitoAnnotations.initMocks(this);
-        Reflect.on(serverlessGitFetchTask).set("serverlessGitFetchTaskHelper", serverlessGitFetchTaskHelper);
-        Reflect.on(serverlessGitFetchTaskHelper).set("gitDecryptionHelper", gitDecryptionHelper);
-        Reflect.on(serverlessGitFetchTaskHelper).set("gitClientV2", gitClientV2);
-        Reflect.on(serverlessGitFetchTaskHelper).set("gitFetchFilesTaskHelper", gitFetchFilesTaskHelper);
-        Reflect.on(serverlessGitFetchTaskHelper).set("scmFetchFilesHelper", scmFetchFilesHelper);
-        Reflect.on(serverlessGitFetchTaskHelper).set("ngGitService", ngGitService);
-        Reflect.on(serverlessGitFetchTaskHelper).set("secretDecryptionService", secretDecryptionService);
-        doReturn(taskProgressClient).when(logStreamingTaskClient).obtainTaskProgressClient();
-        doReturn(executorService).when(logStreamingTaskClient).obtainTaskProgressExecutor();
-    }
+  @Test
+  @Owner(developers = PIYUSH_BHUWALKA)
+  @Category(UnitTests.class)
+  public void runTest() {
+    String combinedPath = path + configOverridePath;
+    List<String> filePaths = Collections.singletonList(combinedPath);
+    FetchFilesResult fetchFilesResult = FetchFilesResult.builder().build();
 
-    @Test
-    @Owner(developers = PIYUSH_BHUWALKA)
-    @Category(UnitTests.class)
-    public void runTest() {
-
-        String combinedPath = path+configOverridePath;
-        List<String> filePaths = Collections.singletonList(combinedPath);
-        FetchFilesResult fetchFilesResult = FetchFilesResult.builder().build();
-
-        doReturn(fetchFilesResult).when(serverlessGitFetchTaskHelper).fetchFileFromRepo(gitStoreDelegateConfig, filePaths,
-                accountId, null);
-        ServerlessGitFetchResponse serverlessGitFetchResponse = (ServerlessGitFetchResponse) serverlessGitFetchTask.run(taskParameters);
-        Map<String, FetchFilesResult> filesFromMultipleRepo = new HashMap<>();
-        filesFromMultipleRepo.put(serverlessGitFetchFileConfig.getIdentifier(), fetchFilesResult);
-        assertThat(serverlessGitFetchResponse.getFilesFromMultipleRepo()).isEqualTo(filesFromMultipleRepo);
-    }
+    doReturn(fetchFilesResult)
+        .when(serverlessGitFetchTaskHelper)
+        .fetchFileFromRepo(gitStoreDelegateConfig, filePaths, accountId, null);
+    ServerlessGitFetchResponse serverlessGitFetchResponse =
+        (ServerlessGitFetchResponse) serverlessGitFetchTask.run(taskParameters);
+    Map<String, FetchFilesResult> filesFromMultipleRepo = new HashMap<>();
+    filesFromMultipleRepo.put(serverlessGitFetchFileConfig.getIdentifier(), fetchFilesResult);
+    assertThat(serverlessGitFetchResponse.getFilesFromMultipleRepo()).isEqualTo(filesFromMultipleRepo);
+  }
 }

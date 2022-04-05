@@ -7,9 +7,8 @@
 
 package io.harness.serverless;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.Objects;
+import org.apache.commons.lang3.StringUtils;
 
 public class ServerlessClient {
   private String serverlessPath;
@@ -70,8 +69,12 @@ public class ServerlessClient {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     ServerlessClient that = (ServerlessClient) o;
     return Objects.equals(serverlessPath, that.serverlessPath);
   }

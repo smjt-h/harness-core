@@ -7,37 +7,38 @@
 
 package io.harness.delegate.task.executioncapability;
 
+import static io.harness.annotations.dev.HarnessTeam.CDP;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.CategoryTest;
-import io.harness.capability.CapabilitySubjectPermission;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.delegate.beans.executioncapability.*;
+import io.harness.delegate.beans.executioncapability.CapabilityResponse;
+import io.harness.delegate.beans.executioncapability.ExecutionCapability;
+import io.harness.delegate.beans.executioncapability.ServerlessInstallationCapability;
 import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 
-import io.harness.annotations.dev.OwnedBy;
-import static io.harness.annotations.dev.HarnessTeam.CDP;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
-import org.junit.Rule;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 @OwnedBy(CDP)
 public class ServerlessInstallationCapabilityCheckTest extends CategoryTest {
+  @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
+  @InjectMocks private ServerlessInstallationCapabilityCheck serverlessInstallationCapabilityCheck;
+  ExecutionCapability executionCapability = ServerlessInstallationCapability.builder().criteria("a").build();
 
-    @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
-    @InjectMocks private ServerlessInstallationCapabilityCheck serverlessInstallationCapabilityCheck;
-    ExecutionCapability executionCapability = ServerlessInstallationCapability.builder().criteria("a").build();
-
-    @Test
-    @Owner(developers = OwnerRule.PIYUSH_BHUWALKA)
-    @Category(UnitTests.class)
-    public void performCapabilityCheckTest() {
-        CapabilityResponse capabilityResponse = serverlessInstallationCapabilityCheck.performCapabilityCheck(executionCapability);
-        assertThat(capabilityResponse.getDelegateCapability()).isInstanceOf(ServerlessInstallationCapability.class);
-    }
+  @Test
+  @Owner(developers = OwnerRule.PIYUSH_BHUWALKA)
+  @Category(UnitTests.class)
+  public void performCapabilityCheckTest() {
+    CapabilityResponse capabilityResponse =
+        serverlessInstallationCapabilityCheck.performCapabilityCheck(executionCapability);
+    assertThat(capabilityResponse.getDelegateCapability()).isInstanceOf(ServerlessInstallationCapability.class);
+  }
 }
-
