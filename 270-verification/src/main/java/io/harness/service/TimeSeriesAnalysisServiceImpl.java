@@ -571,7 +571,8 @@ public class TimeSeriesAnalysisServiceImpl implements TimeSeriesAnalysisService 
         results.getResponse()
             .stream()
             .filter(dataRecord
-                -> dataRecord.getStateType() == stateType && dataRecord.getServiceId().equals(serviceId)
+                -> dataRecord.getStateType() == stateType.getDelegateStateType()
+                    && dataRecord.getServiceId().equals(serviceId)
                     && (dataRecord.getGroupName().equals(groupName)
                         || dataRecord.getGroupName().equals(DEFAULT_GROUP_NAME))
                     && (ClusterLevel.H0 != dataRecord.getLevel() && ClusterLevel.HF != dataRecord.getLevel()))
@@ -614,7 +615,8 @@ public class TimeSeriesAnalysisServiceImpl implements TimeSeriesAnalysisService 
           results.getResponse()
               .stream()
               .filter(dataRecord
-                  -> dataRecord.getStateType() == stateType && dataRecord.getServiceId().equals(serviceId)
+                  -> dataRecord.getStateType() == stateType.getDelegateStateType()
+                      && dataRecord.getServiceId().equals(serviceId)
 
                       && (ClusterLevel.H0 != dataRecord.getLevel() && ClusterLevel.HF != dataRecord.getLevel()))
               .collect(Collectors.toList());
@@ -708,8 +710,8 @@ public class TimeSeriesAnalysisServiceImpl implements TimeSeriesAnalysisService 
     List<TimeSeriesDataRecord> dataRecords =
         results.stream()
             .filter(dataRecord
-                -> dataRecord.getStateType() == stateType && dataRecord.getServiceId().equals(serviceId)
-                    && ClusterLevel.HF == dataRecord.getLevel())
+                -> dataRecord.getStateType() == stateType.getDelegateStateType()
+                    && dataRecord.getServiceId().equals(serviceId) && ClusterLevel.HF == dataRecord.getLevel())
             .collect(Collectors.toList());
     List<NewRelicMetricDataRecord> rv =
         TimeSeriesDataRecord.getNewRelicDataRecordsFromTimeSeriesDataRecords(dataRecords);
@@ -742,8 +744,8 @@ public class TimeSeriesAnalysisServiceImpl implements TimeSeriesAnalysisService 
     List<TimeSeriesDataRecord> dataRecords =
         results.stream()
             .filter(dataRecord
-                -> dataRecord.getStateType() == stateType && dataRecord.getServiceId().equals(serviceId)
-                    && ClusterLevel.H0 == dataRecord.getLevel())
+                -> dataRecord.getStateType() == stateType.getDelegateStateType()
+                    && dataRecord.getServiceId().equals(serviceId) && ClusterLevel.H0 == dataRecord.getLevel())
             .collect(Collectors.toList());
     List<NewRelicMetricDataRecord> rv =
         TimeSeriesDataRecord.getNewRelicDataRecordsFromTimeSeriesDataRecords(dataRecords);
@@ -823,7 +825,17 @@ public class TimeSeriesAnalysisServiceImpl implements TimeSeriesAnalysisService 
         if (!customThresholds.containsKey(threshold.getTransactionName())) {
           customThresholds.put(threshold.getTransactionName(), new HashMap<>());
         }
-        customThresholds.get(threshold.getTransactionName()).put(threshold.getMetricName(), threshold.getThresholds());
+        Map<String, TimeSeriesMetricDefinition> timeSeriesMetricDefinitionMap =
+            customThresholds.get(threshold.getTransactionName());
+        if (timeSeriesMetricDefinitionMap.containsKey(threshold.getMetricName())) {
+          TimeSeriesMetricDefinition existingTimeSeriesMetricDefinition =
+              timeSeriesMetricDefinitionMap.get(threshold.getMetricName());
+          // add custom threshold into existing object.
+          existingTimeSeriesMetricDefinition.getCustomThresholds().addAll(
+              threshold.getThresholds().getCustomThresholds());
+        } else {
+          timeSeriesMetricDefinitionMap.put(threshold.getMetricName(), threshold.getThresholds());
+        }
       }
     }
     return customThresholds;

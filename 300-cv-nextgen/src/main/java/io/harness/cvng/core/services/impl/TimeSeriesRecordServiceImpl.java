@@ -263,10 +263,10 @@ public class TimeSeriesRecordServiceImpl implements TimeSeriesRecordService {
 
   @Override
   public boolean updateRiskScores(String verificationTaskId, TimeSeriesRiskSummary riskSummary) {
-    Set<String> metricNames = riskSummary.getTransactionMetricRiskList()
-                                  .stream()
-                                  .map(TimeSeriesRiskSummary.TransactionMetricRisk::getMetricName)
-                                  .collect(Collectors.toSet());
+    Set<String> metricIdentifiers = riskSummary.getTransactionMetricRiskList()
+                                        .stream()
+                                        .map(TimeSeriesRiskSummary.TransactionMetricRisk::getMetricIdentifier)
+                                        .collect(Collectors.toSet());
     List<TimeSeriesRecord> records =
         hPersistence.createQuery(TimeSeriesRecord.class, excludeAuthority)
             .filter(TimeSeriesRecordKeys.verificationTaskId, riskSummary.getVerificationTaskId())
@@ -275,15 +275,15 @@ public class TimeSeriesRecordServiceImpl implements TimeSeriesRecordService {
                 riskSummary.getAnalysisEndTime().minus(TIMESERIES_SERVICE_GUARD_WINDOW_SIZE_NEW, ChronoUnit.MINUTES))
             .field(TimeSeriesRecordKeys.bucketStartTime)
             .lessThan(riskSummary.getAnalysisEndTime())
-            .field(TimeSeriesRecordKeys.metricName)
-            .in(metricNames)
+            .field(TimeSeriesRecordKeys.metricIdentifier)
+            .in(metricIdentifiers)
             .asList();
 
     Map<String, List<TimeSeriesRecord>> metricNameRecordMap =
-        records.stream().collect(Collectors.groupingBy(TimeSeriesRecord::getMetricName));
+        records.stream().collect(Collectors.groupingBy(TimeSeriesRecord::getMetricIdentifier));
 
     riskSummary.getTransactionMetricRiskList().forEach(metricRisk -> {
-      List<TimeSeriesRecord> timeSeriesRecords = metricNameRecordMap.get(metricRisk.getMetricName());
+      List<TimeSeriesRecord> timeSeriesRecords = metricNameRecordMap.get(metricRisk.getMetricIdentifier());
       if (isNotEmpty(timeSeriesRecords)) {
         timeSeriesRecords.forEach(record -> {
           String groupName = metricRisk.getTransactionName();
@@ -307,7 +307,11 @@ public class TimeSeriesRecordServiceImpl implements TimeSeriesRecordService {
     Preconditions.checkNotNull(cvConfig, "could not find datasource with id ", cvConfigId);
 
     MetricCVConfig metricCVConfig = (MetricCVConfig) cvConfig;
+    return getTimeSeriesMetricDefinitions(metricCVConfig);
+  }
 
+  @Override
+  public List<TimeSeriesMetricDefinition> getTimeSeriesMetricDefinitions(MetricCVConfig metricCVConfig) {
     List<TimeSeriesMetricDefinition> timeSeriesMetricDefinitions = new ArrayList<>();
     // add project level thresholds
     List<TimeSeriesThreshold> metricPackThresholds = metricPackService.getMetricPackThresholds(

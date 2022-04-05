@@ -45,6 +45,17 @@ import io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerCred
 import io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerCredentialSpecDTO;
 import io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerCredentialType;
 import io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureAuthCredentialDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureAuthDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureClientKeyCertDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureClientSecretKeyDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureConstants;
+import io.harness.delegate.beans.connector.azureconnector.AzureCredentialDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureCredentialSpecDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
+import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureSecretType;
 import io.harness.delegate.beans.connector.azurekeyvaultconnector.AzureKeyVaultConnectorDTO;
 import io.harness.delegate.beans.connector.ceawsconnector.AwsCurAttributesDTO;
 import io.harness.delegate.beans.connector.ceawsconnector.CEAwsConnectorDTO;
@@ -99,6 +110,8 @@ import io.harness.delegate.beans.connector.nexusconnector.NexusConnectorDTO;
 import io.harness.delegate.beans.connector.nexusconnector.NexusConstants;
 import io.harness.delegate.beans.connector.nexusconnector.NexusUsernamePasswordAuthDTO;
 import io.harness.delegate.beans.connector.pagerduty.PagerDutyConnectorDTO;
+import io.harness.delegate.beans.connector.pdcconnector.HostDTO;
+import io.harness.delegate.beans.connector.pdcconnector.PhysicalDataCenterConnectorDTO;
 import io.harness.delegate.beans.connector.prometheusconnector.PrometheusConnectorDTO;
 import io.harness.delegate.beans.connector.scm.GitAuthType;
 import io.harness.delegate.beans.connector.scm.GitConnectionType;
@@ -314,5 +327,20 @@ public class ConnectorBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(CustomHealthMethod.class, 19677);
     kryo.register(ServiceNowConnectorDTO.class, 19678);
     kryo.register(ErrorTrackingConnectorDTO.class, 19679);
+
+    kryo.register(AzureConnectorDTO.class, 19680);
+    kryo.register(AzureConstants.class, 19681);
+    kryo.register(AzureCredentialSpecDTO.class, 19682);
+    kryo.register(AzureManualDetailsDTO.class, 19683);
+    kryo.register(AzureCredentialType.class, 19684);
+    kryo.register(AzureCredentialDTO.class, 19685);
+    kryo.register(AzureSecretType.class, 19686);
+    kryo.register(AzureAuthCredentialDTO.class, 19687);
+    kryo.register(AzureAuthDTO.class, 19688);
+    kryo.register(AzureClientSecretKeyDTO.class, 19689);
+    kryo.register(AzureClientKeyCertDTO.class, 19690);
+
+    kryo.register(PhysicalDataCenterConnectorDTO.class, 19691);
+    kryo.register(HostDTO.class, 19692);
   }
 }

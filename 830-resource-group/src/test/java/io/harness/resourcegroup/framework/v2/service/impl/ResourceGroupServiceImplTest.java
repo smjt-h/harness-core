@@ -1,3 +1,10 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.resourcegroup.framework.v2.service.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
@@ -49,6 +56,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class ResourceGroupServiceImplTest extends ResourceGroupTestBase {
   @Inject private ResourceGroupV2Repository resourceGroupV2Repository;
   private ResourceGroupV2Repository resourceGroupV2RepositoryMock;
+  private io.harness.resourcegroup.framework.v1.service.ResourceGroupService resourceGroupV1ServiceMock;
   private OutboxService outboxService;
   private TransactionTemplate transactionTemplate;
   private ResourceGroupServiceImpl resourceGroupService;
@@ -58,12 +66,13 @@ public class ResourceGroupServiceImplTest extends ResourceGroupTestBase {
   @Before
   public void setup() {
     resourceGroupV2RepositoryMock = mock(ResourceGroupV2Repository.class);
+    resourceGroupV1ServiceMock = mock(io.harness.resourcegroup.framework.v1.service.ResourceGroupService.class);
     outboxService = mock(OutboxService.class);
     transactionTemplate = mock(TransactionTemplate.class);
-    resourceGroupService =
-        spy(new ResourceGroupServiceImpl(resourceGroupV2Repository, outboxService, transactionTemplate));
-    resourceGroupServiceMockRepo =
-        spy(new ResourceGroupServiceImpl(resourceGroupV2RepositoryMock, outboxService, transactionTemplate));
+    resourceGroupService = spy(new ResourceGroupServiceImpl(
+        resourceGroupV1ServiceMock, resourceGroupV2Repository, outboxService, transactionTemplate));
+    resourceGroupServiceMockRepo = spy(new ResourceGroupServiceImpl(
+        resourceGroupV1ServiceMock, resourceGroupV2RepositoryMock, outboxService, transactionTemplate));
 
     pageRequest = PageRequest.builder().pageIndex(0).pageSize(50).build();
   }
@@ -139,6 +148,45 @@ public class ResourceGroupServiceImplTest extends ResourceGroupTestBase {
     Criteria criteria =
         getActualGetCriteria(Scope.of(accountIdentifier, orgIdentifier, null), identifier, ManagedFilter.ONLY_CUSTOM);
     assertGetOnlyCustomFilterCriteria(criteria, accountIdentifier, orgIdentifier, null, identifier);
+  }
+
+  @Test
+  @Owner(developers = REETIKA)
+  @Category(UnitTests.class)
+  public void testUpsertCustomCriteria() {
+    String accountIdentifier = randomAlphabetic(10);
+    String orgIdentifier = randomAlphabetic(10);
+    String identifier = randomAlphabetic(10);
+    ResourceGroup resourceGroup = ResourceGroup.builder()
+                                      .accountIdentifier(accountIdentifier)
+                                      .orgIdentifier(orgIdentifier)
+                                      .identifier(identifier)
+                                      .build();
+
+    resourceGroupService.upsert(resourceGroup, true);
+    Criteria criteriaCustom =
+        getActualGetCriteria(Scope.of(accountIdentifier, orgIdentifier, null), identifier, ManagedFilter.ONLY_CUSTOM);
+    assertGetOnlyCustomFilterCriteria(criteriaCustom, accountIdentifier, orgIdentifier, null, identifier);
+  }
+
+  @Test
+  @Owner(developers = REETIKA)
+  @Category(UnitTests.class)
+  public void testUpsertManagedCriteria() {
+    String accountIdentifier = randomAlphabetic(10);
+    String orgIdentifier = randomAlphabetic(10);
+    String identifier = randomAlphabetic(10);
+    ResourceGroup resourceGroup = ResourceGroup.builder()
+                                      .accountIdentifier(accountIdentifier)
+                                      .orgIdentifier(orgIdentifier)
+                                      .identifier(identifier)
+                                      .harnessManaged(true)
+                                      .build();
+
+    resourceGroupService.upsert(resourceGroup, true);
+    Criteria criteriaCustom =
+        getActualGetCriteria(Scope.of(accountIdentifier, orgIdentifier, null), identifier, ManagedFilter.ONLY_MANAGED);
+    assertGetOnlyManagedFilterCriteria(criteriaCustom, accountIdentifier, orgIdentifier, null, identifier);
   }
 
   private void assertGetOnlyCustomFilterCriteria(

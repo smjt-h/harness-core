@@ -67,6 +67,7 @@ import io.harness.ng.core.activityhistory.NGActivityType;
 import io.harness.ng.core.dto.ErrorDetail;
 import io.harness.perpetualtask.PerpetualTaskId;
 import io.harness.repositories.ConnectorRepository;
+import io.harness.telemetry.helpers.ConnectorInstrumentationHelper;
 import io.harness.utils.FullyQualifiedIdentifierHelper;
 
 import com.google.common.collect.ImmutableMap;
@@ -98,6 +99,7 @@ public class ConnectorServiceImpl implements ConnectorService {
   private final HarnessManagedConnectorHelper harnessManagedConnectorHelper;
   private final NGErrorHelper ngErrorHelper;
   private final GitSyncSdkService gitSyncSdkService;
+  private final ConnectorInstrumentationHelper instrumentationHelper;
 
   @Inject
   public ConnectorServiceImpl(@Named(DEFAULT_CONNECTOR_SERVICE) ConnectorService defaultConnectorService,
@@ -106,7 +108,7 @@ public class ConnectorServiceImpl implements ConnectorService {
       ConnectorRepository connectorRepository, @Named(EventsFrameworkConstants.ENTITY_CRUD) Producer eventProducer,
       ExecutorService executorService, ConnectorErrorMessagesHelper connectorErrorMessagesHelper,
       HarnessManagedConnectorHelper harnessManagedConnectorHelper, NGErrorHelper ngErrorHelper,
-      GitSyncSdkService gitSyncSdkService) {
+      GitSyncSdkService gitSyncSdkService, ConnectorInstrumentationHelper instrumentationHelper) {
     this.defaultConnectorService = defaultConnectorService;
     this.secretManagerConnectorService = secretManagerConnectorService;
     this.connectorActivityService = connectorActivityService;
@@ -118,6 +120,7 @@ public class ConnectorServiceImpl implements ConnectorService {
     this.harnessManagedConnectorHelper = harnessManagedConnectorHelper;
     this.ngErrorHelper = ngErrorHelper;
     this.gitSyncSdkService = gitSyncSdkService;
+    this.instrumentationHelper = instrumentationHelper;
   }
 
   private ConnectorService getConnectorService(ConnectorType connectorType) {
@@ -184,6 +187,7 @@ public class ConnectorServiceImpl implements ConnectorService {
                 connectorHeartbeatTaskId.getId());
           }
         }
+        instrumentationHelper.sendConnectorCreateEvent(connector.getConnectorInfo(), accountIdentifier);
         return connectorResponse;
       } else {
         throw new InvalidRequestException("Connector could not be created because we could not create the heartbeat");
@@ -284,7 +288,6 @@ public class ConnectorServiceImpl implements ConnectorService {
     validateTheConnectorTypeIsNotChanged(existingConnector.getConnectorType(), connectorInfo.getConnectorType(),
         accountIdentifier, connectorInfo.getOrgIdentifier(), connectorInfo.getProjectIdentifier(),
         connectorInfo.getIdentifier());
-    validateNameIsUnique(connectorInfo, accountIdentifier, existingConnector.getIdentifier());
   }
 
   private void validateNameIsUnique(ConnectorInfoDTO connectorInfo, String accountIdentifier, String identifier) {
@@ -371,11 +374,15 @@ public class ConnectorServiceImpl implements ConnectorService {
               getConnectorService(connector.getType())
                   .delete(accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifier);
           if (!isDefaultBranchConnector) {
+            instrumentationHelper.sendConnectorDeleteEvent(
+                orgIdentifier, projectIdentifier, connectorIdentifier, accountIdentifier);
             return true;
           }
           if (isConnectorDeleted) {
             publishEvent(accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifier, connector.getType(),
                 EventsFrameworkMetadataConstants.DELETE_ACTION);
+            instrumentationHelper.sendConnectorDeleteEvent(
+                orgIdentifier, projectIdentifier, connectorIdentifier, accountIdentifier);
             return true;
           } else {
             PerpetualTaskId perpetualTaskId = connectorHeartbeatService.createConnectorHeatbeatTask(
@@ -603,8 +610,8 @@ public class ConnectorServiceImpl implements ConnectorService {
   }
 
   @Override
-  public ConnectorCatalogueResponseDTO getConnectorCatalogue() {
-    return defaultConnectorService.getConnectorCatalogue();
+  public ConnectorCatalogueResponseDTO getConnectorCatalogue(String accountIdentifier) {
+    return defaultConnectorService.getConnectorCatalogue(accountIdentifier);
   }
 
   @Override

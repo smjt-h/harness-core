@@ -8,15 +8,15 @@ package git
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/harness/harness-core/commons/go/lib/logs"
 	pb "github.com/harness/harness-core/product/ci/scm/proto"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
@@ -24,7 +24,7 @@ func TestCreatePR(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(201)
-		content, _ := ioutil.ReadFile("testdata/pr.json")
+		content, _ := os.ReadFile("testdata/pr.json")
 		fmt.Fprint(w, string(content))
 	}))
 	defer ts.Close()
@@ -58,7 +58,7 @@ func TestFindFilesInPR(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
-		content, _ := ioutil.ReadFile("testdata/pr_files.json")
+		content, _ := os.ReadFile("testdata/pr_files.json")
 		fmt.Fprint(w, string(content))
 	}))
 	defer ts.Close()
@@ -92,7 +92,7 @@ func TestCreateBranch(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(201)
-		content, _ := ioutil.ReadFile("testdata/branch.json")
+		content, _ := os.ReadFile("testdata/branch.json")
 		fmt.Fprint(w, string(content))
 	}))
 	defer ts.Close()
@@ -124,7 +124,7 @@ func TestGetLatestCommit(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
-		content, _ := ioutil.ReadFile("testdata/commit.json")
+		content, _ := os.ReadFile("testdata/commit.json")
 		fmt.Fprint(w, string(content))
 	}))
 	defer ts.Close()
@@ -157,7 +157,7 @@ func TestListBranches(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
-		content, _ := ioutil.ReadFile("testdata/branches.json")
+		content, _ := os.ReadFile("testdata/branches.json")
 		fmt.Fprint(w, string(content))
 	}))
 	defer ts.Close()
@@ -188,7 +188,7 @@ func TestListCommits(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
-		content, _ := ioutil.ReadFile("testdata/commits.json")
+		content, _ := os.ReadFile("testdata/commits.json")
 		fmt.Fprint(w, string(content))
 	}))
 	defer ts.Close()
@@ -222,7 +222,7 @@ func TestListCommitsInPR(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
-		content, _ := ioutil.ReadFile("testdata/commits.json")
+		content, _ := os.ReadFile("testdata/commits.json")
 		fmt.Fprint(w, string(content))
 	}))
 	defer ts.Close()
@@ -254,7 +254,7 @@ func TestCompareCommits(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
-		content, _ := ioutil.ReadFile("testdata/compare.json")
+		content, _ := os.ReadFile("testdata/compare.json")
 		fmt.Fprint(w, string(content))
 	}))
 	defer ts.Close()
@@ -287,7 +287,7 @@ func TestGetGetUserRepos(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
-		content, _ := ioutil.ReadFile("testdata/repos.json")
+		content, _ := os.ReadFile("testdata/repos.json")
 		fmt.Fprint(w, string(content))
 	}))
 	defer ts.Close()
@@ -322,7 +322,7 @@ func TestGetAuthenticatedUser(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
-		content, _ := ioutil.ReadFile("testdata/user.json")
+		content, _ := os.ReadFile("testdata/user.json")
 		fmt.Fprint(w, string(content))
 	}))
 	defer ts.Close()
@@ -351,7 +351,7 @@ func TestFindPR(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
-		content, _ := ioutil.ReadFile("testdata/find_pr.json")
+		content, _ := os.ReadFile("testdata/find_pr.json")
 		fmt.Fprint(w, string(content))
 	}))
 	defer ts.Close()
@@ -398,7 +398,7 @@ func TestFindPR(t *testing.T) {
 
 // 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
 // 	latestCommitIdResponse, err := GetLatestCommitOnFile(context.Background(), in, log.Sugar())
-	
+
 // 	assert.NotNil(t, err, "found errors")
 // 	assert.Equal(t, latestCommitIdResponse.CommitId, "", "status matches")
 // }
@@ -449,7 +449,6 @@ func TestFindPR(t *testing.T) {
 // 	assert.NotNil(t, len(got.CommitIds), "has commit")
 // }
 
-
 // func TestListCommitsBitbucketOnFile(t *testing.T) {
 // 	in := &pb.ListCommitsRequest{
 // 		Slug: "mohitgargharness/test-repository",
@@ -473,7 +472,6 @@ func TestFindPR(t *testing.T) {
 // 	assert.Nil(t, err, "no errors")
 // 	assert.NotNil(t, len(got.CommitIds), "has commit")
 // }
-
 
 // func TestListCommitsBitbucketOnNewFileThatDoesntExist(t *testing.T) {
 // 	in := &pb.ListCommitsRequest{

@@ -11,6 +11,8 @@ import static io.harness.cvng.CVConstants.STATE_MACHINE_IGNORE_MINUTES;
 
 import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.StoreIn;
+import io.harness.cvng.beans.cvnglog.ExecutionLogDTO.LogLevel;
+import io.harness.cvng.core.entities.VerificationTaskExecutionInstance;
 import io.harness.cvng.statemachine.beans.AnalysisState;
 import io.harness.cvng.statemachine.beans.AnalysisStatus;
 import io.harness.mongo.index.CompoundMongoIndex;
@@ -31,6 +33,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -48,8 +51,8 @@ import org.mongodb.morphia.annotations.Id;
 @Entity(value = "analysisStateMachines", noClassnameStored = true)
 @HarnessEntity(exportable = true)
 @StoreIn(DbAliases.CVNG)
-public final class AnalysisStateMachine
-    implements PersistentEntity, UuidAware, CreatedAtAware, UpdatedAtAware, AccountAccess {
+public final class AnalysisStateMachine implements PersistentEntity, UuidAware, CreatedAtAware, UpdatedAtAware,
+                                                   AccountAccess, VerificationTaskExecutionInstance {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -79,7 +82,7 @@ public final class AnalysisStateMachine
 
   private long nextAttemptTime;
 
-  private Integer stateMachineIgnoreMinutes;
+  @NotNull private Integer stateMachineIgnoreMinutes;
 
   public Integer getStateMachineIgnoreMinutes() {
     if (stateMachineIgnoreMinutes == null) {
@@ -89,4 +92,24 @@ public final class AnalysisStateMachine
   }
 
   @FdTtlIndex @Builder.Default private Date validUntil = Date.from(OffsetDateTime.now().plusDays(14).toInstant());
+
+  @Override
+  public Instant getStartTime() {
+    return analysisStartTime;
+  }
+
+  @Override
+  public Instant getEndTime() {
+    return analysisEndTime;
+  }
+
+  public LogLevel getLogLevel() {
+    if (AnalysisStatus.getFailedStatuses().contains(status)) {
+      return LogLevel.ERROR;
+    } else if (AnalysisStatus.IGNORED.equals(status)) {
+      return LogLevel.WARN;
+    } else {
+      return LogLevel.INFO;
+    }
+  }
 }

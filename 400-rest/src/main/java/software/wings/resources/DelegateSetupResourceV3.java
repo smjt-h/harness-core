@@ -1055,6 +1055,7 @@ public class DelegateSetupResourceV3 {
     }
   }
 
+  // TODO: ARPIT remove this api once UI starts a new one from DelegateTokenNgResource
   @GET
   @Path("/ng/delegate-token")
   @Timed

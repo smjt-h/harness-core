@@ -45,9 +45,9 @@ import io.harness.resourcegroup.framework.v1.events.ResourceGroupCreateEvent;
 import io.harness.resourcegroup.framework.v1.events.ResourceGroupDeleteEvent;
 import io.harness.resourcegroup.framework.v1.events.ResourceGroupUpdateEvent;
 import io.harness.resourcegroup.framework.v1.service.impl.ResourceGroupEventHandler;
-import io.harness.resourcegroup.v1.model.DynamicResourceSelector;
-import io.harness.resourcegroup.v1.model.ResourceSelector;
-import io.harness.resourcegroup.v1.model.StaticResourceSelector;
+import io.harness.resourcegroup.model.DynamicResourceSelector;
+import io.harness.resourcegroup.model.ResourceSelector;
+import io.harness.resourcegroup.model.StaticResourceSelector;
 import io.harness.resourcegroup.v1.remote.dto.ResourceGroupDTO;
 import io.harness.resourcegroup.v1.remote.dto.ResourceGroupRequest;
 import io.harness.rule.Owner;
@@ -108,7 +108,7 @@ public class ResourceGroupEventHandlerTest extends CategoryTest {
     String identifier = randomAlphabetic(10);
     ResourceGroupDTO resourceGroupDTO = getResourceGroupDTO(accountIdentifier, orgIdentifier, null, identifier);
     ResourceGroupCreateEvent resourceGroupCreateEvent =
-        new ResourceGroupCreateEvent(accountIdentifier, resourceGroupDTO);
+        new ResourceGroupCreateEvent(accountIdentifier, resourceGroupDTO, null);
     String eventData = objectMapper.writeValueAsString(resourceGroupCreateEvent);
     OutboxEvent outboxEvent = OutboxEvent.builder()
                                   .id(randomAlphabetic(10))
@@ -165,7 +165,7 @@ public class ResourceGroupEventHandlerTest extends CategoryTest {
     ResourceGroupDTO oldResourceGroupDTO = getResourceGroupDTO(accountIdentifier, orgIdentifier, null, identifier);
     ResourceGroupDTO newResourceGroupDTO = getResourceGroupDTO(accountIdentifier, orgIdentifier, null, identifier);
     ResourceGroupUpdateEvent resourceGroupUpdateEvent =
-        new ResourceGroupUpdateEvent(accountIdentifier, newResourceGroupDTO, oldResourceGroupDTO);
+        new ResourceGroupUpdateEvent(accountIdentifier, newResourceGroupDTO, oldResourceGroupDTO, null, null);
     String eventData = objectMapper.writeValueAsString(resourceGroupUpdateEvent);
     OutboxEvent outboxEvent = OutboxEvent.builder()
                                   .id(randomAlphabetic(10))
@@ -222,7 +222,7 @@ public class ResourceGroupEventHandlerTest extends CategoryTest {
     String identifier = randomAlphabetic(10);
     ResourceGroupDTO resourceGroupDTO = getResourceGroupDTO(accountIdentifier, orgIdentifier, null, identifier);
     ResourceGroupDeleteEvent resourceGroupDeleteEvent =
-        new ResourceGroupDeleteEvent(accountIdentifier, resourceGroupDTO);
+        new ResourceGroupDeleteEvent(accountIdentifier, resourceGroupDTO, null);
     String eventData = objectMapper.writeValueAsString(resourceGroupDeleteEvent);
     OutboxEvent outboxEvent = OutboxEvent.builder()
                                   .id(randomAlphabetic(10))

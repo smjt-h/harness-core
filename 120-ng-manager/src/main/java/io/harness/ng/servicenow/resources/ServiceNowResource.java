@@ -83,4 +83,36 @@ public class ServiceNowResource {
         serviceNowResourceService.getIssueCreateMetadata(connectorRef, orgId, projectId, ticketType);
     return ResponseDTO.newResponse(issueCreateMetadataResponse);
   }
+
+  @GET
+  @Path("metadata")
+  @ApiOperation(value = "Get ServiceNow metadata for ticketType", nickname = "getServiceNowIssueMetadata")
+  public ResponseDTO<List<ServiceNowFieldNG>> getMetadata(
+      @NotNull @QueryParam("connectorRef") String serviceNowConnectorRef,
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
+      @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgId,
+      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectId, @QueryParam("ticketType") String ticketType,
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+    IdentifierRef connectorRef =
+        IdentifierRefHelper.getIdentifierRef(serviceNowConnectorRef, accountId, orgId, projectId);
+    List<ServiceNowFieldNG> metadataResponse =
+        serviceNowResourceService.getMetadata(connectorRef, orgId, projectId, ticketType);
+    return ResponseDTO.newResponse(metadataResponse);
+  }
+
+  @GET
+  @Path("applicationStatus")
+  @ApiOperation(value = "Check if harness application is added to ServiceNow instance",
+      nickname = "getServiceNowApplicationStatus")
+  public ResponseDTO<Boolean>
+  getApplicationStatus(@NotNull @QueryParam("connectorRef") String serviceNowConnectorRef,
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
+      @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgId,
+      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectId,
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+    IdentifierRef connectorRef =
+        IdentifierRefHelper.getIdentifierRef(serviceNowConnectorRef, accountId, orgId, projectId);
+    // mock response to disable template section
+    return ResponseDTO.newResponse(false);
+  }
 }

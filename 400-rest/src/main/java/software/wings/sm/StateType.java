@@ -103,6 +103,7 @@ import software.wings.beans.PhaseStepType;
 import software.wings.common.Constants;
 import software.wings.common.ProvisionerConstants;
 import software.wings.common.WorkflowConstants;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.infra.InfrastructureDefinition;
 import software.wings.service.impl.aws.model.AwsConstants;
 import software.wings.service.impl.workflow.WorkflowServiceHelper;
@@ -111,6 +112,7 @@ import software.wings.sm.states.AppDynamicsState;
 import software.wings.sm.states.ApprovalResumeState;
 import software.wings.sm.states.ApprovalState;
 import software.wings.sm.states.ArtifactCheckState;
+import software.wings.sm.states.ArtifactCollectLoopState;
 import software.wings.sm.states.ArtifactCollectionState;
 import software.wings.sm.states.AwsAmiRollbackSwitchRoutesState;
 import software.wings.sm.states.AwsAmiRollbackTrafficShiftAlbSwitchRoutesState;
@@ -894,7 +896,9 @@ public enum StateType implements StateTypeDescriptor {
 
   CUSTOM_DEPLOYMENT_FETCH_INSTANCES(InstanceFetchState.class, OTHERS, 5, WorkflowServiceHelper.FETCH_INSTANCES,
       Lists.newArrayList(InfrastructureMappingType.CUSTOM), asList(PhaseStepType.CUSTOM_DEPLOYMENT_PHASE_STEP),
-      ORCHESTRATION_STENCILS);
+      ORCHESTRATION_STENCILS),
+
+  ARTIFACT_COLLECT_LOOP_STATE(ArtifactCollectLoopState.class, ENVIRONMENTS, asList(), NONE);
 
   private static final String PCF_MAP_ROUTE_NAME = "Map Route";
   private static final String PCF_UNMAP_ROUTE_NAME = "Unmap Route";
@@ -1085,5 +1089,13 @@ public enum StateType implements StateTypeDescriptor {
 
   public boolean isVerificationState() {
     return this.stencilCategory == StencilCategory.VERIFICATIONS;
+  }
+
+  public DelegateStateType getDelegateStateType() {
+    return DelegateStateType.valueOf(name());
+  }
+
+  public static StateType of(DelegateStateType delegateStateType) {
+    return valueOf(delegateStateType.name());
   }
 }
