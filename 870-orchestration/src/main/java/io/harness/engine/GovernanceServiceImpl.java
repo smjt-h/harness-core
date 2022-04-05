@@ -84,16 +84,15 @@ public class GovernanceServiceImpl implements GovernanceService {
       try {
         YamlField pipelineField = YamlUtils.readTree(expandedJson);
         String pipelineIdentifier =
-            pipelineField.getNode().getField(YAMLFieldNameConstants.PIPELINE).getNode().getIdentifier();
-        String pipelineName = pipelineField.getNode().getField(YAMLFieldNameConstants.PIPELINE).getNode().getName();
-        String entityString = getEntityString(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier);
-        String entityMetadata = getEntityMetadataString(
-            accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, pipelineName, planExecutionId);
+            pipelineField.getNode().getFieldOrThrow(YAMLFieldNameConstants.PIPELINE).getNode().getIdentifier();
+        String pipelineName =
+            pipelineField.getNode().getFieldOrThrow(YAMLFieldNameConstants.PIPELINE).getNode().getName();
         String userIdentifier = getUserIdentifier();
-
-        response = SafeHttpCall.executeWithExceptions(
-            opaServiceClient.evaluateWithCredentials(OpaConstants.OPA_EVALUATION_TYPE_PIPELINE, accountId,
-                orgIdentifier, projectIdentifier, action, entityString, entityMetadata, userIdentifier, context));
+        String urlEncodedPipelineName =
+            URLEncoder.encode(JsonUtils.asJson(pipelineName), StandardCharsets.UTF_8.toString());
+        response = SafeHttpCall.executeWithExceptions(opaServiceClient.evaluateWithCredentials(
+            OpaConstants.OPA_EVALUATION_TYPE_PIPELINE, accountId, orgIdentifier, projectIdentifier, action,
+            pipelineIdentifier, urlEncodedPipelineName, userIdentifier, context));
       } catch (Exception ex) {
         log.error("Exception while evaluating OPA rules", ex);
         throw new InvalidRequestException("Exception while evaluating OPA rules: " + ex.getMessage(), ex);
@@ -104,27 +103,6 @@ public class GovernanceServiceImpl implements GovernanceService {
       log.info("[PMS_Governance_Metadata] Time taken to evaluate governance policies: {}ms",
           System.currentTimeMillis() - startTs);
     }
-  }
-
-  private String getEntityString(String accountId, String orgIdentifier, String projectIdentifier,
-      String pipelineIdentifier) throws UnsupportedEncodingException {
-    String entityStringRaw =
-        String.format("accountIdentifier:%s/orgIdentifier:%s/projectIdentifier:%s/pipelineIdentifier:%s", accountId,
-            orgIdentifier, projectIdentifier, pipelineIdentifier);
-    return URLEncoder.encode(entityStringRaw, StandardCharsets.UTF_8.toString());
-  }
-
-  private String getEntityMetadataString(String accountId, String orgIdentifier, String projectIdentifier,
-      String pipelineIdentifier, String pipelineName, String planExecutionId) throws UnsupportedEncodingException {
-    Map<String, String> metadataMap = ImmutableMap.<String, String>builder()
-                                          .put("accountIdentifier", accountId)
-                                          .put("orgIdentifier", orgIdentifier)
-                                          .put("projectIdentifier", projectIdentifier)
-                                          .put("pipelineIdentifier", pipelineIdentifier)
-                                          .put("pipelineName", pipelineName)
-                                          .put("executionIdentifier", planExecutionId)
-                                          .build();
-    return URLEncoder.encode(JsonUtils.asJson(metadataMap), StandardCharsets.UTF_8.toString());
   }
 
   private GovernanceMetadata mapResponseToMetadata(OpaEvaluationResponseHolder response) {
