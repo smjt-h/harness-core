@@ -369,7 +369,6 @@ public class PMSExecutionServiceImpl implements PMSExecutionService {
           "Invalid request : Input Set did not exist or pipeline execution has been deleted");
     }
     PipelineExecutionSummaryEntity executionSummaryEntity = pipelineExecutionSummaryEntityOptional.get();
-    String pipelineIdentifier = executionSummaryEntity.getPipelineIdentifier();
 
     // get data from existing execution
     String runtimeInputYAML = executionSummaryEntity.getInputSetYaml();
@@ -397,18 +396,20 @@ public class PMSExecutionServiceImpl implements PMSExecutionService {
             .build();
     InputSetTemplateResponseDTOPMS responseForNewExecution;
     try (PmsGitSyncBranchContextGuard ignored = new PmsGitSyncBranchContextGuard(gitSyncBranchContext, true)) {
+      String pipelineIdentifier = executionSummaryEntity.getPipelineIdentifier();
       responseForNewExecution = validateAndMergeHelper.getInputSetTemplateResponseDTO(
           accountId, orgId, projectId, pipelineIdentifier, stageIdentifiers);
     }
-    InputSetYamlWithTemplateDTO inputSetYamlWithTemplateDTO =
-        InputSetYamlWithTemplateDTO.builder()
-            .inputSetTemplateYaml(runtimeInputTemplateDuringExecution)
-            .inputSetYaml(runtimeInputYAML)
-            .expressionValues(expressionValuesDuringExecution)
-            .latestTemplateYaml(responseForNewExecution.getInputSetTemplateYaml())
-            .replacedExpressions(responseForNewExecution.getReplacedExpressions())
-            .modules(responseForNewExecution.getModules())
-            .hasInputSets(responseForNewExecution.getHasInputSets())
-            .build();
+
+    // build final response
+    return InputSetYamlWithTemplateDTO.builder()
+        .inputSetTemplateYaml(runtimeInputTemplateDuringExecution)
+        .inputSetYaml(runtimeInputYAML)
+        .expressionValues(expressionValuesDuringExecution)
+        .latestTemplateYaml(responseForNewExecution.getInputSetTemplateYaml())
+        .replacedExpressions(responseForNewExecution.getReplacedExpressions())
+        .modules(responseForNewExecution.getModules())
+        .hasInputSets(responseForNewExecution.getHasInputSets())
+        .build();
   }
 }
