@@ -8,7 +8,7 @@
 
 
 FROM redhat/ubi8-minimal
-RUN microdnf update && microdnf install shadow-utils
+RUN microdnf update && microdnf install shadow-utils curl
 # Copy ci-addon binary
 COPY ci-addon_/ci-addon /usr/local/bin/ci-addon-linux-amd64
 RUN chmod +x /usr/local/bin/ci-addon-linux-amd64

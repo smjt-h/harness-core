@@ -5,8 +5,7 @@
 # > docker build -t harness/ci-lite-engine:<tag> -f product/ci/engine/Dockerfile $(bazel info bazel-bin)/product/ci/engine/
 
 FROM redhat/ubi8-minimal
-RUN microdnf update && microdnf install shadow-utils
-RUN microdnf install git
+RUN microdnf update && microdnf install shadow-utils git curl
 
 COPY engine_/engine /usr/local/bin/ci-lite-engine
 RUN chmod +x /usr/local/bin/ci-lite-engine
