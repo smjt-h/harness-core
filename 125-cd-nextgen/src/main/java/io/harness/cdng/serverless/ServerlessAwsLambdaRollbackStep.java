@@ -18,8 +18,8 @@ import io.harness.cdng.manifest.yaml.ManifestOutcome;
 import io.harness.cdng.serverless.beans.ServerlessExecutionPassThroughData;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.data.structure.EmptyPredicate;
-import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
+import io.harness.delegate.beans.serverless.ServerlessAwsLambdaRollbackResult;
 import io.harness.delegate.task.serverless.ServerlessAwsLambdaRollbackConfig;
 import io.harness.delegate.task.serverless.ServerlessCommandType;
 import io.harness.delegate.task.serverless.ServerlessManifestConfig;
@@ -40,17 +40,18 @@ import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.data.OptionalSweepingOutput;
+import io.harness.pms.sdk.core.plan.creation.yaml.StepOutcomeGroup;
 import io.harness.pms.sdk.core.resolver.RefObjectUtils;
 import io.harness.pms.sdk.core.resolver.outcome.OutcomeService;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
+import io.harness.pms.sdk.core.steps.io.StepResponse.StepResponseBuilder;
 import io.harness.steps.StepHelper;
 import io.harness.supplier.ThrowingSupplier;
 
 import com.google.inject.Inject;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
@@ -151,7 +152,7 @@ public class ServerlessAwsLambdaRollbackStep extends TaskExecutableWithRollbackA
     StepResponse stepResponse = null;
     try {
       ServerlessRollbackResponse rollbackResponse = (ServerlessRollbackResponse) responseDataSupplier.get();
-      StepResponse.StepResponseBuilder stepResponseBuilder =
+      StepResponseBuilder stepResponseBuilder =
           StepResponse.builder().unitProgressList(rollbackResponse.getUnitProgressData().getUnitProgresses());
 
       stepResponse = generateStepResponse(ambiance, rollbackResponse, stepResponseBuilder);
@@ -166,8 +167,8 @@ public class ServerlessAwsLambdaRollbackStep extends TaskExecutableWithRollbackA
     return stepResponse;
   }
 
-  private StepResponse generateStepResponse(Ambiance ambiance, ServerlessRollbackResponse rollbackResponse,
-      StepResponse.StepResponseBuilder stepResponseBuilder) {
+  private StepResponse generateStepResponse(
+      Ambiance ambiance, ServerlessRollbackResponse rollbackResponse, StepResponseBuilder stepResponseBuilder) {
     StepResponse stepResponse = null;
 
     if (rollbackResponse.getCommandExecutionStatus() != CommandExecutionStatus.SUCCESS) {
@@ -177,12 +178,24 @@ public class ServerlessAwsLambdaRollbackStep extends TaskExecutableWithRollbackA
                                           .build())
                          .build();
     } else {
-      List<ServerInstanceInfo> functionInstanceInfos =
-          serverlessStepCommonHelper.getFunctionInstanceInfo(rollbackResponse, serverlessAwsLambdaStepHelper);
-      StepResponse.StepOutcome stepOutcome =
-          instanceInfoService.saveServerInstancesIntoSweepingOutput(ambiance, functionInstanceInfos);
-
-      stepResponse = stepResponseBuilder.status(Status.SUCCEEDED).stepOutcome(stepOutcome).build();
+      ServerlessAwsLambdaRollbackResult serverlessAwsLambdaRollbackResult =
+          (ServerlessAwsLambdaRollbackResult) rollbackResponse.getServerlessRollbackResult();
+      ServerlessAwsLambdaRollbackOutcome serverlessAwsLambdaRollbackOutcome =
+          ServerlessAwsLambdaRollbackOutcome.builder()
+              .stage(serverlessAwsLambdaRollbackResult.getStage())
+              .rollbackTimeStamp(serverlessAwsLambdaRollbackResult.getRollbackTimeStamp())
+              .region(serverlessAwsLambdaRollbackResult.getRegion())
+              .service(serverlessAwsLambdaRollbackResult.getService())
+              .build();
+      executionSweepingOutputService.consume(ambiance,
+          OutcomeExpressionConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK_OUTCOME, serverlessAwsLambdaRollbackOutcome,
+          StepOutcomeGroup.STEP.name());
+      stepResponse = stepResponseBuilder.status(Status.SUCCEEDED)
+                         .stepOutcome(StepResponse.StepOutcome.builder()
+                                          .name(OutcomeExpressionConstants.OUTPUT)
+                                          .outcome(serverlessAwsLambdaRollbackOutcome)
+                                          .build())
+                         .build();
     }
     return stepResponse;
   }

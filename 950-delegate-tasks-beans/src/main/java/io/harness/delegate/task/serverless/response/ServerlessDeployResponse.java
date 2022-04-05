@@ -15,7 +15,6 @@ import io.harness.delegate.beans.serverless.ServerlessDeployResult;
 import io.harness.logging.CommandExecutionStatus;
 
 import lombok.Builder;
-import lombok.Data;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 

@@ -50,9 +50,9 @@ public class ArtifactoryArtifactTaskHelper {
   private final ArtifactoryArtifactTaskHandler artifactoryArtifactTaskHandler;
 
   public ArtifactTaskResponse getArtifactCollectResponse(
-          ArtifactTaskParameters artifactTaskParameters, LogCallback executionLogCallback) {
+      ArtifactTaskParameters artifactTaskParameters, LogCallback executionLogCallback) {
     ArtifactoryDockerArtifactDelegateRequest attributes =
-            (ArtifactoryDockerArtifactDelegateRequest) artifactTaskParameters.getAttributes();
+        (ArtifactoryDockerArtifactDelegateRequest) artifactTaskParameters.getAttributes();
     String registryUrl = attributes.getArtifactoryConnectorDTO().getArtifactoryServerUrl();
     artifactoryArtifactTaskHandler.decryptRequestDTOs(attributes);
     ArtifactTaskResponse artifactTaskResponse;
@@ -60,113 +60,113 @@ public class ArtifactoryArtifactTaskHelper {
       case GET_LAST_SUCCESSFUL_BUILD:
         saveLogs(executionLogCallback, "Fetching Artifact details");
         artifactTaskResponse =
-                getSuccessTaskResponse(artifactoryArtifactTaskHandler.getLastSuccessfulBuild(attributes));
+            getSuccessTaskResponse(artifactoryArtifactTaskHandler.getLastSuccessfulBuild(attributes));
         ArtifactoryDockerArtifactDelegateResponse artifactoryArtifactDelegateResponse =
-                (ArtifactoryDockerArtifactDelegateResponse) (artifactTaskResponse.getArtifactTaskExecutionResponse()
-                        .getArtifactDelegateResponses()
-                        .size()
+            (ArtifactoryDockerArtifactDelegateResponse) (artifactTaskResponse.getArtifactTaskExecutionResponse()
+                                                             .getArtifactDelegateResponses()
+                                                             .size()
                         != 0
-                        ? artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().get(0)
-                        : ArtifactoryDockerArtifactDelegateResponse.builder().build());
+                    ? artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().get(0)
+                    : ArtifactoryDockerArtifactDelegateResponse.builder().build());
         String buildMetadataUrl = artifactoryArtifactDelegateResponse.getBuildDetails() != null
-                ? artifactoryArtifactDelegateResponse.getBuildDetails().getBuildUrl()
-                : null;
+            ? artifactoryArtifactDelegateResponse.getBuildDetails().getBuildUrl()
+            : null;
         String dockerPullCommand =
-                (RepositoryFormat.docker.name().equals(artifactoryArtifactDelegateResponse.getRepositoryFormat())
-                        && artifactoryArtifactDelegateResponse.getBuildDetails() != null
-                        && artifactoryArtifactDelegateResponse.getBuildDetails().getMetadata() != null)
-                        ? "\nImage pull command: docker pull "
-                        + artifactoryArtifactDelegateResponse.getBuildDetails().getMetadata().get(ArtifactMetadataKeys.IMAGE)
-                        : null;
+            (RepositoryFormat.docker.name().equals(artifactoryArtifactDelegateResponse.getRepositoryFormat())
+                && artifactoryArtifactDelegateResponse.getBuildDetails() != null
+                && artifactoryArtifactDelegateResponse.getBuildDetails().getMetadata() != null)
+            ? "\nImage pull command: docker pull "
+                + artifactoryArtifactDelegateResponse.getBuildDetails().getMetadata().get(ArtifactMetadataKeys.IMAGE)
+            : null;
         saveLogs(executionLogCallback,
-                "Fetched Artifact details"
-                        + "\ntype: Artifactory Artifact"
-                        + "\nbuild metadata url: " + buildMetadataUrl
-                        + "\nrepository: " + artifactoryArtifactDelegateResponse.getRepositoryName()
-                        + "\nartifactPath: " + artifactoryArtifactDelegateResponse.getArtifactPath()
-                        + "\ntag: " + artifactoryArtifactDelegateResponse.getTag()
-                        + "\nrepository type: " + artifactoryArtifactDelegateResponse.getRepositoryFormat()
-                        + (EmptyPredicate.isNotEmpty(dockerPullCommand) ? dockerPullCommand : ""));
+            "Fetched Artifact details"
+                + "\ntype: Artifactory Artifact"
+                + "\nbuild metadata url: " + buildMetadataUrl
+                + "\nrepository: " + artifactoryArtifactDelegateResponse.getRepositoryName()
+                + "\nartifactPath: " + artifactoryArtifactDelegateResponse.getArtifactPath()
+                + "\ntag: " + artifactoryArtifactDelegateResponse.getTag()
+                + "\nrepository type: " + artifactoryArtifactDelegateResponse.getRepositoryFormat()
+                + (EmptyPredicate.isNotEmpty(dockerPullCommand) ? dockerPullCommand : ""));
         break;
       case GET_BUILDS:
         saveLogs(executionLogCallback, "Fetching artifact details");
         artifactTaskResponse = getSuccessTaskResponse(artifactoryArtifactTaskHandler.getBuilds(attributes));
         saveLogs(executionLogCallback,
-                "Fetched " + artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().size()
-                        + " artifacts");
+            "Fetched " + artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().size()
+                + " artifacts");
         break;
       case VALIDATE_ARTIFACT_SERVER:
         saveLogs(executionLogCallback, "Validating  Artifact Server");
         artifactTaskResponse =
-                getSuccessTaskResponse(artifactoryArtifactTaskHandler.validateArtifactServer(attributes));
+            getSuccessTaskResponse(artifactoryArtifactTaskHandler.validateArtifactServer(attributes));
         saveLogs(executionLogCallback, "validated artifact server: " + registryUrl);
         break;
       default:
         saveLogs(executionLogCallback,
-                "No corresponding Artifactory artifact task type [{}]: " + artifactTaskParameters.toString());
+            "No corresponding Artifactory artifact task type [{}]: " + artifactTaskParameters.toString());
         log.error("No corresponding Artifactory artifact task type [{}]", artifactTaskParameters.toString());
         return ArtifactTaskResponse.builder()
-                .commandExecutionStatus(CommandExecutionStatus.FAILURE)
-                .errorMessage("There is no Artifactory artifact task type impl defined for - "
-                        + artifactTaskParameters.getArtifactTaskType().name())
-                .errorCode(ErrorCode.INVALID_ARGUMENT)
-                .build();
+            .commandExecutionStatus(CommandExecutionStatus.FAILURE)
+            .errorMessage("There is no Artifactory artifact task type impl defined for - "
+                + artifactTaskParameters.getArtifactTaskType().name())
+            .errorCode(ErrorCode.INVALID_ARGUMENT)
+            .build();
     }
     return artifactTaskResponse;
   }
 
   public ArtifactTaskResponse getGenericArtifactCollectResponse(
-          ArtifactTaskParameters artifactTaskParameters, LogCallback executionLogCallback) {
+      ArtifactTaskParameters artifactTaskParameters, LogCallback executionLogCallback) {
     ArtifactoryGenericArtifactDelegateRequest attributes =
-            (ArtifactoryGenericArtifactDelegateRequest) artifactTaskParameters.getAttributes();
+        (ArtifactoryGenericArtifactDelegateRequest) artifactTaskParameters.getAttributes();
     ArtifactTaskResponse artifactTaskResponse;
     switch (artifactTaskParameters.getArtifactTaskType()) {
       case GET_LAST_SUCCESSFUL_BUILD:
         saveLogs(executionLogCallback, "Fetching Artifact details");
         artifactTaskResponse = getSuccessTaskResponse(getLatestArtifact(artifactTaskParameters, executionLogCallback));
         ArtifactoryGenericArtifactDelegateResponse artifactoryGenericArtifactDelegateResponse =
-                (ArtifactoryGenericArtifactDelegateResponse) (artifactTaskResponse.getArtifactTaskExecutionResponse()
-                        .getArtifactDelegateResponses()
-                        .size()
+            (ArtifactoryGenericArtifactDelegateResponse) (artifactTaskResponse.getArtifactTaskExecutionResponse()
+                                                              .getArtifactDelegateResponses()
+                                                              .size()
                         != 0
-                        ? artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().get(0)
-                        : ArtifactoryDockerArtifactDelegateResponse.builder().build());
+                    ? artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().get(0)
+                    : ArtifactoryDockerArtifactDelegateResponse.builder().build());
         String buildMetadataUrl = artifactoryGenericArtifactDelegateResponse.getBuildDetails() != null
-                ? artifactoryGenericArtifactDelegateResponse.getBuildDetails().getBuildUrl()
-                : null;
+            ? artifactoryGenericArtifactDelegateResponse.getBuildDetails().getBuildUrl()
+            : null;
         saveLogs(executionLogCallback,
-                "Fetched Artifact details"
-                        + "\ntype: Artifactory Artifact"
-                        + "\nbuild metadata url: " + buildMetadataUrl
-                        + "\nrepository: " + artifactoryGenericArtifactDelegateResponse.getRepositoryName()
-                        + "\nartifactPath: " + artifactoryGenericArtifactDelegateResponse.getArtifactPath()
-                        + "\nrepository type: " + artifactoryGenericArtifactDelegateResponse.getRepositoryFormat());
+            "Fetched Artifact details"
+                + "\ntype: Artifactory Artifact"
+                + "\nbuild metadata url: " + buildMetadataUrl
+                + "\nrepository: " + artifactoryGenericArtifactDelegateResponse.getRepositoryName()
+                + "\nartifactPath: " + artifactoryGenericArtifactDelegateResponse.getArtifactPath()
+                + "\nrepository type: " + artifactoryGenericArtifactDelegateResponse.getRepositoryFormat());
         break;
       case GET_BUILDS:
         saveLogs(executionLogCallback, "Fetching artifact details");
         artifactTaskResponse = getSuccessTaskResponse(artifactoryArtifactTaskHandler.getBuilds(attributes));
         saveLogs(executionLogCallback,
-                "Fetched " + artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().size()
-                        + " artifacts");
+            "Fetched " + artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().size()
+                + " artifacts");
         break;
       default:
         saveLogs(executionLogCallback,
-                "No corresponding Artifactory artifact task type [{}]: " + artifactTaskParameters.toString());
+            "No corresponding Artifactory artifact task type [{}]: " + artifactTaskParameters.toString());
         log.error("No corresponding Artifactory artifact task type [{}]", artifactTaskParameters.toString());
         return ArtifactTaskResponse.builder()
-                .commandExecutionStatus(CommandExecutionStatus.FAILURE)
-                .errorMessage("There is no Artifactory artifact task type impl defined for - "
-                        + artifactTaskParameters.getArtifactTaskType().name())
-                .errorCode(ErrorCode.INVALID_ARGUMENT)
-                .build();
+            .commandExecutionStatus(CommandExecutionStatus.FAILURE)
+            .errorMessage("There is no Artifactory artifact task type impl defined for - "
+                + artifactTaskParameters.getArtifactTaskType().name())
+            .errorCode(ErrorCode.INVALID_ARGUMENT)
+            .build();
     }
     return artifactTaskResponse;
   }
 
   public ArtifactTaskExecutionResponse getLatestArtifact(
-          ArtifactTaskParameters artifactTaskParameters, LogCallback executionLogCallback) {
+      ArtifactTaskParameters artifactTaskParameters, LogCallback executionLogCallback) {
     ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest =
-            (ArtifactoryGenericArtifactDelegateRequest) artifactTaskParameters.getAttributes();
+        (ArtifactoryGenericArtifactDelegateRequest) artifactTaskParameters.getAttributes();
     artifactoryArtifactTaskHandler.decryptRequestDTOs(artifactoryGenericArtifactDelegateRequest);
 
     String artifactDirectory = artifactoryGenericArtifactDelegateRequest.getArtifactDirectory();
@@ -174,49 +174,48 @@ public class ArtifactoryArtifactTaskHelper {
 
     if (EmptyPredicate.isEmpty(artifactDirectory)) {
       saveLogs(executionLogCallback,
-              "Artifact Directory is Empty, assuming Artifacts are present in root of the repository");
+          "Artifact Directory is Empty, assuming Artifacts are present in root of the repository");
       artifactDirectory = DEFAULT_ARTIFACT_DIRECTORY;
     }
 
     ArtifactoryConfigRequest artifactoryConfigRequest = artifactoryRequestMapper.toArtifactoryRequest(
-            artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
+        artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
     BuildDetails buildDetails = artifactoryNgService.getLatestArtifact(artifactoryConfigRequest,
-            artifactoryGenericArtifactDelegateRequest.getRepositoryName(), artifactDirectory,
-            artifactoryGenericArtifactDelegateRequest.getArtifactPathFilter(),
-            artifactoryGenericArtifactDelegateRequest.getArtifactPath(), MAX_NO_OF_TAGS_PER_ARTIFACT);
-    artifactoryGenericArtifactDelegateResponse =
-            ArtifactoryRequestResponseMapper.toArtifactoryGenericResponse(
-                    buildDetails, artifactoryGenericArtifactDelegateRequest);
+        artifactoryGenericArtifactDelegateRequest.getRepositoryName(), artifactDirectory,
+        artifactoryGenericArtifactDelegateRequest.getArtifactPathFilter(),
+        artifactoryGenericArtifactDelegateRequest.getArtifactPath(), MAX_NO_OF_TAGS_PER_ARTIFACT);
+    artifactoryGenericArtifactDelegateResponse = ArtifactoryRequestResponseMapper.toArtifactoryGenericResponse(
+        buildDetails, artifactoryGenericArtifactDelegateRequest);
 
     return artifactoryArtifactTaskHandler.getSuccessTaskExecutionResponseGeneric(
-            Collections.singletonList(artifactoryGenericArtifactDelegateResponse));
+        Collections.singletonList(artifactoryGenericArtifactDelegateResponse));
   }
 
-  public ArtifactTaskExecutionResponse fetchFileBuilds(ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest,
-                                                       LogCallback executionLogCallback) {
-
+  public ArtifactTaskExecutionResponse fetchFileBuilds(
+      ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest,
+      LogCallback executionLogCallback) {
     artifactoryArtifactTaskHandler.decryptRequestDTOs(artifactoryGenericArtifactDelegateRequest);
     ArtifactoryConfigRequest artifactoryConfigRequest = artifactoryRequestMapper.toArtifactoryRequest(
-            artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
+        artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
     String artifactDirectory = artifactoryGenericArtifactDelegateRequest.getArtifactDirectory();
     if (artifactDirectory.isEmpty()) {
       saveLogs(executionLogCallback,
-              "Artifact Directory is Empty, assuming Artifacts are present in root of the repository");
+          "Artifact Directory is Empty, assuming Artifacts are present in root of the repository");
       artifactDirectory = DEFAULT_ARTIFACT_DIRECTORY;
     }
     String filePath = Paths.get(artifactDirectory, DEFAULT_ARTIFACT_FILTER).toString();
 
     List<BuildDetails> buildDetails = artifactoryNgService.getArtifactList(artifactoryConfigRequest,
-            artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, MAX_NO_OF_TAGS_PER_ARTIFACT);
+        artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, MAX_NO_OF_TAGS_PER_ARTIFACT);
 
     return ArtifactTaskExecutionResponse.builder().buildDetails(buildDetails).build();
   }
 
   private ArtifactTaskResponse getSuccessTaskResponse(ArtifactTaskExecutionResponse taskExecutionResponse) {
     return ArtifactTaskResponse.builder()
-            .commandExecutionStatus(SUCCESS)
-            .artifactTaskExecutionResponse(taskExecutionResponse)
-            .build();
+        .commandExecutionStatus(SUCCESS)
+        .artifactTaskExecutionResponse(taskExecutionResponse)
+        .build();
   }
 
   private void saveLogs(LogCallback executionLogCallback, String message) {

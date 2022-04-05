@@ -9,7 +9,9 @@ package io.harness.delegate.task.serverless;
 
 import static io.harness.data.structure.UUIDGenerator.convertBase64UuidToCanonicalForm;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
-import static io.harness.filesystem.FileIo.*;
+import static io.harness.filesystem.FileIo.createDirectoryIfDoesNotExist;
+import static io.harness.filesystem.FileIo.deleteDirectoryAndItsContentIfExists;
+import static io.harness.filesystem.FileIo.waitForDirectoryToBeAccessibleOutOfProcess;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -20,7 +22,6 @@ import io.harness.delegate.exception.TaskNGDataException;
 import io.harness.delegate.serverless.ServerlessCommandTaskHandler;
 import io.harness.delegate.task.serverless.request.ServerlessCommandRequest;
 import io.harness.delegate.task.serverless.response.ServerlessCommandResponse;
-import io.harness.serverless.ServerlessGlobalConfigService;
 import io.harness.serverless.model.ServerlessDelegateTaskParams;
 
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
@@ -46,7 +47,6 @@ public class ServerlessDelegateTaskHelper {
 
     log.info("Starting task execution for command: {}", serverlessCommandRequest.getServerlessCommandType().name());
     decryptRequestDTOs(serverlessCommandRequest);
-    // todo: add execution id to directory path
     String workingDirectory = Paths.get(WORKING_DIR_BASE, convertBase64UuidToCanonicalForm(generateUuid()))
                                   .normalize()
                                   .toAbsolutePath()
@@ -68,7 +68,6 @@ public class ServerlessDelegateTaskHelper {
       log.error("Exception in processing serverless task [{}]",
           serverlessCommandRequest.getCommandName() + ":" + serverlessCommandRequest.getServerlessCommandType(),
           sanitizedException);
-      // todo: add logic to handle task failure
       throw new TaskNGDataException(
           UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress), sanitizedException);
     } finally {
@@ -78,7 +77,6 @@ public class ServerlessDelegateTaskHelper {
 
   private void decryptRequestDTOs(ServerlessCommandRequest serverlessCommandRequest) {
     serverlessInfraConfigHelper.decryptServerlessInfraConfig(serverlessCommandRequest.getServerlessInfraConfig());
-    // todo: have to add more decrypting capabaility for others
   }
 
   private void cleanup(String workingDirectory) {

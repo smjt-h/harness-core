@@ -15,34 +15,43 @@ import static java.lang.String.format;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.manifest.ManifestStoreType;
 import io.harness.cdng.manifest.ManifestType;
 import io.harness.cdng.manifest.yaml.GitStoreConfig;
 import io.harness.cdng.manifest.yaml.ManifestOutcome;
 import io.harness.cdng.manifest.yaml.ServerlessAwsLambdaManifestOutcome;
+import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.instancesync.mapper.ServerlessAwsLambdaFunctionToServerInstanceInfoMapper;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaDeployResult;
-import io.harness.delegate.beans.serverless.ServerlessAwsLambdaRollbackResult;
 import io.harness.delegate.beans.serverless.ServerlessDeployResult;
-import io.harness.delegate.beans.serverless.ServerlessRollbackResult;
-import io.harness.delegate.task.serverless.*;
+import io.harness.delegate.task.serverless.ServerlessAwsLambdaDeployConfig;
+import io.harness.delegate.task.serverless.ServerlessAwsLambdaManifestConfig;
+import io.harness.delegate.task.serverless.ServerlessDeployConfig;
+import io.harness.delegate.task.serverless.ServerlessManifestConfig;
 import io.harness.delegate.task.serverless.response.ServerlessDeployResponse;
 import io.harness.exception.InvalidRequestException;
+import io.harness.git.model.FetchFilesResult;
+import io.harness.git.model.GitFile;
 import io.harness.pms.contracts.ambiance.Ambiance;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.validator.constraints.NotEmpty;
 
 @OwnedBy(HarnessTeam.CDP)
 @Singleton
 public class ServerlessAwsLambdaStepHelper implements ServerlessStepHelper {
-  @Inject private ServerlessStepCommonHelper serverlessStepCommonHelper;
+  @Inject private ServerlessStepUtils serverlessStepUtils;
 
   @Override
   public ManifestOutcome getServerlessManifestOutcome(@NotEmpty Collection<ManifestOutcome> manifestOutcomes) {
@@ -96,8 +105,9 @@ public class ServerlessAwsLambdaStepHelper implements ServerlessStepHelper {
       return ServerlessAwsLambdaManifestConfig.builder()
           .manifestPath(manifestFilePathContent.getKey())
           .manifestContent(manifestFileOverrideContent)
+          .configOverridePath(getConfigOverridePath(manifestOutcome))
           .gitStoreDelegateConfig(
-              serverlessStepCommonHelper.getGitStoreDelegateConfig(ambiance, gitStoreConfig, manifestOutcome))
+              serverlessStepUtils.getGitStoreDelegateConfig(ambiance, gitStoreConfig, manifestOutcome))
           .build();
     }
     throw new UnsupportedOperationException(
@@ -110,6 +120,9 @@ public class ServerlessAwsLambdaStepHelper implements ServerlessStepHelper {
     if (serverlessDeployResult instanceof ServerlessAwsLambdaDeployResult) {
       ServerlessAwsLambdaDeployResult serverlessAwsLambdaDeployResult =
           (ServerlessAwsLambdaDeployResult) serverlessDeployResult;
+      if (EmptyPredicate.isEmpty(serverlessAwsLambdaDeployResult.getFunctions())) {
+        return Collections.emptyList();
+      }
       return ServerlessAwsLambdaFunctionToServerInstanceInfoMapper.toServerInstanceInfoList(
           serverlessAwsLambdaDeployResult.getFunctions(), serverlessAwsLambdaDeployResult.getRegion(),
           serverlessAwsLambdaDeployResult.getStage(), serverlessAwsLambdaDeployResult.getService());
@@ -119,17 +132,27 @@ public class ServerlessAwsLambdaStepHelper implements ServerlessStepHelper {
   }
 
   @Override
-  public List<ServerInstanceInfo> getServerlessRollbackFunctionInstanceInfo(
-      ServerlessRollbackResult serverlessRollbackResult) {
-    if (serverlessRollbackResult instanceof ServerlessAwsLambdaRollbackResult) {
-      ServerlessAwsLambdaRollbackResult serverlessAwsLambdaRollbackResult =
-          (ServerlessAwsLambdaRollbackResult) serverlessRollbackResult;
-      return ServerlessAwsLambdaFunctionToServerInstanceInfoMapper.toServerInstanceInfoList(
-          serverlessAwsLambdaRollbackResult.getFunctions(), serverlessAwsLambdaRollbackResult.getRegion(),
-          serverlessAwsLambdaRollbackResult.getStage(), serverlessAwsLambdaRollbackResult.getService());
+  public Optional<Pair<String, String>> getManifestFileContent(
+      Map<String, FetchFilesResult> fetchFilesResultMap, ManifestOutcome manifestOutcome) {
+    if (manifestOutcome instanceof ServerlessAwsLambdaManifestOutcome) {
+      ServerlessAwsLambdaManifestOutcome serverlessAwsLambdaManifestOutcome =
+          (ServerlessAwsLambdaManifestOutcome) manifestOutcome;
+      StoreConfig store = serverlessAwsLambdaManifestOutcome.getStore();
+      if (ManifestStoreType.isInGitSubset(store.getKind())) {
+        FetchFilesResult fetchFilesResult = fetchFilesResultMap.get(serverlessAwsLambdaManifestOutcome.getIdentifier());
+        if (EmptyPredicate.isNotEmpty(fetchFilesResult.getFiles())) {
+          GitFile gitFile = fetchFilesResult.getFiles().get(0);
+          String filePath = getConfigOverridePath(manifestOutcome);
+          if (EmptyPredicate.isEmpty(filePath)) {
+            filePath = serverlessStepUtils.getManifestDefaultFileName(gitFile.getFilePath());
+          }
+          return Optional.of(ImmutablePair.of(filePath, gitFile.getFileContent()));
+        }
+      }
+      return Optional.empty();
     }
     throw new UnsupportedOperationException(
-        format("Unsupported serverless deploy instance: [%s]", serverlessRollbackResult.getClass()));
+        format("Unsupported serverless manifest type: [%s]", manifestOutcome.getType()));
   }
 
   public String getPreviousVersion(ServerlessDeployResponse serverlessDeployResponse) {

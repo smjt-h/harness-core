@@ -51,7 +51,7 @@ public class ServerlessGitFetchTaskHelper {
   }
 
   public void printFileNames(LogCallback executionLogCallback, List<String> filePaths) {
-    executionLogCallback.saveExecutionLog("\nFetched following Files :");
+    executionLogCallback.saveExecutionLog("\nFetching following Files :");
     gitFetchFilesTaskHelper.printFileNamesInExecutionLogs(filePaths, executionLogCallback);
   }
 

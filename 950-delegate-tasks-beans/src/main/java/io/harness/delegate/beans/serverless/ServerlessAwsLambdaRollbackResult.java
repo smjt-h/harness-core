@@ -10,7 +10,6 @@ package io.harness.delegate.beans.serverless;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
-import java.util.List;
 import lombok.Builder;
 import lombok.Data;
 
@@ -22,5 +21,5 @@ public class ServerlessAwsLambdaRollbackResult implements ServerlessRollbackResu
   private String region;
   private String stage;
   private String errorMessage;
-  private List<ServerlessAwsLambdaFunction> functions;
+  private String rollbackTimeStamp;
 }

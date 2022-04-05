@@ -67,20 +67,21 @@ public class ArtifactResponseToOutcomeMapper {
         NexusArtifactDelegateResponse nexusDelegateResponse = (NexusArtifactDelegateResponse) artifactDelegateResponse;
         return getNexusArtifactOutcome(nexusRegistryArtifactConfig, nexusDelegateResponse, useDelegateResponse);
       case ARTIFACTORY_REGISTRY:
+        ArtifactOutcome artifactOutcome = null;
         ArtifactoryRegistryArtifactConfig artifactoryRegistryArtifactConfig =
             (ArtifactoryRegistryArtifactConfig) artifactConfig;
         if (artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue().equals(docker.name())) {
           ArtifactoryDockerArtifactDelegateResponse artifactoryDelegateResponse =
               (ArtifactoryDockerArtifactDelegateResponse) artifactDelegateResponse;
-          return getArtifactoryArtifactOutcome(
+          artifactOutcome = getArtifactoryArtifactOutcome(
               artifactoryRegistryArtifactConfig, artifactoryDelegateResponse, useDelegateResponse);
-        }
-        if (artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue().equals(generic.name())) {
+        } else if (artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue().equals(generic.name())) {
           ArtifactoryGenericArtifactDelegateResponse artifactoryGenericDelegateResponse =
               (ArtifactoryGenericArtifactDelegateResponse) artifactDelegateResponse;
-          return getArtifactoryGenericArtifactOutcome(
+          artifactOutcome = getArtifactoryGenericArtifactOutcome(
               artifactoryRegistryArtifactConfig, artifactoryGenericDelegateResponse, useDelegateResponse);
         }
+        return artifactOutcome;
       default:
         throw new UnsupportedOperationException(
             String.format("Unknown Artifact Config type: [%s]", artifactConfig.getSourceType()));

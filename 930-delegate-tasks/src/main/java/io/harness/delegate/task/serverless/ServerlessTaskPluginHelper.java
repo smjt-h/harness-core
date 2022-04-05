@@ -9,6 +9,7 @@ package io.harness.delegate.task.serverless;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.logging.LogCallback;
 import io.harness.serverless.PluginCommand;
 import io.harness.serverless.ServerlessCliResponse;
@@ -16,19 +17,23 @@ import io.harness.serverless.ServerlessClient;
 import io.harness.serverless.ServerlessCommandTaskHelper;
 import io.harness.serverless.model.ServerlessDelegateTaskParams;
 
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 import lombok.extern.slf4j.Slf4j;
-import org.zeroturnaround.exec.ProcessResult;
 
 @OwnedBy(HarnessTeam.CDP)
 @Slf4j
 @Singleton
 public class ServerlessTaskPluginHelper {
   public ServerlessCliResponse installServerlessPlugin(ServerlessDelegateTaskParams serverlessDelegateTaskParams,
-      ServerlessClient serverlessClient, String pluginName, LogCallback executionLogCallback, long timeoutInMillis)
-      throws Exception {
+      ServerlessClient serverlessClient, String pluginName, LogCallback executionLogCallback, long timeoutInMillis,
+      String ConfigOverridePath) throws InterruptedException, IOException, TimeoutException {
+    executionLogCallback.saveExecutionLog("\n Installing the serverless plugin: " + pluginName);
     PluginCommand command = serverlessClient.plugin().pluginName(pluginName);
+    if (EmptyPredicate.isNotEmpty(ConfigOverridePath)) {
+      command.config(ConfigOverridePath);
+    }
     return ServerlessCommandTaskHelper.executeCommand(
         command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true, timeoutInMillis);
   }

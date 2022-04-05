@@ -12,7 +12,6 @@ import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.eraro.ErrorCode.GENERAL_ERROR;
 import static io.harness.exception.WingsException.USER;
-import static io.harness.k8s.manifest.ManifestHelper.normalizeFolderPath;
 import static io.harness.steps.StepUtils.prepareCDTaskRequest;
 
 import static java.lang.String.format;
@@ -26,33 +25,37 @@ import io.harness.cdng.expressions.CDExpressionResolveFunctor;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.manifest.ManifestStoreType;
 import io.harness.cdng.manifest.steps.ManifestsOutcome;
-import io.harness.cdng.manifest.yaml.*;
+import io.harness.cdng.manifest.yaml.GitStoreConfig;
+import io.harness.cdng.manifest.yaml.ManifestOutcome;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
-import io.harness.cdng.serverless.beans.*;
+import io.harness.cdng.serverless.beans.ServerlessAwsLambdaStepExecutorParams;
+import io.harness.cdng.serverless.beans.ServerlessExecutionPassThroughData;
+import io.harness.cdng.serverless.beans.ServerlessGitFetchFailurePassThroughData;
+import io.harness.cdng.serverless.beans.ServerlessStepExceptionPassThroughData;
+import io.harness.cdng.serverless.beans.ServerlessStepExecutorParams;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.connector.ConnectorInfoDTO;
-import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.HarnessStringUtils;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
-import io.harness.delegate.beans.serverless.ServerlessAwsLambdaDeployResult;
-import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.exception.TaskNGDataException;
 import io.harness.delegate.task.git.TaskStatus;
-import io.harness.delegate.task.serverless.*;
+import io.harness.delegate.task.serverless.ServerlessArtifactConfig;
+import io.harness.delegate.task.serverless.ServerlessDeployConfig;
+import io.harness.delegate.task.serverless.ServerlessGitFetchFileConfig;
+import io.harness.delegate.task.serverless.ServerlessInfraConfig;
+import io.harness.delegate.task.serverless.ServerlessManifestConfig;
 import io.harness.delegate.task.serverless.request.ServerlessCommandRequest;
 import io.harness.delegate.task.serverless.request.ServerlessGitFetchRequest;
 import io.harness.delegate.task.serverless.response.ServerlessCommandResponse;
 import io.harness.delegate.task.serverless.response.ServerlessDeployResponse;
 import io.harness.delegate.task.serverless.response.ServerlessGitFetchResponse;
-import io.harness.delegate.task.serverless.response.ServerlessRollbackResponse;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.GeneralException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.expression.ExpressionEvaluatorUtils;
 import io.harness.git.model.FetchFilesResult;
-import io.harness.git.model.GitFile;
 import io.harness.ng.core.NGAccess;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.StepElementParameters;
@@ -72,6 +75,7 @@ import io.harness.pms.sdk.core.resolver.outcome.OutcomeService;
 import io.harness.pms.sdk.core.steps.executables.TaskChainResponse;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
+import io.harness.pms.sdk.core.steps.io.StepResponse.StepResponseBuilder;
 import io.harness.serializer.KryoSerializer;
 import io.harness.steps.StepHelper;
 import io.harness.supplier.ThrowingSupplier;
@@ -81,19 +85,23 @@ import software.wings.beans.TaskType;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import java.util.*;
-import org.apache.commons.lang3.tuple.ImmutablePair;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.validator.constraints.NotEmpty;
 
 @OwnedBy(HarnessTeam.CDP)
 @Singleton
-public class ServerlessStepCommonHelper extends CDStepHelper {
+public class ServerlessStepCommonHelper extends ServerlessStepUtils {
   @Inject private OutcomeService outcomeService;
   @Inject private EngineExpressionService engineExpressionService;
   @Inject private ServerlessEntityHelper serverlessEntityHelper;
   @Inject private KryoSerializer kryoSerializer;
   @Inject private StepHelper stepHelper;
+  private static final String ARTIFACT_PATH = "<+artifact.path>";
+  private static final String ARTIFACT_ACTUAL_PATH = "harnessArtifact/artifactFile";
 
   public TaskChainResponse startChainLink(
       Ambiance ambiance, StepElementParameters stepElementParameters, ServerlessStepHelper serverlessStepHelper) {
@@ -111,14 +119,14 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
 
   public TaskChainResponse executeNextLink(ServerlessStepExecutor serverlessStepExecutor, Ambiance ambiance,
       StepElementParameters stepElementParameters, PassThroughData passThroughData,
-      ThrowingSupplier<ResponseData> responseDataSupplier) throws Exception {
+      ThrowingSupplier<ResponseData> responseDataSupplier, ServerlessStepHelper serverlessStepHelper) throws Exception {
     ServerlessStepPassThroughData serverlessStepPassThroughData = (ServerlessStepPassThroughData) passThroughData;
     ResponseData responseData = responseDataSupplier.get();
     UnitProgressData unitProgressData = null;
     try {
       ServerlessGitFetchResponse serverlessGitFetchResponse = (ServerlessGitFetchResponse) responseData;
       return handleServerlessGitFetchFilesResponse(serverlessGitFetchResponse, serverlessStepExecutor, ambiance,
-          stepElementParameters, serverlessStepPassThroughData);
+          stepElementParameters, serverlessStepPassThroughData, serverlessStepHelper);
     } catch (Exception e) {
       return TaskChainResponse.builder()
           .chainEnd(true)
@@ -212,7 +220,7 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
 
   private TaskChainResponse handleServerlessGitFetchFilesResponse(ServerlessGitFetchResponse serverlessGitFetchResponse,
       ServerlessStepExecutor serverlessStepExecutor, Ambiance ambiance, StepElementParameters stepElementParameters,
-      ServerlessStepPassThroughData serverlessStepPassThroughData) {
+      ServerlessStepPassThroughData serverlessStepPassThroughData, ServerlessStepHelper serverlessStepHelper) {
     if (serverlessGitFetchResponse.getTaskStatus() != TaskStatus.SUCCESS) {
       ServerlessGitFetchFailurePassThroughData serverlessGitFetchFailurePassThroughData =
           ServerlessGitFetchFailurePassThroughData.builder()
@@ -225,8 +233,8 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
           .build();
     }
     Map<String, FetchFilesResult> fetchFilesResultMap = serverlessGitFetchResponse.getFilesFromMultipleRepo();
-    Optional<Pair<String, String>> manifestFilePathContent =
-        getManifestFileContent(fetchFilesResultMap, serverlessStepPassThroughData.getServerlessManifestOutcome());
+    Optional<Pair<String, String>> manifestFilePathContent = getManifestFileContent(
+        fetchFilesResultMap, serverlessStepPassThroughData.getServerlessManifestOutcome(), serverlessStepHelper);
     if (!manifestFilePathContent.isPresent()) {
       throw new GeneralException("Found No Manifest Content from serverless git fetch task");
     }
@@ -303,11 +311,11 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
         .build();
   }
 
-  public static StepResponse.StepResponseBuilder getFailureResponseBuilder(
-      ServerlessDeployResponse serverlessDeployResponse, StepResponse.StepResponseBuilder stepResponseBuilder) {
+  public static StepResponseBuilder getFailureResponseBuilder(
+      ServerlessCommandResponse serverlessCommandResponse, StepResponseBuilder stepResponseBuilder) {
     stepResponseBuilder.status(Status.FAILED)
         .failureInfo(FailureInfo.newBuilder()
-                         .setErrorMessage(ServerlessStepCommonHelper.getErrorMessage(serverlessDeployResponse))
+                         .setErrorMessage(ServerlessStepCommonHelper.getErrorMessage(serverlessCommandResponse))
                          .build());
     return stepResponseBuilder;
   }
@@ -316,17 +324,9 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
     return serverlessCommandResponse.getErrorMessage() == null ? "" : serverlessCommandResponse.getErrorMessage();
   }
 
-  private Optional<Pair<String, String>> getManifestFileContent(
-      Map<String, FetchFilesResult> fetchFilesResultMap, ManifestOutcome manifestOutcome) {
-    StoreConfig store = manifestOutcome.getStore();
-    if (ManifestStoreType.isInGitSubset(store.getKind())) {
-      FetchFilesResult fetchFilesResult = fetchFilesResultMap.get(manifestOutcome.getIdentifier());
-      if (EmptyPredicate.isNotEmpty(fetchFilesResult.getFiles())) {
-        GitFile gitFile = fetchFilesResult.getFiles().get(0);
-        return Optional.of(ImmutablePair.of(gitFile.getFilePath(), gitFile.getFileContent()));
-      }
-    }
-    return Optional.empty();
+  private Optional<Pair<String, String>> getManifestFileContent(Map<String, FetchFilesResult> fetchFilesResultMap,
+      ManifestOutcome manifestOutcome, ServerlessStepHelper serverlessStepHelper) {
+    return serverlessStepHelper.getManifestFileContent(fetchFilesResultMap, manifestOutcome);
   }
 
   private TaskChainResponse getGitFetchFileTaskResponse(Ambiance ambiance, boolean shouldOpenLogStream,
@@ -370,19 +370,12 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
         .build();
   }
 
-  public GitStoreDelegateConfig getGitStoreDelegateConfig(
-      Ambiance ambiance, GitStoreConfig gitStoreConfig, ManifestOutcome manifestOutcome) {
-    String connectorId = gitStoreConfig.getConnectorRef().getValue();
-    String validationMessage = format("Serverless manifest with Id [%s]", manifestOutcome.getIdentifier());
-    ConnectorInfoDTO connectorDTO = getConnectorDTO(connectorId, ambiance);
-    validateManifest(gitStoreConfig.getKind(), connectorDTO, validationMessage);
-    List<String> gitPaths = getFolderPathsForManifest(gitStoreConfig);
-    return getGitStoreDelegateConfig(gitStoreConfig, connectorDTO, manifestOutcome, gitPaths, ambiance);
-  }
-
   public String renderManifestContent(Ambiance ambiance, String manifestFileContent) {
     if (isEmpty(manifestFileContent)) {
       return manifestFileContent;
+    }
+    if (manifestFileContent.contains(ARTIFACT_PATH)) {
+      manifestFileContent = manifestFileContent.replace(ARTIFACT_PATH, ARTIFACT_ACTUAL_PATH);
     }
     return engineExpressionService.renderExpression(ambiance, manifestFileContent);
   }
@@ -408,10 +401,6 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
       ServerlessDeployResponse serverlessDeployResponse = (ServerlessDeployResponse) serverlessCommandResponse;
       return serverlessStepHelper.getServerlessDeployFunctionInstanceInfo(
           serverlessDeployResponse.getServerlessDeployResult());
-    } else if (serverlessCommandResponse instanceof ServerlessRollbackResponse) {
-      ServerlessRollbackResponse serverlessRollbackResponse = (ServerlessRollbackResponse) serverlessCommandResponse;
-      return serverlessStepHelper.getServerlessRollbackFunctionInstanceInfo(
-          serverlessRollbackResponse.getServerlessRollbackResult());
     }
     throw new GeneralException("Invalid serverless command response instance");
   }
@@ -419,18 +408,5 @@ public class ServerlessStepCommonHelper extends CDStepHelper {
   private ConnectorInfoDTO getConnectorDTO(String connectorId, Ambiance ambiance) {
     NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
     return serverlessEntityHelper.getConnectorInfoDTO(connectorId, ngAccess);
-  }
-
-  private List<String> getFolderPathsForManifest(GitStoreConfig gitStoreConfig) {
-    List<String> folderPaths = new ArrayList<>();
-
-    List<String> paths = getParameterFieldValue(gitStoreConfig.getPaths());
-    if (!paths.isEmpty()) {
-      folderPaths.add(normalizeFolderPath(paths.get(0)));
-    } else {
-      folderPaths.add(normalizeFolderPath(getParameterFieldValue(gitStoreConfig.getFolderPath())));
-    }
-    return folderPaths;
-    // todo: add error handling
   }
 }

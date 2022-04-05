@@ -29,7 +29,11 @@ import io.harness.walktree.visitor.Visitable;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.Wither;
 import org.springframework.data.annotation.TypeAlias;
@@ -55,8 +59,6 @@ public class ServerlessAwsLambdaManifest implements ManifestAttributes, Visitabl
   @Wither @ApiModelProperty(dataType = STRING_CLASSPATH) @SkipAutoEvaluation ParameterField<String> configOverridePath;
   // For Visitor Framework Impl
   String metadata;
-
-  // todo: check usage of ServerlessAwsManifestVisitorHelper and ServerlessAwsManifestStepParameters
 
   @Override
   public String getKind() {

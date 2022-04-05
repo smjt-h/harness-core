@@ -8,9 +8,15 @@
 package io.harness.delegate.task.serverless;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.data.structure.UUIDGenerator.convertBase64UuidToCanonicalForm;
-import static io.harness.data.structure.UUIDGenerator.generateUuid;
-import static io.harness.filesystem.FileIo.*;
+import static io.harness.filesystem.FileIo.createDirectoryIfDoesNotExist;
+import static io.harness.filesystem.FileIo.waitForDirectoryToBeAccessibleOutOfProcess;
+
+import static software.wings.beans.LogColor.Gray;
+import static software.wings.beans.LogColor.White;
+import static software.wings.beans.LogHelper.color;
+import static software.wings.beans.LogWeight.Bold;
+
+import static java.lang.String.format;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifactory.ArtifactoryConfigRequest;
@@ -24,6 +30,7 @@ import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.beans.logstreaming.NGDelegateLogCallback;
+import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.task.artifactory.ArtifactoryRequestMapper;
 import io.harness.delegate.task.git.ScmFetchFilesHelperNG;
@@ -33,17 +40,21 @@ import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.serverless.model.ServerlessDelegateTaskParams;
 import io.harness.shell.SshSessionConfig;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Pattern;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 
@@ -62,11 +73,7 @@ public class ServerlessTaskHelperBase {
   private static final String ARTIFACTORY_ARTIFACT_PATH = "artifactPath";
   private static final String ARTIFACTORY_ARTIFACT_NAME = "artifactName";
   private static final String ARTIFACT_FILE_NAME = "artifactFile";
-  private static final String ARTIFACT_ZIP_REGEX = ".*\\.zip";
-  private static final String ARTIFACT_JAR_REGEX = ".*\\.jar";
-  private static final String ARTIFACT_WAR_REGEX = ".*\\.war";
-  private static final String ARTIFACT_PATH_REGEX = ".*<\\+artifact\\.path>.*";
-  private static final String ARTIFACT_PATH = "<+artifact.path>";
+  private static final String ARTIFACT_DIR_NAME = "harnessArtifact";
 
   public LogCallback getLogCallback(ILogStreamingTaskClient logStreamingTaskClient, String commandUnitName,
       boolean shouldOpenStream, CommandUnitsProgress commandUnitsProgress) {
@@ -78,17 +85,20 @@ public class ServerlessTaskHelperBase {
   }
 
   public void fetchManifestFilesAndWriteToDirectory(ServerlessAwsLambdaManifestConfig serverlessManifestConfig,
-      String accountId, LogCallback executionLogCallback, ServerlessDelegateTaskParams serverlessDelegateTaskParams) {
+      String accountId, LogCallback executionLogCallback, ServerlessDelegateTaskParams serverlessDelegateTaskParams)
+      throws IOException {
     GitStoreDelegateConfig gitStoreDelegateConfig = serverlessManifestConfig.getGitStoreDelegateConfig();
+    printFilesInExecutionLogs(gitStoreDelegateConfig, executionLogCallback);
     downloadFilesFromGit(
         gitStoreDelegateConfig, executionLogCallback, accountId, serverlessDelegateTaskParams.getWorkingDirectory());
-    // todo: print file download statements
+    executionLogCallback.saveExecutionLog(color("Successfully fetched following files:", White, Bold));
+    executionLogCallback.saveExecutionLog(
+        getManifestFileNamesInLogFormat(serverlessDelegateTaskParams.getWorkingDirectory()));
   }
 
   private void downloadFilesFromGit(GitStoreDelegateConfig gitStoreDelegateConfig, LogCallback executionLogCallback,
       String accountId, String workingDirectory) {
     try {
-      // todo: print git config files
       if (gitStoreDelegateConfig.isOptimizedFilesFetch()) {
         executionLogCallback.saveExecutionLog("Using optimized file fetch");
         serverlessGitFetchTaskHelper.decryptGitStoreConfig(gitStoreDelegateConfig);
@@ -96,20 +106,73 @@ public class ServerlessTaskHelperBase {
       } else {
         GitConfigDTO gitConfigDTO = ScmConnectorMapper.toGitConfigDTO(gitStoreDelegateConfig.getGitConfigDTO());
         gitDecryptionHelper.decryptGitConfig(gitConfigDTO, gitStoreDelegateConfig.getEncryptedDataDetails());
+        ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+            gitConfigDTO, gitStoreDelegateConfig.getEncryptedDataDetails());
         SshSessionConfig sshSessionConfig = gitDecryptionHelper.getSSHSessionConfig(
             gitStoreDelegateConfig.getSshKeySpecDTO(), gitStoreDelegateConfig.getEncryptedDataDetails());
         ngGitService.downloadFiles(gitStoreDelegateConfig, workingDirectory, accountId, sshSessionConfig, gitConfigDTO);
       }
-      // todo: add print statements for fetched directory
     } catch (Exception e) {
     }
   }
+
+  private void printFilesInExecutionLogs(
+      GitStoreDelegateConfig gitStoreDelegateConfig, LogCallback executionLogCallback) {
+    GitConfigDTO gitConfigDTO = ScmConnectorMapper.toGitConfigDTO(gitStoreDelegateConfig.getGitConfigDTO());
+    executionLogCallback.saveExecutionLog("\n"
+        + color(format("Fetching %s files with identifier: %s", gitStoreDelegateConfig.getManifestType(),
+                    gitStoreDelegateConfig.getManifestId()),
+            White, Bold));
+    executionLogCallback.saveExecutionLog("Git connector Url: " + gitConfigDTO.getUrl());
+
+    if (FetchType.BRANCH == gitStoreDelegateConfig.getFetchType()) {
+      executionLogCallback.saveExecutionLog("Branch: " + gitStoreDelegateConfig.getBranch());
+    } else {
+      executionLogCallback.saveExecutionLog("CommitId: " + gitStoreDelegateConfig.getCommitId());
+    }
+
+    StringBuilder sb = new StringBuilder(1024);
+    sb.append("\nFetching files within this path: \n");
+    gitStoreDelegateConfig.getPaths().forEach(
+        filePath -> sb.append(color(format("- %s", filePath), Gray)).append(System.lineSeparator()));
+    executionLogCallback.saveExecutionLog(sb.toString());
+  }
+
+  public String getManifestFileNamesInLogFormat(String manifestFilesDirectory) throws IOException {
+    Path basePath = Paths.get(manifestFilesDirectory);
+    try (Stream<Path> paths = Files.walk(basePath)) {
+      return generateTruncatedFileListForLogging(basePath, paths);
+    }
+  }
+
+  public String generateTruncatedFileListForLogging(Path basePath, Stream<Path> paths) {
+    StringBuilder sb = new StringBuilder(1024);
+    AtomicInteger filesTraversed = new AtomicInteger(0);
+    paths.filter(Files::isRegularFile).forEach(each -> {
+      if (filesTraversed.getAndIncrement() <= 100) {
+        sb.append(color(format("- %s", getRelativePath(each.toString(), basePath.toString())), Gray))
+            .append(System.lineSeparator());
+      }
+    });
+    if (filesTraversed.get() > 100) {
+      sb.append(color(format("- ..%d more", filesTraversed.get() - 100), Gray)).append(System.lineSeparator());
+    }
+
+    return sb.toString();
+  }
+
+  public static String getRelativePath(String filePath, String prefixPath) {
+    Path fileAbsolutePath = Paths.get(filePath).toAbsolutePath();
+    Path prefixAbsolutePath = Paths.get(prefixPath).toAbsolutePath();
+    return prefixAbsolutePath.relativize(fileAbsolutePath).toString();
+  }
+
   public void replaceManifestWithRenderedContent(ServerlessDelegateTaskParams serverlessDelegateTaskParams,
-      ServerlessAwsLambdaManifestConfig serverlessManifestConfig, String updatedManifestContent) throws IOException {
+      ServerlessAwsLambdaManifestConfig serverlessManifestConfig) throws IOException {
     String manifestFilePath =
         Paths.get(serverlessDelegateTaskParams.getWorkingDirectory(), serverlessManifestConfig.getManifestPath())
             .toString();
-    updateManifestFileContent(manifestFilePath, updatedManifestContent);
+    updateManifestFileContent(manifestFilePath, serverlessManifestConfig.getManifestContent());
   }
 
   private void updateManifestFileContent(String manifestFilePath, String manifestContent) throws IOException {
@@ -117,35 +180,20 @@ public class ServerlessTaskHelperBase {
     FileIo.writeUtf8StringToFile(manifestFilePath, manifestContent);
   }
 
-  public String fetchArtifact(ServerlessArtifactConfig serverlessArtifactConfig, LogCallback logCallback,
-      String artifactoryBaseDir, ServerlessManifestConfig serverlessManifestConfig) throws IOException {
-    String artifactoryDirectory = Paths.get(artifactoryBaseDir, convertBase64UuidToCanonicalForm(generateUuid()))
-                                      .normalize()
-                                      .toAbsolutePath()
-                                      .toString();
-    ServerlessAwsLambdaManifestConfig serverlessAwsLambdaManifestConfig =
-        (ServerlessAwsLambdaManifestConfig) serverlessManifestConfig;
+  public void fetchArtifact(ServerlessArtifactConfig serverlessArtifactConfig, LogCallback logCallback,
+      String workingDirectory) throws IOException {
     if (serverlessArtifactConfig instanceof ServerlessArtifactoryArtifactConfig) {
       ServerlessArtifactoryArtifactConfig serverlessArtifactoryArtifactConfig =
           (ServerlessArtifactoryArtifactConfig) serverlessArtifactConfig;
-      return fetchArtifactoryArtifact(serverlessArtifactoryArtifactConfig, logCallback, artifactoryDirectory,
-          serverlessAwsLambdaManifestConfig.getManifestContent());
+      String artifactoryDirectory = Paths.get(workingDirectory, ARTIFACT_DIR_NAME).toString();
+      createDirectoryIfDoesNotExist(artifactoryDirectory);
+      waitForDirectoryToBeAccessibleOutOfProcess(artifactoryDirectory, 10);
+      fetchArtifactoryArtifact(serverlessArtifactoryArtifactConfig, logCallback, artifactoryDirectory);
     }
-    return serverlessAwsLambdaManifestConfig.getManifestContent();
   }
 
-  private String fetchArtifactoryArtifact(ServerlessArtifactoryArtifactConfig artifactoryArtifactConfig,
-      LogCallback logCallback, String artifactWorkingDirectory, String manifestContent) throws IOException {
-    if (!Pattern.matches(ARTIFACT_PATH_REGEX, manifestContent)) {
-      return manifestContent;
-    }
-    String artifactFilePath =
-        downloadArtifactoryArtifact(artifactoryArtifactConfig, logCallback, artifactWorkingDirectory);
-    return manifestContent.replace(ARTIFACT_PATH, artifactFilePath);
-  }
-
-  public String downloadArtifactoryArtifact(ServerlessArtifactoryArtifactConfig artifactoryArtifactConfig,
-      LogCallback logCallback, String artifactWorkingDirectory) throws IOException {
+  public void fetchArtifactoryArtifact(ServerlessArtifactoryArtifactConfig artifactoryArtifactConfig,
+      LogCallback executionLogCallback, String artifactoryDirectory) throws IOException {
     if (EmptyPredicate.isEmpty(artifactoryArtifactConfig.getArtifactPath())) {
       // todo: handle it
     }
@@ -153,17 +201,23 @@ public class ServerlessTaskHelperBase {
         (ArtifactoryConnectorDTO) artifactoryArtifactConfig.getConnectorDTO().getConnectorConfig();
     secretDecryptionService.decrypt(
         artifactoryConnectorDTO.getAuth().getCredentials(), artifactoryArtifactConfig.getEncryptedDataDetails());
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+        artifactoryConnectorDTO, artifactoryArtifactConfig.getEncryptedDataDetails());
     ArtifactoryConfigRequest artifactoryConfigRequest =
         artifactoryRequestMapper.toArtifactoryRequest(artifactoryConnectorDTO);
     Map<String, String> artifactMetadata = new HashMap<>();
-    artifactMetadata.put(ARTIFACTORY_ARTIFACT_PATH, artifactoryArtifactConfig.getArtifactPath());
-    artifactMetadata.put(ARTIFACTORY_ARTIFACT_NAME, artifactoryArtifactConfig.getArtifactPath());
-    Optional<String> artifactFileFormat = getArtifactoryFormat(artifactoryArtifactConfig.getArtifactPath());
-    if (!artifactFileFormat.isPresent()) {
-      // todo: handle it
-    }
-    String artifactFileName = ARTIFACT_FILE_NAME + artifactFileFormat.get();
-    File artifactFile = new File(artifactWorkingDirectory + "/" + artifactFileName);
+    String artifactPath =
+        Paths.get(artifactoryArtifactConfig.getRepositoryName(), artifactoryArtifactConfig.getArtifactPath())
+            .toString();
+    artifactMetadata.put(ARTIFACTORY_ARTIFACT_PATH, artifactPath);
+    artifactMetadata.put(ARTIFACTORY_ARTIFACT_NAME, artifactPath);
+    String artifactFilePath = Paths.get(artifactoryDirectory, ARTIFACT_FILE_NAME).toAbsolutePath().toString();
+    File artifactFile = new File(artifactFilePath);
+    executionLogCallback.saveExecutionLog("\n"
+        + color(format("Downloading %s artifact with identifier: %s",
+                    artifactoryArtifactConfig.getServerlessArtifactType(), artifactoryArtifactConfig.getIdentifier()),
+            White, Bold));
+    executionLogCallback.saveExecutionLog("Artifactory Artifact Url: " + artifactPath);
     try (InputStream artifactInputStream = artifactoryNgService.downloadArtifacts(artifactoryConfigRequest,
              artifactoryArtifactConfig.getRepositoryName(), artifactMetadata, ARTIFACTORY_ARTIFACT_PATH,
              ARTIFACTORY_ARTIFACT_NAME);
@@ -175,18 +229,7 @@ public class ServerlessTaskHelperBase {
         // todo: handle it
       }
       IOUtils.copy(artifactInputStream, outputStream);
-      return artifactFile.getAbsolutePath();
     }
-  }
-
-  private Optional<String> getArtifactoryFormat(String artifactPath) {
-    if (Pattern.matches(ARTIFACT_ZIP_REGEX, artifactPath)) {
-      return Optional.of(".zip");
-    } else if (Pattern.matches(ARTIFACT_JAR_REGEX, artifactPath)) {
-      return Optional.of(".jar");
-    } else if (Pattern.matches(ARTIFACT_WAR_REGEX, artifactPath)) {
-      return Optional.of(".war");
-    }
-    return Optional.empty();
+    executionLogCallback.saveExecutionLog(color("Successfully downloaded artifact..", White, Bold));
   }
 }

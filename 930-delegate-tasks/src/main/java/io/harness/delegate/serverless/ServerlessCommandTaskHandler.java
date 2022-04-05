@@ -23,7 +23,6 @@ public abstract class ServerlessCommandTaskHandler {
   public ServerlessCommandResponse executeTask(ServerlessCommandRequest serverlessCommandRequest,
       ServerlessDelegateTaskParams serverlessDelegateTaskParams, ILogStreamingTaskClient iLogStreamingTaskClient,
       CommandUnitsProgress commandUnitsProgress) throws Exception {
-    // todo: add support for error framework
     return executeTaskInternal(
         serverlessCommandRequest, serverlessDelegateTaskParams, iLogStreamingTaskClient, commandUnitsProgress);
   }

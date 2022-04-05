@@ -34,7 +34,6 @@ import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.exception.TaskNGDataException;
 import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
-import io.harness.delegate.task.git.GitFetchResponse;
 import io.harness.delegate.task.git.TaskStatus;
 import io.harness.delegate.task.serverless.request.ServerlessGitFetchRequest;
 import io.harness.delegate.task.serverless.response.ServerlessGitFetchResponse;
@@ -45,9 +44,17 @@ import io.harness.logging.LogLevel;
 import io.harness.secret.SecretSanitizerThreadLocal;
 import io.harness.serverless.ServerlessCommandUnitConstants;
 
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.inject.Inject;
 import java.nio.file.NoSuchFileException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
@@ -81,13 +88,15 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
       ServerlessGitFetchFileConfig serverlessGitFetchFileConfig =
           serverlessGitFetchRequest.getServerlessGitFetchFileConfig();
       executionLogCallback.saveExecutionLog(
-          color(format("Fetching %s files with identifier: %s", serverlessGitFetchFileConfig.getManifestType(),
+          color(format("Fetching %s config file with identifier: %s", serverlessGitFetchFileConfig.getManifestType(),
                     serverlessGitFetchFileConfig.getIdentifier()),
               White, Bold));
       Map<String, FetchFilesResult> filesFromMultipleRepo = new HashMap<>();
       FetchFilesResult filesResult = fetchManifestFile(
           serverlessGitFetchFileConfig, executionLogCallback, serverlessGitFetchRequest.getAccountId());
       filesFromMultipleRepo.put(serverlessGitFetchFileConfig.getIdentifier(), filesResult);
+      executionLogCallback.saveExecutionLog(
+          color(format("%n Fetch Config File completed successfully."), LogColor.White, LogWeight.Bold), INFO);
       if (serverlessGitFetchRequest.isCloseLogStream()) {
         executionLogCallback.saveExecutionLog("Done.", INFO, CommandExecutionStatus.SUCCESS);
       }
@@ -98,8 +107,10 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
           .build();
 
     } catch (Exception e) {
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
       log.error("Exception in Git Fetch Files Task", e);
-      throw new TaskNGDataException(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress), e);
+      throw new TaskNGDataException(
+          UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress), sanitizedException);
     }
   }
 
@@ -121,6 +132,8 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
     } else {
       gitConfigDTO = ScmConnectorMapper.toGitConfigDTO(gitStoreDelegateConfig.getGitConfigDTO());
       gitDecryptionHelper.decryptGitConfig(gitConfigDTO, gitStoreDelegateConfig.getEncryptedDataDetails());
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+          gitConfigDTO, gitStoreDelegateConfig.getEncryptedDataDetails());
     }
     FetchFilesResult filesResult = null;
     try {
@@ -185,11 +198,12 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
 
   private FetchFilesResult fetchManifestFileFromRepo(GitStoreDelegateConfig gitStoreDelegateConfig, String folderPath,
       String filePath, String accountId, GitConfigDTO gitConfigDTO, LogCallback executionLogCallback) {
-    filePath = serverlessGitFetchTaskHelper.getCompleteFilePath(folderPath, filePath);
+    filePath = ServerlessGitFetchTaskHelper.getCompleteFilePath(folderPath, filePath);
     List<String> filePaths = Collections.singletonList(filePath);
+    serverlessGitFetchTaskHelper.printFileNames(executionLogCallback, filePaths);
     FetchFilesResult fetchFilesResult =
         serverlessGitFetchTaskHelper.fetchFileFromRepo(gitStoreDelegateConfig, filePaths, accountId, gitConfigDTO);
-    serverlessGitFetchTaskHelper.printFileNames(executionLogCallback, filePaths);
+    // todo: add exception handler for above
     return fetchFilesResult;
   }
 }

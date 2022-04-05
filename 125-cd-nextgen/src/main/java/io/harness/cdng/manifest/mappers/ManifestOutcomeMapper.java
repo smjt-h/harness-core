@@ -8,14 +8,37 @@
 package io.harness.cdng.manifest.mappers;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.cdng.manifest.ManifestType.*;
+import static io.harness.cdng.manifest.ManifestType.HelmChart;
+import static io.harness.cdng.manifest.ManifestType.K8Manifest;
+import static io.harness.cdng.manifest.ManifestType.Kustomize;
+import static io.harness.cdng.manifest.ManifestType.KustomizePatches;
+import static io.harness.cdng.manifest.ManifestType.OpenshiftParam;
+import static io.harness.cdng.manifest.ManifestType.OpenshiftTemplate;
+import static io.harness.cdng.manifest.ManifestType.ServerlessAwsLambda;
+import static io.harness.cdng.manifest.ManifestType.VALUES;
 
 import static java.lang.String.format;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.manifest.steps.ManifestStepParameters;
-import io.harness.cdng.manifest.yaml.*;
-import io.harness.cdng.manifest.yaml.kinds.*;
+import io.harness.cdng.manifest.yaml.HelmChartManifestOutcome;
+import io.harness.cdng.manifest.yaml.K8sManifestOutcome;
+import io.harness.cdng.manifest.yaml.KustomizeManifestOutcome;
+import io.harness.cdng.manifest.yaml.KustomizePatchesManifestOutcome;
+import io.harness.cdng.manifest.yaml.ManifestAttributes;
+import io.harness.cdng.manifest.yaml.ManifestOutcome;
+import io.harness.cdng.manifest.yaml.OpenshiftManifestOutcome;
+import io.harness.cdng.manifest.yaml.OpenshiftParamManifestOutcome;
+import io.harness.cdng.manifest.yaml.ServerlessAwsLambdaManifestOutcome;
+import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
+import io.harness.cdng.manifest.yaml.kinds.HelmChartManifest;
+import io.harness.cdng.manifest.yaml.kinds.K8sManifest;
+import io.harness.cdng.manifest.yaml.kinds.KustomizeManifest;
+import io.harness.cdng.manifest.yaml.kinds.KustomizePatchesManifest;
+import io.harness.cdng.manifest.yaml.kinds.OpenshiftManifest;
+import io.harness.cdng.manifest.yaml.kinds.OpenshiftParamManifest;
+import io.harness.cdng.manifest.yaml.kinds.ServerlessAwsLambdaManifest;
+import io.harness.cdng.manifest.yaml.kinds.ValuesManifest;
 
 import java.util.LinkedList;
 import java.util.List;

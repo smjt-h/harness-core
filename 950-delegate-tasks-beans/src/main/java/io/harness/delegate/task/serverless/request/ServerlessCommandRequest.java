@@ -24,7 +24,13 @@ import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.capability.EncryptedDataDetailsCapabilityHelper;
 import io.harness.delegate.task.TaskParameters;
-import io.harness.delegate.task.serverless.*;
+import io.harness.delegate.task.serverless.ServerlessArtifactConfig;
+import io.harness.delegate.task.serverless.ServerlessArtifactoryArtifactConfig;
+import io.harness.delegate.task.serverless.ServerlessAwsLambdaInfraConfig;
+import io.harness.delegate.task.serverless.ServerlessAwsLambdaManifestConfig;
+import io.harness.delegate.task.serverless.ServerlessCommandType;
+import io.harness.delegate.task.serverless.ServerlessInfraConfig;
+import io.harness.delegate.task.serverless.ServerlessManifestConfig;
 import io.harness.exception.UnknownEnumTypeException;
 import io.harness.expression.ExpressionEvaluator;
 import io.harness.security.encryption.EncryptedDataDetail;
@@ -83,7 +89,6 @@ public interface ServerlessCommandRequest extends TaskParameters, ExecutionCapab
       }
     }
     capabilities.add(ServerlessInstallationCapability.builder().build());
-    // todo:sls installation capability
     return capabilities;
   }
 }

@@ -35,11 +35,13 @@ public class ArtifactoryRegistryArtifactInfo implements ArtifactInfo {
   @Override
   public ArtifactConfig toArtifactConfig() {
     return ArtifactoryRegistryArtifactConfig.builder()
-            .connectorRef(connectorRef==null? null:ParameterField.<String>builder().value(connectorRef).build())
-            .artifactPath(artifactPath==null? null:ParameterField.<String>builder().value(artifactPath).build())
-            .repository(repository==null? null:ParameterField.<String>builder().value(repository).build())
-            .artifactDirectory(artifactDirectory==null? null:ParameterField.<String>builder().value(artifactDirectory).build())
-            .repositoryFormat(repositoryFormat==null? null:ParameterField.<String>builder().value(repositoryFormat).build())
-            .build();
+        .connectorRef(connectorRef == null ? null : ParameterField.<String>builder().value(connectorRef).build())
+        .artifactPath(artifactPath == null ? null : ParameterField.<String>builder().value(artifactPath).build())
+        .repository(repository == null ? null : ParameterField.<String>builder().value(repository).build())
+        .artifactDirectory(
+            artifactDirectory == null ? null : ParameterField.<String>builder().value(artifactDirectory).build())
+        .repositoryFormat(
+            repositoryFormat == null ? null : ParameterField.<String>builder().value(repositoryFormat).build())
+        .build();
   }
 }
