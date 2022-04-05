@@ -307,8 +307,14 @@ public class PlanCreatorMergeService {
     completableFutures.supplyAsync(() -> {
       try {
         List<PlanCreationResponse> planCreationResponses = new ArrayList<>();
-        serviceInfo.getValue().getPlanCreationClient().createPlan(
-                PlanCreationBlobRequest.newBuilder().setDeps(batchDependency).putAllContext(contextMap).build()).forEachRemaining(p -> p!=null? planCreationResponses.add(p),);
+        serviceInfo.getValue()
+            .getPlanCreationClient()
+            .createPlan(PlanCreationBlobRequest.newBuilder().setDeps(batchDependency).putAllContext(contextMap).build())
+            .forEachRemaining(p -> {
+              if (p != null) {
+                planCreationResponses.add(p);
+              }
+            });
         return planCreationResponses;
       } catch (StatusRuntimeException ex) {
         log.error(
