@@ -31,8 +31,10 @@ import software.wings.dl.WingsPersistence;
 import software.wings.graphql.datafetcher.application.AppFilterController;
 import software.wings.graphql.datafetcher.environment.EnvFilterController;
 import software.wings.graphql.schema.type.QLAppFilter;
+import software.wings.graphql.schema.type.QLAppFilterType;
 import software.wings.graphql.schema.type.permissions.QLActions;
 import software.wings.graphql.schema.type.permissions.QLAppPermission;
+import software.wings.graphql.schema.type.permissions.QLExecutableElementFilterInput;
 import software.wings.graphql.schema.type.permissions.QLPermissionType;
 import software.wings.graphql.schema.type.permissions.QLUserGroupPermissions;
 import software.wings.service.intfc.InfrastructureProvisionerService;
@@ -355,6 +357,20 @@ public class UserGroupPermissionValidator {
       checkAllAppPermissionFilter(appPermission);
       // Check that the user supplied the correct id
       checkWhetherIdsAreCorrect(appPermission, accountId);
+      // Check for executable element filter
+      checkWhetherExecutableElementFilterIsCorrect(appPermission, accountId);
+    }
+  }
+
+  private void checkWhetherExecutableElementFilterIsCorrect(QLAppPermission appPermission, String accountId) {
+    final QLAppFilter applications = appPermission.getApplications();
+    if (applications != null && appPermission.getDeployments() != null) {
+      final QLExecutableElementFilterInput executableElementFilter =
+          appPermission.getDeployments().getExecutableElementFilter();
+      if (applications.getFilterType().equals(QLAppFilterType.EXCLUDE_SELECTED) && executableElementFilter != null) {
+        throw new InvalidRequestException(
+            "Both exclude selected and execultable element filter can't be set at same time");
+      }
     }
   }
 
