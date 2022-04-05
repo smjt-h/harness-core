@@ -51,7 +51,7 @@ public class ResourceGroupDTODeserializerTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testDeserializationOfAccountResourceGroup() {
     String accountLevelResourceGroup =
-        readFileAsString("940-resource-group-beans/src/test/resources/resourcegroups/accountResourceGroupV2.json");
+        readFileAsString("820-platform-service/contracts/resource-group-service/src/test/resources/resourcegroups/accountResourceGroupV2.json");
     try {
       objectMapper.readValue(accountLevelResourceGroup, ResourceGroupDTO.class);
     } catch (Exception ex) {
