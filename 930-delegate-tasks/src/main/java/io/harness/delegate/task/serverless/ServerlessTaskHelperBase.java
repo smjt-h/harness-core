@@ -11,6 +11,13 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.filesystem.FileIo.createDirectoryIfDoesNotExist;
 import static io.harness.filesystem.FileIo.waitForDirectoryToBeAccessibleOutOfProcess;
 
+import static software.wings.beans.LogColor.Gray;
+import static software.wings.beans.LogColor.White;
+import static software.wings.beans.LogHelper.color;
+import static software.wings.beans.LogWeight.Bold;
+
+import static java.lang.String.format;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifactory.ArtifactoryConfigRequest;
 import io.harness.artifactory.ArtifactoryNgService;
@@ -23,6 +30,7 @@ import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.beans.logstreaming.NGDelegateLogCallback;
+import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.task.artifactory.ArtifactoryRequestMapper;
 import io.harness.delegate.task.git.ScmFetchFilesHelperNG;
@@ -40,9 +48,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 
@@ -73,17 +85,20 @@ public class ServerlessTaskHelperBase {
   }
 
   public void fetchManifestFilesAndWriteToDirectory(ServerlessAwsLambdaManifestConfig serverlessManifestConfig,
-      String accountId, LogCallback executionLogCallback, ServerlessDelegateTaskParams serverlessDelegateTaskParams) {
+      String accountId, LogCallback executionLogCallback, ServerlessDelegateTaskParams serverlessDelegateTaskParams)
+      throws IOException {
     GitStoreDelegateConfig gitStoreDelegateConfig = serverlessManifestConfig.getGitStoreDelegateConfig();
+    printFilesInExecutionLogs(gitStoreDelegateConfig, executionLogCallback);
     downloadFilesFromGit(
         gitStoreDelegateConfig, executionLogCallback, accountId, serverlessDelegateTaskParams.getWorkingDirectory());
-    // todo: print file download statements
+    executionLogCallback.saveExecutionLog(color("Successfully fetched following files:", White, Bold));
+    executionLogCallback.saveExecutionLog(
+        getManifestFileNamesInLogFormat(serverlessDelegateTaskParams.getWorkingDirectory()));
   }
 
   private void downloadFilesFromGit(GitStoreDelegateConfig gitStoreDelegateConfig, LogCallback executionLogCallback,
       String accountId, String workingDirectory) {
     try {
-      // todo: print git config files
       if (gitStoreDelegateConfig.isOptimizedFilesFetch()) {
         executionLogCallback.saveExecutionLog("Using optimized file fetch");
         serverlessGitFetchTaskHelper.decryptGitStoreConfig(gitStoreDelegateConfig);
@@ -97,10 +112,61 @@ public class ServerlessTaskHelperBase {
             gitStoreDelegateConfig.getSshKeySpecDTO(), gitStoreDelegateConfig.getEncryptedDataDetails());
         ngGitService.downloadFiles(gitStoreDelegateConfig, workingDirectory, accountId, sshSessionConfig, gitConfigDTO);
       }
-      // todo: add print statements for fetched directory
     } catch (Exception e) {
     }
   }
+
+  private void printFilesInExecutionLogs(
+      GitStoreDelegateConfig gitStoreDelegateConfig, LogCallback executionLogCallback) {
+    GitConfigDTO gitConfigDTO = ScmConnectorMapper.toGitConfigDTO(gitStoreDelegateConfig.getGitConfigDTO());
+    executionLogCallback.saveExecutionLog("\n"
+        + color(format("Fetching %s files with identifier: %s", gitStoreDelegateConfig.getManifestType(),
+                    gitStoreDelegateConfig.getManifestId()),
+            White, Bold));
+    executionLogCallback.saveExecutionLog("Git connector Url: " + gitConfigDTO.getUrl());
+
+    if (FetchType.BRANCH == gitStoreDelegateConfig.getFetchType()) {
+      executionLogCallback.saveExecutionLog("Branch: " + gitStoreDelegateConfig.getBranch());
+    } else {
+      executionLogCallback.saveExecutionLog("CommitId: " + gitStoreDelegateConfig.getCommitId());
+    }
+
+    StringBuilder sb = new StringBuilder(1024);
+    sb.append("\nFetching files within this path: \n");
+    gitStoreDelegateConfig.getPaths().forEach(
+        filePath -> sb.append(color(format("- %s", filePath), Gray)).append(System.lineSeparator()));
+    executionLogCallback.saveExecutionLog(sb.toString());
+  }
+
+  public String getManifestFileNamesInLogFormat(String manifestFilesDirectory) throws IOException {
+    Path basePath = Paths.get(manifestFilesDirectory);
+    try (Stream<Path> paths = Files.walk(basePath)) {
+      return generateTruncatedFileListForLogging(basePath, paths);
+    }
+  }
+
+  public String generateTruncatedFileListForLogging(Path basePath, Stream<Path> paths) {
+    StringBuilder sb = new StringBuilder(1024);
+    AtomicInteger filesTraversed = new AtomicInteger(0);
+    paths.filter(Files::isRegularFile).forEach(each -> {
+      if (filesTraversed.getAndIncrement() <= 100) {
+        sb.append(color(format("- %s", getRelativePath(each.toString(), basePath.toString())), Gray))
+            .append(System.lineSeparator());
+      }
+    });
+    if (filesTraversed.get() > 100) {
+      sb.append(color(format("- ..%d more", filesTraversed.get() - 100), Gray)).append(System.lineSeparator());
+    }
+
+    return sb.toString();
+  }
+
+  public static String getRelativePath(String filePath, String prefixPath) {
+    Path fileAbsolutePath = Paths.get(filePath).toAbsolutePath();
+    Path prefixAbsolutePath = Paths.get(prefixPath).toAbsolutePath();
+    return prefixAbsolutePath.relativize(fileAbsolutePath).toString();
+  }
+
   public void replaceManifestWithRenderedContent(ServerlessDelegateTaskParams serverlessDelegateTaskParams,
       ServerlessAwsLambdaManifestConfig serverlessManifestConfig) throws IOException {
     String manifestFilePath =
@@ -127,7 +193,7 @@ public class ServerlessTaskHelperBase {
   }
 
   public void fetchArtifactoryArtifact(ServerlessArtifactoryArtifactConfig artifactoryArtifactConfig,
-      LogCallback logCallback, String artifactoryDirectory) throws IOException {
+      LogCallback executionLogCallback, String artifactoryDirectory) throws IOException {
     if (EmptyPredicate.isEmpty(artifactoryArtifactConfig.getArtifactPath())) {
       // todo: handle it
     }
@@ -147,6 +213,11 @@ public class ServerlessTaskHelperBase {
     artifactMetadata.put(ARTIFACTORY_ARTIFACT_NAME, artifactPath);
     String artifactFilePath = Paths.get(artifactoryDirectory, ARTIFACT_FILE_NAME).toAbsolutePath().toString();
     File artifactFile = new File(artifactFilePath);
+    executionLogCallback.saveExecutionLog("\n"
+        + color(format("Downloading %s artifact with identifier: %s",
+                    artifactoryArtifactConfig.getServerlessArtifactType(), artifactoryArtifactConfig.getIdentifier()),
+            White, Bold));
+    executionLogCallback.saveExecutionLog("Artifactory Artifact Url: " + artifactPath);
     try (InputStream artifactInputStream = artifactoryNgService.downloadArtifacts(artifactoryConfigRequest,
              artifactoryArtifactConfig.getRepositoryName(), artifactMetadata, ARTIFACTORY_ARTIFACT_PATH,
              ARTIFACTORY_ARTIFACT_NAME);
@@ -159,5 +230,6 @@ public class ServerlessTaskHelperBase {
       }
       IOUtils.copy(artifactInputStream, outputStream);
     }
+    executionLogCallback.saveExecutionLog(color("Successfully downloaded artifact..", White, Bold));
   }
 }
