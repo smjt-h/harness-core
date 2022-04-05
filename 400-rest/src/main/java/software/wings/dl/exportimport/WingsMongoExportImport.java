@@ -139,35 +139,39 @@ public class WingsMongoExportImport {
       long exportRecordsUpdatedAfter, long exportRecordsCreatedAfter) {
     if (EmptyPredicate.isNotEmpty(identifiers)) {
       filter.put("_id", new BasicDBObject("$in", identifiers));
+      return;
+    }
+    if (exportRecordsUpdatedAfter > 0) {
+      if (fieldExists(collection, "lastUpdatedAt")) {
+        filter.put("lastUpdatedAt", new BasicDBObject("$gte", exportRecordsUpdatedAfter));
+      } else {
+        // Some collection might not have lastUpdatedAt. In such case,
+        // fall back to createdAt field
+        filter.put("createdAt", new BasicDBObject("$gte", exportRecordsUpdatedAfter));
+      }
+    } else if (exportRecordsCreatedAfter > 0) {
+      if (fieldExists(collection, "createdAt")) {
+        filter.put("createdAt", new BasicDBObject("$gte", exportRecordsCreatedAfter));
+      } else {
+        log.info("both createdAt and lastUpdatedAt don't exist for the collection. Unusual scenario.");
+      }
     } else {
-      if (exportRecordsUpdatedAfter > 0) {
-        boolean lastUpdatedAtFieldExists = false;
-        DBObject query = new BasicDBObject("lastUpdatedAt", new BasicDBObject("$exists", true));
-        try (DBCursor existsCursor = collection.find(query)) {
-          if (existsCursor.hasNext()) {
-            lastUpdatedAtFieldExists = true;
-          }
-        }
-        if (lastUpdatedAtFieldExists) {
-          filter.put("lastUpdatedAt", new BasicDBObject("$gte", exportRecordsUpdatedAfter));
-        } else {
-          // Some records might not have lastUpdatedAt populated. In such case,
-          // fall back to createdAt field
-          filter.put("createdAt", new BasicDBObject("$gte", exportRecordsCreatedAfter));
-        }
-      } else if (exportRecordsCreatedAfter > 0) {
-        boolean createdAtFieldExists = false;
-        DBObject query = new BasicDBObject("createdAt", new BasicDBObject("$exists", true));
-        try (DBCursor existsCursor = collection.find(query)) {
-          if (existsCursor.hasNext()) {
-            createdAtFieldExists = true;
-          }
-        }
-        if (createdAtFieldExists) {
-          filter.put("createdAt", new BasicDBObject("$gte", exportRecordsCreatedAfter));
-        }
+      log.info("createdAt or lastUpdatedAt is needed. Neither is sent, so no record is exported");
+    }
+  }
+
+  /*
+    Checks if a given field exists in a collection. Returns true/false accordingly
+   */
+  private boolean fieldExists(DBCollection collection, String field) {
+    boolean result = false;
+    DBObject query = new BasicDBObject(field, new BasicDBObject("$exists", true));
+    try (DBCursor existsCursor = collection.find(query)) {
+      if (existsCursor.hasNext()) {
+        result = true;
       }
     }
+    return result;
   }
 
   public boolean exportRecords(ZipOutputStream zipOutputStream, FileOutputStream fileOutputStream, DBObject filter,
