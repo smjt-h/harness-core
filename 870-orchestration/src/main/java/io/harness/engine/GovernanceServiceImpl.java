@@ -34,17 +34,14 @@ import io.harness.security.SourcePrincipalContextBuilder;
 import io.harness.security.dto.UserPrincipal;
 import io.harness.serializer.JsonUtils;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
