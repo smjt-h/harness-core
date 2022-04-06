@@ -40,6 +40,7 @@ public class DeploymentStageNode extends DeploymentAbstractStageNode {
 
   @JsonProperty("spec")
   @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
+  @VariableExpression
   DeploymentStageConfig deploymentStageConfig;
   @Override
   public String getType() {

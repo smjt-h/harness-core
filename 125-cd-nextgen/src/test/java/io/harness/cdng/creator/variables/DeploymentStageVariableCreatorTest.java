@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -40,10 +41,14 @@ import org.junit.experimental.categories.Category;
 public class DeploymentStageVariableCreatorTest extends CategoryTest {
   DeploymentStageVariableCreator deploymentStageVariableCreator = new DeploymentStageVariableCreator();
   private static final String STAGE_ID = "NnmWEe_TRXCba1-R2EsDrw";
+  private static final String SERVICE_CONFIG_ID = "7Oszx9TqQddNkz3_emc5ng";
+  private static final String INFRASTRUCTURE_ID = "KmxClH1bSKiNstn52Cf6BA";
+  private static final String EXECUTION_ID = "NnmWEe_TRXCba1-R2Esssw";
+
   @Test
   @Owner(developers = NAMAN_TALAYCHA)
   @Category(UnitTests.class)
-  public void createVariablesForChildrenNodes() throws IOException {
+  public void testCreateVariablesForChildrenNodesV2() throws IOException {
     ClassLoader classLoader = this.getClass().getClassLoader();
     final URL testFile = classLoader.getResource("deployment_stage.json");
     String json = Resources.toString(testFile, Charsets.UTF_8);
@@ -51,7 +56,37 @@ public class DeploymentStageVariableCreatorTest extends CategoryTest {
     YamlNode deploymentYamlNode = new YamlNode("stage", jsonNode);
     YamlField yamlField = new YamlField(deploymentYamlNode);
     LinkedHashMap<String, VariableCreationResponse> variablesMap =
-        deploymentStageVariableCreator.createVariablesForChildrenNodes(null, yamlField);
+        deploymentStageVariableCreator.createVariablesForChildrenNodesV2(
+            VariableCreationContext.builder().currentField(yamlField).build(),
+            YamlUtils.read(yamlField.getNode().toString(), DeploymentStageNode.class));
+    for (Map.Entry<String, VariableCreationResponse> entry : variablesMap.entrySet()) {
+      List<String> fqnPropertiesList = entry.getValue()
+                                           .getYamlProperties()
+                                           .values()
+                                           .stream()
+                                           .map(YamlProperties::getFqn)
+                                           .collect(Collectors.toList());
+
+      if (SERVICE_CONFIG_ID.equals(entry.getKey())) {
+        assertThat(fqnPropertiesList)
+            .containsAll(Arrays.asList("serviceConfig", "spec.serviceConfig.service.identifier",
+                "spec.serviceConfig.serviceDefinition.spec.artifacts.primary.spec.connectorRef",
+                "spec.serviceConfig.serviceDefinition.spec.artifacts.primary.spec.imagePath",
+                "spec.serviceConfig.serviceDefinition.spec.artifacts.primary.spec.tag",
+                "spec.serviceConfig.serviceDefinition.spec.manifests.baseValues.spec.store.spec.connectorRef",
+                "spec.serviceConfig.serviceDefinition.spec.manifests.baseValues.spec.store.spec.gitFetchType",
+                "spec.serviceConfig.serviceDefinition.spec.manifests.baseValues.spec.store.spec.branch",
+                "spec.serviceConfig.serviceDefinition.spec.manifests.baseValues.spec.store.spec.paths"));
+      } else if (INFRASTRUCTURE_ID.equals(entry.getKey())) {
+        assertThat(fqnPropertiesList)
+            .containsAll(
+                Arrays.asList("infrastructure", "spec.infrastructure.infrastructureDefinition.spec.connectorRef",
+                    "spec.infrastructure.infrastructureDefinition.spec.namespace",
+                    "spec.infrastructure.infrastructureDefinition.spec.releaseName",
+                    "spec.infrastructure.environment.tags.cloud", "spec.infrastructure.environment.tags.team"));
+      }
+    }
+
     assertThat(variablesMap.get(STAGE_ID)).isNotNull();
     String yamlPath = variablesMap.get(STAGE_ID).getDependencies().getDependenciesMap().get(STAGE_ID);
     YamlField fullYamlField = YamlUtils.readTree(json);
@@ -61,6 +96,7 @@ public class DeploymentStageVariableCreatorTest extends CategoryTest {
     assertThat(specYaml.getName()).isEqualTo("execution");
     assertThat(specYaml.getNode().fetchKeys()).containsExactlyInAnyOrder("steps", "rollbackSteps", "__uuid");
   }
+
   @Test
   @Owner(developers = NAMAN_TALAYCHA)
   @Category(UnitTests.class)
@@ -79,7 +115,7 @@ public class DeploymentStageVariableCreatorTest extends CategoryTest {
   @Test
   @Owner(developers = NAMAN_TALAYCHA)
   @Category(UnitTests.class)
-  public void createVariablesForParentNodes() throws IOException {
+  public void testCreateVariablesForParentNodes() throws IOException {
     ClassLoader classLoader = this.getClass().getClassLoader();
     final URL testFile = classLoader.getResource("pipelineVariableCreatorUuidJson.yaml");
     String pipelineJson = Resources.toString(testFile, Charsets.UTF_8);
