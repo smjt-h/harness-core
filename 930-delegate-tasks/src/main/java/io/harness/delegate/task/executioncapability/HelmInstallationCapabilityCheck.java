@@ -37,7 +37,7 @@ public class HelmInstallationCapabilityCheck implements CapabilityCheck, ProtoCa
   @Inject private K8sGlobalConfigService k8sGlobalConfigService;
 
   @Override
-  public CapabilityResponse performCapabilityCheck(ExecutionCapability delegateCapability) {
+  public CapabilityResponse performCapabilityCheck(ExecutionCapability delegateCapability, boolean isNG) {
     HelmInstallationCapability capability = (HelmInstallationCapability) delegateCapability;
     String helmPath = k8sGlobalConfigService.getHelmPath(capability.getVersion());
     if (isEmpty(helmPath)) {
@@ -83,6 +83,8 @@ public class HelmInstallationCapabilityCheck implements CapabilityCheck, ProtoCa
         return HelmVersion.V2;
       case V3:
         return HelmVersion.V3;
+      case V380:
+        return HelmVersion.V380;
       default:
         throw new RuntimeException("Helm version not found");
     }

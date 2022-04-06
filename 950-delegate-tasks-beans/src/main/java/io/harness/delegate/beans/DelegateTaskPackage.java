@@ -31,6 +31,7 @@ public class DelegateTaskPackage {
   private String accountId;
   private String delegateTaskId;
   private String delegateId;
+  private String delegateInstanceId;
   private String logStreamingToken;
   private String delegateCallbackToken;
 
@@ -42,4 +43,5 @@ public class DelegateTaskPackage {
 
   private List<ExecutionCapability> executionCapabilities;
   private LinkedHashMap<String, String> logStreamingAbstractions;
+  boolean isNG;
 }
