@@ -384,7 +384,7 @@ public class DeploymentAuthHandlerTest extends WingsBaseTest {
     try {
       UserThreadLocal.set(user);
       when(workflowService.getWorkflow(appId, entityId)).thenReturn(null);
-      when(pipelineService.readPipeline(appId, entityId, true)).thenReturn(pipeline);
+      when(pipelineService.getPipeline(appId, entityId)).thenReturn(pipeline);
       doNothing().when(authService).authorize(anyString(), anyList(), eq(entityId), any(), anyList());
       doReturn(false)
           .when(featureFlagService)

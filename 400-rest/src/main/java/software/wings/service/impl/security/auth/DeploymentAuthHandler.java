@@ -169,11 +169,12 @@ public class DeploymentAuthHandler {
       //                ExecutableElementsFilter.FilterType.WORKFLOW);
       //      }
     }
-    Pipeline pipeline = pipelineService.readPipeline(appId, workflowOrPipelineId, true);
+    Pipeline pipeline = pipelineService.getPipeline(appId, workflowOrPipelineId);
     if (pipeline != null) {
       authorizePipelineExecution(appId, workflowOrPipelineId);
       if (featureFlagService.isEnabled(PIPELINE_PER_ENV_DEPLOYMENT_PERMISSION, pipeline.getAccountId())) {
-        authorizeExecutableDeployableInEnv(new HashSet<>(pipeline.getEnvIds()), appId, workflowOrPipelineId,
+        Pipeline fullPipeline = pipelineService.readPipeline(appId, workflowOrPipelineId, true);
+        authorizeExecutableDeployableInEnv(new HashSet<>(fullPipeline.getEnvIds()), appId, workflowOrPipelineId,
             ExecutableElementsFilter.FilterType.PIPELINE);
       }
     }
