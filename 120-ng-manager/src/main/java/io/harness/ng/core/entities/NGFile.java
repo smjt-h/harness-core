@@ -11,7 +11,6 @@ import io.harness.annotation.HarnessEntity;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityIdentifier;
-import io.harness.data.validator.NGEntityName;
 import io.harness.file.beans.NGBaseFile;
 import io.harness.mongo.CollationLocale;
 import io.harness.mongo.CollationStrength;
@@ -37,6 +36,7 @@ import lombok.AccessLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Singular;
+import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
@@ -50,6 +50,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
 @SuperBuilder
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @FieldNameConstants(innerTypeName = "NGFiles")
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -93,7 +94,6 @@ public class NGFile
   @EntityIdentifier(allowBlank = true) String projectIdentifier;
 
   @EntityIdentifier String identifier;
-  @NGEntityName String name;
   @NotNull @Size(max = 1024) String description;
   @NotNull @Singular @Size(max = 128) List<NGTag> tags;
   @NotEmpty String parentId;

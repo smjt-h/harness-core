@@ -11,8 +11,8 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.delegate.beans.FileBucket.CONFIGS;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.data.structure.UUIDGenerator;
 import io.harness.delegate.beans.FileUploadLimit;
+import io.harness.exception.DuplicateEntityException;
 import io.harness.file.beans.NGBaseFile;
 import io.harness.ng.core.api.FileStoreService;
 import io.harness.ng.core.dto.filestore.FileDTO;
@@ -20,6 +20,7 @@ import io.harness.ng.core.dto.filestore.NGFileType;
 import io.harness.ng.core.dto.filestore.node.FileStoreNodeDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 import io.harness.ng.core.entities.NGFile;
+import io.harness.ng.core.mapper.FileDTOMapper;
 import io.harness.ng.core.mapper.FileStoreNodeDTOMapper;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
 import io.harness.stream.BoundedInputStream;
@@ -34,9 +35,12 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 
 @Singleton
 @OwnedBy(CDP)
+@Slf4j
 public class FileStoreServiceImpl implements FileStoreService {
   private final FileService fileService;
   private final FileStoreRepository fileStoreRepository;
@@ -52,16 +56,29 @@ public class FileStoreServiceImpl implements FileStoreService {
 
   @Override
   public FileDTO create(@Valid FileDTO fileDto, InputStream content) {
-    // save entities into configs.files and configs.files by using fileService
-    NGBaseFile baseFile = new NGBaseFile();
-    baseFile.setFileName(fileDto.getName());
-    baseFile.setAccountId(fileDto.getAccountIdentifier());
-    baseFile.setFileUuid(UUIDGenerator.generateUuid());
-    String fileId = fileService.saveFile(
-        baseFile, new BoundedInputStream(content, fileUploadLimit.getEncryptedFileLimit()), CONFIGS);
-    // use mapper to create NGFile from fileDto and NGBaseFile
-    // save NGFile into nfFile by using fileStoreRepository or fileStoreRepositoryCustom
-    return null;
+    try {
+      log.info("Creating {}: {}", fileDto.getType().name().toLowerCase(), fileDto);
+
+      NGBaseFile baseFile = new NGBaseFile();
+      baseFile.setFileName(fileDto.getName());
+      baseFile.setAccountId(fileDto.getAccountIdentifier());
+
+      if (fileDto.isFile()) {
+        BoundedInputStream fileContent = new BoundedInputStream(content, fileUploadLimit.getFileStoreFileLimit());
+        fileService.saveFile(baseFile, fileContent, CONFIGS);
+        baseFile.setSize(fileContent.getTotalBytesRead());
+      }
+
+      NGFile ngFile = FileDTOMapper.getNGFileFromDTO(fileDto, baseFile);
+
+      ngFile = fileStoreRepository.save(ngFile);
+
+      return FileDTOMapper.getFileDTOFromNGFile(ngFile);
+    } catch (DuplicateKeyException e) {
+      throw new DuplicateEntityException(
+          String.format("Try creating another %s, %s with identifier [%s] already exists in the parent folder",
+              fileDto.getType().name().toLowerCase(), fileDto.getType().name().toLowerCase(), fileDto.getIdentifier()));
+    }
   }
 
   @Override

@@ -17,6 +17,7 @@ import io.harness.ng.core.common.beans.NGTag;
 
 import software.wings.beans.EntityType;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModelProperty;
@@ -85,5 +86,10 @@ public class FileDTO {
     this.tags = tags;
     this.entityType = entityType;
     this.entityId = entityId;
+  }
+
+  @JsonIgnore
+  public boolean isFile() {
+    return type == NGFileType.FILE;
   }
 }

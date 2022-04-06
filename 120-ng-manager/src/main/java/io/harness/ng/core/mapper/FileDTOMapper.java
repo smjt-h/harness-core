@@ -10,10 +10,12 @@ package io.harness.ng.core.mapper;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.file.beans.NGBaseFile;
 import io.harness.ng.core.dto.filestore.FileDTO;
 import io.harness.ng.core.entities.NGFile;
 
+import java.util.Collections;
 import lombok.experimental.UtilityClass;
 
 @OwnedBy(CDP)
@@ -25,12 +27,11 @@ public class FileDTOMapper {
         .orgIdentifier(fileDto.getOrgIdentifier())
         .projectIdentifier(fileDto.getProjectIdentifier())
         .identifier(fileDto.getIdentifier())
-        .name(fileDto.getName())
         .fileUsage(fileDto.getFileUsage())
         .type(fileDto.getType())
-        .parentIdentifier(fileDto.getProjectIdentifier())
+        .parentIdentifier(fileDto.getParentIdentifier())
         .description(fileDto.getDescription())
-        .tags(fileDto.getTags())
+        .tags(!EmptyPredicate.isEmpty(fileDto.getTags()) ? fileDto.getTags() : Collections.emptyList())
         .entityId(fileDto.getEntityId())
         .entityType(fileDto.getEntityType())
         .fileUuid(baseFile.getFileUuid())
@@ -47,7 +48,7 @@ public class FileDTOMapper {
         .orgIdentifier(ngFile.getOrgIdentifier())
         .projectIdentifier(ngFile.getProjectIdentifier())
         .identifier(ngFile.getIdentifier())
-        .name(ngFile.getName())
+        .name(ngFile.getFileName())
         .fileUsage(ngFile.getFileUsage())
         .type(ngFile.getType())
         .parentIdentifier(ngFile.getParentIdentifier())
