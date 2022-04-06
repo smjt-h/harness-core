@@ -1789,7 +1789,9 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/StageElementWrapperConfig"
-          }
+          },
+          "maxItems": 2147483647,
+          "minItems": 1
         },
         "tags": {
           "type": "object",
@@ -2302,8 +2304,14 @@
                 "$ref": "#/definitions/ServiceNowField"
               }
             },
+            "templateName": {
+              "type": "string"
+            },
             "ticketType": {
               "type": "string"
+            },
+            "useServiceNowTemplate": {
+              "type": "boolean"
             }
           }
         }
@@ -2363,11 +2371,17 @@
                 "$ref": "#/definitions/ServiceNowField"
               }
             },
+            "templateName": {
+              "type": "string"
+            },
             "ticketNumber": {
               "type": "string"
             },
             "ticketType": {
               "type": "string"
+            },
+            "useServiceNowTemplate": {
+              "type": "boolean"
             }
           }
         }

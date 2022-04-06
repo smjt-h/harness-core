@@ -18,23 +18,28 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.envGroup.beans.EnvironmentGroupConfig;
 import io.harness.cdng.envGroup.beans.EnvironmentGroupEntity;
+import io.harness.cdng.envGroup.beans.EnvironmentGroupWrapperConfig;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.encryption.ScopeHelper;
 import io.harness.exception.InvalidRequestException;
+import io.harness.gitsync.sdk.EntityGitDetailsMapper;
 import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.envGroup.dto.EnvironmentGroupDeleteResponse;
 import io.harness.ng.core.envGroup.dto.EnvironmentGroupResponse;
 import io.harness.ng.core.envGroup.dto.EnvironmentGroupResponseDTO;
+import io.harness.ng.core.environment.dto.EnvironmentResponse;
 import io.harness.pms.yaml.YamlUtils;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import lombok.experimental.UtilityClass;
 
 @OwnedBy(PIPELINE)
 @UtilityClass
 public class EnvironmentGroupMapper {
-  public EnvironmentGroupResponseDTO writeDTO(EnvironmentGroupEntity envGroup) {
+  public EnvironmentGroupResponseDTO writeDTO(
+      EnvironmentGroupEntity envGroup, List<EnvironmentResponse> envResponseList) {
     return EnvironmentGroupResponseDTO.builder()
         .accountId(envGroup.getAccountId())
         .orgIdentifier(envGroup.getOrgIdentifier())
@@ -47,12 +52,15 @@ public class EnvironmentGroupMapper {
         .tags(convertToMap(envGroup.getTags()))
         .version(envGroup.getVersion())
         .envIdentifiers(envGroup.getEnvIdentifiers())
+        .gitDetails(EntityGitDetailsMapper.mapEntityGitDetails(envGroup))
+        .envResponse(CollectionUtils.emptyIfNull(envResponseList))
         .build();
   }
 
-  public EnvironmentGroupResponse toResponseWrapper(EnvironmentGroupEntity envGroup) {
+  public EnvironmentGroupResponse toResponseWrapper(
+      EnvironmentGroupEntity envGroup, List<EnvironmentResponse> envResponseList) {
     return EnvironmentGroupResponse.builder()
-        .environment(writeDTO(envGroup))
+        .environment(writeDTO(envGroup, envResponseList))
         .createdAt(envGroup.getCreatedAt())
         .lastModifiedAt(envGroup.getLastModifiedAt())
         .build();
@@ -69,13 +77,14 @@ public class EnvironmentGroupMapper {
   }
 
   public EnvironmentGroupEntity toEnvironmentEntity(String accId, String orgId, String projectId, String yaml) {
-    EnvironmentGroupConfig environmentGroupConfig;
+    EnvironmentGroupWrapperConfig environmentGroupWrapperConfig;
     try {
-      environmentGroupConfig = YamlUtils.read(yaml, EnvironmentGroupConfig.class);
+      environmentGroupWrapperConfig = YamlUtils.read(yaml, EnvironmentGroupWrapperConfig.class);
     } catch (IOException e) {
       throw new InvalidRequestException(String.format(" Environment Group could not be created - %s", e.getMessage()));
     }
-    // Validates nonEmpty checks for environmentGroupConfig variables
+    // Validates nonEmpty checks for environmentGroupWrapperConfig variables
+    EnvironmentGroupConfig environmentGroupConfig = environmentGroupWrapperConfig.getEnvironmentGroupConfig();
     validate(environmentGroupConfig);
 
     validateOrgAndProjIdForEnvironmentGroup(accId, orgId, projectId, environmentGroupConfig);

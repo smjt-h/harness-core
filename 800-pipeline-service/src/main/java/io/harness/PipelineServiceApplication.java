@@ -147,10 +147,12 @@ import io.harness.steps.barriers.event.BarrierDropper;
 import io.harness.steps.barriers.event.BarrierPositionHelperEventHandler;
 import io.harness.steps.barriers.service.BarrierServiceImpl;
 import io.harness.steps.resourcerestraint.ResourceRestraintInitializer;
+import io.harness.steps.resourcerestraint.ResourceRestraintOrchestrationEndObserver;
 import io.harness.steps.resourcerestraint.service.ResourceRestraintPersistenceMonitor;
 import io.harness.telemetry.TelemetryReporter;
 import io.harness.telemetry.filter.APIAuthTelemetryFilter;
 import io.harness.telemetry.filter.APIAuthTelemetryResponseFilter;
+import io.harness.telemetry.filter.APIErrorsTelemetrySenderFilter;
 import io.harness.threading.ExecutorModule;
 import io.harness.threading.ThreadPool;
 import io.harness.timeout.TimeoutEngine;
@@ -520,6 +522,8 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
         injector.getInstance(Key.get(OrchestrationEndTagsResolveHandler.class)));
     planExecutionStrategy.getOrchestrationEndSubject().register(
         injector.getInstance(Key.get(PipelineStatusUpdateEventHandler.class)));
+    planExecutionStrategy.getOrchestrationEndSubject().register(
+        injector.getInstance(Key.get(ResourceRestraintOrchestrationEndObserver.class)));
 
     HMongoTemplate mongoTemplate = (HMongoTemplate) injector.getInstance(MongoTemplate.class);
     mongoTemplate.getTracerSubject().register(injector.getInstance(MongoRedisTracer.class));
@@ -554,6 +558,7 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     if (configuration.getSegmentConfiguration() != null && configuration.getSegmentConfiguration().isEnabled()) {
       registerAPIAuthTelemetryFilter(environment, injector);
       registerAPIAuthTelemetryResponseFilter(environment, injector);
+      registerAPIErrorsTelemetrySenderFilter(environment, injector);
     }
   }
 
@@ -565,6 +570,12 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
   private void registerAPIAuthTelemetryResponseFilter(Environment environment, Injector injector) {
     TelemetryReporter telemetryReporter = injector.getInstance(TelemetryReporter.class);
     environment.jersey().register(new APIAuthTelemetryResponseFilter(telemetryReporter));
+  }
+
+  private void registerAPIErrorsTelemetrySenderFilter(Environment environment, Injector injector) {
+    TelemetryReporter telemetryReporter = injector.getInstance(TelemetryReporter.class);
+    environment.jersey().register(
+        new APIErrorsTelemetrySenderFilter(telemetryReporter, PIPELINE_SERVICE.getServiceId()));
   }
 
   /**------------------Health Check -----------------------------------------------*/
