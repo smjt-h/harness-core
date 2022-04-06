@@ -33,7 +33,8 @@ public enum ResourceType {
   CONNECTOR(ResourceTypeConstants.CONNECTOR),
   API_KEY(ResourceTypeConstants.API_KEY),
   TOKEN(ResourceTypeConstants.TOKEN),
-  DELEGATE_TOKEN(ResourceTypeConstants.DELEGATE_TOKEN);
+  DELEGATE_TOKEN(ResourceTypeConstants.DELEGATE_TOKEN),
+  VARIABLE(ResourceTypeConstants.VARIABLE);
 
   ResourceType(String resourceType) {
     if (!this.name().equals(resourceType)) {

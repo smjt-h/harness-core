@@ -171,6 +171,13 @@ import io.harness.ng.core.user.service.NgUserService;
 import io.harness.ng.core.user.service.impl.LastAdminCheckServiceImpl;
 import io.harness.ng.core.user.service.impl.NgUserServiceImpl;
 import io.harness.ng.core.user.service.impl.UserEntityCrudStreamListener;
+import io.harness.ng.core.variable.VariableType;
+import io.harness.ng.core.variable.mappers.StringVariableDTOtoEntityMapper;
+import io.harness.ng.core.variable.mappers.StringVariableEntityToDTOMapper;
+import io.harness.ng.core.variable.mappers.VariableDTOToEntityMapper;
+import io.harness.ng.core.variable.mappers.VariableEntityToDTOMapper;
+import io.harness.ng.core.variable.services.VariableService;
+import io.harness.ng.core.variable.services.impl.VariableServiceImpl;
 import io.harness.ng.eventsframework.EventsFrameworkModule;
 import io.harness.ng.feedback.services.FeedbackService;
 import io.harness.ng.feedback.services.impls.FeedbackServiceImpl;
@@ -692,6 +699,14 @@ public class NextGenModule extends AbstractModule {
     registerEncryptors();
 
     bind(FeatureFlagHelperService.class).to(NGFeatureFlagHelperServiceImpl.class);
+
+    bind(VariableService.class).to(VariableServiceImpl.class);
+    MapBinder<VariableType, VariableDTOToEntityMapper> variableDTOToEntityMapperMapBinder =
+        MapBinder.newMapBinder(binder(), VariableType.class, VariableDTOToEntityMapper.class);
+    variableDTOToEntityMapperMapBinder.addBinding(VariableType.STRING).to(StringVariableDTOtoEntityMapper.class);
+    MapBinder<VariableType, VariableEntityToDTOMapper> variableEntityToDTOMapperMapBinder =
+        MapBinder.newMapBinder(binder(), VariableType.class, VariableEntityToDTOMapper.class);
+    variableEntityToDTOMapperMapBinder.addBinding(VariableType.STRING).to(StringVariableEntityToDTOMapper.class);
     bindExceptionHandlers();
   }
 
