@@ -135,7 +135,7 @@ public class TriggerController {
         break;
       case PIPELINE:
         String pipelineId = qlCreateOrUpdateTriggerInput.getAction().getEntityId();
-        Pipeline pipeline = pipelineService.getPipeline(appId, pipelineId);
+        Pipeline pipeline = pipelineService.readPipeline(appId, pipelineId, true);
         validatePipeline(appId, pipelineId, pipeline);
         deploymentAuthHandler.authorizePipelineExecution(appId, pipelineId);
 
