@@ -16,7 +16,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
 import io.harness.remote.client.NGRestUtils;
 import io.harness.resourcegroupclient.remote.ResourceGroupClient;
-import io.harness.resourcegroupclient.remote.v1.ResourceGroupResponse;
+import io.harness.resourcegroup.v1.remote.dto.ResourceGroupResponse;
 import io.harness.utils.RetryUtils;
 
 import com.google.common.collect.Lists;

@@ -61,7 +61,6 @@ java_binary(
         "//820-platform-service/contracts/resource-group-service:module",
         "//820-platform-service/libs/audit-service:module",
         "//820-platform-service/libs/notification-service:module",
-        "//820-platform-service/libs/resource-group-service:module",
         "//840-template-service:module",
         "//860-orchestration-steps:module",
         "//860-orchestration-visualization:module",
