@@ -228,7 +228,7 @@ public class AmbianceExpressionEvaluatorTest extends OrchestrationTestBase {
 
   private Pair<Map<String, Object>, Object> executeResolve(EngineExpressionEvaluator evaluator, Object o) {
     Map<String, Object> docOriginal = RecastOrchestrationUtils.toMap(o);
-    evaluator.resolve(docOriginal);
+    evaluator.resolve(docOriginal, false);
 
     // using recaster to obtain deep copy of the object
     Map<String, Object> docCopy = RecastOrchestrationUtils.toMap(o);

@@ -154,8 +154,9 @@ public class NotificationHelper {
 
   List<NotificationRules> getNotificationRulesFromYaml(String yaml, Ambiance ambiance) throws IOException {
     BasicPipeline basicPipeline = YamlUtils.read(yaml, BasicPipeline.class);
-    return RecastOrchestrationUtils.fromMap((Map<String, Object>) pmsEngineExpressionService.resolve(ambiance,
-                                                RecastOrchestrationUtils.toMap(basicPipeline.getNotificationRules())),
+    return RecastOrchestrationUtils.fromMap(
+        (Map<String, Object>) pmsEngineExpressionService.resolve(
+            ambiance, RecastOrchestrationUtils.toMap(basicPipeline.getNotificationRules()), true),
         List.class);
   }
 

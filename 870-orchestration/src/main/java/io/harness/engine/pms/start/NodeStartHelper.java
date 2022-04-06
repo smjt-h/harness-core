@@ -99,7 +99,7 @@ public class NodeStartHelper {
     String nodeExecutionId = AmbianceUtils.obtainCurrentRuntimeId(ambiance);
     return transactionHelper.performTransaction(() -> {
       List<String> timeoutInstanceIds = registerTimeouts(ambiance, planNode.getTimeoutObtainments());
-      resolveInputs(ambiance, planNode.getStepInputs());
+      resolveInputs(ambiance, planNode.getStepInputs(), planNode.isSkipUnresolvedExpressionsCheck());
       return nodeExecutionService.updateStatusWithOps(nodeExecutionId, targetStatus, ops -> {
         setUnset(ops, NodeExecutionKeys.timeoutInstanceIds, timeoutInstanceIds);
       }, EnumSet.noneOf(Status.class));
@@ -155,14 +155,14 @@ public class NodeStartHelper {
 
     Class<?> cls = o.getClass();
     Map<String, Object> m = NodeExecutionUtils.extractObject(RecastOrchestrationUtils.toJson(o));
-    String json = RecastOrchestrationUtils.toJson(evaluator.resolve(m));
+    String json = RecastOrchestrationUtils.toJson(evaluator.resolve(m, false));
     return (T) RecastOrchestrationUtils.fromJson(json, cls);
   }
 
-  private void resolveInputs(Ambiance ambiance, OrchestrationMap stepInputs) {
+  private void resolveInputs(Ambiance ambiance, OrchestrationMap stepInputs, boolean skipUnresolvedCheck) {
     String nodeExecutionId = AmbianceUtils.obtainCurrentRuntimeId(ambiance);
     log.info("Starting to Resolve step Inputs");
-    Object resolvedInputs = pmsEngineExpressionService.resolve(ambiance, stepInputs);
+    Object resolvedInputs = pmsEngineExpressionService.resolve(ambiance, stepInputs, skipUnresolvedCheck);
     PmsStepParameters parameterInputs =
         PmsStepParameters.parse(OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedInputs));
     pmsGraphStepDetailsService.addStepInputs(nodeExecutionId, ambiance.getPlanExecutionId(), parameterInputs);
