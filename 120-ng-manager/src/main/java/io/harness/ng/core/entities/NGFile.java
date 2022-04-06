@@ -11,7 +11,8 @@ import io.harness.annotation.HarnessEntity;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityIdentifier;
-import io.harness.file.beans.NGBaseFile;
+import io.harness.delegate.beans.ChecksumType;
+import io.harness.file.HarnessFile;
 import io.harness.mongo.CollationLocale;
 import io.harness.mongo.CollationStrength;
 import io.harness.mongo.index.Collation;
@@ -50,8 +51,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
 @SuperBuilder
-@ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
+@ToString
+@EqualsAndHashCode
 @FieldNameConstants(innerTypeName = "NGFiles")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity(value = "ngFiles", noClassnameStored = true)
@@ -59,8 +60,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @TypeAlias("ngFiles")
 @HarnessEntity(exportable = true)
 @OwnedBy(HarnessTeam.CDP)
-public class NGFile
-    extends NGBaseFile implements PersistentEntity, UuidAware, NGAccountAccess, NGOrgAccess, NGProjectAccess {
+public class NGFile implements HarnessFile, PersistentEntity, UuidAware, NGAccountAccess, NGOrgAccess, NGProjectAccess {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -89,6 +89,13 @@ public class NGFile
   @CreatedDate Long createdAt;
   @LastModifiedDate Long lastModifiedAt;
 
+  @NotEmpty String fileUuid;
+  @NotEmpty String fileName;
+  @NotNull ChecksumType checksumType = ChecksumType.MD5;
+  @NotEmpty String checksum;
+  String mimeType;
+  long size;
+
   @NotEmpty String accountIdentifier;
   @EntityIdentifier(allowBlank = true) String orgIdentifier;
   @EntityIdentifier(allowBlank = true) String projectIdentifier;
@@ -102,4 +109,9 @@ public class NGFile
   @NotEmpty String parentIdentifier;
   @NotNull EntityType entityType;
   @NotEmpty String entityId;
+
+  @Override
+  public String getAccountId() {
+    return accountIdentifier;
+  }
 }
