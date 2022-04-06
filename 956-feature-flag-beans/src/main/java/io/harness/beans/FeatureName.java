@@ -302,7 +302,8 @@ public enum FeatureName {
   AZURE_BLOB_SM,
   GIT_SYNC_PROJECT_CLEANUP,
   DISABLE_ARTIFACT_COLLECTION,
-  ENV_GROUP;
+  ENV_GROUP,
+  CLOUDFORMATION_NG;
 
   FeatureName() {
     scope = Scope.PER_ACCOUNT;
