@@ -141,7 +141,15 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
   @Override
   public String getDelegateTokenValue(String accountId, String name) {
     DelegateToken delegateToken = matchNameTokenQuery(accountId, name).get();
-    return delegateToken != null ? decodeBase64ToString(delegateToken.getValue()) : null;
+    if (delegateToken != null) {
+      if (delegateToken.isNg()) {
+        return decodeBase64ToString(delegateToken.getValue());
+      } else {
+        return delegateToken.getValue();
+      }
+    }
+    log.warn("Not able to fetch delegate token {} for account {} . Please verify manually.", name, accountId);
+    return null;
   }
 
   @Override
