@@ -155,7 +155,7 @@ public class NodeStartHelper {
 
     Class<?> cls = o.getClass();
     Map<String, Object> m = NodeExecutionUtils.extractObject(RecastOrchestrationUtils.toJson(o));
-    String json = RecastOrchestrationUtils.toJson(evaluator.resolve(m, false));
+    String json = RecastOrchestrationUtils.toJson(evaluator.resolve(m));
     return (T) RecastOrchestrationUtils.fromJson(json, cls);
   }
 
