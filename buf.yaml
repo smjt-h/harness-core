@@ -8,3 +8,5 @@ lint:
   except:
     - ENUM_VALUE_PREFIX
     - PACKAGE_VERSION_SUFFIX
+    - PACKAGE_DIRECTORY_MATCH
+
