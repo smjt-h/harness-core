@@ -31,6 +31,6 @@ public class RbacCoreKryoRegistrar implements KryoRegistrar {
     kryo.register(PermissionAttribute.PermissionType.class, 5353);
     kryo.register(PermissionAttribute.class, 5352);
     kryo.register(AppFilter.class, 5357);
-    kryo.register(ExecutableElementsFilter.class, 5358);
+    kryo.register(ExecutableElementsFilter.class, 5246);
   }
 }
