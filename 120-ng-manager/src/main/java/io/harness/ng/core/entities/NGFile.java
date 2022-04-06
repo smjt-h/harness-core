@@ -12,7 +12,6 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.delegate.beans.ChecksumType;
-import io.harness.file.HarnessFile;
 import io.harness.mongo.CollationLocale;
 import io.harness.mongo.CollationStrength;
 import io.harness.mongo.index.Collation;
@@ -34,13 +33,13 @@ import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.Singular;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.FieldNameConstants;
-import lombok.experimental.SuperBuilder;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
@@ -50,9 +49,8 @@ import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
-@SuperBuilder
+@Builder
 @ToString
-@EqualsAndHashCode
 @FieldNameConstants(innerTypeName = "NGFiles")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity(value = "ngFiles", noClassnameStored = true)
@@ -60,7 +58,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @TypeAlias("ngFiles")
 @HarnessEntity(exportable = true)
 @OwnedBy(HarnessTeam.CDP)
-public class NGFile implements HarnessFile, PersistentEntity, UuidAware, NGAccountAccess, NGOrgAccess, NGProjectAccess {
+public class NGFile implements PersistentEntity, UuidAware, NGAccountAccess, NGOrgAccess, NGProjectAccess {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -89,13 +87,6 @@ public class NGFile implements HarnessFile, PersistentEntity, UuidAware, NGAccou
   @CreatedDate Long createdAt;
   @LastModifiedDate Long lastModifiedAt;
 
-  @NotEmpty String fileUuid;
-  @NotEmpty String fileName;
-  @NotNull ChecksumType checksumType = ChecksumType.MD5;
-  @NotEmpty String checksum;
-  String mimeType;
-  long size;
-
   @NotEmpty String accountIdentifier;
   @EntityIdentifier(allowBlank = true) String orgIdentifier;
   @EntityIdentifier(allowBlank = true) String projectIdentifier;
@@ -109,9 +100,20 @@ public class NGFile implements HarnessFile, PersistentEntity, UuidAware, NGAccou
   @NotEmpty String parentIdentifier;
   @NotNull EntityType entityType;
   @NotEmpty String entityId;
+  @NotEmpty String fileUuid;
+  @NotEmpty String fileName;
+  @Builder.Default ChecksumType checksumType = ChecksumType.MD5;
+  String checksum;
+  String mimeType;
+  long size;
 
-  @Override
-  public String getAccountId() {
-    return accountIdentifier;
+  @JsonIgnore
+  public boolean isFolder() {
+    return type == NGFileType.FOLDER;
+  }
+
+  @JsonIgnore
+  public boolean isFile() {
+    return type == NGFileType.FILE;
   }
 }

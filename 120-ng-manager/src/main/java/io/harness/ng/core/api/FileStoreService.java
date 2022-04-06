@@ -10,8 +10,10 @@ package io.harness.ng.core.api;
 import io.harness.ng.core.dto.filestore.FileDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 
+import java.io.File;
 import java.io.InputStream;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 public interface FileStoreService {
   /**
@@ -21,18 +23,19 @@ public interface FileStoreService {
    * @param content file content
    * @return created file DTO object
    */
-  FileDTO create(@Valid FileDTO fileDto, InputStream content);
+  FileDTO create(@Valid @NotNull FileDTO fileDto, InputStream content);
 
   /**
-   * Get a file.
+   * Download a file.
    *
    * @param accountIdentifier the account identifier
    * @param orgIdentifier the organization identifier
    * @param projectIdentifier the project identifier
-   * @param identifier the file identifier
+   * @param fileIdentifier the file identifier
    * @return file
    */
-  FileDTO get(String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier);
+  File downloadFile(@NotNull String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      @NotNull String fileIdentifier);
 
   /**
    * Update file.
@@ -41,7 +44,7 @@ public interface FileStoreService {
    * @param content file content
    * @return updated file DTO
    */
-  FileDTO update(@Valid FileDTO fileDto, InputStream content);
+  FileDTO update(@Valid @NotNull FileDTO fileDto, InputStream content);
 
   /**
    * Delete file.
@@ -52,7 +55,8 @@ public interface FileStoreService {
    * @param identifier the file identifier
    * @return whether file is successfully deleted
    */
-  boolean delete(String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier);
+  boolean delete(
+      @NotNull String accountIdentifier, String orgIdentifier, String projectIdentifier, @NotNull String identifier);
 
   /**
    * Get the list of folder nodes.
@@ -60,9 +64,9 @@ public interface FileStoreService {
    * @param accountIdentifier the account identifier
    * @param orgIdentifier the organization identifier
    * @param projectIdentifier the project identifier
-   * @param folderNode the folder node for which to return the list of nodes
+   * @param folderNodeDTO the folder for which to return the list of nodes
    * @return the folder populated with nodes
    */
-  FolderNodeDTO listFolderNodes(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, FolderNodeDTO folderNode);
+  FolderNodeDTO listFolderNodes(@NotNull String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      @Valid @NotNull FolderNodeDTO folderNodeDTO);
 }

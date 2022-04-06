@@ -14,8 +14,6 @@ import io.harness.ng.core.dto.filestore.NGFileType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -30,8 +28,6 @@ import lombok.NoArgsConstructor;
 @Schema(name = "FileStoreNode", description = "This is the view of the file store node entity defined in Harness")
 public abstract class FileStoreNodeDTO {
   protected NGFileType type;
-  protected List<FileStoreNodeDTO> children = new ArrayList<>();
-
   protected FileStoreNodeDTO(NGFileType type) {
     this.type = type;
   }

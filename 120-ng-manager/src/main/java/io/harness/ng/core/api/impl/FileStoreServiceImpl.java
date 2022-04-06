@@ -8,15 +8,18 @@
 package io.harness.ng.core.api.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.delegate.beans.FileBucket.CONFIGS;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.delegate.beans.FileBucket.FILE_STORE;
+
+import static java.lang.String.format;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.FileUploadLimit;
 import io.harness.exception.DuplicateEntityException;
+import io.harness.exception.InvalidArgumentsException;
 import io.harness.file.beans.NGBaseFile;
 import io.harness.ng.core.api.FileStoreService;
 import io.harness.ng.core.dto.filestore.FileDTO;
-import io.harness.ng.core.dto.filestore.NGFileType;
 import io.harness.ng.core.dto.filestore.node.FileStoreNodeDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 import io.harness.ng.core.entities.NGFile;
@@ -27,11 +30,14 @@ import io.harness.stream.BoundedInputStream;
 
 import software.wings.service.intfc.FileService;
 
+import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.io.File;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -56,23 +62,22 @@ public class FileStoreServiceImpl implements FileStoreService {
 
   @Override
   public FileDTO create(@Valid FileDTO fileDto, InputStream content) {
+    log.info("Creating {}: {}", fileDto.getType().name().toLowerCase(), fileDto);
+
+    NGBaseFile baseFile = new NGBaseFile();
+    baseFile.setFileName(fileDto.getName());
+    baseFile.setAccountId(fileDto.getAccountIdentifier());
+
+    if (content != null && fileDto.isFile()) {
+      BoundedInputStream fileContent = new BoundedInputStream(content, fileUploadLimit.getFileStoreFileLimit());
+      fileService.saveFile(baseFile, fileContent, FILE_STORE);
+      baseFile.setSize(fileContent.getTotalBytesRead());
+    }
+
+    NGFile ngFile = FileDTOMapper.getNGFileFromDTO(fileDto, baseFile);
+
     try {
-      log.info("Creating {}: {}", fileDto.getType().name().toLowerCase(), fileDto);
-
-      NGBaseFile baseFile = new NGBaseFile();
-      baseFile.setFileName(fileDto.getName());
-      baseFile.setAccountId(fileDto.getAccountIdentifier());
-
-      if (fileDto.isFile()) {
-        BoundedInputStream fileContent = new BoundedInputStream(content, fileUploadLimit.getFileStoreFileLimit());
-        fileService.saveFile(baseFile, fileContent, CONFIGS);
-        baseFile.setSize(fileContent.getTotalBytesRead());
-      }
-
-      NGFile ngFile = FileDTOMapper.getNGFileFromDTO(fileDto, baseFile);
-
       ngFile = fileStoreRepository.save(ngFile);
-
       return FileDTOMapper.getFileDTOFromNGFile(ngFile);
     } catch (DuplicateKeyException e) {
       throw new DuplicateEntityException(
@@ -82,9 +87,27 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   @Override
-  public FileDTO get(String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier) {
-    // get entity from DB by using fileStoreRepository or fileStoreRepositoryCustom
-    return null;
+  public File downloadFile(@NotNull String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      @NotNull String fileIdentifier) {
+    if (isEmpty(fileIdentifier)) {
+      throw new InvalidArgumentsException("File identifier cannot be empty");
+    }
+
+    Optional<NGFile> ngFileOpt =
+        fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
+            accountIdentifier, orgIdentifier, projectIdentifier, fileIdentifier);
+    if (!ngFileOpt.isPresent()) {
+      throw new InvalidArgumentsException(format("Unable to find file, fileIdentifier: %s", fileIdentifier));
+    }
+    NGFile ngFile = ngFileOpt.get();
+    if (ngFile.isFolder()) {
+      throw new InvalidArgumentsException(
+          format("Downloading folder not supported, fileIdentifier: %s", fileIdentifier));
+    }
+
+    File file = new File(Files.createTempDir(), ngFile.getFileName());
+    log.info("Start downloading file, fileIdentifier: {}, filePath: {}", fileIdentifier, file.getPath());
+    return fileService.download(ngFile.getFileUuid(), file, FILE_STORE);
   }
 
   @Override
@@ -103,10 +126,11 @@ public class FileStoreServiceImpl implements FileStoreService {
 
   @Override
   public FolderNodeDTO listFolderNodes(@NotNull String accountIdentifier, String orgIdentifier,
-      String projectIdentifier, @Valid FolderNodeDTO folderNode) {
-    return populateFolderNode(folderNode, accountIdentifier, orgIdentifier, projectIdentifier);
+      String projectIdentifier, @Valid @NotNull FolderNodeDTO folderNodeDTO) {
+    return populateFolderNode(folderNodeDTO, accountIdentifier, orgIdentifier, projectIdentifier);
   }
 
+  // in the case when we need to return the whole folder structure, create recursion on this method
   private FolderNodeDTO populateFolderNode(
       FolderNodeDTO folderNode, String accountIdentifier, String orgIdentifier, String projectIdentifier) {
     List<FileStoreNodeDTO> fileStoreNodes =
@@ -123,8 +147,8 @@ public class FileStoreServiceImpl implements FileStoreService {
         .stream()
         .filter(Objects::nonNull)
         .map(ngFile
-            -> ngFile.getType() == NGFileType.FOLDER ? FileStoreNodeDTOMapper.getFolderNodeDTO(ngFile)
-                                                     : FileStoreNodeDTOMapper.getFileNodeDTO(ngFile))
+            -> ngFile.isFolder() ? FileStoreNodeDTOMapper.getFolderNodeDTO(ngFile)
+                                 : FileStoreNodeDTOMapper.getFileNodeDTO(ngFile))
         .collect(Collectors.toList());
   }
 

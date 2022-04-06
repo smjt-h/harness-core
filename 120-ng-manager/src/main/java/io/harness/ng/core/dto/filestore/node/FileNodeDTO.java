@@ -17,16 +17,19 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
-import lombok.Value;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-@Value
+@Getter
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @OwnedBy(CDP)
 @Schema(name = "FileNode", description = "This contains file details")
 public class FileNodeDTO extends FileStoreNodeDTO {
-  @NotNull String fileIdentifier;
-  @NotNull String fileName;
+  @NotNull private String fileIdentifier;
+  @NotNull private String fileName;
+  private final NGFileType type = NGFileType.FILE;
 
   @Builder
   public FileNodeDTO(String fileIdentifier, String fileName) {

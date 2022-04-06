@@ -29,7 +29,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.hibernate.validator.constraints.NotBlank;
-import org.hibernate.validator.constraints.NotEmpty;
 
 @OwnedBy(CDP)
 @Data
@@ -49,31 +48,32 @@ public class FileDTO {
   @Schema(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE)
   private String projectIdentifier;
 
-  @NotNull
+  @NotBlank
   @EntityIdentifier
   @Schema(description = "Identifier of the File")
   @FormDataParam("identifier")
   private String identifier;
 
-  @NotNull @NGEntityName @Schema(description = "Name of the File") @FormDataParam("name") private String name;
+  @NotBlank @NGEntityName @Schema(description = "Name of the File") @FormDataParam("name") private String name;
   @NotNull
   @Schema(description = "This specifies the file usage")
   @FormDataParam("fileUsage")
   private FileUsage fileUsage;
   @NotNull @Schema(description = "This specifies the type of the File") @FormDataParam("type") private NGFileType type;
-  @NotNull
+  @NotBlank
   @Schema(description = "This specifies parent identifier")
   @FormDataParam("parentIdentifier")
   private String parentIdentifier;
   @Schema(description = "Description of the File") @FormDataParam("description") private String description;
   @Schema(description = "Tags") @FormDataParam("tags") private List<NGTag> tags;
-  @NotNull @Schema(description = "Content of the File") @FormDataParam("entityType") private EntityType entityType;
-  @NotEmpty @Schema(description = "Content of the File") @FormDataParam("entityId") private String entityId;
+  @Schema(description = "Content of the File") @FormDataParam("entityType") private EntityType entityType;
+  @Schema(description = "Content of the File") @FormDataParam("entityId") private String entityId;
+  @Schema(description = "Mime type of the File") @FormDataParam("mimeType") private String mimeType;
 
   @Builder
   public FileDTO(String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier,
       String name, FileUsage fileUsage, NGFileType type, String parentIdentifier, String description, List<NGTag> tags,
-      EntityType entityType, String entityId) {
+      EntityType entityType, String entityId, String mimeType) {
     this.accountIdentifier = accountIdentifier;
     this.orgIdentifier = orgIdentifier;
     this.projectIdentifier = projectIdentifier;
@@ -86,10 +86,16 @@ public class FileDTO {
     this.tags = tags;
     this.entityType = entityType;
     this.entityId = entityId;
+    this.mimeType = mimeType;
   }
 
   @JsonIgnore
   public boolean isFile() {
     return type == NGFileType.FILE;
+  }
+
+  @JsonIgnore
+  public boolean isFolder() {
+    return type == NGFileType.FOLDER;
   }
 }

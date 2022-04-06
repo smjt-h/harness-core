@@ -12,6 +12,7 @@ import static io.harness.NGCommonEntityConstants.ORG_PARAM_MESSAGE;
 import static io.harness.NGCommonEntityConstants.PROJECT_PARAM_MESSAGE;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 
 import io.harness.NGCommonEntityConstants;
@@ -35,14 +36,19 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.io.File;
 import java.io.InputStream;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -98,21 +104,44 @@ public class FileStoreResource {
   @Consumes({"application/json"})
   @Path("folder")
   @ApiOperation(value = "Get folder nodes", nickname = "getFolderNodes")
-  @Operation(operationId = "getFolderNodes", summary = "Get the list of Folder nodes.",
+  @Operation(operationId = "getFolderNodes", summary = "Get Folder nodes.",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(responseCode = "default", description = "Returns the list of folder nodes")
+        ApiResponse(responseCode = "default", description = "Returns the list of folder nodes as children")
       })
   public ResponseDTO<FolderNodeDTO>
-  listFolderItems(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
+  listFolderNodes(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
                       NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
-      @RequestBody(required = true,
-          description = "Folder node for which to return the list of nodes") @NotNull FolderNodeDTO folderNodeDTO) {
+      @RequestBody(required = true, description = "Folder node for which to return the list of nodes") @Valid
+      @NotNull FolderNodeDTO folderNodeDTO) {
     return ResponseDTO.newResponse(
         fileStoreService.listFolderNodes(accountIdentifier, orgIdentifier, projectIdentifier, folderNodeDTO));
+  }
+
+  @GET
+  @Path("file/{fileIdentifier}/download")
+  @ApiOperation(value = "Download file", nickname = "downloadFile")
+  @Operation(operationId = "downloadFile", summary = "Download File",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(responseCode = "default", description = "Download the file with content")
+      })
+  public Response
+  downloadFile(@Parameter(description = "File identifier") @PathParam(
+                   NGCommonEntityConstants.FILE_IDENTIFIER_KEY) @NotNull String fileIdentifier,
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier) {
+    File file = fileStoreService.downloadFile(accountIdentifier, orgIdentifier, projectIdentifier, fileIdentifier);
+    return Response.ok(file, APPLICATION_OCTET_STREAM)
+        .header("Content-Disposition", "attachment; filename=" + file.getName())
+        .build();
   }
 }
