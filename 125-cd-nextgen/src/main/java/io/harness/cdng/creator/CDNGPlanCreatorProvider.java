@@ -70,6 +70,8 @@ import java.util.List;
 @Singleton
 public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
   private static final String TERRAFORM_STEP_METADATA = "Terraform";
+  private static final List<String> CLOUDFORMATION_CATEGORY =
+      Arrays.asList("Kubernetes", "Provisioner", "Cloudformation");
   private static final String CLOUDFORMATION_STEP_METADATA = "Cloudformation";
   private static final List<String> TERRAFORM_CATEGORY = Arrays.asList("Kubernetes", "Provisioner");
 
@@ -272,7 +274,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
                                .setType(StepSpecTypeConstants.CLOUDFORMATION_CREATE_STACK)
                                .setFeatureRestrictionName(FeatureRestrictionName.CREATE_STACK.name())
                                .setStepMetaData(StepMetaData.newBuilder()
-                                                    .addCategory(CLOUDFORMATION_STEP_METADATA)
+                                                    .addAllCategory(CLOUDFORMATION_CATEGORY)
                                                     .addFolderPaths(CLOUDFORMATION_STEP_METADATA)
                                                     .build())
                                .build();
@@ -282,7 +284,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
                                .setType(StepSpecTypeConstants.CLOUDFORMATION_DELETE_STACK)
                                .setFeatureRestrictionName(FeatureRestrictionName.DELETE_STACK.name())
                                .setStepMetaData(StepMetaData.newBuilder()
-                                                    .addCategory(CLOUDFORMATION_STEP_METADATA)
+                                                    .addAllCategory(CLOUDFORMATION_CATEGORY)
                                                     .addFolderPaths(CLOUDFORMATION_STEP_METADATA)
                                                     .build())
                                .build();
