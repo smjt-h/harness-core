@@ -38,6 +38,7 @@ import com.google.common.collect.ImmutableList;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -129,7 +130,7 @@ public abstract class CVConfig
   }
 
   public String getFullyQualifiedIdentifier() {
-    if (fullyQualifiedIdentifier.isEmpty()) {
+    if (Objects.isNull(fullyQualifiedIdentifier)) {
       return identifier;
     }
     return fullyQualifiedIdentifier;
