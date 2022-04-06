@@ -16,6 +16,7 @@ import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.plancreator.stages.stage.StageInfoConfig;
 import io.harness.steps.StepSpecTypeConstants;
+import io.harness.yaml.core.VariableExpression;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -35,7 +36,7 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(CDC)
 @RecasterAlias("io.harness.cdng.creator.plan.stage.DeploymentStageNode")
 public class DeploymentStageNode extends DeploymentAbstractStageNode {
-  @JsonProperty("type") @NotNull StepType type = StepType.Deployment;
+  @JsonProperty("type") @NotNull @VariableExpression(replaceWithUUid = false) StepType type = StepType.Deployment;
 
   @JsonProperty("spec")
   @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
