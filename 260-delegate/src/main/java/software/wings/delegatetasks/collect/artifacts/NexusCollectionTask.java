@@ -47,8 +47,6 @@ public class NexusCollectionTask extends AbstractDelegateRunnableTask {
 
   @Inject private DelegateFileManager delegateFileManager;
 
-  @Inject private ArtifactCollectionTaskHelper artifactCollectionTaskHelper;
-
   @Inject private EncryptionService encryptionService;
 
   public NexusCollectionTask(DelegateTaskPackage delegateTaskPackage, ILogStreamingTaskClient logStreamingTaskClient,

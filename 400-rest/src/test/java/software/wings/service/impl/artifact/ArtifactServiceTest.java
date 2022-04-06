@@ -1168,7 +1168,7 @@ public class ArtifactServiceTest extends WingsBaseTest {
     artifactService.addArtifactFile(savedArtifact.getUuid(), savedArtifact.getAccountId(), asList(artifactFile));
     List<ArtifactFile> artifactFiles = artifactService.fetchArtifactFiles(savedArtifact.getUuid());
     assertThat(artifactFiles.size()).isEqualTo(1);
-    assertThat(artifactFiles).extracting(BaseFile::getName).contains("test-artifact.war");
+    assertThat(artifactFiles).extracting(ArtifactFile::getName).contains("test-artifact.war");
   }
 
   @Test

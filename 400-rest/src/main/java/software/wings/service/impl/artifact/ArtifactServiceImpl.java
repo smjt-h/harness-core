@@ -846,7 +846,7 @@ public class ArtifactServiceImpl implements ArtifactService {
     return artifacts.stream()
         .flatMap(artifact -> artifact.getArtifactFiles().stream())
         .filter(artifactFile -> artifactFile.getFileUuid() != null)
-        .map(BaseFile::getFileUuid)
+        .map(ArtifactFile::getFileUuid)
         .collect(Collectors.toList());
   }
 
