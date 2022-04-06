@@ -7,8 +7,8 @@
 
 package io.harness.delegate.task.artifacts.artifactory;
 
+import static io.harness.artifactory.service.ArtifactoryRegistryService.DEFAULT_ARTIFACT_DIRECTORY;
 import static io.harness.artifactory.service.ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT;
-import static io.harness.delegate.task.artifacts.ArtifactTaskType.GET_BUILDS;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 
 import io.harness.annotations.dev.HarnessTeam;
@@ -31,9 +31,7 @@ import software.wings.utils.RepositoryFormat;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,8 +43,6 @@ import lombok.extern.slf4j.Slf4j;
 public class ArtifactoryArtifactTaskHelper {
   @Inject ArtifactoryRequestMapper artifactoryRequestMapper;
   @Inject ArtifactoryNgService artifactoryNgService;
-  static final String DEFAULT_ARTIFACT_FILTER = "*";
-  static final String DEFAULT_ARTIFACT_DIRECTORY = "/";
   private final ArtifactoryArtifactTaskHandler artifactoryArtifactTaskHandler;
 
   public ArtifactTaskResponse getArtifactCollectResponse(
@@ -189,26 +185,6 @@ public class ArtifactoryArtifactTaskHelper {
 
     return artifactoryArtifactTaskHandler.getSuccessTaskExecutionResponseGeneric(
         Collections.singletonList(artifactoryGenericArtifactDelegateResponse));
-  }
-
-  public ArtifactTaskExecutionResponse fetchFileBuilds(
-      ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest,
-      LogCallback executionLogCallback) {
-    artifactoryArtifactTaskHandler.decryptRequestDTOs(artifactoryGenericArtifactDelegateRequest);
-    ArtifactoryConfigRequest artifactoryConfigRequest = artifactoryRequestMapper.toArtifactoryRequest(
-        artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
-    String artifactDirectory = artifactoryGenericArtifactDelegateRequest.getArtifactDirectory();
-    if (artifactDirectory.isEmpty()) {
-      saveLogs(executionLogCallback,
-          "Artifact Directory is Empty, assuming Artifacts are present in root of the repository");
-      artifactDirectory = DEFAULT_ARTIFACT_DIRECTORY;
-    }
-    String filePath = Paths.get(artifactDirectory, DEFAULT_ARTIFACT_FILTER).toString();
-
-    List<BuildDetails> buildDetails = artifactoryNgService.getArtifactList(artifactoryConfigRequest,
-        artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, MAX_NO_OF_TAGS_PER_ARTIFACT);
-
-    return ArtifactTaskExecutionResponse.builder().buildDetails(buildDetails).build();
   }
 
   private ArtifactTaskResponse getSuccessTaskResponse(ArtifactTaskExecutionResponse taskExecutionResponse) {
