@@ -368,7 +368,7 @@ public class UserGroupPermissionValidator {
     if (applications != null && appPermission.getDeployments() != null) {
       final QLExecutableElementFilterInput executableElementFilter =
           appPermission.getDeployments().getExecutableElementFilter();
-      if (applications.getFilterType().equals(QLAppFilterType.EXCLUDE_SELECTED) && executableElementFilter != null) {
+      if (QLAppFilterType.EXCLUDE_SELECTED.equals(applications.getFilterType()) && executableElementFilter != null) {
         throw new InvalidRequestException(
             "Both exclude selected and execultable element filter can't be set at same time");
       }
