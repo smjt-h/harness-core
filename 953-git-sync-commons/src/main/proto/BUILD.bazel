@@ -9,6 +9,7 @@ proto_library(
     deps = [
         "//970-ng-commons/src/main/proto/io/harness/eventsframework/schemas/entity:970_ng_commons_proto",
         "//980-commons/src/main/proto/io/harness/security:980_commons_security_proto",
+        "//953-git-sync-commons/src/main/proto:953_git_sync_java_contracts_proto",
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:duration_proto",
         "@com_google_protobuf//:timestamp_proto",

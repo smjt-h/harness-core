@@ -8,6 +8,7 @@ proto_library(
     visibility = ["//visibility:public"],
     deps = [
         "@com_google_protobuf//:any_proto",
+        "//867-polling-contracts/src/main/proto:867_polling_contracts_java_proto"
     ],
 )
 
