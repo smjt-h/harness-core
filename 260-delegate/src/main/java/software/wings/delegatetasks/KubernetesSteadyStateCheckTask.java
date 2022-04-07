@@ -22,7 +22,6 @@ import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.k8s.ContainerDeploymentDelegateBaseHelper;
 import io.harness.exception.WingsException;
-import io.harness.git.ExceptionSanitizer;
 import io.harness.k8s.model.KubernetesConfig;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogLevel;
@@ -109,7 +108,7 @@ public class KubernetesSteadyStateCheckTask extends AbstractDelegateRunnableTask
       throw e;
     } catch (Exception e) {
       Exception sanitiseException = ExceptionMessageSanitizer.sanitizeException(e);
-      log.error("Exception in KubernetesSteadyStateCheck", e);
+      log.error("Exception in KubernetesSteadyStateCheck", sanitiseException);
       Misc.logAllMessages(sanitiseException, executionLogCallback);
       executionLogCallback.saveExecutionLog("Exception occurred while waiting for controller to reach steady state",
           LogLevel.ERROR, CommandExecutionStatus.FAILURE);

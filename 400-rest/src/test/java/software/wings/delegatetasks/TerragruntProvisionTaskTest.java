@@ -143,7 +143,7 @@ public class TerragruntProvisionTaskTest extends CategoryTest {
     encryptedEnvironmentVariables.put("key", encryptedDataDetail);
 
     sourceRepoEncryptionDetails = new ArrayList<>();
-    sourceRepoEncryptionDetails.add(EncryptedDataDetail.builder().build());
+    sourceRepoEncryptionDetails.add(EncryptedDataDetail.builder().fieldName("fieldName").build());
 
     doReturn(GIT_REPO_DIRECTORY).when(gitClientHelper).getRepoDirectory(any(GitOperationContext.class));
 

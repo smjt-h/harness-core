@@ -147,11 +147,12 @@ public class TerragruntProvisionTaskHelperTest extends CategoryTest {
                                       .useBranch(true)
                                       .connectorId("connectorId")
                                       .build();
-    TfVarGitSource tfVarGitSource = TfVarGitSource.builder()
-                                        .gitFileConfig(gitFileConfig)
-                                        .gitConfig(GitConfig.builder().build())
-                                        .encryptedDataDetails(singletonList(EncryptedDataDetail.builder().build()))
-                                        .build();
+    TfVarGitSource tfVarGitSource =
+        TfVarGitSource.builder()
+            .gitFileConfig(gitFileConfig)
+            .gitConfig(GitConfig.builder().build())
+            .encryptedDataDetails(singletonList(EncryptedDataDetail.builder().fieldName("fieldName").build()))
+            .build();
     TerragruntProvisionParameters provisionParameters =
         TerragruntProvisionParameters.builder().tfVarSource(tfVarGitSource).build();
 
