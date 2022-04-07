@@ -56,6 +56,7 @@ import io.harness.serializer.JsonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.time.Instant;
@@ -1156,9 +1157,9 @@ public class DeploymentLogAnalysisServiceImplTest extends CvNextGenTestBase {
             DeploymentLogAnalysisFilter.builder().build(), PageParams.builder().page(0).size(20).build());
 
     LogAnalysisRadarChartListWithCountDTO expectedLogAnalysis =
-        JsonUtils.asObject(Resources.toString(DeploymentLogAnalysisServiceImplTest.class.getResource(
-                                                  "/deployment/deployment-log-analysis-list-output.json"),
-                               Charsets.UTF_8),
+        new Gson().fromJson(Resources.toString(DeploymentLogAnalysisServiceImplTest.class.getResource(
+                                                   "/deployment/deployment-log-analysis-list-output.json"),
+                                Charsets.UTF_8),
             LogAnalysisRadarChartListWithCountDTO.class);
     assertThat(logAnalysisRadarChartListWithCountDTO).isEqualTo(expectedLogAnalysis);
   }
