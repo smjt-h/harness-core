@@ -72,9 +72,7 @@ public class FileStoreServiceImpl implements FileStoreService {
       if (content == null) {
         throw new InvalidArgumentsException(format("File content is empty. Identifier: %s", fileDto.getIdentifier()));
       }
-      BoundedInputStream fileContent =
-          new BoundedInputStream(content, configuration.getFileUploadLimits().getFileStoreFileLimit());
-      saveFile(fileDto, ngFile, fileContent);
+      saveFile(fileDto, ngFile, content);
     }
 
     try {
@@ -113,19 +111,16 @@ public class FileStoreServiceImpl implements FileStoreService {
 
   @Override
   public FileDTO update(@Valid @NotNull FileDTO fileDto, InputStream content, String identifier) {
-    BoundedInputStream inputStream = content == null
-        ? null
-        : new BoundedInputStream(content, configuration.getFileUploadLimits().getFileStoreFileLimit());
     NGFile existingFile =
         fileStoreRepository
             .findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
                 fileDto.getAccountIdentifier(), fileDto.getOrgIdentifier(), fileDto.getProjectIdentifier(), identifier)
             .orElseThrow(() -> new IllegalArgumentException(format("File with identifier: %s not found.", identifier)));
 
-    FileDTOMapper.updateFields(fileDto, existingFile);
-    if (inputStream != null && fileDto.isFile()) {
-      log.info("Start updating file in file system.");
-      saveFile(fileDto, existingFile, inputStream);
+    FileDTOMapper.updateNGFile(fileDto, existingFile);
+    if (content != null && fileDto.isFile()) {
+      log.info("Start updating file in file system, identifier: {}", identifier);
+      saveFile(fileDto, existingFile, content);
     }
     fileStoreRepository.save(existingFile);
     return FileDTOMapper.getFileDTOFromNGFile(existingFile);
@@ -173,7 +168,9 @@ public class FileStoreServiceImpl implements FileStoreService {
         accountIdentifier, orgIdentifier, projectIdentifier, parentIdentifier);
   }
 
-  private void saveFile(@Valid FileDTO fileDto, NGFile ngFile, BoundedInputStream fileContent) {
+  private void saveFile(FileDTO fileDto, NGFile ngFile, @NotNull InputStream content) {
+    BoundedInputStream fileContent =
+        new BoundedInputStream(content, configuration.getFileUploadLimits().getFileStoreFileLimit());
     fileService.saveFile(getNgBaseFile(fileDto), fileContent, FILE_STORE);
     ngFile.setSize(fileContent.getTotalBytesRead());
   }

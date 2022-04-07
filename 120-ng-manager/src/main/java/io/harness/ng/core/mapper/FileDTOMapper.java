@@ -37,18 +37,6 @@ public class FileDTOMapper {
         .build();
   }
 
-  public NGFile updateFields(FileDTO fileDto, NGFile file) {
-    file.setFileUsage(fileDto.getFileUsage());
-    file.setType(fileDto.getType());
-    file.setParentIdentifier(fileDto.getParentIdentifier());
-    file.setDescription(fileDto.getDescription());
-    file.setTags(!EmptyPredicate.isEmpty(fileDto.getTags()) ? fileDto.getTags() : Collections.emptyList());
-    file.setEntityId(fileDto.getEntityId());
-    file.setEntityType(fileDto.getEntityType());
-    file.setFileName(fileDto.getName());
-    return file;
-  }
-
   public FileDTO getFileDTOFromNGFile(NGFile ngFile) {
     return FileDTO.builder()
         .accountIdentifier(ngFile.getAccountIdentifier())
@@ -64,5 +52,18 @@ public class FileDTOMapper {
         .entityType(ngFile.getEntityType())
         .entityId(ngFile.getEntityId())
         .build();
+  }
+
+  public NGFile updateNGFile(FileDTO fileDto, NGFile file) {
+    file.setFileUsage(fileDto.getFileUsage());
+    file.setType(fileDto.getType());
+    file.setParentIdentifier(fileDto.getParentIdentifier());
+    file.setDescription(fileDto.getDescription());
+    file.setTags(!EmptyPredicate.isEmpty(fileDto.getTags()) ? fileDto.getTags() : Collections.emptyList());
+    file.setEntityId(fileDto.getEntityId());
+    file.setEntityType(fileDto.getEntityType());
+    file.setFileName(fileDto.getName());
+    file.setMimeType(fileDto.getMimeType());
+    return file;
   }
 }
