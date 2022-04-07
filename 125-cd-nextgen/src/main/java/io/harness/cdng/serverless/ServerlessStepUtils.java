@@ -52,7 +52,7 @@ public class ServerlessStepUtils extends CDStepHelper {
     List<String> folderPaths = new ArrayList<>();
 
     List<String> paths = getParameterFieldValue(gitStoreConfig.getPaths());
-    if (!paths.isEmpty()) {
+    if ((paths != null) && (!paths.isEmpty())) {
       folderPaths.add(normalizeFolderPath(paths.get(0)));
     } else {
       folderPaths.add(normalizeFolderPath(getParameterFieldValue(gitStoreConfig.getFolderPath())));

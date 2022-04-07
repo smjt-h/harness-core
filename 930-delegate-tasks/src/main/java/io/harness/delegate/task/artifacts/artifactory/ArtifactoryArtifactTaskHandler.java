@@ -7,6 +7,8 @@
 
 package io.harness.delegate.task.artifacts.artifactory;
 
+import static io.harness.artifactory.service.ArtifactoryRegistryService.DEFAULT_ARTIFACT_DIRECTORY;
+import static io.harness.artifactory.service.ArtifactoryRegistryService.DEFAULT_ARTIFACT_FILTER;
 import static io.harness.artifactory.service.ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT;
 
 import io.harness.annotations.dev.HarnessTeam;
@@ -44,9 +46,6 @@ public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<
   private final SecretDecryptionService secretDecryptionService;
   private ArtifactoryNgService artifactoryNgService;
   private ArtifactoryRequestMapper artifactoryRequestMapper;
-
-  static final String DEFAULT_ARTIFACT_FILTER = "*";
-  static final String DEFAULT_ARTIFACT_DIRECTORY = "/";
 
   @Override
   public ArtifactTaskExecutionResponse getLastSuccessfulBuild(
