@@ -12,7 +12,6 @@ import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 
 import java.io.File;
 import java.io.InputStream;
-import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 public interface FileStoreService {
@@ -23,7 +22,7 @@ public interface FileStoreService {
    * @param content file content
    * @return created file DTO object
    */
-  FileDTO create(@Valid @NotNull FileDTO fileDto, InputStream content);
+  FileDTO create(@NotNull FileDTO fileDto, InputStream content);
 
   /**
    * Download a file.
@@ -45,7 +44,7 @@ public interface FileStoreService {
    * @param identifier file identifier
    * @return updated file DTO
    */
-  FileDTO update(@Valid @NotNull FileDTO fileDto, InputStream content, String identifier);
+  FileDTO update(@NotNull FileDTO fileDto, InputStream content, String identifier);
 
   /**
    * Delete file.
@@ -69,5 +68,5 @@ public interface FileStoreService {
    * @return the folder populated with nodes
    */
   FolderNodeDTO listFolderNodes(@NotNull String accountIdentifier, String orgIdentifier, String projectIdentifier,
-      @Valid @NotNull FolderNodeDTO folderNodeDTO);
+      @NotNull FolderNodeDTO folderNodeDTO);
 }

@@ -38,23 +38,17 @@ import org.hibernate.validator.constraints.NotBlank;
 @Schema(name = "File", description = "This is details of the file entity defined in Harness.")
 public class FileDTO {
   @ApiModelProperty(required = true)
-  @NotBlank
   @Schema(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE)
   private String accountIdentifier;
-  @EntityIdentifier(allowBlank = true)
-  @Schema(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE)
-  private String orgIdentifier;
-  @EntityIdentifier(allowBlank = true)
-  @Schema(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE)
-  private String projectIdentifier;
+  @Schema(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) private String orgIdentifier;
+  @Schema(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) private String projectIdentifier;
 
-  @NotBlank
   @EntityIdentifier
   @Schema(description = "Identifier of the File")
   @FormDataParam("identifier")
   private String identifier;
 
-  @NotBlank @NGEntityName @Schema(description = "Name of the File") @FormDataParam("name") private String name;
+  @NGEntityName @Schema(description = "Name of the File") @FormDataParam("name") private String name;
   @NotNull
   @Schema(description = "This specifies the file usage")
   @FormDataParam("fileUsage")

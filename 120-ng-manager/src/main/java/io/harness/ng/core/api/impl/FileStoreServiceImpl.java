@@ -39,16 +39,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.validation.executable.ValidateOnExecution;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 
 @Singleton
 @OwnedBy(CDP)
 @Slf4j
-@ValidateOnExecution
 public class FileStoreServiceImpl implements FileStoreService {
   private final FileService fileService;
   private final FileStoreRepository fileStoreRepository;
@@ -63,7 +60,7 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   @Override
-  public FileDTO create(@Valid @NotNull FileDTO fileDto, InputStream content) {
+  public FileDTO create(@NotNull FileDTO fileDto, InputStream content) {
     log.info("Creating {}: {}", fileDto.getType().name().toLowerCase(), fileDto);
 
     NGFile ngFile = FileDTOMapper.getNGFileFromDTO(fileDto);
@@ -110,7 +107,7 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   @Override
-  public FileDTO update(@Valid @NotNull FileDTO fileDto, InputStream content, String identifier) {
+  public FileDTO update(@NotNull FileDTO fileDto, InputStream content, String identifier) {
     NGFile existingFile =
         fileStoreRepository
             .findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
@@ -136,7 +133,7 @@ public class FileStoreServiceImpl implements FileStoreService {
 
   @Override
   public FolderNodeDTO listFolderNodes(@NotNull String accountIdentifier, String orgIdentifier,
-      String projectIdentifier, @Valid @NotNull FolderNodeDTO folderNodeDTO) {
+      String projectIdentifier, @NotNull FolderNodeDTO folderNodeDTO) {
     return populateFolderNode(folderNodeDTO, accountIdentifier, orgIdentifier, projectIdentifier);
   }
 
