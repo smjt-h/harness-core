@@ -131,7 +131,11 @@ public class FileStoreServiceImpl implements FileStoreService {
 
   @Override
   public boolean delete(String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier) {
-    validateNotRootFolder(identifier);
+    if (FileStoreConstants.ROOT_FOLDER_IDENTIFIER.equals(identifier)) {
+      throw new InvalidArgumentsException(
+          format("File or folder with identifier [%s] can not be deleted.", FileStoreConstants.ROOT_FOLDER_IDENTIFIER));
+    }
+
     IdentifierRef identifierRef =
         IdentifierRefHelper.getIdentifierRef(identifier, accountIdentifier, orgIdentifier, projectIdentifier);
     NGFile file =
@@ -140,10 +144,10 @@ public class FileStoreServiceImpl implements FileStoreService {
                 identifierRef.getAccountIdentifier(), identifierRef.getOrgIdentifier(),
                 identifierRef.getProjectIdentifier(), identifierRef.getIdentifier())
             .orElseThrow(()
-                             -> new InvalidArgumentsException(String.format(
-                                 "File or folder with identifier [%s], account [%s], org [%s] and project [%s] "
-                                     + "could not be retrieved from file store.",
-                                 identifier, accountIdentifier, orgIdentifier, projectIdentifier)));
+                             -> new InvalidArgumentsException(
+                                 format("File or folder with identifier [%s], account [%s], org [%s] and project [%s] "
+                                         + "could not be retrieved from file store.",
+                                     identifier, accountIdentifier, orgIdentifier, projectIdentifier)));
 
     validateIsReferencedBy(file);
     return deleteFileOrFolder(file);
@@ -163,8 +167,23 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   private String getDuplicateEntityMessage(@NotNull FileDTO fileDto) {
-    return String.format("Try creating another %s, %s with identifier [%s] already exists in the parent folder",
+    return format("Try creating another %s, %s with identifier [%s] already exists in the parent folder",
         fileDto.getType().name().toLowerCase(), fileDto.getType().name().toLowerCase(), fileDto.getIdentifier());
+  }
+
+  private void saveFile(FileDTO fileDto, NGFile ngFile, @NotNull InputStream content) {
+    BoundedInputStream fileContent =
+        new BoundedInputStream(content, configuration.getFileUploadLimits().getFileStoreFileLimit());
+    fileService.saveFile(getNgBaseFile(fileDto), fileContent, FILE_STORE);
+    ngFile.setSize(fileContent.getTotalBytesRead());
+  }
+
+  private NGBaseFile getNgBaseFile(FileDTO fileDto) {
+    NGBaseFile baseFile = new NGBaseFile();
+    baseFile.setFileName(fileDto.getName());
+    baseFile.setMimeType(fileDto.getMimeType());
+    baseFile.setAccountId(fileDto.getAccountIdentifier());
+    return baseFile;
   }
 
   // in the case when we need to return the whole folder structure, create recursion on this method
@@ -195,41 +214,18 @@ public class FileStoreServiceImpl implements FileStoreService {
         accountIdentifier, orgIdentifier, projectIdentifier, parentIdentifier);
   }
 
-  private void saveFile(FileDTO fileDto, NGFile ngFile, @NotNull InputStream content) {
-    BoundedInputStream fileContent =
-        new BoundedInputStream(content, configuration.getFileUploadLimits().getFileStoreFileLimit());
-    fileService.saveFile(getNgBaseFile(fileDto), fileContent, FILE_STORE);
-    ngFile.setSize(fileContent.getTotalBytesRead());
-  }
-
-  private NGBaseFile getNgBaseFile(FileDTO fileDto) {
-    NGBaseFile baseFile = new NGBaseFile();
-    baseFile.setFileName(fileDto.getName());
-    baseFile.setMimeType(fileDto.getMimeType());
-    baseFile.setAccountId(fileDto.getAccountIdentifier());
-    return baseFile;
-  }
-
   private void validateIsReferencedBy(NGFile fileOrFolder) {
     if (NGFileType.FOLDER.equals(fileOrFolder.getType())) {
-      validateFolderReferencedBy(fileOrFolder);
+      if (anyFileInFolderHasReferences(fileOrFolder)) {
+        throw new InvalidArgumentsException(format(
+            "Folder [%s], or its subfolders, contain file(s) referenced by other entities and can not be deleted.",
+            fileOrFolder.getIdentifier()));
+      }
     } else {
-      validateFileReferencedBy(fileOrFolder);
-    }
-  }
-
-  private void validateFolderReferencedBy(NGFile file) {
-    if (anyFileInFolderHasReferences(file)) {
-      throw new InvalidArgumentsException(String.format(
-          "Folder [%s], or its subfolders, contain file(s) referenced by other entities and can not be deleted.",
-          file.getIdentifier()));
-    }
-  }
-
-  private void validateFileReferencedBy(NGFile file) {
-    if (isFileReferencedByOtherEntities(file)) {
-      throw new InvalidArgumentsException(
-          String.format("File [%s] is referenced by other entities and can not be deleted.", file.getIdentifier()));
+      if (isFileReferencedByOtherEntities(fileOrFolder)) {
+        throw new InvalidArgumentsException(
+            format("File [%s] is referenced by other entities and can not be deleted.", fileOrFolder.getIdentifier()));
+      }
     }
   }
 
@@ -242,16 +238,24 @@ public class FileStoreServiceImpl implements FileStoreService {
     return childrenFiles.stream().filter(Objects::nonNull).anyMatch(this::isReferencedByOtherEntities);
   }
 
-  private boolean isFileReferencedByOtherEntities(NGFile file) {
-    // TODO: implementation is missing until all details are concluded
-    return false;
-  }
-
   private boolean isReferencedByOtherEntities(NGFile fileOrFolder) {
     if (NGFileType.FOLDER.equals(fileOrFolder.getType())) {
       return anyFileInFolderHasReferences(fileOrFolder);
     } else {
       return isFileReferencedByOtherEntities(fileOrFolder);
+    }
+  }
+
+  private boolean isFileReferencedByOtherEntities(NGFile file) {
+    // TODO: implementation is missing until all details are concluded
+    return false;
+  }
+
+  private boolean deleteFileOrFolder(NGFile fileOrFolder) {
+    if (NGFileType.FOLDER.equals(fileOrFolder.getType())) {
+      return deleteFolder(fileOrFolder);
+    } else {
+      return deleteFile(fileOrFolder);
     }
   }
 
@@ -280,21 +284,6 @@ public class FileStoreServiceImpl implements FileStoreService {
     } catch (Exception e) {
       log.error("Failed to delete file [{}].", file.getIdentifier(), e);
       return false;
-    }
-  }
-
-  private boolean deleteFileOrFolder(NGFile fileOrFolder) {
-    if (NGFileType.FOLDER.equals(fileOrFolder.getType())) {
-      return deleteFolder(fileOrFolder);
-    } else {
-      return deleteFile(fileOrFolder);
-    }
-  }
-
-  private void validateNotRootFolder(String identifier) {
-    if (FileStoreConstants.ROOT_FOLDER_IDENTIFIER.equals(identifier)) {
-      throw new InvalidArgumentsException(String.format(
-          "File or folder with identifier [%s] can not be deleted.", FileStoreConstants.ROOT_FOLDER_IDENTIFIER));
     }
   }
 }
