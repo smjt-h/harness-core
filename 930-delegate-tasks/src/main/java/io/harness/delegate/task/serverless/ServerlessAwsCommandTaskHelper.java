@@ -161,11 +161,13 @@ public class ServerlessAwsCommandTaskHelper {
         }
       }
       executionLogCallback.saveExecutionLog(
-          color(format("%n Installed all required plugins successfully."), LogColor.White, LogWeight.Bold), INFO);
+          color(format("%nInstalled all required plugins successfully..%n"), LogColor.White, LogWeight.Bold), INFO);
+    } else {
+      executionLogCallback.saveExecutionLog(
+          color(
+              format("%nSkipping plugin installation, found no plugins in config..%n"), LogColor.White, LogWeight.Bold),
+          INFO);
     }
-    executionLogCallback.saveExecutionLog(
-        color(format("%n Skipping plugin installation, found no plugins in config."), LogColor.White, LogWeight.Bold),
-        INFO);
   }
 
   public List<ServerlessAwsLambdaFunction> fetchFunctionOutputFromCloudFormationTemplate(

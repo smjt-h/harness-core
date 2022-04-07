@@ -96,10 +96,8 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
           serverlessGitFetchFileConfig, executionLogCallback, serverlessGitFetchRequest.getAccountId());
       filesFromMultipleRepo.put(serverlessGitFetchFileConfig.getIdentifier(), filesResult);
       executionLogCallback.saveExecutionLog(
-          color(format("%n Fetch Config File completed successfully."), LogColor.White, LogWeight.Bold), INFO);
-      if (serverlessGitFetchRequest.isCloseLogStream()) {
-        executionLogCallback.saveExecutionLog("Done.", INFO, CommandExecutionStatus.SUCCESS);
-      }
+          color(format("%nFetch Config File completed successfully..%n"), LogColor.White, LogWeight.Bold), INFO);
+      executionLogCallback.saveExecutionLog("Done..\n", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
       return ServerlessGitFetchResponse.builder()
           .taskStatus(TaskStatus.SUCCESS)
           .filesFromMultipleRepo(filesFromMultipleRepo)
@@ -158,7 +156,6 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
       executionLogCallback.saveExecutionLog(msg, ERROR, CommandExecutionStatus.FAILURE);
       throw e;
     }
-    executionLogCallback.saveExecutionLog("Done..\n", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
     return filesResult;
   }
 

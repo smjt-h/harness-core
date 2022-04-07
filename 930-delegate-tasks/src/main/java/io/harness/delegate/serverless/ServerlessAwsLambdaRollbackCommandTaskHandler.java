@@ -108,7 +108,7 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
         serverlessRollbackRequest.getAccountId(), executionLogCallback, serverlessDelegateTaskParams);
     executionLogCallback.saveExecutionLog("Resolving expressions in serverless config file..\n");
     serverlessTaskHelperBase.replaceManifestWithRenderedContent(serverlessDelegateTaskParams, serverlessManifestConfig);
-    executionLogCallback.saveExecutionLog(color("successfully resolved with config file content:\n", White, Bold));
+    executionLogCallback.saveExecutionLog(color("successfully resolved with config file content:", White, Bold));
     executionLogCallback.saveExecutionLog(serverlessManifestConfig.getManifestContent());
     serverlessAwsLambdaConfig = (ServerlessAwsLambdaConfig) serverlessInfraConfigHelper.createServerlessConfig(
         serverlessRollbackRequest.getServerlessInfraConfig());
@@ -117,7 +117,7 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
         serverlessDelegateTaskParams, executionLogCallback, true, timeoutInMillis);
     if (response.getCommandExecutionStatus() == CommandExecutionStatus.SUCCESS) {
       executionLogCallback.saveExecutionLog(
-          color(format("%n Config Credential command executed successfully."), LogColor.White, LogWeight.Bold), INFO);
+          color(format("%nConfig Credential command executed successfully..%n"), LogColor.White, LogWeight.Bold), INFO);
     } else {
       // todo: error handling
     }
@@ -146,12 +146,13 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
       serverlessAwsLambdaRollbackResultBuilder.rollbackTimeStamp(
           serverlessAwsLambdaRollbackConfig.getPreviousVersionTimeStamp());
       executionLogCallback.saveExecutionLog(
-          color(format("%n Rollback completed successfully."), LogColor.White, LogWeight.Bold), LogLevel.INFO,
+          color(format("%nRollback completed successfully..%n"), LogColor.White, LogWeight.Bold), LogLevel.INFO,
           CommandExecutionStatus.SUCCESS);
+      executionLogCallback.saveExecutionLog("Done..\n", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
       serverlessRollbackResponseBuilder.commandExecutionStatus(CommandExecutionStatus.SUCCESS);
     } else {
       // todo: set error message and error handling
-      executionLogCallback.saveExecutionLog(color(format("%n Rollback failed."), LogColor.Red, LogWeight.Bold),
+      executionLogCallback.saveExecutionLog(color(format("%nRollback failed..%n"), LogColor.Red, LogWeight.Bold),
           LogLevel.ERROR, CommandExecutionStatus.FAILURE);
       serverlessRollbackResponseBuilder.commandExecutionStatus(CommandExecutionStatus.FAILURE);
     }

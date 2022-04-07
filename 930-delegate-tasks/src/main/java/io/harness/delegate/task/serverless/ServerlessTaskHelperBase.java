@@ -217,7 +217,7 @@ public class ServerlessTaskHelperBase {
         + color(format("Downloading %s artifact with identifier: %s",
                     artifactoryArtifactConfig.getServerlessArtifactType(), artifactoryArtifactConfig.getIdentifier()),
             White, Bold));
-    executionLogCallback.saveExecutionLog("Artifactory Artifact Url: " + artifactPath);
+    executionLogCallback.saveExecutionLog("Artifactory Artifact Path: " + artifactPath);
     try (InputStream artifactInputStream = artifactoryNgService.downloadArtifacts(artifactoryConfigRequest,
              artifactoryArtifactConfig.getRepositoryName(), artifactMetadata, ARTIFACTORY_ARTIFACT_PATH,
              ARTIFACTORY_ARTIFACT_NAME);
@@ -230,6 +230,6 @@ public class ServerlessTaskHelperBase {
       }
       IOUtils.copy(artifactInputStream, outputStream);
     }
-    executionLogCallback.saveExecutionLog(color("Successfully downloaded artifact..", White, Bold));
+    executionLogCallback.saveExecutionLog(color("Successfully downloaded artifact..%n", White, Bold));
   }
 }

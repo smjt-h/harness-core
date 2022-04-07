@@ -14,4 +14,11 @@ import lombok.experimental.UtilityClass;
 
 @OwnedBy(HarnessTeam.CDP)
 @UtilityClass
-public class ServerlessAwsLambdaExceptionConstants {}
+public class ServerlessAwsLambdaExceptionConstants {
+  public final String CONFIG_CREDENTIAL_FAILED = "config credentials command failed";
+
+  public final String CONFIG_CREDENTIAL_FAILED_HINT = "serverless config credential command failed.";
+
+  public final String CONFIG_CREDENTIAL_FAILED_EXPLANATION = "Aws access key or Aws secret access key might be wrong, "
+      + "please check it";
+}

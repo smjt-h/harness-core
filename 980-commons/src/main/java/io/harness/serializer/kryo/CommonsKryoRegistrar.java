@@ -40,7 +40,6 @@ import io.harness.exception.KubernetesCliTaskRuntimeException;
 import io.harness.exception.KubernetesTaskException;
 import io.harness.exception.KubernetesYamlException;
 import io.harness.exception.SecretNotFoundException;
-import io.harness.exception.ServerlessCommandExecutionException;
 import io.harness.exception.ServiceNowException;
 import io.harness.exception.ShellExecutionException;
 import io.harness.exception.TerraformCommandExecutionException;
@@ -120,7 +119,6 @@ public class CommonsKryoRegistrar implements KryoRegistrar {
     kryo.register(TerraformCommandExecutionException.class, 980018);
     kryo.register(SimpleEncryption.class, 980019);
     kryo.register(KubernetesCliTaskRuntimeException.class, 980020);
-    kryo.register(ServerlessCommandExecutionException.class, 980021);
     kryo.register(ServerlessAwsLambdaRuntimeException.class, 980022);
   }
 }
