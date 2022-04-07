@@ -41,12 +41,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.validation.executable.ValidateOnExecution;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 
 @Singleton
 @OwnedBy(CDP)
 @Slf4j
+@ValidateOnExecution
 public class FileStoreServiceImpl implements FileStoreService {
   private final FileService fileService;
   private final FileStoreRepository fileStoreRepository;
@@ -61,7 +63,7 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   @Override
-  public FileDTO create(@Valid FileDTO fileDto, InputStream content) {
+  public FileDTO create(@Valid @NotNull FileDTO fileDto, InputStream content) {
     log.info("Creating {}: {}", fileDto.getType().name().toLowerCase(), fileDto);
 
     NGBaseFile baseFile = new NGBaseFile();
@@ -111,14 +113,15 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   @Override
-  public FileDTO update(@Valid FileDTO fileDto, InputStream content) {
+  public FileDTO update(@Valid @NotNull FileDTO fileDto, InputStream content) {
     // update entities in configs.files and configs.files by using fileService
     // update entity in DB by using fileStoreRepository or fileStoreRepositoryCustom
     return null;
   }
 
   @Override
-  public boolean delete(String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier) {
+  public boolean delete(
+      @NotNull String accountIdentifier, String orgIdentifier, String projectIdentifier, @NotNull String identifier) {
     // delete entities in configs.files and configs.files by using fileService
     // delete entity in DB by using fileStoreRepository or fileStoreRepositoryCustom
     return false;
