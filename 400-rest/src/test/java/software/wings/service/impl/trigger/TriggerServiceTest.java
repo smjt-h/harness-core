@@ -3355,8 +3355,8 @@ public class TriggerServiceTest extends WingsBaseTest {
     when(helmChartService.getManifestByVersionNumber(eq(ACCOUNT_ID), anyString(), anyString()))
         .thenAnswer(invocationOnMock
             -> HelmChart.builder()
-                   .uuid(HELM_CHART_ID + invocationOnMock.getArgumentAt(2, String.class))
-                   .version(invocationOnMock.getArgumentAt(2, String.class))
+                   .uuid(HELM_CHART_ID + invocationOnMock.getArgument(2, String.class))
+                   .version(invocationOnMock.getArgument(2, String.class))
                    .build());
     ApplicationManifest appManifest =
         ApplicationManifest.builder().accountId(ACCOUNT_ID).storeType(StoreType.HelmChartRepo).build();
@@ -3604,8 +3604,8 @@ public class TriggerServiceTest extends WingsBaseTest {
     when(helmChartService.getManifestByVersionNumber(eq(ACCOUNT_ID), anyString(), anyString()))
         .thenAnswer(invocationOnMock
             -> HelmChart.builder()
-                   .uuid(HELM_CHART_ID + invocationOnMock.getArgumentAt(2, String.class))
-                   .version(invocationOnMock.getArgumentAt(2, String.class))
+                   .uuid(HELM_CHART_ID + invocationOnMock.getArgument(2, String.class))
+                   .version(invocationOnMock.getArgument(2, String.class))
                    .build());
     when(applicationManifestService.getManifestByServiceId(APP_ID, SERVICE_ID + 2)).thenReturn(appManifest);
     when(applicationManifestService.getAppManifestByName(APP_ID, null, SERVICE_ID + 2, "name")).thenReturn(appManifest);

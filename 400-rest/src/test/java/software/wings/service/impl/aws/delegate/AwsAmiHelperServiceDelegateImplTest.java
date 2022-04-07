@@ -45,9 +45,9 @@ import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -860,8 +860,9 @@ public class AwsAmiHelperServiceDelegateImplTest extends WingsBaseTest {
             .newAutoScalingGroupName("newAsg")
             .infraMappingTargetGroupArns(emptyList())
             .build();
-    doThrow(Exception.class)
-        .when(awsAmiHelperServiceDelegate)
+    doAnswer(invocation -> {
+      throw new Exception();
+    }).when(awsAmiHelperServiceDelegate)
         .resizeAsgs(anyString(), any(), anyList(), anyString(), anyInt(), anyList(), any(), anyBoolean(), anyInt(),
             anyInt(), anyInt(), any(), anyList(), anyList(), anyBoolean(), anyList(), anyInt(), anyBoolean(), any(),
             anyBoolean());
@@ -908,14 +909,17 @@ public class AwsAmiHelperServiceDelegateImplTest extends WingsBaseTest {
         awsAmiHelperServiceDelegate.rollbackSwitchAmiRoutesTrafficShift(trafficShiftAlbSetupRequest);
     assertThat(awsAmiSwitchRoutesResponse.getExecutionStatus()).isEqualTo(SUCCESS);
 
-    doThrow(Exception.class)
-        .when(mockAwsAsgHelperServiceDelegate)
+    doAnswer(invocation -> {
+      throw new Exception();
+    }).when(mockAwsAsgHelperServiceDelegate)
         .clearAllScalingPoliciesForAsg(eq(awsConfig), eq(emptyList()), eq(REGION), anyString(), anyObject());
     awsAmiSwitchRoutesResponse =
         awsAmiHelperServiceDelegate.rollbackSwitchAmiRoutesTrafficShift(trafficShiftAlbSetupRequest);
     assertThat(awsAmiSwitchRoutesResponse.getExecutionStatus()).isEqualTo(FAILED);
 
-    doThrow(Exception.class).when(awsAmiHelperServiceDelegate).rollbackSwitchAmiRoutes(any(), any());
+    doAnswer(invocation -> {
+      throw new Exception();
+    }).when(awsAmiHelperServiceDelegate).rollbackSwitchAmiRoutes(any(), any());
     awsAmiSwitchRoutesResponse =
         awsAmiHelperServiceDelegate.rollbackSwitchAmiRoutesTrafficShift(trafficShiftAlbSetupRequest);
     assertThat(awsAmiSwitchRoutesResponse.getExecutionStatus()).isEqualTo(FAILED);
@@ -972,8 +976,9 @@ public class AwsAmiHelperServiceDelegateImplTest extends WingsBaseTest {
 
     trafficShiftAlbSetupRequest.setNewAsgName("newAsg");
     trafficShiftAlbSetupRequest.setNewAutoscalingGroupWeight(DEFAULT_TRAFFIC_SHIFT_WEIGHT);
-    doThrow(Exception.class)
-        .when(mockAwsElbHelperServiceDelegate)
+    doAnswer(invocation -> {
+      throw new Exception();
+    }).when(mockAwsElbHelperServiceDelegate)
         .updateRulesForAlbTrafficShift(
             eq(awsConfig), eq(REGION), eq(emptyList()), anyList(), anyObject(), anyInt(), anyString());
     awsAmiSwitchRoutesResponse = awsAmiHelperServiceDelegate.switchAmiRoutesTrafficShift(trafficShiftAlbSetupRequest);
@@ -1121,8 +1126,9 @@ public class AwsAmiHelperServiceDelegateImplTest extends WingsBaseTest {
     // Make sure, it doesnt throw an exception
     awsAmiServiceDeployRequest.setOldAutoScalingGroupName(null);
     awsAmiServiceDeployRequest.setAsgDesiredCounts(awsAmiResizeData);
-    doThrow(new InvalidRequestException(""))
-        .when(mockAwsAsgHelperServiceDelegate)
+    doAnswer(invocation -> {
+      throw new InvalidRequestException("");
+    }).when(mockAwsAsgHelperServiceDelegate)
         .listAutoScalingGroupInstances(any(), anyList(), any(), any(), anyBoolean());
     existingInstancesForOlderASG = awsAmiHelperServiceDelegate.fetchExistingInstancesForOlderASG(
         AwsConfig.builder().build(), emptyList(), awsAmiServiceDeployRequest, mockCallback);

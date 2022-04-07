@@ -39,7 +39,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @OwnedBy(HarnessTeam.PIPELINE)
 @Slf4j
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(EventMonitoringServiceImpl.class)
+//@PrepareForTest(EventMonitoringServiceImpl.class)
+@PrepareForTest(System.class)
 public class EventMonitoringServiceImplTest extends PmsCommonsTestBase {
   @Mock private MetricService metricService;
   @InjectMocks private EventMonitoringServiceImpl eventMonitoringService;

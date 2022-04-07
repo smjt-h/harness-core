@@ -286,12 +286,16 @@ public class WatcherServiceImplTest extends CategoryTest {
         RestResponse.Builder.aRestResponse().withResource(delegateConfiguration).build();
     HTimeLimiterMocker.mockCallInterruptible(timeLimiter, ofSeconds(15)).thenReturn(restResponse);
     ExecutionException ioException = new ExecutionException(new IOException("test"));
-    HTimeLimiterMocker.mockCallInterruptible(timeLimiter, ofMinutes(1)).thenThrow(ioException);
+    HTimeLimiterMocker.mockCallInterruptible(timeLimiter, ofMinutes(1)).thenAnswer(invocation -> {
+      throw ioException;
+    });
 
     boolean downloadSuccesful = watcherService.downloadRunScriptsBeforeRestartingDelegateAndWatcher();
     assertThat(downloadSuccesful).isFalse();
 
-    HTimeLimiterMocker.mockCallInterruptible(timeLimiter, ofMinutes(1)).thenThrow(Exception.class);
+    HTimeLimiterMocker.mockCallInterruptible(timeLimiter, ofMinutes(1)).thenAnswer(invocation -> {
+      throw new Exception();
+    });
     downloadSuccesful = watcherService.downloadRunScriptsBeforeRestartingDelegateAndWatcher();
     assertThat(downloadSuccesful).isFalse();
   }

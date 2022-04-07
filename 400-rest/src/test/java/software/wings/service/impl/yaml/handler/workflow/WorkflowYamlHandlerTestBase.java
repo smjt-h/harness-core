@@ -173,9 +173,9 @@ public abstract class WorkflowYamlHandlerTestBase extends YamlHandlerTestBase {
 
     when(serviceResourceService.getDeploymentType(any(), any(), any())).thenReturn(DeploymentType.KUBERNETES);
     when(userGroupService.fetchUserGroupByName(anyString(), any()))
-        .thenAnswer(invocation -> UserGroup.builder().uuid(invocation.getArgumentAt(1, String.class)).build());
+        .thenAnswer(invocation -> UserGroup.builder().uuid(invocation.getArgument(1, String.class)).build());
     when(userGroupService.get(anyString()))
-        .thenAnswer(invocation -> UserGroup.builder().name(invocation.getArgumentAt(0, String.class)).build());
+        .thenAnswer(invocation -> UserGroup.builder().name(invocation.getArgument(0, String.class)).build());
   }
 
   private InfrastructureMapping getInfraMapping() {

@@ -491,7 +491,7 @@ public class HelmDeployStateTest extends CategoryTest {
     when(applicationManifestService.getAppManifest(APP_ID, null, SERVICE_ID, AppManifestKind.K8S_MANIFEST))
         .thenReturn(applicationManifest);
     when(gitFileConfigHelperService.renderGitFileConfig(any(), any()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(1, GitFileConfig.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(1, GitFileConfig.class));
     when(settingsService.fetchGitConfigFromConnectorId(GIT_CONNECTOR_ID)).thenReturn(GitConfig.builder().build());
     ExecutionResponse executionResponse = helmDeployState.execute(context);
     assertStateExecutionResponse(executionResponse);
@@ -1656,7 +1656,7 @@ public class HelmDeployStateTest extends CategoryTest {
     String yamlFileContent = "tag: ${DOCKER_IMAGE_TAG}\nimage: ${DOCKER_IMAGE_NAME}";
     //    ImageDetails imageDetails = ImageDetails.builder().tag("Tag").name("Image").domainName("domain").build();
     doAnswer(invocation -> {
-      Map values = invocation.getArgumentAt(1, Map.class);
+      Map values = invocation.getArgument(1, Map.class);
       values.put(ServiceOverride, singletonList(yamlFileContent));
       return null;
     })
@@ -1675,7 +1675,7 @@ public class HelmDeployStateTest extends CategoryTest {
     String yamlFileContent = "tag: ${DOCKER_IMAGE_TAG}\nimage: ${DOCKER_IMAGE_NAME}";
     ImageDetails imageDetails = ImageDetails.builder().tag("Tag").name("Image").domainName("domain").build();
     doAnswer(invocation -> {
-      Map values = invocation.getArgumentAt(1, Map.class);
+      Map values = invocation.getArgument(1, Map.class);
       values.put(ServiceOverride, singletonList(yamlFileContent));
       return null;
     })
@@ -1694,7 +1694,7 @@ public class HelmDeployStateTest extends CategoryTest {
     String yamlFileContent = "tag: ${DOCKER_IMAGE_TAG}\nimage: domain/${DOCKER_IMAGE_NAME}";
     ImageDetails imageDetails = ImageDetails.builder().tag("Tag").name("Image").domainName("domain").build();
     doAnswer(invocation -> {
-      Map values = invocation.getArgumentAt(1, Map.class);
+      Map values = invocation.getArgument(1, Map.class);
       values.put(ServiceOverride, singletonList(yamlFileContent));
       return null;
     })
@@ -1748,7 +1748,7 @@ public class HelmDeployStateTest extends CategoryTest {
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void testCreateActivityWithBuildOrchestrationWorkflowType() {
-    doAnswer(invocation -> invocation.getArgumentAt(0, Activity.class)).when(activityService).save(any(Activity.class));
+    doAnswer(invocation -> invocation.getArgument(0, Activity.class)).when(activityService).save(any(Activity.class));
     on(stateExecutionInstance).set("orchestrationWorkflowType", OrchestrationWorkflowType.BUILD);
     Activity activity = helmDeployState.createActivity(context, emptyList());
     assertThat(activity.getEnvironmentId()).isEqualTo(GLOBAL_ENV_ID);
@@ -1760,7 +1760,7 @@ public class HelmDeployStateTest extends CategoryTest {
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void testCreateActivityWithInstanceElementDetails() {
-    doAnswer(invocation -> invocation.getArgumentAt(0, Activity.class)).when(activityService).save(any(Activity.class));
+    doAnswer(invocation -> invocation.getArgument(0, Activity.class)).when(activityService).save(any(Activity.class));
     ServiceTemplateElement serviceTemplateElement =
         ServiceTemplateElement.Builder.aServiceTemplateElement()
             .withUuid("templateId")

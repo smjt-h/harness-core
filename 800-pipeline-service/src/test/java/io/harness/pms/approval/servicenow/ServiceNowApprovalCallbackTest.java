@@ -106,7 +106,7 @@ public class ServiceNowApprovalCallbackTest extends CategoryTest {
 
     instance.setDeadline(Long.MAX_VALUE);
     when(ngErrorHelper.getErrorSummary(any()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
     when(ServiceNowCriteriaEvaluator.evaluateCriteria(any(), any())).thenReturn(false);
     serviceNowApprovalCallback.push(response);
     verify(approvalInstanceService).finalizeStatus(approvalInstanceId, ApprovalStatus.EXPIRED);

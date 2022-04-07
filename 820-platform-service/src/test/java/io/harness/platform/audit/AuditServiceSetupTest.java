@@ -42,7 +42,7 @@ public class AuditServiceSetupTest extends CategoryTest {
   @Mock Environment environment;
   @Mock JerseyEnvironment jerseyEnvironment;
   @Mock Injector injector;
-  AuditServiceSetup auditServiceSetup;
+  @Mock AuditServiceSetup auditServiceSetup;
 
   @Captor ArgumentCaptor<AuditOpenApiResource> auditOpenApiResourceArgumentCaptor;
 
@@ -52,7 +52,6 @@ public class AuditServiceSetupTest extends CategoryTest {
     when(injector.getInstance(AuditOpenApiResource.class)).thenReturn(new AuditOpenApiResource());
     when(environment.jersey()).thenReturn(jerseyEnvironment);
     doNothing().when(jerseyEnvironment).register(anyObject());
-    auditServiceSetup = new AuditServiceSetup();
   }
 
   @Test

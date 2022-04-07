@@ -25,8 +25,12 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 
 @Slf4j
+@PowerMockIgnore({"javax.management.*", "com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "org.w3c.dom.*",
+        "com.sun.org.apache.xalan.*", "javax.activation.*", "jdk.internal.reflect.*", "javax.net.ssl.*",
+        "javax.management.*", "javax.crypto.JceSecurity.*", "javax.crypto.*"})
 public class CategoryTest {
   @ClassRule public static ThreadRule threadRule = new ThreadRule();
 

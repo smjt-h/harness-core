@@ -836,7 +836,7 @@ public class K8sBlueGreenDeployTaskHandlerTest extends CategoryTest {
         .getHelmChartDetails(manifestConfig, Paths.get(".", MANIFEST_FILES_DIR).toString());
     doAnswer(invocation
         -> K8sTaskExecutionResponse.builder()
-               .k8sTaskResponse(invocation.getArgumentAt(0, K8sBlueGreenDeployResponse.class))
+               .k8sTaskResponse(invocation.getArgument(0, K8sBlueGreenDeployResponse.class))
                .build())
         .when(k8sTaskHelper)
         .getK8sTaskExecutionResponse(any(K8sTaskResponse.class), any(CommandExecutionStatus.class));
@@ -897,7 +897,7 @@ public class K8sBlueGreenDeployTaskHandlerTest extends CategoryTest {
 
     doAnswer(invocation
         -> K8sTaskExecutionResponse.builder()
-               .k8sTaskResponse(invocation.getArgumentAt(0, K8sBlueGreenDeployResponse.class))
+               .k8sTaskResponse(invocation.getArgument(0, K8sBlueGreenDeployResponse.class))
                .build())
         .when(k8sTaskHelper)
         .getK8sTaskExecutionResponse(any(K8sTaskResponse.class), any(CommandExecutionStatus.class));

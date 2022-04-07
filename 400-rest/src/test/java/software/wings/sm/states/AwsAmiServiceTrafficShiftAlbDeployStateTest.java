@@ -32,9 +32,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.joor.Reflect.on;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -152,7 +152,9 @@ public class AwsAmiServiceTrafficShiftAlbDeployStateTest extends WingsBaseTest {
             .delegateMetaInfo(DelegateMetaInfo.builder().build())
             .instancesAdded(Collections.singletonList(new Instance()))
             .build();
-    doThrow(Exception.class).when(state.awsAmiServiceHelper).populateAlbTrafficShiftSetupData(any());
+    doAnswer(invocation -> {
+      throw new Exception();
+    }).when(state.awsAmiServiceHelper).populateAlbTrafficShiftSetupData(any());
     ExecutionResponse response =
         state.handleAsyncResponse(mockContext, ImmutableMap.of(ACTIVITY_ID, amiServiceDeployResponse));
     assertThat(response).isNotNull();
@@ -255,7 +257,9 @@ public class AwsAmiServiceTrafficShiftAlbDeployStateTest extends WingsBaseTest {
     doReturn(false).when(featureFlagService).isEnabled(any(), anyString());
 
     if (!isSuccess) {
-      doThrow(Exception.class).when(delegateService).queueTask(any());
+      doAnswer(invocation -> {
+        throw new Exception();
+      }).when(delegateService).queueTask(any());
     }
 
     AwsAmiDeployStateExecutionData awsAmiDeployStateExecutionData = AwsAmiDeployStateExecutionData.builder().build();

@@ -24,6 +24,7 @@ import static io.harness.rule.OwnerRule.TMACARI;
 import static io.harness.rule.OwnerRule.VAIBHAV_SI;
 import static io.harness.rule.OwnerRule.YOGESH;
 
+import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
 import static software.wings.beans.CGConstants.GLOBAL_ENV_ID;
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
@@ -53,7 +54,6 @@ import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.doAnswer;
@@ -189,13 +189,13 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
   @InjectMocks private TerraformProvisionState state = new ApplyTerraformProvisionState("tf");
   @InjectMocks private TerraformProvisionState destroyProvisionState = new DestroyTerraformProvisionState("tf");
 
-  private final Answer<String> answer = invocation -> invocation.getArgumentAt(0, String.class) + "-rendered";
+  private final Answer<String> answer = invocation -> invocation.getArgument(0, String.class) + "-rendered";
 
   @Before
   public void setup() {
     BiFunction<String, Collector, Answer> extractVariablesOfType = (type, collector) -> {
       return invocation -> {
-        List<NameValuePair> input = invocation.getArgumentAt(0, List.class);
+        List<NameValuePair> input = invocation.getArgument(0, List.class);
         return input.stream()
             .filter(value -> value.getValue() != null)
             .filter(value -> type.equals(value.getValueType()))
@@ -206,7 +206,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
         extractVariablesOfType.apply("TEXT", toMap(NameValuePair::getName, NameValuePair::getValue));
     Answer doExtractEncryptedVariables = extractVariablesOfType.apply("ENCRYPTED_TEXT",
         toMap(NameValuePair::getName, entry -> EncryptedDataDetail.builder().fieldName(entry.getName()).build()));
-    Answer<String> doReturnSameValue = invocation -> invocation.getArgumentAt(0, String.class);
+    Answer<String> doReturnSameValue = invocation -> invocation.getArgument(0, String.class);
 
     doReturn(Activity.builder().uuid("uuid").build()).when(activityService).save(any(Activity.class));
     doAnswer(doExtractTextVariables)
@@ -501,7 +501,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
     doReturn(provisioner).when(infrastructureProvisionerService).get(APP_ID, PROVISIONER_ID);
     doReturn("taskId").when(delegateService).queueTask(any(DelegateTask.class));
     doReturn(gitConfig).when(gitUtilsManager).getGitConfig(anyString());
-    doAnswer(invocation -> invocation.getArgumentAt(0, String.class) + "-rendered")
+    doAnswer(invocation -> invocation.getArgument(0, String.class) + "-rendered")
         .when(executionContext)
         .renderExpression(anyString());
     ExecutionResponse response = destroyProvisionState.execute(executionContext);

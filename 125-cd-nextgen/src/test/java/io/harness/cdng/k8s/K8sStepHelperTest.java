@@ -214,7 +214,7 @@ public class K8sStepHelperTest extends CategoryTest {
     doReturn(true)
         .when(cdFeatureFlagHelper)
         .isEnabled(AmbianceUtils.getAccountId(ambiance), FeatureName.USE_LATEST_CHARTMUSEUM_VERSION);
-    doAnswer(invocation -> invocation.getArgumentAt(1, String.class))
+    doAnswer(invocation -> invocation.getArgument(1, String.class))
         .when(engineExpressionService)
         .renderExpression(eq(ambiance), anyString());
   }

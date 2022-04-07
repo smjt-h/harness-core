@@ -20,9 +20,9 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 
@@ -229,7 +229,9 @@ public class AzureWebAppSlotShiftTrafficTest extends WingsBaseTest {
       return (String) args[0];
     });
     if (!isSuccess) {
-      doThrow(Exception.class).when(delegateService).queueTask(any());
+      doAnswer(invocation -> {
+        throw new Exception();
+      }).when(delegateService).queueTask(any());
     }
     state.setTrafficWeightExpr("20");
     return mockContext;

@@ -18,9 +18,9 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -137,7 +137,9 @@ public class AzureVMSSRollbackStateTest extends WingsBaseTest {
     SweepingOutputInquiryBuilder sweepingOutputInquiryBuilder = SweepingOutputInquiry.builder();
     when(context.prepareSweepingOutputInquiryBuilder()).thenReturn(sweepingOutputInquiryBuilder);
 
-    doThrow(Exception.class).when(sweepingOutputService).findSweepingOutput(any());
+    doAnswer(invocation -> {
+      throw new Exception();
+    }).when(sweepingOutputService).findSweepingOutput(any());
     assertThatThrownBy(() -> rollbackState.execute(context)).isInstanceOf(InvalidRequestException.class);
   }
 
@@ -150,7 +152,9 @@ public class AzureVMSSRollbackStateTest extends WingsBaseTest {
     SweepingOutputInquiryBuilder sweepingOutputInquiryBuilder = SweepingOutputInquiry.builder();
     when(context.prepareSweepingOutputInquiryBuilder()).thenReturn(sweepingOutputInquiryBuilder);
 
-    doThrow(WingsException.class).when(sweepingOutputService).findSweepingOutput(any());
+    doAnswer(invocation -> {
+      throw new WingsException("");
+    }).when(sweepingOutputService).findSweepingOutput(any());
     rollbackState.execute(context);
   }
 
@@ -194,11 +198,15 @@ public class AzureVMSSRollbackStateTest extends WingsBaseTest {
     rollbackState.handleAsyncResponse(context, responseMap);
     verify(rollbackState, times(1)).markAllPhaseRollbackDone(context);
 
-    doThrow(Exception.class).when(sweepingOutputService).save(any());
+    doAnswer(invocation -> {
+      throw new Exception();
+    }).when(sweepingOutputService).save(any());
     assertThatThrownBy(() -> rollbackState.handleAsyncResponse(context, responseMap))
         .isInstanceOf(InvalidRequestException.class);
 
-    doThrow(WingsException.class).when(sweepingOutputService).save(any());
+    doAnswer(invocation -> {
+      throw new WingsException("");
+    }).when(sweepingOutputService).save(any());
     assertThatThrownBy(() -> rollbackState.handleAsyncResponse(context, responseMap))
         .isInstanceOf(WingsException.class);
   }

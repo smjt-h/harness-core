@@ -48,6 +48,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import retrofit2.Call;
@@ -55,6 +56,7 @@ import retrofit2.Call;
 @OwnedBy(HarnessTeam.PIPELINE)
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({SafeHttpCall.class})
+@PowerMockIgnore({"com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "javax.management.*"})
 public class RemoteSchemaGetterTest {
   private YamlSchemaClient schemaClient;
   private RemoteSchemaGetter remoteSchemaGetter;

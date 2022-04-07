@@ -772,7 +772,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testFillSweepingOutput() {
     when(context.renderExpression(anyString(), any(StateExecutionContext.class)))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
     when(context.prepareSweepingOutputBuilder(any())).thenReturn(SweepingOutputInstance.builder());
     Reflect.on(approvalState).set("kryoSerializer", kryoSerializer);
     approvalState.setSweepingOutputName("test");
@@ -787,7 +787,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testExecuteJiraApprovalFailure() {
     when(context.renderExpression(anyString()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
 
     ApprovalStateParams approvalStateParams = new ApprovalStateParams();
     JiraApprovalParams jiraApprovalParams = new JiraApprovalParams();
@@ -817,7 +817,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   public void testExecuteJiraApprovalIfAlreadyApproved() {
     String approvalValue = "DONE";
     when(context.renderExpression(anyString()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
     when(jiraHelperService.fetchIssue(any(), any(), any(), any()))
         .thenReturn(JiraExecutionData.builder().currentStatus(approvalValue).build());
 
@@ -841,7 +841,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   public void testExecuteJiraApprovalIfAlreadyRejected() {
     String rejectionValue = "REJECTED";
     when(context.renderExpression(anyString()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
     when(jiraHelperService.fetchIssue(any(), any(), any(), any()))
         .thenReturn(JiraExecutionData.builder().currentStatus(rejectionValue).build());
 
@@ -864,7 +864,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testExecuteJiraApprovalWithPollingService() {
     when(context.renderExpression(anyString()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
     when(jiraHelperService.fetchIssue(any(), any(), any(), any()))
         .thenReturn(JiraExecutionData.builder().currentStatus("TODO").build());
 
@@ -892,7 +892,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testExecuteSnowApprovalFailure() {
     when(context.renderExpression(anyString()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
 
     ApprovalStateParams approvalStateParams = new ApprovalStateParams();
     ServiceNowApprovalParams serviceNowApprovalParams = ServiceNowApprovalParams.builder().issueNumber("${a}").build();
@@ -913,7 +913,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   public void testExecuteSnowApprovalIfAlreadyApprovedWithMultipleValues() {
     String approvalValue = "Approved";
     when(context.renderExpression(anyString()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
     when(serviceNowService.getIssueUrl(anyString(), anyString(), any()))
         .thenReturn(ServiceNowExecutionData.builder()
                         .currentState(SERVICENOW_STATE)
@@ -944,7 +944,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   public void testExecuteSnowApprovalIfAlreadyRejectedWithMultipleANDConditions() {
     String approvalValue = "Approved";
     when(context.renderExpression(anyString()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
     when(serviceNowService.getIssueUrl(anyString(), anyString(), any()))
         .thenReturn(ServiceNowExecutionData.builder()
                         .currentState(SERVICENOW_STATE)
@@ -980,7 +980,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testExecuteSnowApprovalIfAlreadyRejectedWithMultipleORConditions() {
     when(context.renderExpression(anyString()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
     Date todayDate = new Date(System.currentTimeMillis());
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     when(serviceNowService.getIssueUrl(anyString(), anyString(), any()))
@@ -1024,7 +1024,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testExecuteSnowApprovalPausedIfConditionsNotMet() {
     when(context.renderExpression(anyString()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
     when(serviceNowService.getIssueUrl(anyString(), anyString(), any()))
         .thenReturn(ServiceNowExecutionData.builder()
                         .currentState(SERVICENOW_STATE)
@@ -1060,7 +1060,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldApproveSnowApprovalIfBothCriteriaMet() {
     when(context.renderExpression(anyString()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
     when(serviceNowService.getIssueUrl(anyString(), anyString(), any()))
         .thenReturn(ServiceNowExecutionData.builder()
                         .currentState(SERVICENOW_STATE)
@@ -1097,7 +1097,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   public void testExecuteSnowApprovalIfAlreadyRejected() {
     String rejectionValue = "REJECTED";
     when(context.renderExpression(anyString()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
     when(serviceNowService.getIssueUrl(anyString(), anyString(), any()))
         .thenReturn(ServiceNowExecutionData.builder()
                         .currentStatus(Collections.singletonMap(SERVICENOW_STATE, rejectionValue))
@@ -1128,7 +1128,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testExecuteSnowApprovalWithPollingServiceWithApprovalField() {
     when(context.renderExpression(anyString()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
     when(serviceNowService.getIssueUrl(anyString(), anyString(), any()))
         .thenReturn(ServiceNowExecutionData.builder()
                         .currentStatus(Collections.singletonMap(SERVICENOW_STATE, "REQUESTED"))
@@ -1161,7 +1161,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testExecuteSnowApprovalWithChangeWindow() {
     when(context.renderExpression(anyString()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
     Date todayDate = new Date(System.currentTimeMillis());
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     when(serviceNowService.getIssueUrl(anyString(), anyString(), any()))
@@ -1203,7 +1203,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testExecuteSnowApprovalWithChangeWindowNullValues() {
     when(context.renderExpression(anyString()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
     Date todayDate = new Date(System.currentTimeMillis());
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     when(serviceNowService.getIssueUrl(anyString(), anyString(), any()))
@@ -1259,7 +1259,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testExecuteSnowApprovalWithChangeWindowNotSatisfied() {
     when(context.renderExpression(anyString()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0, String.class));
     Date todayDate = new Date(System.currentTimeMillis());
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     when(serviceNowService.getIssueUrl(anyString(), anyString(), any()))

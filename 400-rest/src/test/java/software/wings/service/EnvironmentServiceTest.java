@@ -183,7 +183,7 @@ public class EnvironmentServiceTest extends WingsBaseTest {
   @Inject @InjectMocks private EnvironmentService environmentService;
   @Inject @InjectMocks private ResourceLookupService resourceLookupService;
 
-  @Spy @InjectMocks private EnvironmentServiceImpl spyEnvService = new EnvironmentServiceImpl();
+  @Mock private EnvironmentServiceImpl spyEnvService;
 
   @Mock private BackgroundJobScheduler jobScheduler;
   @Mock private HQuery<Environment> query;

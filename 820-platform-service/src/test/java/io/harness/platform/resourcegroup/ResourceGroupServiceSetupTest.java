@@ -43,7 +43,7 @@ public class ResourceGroupServiceSetupTest extends CategoryTest {
   @Mock Environment environment;
   @Mock JerseyEnvironment jerseyEnvironment;
   @Mock Injector injector;
-  ResourceGroupServiceSetup resourceGroupServiceSetup;
+  @Mock ResourceGroupServiceSetup resourceGroupServiceSetup;
   @Captor ArgumentCaptor<ResourceGroupOpenApiResource> resourceGroupOpenApiResourceArgumentCaptor;
 
   @Before
@@ -52,7 +52,6 @@ public class ResourceGroupServiceSetupTest extends CategoryTest {
     when(injector.getInstance(ResourceGroupOpenApiResource.class)).thenReturn(new ResourceGroupOpenApiResource());
     when(environment.jersey()).thenReturn(jerseyEnvironment);
     doNothing().when(jerseyEnvironment).register(anyObject());
-    resourceGroupServiceSetup = new ResourceGroupServiceSetup();
   }
 
   @Test

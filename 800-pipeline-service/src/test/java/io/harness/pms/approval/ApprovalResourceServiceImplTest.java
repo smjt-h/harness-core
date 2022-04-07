@@ -57,12 +57,15 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.core.classloader.annotations.PrepareForTest;
 import retrofit2.Call;
 import retrofit2.Response;
 
 @RunWith(PowerMockRunner.class)
+@PowerMockIgnore({"javax.management.*", "com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "org.w3c.dom.*",
+        "com.sun.org.apache.xalan.*", "javax.activation.*", "jdk.internal.reflect.*"})
 @OwnedBy(PIPELINE)
 @PrepareForTest(NGRestUtils.class)
 public class ApprovalResourceServiceImplTest extends CategoryTest {

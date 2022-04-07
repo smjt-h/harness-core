@@ -16,7 +16,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.reset;
 
 import io.harness.CategoryTest;
@@ -90,7 +90,9 @@ public class PcfCreatePcfResourceCommandTaskHandlerTest extends CategoryTest {
             .timeoutIntervalInMin(10)
             .build();
     List<EncryptedDataDetail> encryptedDataDetails = Collections.emptyList();
-    doThrow(Exception.class)
+    doAnswer(invocation -> {
+      throw new Exception();
+    })
         .when(pcfDeploymentManager)
         .createRouteMap(
             any(CfRequestConfig.class), anyString(), anyString(), anyString(), anyBoolean(), anyBoolean(), anyInt());

@@ -95,10 +95,10 @@ public class ErrorTrackingDashboardServiceImplTest extends CvNextGenTestBase {
     FieldUtils.writeField(errorTrackingDashboardService, "cvConfigService", mockCvConfigService, true);
     FieldUtils.writeField(errorTrackingDashboardService, "verificationTaskService", mockVerificationTaskService, true);
     when(mockVerificationTaskService.getServiceGuardVerificationTaskId(anyString(), anyString()))
-        .thenAnswer(invocation -> invocation.getArgumentAt(1, String.class));
+        .thenAnswer(invocation -> invocation.getArgument(1, String.class));
 
     when(mockVerificationTaskService.createLiveMonitoringVerificationTask(anyString(), anyString(), any()))
-        .thenAnswer(invocation -> invocation.getArgumentAt(1, String.class));
+        .thenAnswer(invocation -> invocation.getArgument(1, String.class));
   }
 
   @Test
