@@ -21,23 +21,48 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class FileDTOMapper {
   public NGFile getNGFileFromDTO(FileDTO fileDto) {
+    if (fileDto.isFolder()) {
+      return NGFile.builder()
+          .accountIdentifier(fileDto.getAccountIdentifier())
+          .orgIdentifier(fileDto.getOrgIdentifier())
+          .projectIdentifier(fileDto.getProjectIdentifier())
+          .identifier(fileDto.getIdentifier())
+          .parentIdentifier(fileDto.getParentIdentifier())
+          .fileName(fileDto.getName())
+          .type(fileDto.getType())
+          .build();
+    }
+
     return NGFile.builder()
         .accountIdentifier(fileDto.getAccountIdentifier())
         .orgIdentifier(fileDto.getOrgIdentifier())
         .projectIdentifier(fileDto.getProjectIdentifier())
         .identifier(fileDto.getIdentifier())
+        .fileName(fileDto.getName())
         .fileUsage(fileDto.getFileUsage())
         .type(fileDto.getType())
         .parentIdentifier(fileDto.getParentIdentifier())
         .description(fileDto.getDescription())
         .tags(!EmptyPredicate.isEmpty(fileDto.getTags()) ? fileDto.getTags() : Collections.emptyList())
-        .entityId(fileDto.getEntityId())
         .entityType(fileDto.getEntityType())
-        .fileName(fileDto.getName())
+        .entityId(fileDto.getEntityId())
+        .mimeType(fileDto.getMimeType())
         .build();
   }
 
   public FileDTO getFileDTOFromNGFile(NGFile ngFile) {
+    if (ngFile.isFolder()) {
+      return FileDTO.builder()
+          .accountIdentifier(ngFile.getAccountIdentifier())
+          .orgIdentifier(ngFile.getOrgIdentifier())
+          .projectIdentifier(ngFile.getProjectIdentifier())
+          .identifier(ngFile.getIdentifier())
+          .name(ngFile.getFileName())
+          .type(ngFile.getType())
+          .parentIdentifier(ngFile.getParentIdentifier())
+          .build();
+    }
+
     return FileDTO.builder()
         .accountIdentifier(ngFile.getAccountIdentifier())
         .orgIdentifier(ngFile.getOrgIdentifier())
@@ -51,6 +76,7 @@ public class FileDTOMapper {
         .tags(ngFile.getTags())
         .entityType(ngFile.getEntityType())
         .entityId(ngFile.getEntityId())
+        .mimeType(ngFile.getMimeType())
         .build();
   }
 

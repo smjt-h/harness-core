@@ -36,6 +36,8 @@ import io.harness.file.beans.NGBaseFile;
 import io.harness.filestore.FileStoreConstants;
 import io.harness.ng.core.dto.filestore.FileDTO;
 import io.harness.ng.core.dto.filestore.NGFileType;
+import io.harness.ng.core.dto.filestore.node.FileNodeDTO;
+import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 import io.harness.ng.core.entities.NGFile;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
 import io.harness.rule.Owner;
@@ -66,6 +68,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
   public static final String PROJECT_IDENTIFIER = "projectIdentifier";
   public static final String IDENTIFIER = "identifier";
   public static final String FILE_IDENTIFIER = "fileIdentifier";
+  public static final String FILE_NAME = "fileName";
 
   @Mock private FileStoreRepository fileStoreRepository;
   @Mock private FileService fileService;
@@ -117,7 +120,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
     assertThatThrownBy(
         () -> fileStoreService.downloadFile(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, null))
         .isInstanceOf(InvalidArgumentsException.class)
-        .hasMessageContaining("File identifier cannot be empty");
+        .hasMessageContaining("File identifier cannot be null or empty");
   }
 
   @Test
@@ -432,7 +435,47 @@ public class FileStoreServiceImplTest extends CategoryTest {
     assertThatThrownBy(
         () -> fileStoreService.delete(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, rootIdentifier))
         .isInstanceOf(InvalidArgumentsException.class)
-        .hasMessage("File or folder with identifier [" + rootIdentifier + "] can not be deleted.");
+        .hasMessage("Root folder [Root] can not be deleted.");
+  }
+
+  @Test
+  @Owner(developers = IVAN)
+  @Category(UnitTests.class)
+  public void testListFolderNodes() {
+    FolderNodeDTO folderNodeDTO =
+        FolderNodeDTO.builder().folderIdentifier(FILE_IDENTIFIER).folderName(FILE_NAME).build();
+    when(fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndParentIdentifier(
+             ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, FILE_IDENTIFIER))
+        .thenReturn(Arrays.asList(NGFile.builder()
+                                      .type(NGFileType.FOLDER)
+                                      .fileName("folderName1")
+                                      .identifier("folderIdentifier1")
+                                      .parentId(FILE_IDENTIFIER)
+                                      .build(),
+            NGFile.builder()
+                .type(NGFileType.FOLDER)
+                .fileName("folderName2")
+                .identifier("folderIdentifier2")
+                .parentId(FILE_IDENTIFIER)
+                .build(),
+            NGFile.builder()
+                .type(NGFileType.FILE)
+                .fileName("fileName")
+                .identifier("fileIdentifier")
+                .parentId(FILE_IDENTIFIER)
+                .build()));
+
+    FolderNodeDTO populatedFolderNodeDTO =
+        fileStoreService.listFolderNodes(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, folderNodeDTO);
+
+    assertThat(populatedFolderNodeDTO).isNotNull();
+    assertThat(populatedFolderNodeDTO.getFolderName()).isEqualTo(FILE_NAME);
+    assertThat(populatedFolderNodeDTO.getFolderIdentifier()).isEqualTo(FILE_IDENTIFIER);
+    assertThat(populatedFolderNodeDTO.getChildren().size()).isEqualTo(3);
+    assertThat(populatedFolderNodeDTO.getChildren())
+        .contains(FileNodeDTO.builder().fileName("fileName").fileIdentifier("fileIdentifier").build(),
+            FolderNodeDTO.builder().folderName("folderName1").folderIdentifier("folderIdentifier1").build(),
+            FolderNodeDTO.builder().folderName("folderName2").folderIdentifier("folderIdentifier2").build());
   }
 
   private static FileDTO aFileDto() {

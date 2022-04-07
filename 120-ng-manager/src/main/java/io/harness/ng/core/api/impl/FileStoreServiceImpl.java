@@ -89,10 +89,34 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   @Override
+  public FileDTO update(@NotNull FileDTO fileDto, InputStream content, @NotNull String identifier) {
+    if (isEmpty(identifier)) {
+      throw new InvalidArgumentsException("File identifier cannot be empty");
+    }
+
+    NGFile existingFile =
+        fileStoreRepository
+            .findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
+                fileDto.getAccountIdentifier(), fileDto.getOrgIdentifier(), fileDto.getProjectIdentifier(), identifier)
+            .orElseThrow(() -> new IllegalArgumentException(format("File with identifier: %s not found.", identifier)));
+
+    FileDTOMapper.updateNGFile(fileDto, existingFile);
+    if (content != null && fileDto.isFile()) {
+      log.info("Start updating file in file system, identifier: {}", identifier);
+      saveFile(fileDto, existingFile, content);
+    }
+    fileStoreRepository.save(existingFile);
+    return FileDTOMapper.getFileDTOFromNGFile(existingFile);
+  }
+
+  @Override
   public File downloadFile(@NotNull String accountIdentifier, String orgIdentifier, String projectIdentifier,
       @NotNull String fileIdentifier) {
     if (isEmpty(fileIdentifier)) {
-      throw new InvalidArgumentsException("File identifier cannot be empty");
+      throw new InvalidArgumentsException("File identifier cannot be null or empty");
+    }
+    if (isEmpty(accountIdentifier)) {
+      throw new InvalidArgumentsException("Account identifier cannot be null or empty");
     }
 
     Optional<NGFile> ngFileOpt =
@@ -113,27 +137,17 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   @Override
-  public FileDTO update(@NotNull FileDTO fileDto, InputStream content, String identifier) {
-    NGFile existingFile =
-        fileStoreRepository
-            .findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
-                fileDto.getAccountIdentifier(), fileDto.getOrgIdentifier(), fileDto.getProjectIdentifier(), identifier)
-            .orElseThrow(() -> new IllegalArgumentException(format("File with identifier: %s not found.", identifier)));
-
-    FileDTOMapper.updateNGFile(fileDto, existingFile);
-    if (content != null && fileDto.isFile()) {
-      log.info("Start updating file in file system, identifier: {}", identifier);
-      saveFile(fileDto, existingFile, content);
+  public boolean delete(
+      @NotNull String accountIdentifier, String orgIdentifier, String projectIdentifier, @NotNull String identifier) {
+    if (isEmpty(identifier)) {
+      throw new InvalidArgumentsException("File identifier cannot be empty");
     }
-    fileStoreRepository.save(existingFile);
-    return FileDTOMapper.getFileDTOFromNGFile(existingFile);
-  }
-
-  @Override
-  public boolean delete(String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier) {
+    if (isEmpty(accountIdentifier)) {
+      throw new InvalidArgumentsException("Account identifier cannot be null or empty");
+    }
     if (FileStoreConstants.ROOT_FOLDER_IDENTIFIER.equals(identifier)) {
       throw new InvalidArgumentsException(
-          format("File or folder with identifier [%s] can not be deleted.", FileStoreConstants.ROOT_FOLDER_IDENTIFIER));
+          format("Root folder [%s] can not be deleted.", FileStoreConstants.ROOT_FOLDER_IDENTIFIER));
     }
 
     IdentifierRef identifierRef =
@@ -174,8 +188,12 @@ public class FileStoreServiceImpl implements FileStoreService {
   private void saveFile(FileDTO fileDto, NGFile ngFile, @NotNull InputStream content) {
     BoundedInputStream fileContent =
         new BoundedInputStream(content, configuration.getFileUploadLimits().getFileStoreFileLimit());
-    fileService.saveFile(getNgBaseFile(fileDto), fileContent, FILE_STORE);
+    NGBaseFile ngBaseFile = getNgBaseFile(fileDto);
+    fileService.saveFile(ngBaseFile, fileContent, FILE_STORE);
     ngFile.setSize(fileContent.getTotalBytesRead());
+    ngFile.setFileUuid(ngBaseFile.getFileUuid());
+    ngFile.setChecksumType(ngBaseFile.getChecksumType());
+    ngFile.setChecksum(ngBaseFile.getChecksum());
   }
 
   private NGBaseFile getNgBaseFile(FileDTO fileDto) {

@@ -7,9 +7,12 @@
 
 package io.harness.ng.core.remote;
 
+import static io.harness.NGCommonEntityConstants.ACCOUNT_KEY;
 import static io.harness.NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE;
-import static io.harness.NGCommonEntityConstants.IDENTIFIER_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.FILE_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.ORG_KEY;
 import static io.harness.NGCommonEntityConstants.ORG_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.PROJECT_KEY;
 import static io.harness.NGCommonEntityConstants.PROJECT_PARAM_MESSAGE;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
@@ -45,6 +48,7 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -85,6 +89,26 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 public class FileStoreResource {
   private final FileStoreService fileStoreService;
 
+  @POST
+  @Consumes(MULTIPART_FORM_DATA)
+  @ApiOperation(value = "Create file or folder", nickname = "create")
+  @Operation(operationId = "create", summary = "Creates file or folder",
+      responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns create response") })
+  public ResponseDTO<FileDTO>
+  create(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
+             ACCOUNT_KEY) @EntityIdentifier String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) @EntityIdentifier(
+          allowBlank = true) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) @EntityIdentifier(
+          allowBlank = true) String projectIdentifier,
+      @FormDataParam("content") InputStream content, @NotNull @Valid @BeanParam FileDTO file) {
+    file.setAccountIdentifier(accountIdentifier);
+    file.setOrgIdentifier(orgIdentifier);
+    file.setProjectIdentifier(projectIdentifier);
+
+    return ResponseDTO.newResponse(fileStoreService.create(file, content));
+  }
+
   @PUT
   @Consumes(MULTIPART_FORM_DATA)
   @Path("{identifier}")
@@ -93,12 +117,13 @@ public class FileStoreResource {
       responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns update response") })
   public ResponseDTO<FileDTO>
   update(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
-             NGCommonEntityConstants.ACCOUNT_KEY) @EntityIdentifier String accountIdentifier,
-      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ORG_KEY) @EntityIdentifier(
+             ACCOUNT_KEY) @EntityIdentifier String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) @EntityIdentifier(
           allowBlank = true) String orgIdentifier,
-      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
-          NGCommonEntityConstants.PROJECT_KEY) @EntityIdentifier(allowBlank = true) String projectIdentifier,
-      @Parameter(description = "The file identifier") @EntityIdentifier @PathParam("identifier") String identifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) @EntityIdentifier(
+          allowBlank = true) String projectIdentifier,
+      @Parameter(description = NGCommonEntityConstants.FILE_PARAM_MESSAGE) @EntityIdentifier @PathParam(
+          NGCommonEntityConstants.IDENTIFIER_KEY) String identifier,
       @NotNull @Valid @BeanParam FileDTO file, @FormDataParam("content") InputStream content) {
     file.setAccountIdentifier(accountIdentifier);
     file.setOrgIdentifier(orgIdentifier);
@@ -107,24 +132,51 @@ public class FileStoreResource {
     return ResponseDTO.newResponse(fileStoreService.update(file, content, identifier));
   }
 
-  @POST
-  @Consumes(MULTIPART_FORM_DATA)
-  @ApiOperation(value = "Create file or folder", nickname = "create")
-  @Operation(operationId = "create", summary = "Creates file or folder",
-      responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns create response") })
-  public ResponseDTO<FileDTO>
-  create(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
-             NGCommonEntityConstants.ACCOUNT_KEY) @EntityIdentifier String accountIdentifier,
-      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ORG_KEY) @EntityIdentifier(
+  @GET
+  @Path("file/{fileIdentifier}/download")
+  @ApiOperation(value = "Download file", nickname = "downloadFile")
+  @Operation(operationId = "downloadFile", summary = "Download File",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(responseCode = "default", description = "Download the file with content")
+      })
+  public Response
+  downloadFile(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
+                   ACCOUNT_KEY) @EntityIdentifier String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) @EntityIdentifier(
           allowBlank = true) String orgIdentifier,
-      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
-          NGCommonEntityConstants.PROJECT_KEY) @EntityIdentifier(allowBlank = true) String projectIdentifier,
-      @FormDataParam("content") InputStream content, @NotNull @Valid @BeanParam FileDTO file) {
-    file.setAccountIdentifier(accountIdentifier);
-    file.setOrgIdentifier(orgIdentifier);
-    file.setProjectIdentifier(projectIdentifier);
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) @EntityIdentifier(
+          allowBlank = true) String projectIdentifier,
+      @Parameter(description = FILE_PARAM_MESSAGE) @PathParam(
+          NGCommonEntityConstants.FILE_IDENTIFIER_KEY) @NotNull String fileIdentifier) {
+    File file = fileStoreService.downloadFile(accountIdentifier, orgIdentifier, projectIdentifier, fileIdentifier);
+    return Response.ok(file, APPLICATION_OCTET_STREAM)
+        .header("Content-Disposition", "attachment; filename=" + file.getName())
+        .build();
+  }
 
-    return ResponseDTO.newResponse(fileStoreService.create(file, content));
+  @DELETE
+  @Path("{identifier}")
+  @Consumes({"application/json"})
+  @ApiOperation(value = "Delete file or folder by identifier", nickname = "deleteFile")
+  @Operation(operationId = "deleteFile", summary = "Delete file or folder by identifier",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(responseCode = "default", description = "Returns true if deletion was successful.")
+      })
+  public ResponseDTO<Boolean>
+  delete(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
+             ACCOUNT_KEY) @EntityIdentifier String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) @EntityIdentifier(
+          allowBlank = true) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) @EntityIdentifier(
+          allowBlank = true) String projectIdentifier,
+      @Parameter(description = FILE_PARAM_MESSAGE) @EntityIdentifier @PathParam(
+          NGCommonEntityConstants.IDENTIFIER_KEY) String identifier) {
+    return ResponseDTO.newResponse(
+        fileStoreService.delete(accountIdentifier, orgIdentifier, projectIdentifier, identifier));
   }
 
   @POST
@@ -139,58 +191,14 @@ public class FileStoreResource {
       })
   public ResponseDTO<FolderNodeDTO>
   listFolderNodes(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
-                      NGCommonEntityConstants.ACCOUNT_KEY) @EntityIdentifier String accountIdentifier,
-      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ORG_KEY) @EntityIdentifier(
+                      ACCOUNT_KEY) @EntityIdentifier String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) @EntityIdentifier(
           allowBlank = true) String orgIdentifier,
-      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
-          NGCommonEntityConstants.PROJECT_KEY) @EntityIdentifier(allowBlank = true) String projectIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) @EntityIdentifier(
+          allowBlank = true) String projectIdentifier,
       @RequestBody(required = true, description = "Folder node for which to return the list of nodes") @Valid
       @NotNull FolderNodeDTO folderNodeDTO) {
     return ResponseDTO.newResponse(
         fileStoreService.listFolderNodes(accountIdentifier, orgIdentifier, projectIdentifier, folderNodeDTO));
-  }
-
-  @Path("file/{fileIdentifier}/download")
-  @ApiOperation(value = "Download file", nickname = "downloadFile")
-  @Operation(operationId = "downloadFile", summary = "Download File",
-      responses =
-      {
-        @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(responseCode = "default", description = "Download the file with content")
-      })
-  public Response
-  downloadFile(@Parameter(description = "File identifier") @PathParam(
-                   NGCommonEntityConstants.FILE_IDENTIFIER_KEY) @NotNull String fileIdentifier,
-      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
-          NGCommonEntityConstants.ACCOUNT_KEY) @EntityIdentifier String accountIdentifier,
-      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ORG_KEY) @EntityIdentifier(
-          allowBlank = true) String orgIdentifier,
-      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
-          NGCommonEntityConstants.PROJECT_KEY) @EntityIdentifier(allowBlank = true) String projectIdentifier) {
-    File file = fileStoreService.downloadFile(accountIdentifier, orgIdentifier, projectIdentifier, fileIdentifier);
-    return Response.ok(file, APPLICATION_OCTET_STREAM)
-        .header("Content-Disposition", "attachment; filename=" + file.getName())
-        .build();
-  }
-
-  @DELETE
-  @Consumes({"application/json"})
-  @ApiOperation(value = "Delete file or folder by identifier", nickname = "deleteFile")
-  @Operation(operationId = "deleteFile", summary = "Delete file or folder by identifier",
-      responses =
-      {
-        @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(responseCode = "default", description = "Returns true if deletion was successful.")
-      })
-  public ResponseDTO<Boolean>
-  delete(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
-             NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
-      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
-      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
-          NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
-      @Parameter(description = IDENTIFIER_PARAM_MESSAGE) @QueryParam(
-          NGCommonEntityConstants.IDENTIFIER_KEY) @NotNull String identifier) {
-    return ResponseDTO.newResponse(
-        fileStoreService.delete(accountIdentifier, orgIdentifier, projectIdentifier, identifier));
   }
 }

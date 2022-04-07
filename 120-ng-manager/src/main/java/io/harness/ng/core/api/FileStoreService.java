@@ -25,6 +25,17 @@ public interface FileStoreService {
   FileDTO create(@NotNull FileDTO fileDto, InputStream content);
 
   /**
+   * Update file.
+   *
+   * @param fileDto the file DTO
+   * @param content file content
+   * @param identifier file identifier
+   * @return updated file DTO
+   */
+
+  FileDTO update(@NotNull FileDTO fileDto, InputStream content, String identifier);
+
+  /**
    * Download a file.
    *
    * @param accountIdentifier the account identifier
@@ -37,23 +48,13 @@ public interface FileStoreService {
       @NotNull String fileIdentifier);
 
   /**
-   * Update file.
-   *
-   * @param fileDto the file DTO
-   * @param content file content
-   * @param identifier file identifier
-   * @return updated file DTO
-   */
-  FileDTO update(@NotNull FileDTO fileDto, InputStream content, String identifier);
-
-  /**
    * Delete file.
    *
    * @param accountIdentifier the account identifier
    * @param orgIdentifier the organization identifier
    * @param projectIdentifier the project identifier
    * @param identifier the file identifier
-   * @return whether file is successfully deleted
+   * @return whether the file is successfully deleted
    */
   boolean delete(
       @NotNull String accountIdentifier, String orgIdentifier, String projectIdentifier, @NotNull String identifier);

@@ -49,10 +49,7 @@ public class FileDTO {
   private String identifier;
 
   @NGEntityName @Schema(description = "Name of the File") @FormDataParam("name") private String name;
-  @NotNull
-  @Schema(description = "This specifies the file usage")
-  @FormDataParam("fileUsage")
-  private FileUsage fileUsage;
+  @Schema(description = "This specifies the file usage") @FormDataParam("fileUsage") private FileUsage fileUsage;
   @NotNull @Schema(description = "This specifies the type of the File") @FormDataParam("type") private NGFileType type;
   @NotBlank
   @Schema(description = "This specifies parent identifier")
