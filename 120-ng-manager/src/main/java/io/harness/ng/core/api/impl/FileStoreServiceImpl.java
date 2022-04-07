@@ -63,6 +63,10 @@ public class FileStoreServiceImpl implements FileStoreService {
   public FileDTO create(@NotNull FileDTO fileDto, InputStream content) {
     log.info("Creating {}: {}", fileDto.getType().name().toLowerCase(), fileDto);
 
+    if (existInDatabase(fileDto)) {
+      throw new DuplicateEntityException(getDuplicateEntityMessage(fileDto));
+    }
+
     NGFile ngFile = FileDTOMapper.getNGFileFromDTO(fileDto);
 
     if (fileDto.isFile()) {
@@ -76,9 +80,7 @@ public class FileStoreServiceImpl implements FileStoreService {
       ngFile = fileStoreRepository.save(ngFile);
       return FileDTOMapper.getFileDTOFromNGFile(ngFile);
     } catch (DuplicateKeyException e) {
-      throw new DuplicateEntityException(
-          String.format("Try creating another %s, %s with identifier [%s] already exists in the parent folder",
-              fileDto.getType().name().toLowerCase(), fileDto.getType().name().toLowerCase(), fileDto.getIdentifier()));
+      throw new DuplicateEntityException(getDuplicateEntityMessage(fileDto));
     }
   }
 
@@ -135,6 +137,18 @@ public class FileStoreServiceImpl implements FileStoreService {
   public FolderNodeDTO listFolderNodes(@NotNull String accountIdentifier, String orgIdentifier,
       String projectIdentifier, @NotNull FolderNodeDTO folderNodeDTO) {
     return populateFolderNode(folderNodeDTO, accountIdentifier, orgIdentifier, projectIdentifier);
+  }
+
+  private boolean existInDatabase(FileDTO fileDto) {
+    return fileStoreRepository
+        .findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(fileDto.getAccountIdentifier(),
+            fileDto.getOrgIdentifier(), fileDto.getProjectIdentifier(), fileDto.getIdentifier())
+        .isPresent();
+  }
+
+  private String getDuplicateEntityMessage(@NotNull FileDTO fileDto) {
+    return String.format("Try creating another %s, %s with identifier [%s] already exists in the parent folder",
+        fileDto.getType().name().toLowerCase(), fileDto.getType().name().toLowerCase(), fileDto.getIdentifier());
   }
 
   // in the case when we need to return the whole folder structure, create recursion on this method

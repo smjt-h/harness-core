@@ -12,6 +12,7 @@ import static io.harness.rule.OwnerRule.FILIP;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.verify;
@@ -40,6 +41,7 @@ import software.wings.service.intfc.FileService;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -65,6 +67,8 @@ public class FileStoreServiceImplCreateTest extends CategoryTest {
     when(configuration.getFileUploadLimits()).thenReturn(new FileUploadLimit());
 
     when(fileStoreRepository.save(any())).thenAnswer(invocation -> invocation.getArguments()[0]);
+
+    givenThatDatabaseIsEmpty();
   }
 
   @Test
@@ -125,8 +129,8 @@ public class FileStoreServiceImplCreateTest extends CategoryTest {
   @Test
   @Owner(developers = FILIP)
   @Category(UnitTests.class)
-  public void shouldHandleDuplicateKeyExceptionForFolder() {
-    when(fileStoreRepository.save(any())).thenThrow(DuplicateKeyException.class);
+  public void shouldThrowExceptionWhenFolderAlreadyExistsInDatabase() {
+    givenThatFileExistsInDatabase();
 
     FileDTO folderDto = aFolderDto();
 
@@ -135,6 +139,21 @@ public class FileStoreServiceImplCreateTest extends CategoryTest {
         .hasMessageContaining(
             "Try creating another folder, folder with identifier [%s] already exists in the parent folder",
             folderDto.getIdentifier());
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void shouldThrowExceptionWhenFileAlreadyExistsInDatabase() {
+    givenThatFileExistsInDatabase();
+
+    FileDTO fileDTO = aFileDto();
+
+    assertThatThrownBy(() -> fileStoreService.create(fileDTO, getStreamWithDummyContent()))
+        .isInstanceOf(DuplicateEntityException.class)
+        .hasMessageContaining(
+            "Try creating another file, file with identifier [%s] already exists in the parent folder",
+            fileDTO.getIdentifier());
   }
 
   @Test
@@ -181,6 +200,18 @@ public class FileStoreServiceImplCreateTest extends CategoryTest {
         .name("folder-name")
         .type(NGFileType.FOLDER)
         .build();
+  }
+
+  private void givenThatFileExistsInDatabase() {
+    when(fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
+             anyString(), anyString(), anyString(), anyString()))
+        .thenReturn(Optional.of(NGFile.builder().build()));
+  }
+
+  private void givenThatDatabaseIsEmpty() {
+    when(fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
+             anyString(), anyString(), anyString(), anyString()))
+        .thenReturn(Optional.empty());
   }
 
   private static InputStream getStreamWithDummyContent() {
