@@ -75,6 +75,7 @@ import io.harness.delegate.beans.ci.k8s.K8ExecCommandParams;
 import io.harness.delegate.beans.ci.k8s.K8ExecuteCommandTaskParams;
 import io.harness.delegate.beans.ci.k8s.K8sTaskExecutionResponse;
 import io.harness.delegate.beans.ci.k8s.PodStatus;
+import io.harness.delegate.beans.ci.k8s.TaskExecutionResponse;
 import io.harness.delegate.beans.ci.pod.CIContainerType;
 import io.harness.delegate.beans.ci.pod.CIK8ContainerParams;
 import io.harness.delegate.beans.ci.pod.CIK8PodParams;
@@ -803,6 +804,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(NexusArtifactDelegateResponse.class, 19456);
     kryo.register(ArtifactoryArtifactDelegateRequest.class, 19472);
     kryo.register(ArtifactoryArtifactDelegateResponse.class, 19473);
+    kryo.register(TaskExecutionResponse.class, 19482);
 
     kryo.register(DeploymentSlotData.class, 19457);
     kryo.register(ShellScriptTaskParametersNG.class, 19463);

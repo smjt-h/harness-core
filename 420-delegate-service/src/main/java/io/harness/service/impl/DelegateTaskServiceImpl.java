@@ -68,6 +68,8 @@ public class DelegateTaskServiceImpl implements DelegateTaskService {
   @Inject private DelegateMetricsService delegateMetricsService;
 
   @Override
+
+
   public void touchExecutingTasks(String accountId, String delegateId, List<String> delegateTaskIds) {
     // Touch currently executing tasks.
     if (EmptyPredicate.isEmpty(delegateTaskIds)) {

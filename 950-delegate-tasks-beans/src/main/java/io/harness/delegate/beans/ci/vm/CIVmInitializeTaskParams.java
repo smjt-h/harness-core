@@ -33,6 +33,7 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CIVmInitializeTaskParams
     extends ConnectorTaskParams implements CIInitializeTaskParams, ExecutionCapabilityDemander {
+  // Add some extra stuff which currently is added by the de
   @NotNull private String poolID;
   @NotNull private String workingDir;
 

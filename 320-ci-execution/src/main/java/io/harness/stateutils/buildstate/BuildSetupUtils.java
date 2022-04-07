@@ -34,8 +34,10 @@ public class BuildSetupUtils {
     switch (initializeStepInfo.getBuildJobEnvInfo().getType()) {
       case K8:
         return k8BuildSetupUtils.getCIk8BuildTaskParams(initializeStepInfo, ambiance, taskIds, logPrefix, stepLogKeys);
+//        return dockerInitializeTaskUtils.getInitializeTaskParams(initializeStepInfo, ambiance, logPrefix);
       case VM:
-        return vmInitializeTaskUtils.getInitializeTaskParams(initializeStepInfo, ambiance, logPrefix);
+        return vmInitializeTaskUtils.getInitializeTaskParamsDocker(initializeStepInfo, ambiance, logPrefix);
+//        return dockerInitializeTaskUtils.getInitializeTaskParams(initializeStepInfo, ambiance, logPrefix);
       default:
         unhandled(initializeStepInfo.getBuildJobEnvInfo().getType());
     }

@@ -11,6 +11,14 @@ import static io.harness.beans.serializer.RunTimeInputHandler.resolveMapParamete
 import static io.harness.beans.sweepingoutputs.StageInfraDetails.STAGE_INFRA_DETAILS;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.delegate.task.citasks.vm.helper.CIVMConstants.DRONE_COMMIT_BRANCH;
+import static io.harness.delegate.task.citasks.vm.helper.CIVMConstants.DRONE_COMMIT_LINK;
+import static io.harness.delegate.task.citasks.vm.helper.CIVMConstants.DRONE_COMMIT_SHA;
+import static io.harness.delegate.task.citasks.vm.helper.CIVMConstants.DRONE_REMOTE_URL;
+import static io.harness.delegate.task.citasks.vm.helper.CIVMConstants.DRONE_SOURCE_BRANCH;
+import static io.harness.delegate.task.citasks.vm.helper.CIVMConstants.DRONE_TARGET_BRANCH;
+import static io.harness.delegate.task.citasks.vm.helper.CIVMConstants.NETWORK_ID;
 import static java.lang.String.format;
 
 import io.harness.annotations.dev.HarnessTeam;
@@ -28,6 +36,8 @@ import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.VmInfraSpec;
 import io.harness.beans.yaml.extended.infrastrucutre.VmInfraYaml;
 import io.harness.beans.yaml.extended.infrastrucutre.VmPoolYaml;
+import io.harness.delegate.beans.ci.docker.CIDockerInitializeTaskParams;
+import io.harness.delegate.beans.ci.docker.CIDockerInitializeTaskRequest;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.ci.vm.CIVmInitializeTaskParams;
 import io.harness.delegate.beans.ci.vm.steps.VmServiceDependency;
@@ -150,6 +160,165 @@ public class VmInitializeTaskUtils {
         .volToMountPath(vmBuildJobInfo.getVolToMountPath())
         .serviceDependencies(getServiceDependencies(ambiance, vmBuildJobInfo.getServiceDependencies()))
         .build();
+  }
+
+  public CIDockerInitializeTaskParams getInitializeTaskParamsDocker(
+          InitializeStepInfo initializeStepInfo, Ambiance ambiance, String logPrefix) {
+    Infrastructure infrastructure = initializeStepInfo.getInfrastructure();
+
+    if (infrastructure == null || ((VmInfraYaml) infrastructure).getSpec() == null) {
+      throw new CIStageExecutionException("Input infrastructure can not be empty");
+    }
+
+    VmInfraYaml vmInfraYaml = (VmInfraYaml) infrastructure;
+    if (vmInfraYaml.getSpec().getType() != VmInfraSpec.Type.POOL) {
+      throw new CIStageExecutionException(
+              format("Invalid VM infrastructure spec type: %s", vmInfraYaml.getSpec().getType()));
+    }
+    VmBuildJobInfo vmBuildJobInfo = (VmBuildJobInfo) initializeStepInfo.getBuildJobEnvInfo();
+    VmPoolYaml vmPoolYaml = (VmPoolYaml) vmInfraYaml.getSpec();
+    String poolId = vmPoolYaml.getSpec().getIdentifier();
+    consumeSweepingOutput(ambiance,
+            VmStageInfraDetails.builder()
+                    .poolId(poolId)
+                    .workDir(vmBuildJobInfo.getWorkDir())
+                    .volToMountPathMap(vmBuildJobInfo.getVolToMountPath())
+                    .build(),
+            STAGE_INFRA_DETAILS);
+
+    OptionalSweepingOutput optionalSweepingOutput = executionSweepingOutputResolver.resolveOptional(
+            ambiance, RefObjectUtils.getSweepingOutputRefObject(ContextElement.stageDetails));
+    if (!optionalSweepingOutput.isFound()) {
+      throw new CIStageExecutionException("Stage details sweeping output cannot be empty");
+    }
+
+    StageDetails stageDetails = (StageDetails) optionalSweepingOutput.getOutput();
+    String accountID = AmbianceUtils.getAccountId(ambiance);
+    NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
+
+    ConnectorDetails gitConnector = codebaseUtils.getGitConnector(
+            ngAccess, initializeStepInfo.getCiCodebase(), initializeStepInfo.isSkipGitClone());
+    Map<String, String> codebaseEnvVars = codebaseUtils.getCodebaseVars(ambiance, vmBuildJobInfo.getCiExecutionArgs());
+    Map<String, String> gitEnvVars = codebaseUtils.getGitEnvVariables(gitConnector, initializeStepInfo.getCiCodebase());
+
+    Map<String, String> envVars = new HashMap<>();
+    envVars.putAll(codebaseEnvVars);
+    envVars.putAll(gitEnvVars);
+
+    Map<String, String> stageVars = getEnvironmentVariables(
+            NGVariablesUtils.getMapOfVariables(vmBuildJobInfo.getStageVars(), ambiance.getExpressionFunctorToken()));
+    CIVmSecretEvaluator ciVmSecretEvaluator = CIVmSecretEvaluator.builder().build();
+    Set<String> secrets = ciVmSecretEvaluator.resolve(stageVars, ngAccess, ambiance.getExpressionFunctorToken());
+    envVars.putAll(stageVars);
+
+    return CIDockerInitializeTaskParams.builder()
+            .poolID(poolId)
+            .workingDir(vmBuildJobInfo.getWorkDir())
+            .environment(envVars)
+            .gitConnector(gitConnector)
+            .stageRuntimeId(stageDetails.getStageRuntimeID())
+            .accountID(accountID)
+            .orgID(AmbianceUtils.getOrgIdentifier(ambiance))
+            .projectID(AmbianceUtils.getProjectIdentifier(ambiance))
+            .pipelineID(ambiance.getMetadata().getPipelineIdentifier())
+            .stageID(stageDetails.getStageID())
+            .buildID(String.valueOf(ambiance.getMetadata().getRunSequence()))
+            .logKey(getLogKey(ambiance))
+            .logStreamUrl(logServiceUtils.getLogServiceConfig().getBaseUrl())
+            .logSvcToken(getLogSvcToken(accountID))
+            .logSvcIndirectUpload(featureFlagService.isEnabled(FeatureName.CI_INDIRECT_LOG_UPLOAD, accountID))
+            .tiUrl(tiServiceUtils.getTiServiceConfig().getBaseUrl())
+            .tiSvcToken(getTISvcToken(accountID))
+            .secrets(new ArrayList<>(secrets))
+            .volToMountPath(vmBuildJobInfo.getVolToMountPath())
+            .serviceDependencies(getServiceDependencies(ambiance, vmBuildJobInfo.getServiceDependencies()))
+            .build();
+  }
+
+  public CIDockerInitializeTaskRequest convertSetup(CIDockerInitializeTaskParams params) {
+    Map<String, String> env = new HashMap<>();
+    List<String> secrets = new ArrayList<>();
+    if (isNotEmpty(params.getSecrets())) {
+      secrets.addAll(params.getSecrets());
+    }
+    if (isNotEmpty(params.getEnvironment())) {
+      env = params.getEnvironment();
+    }
+
+    // This stuff is done on the delegate agent which is currently not available :(
+
+//    if (params.getGitConnector() != null) {
+//      Map<String, SecretParams> secretVars = secretSpecBuilder.decryptGitSecretVariables(params.getGitConnector());
+//      for (Map.Entry<String, SecretParams> entry : secretVars.entrySet()) {
+//        String secret = new String(decodeBase64(entry.getValue().getValue()));
+//        env.put(entry.getKey(), secret);
+//        secrets.add(secret);
+//      }
+//    }
+//    if (proxyVariableHelper != null && proxyVariableHelper.checkIfProxyIsConfigured()) {
+//      Map<String, SecretParams> proxyConfiguration = proxyVariableHelper.getProxyConfiguration();
+//      for (Map.Entry<String, SecretParams> entry : proxyConfiguration.entrySet()) {
+//        String secret = new String(decodeBase64(entry.getValue().getValue()));
+//        env.put(entry.getKey(), secret);
+//        secrets.add(secret);
+//      }
+//    }
+    CIDockerInitializeTaskRequest.TIConfig tiConfig = CIDockerInitializeTaskRequest.TIConfig.builder()
+            .url(params.getTiUrl())
+            .token(params.getTiSvcToken())
+            .accountID(params.getAccountID())
+            .orgID(params.getOrgID())
+            .projectID(params.getProjectID())
+            .pipelineID(params.getPipelineID())
+            .stageID(params.getStageID())
+            .buildID(params.getBuildID())
+            .repo(env.getOrDefault(DRONE_REMOTE_URL, ""))
+            .sha(env.getOrDefault(DRONE_COMMIT_SHA, ""))
+            .sourceBranch(env.getOrDefault(DRONE_SOURCE_BRANCH, ""))
+            .targetBranch(env.getOrDefault(DRONE_TARGET_BRANCH, ""))
+            .commitBranch(env.getOrDefault(DRONE_COMMIT_BRANCH, ""))
+            .commitLink(env.getOrDefault(DRONE_COMMIT_LINK, ""))
+            .build();
+
+    CIDockerInitializeTaskRequest.Config config = CIDockerInitializeTaskRequest.Config.builder()
+            .envs(env)
+            .secrets(secrets)
+            .network(CIDockerInitializeTaskRequest.Network.builder().id(NETWORK_ID).build())
+            .logConfig(CIDockerInitializeTaskRequest.LogConfig.builder()
+                    .url(params.getLogStreamUrl())
+                    .token(params.getLogSvcToken())
+                    .accountID(params.getAccountID())
+                    .indirectUpload(params.isLogSvcIndirectUpload())
+                    .build())
+            .tiConfig(tiConfig)
+            .volumes(getVolumes(params.getVolToMountPath()))
+            .build();
+    return CIDockerInitializeTaskRequest.builder()
+            .id(params.getStageRuntimeId())
+            .poolID(params.getPoolID())
+            .config(config)
+            .logKey(params.getLogKey())
+            .build();
+  }
+
+
+
+  private List<CIDockerInitializeTaskRequest.Volume> getVolumes(Map<String, String> volToMountPath) {
+    List<CIDockerInitializeTaskRequest.Volume> volumes = new ArrayList<>();
+    if (isEmpty(volToMountPath)) {
+      return volumes;
+    }
+
+    for (Map.Entry<String, String> entry : volToMountPath.entrySet()) {
+      volumes.add(CIDockerInitializeTaskRequest.Volume.builder()
+              .hostVolume(CIDockerInitializeTaskRequest.HostVolume.builder()
+                      .id(entry.getKey())
+                      .name(entry.getKey())
+                      .path(entry.getValue())
+                      .build())
+              .build());
+    }
+    return volumes;
   }
 
   private List<VmServiceDependency> getServiceDependencies(

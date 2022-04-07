@@ -22,7 +22,7 @@ public class RestartableServiceManager {
   private ServiceManager serviceManager;
 
   public void start() {
-    log.info("Initializing grpc server...");
+    log.info("Initializing grpc server.....");
     synchronized (this) {
       ServiceManager sm = injector.getInstance(ServiceManager.class);
       try {
@@ -33,7 +33,7 @@ public class RestartableServiceManager {
       }
 
       serviceManager = sm;
-      log.info("Started grpc server");
+      log.info("Started grpc server..");
     }
   }
 

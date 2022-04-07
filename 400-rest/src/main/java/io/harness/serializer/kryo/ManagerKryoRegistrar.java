@@ -460,6 +460,7 @@ import software.wings.helpers.ext.external.comm.EmailRequest;
 import software.wings.helpers.ext.gcb.models.BuildStep;
 import software.wings.helpers.ext.gcb.models.GcbBuildDetails;
 import software.wings.helpers.ext.gcb.models.GcbBuildStatus;
+import software.wings.helpers.ext.generic.TaskExecutionResponse;
 import software.wings.helpers.ext.helm.HelmCommandExecutionResponse;
 import software.wings.helpers.ext.helm.request.HelmChartCollectionParams;
 import software.wings.helpers.ext.helm.request.HelmChartConfigParams;
@@ -1681,5 +1682,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(RancherStateExecutionData.class, 50009);
     kryo.register(UserGroupEntityReference.class, 50010);
     kryo.register(K8sRollingDeployRollbackResponse.class, 50011);
+    kryo.register(TaskExecutionResponse.class, 50012);
   }
 }
