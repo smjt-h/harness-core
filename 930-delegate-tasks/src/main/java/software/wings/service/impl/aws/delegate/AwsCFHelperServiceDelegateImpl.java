@@ -23,6 +23,7 @@ import software.wings.beans.CloudFormationSourceType;
 import software.wings.beans.GitConfig;
 import software.wings.beans.GitFileConfig;
 import software.wings.beans.GitOperationContext;
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.service.impl.aws.client.CloseableAmazonWebServiceClient;
 import software.wings.service.impl.aws.model.AwsCFTemplateParamsData;
 import software.wings.service.intfc.aws.delegate.AwsCFHelperServiceDelegate;
@@ -95,8 +96,9 @@ public class AwsCFHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getParamsData", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getParamsData", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -115,8 +117,9 @@ public class AwsCFHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getStackBody", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getStackBody", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return "";
   }
@@ -139,8 +142,9 @@ public class AwsCFHelperServiceDelegateImpl
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getCapabilities", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getCapabilities", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }

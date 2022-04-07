@@ -32,6 +32,7 @@ import io.harness.logging.LogLevel;
 import io.harness.manifest.CustomManifestService;
 import io.harness.manifest.CustomManifestSource;
 import io.harness.manifest.CustomSourceFile;
+import io.harness.secret.SecretSanitizerThreadLocal;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
@@ -56,6 +57,7 @@ public class CustomManifestValuesFetchTask extends AbstractDelegateRunnableTask 
       ILogStreamingTaskClient logStreamingTaskClient, Consumer<DelegateTaskResponse> consumer,
       BooleanSupplier preExecute) {
     super(delegateTaskPackage, logStreamingTaskClient, consumer, preExecute);
+    SecretSanitizerThreadLocal.addAll(delegateTaskPackage.getSecrets());
   }
 
   @Override

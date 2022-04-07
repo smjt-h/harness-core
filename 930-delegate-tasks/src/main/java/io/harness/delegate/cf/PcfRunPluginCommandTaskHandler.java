@@ -42,6 +42,8 @@ import io.harness.pcf.model.CfRunPluginScriptRequestData;
 import io.harness.pcf.model.PcfConstants;
 import io.harness.security.encryption.EncryptedDataDetail;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Singleton;
 import java.io.File;
@@ -78,6 +80,7 @@ public class PcfRunPluginCommandTaskHandler extends PcfCommandTaskHandler {
     executionLogCallback.saveExecutionLog(color("---------- Starting PCF Run Plugin Command Execution", White, Bold));
     CfInternalConfig pcfConfig = cfCommandRequest.getPcfConfig();
     secretDecryptionService.decrypt(pcfConfig, encryptedDataDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(pcfConfig, encryptedDataDetails);
     File workingDirectory = null;
     try {
       workingDirectory = createWorkingDirectory();

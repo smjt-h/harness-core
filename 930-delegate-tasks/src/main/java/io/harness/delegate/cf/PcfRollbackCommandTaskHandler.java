@@ -55,6 +55,8 @@ import io.harness.pcf.model.CfRenameRequest;
 import io.harness.pcf.model.CfRequestConfig;
 import io.harness.security.encryption.EncryptedDataDetail;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Singleton;
 import java.io.File;
@@ -98,6 +100,7 @@ public class PcfRollbackCommandTaskHandler extends PcfCommandTaskHandler {
 
       CfInternalConfig pcfConfig = cfCommandRequest.getPcfConfig();
       secretDecryptionService.decrypt(pcfConfig, encryptedDataDetails, false);
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(pcfConfig, encryptedDataDetails);
       if (CollectionUtils.isEmpty(commandRollbackRequest.getInstanceData())) {
         commandRollbackRequest.setInstanceData(new ArrayList<>());
       }

@@ -43,6 +43,7 @@ import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
 import io.harness.manifest.CustomManifestService;
 import io.harness.manifest.CustomManifestSource;
+import io.harness.secret.SecretSanitizerThreadLocal;
 
 import software.wings.exception.ShellScriptException;
 
@@ -71,6 +72,7 @@ public class CustomManifestFetchTask extends AbstractDelegateRunnableTask {
       ILogStreamingTaskClient logStreamingTaskClient, Consumer<DelegateTaskResponse> consumer,
       BooleanSupplier preExecute) {
     super(delegateTaskPackage, logStreamingTaskClient, consumer, preExecute);
+    SecretSanitizerThreadLocal.addAll(delegateTaskPackage.getSecrets());
   }
 
   @Override

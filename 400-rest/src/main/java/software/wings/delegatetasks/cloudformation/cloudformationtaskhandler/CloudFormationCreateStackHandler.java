@@ -34,6 +34,7 @@ import software.wings.beans.AwsConfig;
 import software.wings.beans.NameValuePair;
 import software.wings.beans.ServiceVariable.Type;
 import software.wings.beans.command.ExecutionLogCallback;
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.helpers.ext.cloudformation.request.CloudFormationCommandRequest;
 import software.wings.helpers.ext.cloudformation.request.CloudFormationCreateStackRequest;
 import software.wings.helpers.ext.cloudformation.response.CloudFormationCommandExecutionResponse;
@@ -83,6 +84,7 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
       List<EncryptedDataDetail> details, ExecutionLogCallback executionLogCallback) {
     encryptionService.decrypt(request.getAwsConfig(), details, false);
     AwsInternalConfig awsInternalConfig = AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig());
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(request.getAwsConfig(), details);
 
     CloudFormationCreateStackRequest upsertRequest = (CloudFormationCreateStackRequest) request;
 
@@ -170,8 +172,8 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
         }
       }
     } catch (Exception ex) {
-      String errorMessage =
-          format("# Exception: %s while Updating stack: %s", ExceptionUtils.getMessage(ex), stack.getStackName());
+      String errorMessage = format("# Exception: %s while Updating stack: %s",
+          ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)), stack.getStackName());
       executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
       builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
     }
@@ -252,7 +254,8 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
         }
       }
     } catch (Exception ex) {
-      String errorMessage = format("Exception: %s while creating stack: %s", ExceptionUtils.getMessage(ex), stackName);
+      String errorMessage = format("Exception: %s while creating stack: %s",
+          ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)), stackName);
       executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
       builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
     }

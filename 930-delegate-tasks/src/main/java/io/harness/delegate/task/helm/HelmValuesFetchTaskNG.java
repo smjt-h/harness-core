@@ -32,6 +32,7 @@ import io.harness.k8s.K8sCommandUnitConstants;
 import io.harness.k8s.model.HelmVersion;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
+import io.harness.secret.SecretSanitizerThreadLocal;
 
 import com.google.inject.Inject;
 import java.util.function.BooleanSupplier;
@@ -47,6 +48,7 @@ public class HelmValuesFetchTaskNG extends AbstractDelegateRunnableTask {
   public HelmValuesFetchTaskNG(DelegateTaskPackage delegateTaskPackage, ILogStreamingTaskClient logStreamingTaskClient,
       Consumer<DelegateTaskResponse> consumer, BooleanSupplier preExecute) {
     super(delegateTaskPackage, logStreamingTaskClient, consumer, preExecute);
+    SecretSanitizerThreadLocal.addAll(delegateTaskPackage.getSecrets());
   }
 
   @Override

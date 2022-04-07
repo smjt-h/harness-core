@@ -21,6 +21,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.AwsConfig;
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.service.impl.aws.client.CloseableAmazonWebServiceClient;
 import software.wings.service.intfc.aws.delegate.AwsS3HelperServiceDelegate;
 
@@ -51,6 +52,7 @@ public class AwsS3HelperServiceDelegateImpl extends AwsHelperServiceDelegateBase
   @Override
   public List<String> listBucketNames(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonS3Client> closeableAmazonS3Client =
              new CloseableAmazonWebServiceClient(getAmazonS3Client(awsConfig))) {
       tracker.trackS3Call("List Buckets");
@@ -64,8 +66,9 @@ public class AwsS3HelperServiceDelegateImpl extends AwsHelperServiceDelegateBase
     } catch (AmazonClientException amazonClientException) {
       handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
       log.error("Exception listBucketNames", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }

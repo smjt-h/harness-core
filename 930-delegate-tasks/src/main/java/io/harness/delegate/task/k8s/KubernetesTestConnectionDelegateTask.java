@@ -19,6 +19,7 @@ import io.harness.delegate.beans.connector.k8Connector.KubernetesConnectionTaskR
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
+import io.harness.secret.SecretSanitizerThreadLocal;
 
 import com.google.inject.Inject;
 import java.util.function.BooleanSupplier;
@@ -35,6 +36,7 @@ public class KubernetesTestConnectionDelegateTask extends AbstractDelegateRunnab
       ILogStreamingTaskClient logStreamingTaskClient, Consumer<DelegateTaskResponse> consumer,
       BooleanSupplier preExecute) {
     super(delegateTaskPackage, logStreamingTaskClient, consumer, preExecute);
+    SecretSanitizerThreadLocal.addAll(delegateTaskPackage.getSecrets());
   }
 
   @Override

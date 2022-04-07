@@ -24,6 +24,8 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.pcf.model.CfRequestConfig;
 import io.harness.security.encryption.EncryptedDataDetail;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.inject.Singleton;
 import java.util.Arrays;
 import java.util.List;
@@ -50,6 +52,7 @@ public class PcfCreatePcfResourceCommandTaskHandler extends PcfCommandTaskHandle
     CfInfraMappingDataRequest cfInfraMappingDataRequest = (CfInfraMappingDataRequest) cfCommandRequest;
     CfInternalConfig pcfConfig = cfInfraMappingDataRequest.getPcfConfig();
     secretDecryptionService.decrypt(pcfConfig, encryptedDataDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(pcfConfig, encryptedDataDetails);
 
     CfCommandExecutionResponse cfCommandExecutionResponse = CfCommandExecutionResponse.builder().build();
     CfInfraMappingDataResponse cfInfraMappingDataResponse = CfInfraMappingDataResponse.builder().build();
@@ -83,7 +86,7 @@ public class PcfCreatePcfResourceCommandTaskHandler extends PcfCommandTaskHandle
       cfInfraMappingDataResponse.setSpaces(emptyList());
       cfInfraMappingDataResponse.setRouteMaps(emptyList());
       cfInfraMappingDataResponse.setCommandExecutionStatus(CommandExecutionStatus.FAILURE);
-      cfInfraMappingDataResponse.setOutput(ExceptionUtils.getMessage(e));
+      cfInfraMappingDataResponse.setOutput(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)));
     }
 
     cfCommandExecutionResponse.setCommandExecutionStatus(cfInfraMappingDataResponse.getCommandExecutionStatus());

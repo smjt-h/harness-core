@@ -43,6 +43,8 @@ import io.harness.pcf.model.CfAppAutoscalarRequestData;
 import io.harness.pcf.model.CfRequestConfig;
 import io.harness.security.encryption.EncryptedDataDetail;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Singleton;
 import java.io.File;
@@ -94,6 +96,7 @@ public class PcfRouteUpdateCommandTaskHandler extends PcfCommandTaskHandler {
       CfCommandRouteUpdateRequest cfCommandRouteUpdateRequest = (CfCommandRouteUpdateRequest) cfCommandRequest;
       CfInternalConfig pcfConfig = cfCommandRouteUpdateRequest.getPcfConfig();
       secretDecryptionService.decrypt(pcfConfig, encryptedDataDetails, false);
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(pcfConfig, encryptedDataDetails);
 
       CfRequestConfig cfRequestConfig =
           CfRequestConfig.builder()
@@ -140,10 +143,11 @@ public class PcfRouteUpdateCommandTaskHandler extends PcfCommandTaskHandler {
       cfCommandResponse.setOutput(StringUtils.EMPTY);
       cfCommandResponse.setCommandExecutionStatus(CommandExecutionStatus.SUCCESS);
     } catch (Exception e) {
-      log.error("Exception in processing PCF Route Update task", e);
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception in processing PCF Route Update task", sanitizedException);
       executionLogCallback.saveExecutionLog("\n\n--------- PCF Route Update failed to complete successfully");
-      executionLogCallback.saveExecutionLog("# Error: " + e.getMessage());
-      cfCommandResponse.setOutput(e.getMessage());
+      executionLogCallback.saveExecutionLog("# Error: " + sanitizedException.getMessage());
+      cfCommandResponse.setOutput(sanitizedException.getMessage());
       cfCommandResponse.setCommandExecutionStatus(CommandExecutionStatus.FAILURE);
     } finally {
       try {

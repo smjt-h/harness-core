@@ -23,6 +23,8 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.pcf.model.CfRequestConfig;
 import io.harness.security.encryption.EncryptedDataDetail;
 
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
+
 import com.google.inject.Singleton;
 import java.util.List;
 import lombok.NoArgsConstructor;
@@ -56,7 +58,7 @@ public class PcfApplicationDetailsCommandTaskHandler extends PcfCommandTaskHandl
     try {
       CfInternalConfig pcfConfig = cfCommandRequest.getPcfConfig();
       secretDecryptionService.decrypt(pcfConfig, encryptedDataDetails, isInstanceSync);
-
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(pcfConfig, encryptedDataDetails);
       CfInstanceSyncRequest cfInstanceSyncRequest = (CfInstanceSyncRequest) cfCommandRequest;
       CfRequestConfig cfRequestConfig =
           CfRequestConfig.builder()
@@ -88,7 +90,7 @@ public class PcfApplicationDetailsCommandTaskHandler extends PcfCommandTaskHandl
       log.warn("Failed while collecting PCF Application Details For Application: {}, with Error: {}",
           ((CfInstanceSyncRequest) cfCommandRequest).getPcfApplicationName(), e);
       cfInstanceSyncResponse.setCommandExecutionStatus(CommandExecutionStatus.FAILURE);
-      cfInstanceSyncResponse.setOutput(ExceptionUtils.getMessage(e));
+      cfInstanceSyncResponse.setOutput(ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(e)));
     }
 
     cfCommandExecutionResponse.setErrorMessage(cfInstanceSyncResponse.getOutput());

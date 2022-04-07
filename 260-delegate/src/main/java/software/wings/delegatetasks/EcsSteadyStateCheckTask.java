@@ -24,6 +24,7 @@ import io.harness.delegate.task.TaskParameters;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.TimeoutException;
 import io.harness.logging.LogLevel;
+import io.harness.secret.SecretSanitizerThreadLocal;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.AwsConfig;
@@ -57,6 +58,7 @@ public class EcsSteadyStateCheckTask extends AbstractDelegateRunnableTask {
       ILogStreamingTaskClient logStreamingTaskClient, Consumer<DelegateTaskResponse> consumer,
       BooleanSupplier preExecute) {
     super(delegateTaskPackage, logStreamingTaskClient, consumer, preExecute);
+    SecretSanitizerThreadLocal.addAll(delegateTaskPackage.getSecrets());
   }
 
   private Service getService(String region, AwsConfig awsConfig, List<EncryptedDataDetail> encryptedDataDetails,
@@ -132,10 +134,11 @@ public class EcsSteadyStateCheckTask extends AbstractDelegateRunnableTask {
           .containerInfoList(containerInfos)
           .build();
     } catch (TimeoutException ex) {
+      Exception sanitiseException = ExceptionMessageSanitizer.sanitizeException(ex);
       String errorMessage = String.format("Timeout Exception: %s while waiting for ECS steady state for activity: %s",
-          ex.getMessage(), params.getActivityId());
+          sanitiseException.getMessage(), params.getActivityId());
       executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
-      log.error(errorMessage, ex);
+      log.error(errorMessage, sanitiseException);
       EcsSteadyStateCheckResponse response = EcsSteadyStateCheckResponse.builder()
                                                  .executionStatus(ExecutionStatus.FAILED)
                                                  .errorMessage(errorMessage)
@@ -146,10 +149,11 @@ public class EcsSteadyStateCheckTask extends AbstractDelegateRunnableTask {
 
       return response;
     } catch (Exception ex) {
-      String errorMessage = String.format(
-          "Exception: %s while waiting for ECS steady state for activity: %s", ex.getMessage(), params.getActivityId());
+      Exception sanitiseException = ExceptionMessageSanitizer.sanitizeException(ex);
+      String errorMessage = String.format("Exception: %s while waiting for ECS steady state for activity: %s",
+          sanitiseException.getMessage(), params.getActivityId());
       executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
-      log.error(errorMessage, ex);
+      log.error(errorMessage, sanitiseException);
       return EcsSteadyStateCheckResponse.builder()
           .executionStatus(ExecutionStatus.FAILED)
           .errorMessage(errorMessage)

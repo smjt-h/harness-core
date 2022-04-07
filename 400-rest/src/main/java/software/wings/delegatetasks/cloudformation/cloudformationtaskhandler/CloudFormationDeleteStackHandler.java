@@ -17,6 +17,7 @@ import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.AwsConfig;
 import software.wings.beans.command.ExecutionLogCallback;
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.helpers.ext.cloudformation.request.CloudFormationCommandRequest;
 import software.wings.helpers.ext.cloudformation.request.CloudFormationDeleteStackRequest;
 import software.wings.helpers.ext.cloudformation.response.CloudFormationCommandExecutionResponse;
@@ -41,6 +42,7 @@ public class CloudFormationDeleteStackHandler extends CloudFormationCommandTaskH
     CloudFormationCommandExecutionResponseBuilder builder = CloudFormationCommandExecutionResponse.builder();
     AwsConfig awsConfig = cloudFormationDeleteStackRequest.getAwsConfig();
     encryptionService.decrypt(awsConfig, details, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, details);
     Optional<Stack> existingStack = cloudformationBaseHelper.getIfStackExists(
         cloudFormationDeleteStackRequest.getCustomStackName(), cloudFormationDeleteStackRequest.getStackNameSuffix(),
         AwsConfigToInternalMapper.toAwsInternalConfig(cloudFormationDeleteStackRequest.getAwsConfig()),

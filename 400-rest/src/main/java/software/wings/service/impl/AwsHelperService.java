@@ -51,6 +51,7 @@ import software.wings.beans.SettingAttribute;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.common.InfrastructureConstants;
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.expression.ManagerExpressionEvaluator;
 import software.wings.helpers.ext.amazons3.AWSTemporaryCredentialsRestClient;
 import software.wings.service.impl.aws.client.CloseableAmazonWebServiceClient;
@@ -231,6 +232,7 @@ public class AwsHelperService {
 
   public boolean validateAwsAccountCredential(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonEC2Client> closeableAmazonEC2Client =
              new CloseableAmazonWebServiceClient(getAmazonEc2Client(awsConfig))) {
       tracker.trackEC2Call("Describe Regions");
@@ -240,8 +242,9 @@ public class AwsHelperService {
         throw new InvalidRequestException("Invalid AWS credentials", INVALID_CLOUD_PROVIDER, USER);
       }
     } catch (Exception e) {
-      log.error("Exception validateAwsAccountCredential", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception validateAwsAccountCredential", sanitizedException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizedException), sanitizedException);
     }
     return true;
   }
@@ -257,8 +260,9 @@ public class AwsHelperService {
         throw new InvalidRequestException("Invalid AWS credentials", ErrorCode.INVALID_CLOUD_PROVIDER, USER);
       }
     } catch (Exception e) {
-      log.error("Exception validateAwsAccountCredential", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception validateAwsAccountCredential", sanitizedException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizedException), sanitizedException);
     }
   }
 
@@ -278,6 +282,7 @@ public class AwsHelperService {
 
   public AmazonECRClient getAmazonEcrClient(EcrConfig ecrConfig, List<EncryptedDataDetail> encryptedDataDetails) {
     encryptionService.decrypt(ecrConfig, encryptedDataDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(ecrConfig, encryptedDataDetails);
     return (AmazonECRClient) AmazonECRClientBuilder.standard()
         .withRegion(ecrConfig.getRegion())
         .withCredentials(new AWSStaticCredentialsProvider(
@@ -292,6 +297,7 @@ public class AwsHelperService {
    */
   public String getAmazonEcrAuthToken(EcrConfig ecrConfig, List<EncryptedDataDetail> encryptedDataDetails) {
     encryptionService.decrypt(ecrConfig, encryptedDataDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(ecrConfig, encryptedDataDetails);
     AmazonECRClient ecrClient = (AmazonECRClient) AmazonECRClientBuilder.standard()
                                     .withRegion(ecrConfig.getRegion())
                                     .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(
@@ -433,13 +439,15 @@ public class AwsHelperService {
       }
       return instanceId;
     } catch (Exception e) {
-      log.error("Exception getInstanceId", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getInstanceId", sanitizedException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizedException), sanitizedException);
     }
   }
 
   public List<Bucket> listS3Buckets(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonS3Client> closeableAmazonS3Client =
              new CloseableAmazonWebServiceClient(getAmazonS3Client(awsConfig))) {
       tracker.trackS3Call("List Buckets");
@@ -449,8 +457,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listS3Buckets", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listS3Buckets", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return Collections.emptyList();
   }
@@ -459,6 +468,7 @@ public class AwsHelperService {
       AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String bucketName, String key) {
     try {
       encryptionService.decrypt(awsConfig, encryptionDetails, false);
+      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
       tracker.trackS3Call("Get Object");
       return getAmazonS3Client(getBucketRegion(awsConfig, encryptionDetails, bucketName), awsConfig)
           .getObject(bucketName, key);
@@ -473,6 +483,7 @@ public class AwsHelperService {
   public ObjectMetadata getObjectMetadataFromS3(
       AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String bucketName, String key) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonS3Client> closeableAmazonS3Client = new CloseableAmazonWebServiceClient(
              getAmazonS3Client(getBucketRegion(awsConfig, encryptionDetails, bucketName), awsConfig))) {
       tracker.trackS3Call("Get Object Metadata");
@@ -482,8 +493,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getObjectMetadataFromS3", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getObjectMetadataFromS3", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return null;
   }
@@ -491,6 +503,7 @@ public class AwsHelperService {
   public ListObjectsV2Result listObjectsInS3(
       AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, ListObjectsV2Request listObjectsV2Request) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonS3Client> closeableAmazonS3Client =
              new CloseableAmazonWebServiceClient(getAmazonS3Client(
                  getBucketRegion(awsConfig, encryptionDetails, listObjectsV2Request.getBucketName()), awsConfig))) {
@@ -501,8 +514,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listObjectsInS3", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listObjectsInS3", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListObjectsV2Result();
   }
@@ -514,6 +528,8 @@ public class AwsHelperService {
       throw new InvalidRequestException("connectorConfig is not of type AwsConfig");
     }
     encryptionService.decrypt((EncryptableSetting) connectorConfig.getValue(), encryptedDataDetails, isInstanceSync);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+        (EncryptableSetting) connectorConfig.getValue(), encryptedDataDetails);
     return (AwsConfig) connectorConfig.getValue();
   }
 
@@ -521,6 +537,7 @@ public class AwsHelperService {
       List<EncryptedDataDetail> encryptionDetails, String region,
       ListDeploymentGroupsRequest listDeploymentGroupsRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonCodeDeployClient> closeableAmazonCodeDeployClient =
              new CloseableAmazonWebServiceClient(getAmazonCodeDeployClient(Regions.fromName(region), awsConfig))) {
       tracker.trackCDCall("List Deployment Groups");
@@ -530,8 +547,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listDeploymentGroupsResult", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listDeploymentGroupsResult", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListDeploymentGroupsResult();
   }
@@ -539,6 +557,7 @@ public class AwsHelperService {
   public ListApplicationsResult listApplicationsResult(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails,
       String region, ListApplicationsRequest listApplicationsRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonCodeDeployClient> closeableAmazonCodeDeployClient =
              new CloseableAmazonWebServiceClient(getAmazonCodeDeployClient(Regions.fromName(region), awsConfig))) {
       tracker.trackCDCall("List Applications");
@@ -548,8 +567,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listApplicationsResult", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listApplicationsResult", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListApplicationsResult();
   }
@@ -558,6 +578,7 @@ public class AwsHelperService {
       List<EncryptedDataDetail> encryptionDetails, String region,
       ListDeploymentConfigsRequest listDeploymentConfigsRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonCodeDeployClient> closeableAmazonCodeDeployClient =
              new CloseableAmazonWebServiceClient(getAmazonCodeDeployClient(Regions.fromName(region), awsConfig))) {
       tracker.trackCDCall("List Deployment Configs");
@@ -567,8 +588,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listDeploymentConfigsResult", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listDeploymentConfigsResult", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListDeploymentConfigsResult();
   }
@@ -576,6 +598,7 @@ public class AwsHelperService {
   public GetDeploymentResult getCodeDeployDeployment(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails,
       String region, GetDeploymentRequest getDeploymentRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonCodeDeployClient> closeableAmazonCodeDeployClient =
              new CloseableAmazonWebServiceClient(getAmazonCodeDeployClient(Regions.fromName(region), awsConfig))) {
       tracker.trackCDCall("Get Deployment");
@@ -585,8 +608,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getCodeDeployDeployment", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getCodeDeployDeployment", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new GetDeploymentResult();
   }
@@ -594,6 +618,7 @@ public class AwsHelperService {
   public GetDeploymentGroupResult getCodeDeployDeploymentGroup(AwsConfig awsConfig,
       List<EncryptedDataDetail> encryptionDetails, String region, GetDeploymentGroupRequest getDeploymentGroupRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonCodeDeployClient> closeableAmazonCodeDeployClient =
              new CloseableAmazonWebServiceClient(getAmazonCodeDeployClient(Regions.fromName(region), awsConfig))) {
       tracker.trackCDCall("Get Deployment Group");
@@ -603,8 +628,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getCodeDeployDeploymentGroup", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getCodeDeployDeploymentGroup", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new GetDeploymentGroupResult();
   }
@@ -612,6 +638,7 @@ public class AwsHelperService {
   public CreateDeploymentResult createCodeDeployDeployment(AwsConfig awsConfig,
       List<EncryptedDataDetail> encryptionDetails, String region, CreateDeploymentRequest createDeploymentRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonCodeDeployClient> closeableAmazonCodeDeployClient =
              new CloseableAmazonWebServiceClient(getAmazonCodeDeployClient(Regions.fromName(region), awsConfig))) {
       tracker.trackCDCall("Create Deployment");
@@ -621,8 +648,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception createCodeDeployDeployment", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception createCodeDeployDeployment", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new CreateDeploymentResult();
   }
@@ -631,6 +659,7 @@ public class AwsHelperService {
       List<EncryptedDataDetail> encryptionDetails, String region,
       ListDeploymentInstancesRequest listDeploymentInstancesRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonCodeDeployClient> closeableAmazonCodeDeployClient =
              new CloseableAmazonWebServiceClient(getAmazonCodeDeployClient(Regions.fromName(region), awsConfig))) {
       tracker.trackCDCall("List Deployment Instances");
@@ -640,8 +669,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listDeploymentInstances", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listDeploymentInstances", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListDeploymentInstancesResult();
   }
@@ -659,6 +689,7 @@ public class AwsHelperService {
   public DescribeInstancesResult describeEc2Instances(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails,
       String region, DescribeInstancesRequest describeInstancesRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonEC2Client> closeableAmazonEC2Client =
              new CloseableAmazonWebServiceClient(getAmazonEc2Client(region, awsConfig))) {
       tracker.trackEC2Call("Describe Instances");
@@ -668,8 +699,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception describeEc2Instances", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception describeEc2Instances", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeInstancesResult();
   }
@@ -677,6 +709,7 @@ public class AwsHelperService {
   public DescribeImagesResult desribeEc2Images(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails,
       String region, DescribeImagesRequest describeImagesRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonEC2Client> closeableAmazonEC2Client =
              new CloseableAmazonWebServiceClient(getAmazonEc2Client(region, awsConfig))) {
       tracker.trackEC2Call("Describe Images");
@@ -686,14 +719,16 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception desribeEc2Images", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception desribeEc2Images", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeImagesResult();
   }
 
   public List<String> listRegions(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     return awsApiHelperService.listRegions(AwsConfigToInternalMapper.toAwsInternalConfig(awsConfig));
   }
 
@@ -706,6 +741,7 @@ public class AwsHelperService {
     String nextToken = null;
     Set<String> tags = new HashSet<>();
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonEC2Client> closeableAmazonEC2Client =
              new CloseableAmazonWebServiceClient(getAmazonEc2Client(region, awsConfig))) {
       do {
@@ -724,8 +760,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listTags", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listTags", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return tags;
   }
@@ -733,6 +770,7 @@ public class AwsHelperService {
   public CreateClusterResult createCluster(String region, AwsConfig awsConfig,
       List<EncryptedDataDetail> encryptionDetails, CreateClusterRequest createClusterRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("Create Cluster");
@@ -742,7 +780,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new CreateClusterResult();
   }
@@ -750,6 +789,7 @@ public class AwsHelperService {
   public DescribeClustersResult describeClusters(String region, AwsConfig awsConfig,
       List<EncryptedDataDetail> encryptionDetails, DescribeClustersRequest describeClustersRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("Describe Cluster");
@@ -759,7 +799,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeClustersResult();
   }
@@ -767,6 +808,7 @@ public class AwsHelperService {
   public ListClustersResult listClusters(String region, AwsConfig awsConfig,
       List<EncryptedDataDetail> encryptionDetails, ListClustersRequest listClustersRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("List Clusters");
@@ -776,7 +818,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListClustersResult();
   }
@@ -784,18 +827,21 @@ public class AwsHelperService {
   public RegisterTaskDefinitionResult registerTaskDefinition(String region, AwsConfig awsConfig,
       List<EncryptedDataDetail> encryptionDetails, RegisterTaskDefinitionRequest registerTaskDefinitionRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("Register Task Definition");
       return closeableAmazonECSClient.getClient().registerTaskDefinition(registerTaskDefinitionRequest);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
   public ListServicesResult listServices(String region, AwsConfig awsConfig,
       List<EncryptedDataDetail> encryptionDetails, ListServicesRequest listServicesRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("List Services");
@@ -805,7 +851,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListServicesResult();
   }
@@ -813,6 +860,7 @@ public class AwsHelperService {
   public DescribeServicesResult describeServices(String region, AwsConfig awsConfig,
       List<EncryptedDataDetail> encryptionDetails, DescribeServicesRequest describeServicesRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("Describe Services");
@@ -822,7 +870,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeServicesResult();
   }
@@ -836,6 +885,7 @@ public class AwsHelperService {
       serviceName = services.get(0);
     }
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("Wait for Service to be stable");
@@ -854,14 +904,17 @@ public class AwsHelperService {
     } catch (WaiterTimedOutException waiterTimedOutException) {
       String msg = format("Timed out while waiting for service %s to be in stable state", serviceName);
       executionLogCallback.saveExecutionLog(msg, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
-      throw new TimeoutException(msg, "Timeout", waiterTimedOutException, WingsException.EVERYBODY);
+      throw new TimeoutException(msg, "Timeout",
+          (WaiterTimedOutException) ExceptionMessageSanitizer.sanitizeException(waiterTimedOutException),
+          WingsException.EVERYBODY);
     } catch (Exception e) {
-      if (e instanceof InterruptedException) {
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      if (sanitizeException instanceof InterruptedException) {
         String msg = format("Interrupted while waiting for service %s to reach stable state", serviceName);
         executionLogCallback.saveExecutionLog(msg, LogLevel.ERROR);
-        throw new InvalidRequestException(msg, e);
+        throw new InvalidRequestException(msg, sanitizeException);
       }
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -891,30 +944,35 @@ public class AwsHelperService {
   public CreateServiceResult createService(String region, AwsConfig awsConfig,
       List<EncryptedDataDetail> encryptionDetails, CreateServiceRequest createServiceRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("Create Service");
       return closeableAmazonECSClient.getClient().createService(createServiceRequest);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
   public RunTaskResult triggerEcsRunTask(
       String region, AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, RunTaskRequest runTaskRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("Ecs Run Task Request");
       return closeableAmazonECSClient.getClient().runTask(runTaskRequest);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
   public UpdateServiceResult updateService(String region, AwsConfig awsConfig,
       List<EncryptedDataDetail> encryptionDetails, UpdateServiceRequest updateServiceRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("Update Service");
@@ -924,7 +982,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new UpdateServiceResult();
   }
@@ -932,6 +991,7 @@ public class AwsHelperService {
   public DeleteServiceResult deleteService(String region, AwsConfig awsConfig,
       List<EncryptedDataDetail> encryptionDetails, DeleteServiceRequest deleteServiceRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("Delete Service");
@@ -941,7 +1001,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DeleteServiceResult();
   }
@@ -949,20 +1010,24 @@ public class AwsHelperService {
   public DeregisterTaskDefinitionResult deregisterTaskDefinitions(String region, AwsConfig awsConfig,
       List<EncryptedDataDetail> encryptionDetails, DeregisterTaskDefinitionRequest deregisterTaskDefinitionRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("List Tasks");
       return closeableAmazonECSClient.getClient().deregisterTaskDefinition(deregisterTaskDefinitionRequest);
     } catch (ClusterNotFoundException ex) {
-      throw new WingsException(ErrorCode.AWS_CLUSTER_NOT_FOUND).addParam("message", ExceptionUtils.getMessage(ex));
+      throw new WingsException(ErrorCode.AWS_CLUSTER_NOT_FOUND)
+          .addParam("message", ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)));
     } catch (ServiceNotFoundException ex) {
-      throw new WingsException(ErrorCode.AWS_SERVICE_NOT_FOUND).addParam("message", ExceptionUtils.getMessage(ex));
+      throw new WingsException(ErrorCode.AWS_SERVICE_NOT_FOUND)
+          .addParam("message", ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)));
     } catch (AmazonServiceException amazonServiceException) {
       awsApiHelperService.handleAmazonServiceException(amazonServiceException);
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DeregisterTaskDefinitionResult();
   }
@@ -970,20 +1035,24 @@ public class AwsHelperService {
   public ListTasksResult listTasks(String region, AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails,
       ListTasksRequest listTasksRequest, boolean isInstanceSync) {
     encryptionService.decrypt(awsConfig, encryptionDetails, isInstanceSync);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("List Tasks");
       return closeableAmazonECSClient.getClient().listTasks(listTasksRequest.withMaxResults(100));
     } catch (ClusterNotFoundException ex) {
-      throw new WingsException(ErrorCode.AWS_CLUSTER_NOT_FOUND).addParam("message", ExceptionUtils.getMessage(ex));
+      throw new WingsException(ErrorCode.AWS_CLUSTER_NOT_FOUND)
+          .addParam("message", ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)));
     } catch (ServiceNotFoundException ex) {
-      throw new WingsException(ErrorCode.AWS_SERVICE_NOT_FOUND).addParam("message", ExceptionUtils.getMessage(ex));
+      throw new WingsException(ErrorCode.AWS_SERVICE_NOT_FOUND)
+          .addParam("message", ExceptionUtils.getMessage(ExceptionMessageSanitizer.sanitizeException(ex)));
     } catch (AmazonServiceException amazonServiceException) {
       awsApiHelperService.handleAmazonServiceException(amazonServiceException);
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListTasksResult();
   }
@@ -991,6 +1060,7 @@ public class AwsHelperService {
   public DescribeTaskDefinitionResult describeTaskDefinition(String region, AwsConfig awsConfig,
       List<EncryptedDataDetail> encryptionDetails, DescribeTaskDefinitionRequest describeTaskDefinitionRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("Desscribe Task Definition");
@@ -1000,7 +1070,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeTaskDefinitionResult();
   }
@@ -1008,6 +1079,7 @@ public class AwsHelperService {
   public DescribeTasksResult describeTasks(String region, AwsConfig awsConfig,
       List<EncryptedDataDetail> encryptionDetails, DescribeTasksRequest describeTasksRequest, boolean isInstanceSync) {
     encryptionService.decrypt(awsConfig, encryptionDetails, isInstanceSync);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("Describe Tasks");
@@ -1017,7 +1089,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeTasksResult();
   }
@@ -1026,6 +1099,7 @@ public class AwsHelperService {
       List<EncryptedDataDetail> encryptionDetails,
       DescribeContainerInstancesRequest describeContainerInstancesRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("Describe Container Instances");
@@ -1035,7 +1109,8 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeContainerInstancesResult();
   }
@@ -1043,6 +1118,7 @@ public class AwsHelperService {
   public ListImagesResult listEcrImages(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String region,
       ListImagesRequest listImagesRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     return awsApiHelperService.listEcrImages(
         AwsConfigToInternalMapper.toAwsInternalConfig(awsConfig), region, listImagesRequest);
   }
@@ -1058,8 +1134,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listEcrImages", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listEcrImages", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new ListImagesResult();
   }
@@ -1075,8 +1152,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception listRepositories", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception listRepositories", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeRepositoriesResult();
   }
@@ -1084,6 +1162,7 @@ public class AwsHelperService {
   public DescribeRepositoriesResult listRepositories(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails,
       DescribeRepositoriesRequest describeRepositoriesRequest, String region) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     return awsApiHelperService.listRepositories(
         AwsConfigToInternalMapper.toAwsInternalConfig(awsConfig), describeRepositoriesRequest, region);
   }
@@ -1091,6 +1170,7 @@ public class AwsHelperService {
   public List<LoadBalancerDescription> getLoadBalancerDescriptions(
       String region, AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient>
              closeableAmazonElasticLoadBalancingClient =
                  new CloseableAmazonWebServiceClient(getClassicElbClient(Regions.fromName(region), awsConfig))) {
@@ -1104,8 +1184,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getLoadBalancerDescriptions", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getLoadBalancerDescriptions", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -1113,6 +1194,7 @@ public class AwsHelperService {
   public TargetGroup getTargetGroupForAlb(
       String region, AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String targetGroupArn) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonElasticLoadBalancingClient> closeableAmazonElasticLoadBalancingClient =
              new CloseableAmazonWebServiceClient(
                  getAmazonElasticLoadBalancingClient(Regions.fromName(region), awsConfig))) {
@@ -1132,8 +1214,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getTargetGroupForAlb", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getTargetGroupForAlb", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return null;
   }
@@ -1142,6 +1225,7 @@ public class AwsHelperService {
       List<EncryptedDataDetail> encryptionDetails, String region, String autoScalingGroupName, Integer desiredCapacity,
       ManagerExecutionLogCallback executionLogCallback, Integer autoScalingSteadyStateTimeout) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     AmazonAutoScalingClient amazonAutoScalingClient = null;
     try (CloseableAmazonWebServiceClient<AmazonAutoScalingClient> closeableAmazonAutoScalingClient =
              new CloseableAmazonWebServiceClient(getAmazonAutoScalingClient(Regions.fromName(region), awsConfig))) {
@@ -1162,8 +1246,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception setAutoScalingGroupCapacityAndWaitForInstancesReadyState", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception setAutoScalingGroupCapacityAndWaitForInstancesReadyState", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -1217,9 +1302,10 @@ public class AwsHelperService {
       throw new WingsException(INIT_TIMEOUT)
           .addParam("message", "Timed out waiting for all instances to be in running state");
     } catch (WingsException e) {
-      throw e;
+      throw(WingsException) ExceptionMessageSanitizer.sanitizeException(e);
     } catch (Exception e) {
-      throw new InvalidRequestException("Error while waiting for all instances to be in running state", e);
+      throw new InvalidRequestException("Error while waiting for all instances to be in running state",
+          ExceptionMessageSanitizer.sanitizeException(e));
     }
     executionLogCallback.saveExecutionLog("AutoScaling group reached steady state");
   }
@@ -1277,6 +1363,7 @@ public class AwsHelperService {
       CreateAutoScalingGroupRequest createAutoScalingGroupRequest, LogCallback logCallback) {
     AmazonAutoScalingClient amazonAutoScalingClient = null;
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonAutoScalingClient> closeableAmazonAutoScalingClient =
              new CloseableAmazonWebServiceClient(getAmazonAutoScalingClient(Regions.fromName(region), awsConfig))) {
       amazonAutoScalingClient = closeableAmazonAutoScalingClient.getClient();
@@ -1291,8 +1378,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception createAutoScalingGroup", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception createAutoScalingGroup", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new CreateAutoScalingGroupResult();
   }
@@ -1301,6 +1389,7 @@ public class AwsHelperService {
       List<EncryptedDataDetail> encryptionDetails, String region,
       DescribeAutoScalingGroupsRequest autoScalingGroupsRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonAutoScalingClient> closeableAmazonAutoScalingClient =
              new CloseableAmazonWebServiceClient(getAmazonAutoScalingClient(Regions.fromName(region), awsConfig))) {
       tracker.trackASGCall("Describe ASGs");
@@ -1310,8 +1399,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception describeAutoScalingGroups", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception describeAutoScalingGroups", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return new DescribeAutoScalingGroupsResult();
   }
@@ -1352,13 +1442,15 @@ public class AwsHelperService {
             });
       }
     } catch (Exception e) {
-      log.warn("Failed to describe autoScalingGroup for [{}]", autoScalingGroupName, e);
+      log.warn("Failed to describe autoScalingGroup for [{}]", autoScalingGroupName,
+          ExceptionMessageSanitizer.sanitizeException(e));
     }
   }
 
   public List<Metric> getCloudWatchMetrics(
       AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String region) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonCloudWatchClient> closeableAmazonCloudWatchClient =
              new CloseableAmazonWebServiceClient(getAwsCloudWatchClient(region, awsConfig))) {
       List<Metric> rv = new ArrayList<>();
@@ -1378,8 +1470,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getCloudWatchMetrics", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getCloudWatchMetrics", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -1387,6 +1480,7 @@ public class AwsHelperService {
   public List<Metric> getCloudWatchMetrics(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails,
       String region, ListMetricsRequest listMetricsRequest) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonCloudWatchClient> closeableAmazonCloudWatchClient =
              new CloseableAmazonWebServiceClient(getAwsCloudWatchClient(region, awsConfig))) {
       List<Metric> rv = new ArrayList<>();
@@ -1407,8 +1501,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getCloudWatchMetrics", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getCloudWatchMetrics", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return emptyList();
   }
@@ -1432,8 +1527,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception registerInstancesWithLoadBalancer", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception registerInstancesWithLoadBalancer", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return false;
   }
@@ -1457,8 +1553,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception deregisterInstancesFromLoadBalancer", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception deregisterInstancesFromLoadBalancer", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return false;
   }
@@ -1466,6 +1563,7 @@ public class AwsHelperService {
   public boolean isVersioningEnabledForBucket(
       AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String bucketName) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonS3Client> closeableAmazonS3Client = new CloseableAmazonWebServiceClient(
              getAmazonS3Client(getBucketRegion(awsConfig, encryptionDetails, bucketName), awsConfig))) {
       tracker.trackS3Call("Get Bucket Versioning Configuration");
@@ -1477,14 +1575,16 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception isVersioningEnabledForBucket", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception isVersioningEnabledForBucket", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return false;
   }
 
   public String getBucketRegion(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String bucketName) {
     encryptionService.decrypt(awsConfig, encryptionDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
     try (CloseableAmazonWebServiceClient<AmazonS3Client> closeableAmazonS3Client =
              new CloseableAmazonWebServiceClient(getAmazonS3Client(awsConfig))) {
       // You can query the bucket location using any region, it returns the result. So, using the default
@@ -1504,8 +1604,9 @@ public class AwsHelperService {
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getBucketRegion", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getBucketRegion", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return null;
   }
@@ -1534,24 +1635,28 @@ public class AwsHelperService {
   public TagResourceResult tagService(String region, List<EncryptedDataDetail> encryptedDataDetails,
       TagResourceRequest tagResourceRequest, AwsConfig awsConfig) {
     encryptionService.decrypt(awsConfig, encryptedDataDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptedDataDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("Tag Resource");
       return closeableAmazonECSClient.getClient().tagResource(tagResourceRequest);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
   public UntagResourceResult untagService(String region, List<EncryptedDataDetail> encryptedDataDetails,
       UntagResourceRequest untagResourceRequest, AwsConfig awsConfig) {
     encryptionService.decrypt(awsConfig, encryptedDataDetails, false);
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptedDataDetails);
     try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
              new CloseableAmazonWebServiceClient(getAmazonEcsClient(region, awsConfig))) {
       tracker.trackECSCall("Untag Resource");
       return closeableAmazonECSClient.getClient().untagResource(untagResourceRequest);
     } catch (Exception e) {
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
   }
 
@@ -1573,7 +1678,7 @@ public class AwsHelperService {
       Response<ResponseBody> response = credentialsRestClient.getRoleName().execute();
       roleName = response.body().string();
     } catch (IOException e) {
-      throw new InvalidRequestException("Cannot get the role name", e);
+      throw new InvalidRequestException("Cannot get the role name", ExceptionMessageSanitizer.sanitizeException(e));
     }
 
     if (isEmpty(roleName)) {
@@ -1589,7 +1694,8 @@ public class AwsHelperService {
       }
 
     } catch (IOException e) {
-      throw new InvalidRequestException("Cannot get the temporary credentials", e);
+      throw new InvalidRequestException(
+          "Cannot get the temporary credentials", ExceptionMessageSanitizer.sanitizeException(e));
     }
   }
 
