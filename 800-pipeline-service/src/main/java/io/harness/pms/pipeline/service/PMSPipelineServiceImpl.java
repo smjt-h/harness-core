@@ -60,7 +60,7 @@ import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineEntity.PipelineEntityKeys;
 import io.harness.pms.pipeline.PipelineEntityUtils;
 import io.harness.pms.pipeline.PipelineFilterPropertiesDto;
-import io.harness.pms.pipeline.PipelineMetadata;
+import io.harness.pms.pipeline.PipelineMetadataV2;
 import io.harness.pms.pipeline.StepCategory;
 import io.harness.pms.pipeline.StepPalleteFilterWrapper;
 import io.harness.pms.pipeline.StepPalleteInfo;
@@ -284,8 +284,8 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
   @Override
   public int incrementRunSequence(
       String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier, boolean deleted) {
-    return pipelineMetadataService.incrementExecutionCounter(accountId, orgIdentifier, projectIdentifier,
-        pipelineIdentifier, gitSyncHelper.getGitSyncBranchContextBytesThreadLocal());
+    return pipelineMetadataService.incrementExecutionCounter(
+        accountId, orgIdentifier, projectIdentifier, pipelineIdentifier);
   }
 
   @Override
@@ -293,33 +293,25 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     String accountId = pipelineEntity.getAccountId();
     String orgIdentifier = pipelineEntity.getOrgIdentifier();
     String projectIdentifier = pipelineEntity.getProjectIdentifier();
-    ByteString gitSyncBranchContext = gitSyncHelper.getGitSyncBranchContextBytesThreadLocal(pipelineEntity);
-    Optional<PipelineMetadata> pipelineMetadataOptional = pipelineMetadataService.getMetadata(
-        accountId, orgIdentifier, projectIdentifier, pipelineEntity.getIdentifier(), gitSyncBranchContext);
-    PipelineMetadata pipelineMetadata;
-    if (pipelineMetadataOptional.isPresent()) {
-      return pipelineMetadataService.incrementExecutionCounter(
-          accountId, orgIdentifier, projectIdentifier, pipelineEntity.getIdentifier(), gitSyncBranchContext);
-    } else {
+    int count = pipelineMetadataService.incrementExecutionCounter(
+        accountId, orgIdentifier, projectIdentifier, pipelineEntity.getIdentifier());
+    if (count == -1) {
       try {
-        PipelineMetadata metadata =
-            PipelineMetadata.builder()
-                .accountIdentifier(pipelineEntity.getAccountIdentifier())
-                .orgIdentifier(orgIdentifier)
-                .projectIdentifier(projectIdentifier)
-                .executionSummaryInfo(pipelineEntity.getExecutionSummaryInfo())
-                .runSequence(pipelineEntity.getRunSequence() + 1)
-                .identifier(pipelineEntity.getIdentifier())
-                .entityGitDetails(gitSyncHelper.getEntityGitDetailsFromBytes(gitSyncBranchContext))
-                .build();
-        pipelineMetadata = pipelineMetadataService.save(metadata);
+        PipelineMetadataV2 metadata = PipelineMetadataV2.builder()
+                                          .accountIdentifier(pipelineEntity.getAccountIdentifier())
+                                          .orgIdentifier(orgIdentifier)
+                                          .projectIdentifier(projectIdentifier)
+                                          .runSequence(pipelineEntity.getRunSequence() + 1)
+                                          .identifier(pipelineEntity.getIdentifier())
+                                          .build();
+        return pipelineMetadataService.save(metadata).getRunSequence();
       } catch (DuplicateKeyException exception) {
         // retry insert if above fails
         return pipelineMetadataService.incrementExecutionCounter(
-            accountId, orgIdentifier, projectIdentifier, pipelineEntity.getIdentifier(), gitSyncBranchContext);
+            accountId, orgIdentifier, projectIdentifier, pipelineEntity.getIdentifier());
       }
     }
-    return pipelineMetadata.getRunSequence();
+    return count;
   }
 
   @Override
@@ -487,9 +479,21 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
   }
 
   @Override
-  public VariableMergeServiceResponse createVariablesResponse(String yaml) {
+  public VariableMergeServiceResponse createVariablesResponse(String yaml, boolean newVersion) {
     try {
-      return variableCreatorMergeService.createVariablesResponse(yaml);
+      return variableCreatorMergeService.createVariablesResponse(yaml, newVersion);
+    } catch (Exception ex) {
+      log.error("Error happened while creating variables for pipeline:", ex);
+      throw new InvalidRequestException(
+          format("Error happened while creating variables for pipeline: %s", ex.getMessage()));
+    }
+  }
+
+  @Override
+  public VariableMergeServiceResponse createVariablesResponseV2(
+      String accountId, String orgId, String projectId, String yaml) {
+    try {
+      return variableCreatorMergeService.createVariablesResponseV2(accountId, orgId, projectId, yaml);
     } catch (Exception ex) {
       log.error("Error happened while creating variables for pipeline:", ex);
       throw new InvalidRequestException(
@@ -568,8 +572,8 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     properties.put(PIPELINE_SAVE_ACTION_TYPE, actionType);
     properties.put(PipelineInstrumentationConstants.MODULE_NAME,
         PipelineEntityUtils.getModuleNameFromPipelineEntity(entity, "cd"));
-    telemetryReporter.sendTrackEvent(
-        PIPELINE_SAVE, properties, Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL);
+    telemetryReporter.sendTrackEvent(PIPELINE_SAVE, null, entity.getAccountId(), properties,
+        Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL);
   }
 
   @Override
@@ -593,7 +597,8 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
       return pipelineYaml;
     }
     long start = System.currentTimeMillis();
-    ExpansionRequestMetadata expansionRequestMetadata = getRequestMetadata(accountId, orgIdentifier, projectIdentifier);
+    ExpansionRequestMetadata expansionRequestMetadata =
+        getRequestMetadata(accountId, orgIdentifier, projectIdentifier, pipelineYaml);
 
     Set<ExpansionRequest> expansionRequests = expansionRequestsExtractor.fetchExpansionRequests(pipelineYaml);
     Set<ExpansionResponseBatch> expansionResponseBatches =
@@ -618,20 +623,18 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
         pipelineEntity.getProjectIdentifier(), criteria, update);
   }
 
-  ExpansionRequestMetadata getRequestMetadata(String accountId, String orgIdentifier, String projectIdentifier) {
+  ExpansionRequestMetadata getRequestMetadata(
+      String accountId, String orgIdentifier, String projectIdentifier, String pipelineYaml) {
     ByteString gitSyncBranchContextBytes = gitSyncHelper.getGitSyncBranchContextBytesThreadLocal();
+    ExpansionRequestMetadata.Builder expansionRequestMetadataBuilder =
+        ExpansionRequestMetadata.newBuilder()
+            .setAccountId(accountId)
+            .setOrgId(orgIdentifier)
+            .setProjectId(projectIdentifier)
+            .setYaml(ByteString.copyFromUtf8(pipelineYaml));
     if (gitSyncBranchContextBytes != null) {
-      return ExpansionRequestMetadata.newBuilder()
-          .setAccountId(accountId)
-          .setOrgId(orgIdentifier)
-          .setProjectId(projectIdentifier)
-          .setGitSyncBranchContext(gitSyncBranchContextBytes)
-          .build();
+      expansionRequestMetadataBuilder.setGitSyncBranchContext(gitSyncBranchContextBytes);
     }
-    return ExpansionRequestMetadata.newBuilder()
-        .setAccountId(accountId)
-        .setOrgId(orgIdentifier)
-        .setProjectId(projectIdentifier)
-        .build();
+    return expansionRequestMetadataBuilder.build();
   }
 }

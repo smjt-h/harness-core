@@ -24,6 +24,7 @@ import io.harness.cdng.infra.yaml.Infrastructure;
 import io.harness.cdng.infra.yaml.InfrastructureKind;
 import io.harness.cdng.infra.yaml.K8SDirectInfrastructure;
 import io.harness.cdng.infra.yaml.K8sGcpInfrastructure;
+import io.harness.cdng.infra.yaml.PdcInfrastructure;
 import io.harness.cdng.infra.yaml.ServerlessAwsLambdaInfrastructure;
 import io.harness.cdng.k8s.K8sStepHelper;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
@@ -237,6 +238,11 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
         validateExpression(serverlessAwsLambdaInfrastructure.getConnectorRef(),
             serverlessAwsLambdaInfrastructure.getRegion(), serverlessAwsLambdaInfrastructure.getStage());
         break;
+      case InfrastructureKind.PDC:
+        PdcInfrastructure pdcInfrastructure = (PdcInfrastructure) infrastructure;
+        validateExpression(pdcInfrastructure.getSshKeyRef());
+        requireOne(pdcInfrastructure.getHosts(), pdcInfrastructure.getConnectorRef());
+        break;
       default:
         throw new InvalidArgumentsException(format("Unknown Infrastructure Kind : [%s]", infrastructure.getKind()));
     }
@@ -245,9 +251,20 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
   @SafeVarargs
   private final <T> void validateExpression(ParameterField<T>... inputs) {
     for (ParameterField<T> input : inputs) {
-      if (!ParameterField.isNull(input) && input.isExpression()) {
+      if (unresolvedExpression(input)) {
         throw new InvalidRequestException(format("Unresolved Expression : [%s]", input.getExpressionValue()));
       }
+    }
+  }
+
+  private <T> boolean unresolvedExpression(ParameterField<T> input) {
+    return !ParameterField.isNull(input) && input.isExpression();
+  }
+
+  private void requireOne(ParameterField<?> first, ParameterField<?> second) {
+    if (unresolvedExpression(first) && unresolvedExpression(second)) {
+      throw new InvalidRequestException(
+          format("Unresolved Expressions : [%s] , [%s]", first.getExpressionValue(), second.getExpressionValue()));
     }
   }
 

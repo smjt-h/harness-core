@@ -15,6 +15,7 @@ import static io.harness.gitsync.common.beans.GitToHarnessProcessingStepStatus.D
 import static io.harness.gitsync.common.beans.GitToHarnessProcessingStepStatus.ERROR;
 import static io.harness.gitsync.common.beans.GitToHarnessProcessingStepStatus.IN_PROGRESS;
 import static io.harness.gitsync.common.beans.GitToHarnessProcessingStepType.PROCESS_FILES_IN_MSVS;
+import static io.harness.gitsync.common.helper.RepoProviderHelper.getRepoProviderType;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -49,6 +50,7 @@ import io.harness.gitsync.common.beans.GitToHarnessProgressStatus;
 import io.harness.gitsync.common.beans.MsvcProcessingFailureStage;
 import io.harness.gitsync.common.dtos.ChangeSetWithYamlStatusDTO;
 import io.harness.gitsync.common.dtos.GitSyncEntityDTO;
+import io.harness.gitsync.common.dtos.RepoProviders;
 import io.harness.gitsync.common.helper.GitChangeSetMapper;
 import io.harness.gitsync.common.helper.GitConnectivityExceptionHelper;
 import io.harness.gitsync.common.helper.GitSyncGrpcClientUtils;
@@ -289,8 +291,9 @@ public class GitToHarnessProcessorServiceImpl implements GitToHarnessProcessorSe
       } catch (Exception ex) {
         // This exception happens in the case when we are not able to connect to the microservice
         log.error("Exception in file processing for the microservice {}", microservice, ex);
-        gitSyncErrorService.recordConnectivityError(gitToHarnessProcessingInfo.getAccountId(),
-            gitToHarnessProcessingInfo.getRepoUrl(), GitConnectivityExceptionHelper.ERROR_MSG_MSVC_DOWN);
+        gitSyncErrorService.saveConnectivityError(gitToHarnessProcessingInfo.getAccountId(),
+            gitToHarnessProcessingInfo.getRepoUrl(), GitConnectivityExceptionHelper.ERROR_MSG_MSVC_DOWN,
+            getRepoProviderType(gitToHarnessProcessingInfo.getYamlGitConfigs()));
         gitToHarnessProcessingResponseDTO = GitToHarnessProcessingResponseDTO.builder()
                                                 .msvcProcessingFailureStage(MsvcProcessingFailureStage.RECEIVE_STAGE)
                                                 .build();
@@ -526,10 +529,12 @@ public class GitToHarnessProcessorServiceImpl implements GitToHarnessProcessorSe
 
   private GitSyncErrorDTO buildGitSyncErrorDTO(GitToHarnessProcessingInfo gitToHarnessProcessingInfo,
       String errorMessage, ChangeSet changeSet, List<Scope> scopes) {
+    RepoProviders repoProviderType = getRepoProviderType(gitToHarnessProcessingInfo.getYamlGitConfigs());
     return GitSyncErrorDTO.builder()
         .accountIdentifier(gitToHarnessProcessingInfo.getAccountId())
         .repoUrl(gitToHarnessProcessingInfo.getRepoUrl())
         .branchName(gitToHarnessProcessingInfo.getBranchName())
+        .repoProvider(repoProviderType)
         .scopes(scopes)
         .errorType(GitSyncErrorType.GIT_TO_HARNESS)
         .status(GitSyncErrorStatus.ACTIVE)

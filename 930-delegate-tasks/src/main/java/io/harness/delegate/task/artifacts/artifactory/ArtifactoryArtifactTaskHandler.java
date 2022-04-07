@@ -66,8 +66,6 @@ public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<
               attributesRequest.getArtifactPath(), attributesRequest.getRepositoryFormat(), attributesRequest.getTag());
     }
 
-    artifactoryRegistryService.verifyArtifactManifestUrl(lastSuccessfulBuild, artifactoryConfig);
-
     ArtifactoryDockerArtifactDelegateResponse artifactoryDockerArtifactDelegateResponse =
         ArtifactoryRequestResponseMapper.toArtifactoryDockerResponse(lastSuccessfulBuild, attributesRequest);
 

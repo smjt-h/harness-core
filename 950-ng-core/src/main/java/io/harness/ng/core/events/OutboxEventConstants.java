@@ -23,4 +23,6 @@ public class OutboxEventConstants {
 
   // EnvironmentGroup
   public static final String ENVIRONMENT_GROUP_CREATED = "EnvironmentGroupCreated";
+  public static final String ENVIRONMENT_GROUP_DELETED = "EnvironmentGroupDeleted";
+  public static final String ENVIRONMENT_GROUP_UPDATED = "EnvironmentGroupUpdated";
 }

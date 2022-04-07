@@ -578,6 +578,13 @@ enum BitbucketServerWebhookEvent {
   BITBUCKET_SERVER_PR_COMMENT = 2;
 }
 
+enum AzureWebhookEvent {
+  AZURE_PUSH = 0;
+  AZURE_PULLREQUEST_CREATED = 1;
+  AZURE_PULLREQUEST_UPDATED = 2;
+  AZURE_PULLREQUEST_MERGED = 3;
+}
+
 message GithubWebhookEvents {
   repeated GithubWebhookEvent events = 1;
 }
@@ -594,14 +601,21 @@ message BitbucketServerWebhookEvents {
   repeated BitbucketServerWebhookEvent events = 1;
 }
 
+message AzureWebhookEvents {
+  // Azure only allows one event type per hook
+  AzureWebhookEvent events = 1;
+}
+
 message NativeEvents {
   oneof nativeEvents {
     GithubWebhookEvents github = 1;
     GitlabWebhookEvents gitlab = 2;
     BitbucketCloudWebhookEvents bitbucket_cloud = 3;
     BitbucketServerWebhookEvents bitbucket_server = 4;
+    AzureWebhookEvents azure = 5;
   }
 }
+
 message CreateWebhookRequest {
   string slug = 1;
   string name = 2;
@@ -672,6 +686,17 @@ message GetUserReposResponse {
   string error = 4;
 }
 
+message GetUserRepoRequest {
+  string slug = 1;
+  Provider provider = 2;
+}
+
+message GetUserRepoResponse {
+  Repository repo = 1;
+  int32 status = 2;
+  string error = 3;
+}
+
 message FindPRRequest {
   int64 number = 1;
   string slug = 2;
@@ -731,6 +756,7 @@ service SCM {
   // User functions
   rpc GetAuthenticatedUser(GetAuthenticatedUserRequest) returns (GetAuthenticatedUserResponse);
   rpc GetUserRepos(GetUserReposRequest) returns (GetUserReposResponse);
+  rpc GetUserRepo(GetUserRepoRequest) returns (GetUserRepoResponse);
 
   // repo functions from go-scm
   rpc CreateWebhook(CreateWebhookRequest) returns (CreateWebhookResponse);

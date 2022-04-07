@@ -69,18 +69,18 @@ public class EnvironmentGroupEntity implements PersistentEntity, GitSyncableEnti
   @Trimmed private String projectIdentifier;
 
   @NotEmpty @EntityIdentifier private String identifier;
-  @Trimmed @EntityName private String name;
-  @Size(max = 1024) String description;
-  @Size(max = 100) String color;
+  @Wither @Trimmed @EntityName private String name;
+  @Wither @Size(max = 1024) String description;
+  @Wither @Size(max = 100) String color;
   @Wither @Singular @Size(max = 128) private List<NGTag> tags;
 
   @Wither @CreatedDate Long createdAt;
   @Wither @LastModifiedDate Long lastModifiedAt;
   @Wither @Version Long version;
-  @Builder.Default Boolean deleted = Boolean.FALSE;
+  @Wither @Builder.Default Boolean deleted = Boolean.FALSE;
 
   // Linked Environment Identifiers
-  private List<String> envIdentifiers;
+  @Wither private List<String> envIdentifiers;
 
   // Git Sync
   @Wither @NonFinal String objectIdOfYaml;

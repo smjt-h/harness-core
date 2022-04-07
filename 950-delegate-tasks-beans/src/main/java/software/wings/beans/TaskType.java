@@ -342,6 +342,7 @@ public enum TaskType {
   SERVICENOW_TASK_NG(TaskGroup.SERVICENOW_NG, "ServiceNow Task"),
   RANCHER_RESOLVE_CLUSTERS(TaskGroup.K8S, "Rancher Resolve Clusters"),
   NG_AZURE_TASK(TaskGroup.AZURE_RESOURCE),
+  CLOUDFORMATION_TASK_NG(TaskGroup.CLOUDFORMATION_NG, "Cloudformation Task"),
   SERVERLESS_GIT_FETCH_TASK_NG(TaskGroup.SERVERLESS_NG, "Git Fetch Files Task"),
   SERVERLESS_COMMAND_TASK(TaskGroup.SERVERLESS_NG, "Serverless Deploy Task");
 

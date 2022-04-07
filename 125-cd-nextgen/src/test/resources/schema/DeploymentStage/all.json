@@ -264,8 +264,7 @@
       "type": "object",
       "required": [
         "disallowPipelineExecutor",
-        "minimumCount",
-        "userGroups"
+        "minimumCount"
       ],
       "properties": {
         "disallowPipelineExecutor": {
@@ -295,14 +294,17 @@
               "type": "array",
               "items": {
                 "type": "string"
-              }
+              },
+              "maxItems": 2147483647,
+              "minItems": 1
             },
             {
               "type": "string",
               "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
               "minLength": 1
             }
-          ]
+          ],
+          "minLength": 1
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -613,8 +615,7 @@
       "type": "object",
       "required": [
         "key",
-        "operator",
-        "value"
+        "operator"
       ],
       "properties": {
         "key": {
@@ -630,7 +631,8 @@
           ]
         },
         "value": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1969,7 +1971,8 @@
           "type": "string",
           "enum": [
             "KubernetesDirect",
-            "KubernetesGcp"
+            "KubernetesGcp",
+            "Pdc"
           ]
         }
       },
@@ -2003,6 +2006,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/K8sGcpInfrastructure"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Pdc"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/PdcInfrastructure"
               }
             }
           }
@@ -3591,6 +3610,189 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "PdcInfrastructure": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Infrastructure"
+        },
+        { }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "sshKeyRef",
+            "connectorRef"
+          ],
+          "properties": {
+            "connectorRef": {
+              "type": "string"
+            },
+            "delegateSelectors": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
+            },
+            "sshKeyRef": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "sshKeyRef",
+            "hosts"
+          ],
+          "properties": {
+            "delegateSelectors": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
+            },
+            "hosts": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
+            },
+            "sshKeyRef": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "sshKeyRef",
+            "connectorRef",
+            "hostFilters"
+          ],
+          "properties": {
+            "connectorRef": {
+              "type": "string"
+            },
+            "delegateSelectors": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
+            },
+            "hostFilters": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
+            },
+            "sshKeyRef": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "sshKeyRef",
+            "connectorRef",
+            "attributeFilters"
+          ],
+          "properties": {
+            "attributeFilters": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
+            },
+            "connectorRef": {
+              "type": "string"
+            },
+            "delegateSelectors": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
+            },
+            "sshKeyRef": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
     "PercentageInstanceSelection": {
       "allOf": [
         {
@@ -4193,7 +4395,8 @@
           "enum": [
             "Kubernetes",
             "NativeHelm",
-            "Ssh"
+            "Ssh",
+            "WinRm"
           ]
         }
       },
@@ -4243,6 +4446,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/SshServiceSpec"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "WinRm"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/WinRmServiceSpec"
               }
             }
           }
@@ -4334,8 +4553,14 @@
                 "$ref": "#/definitions/ServiceNowField"
               }
             },
+            "templateName": {
+              "type": "string"
+            },
             "ticketType": {
               "type": "string"
+            },
+            "useServiceNowTemplate": {
+              "type": "boolean"
             }
           }
         }
@@ -4395,11 +4620,17 @@
                 "$ref": "#/definitions/ServiceNowField"
               }
             },
+            "templateName": {
+              "type": "string"
+            },
             "ticketNumber": {
               "type": "string"
             },
             "ticketType": {
               "type": "string"
+            },
+            "useServiceNowTemplate": {
+              "type": "boolean"
             }
           }
         }
@@ -6320,6 +6551,22 @@
           "format": "int32"
         }
       },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "WinRmServiceSpec": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ServiceSpec"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "metadata": {
+              "type": "string"
+            }
+          }
+        }
+      ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     }
   }

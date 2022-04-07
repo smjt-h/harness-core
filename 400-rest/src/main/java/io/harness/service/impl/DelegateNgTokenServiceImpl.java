@@ -106,8 +106,13 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
                 Date.from(OffsetDateTime.now().plusDays(DelegateToken.TTL.toDays()).toInstant()));
     DelegateToken updatedDelegateToken =
         persistence.findAndModify(filterQuery, updateOperations, new FindAndModifyOptions());
+
+    // we are not removing token from delegateTokenCache in DelegateTokenCacheHelper, since the cache has an expiry of 3
+    // mins.
+
     invalidateDelegateGroupCache(accountId, tokenName);
     publishRevokeTokenAuditEvent(updatedDelegateToken);
+
     return getDelegateTokenDetails(updatedDelegateToken, false);
   }
 
@@ -133,10 +138,20 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
     return null;
   }
 
+  // some old ng delegates are using accountKey as token, and the value of acccountKey is same as default token in cg
+  // which is not encoded. So we should not decode it.
   @Override
   public String getDelegateTokenValue(String accountId, String name) {
     DelegateToken delegateToken = matchNameTokenQuery(accountId, name).get();
-    return delegateToken != null ? decodeBase64ToString(delegateToken.getValue()) : null;
+    if (delegateToken != null) {
+      if (delegateToken.isNg()) {
+        return decodeBase64ToString(delegateToken.getValue());
+      } else {
+        return delegateToken.getValue();
+      }
+    }
+    log.warn("Not able to find delegate token {} for account {} . Please verify manually.", name, accountId);
+    return null;
   }
 
   @Override

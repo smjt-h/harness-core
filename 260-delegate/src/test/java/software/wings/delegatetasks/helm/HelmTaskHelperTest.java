@@ -17,6 +17,7 @@ import static io.harness.rule.OwnerRule.ABOSII;
 import static io.harness.rule.OwnerRule.ACASIAN;
 import static io.harness.rule.OwnerRule.ACHYUTH;
 import static io.harness.rule.OwnerRule.PRABU;
+import static io.harness.rule.OwnerRule.PRATYUSH;
 import static io.harness.rule.OwnerRule.RAGHVENDRA;
 import static io.harness.rule.OwnerRule.ROHITKARELIA;
 import static io.harness.rule.OwnerRule.YOGESH;
@@ -63,6 +64,7 @@ import io.harness.delegate.task.helm.HelmChartInfo;
 import io.harness.delegate.task.helm.HelmCommandFlag;
 import io.harness.delegate.task.helm.HelmTaskHelperBase;
 import io.harness.exception.HelmClientException;
+import io.harness.exception.HelmClientRuntimeException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.helm.HelmCliCommandType;
@@ -149,13 +151,13 @@ public class HelmTaskHelperTest extends WingsBaseTest {
     doNothing()
         .when(helmTaskHelperBase)
         .addRepo("vault", "vault", "https://helm-server", "admin", "secret-text".toCharArray(), "/home", V3,
-            LONG_TIMEOUT_INTERVAL, false, false);
+            LONG_TIMEOUT_INTERVAL, "");
     helmTaskHelper.addRepo("vault", "vault", "https://helm-server", "admin", "secret-text".toCharArray(), "/home", V3,
         LONG_TIMEOUT_INTERVAL);
 
     verify(helmTaskHelperBase)
         .addRepo("vault", "vault", "https://helm-server", "admin", "secret-text".toCharArray(), "/home", V3,
-            LONG_TIMEOUT_INTERVAL, false, false);
+            LONG_TIMEOUT_INTERVAL, "");
   }
 
   @Test
@@ -221,7 +223,7 @@ public class HelmTaskHelperTest extends WingsBaseTest {
         .when(helmTaskHelperBase)
         .executeCommand(anyMap(), anyString(), anyString(), anyString(), anyLong(), eq(HelmCliCommandType.REPO_ADD));
     helmTaskHelperBase.addRepo(
-        "vault", "vault", "https://helm-server", "admin", "secret-text".toCharArray(), "/home", V3, 9000L, true, true);
+        "vault", "vault", "https://helm-server", "admin", "secret-text".toCharArray(), "/home", V3, 9000L, "xyz/cache");
 
     verify(helmTaskHelperBase, times(1))
         .executeCommand(
@@ -241,7 +243,7 @@ public class HelmTaskHelperTest extends WingsBaseTest {
 
     assertThatCode(()
                        -> helmTaskHelperBase.fetchChartFromRepo("repo", "repo display", "chart", "1.0.0", "/dir", V3,
-                           HelmCommandFlag.builder().build(), 90000, true, false, true))
+                           HelmCommandFlag.builder().build(), 90000, false, ""))
         .doesNotThrowAnyException();
 
     verify(helmTaskHelperBase, times(1))
@@ -571,19 +573,19 @@ public class HelmTaskHelperTest extends WingsBaseTest {
         .executeCommand(anyMap(), anyString(), anyString(), anyString(), anyLong(), eq(HelmCliCommandType.REPO_ADD));
 
     helmTaskHelperBase.addRepo(
-        "repo", "repo", "http://null-password-url", "username", null, "chart", V3, LONG_TIMEOUT_INTERVAL, false, false);
+        "repo", "repo", "http://null-password-url", "username", null, "chart", V3, LONG_TIMEOUT_INTERVAL, "");
     verify(helmTaskHelperBase)
         .executeCommand(anyMap(), eq("v3/helm repo add repo http://null-password-url --username username "),
             anyString(), anyString(), anyLong(), eq(HelmCliCommandType.REPO_ADD));
 
     helmTaskHelperBase.addRepo(
-        "repo", "repo", "http://repo-url", "username", emptyPassword, "chart", V3, LONG_TIMEOUT_INTERVAL, false, false);
+        "repo", "repo", "http://repo-url", "username", emptyPassword, "chart", V3, LONG_TIMEOUT_INTERVAL, "");
     verify(helmTaskHelperBase)
         .executeCommand(anyMap(), eq("v3/helm repo add repo http://repo-url --username username "), anyString(),
             anyString(), anyLong(), eq(HelmCliCommandType.REPO_ADD));
 
-    helmTaskHelperBase.addRepo("repo", "repo", "http://repo-url", " ", passwordWithWhitespaces, "chart", V3,
-        LONG_TIMEOUT_INTERVAL, false, false);
+    helmTaskHelperBase.addRepo(
+        "repo", "repo", "http://repo-url", " ", passwordWithWhitespaces, "chart", V3, LONG_TIMEOUT_INTERVAL, "");
     verify(helmTaskHelperBase)
         .executeCommand(anyMap(), eq("v3/helm repo add repo http://repo-url  "), anyString(), anyString(), anyLong(),
             eq(HelmCliCommandType.REPO_ADD));
@@ -603,19 +605,19 @@ public class HelmTaskHelperTest extends WingsBaseTest {
         "repo", "repo", "http://null-password-url", "username", null, "chart", V3, LONG_TIMEOUT_INTERVAL);
     verify(helmTaskHelperBase)
         .addRepo(eq("repo"), eq("repo"), eq("http://null-password-url"), eq("username"), any(), eq("chart"), any(),
-            anyLong(), eq(false), eq(false));
+            anyLong(), eq(""));
 
     helmTaskHelper.addRepo(
         "repo", "repo", "http://repo-url", "username", emptyPassword, "chart", V3, LONG_TIMEOUT_INTERVAL);
     verify(helmTaskHelperBase)
         .addRepo(eq("repo"), eq("repo"), eq("http://repo-url"), eq("username"), eq(emptyPassword), eq("chart"), any(),
-            anyLong(), eq(false), eq(false));
+            anyLong(), eq(""));
 
     helmTaskHelper.addRepo(
         "repo", "repo", "http://repo-url", " ", passwordWithWhitespaces, "chart", V3, LONG_TIMEOUT_INTERVAL);
     verify(helmTaskHelperBase)
         .addRepo(eq("repo"), eq("repo"), eq("http://repo-url"), eq(" "), eq(passwordWithWhitespaces), eq("chart"),
-            any(), anyLong(), eq(false), eq(false));
+            any(), anyLong(), eq(""));
   }
 
   @Test
@@ -1227,5 +1229,33 @@ public class HelmTaskHelperTest extends WingsBaseTest {
 
     verify(helmTaskHelperBase)
         .removeRepo(repoName, workingDirectory, V2, LONG_TIMEOUT_INTERVAL, false, StringUtils.EMPTY);
+  }
+
+  @Test
+  @Owner(developers = PRATYUSH)
+  @Category(UnitTests.class)
+  public void testFailedtoFetchValuesYamlFromChart() throws Exception {
+    String valuesFileContent = "var: value";
+    String chartName = "chartName";
+
+    Map<String, List<String>> mapK8sValuesLocationToFilePaths = new HashMap<>();
+    mapK8sValuesLocationToFilePaths.put(K8sValuesLocation.ServiceOverride.name(), singletonList("values1.yaml"));
+
+    HelmChartConfigParams helmChartConfigParams =
+        HelmChartConfigParams.builder().chartName(chartName).chartVersion("0.1.0").build();
+    String workingDirectory = prepareChartDirectoryWithValuesFileForTest(chartName, valuesFileContent);
+
+    doNothing().when(helmTaskHelper).initHelm(anyString(), any(HelmVersion.class), anyLong());
+    doReturn(new ProcessResult(1, new ProcessOutput("something went wrong executing command".getBytes())))
+        .when(helmTaskHelperBase)
+        .executeCommand(anyMap(), contains("helm/path fetch chartName --untar"), anyString(),
+            eq("fetch chart chartName"), anyLong(), any());
+
+    assertThatThrownBy(()
+                           -> helmTaskHelper.getValuesYamlFromChart(
+                               helmChartConfigParams, LONG_TIMEOUT_INTERVAL, null, mapK8sValuesLocationToFilePaths))
+        .isInstanceOf(HelmClientRuntimeException.class)
+        .hasMessageContaining("Failed to fetch chart")
+        .hasMessageContaining("something went wrong executing command");
   }
 }

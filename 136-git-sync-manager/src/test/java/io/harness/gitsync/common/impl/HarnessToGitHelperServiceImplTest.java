@@ -7,11 +7,11 @@
 
 package io.harness.gitsync.common.impl;
 
+import static io.harness.logging.LoggingInitializer.initializeLogging;
 import static io.harness.rule.OwnerRule.MEET;
 import static io.harness.rule.OwnerRule.MOHIT_GARG;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -20,20 +20,21 @@ import static org.mockito.Mockito.when;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.eraro.ErrorCode;
-import io.harness.exception.HintException;
-import io.harness.exception.WingsException;
+import io.harness.delegate.beans.git.YamlGitConfigDTO;
+import io.harness.exception.InvalidRequestException;
+import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.ChangeType;
 import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.GitSyncTestBase;
+import io.harness.gitsync.RepoDetails;
 import io.harness.gitsync.common.dtos.GitSyncEntityDTO;
 import io.harness.gitsync.common.service.GitEntityService;
+import io.harness.gitsync.common.service.YamlGitConfigService;
 import io.harness.ng.core.EntityDetail;
 import io.harness.rule.Owner;
-import io.harness.security.Principal;
-import io.harness.security.UserPrincipal;
 
 import com.google.protobuf.StringValue;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -47,14 +48,23 @@ import org.powermock.modules.junit4.PowerMockRunner;
 public class HarnessToGitHelperServiceImplTest extends GitSyncTestBase {
   @InjectMocks HarnessToGitHelperServiceImpl harnessToGitHelperService;
   @Mock GitEntityService gitEntityService;
+  @Mock YamlGitConfigService yamlGitConfigService;
 
-  String name = "name";
-  String userName = "userName";
-  String email = "email";
   String baseBranch = "baseBranch";
   String branch = "branch";
   String commitId = "commitId";
   String errorMessage = "errorMessage";
+  String invalidRequestErrorMessage = "Invalid request: errorMessage";
+  String accountId = "accountId";
+  String orgId = "orgId";
+  String projectId = "projectId";
+  String projectId2 = "projectId2";
+  String identifier = "identifier";
+
+  @Before
+  public void before() {
+    initializeLogging();
+  }
 
   @Test
   @Owner(developers = MOHIT_GARG)
@@ -103,18 +113,28 @@ public class HarnessToGitHelperServiceImplTest extends GitSyncTestBase {
   @Test
   @Owner(developers = MEET)
   @Category(UnitTests.class)
-  public void testProcessPushFileException() {
-    UserPrincipal userPrincipal = UserPrincipal.newBuilder()
-                                      .setUserId(StringValue.of(name))
-                                      .setUserName(StringValue.of(userName))
-                                      .setEmail(StringValue.of(email))
-                                      .build();
-    io.harness.security.Principal principal = Principal.newBuilder().setUserPrincipal(userPrincipal).build();
-    FileInfo fileInfo = FileInfo.newBuilder().setPrincipal(principal).build();
-    WingsException wingsException = WingsException.builder().code(ErrorCode.SCM_UNAUTHORIZED).build();
-    assertThatThrownBy(() -> harnessToGitHelperService.processPushFileException(fileInfo, wingsException))
-        .isInstanceOf(HintException.class)
-        .hasMessage("Please check your SCM credentials");
+  public void testGetBranchDetails() {
+    RepoDetails repoDetails = RepoDetails.newBuilder()
+                                  .setAccountId(accountId)
+                                  .setOrgIdentifier(StringValue.of(orgId))
+                                  .setProjectIdentifier(StringValue.of(projectId))
+                                  .setYamlGitConfigId(identifier)
+                                  .build();
+    RepoDetails repoDetails2 = RepoDetails.newBuilder()
+                                   .setAccountId(accountId)
+                                   .setOrgIdentifier(StringValue.of(orgId))
+                                   .setProjectIdentifier(StringValue.of(projectId2))
+                                   .setYamlGitConfigId(identifier)
+                                   .build();
+    YamlGitConfigDTO yamlGitConfigDTO = YamlGitConfigDTO.builder().branch(branch).build();
+    BranchDetails branchDetails = BranchDetails.newBuilder().setDefaultBranch(branch).build();
+    when(yamlGitConfigService.get(projectId, orgId, accountId, identifier)).thenReturn(yamlGitConfigDTO);
+    assertThat(harnessToGitHelperService.getBranchDetails(repoDetails)).isEqualTo(branchDetails);
+
+    BranchDetails branchDetails2 = BranchDetails.newBuilder().setError(invalidRequestErrorMessage).build();
+    when(yamlGitConfigService.get(projectId2, orgId, accountId, identifier))
+        .thenThrow(new InvalidRequestException(errorMessage));
+    assertThat(harnessToGitHelperService.getBranchDetails(repoDetails2)).isEqualTo(branchDetails2);
   }
 
   private FileInfo getFileInfoDefault(String commitId, ChangeType changeType) {

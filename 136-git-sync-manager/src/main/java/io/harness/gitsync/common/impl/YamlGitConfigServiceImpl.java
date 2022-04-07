@@ -241,7 +241,7 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
   private void validateThatImmutableValuesAreNotChanged(
       YamlGitConfigDTO gitSyncConfigDTO, YamlGitConfig existingYamlGitConfigDTO) {
     if (!gitSyncConfigDTO.getRepo().equals(existingYamlGitConfigDTO.getRepo())) {
-      throw new InvalidRequestException("The repo url of an git config cannot be changed");
+      throw new InvalidRequestException("The repository url of an git config cannot be changed");
     }
     if (!gitSyncConfigDTO.getBranch().equals(existingYamlGitConfigDTO.getBranch())) {
       throw new InvalidRequestException("The default branch of an git config cannot be changed");
@@ -269,10 +269,10 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
           wasGitSyncEnabled ? GitSyncConfigSwitchType.NONE : GitSyncConfigSwitchType.ENABLED);
       sendEventForConnectorSetupUsageChange(gitSyncConfigDTO);
     } catch (DuplicateKeyException ex) {
-      log.error("A git sync config with this identifier or repo %s and branch %s already exists",
-          gitSyncConfigDTO.getRepo(), gitSyncConfigDTO.getBranch());
-      throw new DuplicateEntityException(String.format(
-          "A git sync config with this identifier or repo %s already exists", gitSyncConfigDTO.getRepo()));
+      String errorMessage = String.format("A git sync config with identifier [%s] or repo [%s] already exists",
+          gitSyncConfigDTO.getIdentifier(), gitSyncConfigDTO.getRepo());
+      log.error(errorMessage);
+      throw new DuplicateEntityException(errorMessage);
     }
 
     executorService.submit(() -> {

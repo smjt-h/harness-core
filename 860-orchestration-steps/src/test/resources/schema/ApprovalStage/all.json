@@ -353,8 +353,7 @@
       "type": "object",
       "required": [
         "disallowPipelineExecutor",
-        "minimumCount",
-        "userGroups"
+        "minimumCount"
       ],
       "properties": {
         "disallowPipelineExecutor": {
@@ -384,14 +383,17 @@
               "type": "array",
               "items": {
                 "type": "string"
-              }
+              },
+              "maxItems": 2147483647,
+              "minItems": 1
             },
             {
               "type": "string",
               "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
               "minLength": 1
             }
-          ]
+          ],
+          "minLength": 1
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -472,8 +474,7 @@
       "type": "object",
       "required": [
         "key",
-        "operator",
-        "value"
+        "operator"
       ],
       "properties": {
         "key": {
@@ -489,7 +490,8 @@
           ]
         },
         "value": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1768,8 +1770,14 @@
                 "$ref": "#/definitions/ServiceNowField"
               }
             },
+            "templateName": {
+              "type": "string"
+            },
             "ticketType": {
               "type": "string"
+            },
+            "useServiceNowTemplate": {
+              "type": "boolean"
             }
           }
         }
@@ -1829,11 +1837,17 @@
                 "$ref": "#/definitions/ServiceNowField"
               }
             },
+            "templateName": {
+              "type": "string"
+            },
             "ticketNumber": {
               "type": "string"
             },
             "ticketType": {
               "type": "string"
+            },
+            "useServiceNowTemplate": {
+              "type": "boolean"
             }
           }
         }

@@ -20,17 +20,6 @@ public class ServerlessInstallationCapabilityCheck implements CapabilityCheck, P
   private final String serverlessVersionCommand = "serverless --version";
 
   @Override
-  public CapabilityResponse performCapabilityCheck(ExecutionCapability executionCapability) {
-    ServerlessInstallationCapability serverlessInstallationCapability =
-        (ServerlessInstallationCapability) executionCapability;
-
-    return CapabilityResponse.builder()
-        .validated(executeCommand(serverlessVersionCommand, 2))
-        .delegateCapability(serverlessInstallationCapability)
-        .build();
-  }
-
-  @Override
   public CapabilitySubjectPermission performCapabilityCheckWithProto(CapabilityParameters parameters) {
     CapabilitySubjectPermissionBuilder builder = CapabilitySubjectPermission.builder();
 
@@ -38,6 +27,17 @@ public class ServerlessInstallationCapabilityCheck implements CapabilityCheck, P
         .permissionResult(executeCommand(serverlessVersionCommand, 2)
                 ? CapabilitySubjectPermission.PermissionResult.ALLOWED
                 : CapabilitySubjectPermission.PermissionResult.DENIED)
+        .build();
+  }
+
+  @Override
+  public CapabilityResponse performCapabilityCheck(ExecutionCapability executionCapability, boolean isNG) {
+    ServerlessInstallationCapability serverlessInstallationCapability =
+        (ServerlessInstallationCapability) executionCapability;
+
+    return CapabilityResponse.builder()
+        .validated(executeCommand(serverlessVersionCommand, 2))
+        .delegateCapability(serverlessInstallationCapability)
         .build();
   }
 }

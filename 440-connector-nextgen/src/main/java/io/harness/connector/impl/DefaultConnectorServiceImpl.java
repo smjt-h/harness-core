@@ -17,6 +17,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.errorhandling.NGErrorHelper.DEFAULT_ERROR_SUMMARY;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.git.model.ChangeType.ADD;
+import static io.harness.utils.PageUtils.getPageRequest;
 import static io.harness.utils.RestCallToNGManagerClientUtils.execute;
 
 import static java.lang.String.format;
@@ -76,6 +77,7 @@ import io.harness.exception.ConnectorNotFoundException;
 import io.harness.exception.DelegateServiceDriverException;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.ReferencedEntityException;
 import io.harness.exception.UnexpectedException;
 import io.harness.exception.WingsException;
 import io.harness.exception.ngexception.ConnectorValidationException;
@@ -106,7 +108,6 @@ import io.harness.outbox.api.OutboxService;
 import io.harness.perpetualtask.PerpetualTaskId;
 import io.harness.repositories.ConnectorRepository;
 import io.harness.utils.FullyQualifiedIdentifierHelper;
-import io.harness.utils.PageUtils;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -202,7 +203,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
     Criteria criteria =
         filterService.createCriteriaFromConnectorListQueryParams(accountIdentifier, orgIdentifier, projectIdentifier,
             filterIdentifier, searchTerm, filterProperties, includeAllConnectorsAccessibleAtScope, isBuiltInSMDisabled);
-    Pageable pageable = PageUtils.getPageRequest(
+    Pageable pageable = getPageRequest(
         PageRequest.builder()
             .pageIndex(page)
             .pageSize(size)
@@ -284,7 +285,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
         accountSettingService.getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
     Criteria criteria = filterService.createCriteriaFromConnectorFilter(accountIdentifier, orgIdentifier,
         projectIdentifier, searchTerm, type, category, sourceCategory, isBuiltInSMDisabled);
-    Pageable pageable = PageUtils.getPageRequest(
+    Pageable pageable = getPageRequest(
         PageRequest.builder()
             .pageIndex(page)
             .pageSize(size)
@@ -388,7 +389,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
     if (HARNESS_SECRET_MANAGER_IDENTIFIER.equalsIgnoreCase(connectorRequestDTO.getConnectorInfo().getIdentifier())) {
       log.info("[AccountSetup]:Creating default SecretManager");
     }
-    validateThatAConnectorWithThisNameDoesNotExists(connectorRequestDTO.getConnectorInfo(), accountIdentifier);
+
     Connector connectorEntity = connectorMapper.toConnector(connectorRequestDTO, accountIdentifier);
     connectorEntity.setTimeWhenConnectorIsLastUpdated(System.currentTimeMillis());
     Connector savedConnectorEntity = null;
@@ -673,7 +674,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
       throw new UnexpectedException("Error while deleting the connector");
     }
     if (isEntityReferenced) {
-      throw new InvalidRequestException(String.format(
+      throw new ReferencedEntityException(String.format(
           "Could not delete the connector %s as it is referenced by other entities", connector.getIdentifier()));
     }
   }
@@ -850,9 +851,9 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
   }
 
   @Override
-  public ConnectorCatalogueResponseDTO getConnectorCatalogue() {
+  public ConnectorCatalogueResponseDTO getConnectorCatalogue(String accountIdentifier) {
     return ConnectorCatalogueResponseDTO.builder()
-        .catalogue(catalogueHelper.getConnectorTypeToCategoryMapping())
+        .catalogue(catalogueHelper.getConnectorTypeToCategoryMapping(accountIdentifier))
         .build();
   }
 
@@ -944,7 +945,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
       return emptyList();
     }
 
-    Pageable pageable = PageUtils.getPageRequest(
+    Pageable pageable = getPageRequest(
         PageRequest.builder()
             .pageSize(connectorFQN.size())
             .sortOrders(Collections.singletonList(

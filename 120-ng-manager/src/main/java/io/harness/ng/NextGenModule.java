@@ -24,6 +24,7 @@ import static io.harness.eventsframework.EventsFrameworkConstants.INSTANCE_STATS
 import static io.harness.eventsframework.EventsFrameworkConstants.SETUP_USAGE;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.ACCOUNT_ENTITY;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.CONNECTOR_ENTITY;
+import static io.harness.eventsframework.EventsFrameworkMetadataConstants.ENVIRONMENT_GROUP_ENTITY;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.PROJECT_ENTITY;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.SECRET_ENTITY;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.USER_ENTITY;
@@ -123,8 +124,7 @@ import io.harness.ng.core.api.impl.NGModulesServiceImpl;
 import io.harness.ng.core.api.impl.NGSecretServiceV2Impl;
 import io.harness.ng.core.api.impl.TokenServiceImpl;
 import io.harness.ng.core.api.impl.UserGroupServiceImpl;
-import io.harness.ng.core.delegate.client.DelegateConfigNgClientModule;
-import io.harness.ng.core.delegate.client.DelegateTokenNgClientModule;
+import io.harness.ng.core.delegate.client.DelegateNgManagerCgManagerClientModule;
 import io.harness.ng.core.encryptors.NGManagerKmsEncryptor;
 import io.harness.ng.core.encryptors.NGManagerVaultEncryptor;
 import io.harness.ng.core.entityactivity.event.EntityActivityCrudEventMessageListener;
@@ -133,6 +133,7 @@ import io.harness.ng.core.entitysetupusage.event.SetupUsageChangeEventMessageLis
 import io.harness.ng.core.entitysetupusage.event.SetupUsageChangeEventMessageProcessor;
 import io.harness.ng.core.event.AccountSetupListener;
 import io.harness.ng.core.event.ConnectorEntityCRUDStreamListener;
+import io.harness.ng.core.event.EnvironmentGroupEntityCrudStreamListener;
 import io.harness.ng.core.event.MessageListener;
 import io.harness.ng.core.event.MessageProcessor;
 import io.harness.ng.core.event.ProjectEntityCRUDStreamListener;
@@ -190,6 +191,8 @@ import io.harness.ng.userprofile.services.api.SourceCodeManagerService;
 import io.harness.ng.userprofile.services.api.UserInfoService;
 import io.harness.ng.userprofile.services.impl.SourceCodeManagerServiceImpl;
 import io.harness.ng.userprofile.services.impl.UserInfoServiceImpl;
+import io.harness.ng.validator.service.NGHostValidationServiceImpl;
+import io.harness.ng.validator.service.api.NGHostValidationService;
 import io.harness.ng.webhook.services.api.WebhookEventProcessingService;
 import io.harness.ng.webhook.services.api.WebhookEventService;
 import io.harness.ng.webhook.services.api.WebhookService;
@@ -541,9 +544,7 @@ public class NextGenModule extends AbstractModule {
     install(ConnectorModule.getInstance(appConfig.getNextGenConfig(), appConfig.getCeNextGenClientConfig()));
     install(new NgConnectorManagerClientModule(
         appConfig.getManagerClientConfig(), appConfig.getNextGenConfig().getManagerServiceSecret()));
-    install(new DelegateTokenNgClientModule(appConfig.getManagerClientConfig(),
-        appConfig.getNextGenConfig().getManagerServiceSecret(), NG_MANAGER.getServiceId()));
-    install(new DelegateConfigNgClientModule(appConfig.getManagerClientConfig(),
+    install(new DelegateNgManagerCgManagerClientModule(appConfig.getManagerClientConfig(),
         appConfig.getNextGenConfig().getManagerServiceSecret(), NG_MANAGER.getServiceId()));
     bind(NgGlobalKmsService.class).to(NgGlobalKmsServiceImpl.class);
     install(new ProviderModule() {
@@ -647,6 +648,7 @@ public class NextGenModule extends AbstractModule {
     bind(UserInfoService.class).to(UserInfoServiceImpl.class);
     bind(WebhookService.class).to(WebhookServiceImpl.class);
     bind(WebhookEventProcessingService.class).to(WebhookEventProcessingServiceImpl.class);
+    bind(NGHostValidationService.class).to(NGHostValidationServiceImpl.class);
     bind(MessageListener.class)
         .annotatedWith(Names.named(USER_ENTITY + ENTITY_CRUD))
         .to(UserEntityCrudStreamListener.class);
@@ -755,6 +757,9 @@ public class NextGenModule extends AbstractModule {
     bind(MessageListener.class)
         .annotatedWith(Names.named(CONNECTOR_ENTITY + ENTITY_CRUD))
         .to(ConnectorEntityCRUDStreamListener.class);
+    bind(MessageListener.class)
+        .annotatedWith(Names.named(ENVIRONMENT_GROUP_ENTITY + ENTITY_CRUD))
+        .to(EnvironmentGroupEntityCrudStreamListener.class);
     bind(MessageListener.class)
         .annotatedWith(Names.named(SECRET_ENTITY + ENTITY_CRUD))
         .to(SecretEntityCRUDStreamListener.class);
