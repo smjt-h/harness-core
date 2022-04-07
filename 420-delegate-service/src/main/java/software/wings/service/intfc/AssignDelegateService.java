@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.DEL;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.DelegateTask;
 import io.harness.delegate.beans.Delegate;
+import io.harness.delegate.beans.EligibleDelegates;
 import io.harness.delegate.task.TaskFailureReason;
 
 import software.wings.delegatetasks.validation.DelegateConnectionResult;
@@ -42,7 +43,7 @@ public interface AssignDelegateService {
 
   boolean noInstalledDelegates(String accountId);
 
-  List<String> getEligibleDelegatesToExecuteTask(DelegateTask task);
+  EligibleDelegates getEligibleDelegatesToExecuteTask(DelegateTask task);
 
   List<String> getConnectedDelegateList(List<String> delegates, DelegateTask delegateTask);
 

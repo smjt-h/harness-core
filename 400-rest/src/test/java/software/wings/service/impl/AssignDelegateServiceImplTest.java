@@ -1877,8 +1877,9 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
     DelegateTask task = constructDelegateTask(false, Collections.emptySet(), DelegateTask.Status.QUEUED);
     when(accountDelegatesCache.get(ACCOUNT_ID)).thenReturn(asList(delegate));
     when(delegateCache.get(ACCOUNT_ID, delegate.getUuid(), false)).thenReturn(delegate);
-    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task)).isNotEmpty();
-    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task)).contains(delegate.getUuid());
+    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task)).isNotNull();
+    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task).getEligibleDelegateIds())
+        .contains(delegate.getUuid());
   }
 
   @Test
@@ -1898,8 +1899,9 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
                                                     .build();
     when(delegateConnectionResultCache.get(ImmutablePair.of(delegate.getUuid(), connectionResult.getCriteria())))
         .thenReturn(of(connectionResult));
-    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task)).isNotEmpty();
-    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task)).contains(delegate.getUuid());
+    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task)).isNotNull();
+    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task).getEligibleDelegateIds())
+        .contains(delegate.getUuid());
   }
 
   @Test
@@ -1907,7 +1909,7 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testGetEligibleDelegatesToExecuteTaskWithNoActiveDelegates() throws ExecutionException {
     DelegateTask task = constructDelegateTask(false, Collections.emptySet(), DelegateTask.Status.QUEUED);
-    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task)).isEmpty();
+    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task)).isNotNull();
   }
 
   @Test
@@ -1919,7 +1921,7 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
     DelegateTask task = constructDelegateTask(false, Collections.emptySet(), DelegateTask.Status.QUEUED);
     when(accountDelegatesCache.get("ACCOUNT_ID")).thenReturn(asList(delegate));
     when(delegateCache.get("ACCOUNT_ID", delegate.getUuid(), false)).thenReturn(delegate);
-    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task)).isEmpty();
+    assertThat(assignDelegateService.getEligibleDelegatesToExecuteTask(task)).isNotNull();
   }
 
   @Test

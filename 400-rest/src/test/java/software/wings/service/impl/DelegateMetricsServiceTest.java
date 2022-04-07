@@ -21,6 +21,7 @@ import io.harness.category.element.UnitTests;
 import io.harness.delegate.NoEligibleDelegatesInAccountException;
 import io.harness.delegate.beans.DelegateStringResponseData;
 import io.harness.delegate.beans.DelegateTaskResponse;
+import io.harness.delegate.beans.EligibleDelegates;
 import io.harness.delegate.beans.TaskData;
 import io.harness.metrics.impl.DelegateTaskMetricContextBuilder;
 import io.harness.metrics.intfc.DelegateMetricsService;
@@ -99,7 +100,7 @@ public class DelegateMetricsServiceTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testRecordMetrics_saveDelegateTask() {
     Mockito.when(assignDelegateService.getEligibleDelegatesToExecuteTask(anyObject()))
-        .thenReturn(Lists.newArrayList("delegateId1"));
+        .thenReturn(EligibleDelegates.builder().eligibleDelegateIds(Lists.newArrayList("delegateId1")).build());
     Mockito.when(assignDelegateService.getConnectedDelegateList(anyObject(), anyObject()))
         .thenReturn(Lists.newArrayList("delegateId1"));
     delegateTaskServiceClassic.processDelegateTask(createDefaultDelegateTask(), DelegateTask.Status.QUEUED);

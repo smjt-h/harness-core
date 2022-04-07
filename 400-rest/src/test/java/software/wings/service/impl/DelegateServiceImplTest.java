@@ -77,6 +77,7 @@ import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.DelegateTaskResponse.ResponseCode;
 import io.harness.delegate.beans.DelegateType;
 import io.harness.delegate.beans.DelegateUnregisterRequest;
+import io.harness.delegate.beans.EligibleDelegates;
 import io.harness.delegate.beans.K8sConfigDetails;
 import io.harness.delegate.beans.K8sPermissionType;
 import io.harness.delegate.beans.TaskData;
@@ -336,7 +337,8 @@ public class DelegateServiceImplTest extends WingsBaseTest {
     persistence.save(delegate);
     DelegateTask delegateTask = getDelegateTask();
     when(assignDelegateService.getEligibleDelegatesToExecuteTask(any()))
-        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
+        .thenReturn(
+            EligibleDelegates.builder().eligibleDelegateIds(new ArrayList<>(singletonList(DELEGATE_ID))).build());
     when(assignDelegateService.getConnectedDelegateList(any(), any()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     when(assignDelegateService.canAssign(eq(delegateTask.getDelegateId()), any())).thenReturn(true);
@@ -361,7 +363,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
     });
     thread.start();
     when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
-        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
+        .thenReturn(EligibleDelegates.builder().eligibleDelegateIds(singletonList(DELEGATE_ID)).build());
 
     DelegateResponseData responseData = delegateTaskServiceClassic.executeTask(delegateTask);
     assertThat(responseData).isInstanceOf(HttpStateExecutionResponse.class);
@@ -399,7 +401,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
     String delegateId = generateUuid();
     String taskId = generateUuid();
     when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
-        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
+        .thenReturn(EligibleDelegates.builder().eligibleDelegateIds(singletonList(DELEGATE_ID)).build());
     when(assignDelegateService.getConnectedDelegateList(any(), any()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
 
@@ -407,7 +409,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
     delegateTask.getData().setAsync(false);
     delegateTask.setUuid(taskId);
     when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
-        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
+        .thenReturn(EligibleDelegates.builder().eligibleDelegateIds(singletonList(DELEGATE_ID)).build());
 
     delegateTaskServiceClassic.processDelegateTask(delegateTask, DelegateTask.Status.QUEUED);
     assertThat(persistence.get(DelegateTask.class, taskId).getPreAssignedDelegateId()).isNotEqualTo(delegateId);
@@ -452,7 +454,8 @@ public class DelegateServiceImplTest extends WingsBaseTest {
     doReturn(delegate).when(delegateCache).get(ACCOUNT_ID, delegate.getUuid(), false);
 
     when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
-        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
+        .thenReturn(
+            EligibleDelegates.builder().eligibleDelegateIds(new ArrayList<>(singletonList(DELEGATE_ID))).build());
     when(assignDelegateService.getConnectedDelegateList(any(), any()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
 

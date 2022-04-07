@@ -15,4 +15,7 @@ public class NoEligibleDelegatesInAccountException extends NoDelegatesException 
   public NoEligibleDelegatesInAccountException() {
     super("No eligible delegates to execute task", NO_AVAILABLE_DELEGATES);
   }
+  public NoEligibleDelegatesInAccountException(String message) {
+    super(message, NO_AVAILABLE_DELEGATES);
+  }
 }

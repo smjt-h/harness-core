@@ -14,6 +14,7 @@ import static io.harness.beans.DelegateTask.Status.QUEUED;
 import static io.harness.beans.DelegateTask.Status.STARTED;
 import static io.harness.beans.DelegateTask.Status.runningStatuses;
 import static io.harness.beans.FeatureName.GIT_HOST_CONNECTIVITY;
+import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.SizeFunction.size;
@@ -71,6 +72,7 @@ import io.harness.delegate.beans.DelegateTaskPackage.DelegateTaskPackageBuilder;
 import io.harness.delegate.beans.DelegateTaskRank;
 import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.DelegateTaskResponse.ResponseCode;
+import io.harness.delegate.beans.EligibleDelegates;
 import io.harness.delegate.beans.ErrorNotifyResponseData;
 import io.harness.delegate.beans.NoAvailableDelegatesException;
 import io.harness.delegate.beans.NoInstalledDelegatesException;
@@ -437,12 +439,19 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
         generateCapabilitiesForTask(task);
         convertToExecutionCapability(task);
 
-        List<String> eligibleListOfDelegates = assignDelegateService.getEligibleDelegatesToExecuteTask(task);
+        EligibleDelegates eligibleDelegates = assignDelegateService.getEligibleDelegatesToExecuteTask(task);
+        List<String> eligibleListOfDelegates = eligibleDelegates != null
+            ? emptyIfNull(eligibleDelegates.getEligibleDelegateIds())
+            : Collections.emptyList();
         delegateSelectionLogsService.logDelegateTaskInfo(task);
         if (eligibleListOfDelegates.isEmpty()) {
           addToTaskActivityLog(task, NO_ELIGIBLE_DELEGATES);
           delegateSelectionLogsService.logNoEligibleDelegatesToExecuteTask(task);
           delegateMetricsService.recordDelegateTaskMetrics(task, DELEGATE_TASK_NO_ELIGIBLE_DELEGATES);
+          if (eligibleDelegates != null) {
+            String errorMessage = String.join("\n", eligibleDelegates.getErrors());
+            throw new NoEligibleDelegatesInAccountException(errorMessage);
+          }
           throw new NoEligibleDelegatesInAccountException();
         }
         // shuffle the eligible delegates to evenly distribute the load
