@@ -11,6 +11,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.persistence.HQuery.excludeAuthority;
 
 import static java.lang.System.currentTimeMillis;
+import static java.lang.System.err;
 import static java.util.stream.Collectors.toList;
 
 import io.harness.annotations.dev.HarnessTeam;
@@ -98,8 +99,12 @@ public class DelegateSyncServiceImpl implements DelegateSyncService {
     }
 
     if (taskResponse == null) {
-      throw new InvalidArgumentsException(
-          "Task has expired. It wasn't picked up by any delegate or delegate did not have enough time to finish the execution.");
+      String errorMessage = new StringBuilder()
+          .append("Task has expired. None of the delegates were eligible to connect to your ")
+          .append(description)
+          .append(" server or the delegates did not have enough time to finish the execution.")
+          .toString();
+      throw new InvalidArgumentsException(errorMessage);
     }
 
     if (disableDeserialization) {

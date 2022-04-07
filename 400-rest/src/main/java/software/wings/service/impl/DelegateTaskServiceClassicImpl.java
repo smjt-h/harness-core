@@ -403,8 +403,9 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
   @Override
   public <T extends DelegateResponseData> T executeTask(DelegateTask task) {
     scheduleSyncTask(task);
+    TaskGroup taskGroup = TaskType.valueOf(task.getData().getTaskType()).getTaskGroup();
     return delegateSyncService.waitForTask(
-        task.getUuid(), task.calcDescription(), Duration.ofMillis(task.getData().getTimeout()));
+        task.getUuid(), taskGroup.name(), Duration.ofMillis(task.getData().getTimeout()));
   }
 
   @VisibleForTesting
