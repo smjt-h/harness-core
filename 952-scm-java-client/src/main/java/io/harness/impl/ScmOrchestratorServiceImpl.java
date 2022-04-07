@@ -29,6 +29,7 @@ import io.harness.product.ci.scm.proto.FindCommitResponse;
 import io.harness.product.ci.scm.proto.FindFilesInBranchResponse;
 import io.harness.product.ci.scm.proto.FindFilesInCommitResponse;
 import io.harness.product.ci.scm.proto.GetLatestCommitResponse;
+import io.harness.product.ci.scm.proto.GetUserRepoResponse;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.IsLatestFileResponse;
 import io.harness.product.ci.scm.proto.ListBranchesResponse;
@@ -180,5 +181,10 @@ public class ScmOrchestratorServiceImpl implements ScmOrchestratorService {
   @Override
   public GetUserReposResponse getUserRepos(ScmConnector scmConnector) {
     return scmServiceGitClient.getUserRepos(scmConnector);
+  }
+
+  @Override
+  public GetUserRepoResponse getUserRepo(ScmConnector scmConnector) {
+    return scmServiceGitClient.getUserRepo(scmConnector);
   }
 }

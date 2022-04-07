@@ -70,6 +70,8 @@ import io.harness.product.ci.scm.proto.GetLatestCommitOnFileResponse;
 import io.harness.product.ci.scm.proto.GetLatestCommitRequest;
 import io.harness.product.ci.scm.proto.GetLatestCommitResponse;
 import io.harness.product.ci.scm.proto.GetLatestFileRequest;
+import io.harness.product.ci.scm.proto.GetUserRepoRequest;
+import io.harness.product.ci.scm.proto.GetUserRepoResponse;
 import io.harness.product.ci.scm.proto.GetUserReposRequest;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.IsLatestFileRequest;
@@ -581,6 +583,20 @@ public class ScmServiceClientImpl implements ScmServiceClient {
   }
 
   @Override
+  public CreateWebhookResponse createWebhook(
+      ScmConnector scmConnector, GitWebhookDetails gitWebhookDetails, SCMGrpc.SCMBlockingStub scmBlockingStub) {
+    String slug = scmGitProviderHelper.getSlug(scmConnector);
+    Provider gitProvider = scmGitProviderMapper.mapToSCMGitProvider(scmConnector);
+    CreateWebhookRequest createWebhookRequest =
+        getCreateWebhookRequest(slug, gitProvider, gitWebhookDetails, scmConnector, null);
+    CreateWebhookResponse createWebhookResponse =
+        ScmGrpcClientUtils.retryAndProcessException(scmBlockingStub::createWebhook, createWebhookRequest);
+    ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
+        createWebhookResponse.getStatus(), createWebhookResponse.getError());
+    return createWebhookResponse;
+  }
+
+  @Override
   public FindCommitResponse findCommit(
       ScmConnector scmConnector, String commitId, SCMGrpc.SCMBlockingStub scmBlockingStub) {
     String slug = scmGitProviderHelper.getSlug(scmConnector);
@@ -595,17 +611,14 @@ public class ScmServiceClientImpl implements ScmServiceClient {
   }
 
   @Override
-  public CreateWebhookResponse createWebhook(
-      ScmConnector scmConnector, GitWebhookDetails gitWebhookDetails, SCMGrpc.SCMBlockingStub scmBlockingStub) {
+  public GetUserRepoResponse getUserRepo(ScmConnector scmConnector, SCMGrpc.SCMBlockingStub scmBlockingStub) {
     String slug = scmGitProviderHelper.getSlug(scmConnector);
     Provider gitProvider = scmGitProviderMapper.mapToSCMGitProvider(scmConnector);
-    CreateWebhookRequest createWebhookRequest =
-        getCreateWebhookRequest(slug, gitProvider, gitWebhookDetails, scmConnector, null);
-    CreateWebhookResponse createWebhookResponse =
-        ScmGrpcClientUtils.retryAndProcessException(scmBlockingStub::createWebhook, createWebhookRequest);
-    ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
-        createWebhookResponse.getStatus(), createWebhookResponse.getError());
-    return createWebhookResponse;
+    GetUserRepoRequest userRepoRequest = GetUserRepoRequest.newBuilder().setSlug(slug).setProvider(gitProvider).build();
+    final GetUserRepoResponse repoResponse =
+        ScmGrpcClientUtils.retryAndProcessException(scmBlockingStub::getUserRepo, userRepoRequest);
+    ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(repoResponse.getStatus(), repoResponse.getError());
+    return repoResponse;
   }
 
   private CreateWebhookResponse createWebhook(ScmConnector scmConnector, GitWebhookDetails gitWebhookDetails,
