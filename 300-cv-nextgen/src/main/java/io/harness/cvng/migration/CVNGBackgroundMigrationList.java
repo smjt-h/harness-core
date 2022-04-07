@@ -29,6 +29,7 @@ import io.harness.cvng.migration.list.CleanupDeprecatedDocuments;
 import io.harness.cvng.migration.list.CreateDefaultVerificationJobsMigration;
 import io.harness.cvng.migration.list.CustomHealthCustomPackForExistingProjects;
 import io.harness.cvng.migration.list.DeleteInvalidOrchestratorsMigration;
+import io.harness.cvng.migration.list.DeleteOldAnalysisOrchestratorMigration;
 import io.harness.cvng.migration.list.DeleteOrchestratorWithInvalidVerificationTaskId;
 import io.harness.cvng.migration.list.DeleteSLISLOMigration;
 import io.harness.cvng.migration.list.EnableExistingCVConfigs;
@@ -104,7 +105,8 @@ public class CVNGBackgroundMigrationList {
         .add(Pair.of(41, AddMetricIdentifierToTimeSeriesThreshold.class))
         .add(Pair.of(42, AddMonitoredServiceToWebhookMigration.class))
         .add(Pair.of(43, AddTaskInfoToVerificationTask.class))
-        .add(Pair.of(44, AddFullyQualifiedIdentifierToCVConfig.class))
+        .add(Pair.of(44, DeleteOldAnalysisOrchestratorMigration.class))
+        .add(Pair.of(45, AddFullyQualifiedIdentifierToCVConfig.class))
 
         .build();
   }

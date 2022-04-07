@@ -479,9 +479,21 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
   }
 
   @Override
-  public VariableMergeServiceResponse createVariablesResponse(String yaml) {
+  public VariableMergeServiceResponse createVariablesResponse(String yaml, boolean newVersion) {
     try {
-      return variableCreatorMergeService.createVariablesResponse(yaml);
+      return variableCreatorMergeService.createVariablesResponse(yaml, newVersion);
+    } catch (Exception ex) {
+      log.error("Error happened while creating variables for pipeline:", ex);
+      throw new InvalidRequestException(
+          format("Error happened while creating variables for pipeline: %s", ex.getMessage()));
+    }
+  }
+
+  @Override
+  public VariableMergeServiceResponse createVariablesResponseV2(
+      String accountId, String orgId, String projectId, String yaml) {
+    try {
+      return variableCreatorMergeService.createVariablesResponseV2(accountId, orgId, projectId, yaml);
     } catch (Exception ex) {
       log.error("Error happened while creating variables for pipeline:", ex);
       throw new InvalidRequestException(
@@ -585,7 +597,8 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
       return pipelineYaml;
     }
     long start = System.currentTimeMillis();
-    ExpansionRequestMetadata expansionRequestMetadata = getRequestMetadata(accountId, orgIdentifier, projectIdentifier);
+    ExpansionRequestMetadata expansionRequestMetadata =
+        getRequestMetadata(accountId, orgIdentifier, projectIdentifier, pipelineYaml);
 
     Set<ExpansionRequest> expansionRequests = expansionRequestsExtractor.fetchExpansionRequests(pipelineYaml);
     Set<ExpansionResponseBatch> expansionResponseBatches =
@@ -610,20 +623,18 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
         pipelineEntity.getProjectIdentifier(), criteria, update);
   }
 
-  ExpansionRequestMetadata getRequestMetadata(String accountId, String orgIdentifier, String projectIdentifier) {
+  ExpansionRequestMetadata getRequestMetadata(
+      String accountId, String orgIdentifier, String projectIdentifier, String pipelineYaml) {
     ByteString gitSyncBranchContextBytes = gitSyncHelper.getGitSyncBranchContextBytesThreadLocal();
+    ExpansionRequestMetadata.Builder expansionRequestMetadataBuilder =
+        ExpansionRequestMetadata.newBuilder()
+            .setAccountId(accountId)
+            .setOrgId(orgIdentifier)
+            .setProjectId(projectIdentifier)
+            .setYaml(ByteString.copyFromUtf8(pipelineYaml));
     if (gitSyncBranchContextBytes != null) {
-      return ExpansionRequestMetadata.newBuilder()
-          .setAccountId(accountId)
-          .setOrgId(orgIdentifier)
-          .setProjectId(projectIdentifier)
-          .setGitSyncBranchContext(gitSyncBranchContextBytes)
-          .build();
+      expansionRequestMetadataBuilder.setGitSyncBranchContext(gitSyncBranchContextBytes);
     }
-    return ExpansionRequestMetadata.newBuilder()
-        .setAccountId(accountId)
-        .setOrgId(orgIdentifier)
-        .setProjectId(projectIdentifier)
-        .build();
+    return expansionRequestMetadataBuilder.build();
   }
 }
