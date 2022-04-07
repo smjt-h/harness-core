@@ -188,20 +188,12 @@ public class FileStoreServiceImpl implements FileStoreService {
   private void saveFile(FileDTO fileDto, NGFile ngFile, @NotNull InputStream content) {
     BoundedInputStream fileContent =
         new BoundedInputStream(content, configuration.getFileUploadLimits().getFileStoreFileLimit());
-    NGBaseFile ngBaseFile = getNgBaseFile(fileDto);
+    NGBaseFile ngBaseFile = FileDTOMapper.getNgBaseFileFromFileDTO(fileDto);
     fileService.saveFile(ngBaseFile, fileContent, FILE_STORE);
     ngFile.setSize(fileContent.getTotalBytesRead());
     ngFile.setFileUuid(ngBaseFile.getFileUuid());
     ngFile.setChecksumType(ngBaseFile.getChecksumType());
     ngFile.setChecksum(ngBaseFile.getChecksum());
-  }
-
-  private NGBaseFile getNgBaseFile(FileDTO fileDto) {
-    NGBaseFile baseFile = new NGBaseFile();
-    baseFile.setFileName(fileDto.getName());
-    baseFile.setMimeType(fileDto.getMimeType());
-    baseFile.setAccountId(fileDto.getAccountIdentifier());
-    return baseFile;
   }
 
   // in the case when we need to return the whole folder structure, create recursion on this method

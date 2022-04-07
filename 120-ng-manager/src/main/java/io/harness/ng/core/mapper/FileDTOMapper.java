@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.file.beans.NGBaseFile;
 import io.harness.ng.core.dto.filestore.FileDTO;
 import io.harness.ng.core.entities.NGFile;
 
@@ -91,5 +92,13 @@ public class FileDTOMapper {
     file.setFileName(fileDto.getName());
     file.setMimeType(fileDto.getMimeType());
     return file;
+  }
+
+  public NGBaseFile getNgBaseFileFromFileDTO(FileDTO fileDto) {
+    NGBaseFile baseFile = new NGBaseFile();
+    baseFile.setFileName(fileDto.getName());
+    baseFile.setMimeType(fileDto.getMimeType());
+    baseFile.setAccountId(fileDto.getAccountIdentifier());
+    return baseFile;
   }
 }
