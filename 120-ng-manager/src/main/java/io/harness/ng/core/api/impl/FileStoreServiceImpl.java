@@ -14,7 +14,6 @@ import static io.harness.delegate.beans.FileBucket.FILE_STORE;
 import static java.lang.String.format;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.delegate.beans.FileUploadLimit;
 import io.harness.exception.DuplicateEntityException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.file.beans.NGBaseFile;
@@ -28,6 +27,7 @@ import io.harness.ng.core.mapper.FileStoreNodeDTOMapper;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
 import io.harness.stream.BoundedInputStream;
 
+import software.wings.app.MainConfiguration;
 import software.wings.service.intfc.FileService;
 
 import com.google.common.io.Files;
@@ -52,31 +52,30 @@ import org.springframework.dao.DuplicateKeyException;
 public class FileStoreServiceImpl implements FileStoreService {
   private final FileService fileService;
   private final FileStoreRepository fileStoreRepository;
-  private final FileUploadLimit fileUploadLimit;
+  private final MainConfiguration configuration;
 
   @Inject
   public FileStoreServiceImpl(
-      FileService fileService, FileStoreRepository fileStoreRepository, FileUploadLimit fileUploadLimit) {
+      FileService fileService, FileStoreRepository fileStoreRepository, MainConfiguration configuration) {
     this.fileService = fileService;
     this.fileStoreRepository = fileStoreRepository;
-    this.fileUploadLimit = fileUploadLimit;
+    this.configuration = configuration;
   }
 
   @Override
   public FileDTO create(@Valid @NotNull FileDTO fileDto, InputStream content) {
     log.info("Creating {}: {}", fileDto.getType().name().toLowerCase(), fileDto);
 
-    NGBaseFile baseFile = new NGBaseFile();
-    baseFile.setFileName(fileDto.getName());
-    baseFile.setAccountId(fileDto.getAccountIdentifier());
+    NGFile ngFile = FileDTOMapper.getNGFileFromDTO(fileDto);
 
-    if (content != null && fileDto.isFile()) {
-      BoundedInputStream fileContent = new BoundedInputStream(content, fileUploadLimit.getFileStoreFileLimit());
-      fileService.saveFile(baseFile, fileContent, FILE_STORE);
-      baseFile.setSize(fileContent.getTotalBytesRead());
+    if (fileDto.isFile()) {
+      if (content == null) {
+        throw new InvalidArgumentsException(format("File content is empty. Identifier: %s", fileDto.getIdentifier()));
+      }
+      BoundedInputStream fileContent =
+          new BoundedInputStream(content, configuration.getFileUploadLimits().getFileStoreFileLimit());
+      saveFile(fileDto, ngFile, fileContent);
     }
-
-    NGFile ngFile = FileDTOMapper.getNGFileFromDTO(fileDto, baseFile);
 
     try {
       ngFile = fileStoreRepository.save(ngFile);
@@ -113,10 +112,23 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   @Override
-  public FileDTO update(@Valid @NotNull FileDTO fileDto, InputStream content) {
-    // update entities in configs.files and configs.files by using fileService
-    // update entity in DB by using fileStoreRepository or fileStoreRepositoryCustom
-    return null;
+  public FileDTO update(@Valid @NotNull FileDTO fileDto, InputStream content, String identifier) {
+    BoundedInputStream inputStream = content == null
+        ? null
+        : new BoundedInputStream(content, configuration.getFileUploadLimits().getFileStoreFileLimit());
+    NGFile existingFile =
+        fileStoreRepository
+            .findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
+                fileDto.getAccountIdentifier(), fileDto.getOrgIdentifier(), fileDto.getProjectIdentifier(), identifier)
+            .orElseThrow(() -> new IllegalArgumentException(format("File with identifier: %s not found.", identifier)));
+
+    FileDTOMapper.updateFields(fileDto, existingFile);
+    if (inputStream != null && fileDto.isFile()) {
+      log.info("Start updating file in file system.");
+      saveFile(fileDto, existingFile, inputStream);
+    }
+    fileStoreRepository.save(existingFile);
+    return FileDTOMapper.getFileDTOFromNGFile(existingFile);
   }
 
   @Override
@@ -159,5 +171,18 @@ public class FileStoreServiceImpl implements FileStoreService {
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String parentIdentifier) {
     return fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndParentIdentifier(
         accountIdentifier, orgIdentifier, projectIdentifier, parentIdentifier);
+  }
+
+  private void saveFile(@Valid FileDTO fileDto, NGFile ngFile, BoundedInputStream fileContent) {
+    fileService.saveFile(getNgBaseFile(fileDto), fileContent, FILE_STORE);
+    ngFile.setSize(fileContent.getTotalBytesRead());
+  }
+
+  private NGBaseFile getNgBaseFile(FileDTO fileDto) {
+    NGBaseFile baseFile = new NGBaseFile();
+    baseFile.setFileName(fileDto.getName());
+    baseFile.setMimeType(fileDto.getMimeType());
+    baseFile.setAccountId(fileDto.getAccountIdentifier());
+    return baseFile;
   }
 }

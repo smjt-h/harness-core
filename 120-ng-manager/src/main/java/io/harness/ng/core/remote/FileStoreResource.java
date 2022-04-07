@@ -44,6 +44,7 @@ import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -81,6 +82,27 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 @Slf4j
 public class FileStoreResource {
   private final FileStoreService fileStoreService;
+
+  @PUT
+  @Consumes(MULTIPART_FORM_DATA)
+  @Path("{identifier}")
+  @ApiOperation(value = "Update file or folder", nickname = "update")
+  @Operation(operationId = "update", summary = "Updates file or folder",
+      responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns update response") })
+  public ResponseDTO<FileDTO>
+  update(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
+             NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
+      @Parameter(description = "The file identifier") @NotNull @PathParam("identifier") String identifier,
+      @NotNull @BeanParam FileDTO file, @FormDataParam("content") InputStream content) {
+    file.setAccountIdentifier(accountIdentifier);
+    file.setOrgIdentifier(orgIdentifier);
+    file.setProjectIdentifier(projectIdentifier);
+
+    return ResponseDTO.newResponse(fileStoreService.update(file, content, identifier));
+  }
 
   @POST
   @Consumes(MULTIPART_FORM_DATA)

@@ -42,9 +42,10 @@ public interface FileStoreService {
    *
    * @param fileDto the file DTO
    * @param content file content
+   * @param identifier file identifier
    * @return updated file DTO
    */
-  FileDTO update(@Valid @NotNull FileDTO fileDto, InputStream content);
+  FileDTO update(@Valid @NotNull FileDTO fileDto, InputStream content, String identifier);
 
   /**
    * Delete file.

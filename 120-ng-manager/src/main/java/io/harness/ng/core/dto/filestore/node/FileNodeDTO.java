@@ -27,8 +27,8 @@ import lombok.NoArgsConstructor;
 @OwnedBy(CDP)
 @Schema(name = "FileNode", description = "This contains file details")
 public class FileNodeDTO extends FileStoreNodeDTO {
-  @NotNull private String fileIdentifier;
-  @NotNull private String fileName;
+  @NotNull @Schema(description = "Identifier of the File") private String fileIdentifier;
+  @NotNull @Schema(description = "Name of the File") private String fileName;
   private final NGFileType type = NGFileType.FILE;
 
   @Builder

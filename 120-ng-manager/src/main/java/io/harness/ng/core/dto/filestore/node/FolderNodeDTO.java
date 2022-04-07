@@ -29,10 +29,10 @@ import lombok.NoArgsConstructor;
 @OwnedBy(CDP)
 @Schema(name = "FolderNode", description = "This contains folder details")
 public class FolderNodeDTO extends FileStoreNodeDTO {
-  @NotNull private String folderIdentifier;
-  @NotNull private String folderName;
-  private final NGFileType type = NGFileType.FOLDER;
-  protected List<FileStoreNodeDTO> children = new ArrayList<>();
+  @NotNull @Schema(description = "Identifier of the Folder") private String folderIdentifier;
+  @NotNull @Schema(description = "Name of the Folder") private String folderName;
+  @Schema(description = "Type of the node") private final NGFileType type = NGFileType.FOLDER;
+  @Schema(description = "Node children") protected List<FileStoreNodeDTO> children = new ArrayList<>();
 
   @Builder
   public FolderNodeDTO(String folderIdentifier, String folderName) {

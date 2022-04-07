@@ -11,7 +11,6 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
-import io.harness.file.beans.NGBaseFile;
 import io.harness.ng.core.dto.filestore.FileDTO;
 import io.harness.ng.core.entities.NGFile;
 
@@ -21,7 +20,7 @@ import lombok.experimental.UtilityClass;
 @OwnedBy(CDP)
 @UtilityClass
 public class FileDTOMapper {
-  public NGFile getNGFileFromDTO(FileDTO fileDto, NGBaseFile baseFile) {
+  public NGFile getNGFileFromDTO(FileDTO fileDto) {
     return NGFile.builder()
         .accountIdentifier(fileDto.getAccountIdentifier())
         .orgIdentifier(fileDto.getOrgIdentifier())
@@ -34,12 +33,20 @@ public class FileDTOMapper {
         .tags(!EmptyPredicate.isEmpty(fileDto.getTags()) ? fileDto.getTags() : Collections.emptyList())
         .entityId(fileDto.getEntityId())
         .entityType(fileDto.getEntityType())
-        .fileUuid(baseFile.getFileUuid())
-        .fileName(baseFile.getFileName())
-        .checksumType(baseFile.getChecksumType())
-        .checksum(baseFile.getChecksum())
-        .size(baseFile.getSize())
+        .fileName(fileDto.getName())
         .build();
+  }
+
+  public NGFile updateFields(FileDTO fileDto, NGFile file) {
+    file.setFileUsage(fileDto.getFileUsage());
+    file.setType(fileDto.getType());
+    file.setParentIdentifier(fileDto.getParentIdentifier());
+    file.setDescription(fileDto.getDescription());
+    file.setTags(!EmptyPredicate.isEmpty(fileDto.getTags()) ? fileDto.getTags() : Collections.emptyList());
+    file.setEntityId(fileDto.getEntityId());
+    file.setEntityType(fileDto.getEntityType());
+    file.setFileName(fileDto.getName());
+    return file;
   }
 
   public FileDTO getFileDTOFromNGFile(NGFile ngFile) {

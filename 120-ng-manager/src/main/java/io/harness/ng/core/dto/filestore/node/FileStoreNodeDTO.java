@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 @OwnedBy(HarnessTeam.CDP)
 @Schema(name = "FileStoreNode", description = "This is the view of the file store node entity defined in Harness")
 public abstract class FileStoreNodeDTO {
-  protected NGFileType type;
+  @Schema(description = "Type of the File") protected NGFileType type;
   protected FileStoreNodeDTO(NGFileType type) {
     this.type = type;
   }

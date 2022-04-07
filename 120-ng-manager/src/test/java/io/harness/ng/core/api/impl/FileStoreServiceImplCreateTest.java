@@ -7,6 +7,7 @@
 
 package io.harness.ng.core.api.impl;
 
+import static io.harness.rule.OwnerRule.BOJAN;
 import static io.harness.rule.OwnerRule.FILIP;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -26,6 +27,7 @@ import io.harness.delegate.beans.ChecksumType;
 import io.harness.delegate.beans.FileBucket;
 import io.harness.delegate.beans.FileUploadLimit;
 import io.harness.exception.DuplicateEntityException;
+import io.harness.exception.InvalidArgumentsException;
 import io.harness.file.beans.NGBaseFile;
 import io.harness.ng.core.dto.filestore.FileDTO;
 import io.harness.ng.core.dto.filestore.NGFileType;
@@ -33,6 +35,7 @@ import io.harness.ng.core.entities.NGFile;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
 import io.harness.rule.Owner;
 
+import software.wings.app.MainConfiguration;
 import software.wings.service.intfc.FileService;
 
 import java.io.ByteArrayInputStream;
@@ -52,11 +55,14 @@ public class FileStoreServiceImplCreateTest extends CategoryTest {
 
   @Mock private FileService fileService;
 
+  @Mock private MainConfiguration configuration;
+
   @InjectMocks private FileStoreServiceImpl fileStoreService;
 
   @Before
   public void setup() {
     initMocks(this);
+    when(configuration.getFileUploadLimits()).thenReturn(new FileUploadLimit());
 
     when(fileStoreRepository.save(any())).thenAnswer(invocation -> invocation.getArguments()[0]);
   }
@@ -99,7 +105,7 @@ public class FileStoreServiceImplCreateTest extends CategoryTest {
     baseFile.setFileName(fileDto.getName());
     baseFile.setAccountId(fileDto.getAccountIdentifier());
 
-    verify(fileService).saveFile(eq(baseFile), notNull(InputStream.class), eq(FileBucket.CONFIGS));
+    verify(fileService).saveFile(eq(baseFile), notNull(InputStream.class), eq(FileBucket.FILE_STORE));
   }
 
   @Test
@@ -139,11 +145,22 @@ public class FileStoreServiceImplCreateTest extends CategoryTest {
 
     FileDTO fileDTO = aFileDto();
 
-    assertThatThrownBy(() -> fileStoreService.create(fileDTO, null))
+    assertThatThrownBy(() -> fileStoreService.create(fileDTO, getStreamWithDummyContent()))
         .isInstanceOf(DuplicateEntityException.class)
         .hasMessageContaining(
             "Try creating another file, file with identifier [%s] already exists in the parent folder",
             fileDTO.getIdentifier());
+  }
+
+  @Test
+  @Owner(developers = BOJAN)
+  @Category(UnitTests.class)
+  public void shouldHandleEmptyFileExceptionForFile() {
+    FileDTO fileDTO = aFileDto();
+
+    assertThatThrownBy(() -> fileStoreService.create(fileDTO, null))
+        .isInstanceOf(InvalidArgumentsException.class)
+        .hasMessageContaining("File content is empty. Identifier: " + fileDTO.getIdentifier(), fileDTO.getIdentifier());
   }
 
   private static FileDTO aFileDto() {
