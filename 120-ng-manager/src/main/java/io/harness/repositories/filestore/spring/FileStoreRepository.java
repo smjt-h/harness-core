@@ -23,7 +23,6 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 public interface FileStoreRepository extends PagingAndSortingRepository<NGFile, String>, FileStoreRepositoryCustom {
   List<NGFile> findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndParentIdentifier(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String parentIdentifier);
-
   Optional<NGFile> findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier);
 }

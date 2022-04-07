@@ -14,11 +14,14 @@ import static io.harness.delegate.beans.FileBucket.FILE_STORE;
 import static java.lang.String.format;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.IdentifierRef;
 import io.harness.exception.DuplicateEntityException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.file.beans.NGBaseFile;
+import io.harness.filestore.FileStoreConstants;
 import io.harness.ng.core.api.FileStoreService;
 import io.harness.ng.core.dto.filestore.FileDTO;
+import io.harness.ng.core.dto.filestore.NGFileType;
 import io.harness.ng.core.dto.filestore.node.FileStoreNodeDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 import io.harness.ng.core.entities.NGFile;
@@ -26,6 +29,7 @@ import io.harness.ng.core.mapper.FileDTOMapper;
 import io.harness.ng.core.mapper.FileStoreNodeDTOMapper;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
 import io.harness.stream.BoundedInputStream;
+import io.harness.utils.IdentifierRefHelper;
 
 import software.wings.app.MainConfiguration;
 import software.wings.service.intfc.FileService;
@@ -126,11 +130,23 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   @Override
-  public boolean delete(
-      @NotNull String accountIdentifier, String orgIdentifier, String projectIdentifier, @NotNull String identifier) {
-    // delete entities in configs.files and configs.files by using fileService
-    // delete entity in DB by using fileStoreRepository or fileStoreRepositoryCustom
-    return false;
+  public boolean delete(String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier) {
+    validateNotRootFolder(identifier);
+    IdentifierRef identifierRef =
+        IdentifierRefHelper.getIdentifierRef(identifier, accountIdentifier, orgIdentifier, projectIdentifier);
+    NGFile file =
+        fileStoreRepository
+            .findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
+                identifierRef.getAccountIdentifier(), identifierRef.getOrgIdentifier(),
+                identifierRef.getProjectIdentifier(), identifierRef.getIdentifier())
+            .orElseThrow(()
+                             -> new InvalidArgumentsException(String.format(
+                                 "File or folder with identifier [%s], account [%s], org [%s] and project [%s] "
+                                     + "could not be retrieved from file store.",
+                                 identifier, accountIdentifier, orgIdentifier, projectIdentifier)));
+
+    validateIsReferencedBy(file);
+    return deleteFileOrFolder(file);
   }
 
   @Override
@@ -192,5 +208,93 @@ public class FileStoreServiceImpl implements FileStoreService {
     baseFile.setMimeType(fileDto.getMimeType());
     baseFile.setAccountId(fileDto.getAccountIdentifier());
     return baseFile;
+  }
+
+  private void validateIsReferencedBy(NGFile fileOrFolder) {
+    if (NGFileType.FOLDER.equals(fileOrFolder.getType())) {
+      validateFolderReferencedBy(fileOrFolder);
+    } else {
+      validateFileReferencedBy(fileOrFolder);
+    }
+  }
+
+  private void validateFolderReferencedBy(NGFile file) {
+    if (anyFileInFolderHasReferences(file)) {
+      throw new InvalidArgumentsException(String.format(
+          "Folder [%s], or its subfolders, contain file(s) referenced by other entities and can not be deleted.",
+          file.getIdentifier()));
+    }
+  }
+
+  private void validateFileReferencedBy(NGFile file) {
+    if (isFileReferencedByOtherEntities(file)) {
+      throw new InvalidArgumentsException(
+          String.format("File [%s] is referenced by other entities and can not be deleted.", file.getIdentifier()));
+    }
+  }
+
+  private boolean anyFileInFolderHasReferences(NGFile folder) {
+    List<NGFile> childrenFiles = listFilesByParentIdentifier(folder.getAccountIdentifier(), folder.getOrgIdentifier(),
+        folder.getProjectIdentifier(), folder.getIdentifier());
+    if (isEmpty(childrenFiles)) {
+      return false;
+    }
+    return childrenFiles.stream().filter(Objects::nonNull).anyMatch(this::isReferencedByOtherEntities);
+  }
+
+  private boolean isFileReferencedByOtherEntities(NGFile file) {
+    // TODO: implementation is missing until all details are concluded
+    return false;
+  }
+
+  private boolean isReferencedByOtherEntities(NGFile fileOrFolder) {
+    if (NGFileType.FOLDER.equals(fileOrFolder.getType())) {
+      return anyFileInFolderHasReferences(fileOrFolder);
+    } else {
+      return isFileReferencedByOtherEntities(fileOrFolder);
+    }
+  }
+
+  private boolean deleteFolder(NGFile folder) {
+    List<NGFile> childrenFiles = listFilesByParentIdentifier(folder.getAccountIdentifier(), folder.getOrgIdentifier(),
+        folder.getProjectIdentifier(), folder.getIdentifier());
+    if (!isEmpty(childrenFiles)) {
+      childrenFiles.stream().filter(Objects::nonNull).forEach(this::deleteFileOrFolder);
+    }
+    try {
+      fileStoreRepository.delete(folder);
+      log.info("Folder [{}] deleted.", folder.getFileName());
+      return true;
+    } catch (Exception e) {
+      log.error("Failed to delete folder [{}].", folder.getFileName(), e);
+      return false;
+    }
+  }
+
+  private boolean deleteFile(NGFile file) {
+    try {
+      fileService.deleteFile(file.getFileUuid(), FILE_STORE);
+      fileStoreRepository.delete(file);
+      log.info("File [{}] deleted.", file.getIdentifier());
+      return true;
+    } catch (Exception e) {
+      log.error("Failed to delete file [{}].", file.getIdentifier(), e);
+      return false;
+    }
+  }
+
+  private boolean deleteFileOrFolder(NGFile fileOrFolder) {
+    if (NGFileType.FOLDER.equals(fileOrFolder.getType())) {
+      return deleteFolder(fileOrFolder);
+    } else {
+      return deleteFile(fileOrFolder);
+    }
+  }
+
+  private void validateNotRootFolder(String identifier) {
+    if (FileStoreConstants.ROOT_FOLDER_IDENTIFIER.equals(identifier)) {
+      throw new InvalidArgumentsException(String.format(
+          "File or folder with identifier [%s] can not be deleted.", FileStoreConstants.ROOT_FOLDER_IDENTIFIER));
+    }
   }
 }

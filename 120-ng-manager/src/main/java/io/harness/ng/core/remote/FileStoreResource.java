@@ -8,6 +8,7 @@
 package io.harness.ng.core.remote;
 
 import static io.harness.NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.IDENTIFIER_PARAM_MESSAGE;
 import static io.harness.NGCommonEntityConstants.ORG_PARAM_MESSAGE;
 import static io.harness.NGCommonEntityConstants.PROJECT_PARAM_MESSAGE;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
@@ -43,7 +44,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -149,7 +150,6 @@ public class FileStoreResource {
         fileStoreService.listFolderNodes(accountIdentifier, orgIdentifier, projectIdentifier, folderNodeDTO));
   }
 
-  @GET
   @Path("file/{fileIdentifier}/download")
   @ApiOperation(value = "Download file", nickname = "downloadFile")
   @Operation(operationId = "downloadFile", summary = "Download File",
@@ -171,5 +171,26 @@ public class FileStoreResource {
     return Response.ok(file, APPLICATION_OCTET_STREAM)
         .header("Content-Disposition", "attachment; filename=" + file.getName())
         .build();
+  }
+
+  @DELETE
+  @Consumes({"application/json"})
+  @ApiOperation(value = "Delete file or folder by identifier", nickname = "deleteFile")
+  @Operation(operationId = "deleteFile", summary = "Delete file or folder by identifier",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(responseCode = "default", description = "Returns true if deletion was successful.")
+      })
+  public ResponseDTO<Boolean>
+  delete(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
+             NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
+      @Parameter(description = IDENTIFIER_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.IDENTIFIER_KEY) @NotNull String identifier) {
+    return ResponseDTO.newResponse(
+        fileStoreService.delete(accountIdentifier, orgIdentifier, projectIdentifier, identifier));
   }
 }
