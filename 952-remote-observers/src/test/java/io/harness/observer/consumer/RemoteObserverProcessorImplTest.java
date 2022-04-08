@@ -35,6 +35,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.inject.Injector;
 import com.google.protobuf.ByteString;
 import java.util.Set;
+
+import io.harness.serializer.kryo.KryoPoolConfiguration;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +56,7 @@ public class RemoteObserverProcessorImplTest extends CategoryTest {
     injector = mock(Injector.class);
     final ImmutableSet<Class<? extends KryoRegistrar>> kryos =
         ImmutableSet.<Class<? extends KryoRegistrar>>builder().add(TestKryoRegistrar.class).build();
-    kryoSerializer = new KryoSerializer(kryos);
+    kryoSerializer = new KryoSerializer(kryos, new KryoPoolConfiguration());
     remoteObserverProcessor = spy(new RemoteObserverProcessorImpl(injector, kryoSerializer));
     MockitoAnnotations.initMocks(this);
   }
