@@ -9,6 +9,7 @@ package io.harness.serializer;
 
 import static java.lang.String.format;
 
+import com.esotericsoftware.kryo.Kryo;
 import io.harness.reflection.CodeUtils;
 
 import com.esotericsoftware.kryo.Registration;
@@ -24,7 +25,9 @@ import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 import lombok.extern.slf4j.Slf4j;
@@ -50,11 +53,14 @@ public class KryoSerializer {
     }
   }
 
+  private static final int DEFAULT_QUEUE_CAPACITY = 20;
+
   private final KryoPool pool;
 
   @Inject
   public KryoSerializer(Set<Class<? extends KryoRegistrar>> registrars) {
-    pool = new KryoPool.Builder(() -> kryo(registrars)).softReferences().build();
+    final Queue<Kryo> queue = new ArrayBlockingQueue<>(DEFAULT_QUEUE_CAPACITY);
+    pool = new KryoPool.Builder(() -> kryo(registrars)).queue(queue).softReferences().build();
   }
 
   private HKryo kryo(Collection<Class<? extends KryoRegistrar>> registrars) {
