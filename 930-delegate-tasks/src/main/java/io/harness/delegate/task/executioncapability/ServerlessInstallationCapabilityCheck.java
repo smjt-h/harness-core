@@ -31,7 +31,7 @@ public class ServerlessInstallationCapabilityCheck implements CapabilityCheck, P
   }
 
   @Override
-  public CapabilityResponse performCapabilityCheck(ExecutionCapability executionCapability, boolean isNG) {
+  public CapabilityResponse performCapabilityCheck(ExecutionCapability executionCapability) {
     ServerlessInstallationCapability serverlessInstallationCapability =
         (ServerlessInstallationCapability) executionCapability;
 

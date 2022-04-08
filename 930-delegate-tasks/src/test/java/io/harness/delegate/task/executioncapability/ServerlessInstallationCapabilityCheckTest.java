@@ -38,7 +38,7 @@ public class ServerlessInstallationCapabilityCheckTest extends CategoryTest {
   @Category(UnitTests.class)
   public void performCapabilityCheckTest() {
     CapabilityResponse capabilityResponse =
-        serverlessInstallationCapabilityCheck.performCapabilityCheck(executionCapability, true);
+        serverlessInstallationCapabilityCheck.performCapabilityCheck(executionCapability);
     assertThat(capabilityResponse.getDelegateCapability()).isInstanceOf(ServerlessInstallationCapability.class);
   }
 }
