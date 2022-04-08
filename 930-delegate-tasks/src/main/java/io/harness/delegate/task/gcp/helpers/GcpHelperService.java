@@ -85,6 +85,17 @@ public class GcpHelperService {
       JacksonFactory jsonFactory = JacksonFactory.getDefaultInstance();
       HttpTransport transport = gcpHttpTransportHelperService.checkIfUseProxyAndGetHttpTransport();
       GoogleCredential credential = getGoogleCredential(serviceAccountKeyFileContent, isUseDelegate);
+      if (serviceAccountKeyFileContent == null) {
+        log.error("serviceAccountKeyFileContent is null");
+      } else {
+        log.error("serviceACcountkey:");
+        log.error(serviceAccountKeyFileContent.toString());
+      }
+
+      log.error("credentials:");
+      log.error(credential.getServiceAccountId());
+      log.error(credential.getServiceAccountUser());
+
       return new Container.Builder(transport, jsonFactory, credential).setApplicationName("Harness").build();
     } catch (GeneralSecurityException e) {
       log.error("Security exception getting Google container service", e);

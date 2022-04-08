@@ -117,6 +117,10 @@ public class GkeClusterHelper {
       char[] serviceAccountKeyFileContent, boolean useDelegate, String locationClusterName, String namespace) {
     Container gkeContainerService = gcpHelperService.getGkeContainerService(serviceAccountKeyFileContent, useDelegate);
     String projectId = getProjectIdFromCredentials(serviceAccountKeyFileContent, useDelegate);
+    if (EmptyPredicate.isEmpty(projectId)) {
+      throw new InvalidRequestException("Project ID is empty");
+    }
+
     if (EmptyPredicate.isEmpty(locationClusterName)) {
       throw new InvalidRequestException("Cluster name is empty in Inframapping");
     }
@@ -129,11 +133,20 @@ public class GkeClusterHelper {
     String location = locationCluster[0];
     String clusterName = locationCluster[1];
     try {
+      ListClustersResponse response = gkeContainerService.projects()
+                                          .locations()
+                                          .clusters()
+                                          .list("projects/" + projectId + "/locations/" + ALL_LOCATIONS)
+                                          .execute();
+      List<Cluster> clusters = response.getClusters();
+      log.info("listing clusters " + clusters.toString());
+
       Cluster cluster = gkeContainerService.projects()
                             .locations()
                             .clusters()
                             .get("projects/" + projectId + "/locations/" + location + "/clusters/" + clusterName)
                             .execute();
+
       log.debug("Found cluster {} in location {} for project {}", clusterName, location, projectId);
       log.info("Cluster status: {}", cluster.getStatus());
       log.debug("Master endpoint: {}", cluster.getEndpoint());
