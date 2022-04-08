@@ -1243,7 +1243,7 @@ public class SettingValidationServiceTest extends WingsBaseTest {
       settingValidationService.validateConnectivity(settingAttribute);
       fail("The delegate task executed should have thrown error.");
     } catch (NoEligibleDelegatesInAccountException e) {
-      assertThat(e.getMessage()).isEqualTo("No eligible delegates to execute task");
+      assertThat(e.getMessage()).isEqualTo("No eligible delegates to execute task. ");
     }
     ArgumentCaptor<DelegateTask> taskArgumentCaptor = ArgumentCaptor.forClass(DelegateTask.class);
     verify(delegateService, times(1)).executeTask(taskArgumentCaptor.capture());
