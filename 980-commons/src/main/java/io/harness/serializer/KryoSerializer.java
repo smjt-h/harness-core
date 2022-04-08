@@ -28,8 +28,11 @@ import java.util.Collection;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
+
+import io.harness.serializer.kryo.KryoPoolConfiguration;
 import lombok.extern.slf4j.Slf4j;
 
 @Singleton
@@ -53,14 +56,20 @@ public class KryoSerializer {
     }
   }
 
-  private static final int DEFAULT_QUEUE_CAPACITY = 20;
-
   private final KryoPool pool;
 
   @Inject
-  public KryoSerializer(Set<Class<? extends KryoRegistrar>> registrars) {
-    final Queue<Kryo> queue = new ArrayBlockingQueue<>(DEFAULT_QUEUE_CAPACITY);
-    pool = new KryoPool.Builder(() -> kryo(registrars)).queue(queue).softReferences().build();
+  public KryoSerializer(Set<Class<? extends KryoRegistrar>> registrars, KryoPoolConfiguration kpConfig) {
+    pool = new KryoPool.Builder(() -> kryo(registrars)).queue(createQueue(kpConfig)).softReferences().build();
+  }
+
+  private Queue<Kryo> createQueue(KryoPoolConfiguration kpConfig) {
+    log.info("Queue capacity set to {}", kpConfig.getQueueCapacity());
+    if (kpConfig.getQueueCapacity() > 0) {
+      return new ArrayBlockingQueue<>(kpConfig.getQueueCapacity());
+    } else {
+      return new ConcurrentLinkedQueue<>();
+    }
   }
 
   private HKryo kryo(Collection<Class<? extends KryoRegistrar>> registrars) {

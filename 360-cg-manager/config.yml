@@ -704,3 +704,6 @@ ldapSyncJobConfig:
   defaultCronExpression: "0 0/15 * 1/1 * ? *"
 
 useGlobalKMSAsBaseAlgo: false
+
+kryoPool:
+  queueCapacity: ${KRYO_POOL_QUEUE_CAPACITY:-0}

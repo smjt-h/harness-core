@@ -213,6 +213,7 @@ import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.seeddata.SampleDataProviderService;
 import io.harness.seeddata.SampleDataProviderServiceImpl;
 import io.harness.serializer.YamlUtils;
+import io.harness.serializer.kryo.KryoPoolConfiguration;
 import io.harness.service.CgEventHelper;
 import io.harness.service.DelegateServiceDriverModule;
 import io.harness.service.EventConfigService;
@@ -1748,4 +1749,11 @@ public class WingsModule extends AbstractModule implements ServersModule {
   public ObjectMapper getYamlSchemaObjectMapperWithoutNamed() {
     return Jackson.newObjectMapper();
   }
+
+  @Provides
+  @Singleton
+  public KryoPoolConfiguration kryoPoolConfiguration() {
+      return configuration.getKryoPoolConfig();
+  }
+
 }
