@@ -4664,7 +4664,7 @@ plain_artifacts = [
     "io.netty:netty-buffer:4.1.52.Final",
     "io.netty:netty-codec-dns:4.1.52.Final",
     "io.netty:netty-codec-http2:4.1.52.Final",
-    "io.netty:netty-codec-http:4.1.52.Final",
+    "io.netty:netty-codec-http:4.1.60.Final",
     "io.netty:netty-codec-socks:4.1.52.Final",
     "io.netty:netty-codec:4.1.52.Final",
     "io.netty:netty-common:4.1.52.Final",
