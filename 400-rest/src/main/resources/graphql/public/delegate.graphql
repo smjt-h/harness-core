@@ -6,11 +6,25 @@
 extend type Query {
   # Get details about all delegates for account
   delegateList(filters: [DelegateFilter], limit: Int, offset: Int): DelegateList @dataFetcher(name: delegateList)
+  # Get details about all delegate scopes for account
+  delegateScopesList(input: DelegateScopeListInput!): DelegateScopeListPayload @dataFetcher(name: delegateScopesList)
 }
 
 type DelegateList {
   pageInfo: PageInfo
   nodes: [Delegate]
+}
+
+input DelegateScopeListInput {
+  limit: String
+  offset: String
+  accountId: String!
+  clientMutationId: String
+}
+
+type DelegateScopeListPayload {
+  clientMutationId: String
+  nodes: [DelegateScope]
 }
 
 input DelegateFilter {
