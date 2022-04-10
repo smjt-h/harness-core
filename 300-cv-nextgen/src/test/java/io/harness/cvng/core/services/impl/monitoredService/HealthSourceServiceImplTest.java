@@ -313,7 +313,5 @@ public class HealthSourceServiceImplTest extends CvNextGenTestBase {
     assertThat(cvConfig.getTierName()).isEqualTo(appTierName);
     assertThat(cvConfig.getApplicationName()).isEqualTo(applicationName);
     assertThat(cvConfig.getMonitoredServiceIdentifier()).isEqualTo(monitoredServiceIdentifier);
-    assertThat(cvConfig.getFullyQualifiedIdentifier())
-        .isEqualTo(HealthSourceService.getNameSpacedIdentifier(nameSpaceIdentifier, identifier));
   }
 }
