@@ -45,4 +45,9 @@ public class ServerlessCommandTask extends AbstractDelegateRunnableTask {
     return serverlessDelegateTaskHelper.getServerlessCommandResponse(
         serverlessCommandRequest, getLogStreamingTaskClient());
   }
+
+  @Override
+  public boolean isSupportingErrorFramework() {
+    return true;
+  }
 }

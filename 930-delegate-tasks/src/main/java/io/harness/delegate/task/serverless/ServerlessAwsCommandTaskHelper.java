@@ -8,6 +8,13 @@
 package io.harness.delegate.task.serverless;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.SERVERLESS_MANIFEST_PROCESSING_EXPLANATION;
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.SERVERLESS_MANIFEST_PROCESSING_FAILED;
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.SERVERLESS_MANIFEST_PROCESSING_HINT;
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.SERVERLESS_PLUGIN_INSTALL_EXPLANATION;
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.SERVERLESS_PLUGIN_INSTALL_FAILED;
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.SERVERLESS_PLUGIN_INSTALL_HINT;
+import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.logging.LogLevel.INFO;
 
 import static software.wings.beans.LogHelper.color;
@@ -20,6 +27,9 @@ import io.harness.delegate.beans.serverless.ServerlessAwsLambdaCloudFormationSch
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaFunction;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaFunction.ServerlessAwsLambdaFunctionBuilder;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaManifestSchema;
+import io.harness.exception.ExceptionUtils;
+import io.harness.exception.NestedExceptionUtils;
+import io.harness.exception.runtime.serverless.ServerlessAwsLambdaRuntimeException;
 import io.harness.filesystem.FileIo;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
@@ -36,6 +46,7 @@ import io.harness.serverless.model.ServerlessDelegateTaskParams;
 
 import software.wings.beans.LogColor;
 import software.wings.beans.LogWeight;
+import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
@@ -139,16 +150,28 @@ public class ServerlessAwsCommandTaskHelper {
   }
 
   public ServerlessAwsLambdaManifestSchema parseServerlessManifest(
-      ServerlessAwsLambdaManifestConfig serverlessManifestConfig) throws IOException {
+      ServerlessAwsLambdaManifestConfig serverlessManifestConfig, LogCallback executionLogCallback) {
     String manifestContent = serverlessManifestConfig.getManifestContent();
     YamlUtils yamlUtils = new YamlUtils();
-    return yamlUtils.read(manifestContent, ServerlessAwsLambdaManifestSchema.class);
+    try {
+      return yamlUtils.read(manifestContent, ServerlessAwsLambdaManifestSchema.class);
+    } catch (Exception e) {
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Failure in processing manifest file", sanitizedException);
+      executionLogCallback.saveExecutionLog(
+          "Failed to process manifest file with error: " + ExceptionUtils.getMessage(sanitizedException), ERROR,
+          CommandExecutionStatus.FAILURE);
+      throw NestedExceptionUtils.hintWithExplanationException(SERVERLESS_MANIFEST_PROCESSING_HINT,
+          SERVERLESS_MANIFEST_PROCESSING_EXPLANATION,
+          new ServerlessAwsLambdaRuntimeException(SERVERLESS_MANIFEST_PROCESSING_FAILED));
+    }
   }
 
   public void installPlugins(ServerlessAwsLambdaManifestSchema serverlessAwsLambdaManifestSchema,
       ServerlessDelegateTaskParams serverlessDelegateTaskParams, LogCallback executionLogCallback,
       ServerlessClient serverlessClient, long timeoutInMillis,
-      ServerlessAwsLambdaManifestConfig serverlessAwsLambdaManifestConfig) throws Exception {
+      ServerlessAwsLambdaManifestConfig serverlessAwsLambdaManifestConfig)
+      throws InterruptedException, TimeoutException, IOException {
     ServerlessCliResponse response;
     if (EmptyPredicate.isNotEmpty(serverlessAwsLambdaManifestSchema.getPlugins())) {
       executionLogCallback.saveExecutionLog("Plugin Installation starting..\n");
@@ -157,7 +180,12 @@ public class ServerlessAwsCommandTaskHelper {
         response = serverlessTaskPluginHelper.installServerlessPlugin(serverlessDelegateTaskParams, serverlessClient,
             plugin, executionLogCallback, timeoutInMillis, serverlessAwsLambdaManifestConfig.getConfigOverridePath());
         if (response.getCommandExecutionStatus() != CommandExecutionStatus.SUCCESS) {
-          // todo: error handling
+          Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(
+              new ServerlessAwsLambdaRuntimeException(SERVERLESS_PLUGIN_INSTALL_FAILED));
+          executionLogCallback.saveExecutionLog(
+              "%nPlugin Installation failed.. \n", ERROR, CommandExecutionStatus.FAILURE);
+          throw NestedExceptionUtils.hintWithExplanationException(format(SERVERLESS_PLUGIN_INSTALL_HINT, plugin),
+              format(SERVERLESS_PLUGIN_INSTALL_EXPLANATION, plugin), sanitizedException);
         }
       }
       executionLogCallback.saveExecutionLog(
@@ -171,7 +199,7 @@ public class ServerlessAwsCommandTaskHelper {
   }
 
   public List<ServerlessAwsLambdaFunction> fetchFunctionOutputFromCloudFormationTemplate(
-      String cloudFormationTemplateDirectory) throws Exception {
+      String cloudFormationTemplateDirectory) throws IOException {
     String cloudFormationTemplatePath =
         Paths.get(cloudFormationTemplateDirectory, CLOUDFORMATION_UPDATE_FILE).toString();
     String cloudFormationTemplateContent =

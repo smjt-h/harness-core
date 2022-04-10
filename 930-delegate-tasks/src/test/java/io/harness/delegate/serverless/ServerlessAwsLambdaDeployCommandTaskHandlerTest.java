@@ -116,7 +116,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
     doReturn(serverlessAwsLambdaConfig).when(serverlessInfraConfigHelper).createServerlessConfig(serverlessInfraConfig);
     doReturn(serverlessAwsLambdaManifestSchema)
         .when(serverlessAwsCommandTaskHelper)
-        .parseServerlessManifest((ServerlessAwsLambdaManifestConfig) serverlessManifestConfig);
+        .parseServerlessManifest((ServerlessAwsLambdaManifestConfig) serverlessManifestConfig, initLogCallback);
 
     ServerlessClient serverlessClient = ServerlessClient.client(serverlessDelegateTaskParams.getServerlessClientPath());
 

@@ -7,6 +7,10 @@
 
 package io.harness.delegate.serverless;
 
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.CONFIG_CREDENTIAL_FAILED;
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.CONFIG_CREDENTIAL_FAILED_EXPLANATION;
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.CONFIG_CREDENTIAL_FAILED_HINT;
+import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.logging.LogLevel.INFO;
 
 import static software.wings.beans.LogColor.White;
@@ -34,6 +38,8 @@ import io.harness.delegate.task.serverless.response.ServerlessCommandResponse;
 import io.harness.delegate.task.serverless.response.ServerlessRollbackResponse;
 import io.harness.delegate.task.serverless.response.ServerlessRollbackResponse.ServerlessRollbackResponseBuilder;
 import io.harness.exception.InvalidArgumentsException;
+import io.harness.exception.NestedExceptionUtils;
+import io.harness.exception.runtime.serverless.ServerlessAwsLambdaRuntimeException;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
@@ -92,10 +98,23 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
         (ServerlessAwsLambdaInfraConfig) serverlessRollbackRequest.getServerlessInfraConfig();
     LogCallback initLogCallback = serverlessTaskHelperBase.getLogCallback(
         iLogStreamingTaskClient, ServerlessCommandUnitConstants.init.toString(), true, commandUnitsProgress);
-    init(serverlessRollbackRequest, initLogCallback, serverlessDelegateTaskParams);
+    try {
+      init(serverlessRollbackRequest, initLogCallback, serverlessDelegateTaskParams);
+    } catch (Exception ex) {
+      initLogCallback.saveExecutionLog(color(format("%n Initialization failed."), LogColor.Red, LogWeight.Bold),
+          LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+      throw ex;
+    }
+
     LogCallback rollbackLogCallback = serverlessTaskHelperBase.getLogCallback(
         iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true, commandUnitsProgress);
-    return rollback(serverlessRollbackRequest, rollbackLogCallback, serverlessDelegateTaskParams);
+    try {
+      return rollback(serverlessRollbackRequest, rollbackLogCallback, serverlessDelegateTaskParams);
+    } catch (Exception ex) {
+      rollbackLogCallback.saveExecutionLog(color(format("%n Rollback failed."), LogColor.Red, LogWeight.Bold),
+          LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+      throw ex;
+    }
   }
 
   private void init(ServerlessRollbackRequest serverlessRollbackRequest, LogCallback executionLogCallback,
@@ -106,10 +125,12 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
         (ServerlessAwsLambdaManifestConfig) serverlessRollbackRequest.getServerlessManifestConfig();
     serverlessTaskHelperBase.fetchManifestFilesAndWriteToDirectory(serverlessManifestConfig,
         serverlessRollbackRequest.getAccountId(), executionLogCallback, serverlessDelegateTaskParams);
+
     executionLogCallback.saveExecutionLog("Resolving expressions in serverless config file..\n");
     serverlessTaskHelperBase.replaceManifestWithRenderedContent(serverlessDelegateTaskParams, serverlessManifestConfig);
     executionLogCallback.saveExecutionLog(color("successfully resolved with config file content:", White, Bold));
     executionLogCallback.saveExecutionLog(serverlessManifestConfig.getManifestContent());
+
     serverlessAwsLambdaConfig = (ServerlessAwsLambdaConfig) serverlessInfraConfigHelper.createServerlessConfig(
         serverlessRollbackRequest.getServerlessInfraConfig());
     serverlessClient = ServerlessClient.client(serverlessDelegateTaskParams.getServerlessClientPath());
@@ -119,9 +140,15 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
       executionLogCallback.saveExecutionLog(
           color(format("%nConfig Credential command executed successfully..%n"), LogColor.White, LogWeight.Bold), INFO);
     } else {
-      // todo: error handling
+      executionLogCallback.saveExecutionLog(
+          color(format("%nConfig Credential command failed..%n"), LogColor.Red, LogWeight.Bold), ERROR,
+          CommandExecutionStatus.FAILURE);
+      throw NestedExceptionUtils.hintWithExplanationException(CONFIG_CREDENTIAL_FAILED_HINT,
+          CONFIG_CREDENTIAL_FAILED_EXPLANATION, new ServerlessAwsLambdaRuntimeException(CONFIG_CREDENTIAL_FAILED));
     }
-    serverlessManifestSchema = serverlessAwsCommandTaskHelper.parseServerlessManifest(serverlessManifestConfig);
+
+    serverlessManifestSchema =
+        serverlessAwsCommandTaskHelper.parseServerlessManifest(serverlessManifestConfig, executionLogCallback);
     serverlessAwsCommandTaskHelper.installPlugins(serverlessManifestSchema, serverlessDelegateTaskParams,
         executionLogCallback, serverlessClient, timeoutInMillis, serverlessManifestConfig);
     executionLogCallback.saveExecutionLog("Done..\n", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
@@ -151,7 +178,6 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
       executionLogCallback.saveExecutionLog("Done..\n", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
       serverlessRollbackResponseBuilder.commandExecutionStatus(CommandExecutionStatus.SUCCESS);
     } else {
-      // todo: set error message and error handling
       executionLogCallback.saveExecutionLog(color(format("%nRollback failed..%n"), LogColor.Red, LogWeight.Bold),
           LogLevel.ERROR, CommandExecutionStatus.FAILURE);
       serverlessRollbackResponseBuilder.commandExecutionStatus(CommandExecutionStatus.FAILURE);

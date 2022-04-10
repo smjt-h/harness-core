@@ -16,25 +16,17 @@ import io.harness.exception.FailureType;
 import io.harness.exception.WingsException;
 
 import java.util.EnumSet;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 
-@Data
 @OwnedBy(HarnessTeam.CDP)
-@EqualsAndHashCode(callSuper = false)
 public class ServerlessAwsLambdaRuntimeException extends WingsException {
-  private final String message;
   private static final String MESSAGE_ARG = "message";
 
   public ServerlessAwsLambdaRuntimeException(String message) {
-    super(message, null, SERVERLESS_EXECUTION_ERROR, Level.ERROR, null, EnumSet.of(FailureType.APPLICATION_ERROR));
-    this.message = message;
-    super.param(MESSAGE_ARG, message);
+    this(message, null);
   }
 
   public ServerlessAwsLambdaRuntimeException(String message, Throwable cause) {
     super(message, cause, SERVERLESS_EXECUTION_ERROR, Level.ERROR, null, EnumSet.of(FailureType.APPLICATION_ERROR));
-    this.message = message;
     super.param(MESSAGE_ARG, message);
   }
 }

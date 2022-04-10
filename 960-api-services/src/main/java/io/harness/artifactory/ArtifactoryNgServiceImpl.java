@@ -69,15 +69,24 @@ public class ArtifactoryNgServiceImpl implements ArtifactoryNgService {
 
     buildDetails = buildDetails.stream().sorted(new BuildDetailsComparatorDescending()).collect(Collectors.toList());
     if (buildDetails.isEmpty()) {
-      throw NestedExceptionUtils.hintWithExplanationException(
-          "Please check ArtifactPathFilter field in Artifactory artifact configuration.",
-          String.format(
-              "Could not find any Artifact that match ArtifactPathFilter [%s] for Artifactory repository [%s] for generic artifact directory [%s] in registry [%s].",
-              artifactPathFilter, repositoryName, artifactDirectory, artifactoryConfig.getArtifactoryUrl()),
-          new ArtifactoryRegistryException(
-              String.format("Could not find an artifact that matches artifactPathFilter '%s'", artifactPathFilter)));
+      if (EmptyPredicate.isEmpty(artifactPath)) {
+        throw NestedExceptionUtils.hintWithExplanationException(
+            "Please check artifactPathFilter or artifactDirectory or repository field in Artifactory artifact .",
+            String.format("Could not find any Artifact that match artifactPathFilter [%s] for Artifactory repository"
+                    + " [%s] for generic artifactDirectory [%s] in registry [%s].",
+                artifactPathFilter, repositoryName, artifactDirectory, artifactoryConfig.getArtifactoryUrl()),
+            new ArtifactoryRegistryException(
+                String.format("Could not find an artifact that matches artifactPathFilter '%s'", artifactPathFilter)));
+      } else {
+        throw NestedExceptionUtils.hintWithExplanationException(
+            "Please check artifactPath or artifactDirectory or repository field in Artifactory artifact configuration.",
+            String.format("Could not find any Artifact with artifactPath [%s] for Artifactory repository"
+                    + " [%s] for generic artifactDirectory [%s] in registry [%s].",
+                artifactPath, repositoryName, artifactDirectory, artifactoryConfig.getArtifactoryUrl()),
+            new ArtifactoryRegistryException(
+                String.format("Could not find an artifact with artifactPath '%s'", artifactPath)));
+      }
     }
-
     return buildDetails.get(0);
   }
 

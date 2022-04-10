@@ -7,9 +7,13 @@
 
 package io.harness.delegate.task.serverless;
 
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.NO_SERVERLESS_MANIFEST_EXPLANATION;
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.NO_SERVERLESS_MANIFEST_FAILED;
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.NO_SERVERLESS_MANIFEST_HINT;
 import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.logging.LogLevel.INFO;
 
+import static software.wings.beans.LogColor.Red;
 import static software.wings.beans.LogColor.White;
 import static software.wings.beans.LogHelper.color;
 import static software.wings.beans.LogWeight.Bold;
@@ -37,6 +41,8 @@ import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.git.TaskStatus;
 import io.harness.delegate.task.serverless.request.ServerlessGitFetchRequest;
 import io.harness.delegate.task.serverless.response.ServerlessGitFetchResponse;
+import io.harness.exception.NestedExceptionUtils;
+import io.harness.exception.runtime.serverless.ServerlessAwsLambdaRuntimeException;
 import io.harness.git.model.FetchFilesResult;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
@@ -112,8 +118,8 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
     }
   }
 
-  private FetchFilesResult fetchManifestFile(ServerlessGitFetchFileConfig serverlessGitFetchFileConfig,
-      LogCallback executionLogCallback, String accountId) throws NoSuchFileException {
+  private FetchFilesResult fetchManifestFile(
+      ServerlessGitFetchFileConfig serverlessGitFetchFileConfig, LogCallback executionLogCallback, String accountId) {
     GitStoreDelegateConfig gitStoreDelegateConfig = serverlessGitFetchFileConfig.getGitStoreDelegateConfig();
     executionLogCallback.saveExecutionLog("Git connector Url: " + gitStoreDelegateConfig.getGitConfigDTO().getUrl());
     String fetchTypeInfo;
@@ -145,23 +151,24 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
               gitStoreDelegateConfig, folderPath, accountId, gitConfigDTO, executionLogCallback);
         }
       }
-    } catch (Exception e) {
-      String msg = "Exception in processing GitFetchFilesTask. " + e.getMessage();
-      if (e.getCause() instanceof NoSuchFileException) {
-        log.error(msg, e);
+    } catch (Exception ex) {
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(ex);
+      String msg = "Exception in processing GitFetchFilesTask. " + sanitizedException.getMessage();
+      if (sanitizedException.getCause() instanceof NoSuchFileException) {
+        log.error(msg, sanitizedException);
         executionLogCallback.saveExecutionLog(
             color(format("No manifest file found with identifier: %s.", serverlessGitFetchFileConfig.getIdentifier()),
-                White));
+                Red),
+            ERROR);
       }
       executionLogCallback.saveExecutionLog(msg, ERROR, CommandExecutionStatus.FAILURE);
-      throw e;
+      throw ex;
     }
     return filesResult;
   }
 
   private FetchFilesResult fetchManifestFileInPriorityOrder(GitStoreDelegateConfig gitStoreDelegateConfig,
-      String folderPath, String accountId, GitConfigDTO gitConfigDTO, LogCallback executionLogCallback)
-      throws NoSuchFileException {
+      String folderPath, String accountId, GitConfigDTO gitConfigDTO, LogCallback executionLogCallback) {
     // todo: // optimize in such a way fetching of files from git happens only once
     Optional<FetchFilesResult> serverlessManifestFileResult;
     serverlessManifestFileResult = fetchServerlessManifestFileFromRepo(
@@ -179,7 +186,12 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
     if (serverlessManifestFileResult.isPresent()) {
       return serverlessManifestFileResult.get();
     }
-    throw new NoSuchFileException("No Serverless Manifest Found");
+    executionLogCallback.saveExecutionLog(
+        color(format("No manifest file found with identifier: %s.", gitStoreDelegateConfig.getManifestId()), Red),
+        ERROR);
+    throw NestedExceptionUtils.hintWithExplanationException(format(NO_SERVERLESS_MANIFEST_HINT, folderPath),
+        format(NO_SERVERLESS_MANIFEST_EXPLANATION, folderPath),
+        new ServerlessAwsLambdaRuntimeException(NO_SERVERLESS_MANIFEST_FAILED));
   }
 
   private Optional<FetchFilesResult> fetchServerlessManifestFileFromRepo(GitStoreDelegateConfig gitStoreDelegateConfig,
@@ -198,9 +210,11 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
     filePath = ServerlessGitFetchTaskHelper.getCompleteFilePath(folderPath, filePath);
     List<String> filePaths = Collections.singletonList(filePath);
     serverlessGitFetchTaskHelper.printFileNames(executionLogCallback, filePaths);
-    FetchFilesResult fetchFilesResult =
-        serverlessGitFetchTaskHelper.fetchFileFromRepo(gitStoreDelegateConfig, filePaths, accountId, gitConfigDTO);
-    // todo: add exception handler for above
-    return fetchFilesResult;
+    return serverlessGitFetchTaskHelper.fetchFileFromRepo(gitStoreDelegateConfig, filePaths, accountId, gitConfigDTO);
+  }
+
+  @Override
+  public boolean isSupportingErrorFramework() {
+    return true;
   }
 }

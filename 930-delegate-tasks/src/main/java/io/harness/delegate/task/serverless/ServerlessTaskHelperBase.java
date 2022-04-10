@@ -8,8 +8,16 @@
 package io.harness.delegate.task.serverless;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.BLANK_ARTIFACT_PATH;
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.BLANK_ARTIFACT_PATH_EXPLANATION;
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.BLANK_ARTIFACT_PATH_HINT;
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.DOWNLOAD_FROM_ARTIFACTORY_EXPLANATION;
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.DOWNLOAD_FROM_ARTIFACTORY_FAILED;
+import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.DOWNLOAD_FROM_ARTIFACTORY_HINT;
+import static io.harness.exception.WingsException.USER;
 import static io.harness.filesystem.FileIo.createDirectoryIfDoesNotExist;
 import static io.harness.filesystem.FileIo.waitForDirectoryToBeAccessibleOutOfProcess;
+import static io.harness.logging.LogLevel.ERROR;
 
 import static software.wings.beans.LogColor.Gray;
 import static software.wings.beans.LogColor.White;
@@ -34,7 +42,15 @@ import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.task.artifactory.ArtifactoryRequestMapper;
 import io.harness.delegate.task.git.ScmFetchFilesHelperNG;
+import io.harness.eraro.ErrorCode;
+import io.harness.eraro.Level;
+import io.harness.exception.ExceptionUtils;
+import io.harness.exception.FileCreationException;
+import io.harness.exception.NestedExceptionUtils;
+import io.harness.exception.YamlException;
+import io.harness.exception.runtime.serverless.ServerlessAwsLambdaRuntimeException;
 import io.harness.filesystem.FileIo;
+import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.serverless.model.ServerlessDelegateTaskParams;
@@ -112,7 +128,26 @@ public class ServerlessTaskHelperBase {
             gitStoreDelegateConfig.getSshKeySpecDTO(), gitStoreDelegateConfig.getEncryptedDataDetails());
         ngGitService.downloadFiles(gitStoreDelegateConfig, workingDirectory, accountId, sshSessionConfig, gitConfigDTO);
       }
+    } catch (YamlException e) {
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Failure in fetching files from git", sanitizedException);
+      executionLogCallback.saveExecutionLog(
+          "Failed to download manifest files from git. " + ExceptionUtils.getMessage(sanitizedException), ERROR,
+          CommandExecutionStatus.FAILURE);
+      throw new ServerlessAwsLambdaRuntimeException(
+          format("Failed while trying to fetch files from git connector: '%s' in manifest with identifier: %s",
+              gitStoreDelegateConfig.getConnectorName(), gitStoreDelegateConfig.getManifestId()),
+          e.getCause());
     } catch (Exception e) {
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Failure in fetching files from git", sanitizedException);
+      executionLogCallback.saveExecutionLog(
+          "Failed to download manifest files from git. " + ExceptionUtils.getMessage(sanitizedException), ERROR,
+          CommandExecutionStatus.FAILURE);
+      throw new ServerlessAwsLambdaRuntimeException(
+          format("Failed while trying to fetch files from git connector: '%s' in manifest with identifier: %s",
+              gitStoreDelegateConfig.getConnectorName(), gitStoreDelegateConfig.getManifestId()),
+          e);
     }
   }
 
@@ -195,7 +230,11 @@ public class ServerlessTaskHelperBase {
   public void fetchArtifactoryArtifact(ServerlessArtifactoryArtifactConfig artifactoryArtifactConfig,
       LogCallback executionLogCallback, String artifactoryDirectory) throws IOException {
     if (EmptyPredicate.isEmpty(artifactoryArtifactConfig.getArtifactPath())) {
-      // todo: handle it
+      executionLogCallback.saveExecutionLog(
+          "artifactPath or artifactPathFilter is blank", ERROR, CommandExecutionStatus.FAILURE);
+      throw NestedExceptionUtils.hintWithExplanationException(BLANK_ARTIFACT_PATH_HINT,
+          String.format(BLANK_ARTIFACT_PATH_EXPLANATION, artifactoryArtifactConfig.getIdentifier()),
+          new ServerlessAwsLambdaRuntimeException(BLANK_ARTIFACT_PATH));
     }
     ArtifactoryConnectorDTO artifactoryConnectorDTO =
         (ArtifactoryConnectorDTO) artifactoryArtifactConfig.getConnectorDTO().getConnectorConfig();
@@ -218,18 +257,38 @@ public class ServerlessTaskHelperBase {
                     artifactoryArtifactConfig.getServerlessArtifactType(), artifactoryArtifactConfig.getIdentifier()),
             White, Bold));
     executionLogCallback.saveExecutionLog("Artifactory Artifact Path: " + artifactPath);
+    if (!artifactFile.createNewFile()) {
+      log.error("Failed to create new file");
+      executionLogCallback.saveExecutionLog(
+          "Failed to create a file for artifactory", ERROR, CommandExecutionStatus.FAILURE);
+      throw new FileCreationException("Failed to create file " + artifactFile.getCanonicalPath(), null,
+          ErrorCode.FILE_CREATE_ERROR, Level.ERROR, USER, null);
+    }
     try (InputStream artifactInputStream = artifactoryNgService.downloadArtifacts(artifactoryConfigRequest,
              artifactoryArtifactConfig.getRepositoryName(), artifactMetadata, ARTIFACTORY_ARTIFACT_PATH,
              ARTIFACTORY_ARTIFACT_NAME);
          FileOutputStream outputStream = new FileOutputStream(artifactFile)) {
       if (artifactInputStream == null) {
-        // todo: handle it
-      }
-      if (!artifactFile.createNewFile()) {
-        // todo: handle it
+        log.error("Failure in downloading artifact from artifactory");
+        executionLogCallback.saveExecutionLog(
+            "Failed to download artifact from artifactory.ø", ERROR, CommandExecutionStatus.FAILURE);
+        throw NestedExceptionUtils.hintWithExplanationException(DOWNLOAD_FROM_ARTIFACTORY_HINT,
+            String.format(
+                DOWNLOAD_FROM_ARTIFACTORY_EXPLANATION, artifactPath, artifactoryConfigRequest.getArtifactoryUrl()),
+            new ServerlessAwsLambdaRuntimeException(DOWNLOAD_FROM_ARTIFACTORY_FAILED));
       }
       IOUtils.copy(artifactInputStream, outputStream);
+      executionLogCallback.saveExecutionLog(color("Successfully downloaded artifact..%n", White, Bold));
+    } catch (Exception e) {
+      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Failure in downloading artifact from artifactory", sanitizedException);
+      executionLogCallback.saveExecutionLog(
+          "Failed to download artifact from artifactory. " + ExceptionUtils.getMessage(sanitizedException), ERROR,
+          CommandExecutionStatus.FAILURE);
+      throw new ServerlessAwsLambdaRuntimeException(
+          format("Failed while trying to download artifact from artifactory with identifier: %s",
+              artifactoryArtifactConfig.getIdentifier()),
+          e);
     }
-    executionLogCallback.saveExecutionLog(color("Successfully downloaded artifact..%n", White, Bold));
   }
 }
