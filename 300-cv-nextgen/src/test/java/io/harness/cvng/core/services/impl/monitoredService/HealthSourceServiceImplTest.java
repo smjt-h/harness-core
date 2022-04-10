@@ -77,7 +77,7 @@ public class HealthSourceServiceImplTest extends CvNextGenTestBase {
     applicationName = "applicationName";
     appTierName = "appTierName";
     nameSpaceIdentifier = "monitoredServiceIdentifier";
-    monitoredServiceIdentifier = generateUuid();
+    monitoredServiceIdentifier = "monitoredServiceIdentifier";
     metricPackService.createDefaultMetricPackAndThresholds(accountId, orgIdentifier, projectIdentifier);
   }
 
