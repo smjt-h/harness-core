@@ -16,6 +16,7 @@ import io.harness.cvng.core.beans.monitoredService.HealthSource.CVConfigUpdateRe
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.CustomHealthLogCVConfig;
 import io.harness.cvng.core.services.api.MetricPackService;
+import io.harness.cvng.core.services.api.monitoredService.HealthSourceService;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.Sets;
@@ -42,8 +43,9 @@ public class CustomHealthSourceLogSpec extends HealthSourceSpec {
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
       String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
-      String healthSourceIdentifier, String identifier, String name, List<CVConfig> existingCVConfigs,
+      String healthSourceIdentifier, String name, List<CVConfig> existingCVConfigs,
       MetricPackService metricPackService) {
+    String identifier = HealthSourceService.getNameSpacedIdentifier(monitoredServiceIdentifier, healthSourceIdentifier);
     List<CustomHealthLogCVConfig> existingDBCVConfigs = (List<CustomHealthLogCVConfig>) (List<?>) existingCVConfigs;
     Map<String, CustomHealthLogCVConfig> existingConfigs = new HashMap<>();
     existingDBCVConfigs.forEach(config -> existingConfigs.put(config.getQueryName(), config));

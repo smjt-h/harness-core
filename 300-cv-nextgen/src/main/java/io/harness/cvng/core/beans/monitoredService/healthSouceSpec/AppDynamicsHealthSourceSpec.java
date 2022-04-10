@@ -16,6 +16,7 @@ import io.harness.cvng.core.entities.AppDynamicsCVConfig;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.MetricPack;
 import io.harness.cvng.core.services.api.MetricPackService;
+import io.harness.cvng.core.services.api.monitoredService.HealthSourceService;
 import io.harness.cvng.core.validators.UniqueIdentifierCheck;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -75,8 +76,9 @@ public class AppDynamicsHealthSourceSpec extends MetricHealthSourceSpec {
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
       String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
-      String healthSourceIdentifier, String identifier, String name, List<CVConfig> existingCVConfigs,
+      String healthSourceIdentifier, String name, List<CVConfig> existingCVConfigs,
       MetricPackService metricPackService) {
+    String identifier = HealthSourceService.getNameSpacedIdentifier(monitoredServiceIdentifier, healthSourceIdentifier);
     List<AppDynamicsCVConfig> cvConfigsFromThisObj =
         toCVConfigs(accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier,
             healthSourceIdentifier, identifier, name, metricPackService);

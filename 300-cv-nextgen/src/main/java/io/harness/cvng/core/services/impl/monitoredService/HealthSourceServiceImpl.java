@@ -49,11 +49,9 @@ public class HealthSourceServiceImpl implements HealthSourceService {
       String serviceRef, String monitoredServiceIdentifier, String nameSpaceIdentifier, Set<HealthSource> healthSources,
       boolean enabled) {
     healthSources.forEach(healthSource -> {
-      CVConfigUpdateResult cvConfigUpdateResult =
-          healthSource.getSpec().getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, environmentRef,
-              serviceRef, monitoredServiceIdentifier, healthSource.getIdentifier(),
-              HealthSourceService.getNameSpacedIdentifier(nameSpaceIdentifier, healthSource.getIdentifier()),
-              healthSource.getName(), Collections.emptyList(), metricPackService);
+      CVConfigUpdateResult cvConfigUpdateResult = healthSource.getSpec().getCVConfigUpdateResult(accountId,
+          orgIdentifier, projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier,
+          healthSource.getIdentifier(), healthSource.getName(), Collections.emptyList(), metricPackService);
       boolean isDemoEnabledForAnyCVConfig = false;
       for (CVConfig cvConfig : cvConfigUpdateResult.getAdded()) {
         cvConfig.setEnabled(enabled);
@@ -115,11 +113,9 @@ public class HealthSourceServiceImpl implements HealthSourceService {
     healthSources.forEach(healthSource -> {
       List<CVConfig> saved = cvConfigService.list(accountId, orgIdentifier, projectIdentifier,
           HealthSourceService.getNameSpacedIdentifier(nameSpaceIdentifier, healthSource.getIdentifier()));
-      CVConfigUpdateResult cvConfigUpdateResult =
-          healthSource.getSpec().getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, environmentRef,
-              serviceRef, monitoredServiceIdentifier, healthSource.getIdentifier(),
-              HealthSourceService.getNameSpacedIdentifier(nameSpaceIdentifier, healthSource.getIdentifier()),
-              healthSource.getName(), saved, metricPackService);
+      CVConfigUpdateResult cvConfigUpdateResult = healthSource.getSpec().getCVConfigUpdateResult(accountId,
+          orgIdentifier, projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier,
+          healthSource.getIdentifier(), healthSource.getName(), saved, metricPackService);
       cvConfigUpdateResult.getDeleted().forEach(cvConfig -> cvConfigService.delete(cvConfig.getUuid()));
 
       for (CVConfig cvConfig : cvConfigUpdateResult.getAdded()) {

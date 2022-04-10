@@ -88,7 +88,7 @@ public class SplunkHealthSourceSpecTest extends CvNextGenTestBase {
   public void getCVConfigUpdateResult_forNoExistingConfigs() {
     HealthSource.CVConfigUpdateResult cvConfigUpdateResult = splunkHealthSourceSpec.getCVConfigUpdateResult(accountId,
         orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier,
-        healthSourceIdentifier, identifier, name, new ArrayList<>(), metricPackService);
+        healthSourceIdentifier, name, new ArrayList<>(), metricPackService);
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
     assertThat(cvConfigUpdateResult.getDeleted()).isEmpty();
     List<CVConfig> added = cvConfigUpdateResult.getAdded();
@@ -107,9 +107,9 @@ public class SplunkHealthSourceSpecTest extends CvNextGenTestBase {
     List<CVConfig> cvConfigs = new ArrayList<>();
     cvConfigs.add(createCVConfig(
         SplunkHealthSourceSpec.QueryDTO.builder().name(randomAlphabetic(10)).query(randomAlphabetic(10)).build()));
-    HealthSource.CVConfigUpdateResult result = splunkHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier, healthSourceIdentifier,
-        identifier, name, cvConfigs, metricPackService);
+    HealthSource.CVConfigUpdateResult result =
+        splunkHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
+            serviceIdentifier, monitoredServiceIdentifier, healthSourceIdentifier, name, cvConfigs, metricPackService);
     assertThat(result.getDeleted()).hasSize(1);
     SplunkCVConfig splunkCVConfig = (SplunkCVConfig) result.getDeleted().get(0);
     assertThat(splunkCVConfig.getCategory()).isEqualTo(CVMonitoringCategory.ERRORS);
@@ -122,9 +122,9 @@ public class SplunkHealthSourceSpecTest extends CvNextGenTestBase {
     List<CVConfig> cvConfigs = new ArrayList<>();
     cvConfigs.add(createCVConfig(
         SplunkHealthSourceSpec.QueryDTO.builder().name(randomAlphabetic(10)).query(randomAlphabetic(10)).build()));
-    HealthSource.CVConfigUpdateResult result = splunkHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier, healthSourceIdentifier,
-        identifier, name, cvConfigs, metricPackService);
+    HealthSource.CVConfigUpdateResult result =
+        splunkHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
+            serviceIdentifier, monitoredServiceIdentifier, healthSourceIdentifier, name, cvConfigs, metricPackService);
     assertThat(result.getAdded()).hasSize(1);
     SplunkCVConfig splunkCVConfig = (SplunkCVConfig) result.getAdded().get(0);
     assertCommon(splunkCVConfig);
@@ -140,9 +140,9 @@ public class SplunkHealthSourceSpecTest extends CvNextGenTestBase {
                                      .name(queryDTOS.get(0).getName())
                                      .query(randomAlphabetic(10))
                                      .build()));
-    HealthSource.CVConfigUpdateResult result = splunkHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier, healthSourceIdentifier,
-        identifier, name, cvConfigs, metricPackService);
+    HealthSource.CVConfigUpdateResult result =
+        splunkHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
+            serviceIdentifier, monitoredServiceIdentifier, healthSourceIdentifier, name, cvConfigs, metricPackService);
     assertThat(result.getUpdated()).hasSize(1);
     SplunkCVConfig splunkCVConfig = (SplunkCVConfig) result.getUpdated().get(0);
     assertCommon(splunkCVConfig);
@@ -167,7 +167,6 @@ public class SplunkHealthSourceSpecTest extends CvNextGenTestBase {
     assertThat(cvConfig.getConnectorIdentifier()).isEqualTo(connectorIdentifier);
     assertThat(cvConfig.getEnvIdentifier()).isEqualTo(envIdentifier);
     assertThat(cvConfig.getServiceIdentifier()).isEqualTo(serviceIdentifier);
-    assertThat(cvConfig.getFullyQualifiedIdentifier()).isEqualTo(identifier);
     assertThat(cvConfig.getProductName()).isEqualTo(feature);
     assertThat(cvConfig.getMonitoringSourceName()).isEqualTo(name);
     assertThat(cvConfig.getQueryName()).isEqualTo(queryDTOS.get(0).getName());

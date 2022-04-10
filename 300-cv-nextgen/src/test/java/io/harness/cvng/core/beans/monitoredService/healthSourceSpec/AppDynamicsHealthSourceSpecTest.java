@@ -157,7 +157,7 @@ public class AppDynamicsHealthSourceSpecTest extends CvNextGenTestBase {
   public void getCVConfigUpdateResult_whenNoConfigExist() {
     CVConfigUpdateResult cvConfigUpdateResult = appDynamicsHealthSourceSpec.getCVConfigUpdateResult(accountId,
         orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier,
-        healthSourceIdentifier, identifier, name, Collections.emptyList(), metricPackService);
+        healthSourceIdentifier, name, Collections.emptyList(), metricPackService);
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
     assertThat(cvConfigUpdateResult.getDeleted()).isEmpty();
     List<CVConfig> added = cvConfigUpdateResult.getAdded();
@@ -182,9 +182,9 @@ public class AppDynamicsHealthSourceSpecTest extends CvNextGenTestBase {
     List<CVConfig> cvConfigs = new ArrayList<>();
     cvConfigs.add(
         createCVConfig(MetricPack.builder().accountId(accountId).category(CVMonitoringCategory.PERFORMANCE).build()));
-    CVConfigUpdateResult result = appDynamicsHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier, healthSourceIdentifier,
-        identifier, name, cvConfigs, metricPackService);
+    CVConfigUpdateResult result =
+        appDynamicsHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
+            serviceIdentifier, monitoredServiceIdentifier, healthSourceIdentifier, name, cvConfigs, metricPackService);
     assertThat(result.getDeleted()).hasSize(1);
     AppDynamicsCVConfig appDynamicsCVConfig = (AppDynamicsCVConfig) result.getDeleted().get(0);
     assertThat(appDynamicsCVConfig.getMetricPack().getCategory()).isEqualTo(CVMonitoringCategory.PERFORMANCE);
@@ -197,9 +197,9 @@ public class AppDynamicsHealthSourceSpecTest extends CvNextGenTestBase {
     List<CVConfig> cvConfigs = new ArrayList<>();
     cvConfigs.add(
         createCVConfig(MetricPack.builder().accountId(accountId).category(CVMonitoringCategory.PERFORMANCE).build()));
-    CVConfigUpdateResult result = appDynamicsHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier, healthSourceIdentifier,
-        identifier, name, cvConfigs, metricPackService);
+    CVConfigUpdateResult result =
+        appDynamicsHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
+            serviceIdentifier, monitoredServiceIdentifier, healthSourceIdentifier, name, cvConfigs, metricPackService);
     assertThat(result.getAdded()).hasSize(3);
     result.getAdded().stream().map(cvConfig -> (AppDynamicsCVConfig) cvConfig).forEach(this::assertCommon);
     assertThat(result.getAdded()
@@ -236,9 +236,9 @@ public class AppDynamicsHealthSourceSpecTest extends CvNextGenTestBase {
     List<CVConfig> cvConfigs = new ArrayList<>();
     cvConfigs.add(createCVConfig(metricPackService.getMetricPack(accountId, orgIdentifier, projectIdentifier,
         DataSourceType.APP_DYNAMICS, CVNextGenConstants.ERRORS_PACK_IDENTIFIER)));
-    CVConfigUpdateResult result = appDynamicsHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
-        projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier, healthSourceIdentifier,
-        identifier, name, cvConfigs, metricPackService);
+    CVConfigUpdateResult result =
+        appDynamicsHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier, projectIdentifier, envIdentifier,
+            serviceIdentifier, monitoredServiceIdentifier, healthSourceIdentifier, name, cvConfigs, metricPackService);
     assertThat(result.getUpdated()).hasSize(1);
     AppDynamicsCVConfig appDynamicsCVConfig = (AppDynamicsCVConfig) result.getUpdated().get(0);
     assertCommon(appDynamicsCVConfig);
@@ -254,7 +254,6 @@ public class AppDynamicsHealthSourceSpecTest extends CvNextGenTestBase {
     assertThat(cvConfig.getConnectorIdentifier()).isEqualTo(connectorIdentifier);
     assertThat(cvConfig.getEnvIdentifier()).isEqualTo(envIdentifier);
     assertThat(cvConfig.getServiceIdentifier()).isEqualTo(serviceIdentifier);
-    assertThat(cvConfig.getFullyQualifiedIdentifier()).isEqualTo(identifier);
     assertThat(cvConfig.getProductName()).isEqualTo(feature);
     assertThat(cvConfig.getMonitoringSourceName()).isEqualTo(name);
     assertThat(cvConfig.getMetricPack().getAccountId()).isEqualTo(accountId);

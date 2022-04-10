@@ -13,6 +13,7 @@ import io.harness.cvng.core.beans.monitoredService.HealthSource;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.DatadogLogCVConfig;
 import io.harness.cvng.core.services.api.MetricPackService;
+import io.harness.cvng.core.services.api.monitoredService.HealthSourceService;
 import io.harness.exception.InvalidRequestException;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -69,8 +70,9 @@ public class DatadogLogHealthSourceSpec extends HealthSourceSpec {
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
       String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
-      String healthSourceIdentifier, String identifier, String name, List<CVConfig> existingCVConfigs,
+      String healthSourceIdentifier, String name, List<CVConfig> existingCVConfigs,
       MetricPackService metricPackService) {
+    String identifier = HealthSourceService.getNameSpacedIdentifier(monitoredServiceIdentifier, healthSourceIdentifier);
     Map<Key, DatadogLogCVConfig> existingConfigMap = getExistingCVConfigMap(existingCVConfigs);
     Map<Key, DatadogLogCVConfig> currentConfigMap = getCurrentCVConfigMap(accountId, orgIdentifier, projectIdentifier,
         environmentRef, serviceRef, monitoredServiceIdentifier, healthSourceIdentifier, identifier, name);

@@ -16,6 +16,7 @@ import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.MetricPack;
 import io.harness.cvng.core.entities.NewRelicCVConfig;
 import io.harness.cvng.core.services.api.MetricPackService;
+import io.harness.cvng.core.services.api.monitoredService.HealthSourceService;
 import io.harness.cvng.core.validators.UniqueIdentifierCheck;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -49,7 +50,8 @@ public class NewRelicHealthSourceSpec extends MetricHealthSourceSpec {
   @Override
   public CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier, String projectIdentifier,
       String environmentRef, String serviceRef, String monitoredServiceIdentifier, String healthSourceIdentifier,
-      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+      String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+    String identifier = HealthSourceService.getNameSpacedIdentifier(monitoredServiceIdentifier, healthSourceIdentifier);
     Map<Key, NewRelicCVConfig> mapExistingConfigs = new HashMap<>();
     existingCVConfigs.forEach(cvConfig
         -> mapExistingConfigs.put(getKeyFromCVConfig((NewRelicCVConfig) cvConfig), (NewRelicCVConfig) cvConfig));

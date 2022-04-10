@@ -19,6 +19,7 @@ import io.harness.cvng.core.beans.monitoredService.HealthSource;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.CustomHealthMetricCVConfig;
 import io.harness.cvng.core.services.api.MetricPackService;
+import io.harness.cvng.core.services.api.monitoredService.HealthSourceService;
 import io.harness.cvng.core.utils.analysisinfo.DevelopmentVerificationTransformer;
 import io.harness.cvng.core.utils.analysisinfo.LiveMonitoringTransformer;
 import io.harness.cvng.core.utils.analysisinfo.SLIMetricTransformer;
@@ -58,8 +59,9 @@ public class CustomHealthSourceMetricSpec extends MetricHealthSourceSpec {
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
       String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
-      String healthSourceIdentifier, String identifier, String name, List<CVConfig> existingCVConfigs,
+      String healthSourceIdentifier, String name, List<CVConfig> existingCVConfigs,
       MetricPackService metricPackService) {
+    String identifier = HealthSourceService.getNameSpacedIdentifier(monitoredServiceIdentifier, healthSourceIdentifier);
     List<CustomHealthMetricCVConfig> existingDBCVConfigs =
         (List<CustomHealthMetricCVConfig>) (List<?>) existingCVConfigs;
     Map<Key, CustomHealthMetricCVConfig> existingConfigs = new HashMap<>();

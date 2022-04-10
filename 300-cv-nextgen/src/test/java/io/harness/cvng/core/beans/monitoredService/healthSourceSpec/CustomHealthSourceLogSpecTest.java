@@ -40,7 +40,6 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
   String queryName = "errorQuery";
   String timestampValueJSONPath = "json.path.to.timestampValue";
   String queryValueJSONPath = "json.path.to.message";
-  String identifier = "1234_identifier";
   String urlPath = "http://urlPath.com";
   String accountId;
   String orgIdentifier;
@@ -85,7 +84,7 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
 
     HealthSource.CVConfigUpdateResult result = customHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
         projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, healthSourceIdentifier,
-        "1234234_iden", "healthsource", existingCVConfigs, metricPackService);
+        "healthsource", existingCVConfigs, metricPackService);
 
     assertThat(result.getAdded().get(0).toString()).isEqualTo(addedCVConfig.toString());
     assertThat(result.getAdded().size()).isEqualTo(1);
@@ -140,7 +139,7 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
 
     HealthSource.CVConfigUpdateResult result = customHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
         projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, healthSourceIdentifier,
-        "1234234_iden", "healthsource", existingCVConfigs, metricPackService);
+        "healthsource", existingCVConfigs, metricPackService);
 
     assertThat(result.getUpdated().get(0).toString()).isEqualTo(customHealthLogCVConfig.toString());
     assertThat(result.getAdded().size()).isEqualTo(0);
@@ -180,7 +179,7 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
 
     HealthSource.CVConfigUpdateResult result = customHealthSourceSpec.getCVConfigUpdateResult(accountId, orgIdentifier,
         projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, healthSourceIdentifier,
-        "1234234_iden", "healthsource", existingCVConfigs, metricPackService);
+        "healthsource", existingCVConfigs, metricPackService);
 
     assertThat(result.getDeleted().get(0).toString()).isEqualTo(existingCVConfig.toString());
     assertThat(result.getAdded().size()).isEqualTo(2);

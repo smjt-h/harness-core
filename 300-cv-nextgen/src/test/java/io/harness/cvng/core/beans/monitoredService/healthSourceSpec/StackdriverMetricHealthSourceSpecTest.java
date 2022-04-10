@@ -100,7 +100,7 @@ public class StackdriverMetricHealthSourceSpecTest {
 
     HealthSource.CVConfigUpdateResult cvConfigUpdateResult = stackdriverMetricHealthSourceSpec.getCVConfigUpdateResult(
         accountId, orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier,
-        healthSourceIdentifier, identifier, name, Collections.emptyList(), null);
+        healthSourceIdentifier, name, Collections.emptyList(), null);
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isNotEmpty();
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
@@ -156,7 +156,7 @@ public class StackdriverMetricHealthSourceSpecTest {
 
     HealthSource.CVConfigUpdateResult cvConfigUpdateResult = stackdriverMetricHealthSourceSpec.getCVConfigUpdateResult(
         accountId, orgIdentifier, projectIdentifier, envIdentifier, serviceIdentifier, monitoredServiceIdentifier,
-        healthSourceIdentifier, identifier, name, Collections.emptyList(), null);
+        healthSourceIdentifier, name, Collections.emptyList(), null);
     assertThat(cvConfigUpdateResult).isNotNull();
     assertThat(cvConfigUpdateResult.getAdded()).isNotEmpty();
     assertThat(cvConfigUpdateResult.getUpdated()).isEmpty();
