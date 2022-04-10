@@ -52,6 +52,8 @@ import org.springframework.data.annotation.TypeAlias;
 @OneOfSet(fields = {"skipCondition, when, failureStrategies, type, stageType, variables, tags", "template"},
     requiredFieldNames = {"type", "template"})
 @RecasterAlias("io.harness.plancreator.stages.stage.StageElementConfig")
+// @deprecated: Use the AbstractStageNode instead.
+@Deprecated
 public class StageElementConfig {
   @JsonProperty(YamlNode.UUID_FIELD_NAME)
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
@@ -61,7 +63,7 @@ public class StageElementConfig {
   @NotNull
   @EntityIdentifier
   @Pattern(regexp = NGRegexValidatorConstants.IDENTIFIER_PATTERN)
-  @VariableExpression(replaceWithUUid = false)
+  @VariableExpression
   String identifier;
   @NotNull @EntityName @Pattern(regexp = NGRegexValidatorConstants.NAME_PATTERN) @VariableExpression String name;
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
@@ -77,7 +79,7 @@ public class StageElementConfig {
   List<FailureStrategyConfig> failureStrategies;
   @VariableExpression List<NGVariable> variables;
   @VariableExpression Map<String, String> tags;
-  @VariableExpression(replaceWithUUid = false) String type;
+  @VariableExpression String type;
   @JsonProperty("spec")
   @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
   @VariableExpression
