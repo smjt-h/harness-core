@@ -16,7 +16,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.List;
-import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -28,17 +27,12 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @OwnedBy(CDP)
 @Schema(name = "FolderNode", description = "This contains folder details")
-public class FolderNodeDTO extends FileStoreNodeDTO {
-  @NotNull @Schema(description = "Identifier of the Folder") private String folderIdentifier;
-  @NotNull @Schema(description = "Name of the Folder") private String folderName;
-  @Schema(description = "Type of the node") private final NGFileType type = NGFileType.FOLDER;
-  @Schema(description = "Node children") protected List<FileStoreNodeDTO> children = new ArrayList<>();
+public final class FolderNodeDTO extends FileStoreNodeDTO {
+  @Schema(description = "Node children") private final List<FileStoreNodeDTO> children = new ArrayList<>();
 
   @Builder
-  public FolderNodeDTO(String folderIdentifier, String folderName) {
-    super(NGFileType.FOLDER);
-    this.folderIdentifier = folderIdentifier;
-    this.folderName = folderName;
+  public FolderNodeDTO(String identifier, String name) {
+    super(NGFileType.FOLDER, identifier, name);
   }
 
   public FileStoreNodeDTO addChild(FileStoreNodeDTO child) {

@@ -14,7 +14,6 @@ import io.harness.ng.core.dto.filestore.NGFileType;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
-import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -26,15 +25,9 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @OwnedBy(CDP)
 @Schema(name = "FileNode", description = "This contains file details")
-public class FileNodeDTO extends FileStoreNodeDTO {
-  @NotNull @Schema(description = "Identifier of the File") private String fileIdentifier;
-  @NotNull @Schema(description = "Name of the File") private String fileName;
-  private final NGFileType type = NGFileType.FILE;
-
+public final class FileNodeDTO extends FileStoreNodeDTO {
   @Builder
-  public FileNodeDTO(String fileIdentifier, String fileName) {
-    super(NGFileType.FILE);
-    this.fileIdentifier = fileIdentifier;
-    this.fileName = fileName;
+  public FileNodeDTO(String identifier, String name) {
+    super(NGFileType.FILE, identifier, name);
   }
 }

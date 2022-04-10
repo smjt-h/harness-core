@@ -131,7 +131,7 @@ public class FileStoreServiceImpl implements FileStoreService {
           format("Downloading folder not supported, fileIdentifier: %s", fileIdentifier));
     }
 
-    File file = new File(Files.createTempDir(), ngFile.getFileName());
+    File file = new File(Files.createTempDir(), ngFile.getName());
     log.info("Start downloading file, fileIdentifier: {}, filePath: {}", fileIdentifier, file.getPath());
     return fileService.download(ngFile.getFileUuid(), file, FILE_STORE);
   }
@@ -200,7 +200,7 @@ public class FileStoreServiceImpl implements FileStoreService {
   private FolderNodeDTO populateFolderNode(
       FolderNodeDTO folderNode, String accountIdentifier, String orgIdentifier, String projectIdentifier) {
     List<FileStoreNodeDTO> fileStoreNodes =
-        listFolderChildren(accountIdentifier, orgIdentifier, projectIdentifier, folderNode.getFolderIdentifier());
+        listFolderChildren(accountIdentifier, orgIdentifier, projectIdentifier, folderNode.getIdentifier());
     for (FileStoreNodeDTO node : fileStoreNodes) {
       folderNode.addChild(node);
     }
@@ -277,10 +277,10 @@ public class FileStoreServiceImpl implements FileStoreService {
     }
     try {
       fileStoreRepository.delete(folder);
-      log.info("Folder [{}] deleted.", folder.getFileName());
+      log.info("Folder [{}] deleted.", folder.getName());
       return true;
     } catch (Exception e) {
-      log.error("Failed to delete folder [{}].", folder.getFileName(), e);
+      log.error("Failed to delete folder [{}].", folder.getName(), e);
       return false;
     }
   }

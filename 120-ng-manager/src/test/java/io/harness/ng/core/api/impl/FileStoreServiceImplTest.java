@@ -186,7 +186,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
                           .identifier(fileDto.getIdentifier())
                           .accountIdentifier(fileDto.getAccountIdentifier())
                           .description(fileDto.getDescription())
-                          .fileName(fileDto.getName())
+                          .name(fileDto.getName())
                           .type(fileDto.getType())
                           .checksumType(ChecksumType.MD5)
                           .build();
@@ -301,7 +301,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
   @Category(UnitTests.class)
   public void shouldDeleteFile() {
     String fileUuid = "fileUUID";
-    NGFile file = NGFile.builder().fileName(IDENTIFIER).identifier(IDENTIFIER).fileUuid(fileUuid).build();
+    NGFile file = NGFile.builder().name(IDENTIFIER).identifier(IDENTIFIER).fileUuid(fileUuid).build();
     when(fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
              ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, IDENTIFIER))
         .thenReturn(Optional.of(file));
@@ -316,10 +316,10 @@ public class FileStoreServiceImplTest extends CategoryTest {
   @Category(UnitTests.class)
   public void shouldDeleteFolder() {
     String fileUuid = "fileUUID";
-    NGFile file = NGFile.builder().fileName(IDENTIFIER).fileUuid(fileUuid).build();
+    NGFile file = NGFile.builder().name(IDENTIFIER).fileUuid(fileUuid).build();
     String folder1 = "folder1";
     NGFile parentFolder = NGFile.builder()
-                              .fileName(folder1)
+                              .name(folder1)
                               .identifier(folder1)
                               .type(NGFileType.FOLDER)
                               .accountIdentifier(ACCOUNT_IDENTIFIER)
@@ -347,10 +347,10 @@ public class FileStoreServiceImplTest extends CategoryTest {
   @Category(UnitTests.class)
   public void shouldDeleteFolderWithSubfolder() {
     String fileUuid1 = "fileUUID1";
-    NGFile file = NGFile.builder().fileName(IDENTIFIER).identifier(IDENTIFIER).fileUuid(fileUuid1).build();
+    NGFile file = NGFile.builder().name(IDENTIFIER).identifier(IDENTIFIER).fileUuid(fileUuid1).build();
     String folder1 = "folder1";
     NGFile parentFolder = NGFile.builder()
-                              .fileName(folder1)
+                              .name(folder1)
                               .identifier(folder1)
                               .type(NGFileType.FOLDER)
                               .accountIdentifier(ACCOUNT_IDENTIFIER)
@@ -359,7 +359,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
                               .build();
     String folder2 = "folder2";
     NGFile childFolder = NGFile.builder()
-                             .fileName(folder2)
+                             .name(folder2)
                              .identifier(folder2)
                              .type(NGFileType.FOLDER)
                              .accountIdentifier(ACCOUNT_IDENTIFIER)
@@ -368,7 +368,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
                              .build();
     String file2 = "file2";
     String fileUuid2 = "fileUUID2";
-    NGFile childFile = NGFile.builder().fileName(file2).fileUuid(fileUuid2).build();
+    NGFile childFile = NGFile.builder().name(file2).fileUuid(fileUuid2).build();
     when(fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
              ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, IDENTIFIER))
         .thenReturn(Optional.of(file));
@@ -402,10 +402,10 @@ public class FileStoreServiceImplTest extends CategoryTest {
   @Category(UnitTests.class)
   public void shouldDeleteFolderWithScopePrefix() {
     String fileUuid = "fileUUID";
-    NGFile file = NGFile.builder().fileName(IDENTIFIER).identifier(IDENTIFIER).fileUuid(fileUuid).build();
+    NGFile file = NGFile.builder().name(IDENTIFIER).identifier(IDENTIFIER).fileUuid(fileUuid).build();
     String folder1 = "folder1";
     NGFile parentFolder = NGFile.builder()
-                              .fileName(folder1)
+                              .name(folder1)
                               .identifier(folder1)
                               .type(NGFileType.FOLDER)
                               .accountIdentifier(ACCOUNT_IDENTIFIER)
@@ -442,25 +442,24 @@ public class FileStoreServiceImplTest extends CategoryTest {
   @Owner(developers = IVAN)
   @Category(UnitTests.class)
   public void testListFolderNodes() {
-    FolderNodeDTO folderNodeDTO =
-        FolderNodeDTO.builder().folderIdentifier(FILE_IDENTIFIER).folderName(FILE_NAME).build();
+    FolderNodeDTO folderNodeDTO = FolderNodeDTO.builder().identifier(FILE_IDENTIFIER).name(FILE_NAME).build();
     when(fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndParentIdentifier(
              ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, FILE_IDENTIFIER))
         .thenReturn(Arrays.asList(NGFile.builder()
                                       .type(NGFileType.FOLDER)
-                                      .fileName("folderName1")
+                                      .name("folderName1")
                                       .identifier("folderIdentifier1")
                                       .parentId(FILE_IDENTIFIER)
                                       .build(),
             NGFile.builder()
                 .type(NGFileType.FOLDER)
-                .fileName("folderName2")
+                .name("folderName2")
                 .identifier("folderIdentifier2")
                 .parentId(FILE_IDENTIFIER)
                 .build(),
             NGFile.builder()
                 .type(NGFileType.FILE)
-                .fileName("fileName")
+                .name("fileName")
                 .identifier("fileIdentifier")
                 .parentId(FILE_IDENTIFIER)
                 .build()));
@@ -469,13 +468,13 @@ public class FileStoreServiceImplTest extends CategoryTest {
         fileStoreService.listFolderNodes(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, folderNodeDTO);
 
     assertThat(populatedFolderNodeDTO).isNotNull();
-    assertThat(populatedFolderNodeDTO.getFolderName()).isEqualTo(FILE_NAME);
-    assertThat(populatedFolderNodeDTO.getFolderIdentifier()).isEqualTo(FILE_IDENTIFIER);
+    assertThat(populatedFolderNodeDTO.getName()).isEqualTo(FILE_NAME);
+    assertThat(populatedFolderNodeDTO.getIdentifier()).isEqualTo(FILE_IDENTIFIER);
     assertThat(populatedFolderNodeDTO.getChildren().size()).isEqualTo(3);
     assertThat(populatedFolderNodeDTO.getChildren())
-        .contains(FileNodeDTO.builder().fileName("fileName").fileIdentifier("fileIdentifier").build(),
-            FolderNodeDTO.builder().folderName("folderName1").folderIdentifier("folderIdentifier1").build(),
-            FolderNodeDTO.builder().folderName("folderName2").folderIdentifier("folderIdentifier2").build());
+        .contains(FileNodeDTO.builder().name("fileName").identifier("fileIdentifier").build(),
+            FolderNodeDTO.builder().name("folderName1").identifier("folderIdentifier1").build(),
+            FolderNodeDTO.builder().name("folderName2").identifier("folderIdentifier2").build());
   }
 
   private static FileDTO aFileDto() {
@@ -527,7 +526,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
     return NGFile.builder()
         .type(NGFileType.FILE)
         .entityId(FILE_ID)
-        .fileName("oldName")
+        .name("oldName")
         .description("oldDescription")
         .identifier("identifier1")
         .build();

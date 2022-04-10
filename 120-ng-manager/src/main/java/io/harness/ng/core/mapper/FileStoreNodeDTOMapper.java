@@ -20,10 +20,10 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class FileStoreNodeDTOMapper {
   public FileNodeDTO getFileNodeDTO(NGFile ngFile) {
-    return FileNodeDTO.builder().fileIdentifier(ngFile.getIdentifier()).fileName(ngFile.getFileName()).build();
+    return FileNodeDTO.builder().identifier(ngFile.getIdentifier()).name(ngFile.getName()).build();
   }
 
   public FolderNodeDTO getFolderNodeDTO(NGFile ngFile) {
-    return FolderNodeDTO.builder().folderIdentifier(ngFile.getIdentifier()).folderName(ngFile.getFileName()).build();
+    return FolderNodeDTO.builder().identifier(ngFile.getIdentifier()).name(ngFile.getName()).build();
   }
 }

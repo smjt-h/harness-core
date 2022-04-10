@@ -90,17 +90,14 @@ public class FileStoreResourceTest extends CategoryTest {
   public void testListFolderNodes() {
     FolderNodeDTO folderDTO = FolderNodeDTO.builder().build();
     when(fileStoreService.listFolderNodes(ACCOUNT, ORG, PROJECT, folderDTO))
-        .thenReturn(FolderNodeDTO.builder()
-                        .folderName("returnedFolderName")
-                        .folderIdentifier("returnedFolderIdentifier")
-                        .build());
+        .thenReturn(FolderNodeDTO.builder().name("returnedFolderName").identifier("returnedFolderIdentifier").build());
     ResponseDTO<FolderNodeDTO> folderNodeDTOResponseDTO =
         fileStoreResource.listFolderNodes(ACCOUNT, ORG, PROJECT, folderDTO);
     FolderNodeDTO data = folderNodeDTOResponseDTO.getData();
 
     assertThat(data).isNotNull();
-    assertThat(data.getFolderName()).isEqualTo("returnedFolderName");
-    assertThat(data.getFolderIdentifier()).isEqualTo("returnedFolderIdentifier");
+    assertThat(data.getName()).isEqualTo("returnedFolderName");
+    assertThat(data.getIdentifier()).isEqualTo("returnedFolderIdentifier");
   }
 
   @Test
