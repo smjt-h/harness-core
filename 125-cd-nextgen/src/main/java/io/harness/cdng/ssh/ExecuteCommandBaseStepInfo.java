@@ -8,6 +8,7 @@
 package io.harness.cdng.ssh;
 
 import static io.harness.beans.SwaggerConstants.BOOLEAN_CLASSPATH;
+import static io.harness.beans.SwaggerConstants.STRING_CLASSPATH;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
 
@@ -15,7 +16,6 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
 import io.harness.pms.yaml.ParameterField;
-import io.harness.steps.shellscript.ExecutionTarget;
 import io.harness.steps.shellscript.ShellScriptSourceWrapper;
 import io.harness.steps.shellscript.ShellType;
 import io.harness.yaml.YamlSchemaTypes;
@@ -36,7 +36,6 @@ import org.springframework.data.annotation.TypeAlias;
 public class ExecuteCommandBaseStepInfo {
   @NotNull ShellType shell;
   @NotNull ShellScriptSourceWrapper source;
-  ExecutionTarget executionTarget;
   List<TailFilePattern> tailFiles;
   @NotNull
   @ApiModelProperty(dataType = BOOLEAN_CLASSPATH)
@@ -45,4 +44,5 @@ public class ExecuteCommandBaseStepInfo {
   @YamlSchemaTypes(value = {runtime})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   ParameterField<List<String>> delegateSelectors;
+  @ApiModelProperty(dataType = STRING_CLASSPATH) @YamlSchemaTypes({string}) ParameterField<String> workingDirectory;
 }

@@ -1300,8 +1300,21 @@
                 }
               ]
             },
-            "executionTarget": {
-              "$ref": "#/definitions/ExecutionTarget"
+            "environmentVariables": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/NumberNGVariable"
+                  },
+                  {
+                    "$ref": "#/definitions/SecretNGVariable"
+                  },
+                  {
+                    "$ref": "#/definitions/StringNGVariable"
+                  }
+                ]
+              }
             },
             "metadata": {
               "type": "string"
@@ -1331,6 +1344,16 @@
               "items": {
                 "$ref": "#/definitions/TailFilePattern"
               }
+            },
+            "workingDirectory": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             }
           }
         }

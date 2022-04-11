@@ -24,6 +24,7 @@ import io.harness.cdng.infra.yaml.K8SDirectInfrastructure;
 import io.harness.cdng.infra.yaml.K8sGcpInfrastructure;
 import io.harness.cdng.infra.yaml.PdcInfrastructure;
 import io.harness.cdng.k8s.K8sStepHelper;
+import io.harness.cdng.service.beans.ServiceSpecType;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.connector.ConnectorInfoDTO;
@@ -35,6 +36,7 @@ import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpCredentialType;
 import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
+import io.harness.delegate.task.ssh.SshInfraDelegateConfig;
 import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
@@ -68,6 +70,7 @@ import io.harness.steps.OutputExpressionConstants;
 import io.harness.steps.environment.EnvironmentOutcome;
 import io.harness.steps.executable.SyncExecutableWithRbac;
 import io.harness.steps.shellscript.K8sInfraDelegateConfigOutput;
+import io.harness.steps.shellscript.SshInfraDelegateConfigOutput;
 import io.harness.utils.IdentifierRefHelper;
 import io.harness.walktree.visitor.SimpleVisitorFactory;
 
@@ -123,7 +126,7 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
     InfrastructureOutcome infrastructureOutcome =
         InfrastructureMapper.toOutcome(infrastructure, environmentOutcome, serviceOutcome);
 
-    publishK8sInfraDelegateConfigOutput(infrastructureOutcome, ambiance);
+    publishInfraDelegateConfigOutput(serviceOutcome, infrastructureOutcome, ambiance);
     ngManagerLogCallback.saveExecutionLog(
         "Infrastructure Step completed", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
     return StepResponse.builder()
@@ -142,6 +145,32 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
         .build();
   }
 
+  private void publishInfraDelegateConfigOutput(
+      ServiceStepOutcome serviceOutcome, InfrastructureOutcome infrastructureOutcome, Ambiance ambiance) {
+    switch (serviceOutcome.getType()) {
+      case ServiceSpecType.SSH:
+        publishSshInfraDelegateConfigOutput(infrastructureOutcome, ambiance);
+        break;
+      case ServiceSpecType.KUBERNETES:
+      case ServiceSpecType.NATIVE_HELM:
+        publishK8sInfraDelegateConfigOutput(infrastructureOutcome, ambiance);
+        break;
+      default:
+        throw new UnsupportedOperationException(
+            format("Unsupported Service Definition type: [%s]", serviceOutcome.getType()));
+    }
+  }
+
+  private void publishSshInfraDelegateConfigOutput(InfrastructureOutcome infrastructureOutcome, Ambiance ambiance) {
+    SshInfraDelegateConfig sshInfraDelegateConfig =
+        k8sStepHelper.getSshInfraDelegateConfig(infrastructureOutcome, ambiance);
+
+    SshInfraDelegateConfigOutput sshInfraDelegateConfigOutput =
+        SshInfraDelegateConfigOutput.builder().sshInfraDelegateConfig(sshInfraDelegateConfig).build();
+    executionSweepingOutputService.consume(ambiance, OutputExpressionConstants.SSH_INFRA_DELEGATE_CONFIG_OUTPUT_NAME,
+        sshInfraDelegateConfigOutput, StepOutcomeGroup.STAGE.name());
+  }
+
   private void publishK8sInfraDelegateConfigOutput(InfrastructureOutcome infrastructureOutcome, Ambiance ambiance) {
     K8sInfraDelegateConfig k8sInfraDelegateConfig =
         k8sStepHelper.getK8sInfraDelegateConfig(infrastructureOutcome, ambiance);
@@ -155,6 +184,11 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
   @VisibleForTesting
   void validateConnector(Infrastructure infrastructure, Ambiance ambiance) {
     if (infrastructure == null) {
+      return;
+    }
+
+    if (InfrastructureKind.PDC.equals(infrastructure.getKind())
+        && ParameterField.isNull(infrastructure.getConnectorReference())) {
       return;
     }
 

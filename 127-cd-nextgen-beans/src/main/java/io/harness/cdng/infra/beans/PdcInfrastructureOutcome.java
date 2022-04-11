@@ -11,8 +11,10 @@ import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.infra.yaml.InfrastructureKind;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.steps.environment.EnvironmentOutcome;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.List;
 import java.util.Map;
@@ -39,5 +41,10 @@ public class PdcInfrastructureOutcome implements InfrastructureOutcome {
   @Override
   public String getKind() {
     return InfrastructureKind.PDC;
+  }
+
+  @JsonIgnore
+  public boolean useInfrastructureHosts() {
+    return EmptyPredicate.isNotEmpty(hosts);
   }
 }

@@ -104,10 +104,9 @@ public enum NGStepType {
       "Utilites/Non-Scripted/", StepSpecTypeConstants.PLACEHOLDER),
 
   // ssh steps
-  // TODO Remove K8S service def type after testing
   @JsonProperty(StepSpecTypeConstants.EXECUTE_COMMAND)
-  EXECUTE_COMMAND("Execute Command", Arrays.asList(ServiceDefinitionType.KUBERNETES, ServiceDefinitionType.SSH),
-      "Execute Command", StepSpecTypeConstants.EXECUTE_COMMAND);
+  EXECUTE_COMMAND("Execute Command", Arrays.asList(ServiceDefinitionType.SSH, ServiceDefinitionType.WINRM), "Command",
+      StepSpecTypeConstants.EXECUTE_COMMAND);
 
   private String displayName;
   private List<ServiceDefinitionType> serviceDefinitionTypes;
