@@ -23,10 +23,11 @@ public class CCMConnectorExceptionHandler implements ExceptionHandler {
   @Override
   public WingsException handleException(Exception exception) {
     CCMConnectorRuntimeException ex = (CCMConnectorRuntimeException) exception;
-    log.info("Exception message: {}", ex.getMessage());
+    log.info("Exception message: {}, code: {}", ex.getMessage(), ex.getCode());
     if (ex.getCode() == 500) {
+      log.info("Returning data processing exception");
       return NestedExceptionUtils.hintWithExplanationException(
-              ex.getHint(), ex.getExplanation(), new DataProcessingException(ex.getMessage(), USER));
+          ex.getHint(), ex.getExplanation(), new DataProcessingException(ex.getMessage(), USER));
     }
     return NestedExceptionUtils.hintWithExplanationException(
         ex.getHint(), ex.getExplanation(), new InvalidRequestException(ex.getMessage(), USER));
