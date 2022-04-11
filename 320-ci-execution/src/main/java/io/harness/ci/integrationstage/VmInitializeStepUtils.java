@@ -25,7 +25,7 @@ import io.harness.beans.environment.BuildJobEnvInfo;
 import io.harness.beans.environment.VmBuildJobInfo;
 import io.harness.beans.executionargs.CIExecutionArgs;
 import io.harness.beans.plugin.compatible.PluginCompatibleStep;
-import io.harness.beans.stages.IntegrationStageConfig;
+import io.harness.beans.stages.IntegrationStageInfoConfig;
 import io.harness.beans.steps.CIStepInfo;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
@@ -85,16 +85,16 @@ public class VmInitializeStepUtils {
         }
       }
     }
-    IntegrationStageConfig integrationStageConfig = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
-    validateStageConfig(integrationStageConfig, accountId);
+    IntegrationStageInfoConfig stageInfoConfig = (IntegrationStageInfoConfig) stageElementConfig.getStageType();
+    validateStageConfig(accountId);
     List<DependencyElement> serviceDependencies = null;
-    if (integrationStageConfig.getServiceDependencies() != null
-        && integrationStageConfig.getServiceDependencies().getValue() != null) {
-      serviceDependencies = integrationStageConfig.getServiceDependencies().getValue();
+    if (stageInfoConfig.getServiceDependencies() != null
+        && stageInfoConfig.getServiceDependencies().getValue() != null) {
+      serviceDependencies = stageInfoConfig.getServiceDependencies().getValue();
       ValidationUtils.validateVmInfraDependencies(serviceDependencies);
     }
 
-    Map<String, String> volumeToMountPath = getVolumeToMountPath(integrationStageConfig.getSharedPaths());
+    Map<String, String> volumeToMountPath = getVolumeToMountPath(stageInfoConfig.getSharedPaths());
     return VmBuildJobInfo.builder()
         .ciExecutionArgs(ciExecutionArgs)
         .workDir(STEP_WORK_DIR)
@@ -105,7 +105,7 @@ public class VmInitializeStepUtils {
         .build();
   }
 
-  private void validateStageConfig(IntegrationStageConfig integrationStageConfig, String accountId) {
+  private void validateStageConfig(String accountId) {
     if (!featureFlagService.isEnabled(FeatureName.CI_VM_INFRASTRUCTURE, accountId)) {
       throw new CIStageExecutionException("infrastructure VM is not allowed");
     }

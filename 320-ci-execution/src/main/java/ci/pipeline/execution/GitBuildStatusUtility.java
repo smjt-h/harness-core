@@ -23,6 +23,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.DelegateTaskRequest;
 import io.harness.beans.build.BuildStatusUpdateParameter;
 import io.harness.beans.stages.IntegrationStageStepParametersPMS;
+import io.harness.beans.stages.SecurityStageStepParametersPMS;
 import io.harness.beans.sweepingoutputs.CodebaseSweepingOutput;
 import io.harness.beans.sweepingoutputs.ContextElement;
 import io.harness.beans.sweepingoutputs.StageDetails;
@@ -339,9 +340,16 @@ public class GitBuildStatusUtility {
   private BuildStatusUpdateParameter fetchBuildStatusUpdateParameter(StepParameters stepParameters, Ambiance ambiance) {
     if (stepParameters instanceof StageElementParameters) {
       StageElementParameters stageElementParameters = (StageElementParameters) stepParameters;
-      IntegrationStageStepParametersPMS integrationStageStepParameters =
-          (IntegrationStageStepParametersPMS) stageElementParameters.getSpecConfig();
-      return integrationStageStepParameters.getBuildStatusUpdateParameter();
+
+      if (stageElementParameters.getType().equals("CI")) {
+        IntegrationStageStepParametersPMS integrationStageStepParameters =
+            (IntegrationStageStepParametersPMS) stageElementParameters.getSpecConfig();
+        return integrationStageStepParameters.getBuildStatusUpdateParameter();
+      } else if (stageElementParameters.getType().equals("Security")) {
+        SecurityStageStepParametersPMS securityStageStepParameters =
+            (SecurityStageStepParametersPMS) stageElementParameters.getSpecConfig();
+        return securityStageStepParameters.getBuildStatusUpdateParameter();
+      }
     } else if (stepParameters instanceof CodeBaseTaskStepParameters) {
       OptionalSweepingOutput optionalSweepingOutputStageDetails = executionSweepingOutputResolver.resolveOptional(
           ambiance, RefObjectUtils.getSweepingOutputRefObject(ContextElement.stageDetails));

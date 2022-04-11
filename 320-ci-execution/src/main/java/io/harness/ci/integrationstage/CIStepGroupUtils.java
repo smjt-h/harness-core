@@ -25,7 +25,7 @@ import io.harness.beans.execution.ExecutionSource;
 import io.harness.beans.execution.ManualExecutionSource;
 import io.harness.beans.executionargs.CIExecutionArgs;
 import io.harness.beans.serializer.RunTimeInputHandler;
-import io.harness.beans.stages.IntegrationStageConfig;
+import io.harness.beans.stages.IntegrationStageInfoConfig;
 import io.harness.beans.steps.CIStepInfo;
 import io.harness.beans.steps.CIStepInfoType;
 import io.harness.beans.steps.stepinfo.InitializeStepInfo;
@@ -70,19 +70,19 @@ public class CIStepGroupUtils {
       CIExecutionArgs ciExecutionArgs, CodeBase ciCodebase, Infrastructure infrastructure, String accountId) {
     List<ExecutionWrapperConfig> mainEngineExecutionSections = new ArrayList<>();
 
-    IntegrationStageConfig integrationStageConfig = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
+    IntegrationStageInfoConfig stageInfoConfig = (IntegrationStageInfoConfig) stageElementConfig.getStageType();
 
-    if (integrationStageConfig.getExecution() == null || isEmpty(integrationStageConfig.getExecution().getSteps())) {
+    if (stageInfoConfig.getExecution() == null || isEmpty(stageInfoConfig.getExecution().getSteps())) {
       return mainEngineExecutionSections;
     }
 
-    List<ExecutionWrapperConfig> executionSections = integrationStageConfig.getExecution().getSteps();
+    List<ExecutionWrapperConfig> executionSections = stageInfoConfig.getExecution().getSteps();
 
     log.info("Creating CI execution wrapper step info with initialize step for integration stage {} ",
         stageElementConfig.getIdentifier());
 
     List<ExecutionWrapperConfig> initializeExecutionSections = new ArrayList<>();
-    boolean gitClone = RunTimeInputHandler.resolveGitClone(integrationStageConfig.getCloneCodebase());
+    boolean gitClone = RunTimeInputHandler.resolveGitClone(stageInfoConfig.getCloneCodebase());
 
     if (gitClone) {
       initializeExecutionSections.add(getGitCloneStep(ciExecutionArgs, ciCodebase, accountId));

@@ -13,7 +13,7 @@ import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.environment.BuildJobEnvInfo;
 import io.harness.beans.execution.ExecutionSource;
-import io.harness.beans.stages.IntegrationStageConfig;
+import io.harness.beans.stages.IntegrationStageInfoConfig;
 import io.harness.beans.steps.CIStepInfo;
 import io.harness.beans.steps.CIStepInfoType;
 import io.harness.beans.steps.TypeInfo;
@@ -79,7 +79,7 @@ public class InitializeStepInfo implements CIStepInfo, WithConnectorRef {
   ExecutionSource executionSource;
   List<NGVariable> variables;
   String stageIdentifier;
-  IntegrationStageConfig stageElementConfig;
+  IntegrationStageInfoConfig stageElementConfig;
   @NotNull boolean skipGitClone;
   @NotNull Infrastructure infrastructure;
 
@@ -90,7 +90,7 @@ public class InitializeStepInfo implements CIStepInfo, WithConnectorRef {
   public InitializeStepInfo(String accountId, int timeout, String identifier, String name, Integer retry,
       BuildJobEnvInfo buildJobEnvInfo, ExecutionElementConfig executionElementConfig, boolean usePVC,
       CodeBase ciCodebase, boolean skipGitClone, Infrastructure infrastructure, ExecutionSource executionSource,
-      IntegrationStageConfig stageElementConfig, List<NGVariable> variables, String stageIdentifier) {
+      IntegrationStageInfoConfig stageElementConfig, List<NGVariable> variables, String stageIdentifier) {
     this.accountId = accountId;
     this.timeout = timeout;
     this.identifier = identifier;

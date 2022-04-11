@@ -25,6 +25,8 @@ public interface EntityTypeConstants {
   String DELEGATES = "Delegates";
   String DELEGATE_CONFIGURATIONS = "DelegateConfigurations";
   String CV_VERIFICATION_JOB = "CvVerificationJob";
+  String SECURITY_STAGE = "SecurityStage";
+  String SECURITY_STEPS = "SecuritySteps";
   String INTEGRATION_STAGE = "IntegrationStage";
   String INTEGRATION_STEPS = "IntegrationSteps";
   String CV_KUBERNETES_ACTIVITY_SOURCE = "CvKubernetesActivitySource";

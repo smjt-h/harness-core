@@ -127,6 +127,12 @@ public enum EntityType {
   @JsonProperty(EntityTypeConstants.CV_VERIFICATION_JOB)
   CV_VERIFICATION_JOB(ModuleType.CV, EntityTypeConstants.CV_VERIFICATION_JOB, IdentifierRef.class,
       EntityYamlRootNames.CV_VERIFICATION_JOB),
+  @JsonProperty(EntityTypeConstants.SECURITY_STAGE)
+  SECURITY_STAGE(
+      ModuleType.STO, EntityTypeConstants.SECURITY_STAGE, IdentifierRef.class, EntityYamlRootNames.SECURITY_STAGE),
+  @JsonProperty(EntityTypeConstants.SECURITY_STEPS)
+  SECURITY_STEPS(
+      ModuleType.STO, EntityTypeConstants.SECURITY_STEPS, IdentifierRef.class, EntityYamlRootNames.SECURITY_STEP),
   @JsonProperty(EntityTypeConstants.INTEGRATION_STAGE)
   INTEGRATION_STAGE(
       ModuleType.CI, EntityTypeConstants.INTEGRATION_STAGE, IdentifierRef.class, EntityYamlRootNames.INTEGRATION_STAGE),

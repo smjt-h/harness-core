@@ -37,6 +37,8 @@ public class EntityYamlRootNames {
   public static String DELEGATE = "delegate";
   public static String DELEGATE_CONFIGURATION = "delegateConfigurations";
   public static String CV_VERIFICATION_JOB = "cvVerificationJob";
+  public static String SECURITY_STAGE = "securityStage";
+  public static String SECURITY_STEP = "securityStep";
   public static String INTEGRATION_STAGE = "integrationStage";
   public static String INTEGRATION_STEP = "integrationSteps";
   public static String CV_KUBERNETES_ACTIVITY_SOURCE = "cvKubernetesActivitySource";

@@ -12,6 +12,7 @@ import io.harness.ModuleType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.stages.IntegrationStageNode;
+import io.harness.beans.stages.SecurityStageNode;
 import io.harness.beans.steps.CIStepInfo;
 import io.harness.beans.steps.nodes.ArtifactoryUploadNode;
 import io.harness.beans.steps.nodes.BuildAndPushDockerNode;
@@ -82,6 +83,25 @@ public class CiBeansRegistrars {
                                            .modulesSupported(ImmutableList.of(ModuleType.CI, ModuleType.PMS))
                                            .yamlGroup(YamlGroup.builder().group(StepCategory.STAGE.name()).build())
                                            .build())
+                   .build())
+          .add(YamlSchemaRootClass.builder()
+                   .entityType(EntityType.SECURITY_STAGE)
+                   .availableAtProjectLevel(true)
+                   .availableAtOrgLevel(false)
+                   .availableAtAccountLevel(false)
+                   .clazz(SecurityStageNode.class)
+                   .yamlSchemaMetadata(YamlSchemaMetadata.builder()
+                                           .namespace(SchemaNamespaceConstants.SECURITY)
+                                           .modulesSupported(ImmutableList.of(ModuleType.STO, ModuleType.PMS))
+                                           .yamlGroup(YamlGroup.builder().group(StepCategory.STAGE.name()).build())
+                                           .build())
+                   .build())
+          .add(YamlSchemaRootClass.builder()
+                   .entityType(EntityType.SECURITY_STEPS)
+                   .availableAtProjectLevel(true)
+                   .availableAtOrgLevel(false)
+                   .availableAtAccountLevel(false)
+                   .clazz(CIStepInfo.class)
                    .build())
           .add(YamlSchemaRootClass.builder()
                    .entityType(EntityType.INTEGRATION_STEPS)
@@ -238,7 +258,7 @@ public class CiBeansRegistrars {
                    .availableAtProjectLevel(true)
                    .availableAtOrgLevel(false)
                    .yamlSchemaMetadata(YamlSchemaMetadata.builder()
-                                           .modulesSupported(Collections.singletonList(ModuleType.CI))
+                                           .modulesSupported(ImmutableList.of(ModuleType.STO, ModuleType.CI))
                                            .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
                                            .build())
                    .availableAtAccountLevel(false)

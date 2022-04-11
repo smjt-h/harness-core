@@ -15,10 +15,10 @@ import io.harness.ModuleType;
 import io.harness.account.AccountClient;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.app.intfc.CIYamlSchemaService;
+import io.harness.app.intfc.SecurityStageYamlSchemaService;
 import io.harness.beans.FeatureFlag;
 import io.harness.beans.stages.IntegrationStageConfig;
-import io.harness.beans.stages.IntegrationStageNode;
+import io.harness.beans.stages.SecurityStageNode;
 import io.harness.encryption.Scope;
 import io.harness.jackson.JsonNodeUtils;
 import io.harness.plancreator.steps.ParallelStepElementConfig;
@@ -56,12 +56,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@OwnedBy(HarnessTeam.CI)
-public class CIYamlSchemaServiceImpl implements CIYamlSchemaService {
-  private static final String INTEGRATION_STAGE_NODE = YamlSchemaUtils.getSwaggerName(IntegrationStageNode.class);
+@OwnedBy(HarnessTeam.STO)
+public class SecurityStageYamlSchemaServiceImpl implements SecurityStageYamlSchemaService {
+  private static final String SECURITY_STAGE_NODE = YamlSchemaUtils.getSwaggerName(SecurityStageNode.class);
   private static final String STEP_ELEMENT_CONFIG = YamlSchemaUtils.getSwaggerName(StepElementConfig.class);
   private static final Class<StepElementConfig> STEP_ELEMENT_CONFIG_CLASS = StepElementConfig.class;
-  private static final String CI_NAMESPACE = "ci";
+  private static final String SECURITY_NAMESPACE = "security";
 
   private final YamlSchemaProvider yamlSchemaProvider;
   private final YamlSchemaGenerator yamlSchemaGenerator;
@@ -71,7 +71,8 @@ public class CIYamlSchemaServiceImpl implements CIYamlSchemaService {
   private final FeatureRestrictionsGetter featureRestrictionsGetter;
 
   @Inject
-  public CIYamlSchemaServiceImpl(YamlSchemaProvider yamlSchemaProvider, YamlSchemaGenerator yamlSchemaGenerator,
+  public SecurityStageYamlSchemaServiceImpl(YamlSchemaProvider yamlSchemaProvider,
+      YamlSchemaGenerator yamlSchemaGenerator,
       @Named("yaml-schema-subtypes") Map<Class<?>, Set<Class<?>>> yamlSchemaSubtypes,
       List<YamlSchemaRootClass> yamlSchemaRootClasses, AccountClient accountClient,
       FeatureRestrictionsGetter featureRestrictionsGetter) {
@@ -84,22 +85,22 @@ public class CIYamlSchemaServiceImpl implements CIYamlSchemaService {
   }
 
   @Override
-  public PartialSchemaDTO getMergedIntegrationStageYamlSchema(String accountIdentifier, String projectIdentifier,
+  public PartialSchemaDTO getMergedSecurityStageYamlSchema(String accountIdentifier, String projectIdentifier,
       String orgIdentifier, Scope scope, List<YamlSchemaWithDetails> stepSchemaWithDetails) {
-    return getIntegrationStageYamlSchemaUtil(
+    return getSecurityStageYamlSchemaUtil(
         accountIdentifier, projectIdentifier, orgIdentifier, scope, stepSchemaWithDetails);
   }
 
   @Override
-  public List<YamlSchemaWithDetails> getIntegrationStageYamlSchemaWithDetails(
+  public List<YamlSchemaWithDetails> getSecurityStageYamlSchemaWithDetails(
       String accountIdentifier, String projectIdentifier, String orgIdentifier, Scope scope) {
     List<YamlSchemaWithDetails> yamlSchemaWithDetailsList = yamlSchemaProvider.getCrossFunctionalStepsSchemaDetails(
         projectIdentifier, orgIdentifier, scope,
-        YamlSchemaUtils.getNodeEntityTypesByYamlGroup(yamlSchemaRootClasses, StepCategory.STEP.name()), ModuleType.CI);
+        YamlSchemaUtils.getNodeEntityTypesByYamlGroup(yamlSchemaRootClasses, StepCategory.STEP.name()), ModuleType.STO);
     yamlSchemaWithDetailsList.addAll(
         yamlSchemaProvider.getCrossFunctionalStepsSchemaDetails(projectIdentifier, orgIdentifier, scope,
             YamlSchemaUtils.getNodeEntityTypesByYamlGroup(yamlSchemaRootClasses, StepCategory.STAGE.name()),
-            ModuleType.CI));
+            ModuleType.STO));
     return yamlSchemaWithDetailsList;
   }
 
@@ -109,22 +110,22 @@ public class CIYamlSchemaServiceImpl implements CIYamlSchemaService {
   }
 
   @Override
-  public PartialSchemaDTO getIntegrationStageYamlSchema(
+  public PartialSchemaDTO getSecurityStageYamlSchema(
       String accountIdentifier, String projectIdentifier, String orgIdentifier, Scope scope) {
-    return getIntegrationStageYamlSchemaUtil(accountIdentifier, projectIdentifier, orgIdentifier, scope, null);
+    return getSecurityStageYamlSchemaUtil(accountIdentifier, projectIdentifier, orgIdentifier, scope, null);
   }
 
-  public PartialSchemaDTO getIntegrationStageYamlSchemaUtil(String accountIdentifier, String projectIdentifier,
+  public PartialSchemaDTO getSecurityStageYamlSchemaUtil(String accountIdentifier, String projectIdentifier,
       String orgIdentifier, Scope scope, List<YamlSchemaWithDetails> stepSchemaWithDetails) {
-    JsonNode integrationStageSchema =
-        yamlSchemaProvider.getYamlSchema(EntityType.INTEGRATION_STAGE, orgIdentifier, projectIdentifier, scope);
-    JsonNode integrationStageSteps =
-        yamlSchemaProvider.getYamlSchema(EntityType.INTEGRATION_STEPS, orgIdentifier, projectIdentifier, scope);
+    JsonNode securityStageSchema =
+        yamlSchemaProvider.getYamlSchema(EntityType.SECURITY_STAGE, orgIdentifier, projectIdentifier, scope);
+    JsonNode securityStageSteps =
+        yamlSchemaProvider.getYamlSchema(EntityType.SECURITY_STEPS, orgIdentifier, projectIdentifier, scope);
 
-    JsonNode definitions = integrationStageSchema.get(DEFINITIONS_NODE);
-    JsonNode integrationStepDefinitions = integrationStageSteps.get(DEFINITIONS_NODE);
+    JsonNode definitions = securityStageSchema.get(DEFINITIONS_NODE);
+    JsonNode securityStepDefinitions = securityStageSteps.get(DEFINITIONS_NODE);
 
-    JsonNodeUtils.merge(definitions, integrationStepDefinitions);
+    JsonNodeUtils.merge(definitions, securityStepDefinitions);
     yamlSchemaProvider.mergeAllV2StepsDefinitions(projectIdentifier, orgIdentifier, scope, (ObjectNode) definitions,
         YamlSchemaUtils.getNodeEntityTypesByYamlGroup(yamlSchemaRootClasses, StepCategory.STEP.name()));
 
@@ -137,7 +138,7 @@ public class CIYamlSchemaServiceImpl implements CIYamlSchemaService {
     }
     removeUnwantedNodes(definitions);
 
-    yamlSchemaGenerator.modifyRefsNamespace(integrationStageSchema, CI_NAMESPACE);
+    yamlSchemaGenerator.modifyRefsNamespace(securityStageSchema, SECURITY_NAMESPACE);
     Set<String> enabledFeatureFlags =
         RestClientUtils.getResponse(accountClient.listAllFeatureFlagsForAccount(accountIdentifier))
             .stream()
@@ -147,26 +148,26 @@ public class CIYamlSchemaServiceImpl implements CIYamlSchemaService {
     Map<String, Boolean> featureRestrictionsMap =
         featureRestrictionsGetter.getFeatureRestrictionsAvailability(stepSchemaWithDetails, accountIdentifier);
     // Should be after this modifyRefsNamespace call.
-    YamlSchemaUtils.addOneOfInExecutionWrapperConfig(integrationStageSchema.get(DEFINITIONS_NODE),
+    YamlSchemaUtils.addOneOfInExecutionWrapperConfig(securityStageSchema.get(DEFINITIONS_NODE),
         YamlSchemaUtils.getNodeClassesByYamlGroup(
             yamlSchemaRootClasses, StepCategory.STEP.name(), enabledFeatureFlags, featureRestrictionsMap),
-        CI_NAMESPACE);
+        SECURITY_NAMESPACE);
     if (stepSchemaWithDetails != null) {
-      YamlSchemaUtils.addOneOfInExecutionWrapperConfig(integrationStageSchema.get(DEFINITIONS_NODE),
-          stepSchemaWithDetails, ModuleType.CD, enabledFeatureFlags, featureRestrictionsMap);
+      YamlSchemaUtils.addOneOfInExecutionWrapperConfig(securityStageSchema.get(DEFINITIONS_NODE), stepSchemaWithDetails,
+          ModuleType.CD, enabledFeatureFlags, featureRestrictionsMap);
     }
 
     ObjectMapper mapper = SchemaGeneratorUtils.getObjectMapperForSchemaGeneration();
-    JsonNode node = mapper.createObjectNode().set(CI_NAMESPACE, definitions);
+    JsonNode node = mapper.createObjectNode().set(SECURITY_NAMESPACE, definitions);
 
-    JsonNode partialCiSchema = ((ObjectNode) integrationStageSchema).set(DEFINITIONS_NODE, node);
+    JsonNode partialCiSchema = ((ObjectNode) securityStageSchema).set(DEFINITIONS_NODE, node);
 
     return PartialSchemaDTO.builder()
-        .namespace(CI_NAMESPACE)
-        .nodeName(INTEGRATION_STAGE_NODE)
+        .namespace(SECURITY_NAMESPACE)
+        .nodeName(SECURITY_STAGE_NODE)
         .schema(partialCiSchema)
-        .nodeType(getIntegrationStageTypeName())
-        .moduleType(ModuleType.CI)
+        .nodeType(getSecurityStageTypeName())
+        .moduleType(ModuleType.STO)
         .skipStageSchema(false)
         .build();
   }
@@ -215,7 +216,7 @@ public class CIYamlSchemaServiceImpl implements CIYamlSchemaService {
     }
   }
 
-  private String getIntegrationStageTypeName() {
+  private String getSecurityStageTypeName() {
     JsonTypeName annotation = IntegrationStageConfig.class.getAnnotation(JsonTypeName.class);
     return annotation.value();
   }

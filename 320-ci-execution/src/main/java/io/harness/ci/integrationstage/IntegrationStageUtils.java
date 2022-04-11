@@ -34,6 +34,7 @@ import io.harness.beans.execution.PRWebhookEvent;
 import io.harness.beans.execution.WebhookExecutionSource;
 import io.harness.beans.serializer.RunTimeInputHandler;
 import io.harness.beans.stages.IntegrationStageConfig;
+import io.harness.beans.stages.IntegrationStageInfoConfig;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
@@ -84,9 +85,9 @@ public class IntegrationStageUtils {
   private static final String BRANCH_EXPRESSION = "<+trigger.branch>";
   public static final String PR_EXPRESSION = "<+trigger.prNumber>";
 
-  public IntegrationStageConfig getIntegrationStageConfig(StageElementConfig stageElementConfig) {
-    if (stageElementConfig.getType().equals("CI")) {
-      return (IntegrationStageConfig) stageElementConfig.getStageType();
+  public IntegrationStageInfoConfig verifyStageConfig(StageElementConfig stageElementConfig, String stageType) {
+    if (stageElementConfig.getType().equals(stageType)) {
+      return (IntegrationStageInfoConfig) stageElementConfig.getStageType();
     } else {
       throw new CIStageExecutionException("Invalid stage type: " + stageElementConfig.getStageType());
     }

@@ -12,6 +12,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.executionargs.CIExecutionArgs;
 import io.harness.beans.serializer.RunTimeInputHandler;
 import io.harness.beans.stages.IntegrationStageConfig;
+import io.harness.beans.stages.IntegrationStageInfoConfig;
 import io.harness.beans.steps.stepinfo.InitializeStepInfo;
 import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.plancreator.execution.ExecutionElementConfig;
@@ -30,16 +31,16 @@ public class InitializeStepGenerator {
   InitializeStepInfo createInitializeStepInfo(ExecutionElementConfig executionElement, CodeBase ciCodebase,
       StageElementConfig stageElementConfig, CIExecutionArgs ciExecutionArgs, Infrastructure infrastructure,
       String accountId) {
-    IntegrationStageConfig integrationStageConfig = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
+    IntegrationStageInfoConfig stageInfoConfig = (IntegrationStageInfoConfig) stageElementConfig.getStageType();
 
-    boolean gitClone = RunTimeInputHandler.resolveGitClone(integrationStageConfig.getCloneCodebase());
+    boolean gitClone = RunTimeInputHandler.resolveGitClone(stageInfoConfig.getCloneCodebase());
     return InitializeStepInfo.builder()
         .identifier(INITIALIZE_TASK)
         .name(INITIALIZE_TASK)
         .infrastructure(infrastructure)
         .stageIdentifier(stageElementConfig.getIdentifier())
         .variables(stageElementConfig.getVariables())
-        .stageElementConfig(integrationStageConfig)
+        .stageElementConfig(stageInfoConfig)
         .executionSource(ciExecutionArgs.getExecutionSource())
         .ciCodebase(ciCodebase)
         .skipGitClone(!gitClone)

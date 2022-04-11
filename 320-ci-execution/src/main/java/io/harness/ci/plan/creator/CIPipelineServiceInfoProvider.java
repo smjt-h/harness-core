@@ -15,7 +15,9 @@ import io.harness.ci.creator.variables.CIStageVariableCreator;
 import io.harness.ci.creator.variables.CIStepVariableCreator;
 import io.harness.ci.creator.variables.RunStepVariableCreator;
 import io.harness.ci.plan.creator.filter.CIStageFilterJsonCreator;
+import io.harness.ci.plan.creator.filter.SecurityStageFilterJsonCreator;
 import io.harness.ci.plan.creator.stage.IntegrationStagePMSPlanCreator;
+import io.harness.ci.plan.creator.stage.SecurityStagePMSPlanCreator;
 import io.harness.ci.plan.creator.step.CIPMSStepFilterJsonCreator;
 import io.harness.ci.plan.creator.step.CIPMSStepPlanCreator;
 import io.harness.ci.plan.creator.step.CIStepFilterJsonCreatorV2;
@@ -61,6 +63,7 @@ public class CIPipelineServiceInfoProvider implements PipelineServiceInfoProvide
   public List<PartialPlanCreator<?>> getPlanCreators() {
     List<PartialPlanCreator<?>> planCreators = new LinkedList<>();
     planCreators.add(new IntegrationStagePMSPlanCreator());
+    planCreators.add(new SecurityStagePMSPlanCreator());
     planCreators.add(new CIPMSStepPlanCreator());
     planCreators.add(new RunStepPlanCreator());
     planCreators.add(new RunTestStepPlanCreator());
@@ -87,6 +90,7 @@ public class CIPipelineServiceInfoProvider implements PipelineServiceInfoProvide
   public List<FilterJsonCreator> getFilterJsonCreators() {
     List<FilterJsonCreator> filterJsonCreators = new ArrayList<>();
     filterJsonCreators.add(new CIStageFilterJsonCreator());
+    filterJsonCreators.add(new SecurityStageFilterJsonCreator());
     filterJsonCreators.add(new CIPMSStepFilterJsonCreator());
     filterJsonCreators.add(new CIStepFilterJsonCreatorV2());
     injectorUtils.injectMembers(filterJsonCreators);

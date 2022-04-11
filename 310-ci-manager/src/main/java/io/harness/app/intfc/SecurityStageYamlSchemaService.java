@@ -15,12 +15,12 @@ import io.harness.yaml.schema.beans.YamlSchemaWithDetails;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.List;
 
-public interface CIYamlSchemaService {
-  PartialSchemaDTO getIntegrationStageYamlSchema(
+public interface SecurityStageYamlSchemaService {
+  PartialSchemaDTO getSecurityStageYamlSchema(
       String accountIdentifier, String projectIdentifier, String orgIdentifier, Scope scope);
-  PartialSchemaDTO getMergedIntegrationStageYamlSchema(String accountIdentifier, String projectIdentifier,
+  PartialSchemaDTO getMergedSecurityStageYamlSchema(String accountIdentifier, String projectIdentifier,
       String orgIdentifier, Scope scope, List<YamlSchemaWithDetails> stepSchemaWithDetails);
-  List<YamlSchemaWithDetails> getIntegrationStageYamlSchemaWithDetails(
+  List<YamlSchemaWithDetails> getSecurityStageYamlSchemaWithDetails(
       String accountIdentifier, String projectIdentifier, String orgIdentifier, Scope scope);
   JsonNode getIndividualYamlSchema(EntityType entityType, String orgId, String projectId, Scope scope);
 }

@@ -47,7 +47,7 @@ import io.harness.beans.plugin.compatible.PluginCompatibleStep;
 import io.harness.beans.quantity.unit.DecimalQuantityUnit;
 import io.harness.beans.quantity.unit.StorageQuantityUnit;
 import io.harness.beans.serializer.RunTimeInputHandler;
-import io.harness.beans.stages.IntegrationStageConfig;
+import io.harness.beans.stages.IntegrationStageInfoConfig;
 import io.harness.beans.steps.CIStepInfo;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
@@ -74,6 +74,7 @@ import io.harness.exception.ngexception.CIStageExecutionException;
 import io.harness.execution.CIExecutionConfigService;
 import io.harness.ff.CIFeatureFlagService;
 import io.harness.plancreator.execution.ExecutionWrapperConfig;
+import io.harness.plancreator.stages.StageElementWrapperConfig;
 import io.harness.plancreator.stages.stage.StageElementConfig;
 import io.harness.plancreator.steps.ParallelStepElementConfig;
 import io.harness.plancreator.steps.StepElementConfig;
@@ -165,6 +166,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
     List<PodSetupInfo> pods = new ArrayList<>();
 
     Set<Integer> usedPorts = new HashSet<>();
+    IntegrationStageInfoConfig stageInfoConfig = (IntegrationStageInfoConfig) stageElementConfig.getStageType();
     PortFinder portFinder = PortFinder.builder().startingPort(PORT_STARTING_RANGE).usedPorts(usedPorts).build();
     String workDirPath = STEP_WORK_DIR;
     List<ContainerDefinitionInfo> serviceContainerDefinitionInfos = CIServiceBuilder.createServicesContainerDefinition(
@@ -178,9 +180,8 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
 
     Integer stageMemoryRequest = getStageMemoryRequest(steps, accountId);
     Integer stageCpuRequest = getStageCpuRequest(steps, accountId);
-    List<String> serviceIdList = CIServiceBuilder.getServiceIdList(stageElementConfig);
-    List<Integer> serviceGrpcPortList = CIServiceBuilder.getServiceGrpcPortList(stageElementConfig);
-    IntegrationStageConfig integrationStageConfig = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
+    List<String> serviceIdList = CIServiceBuilder.getServiceIdList(stageInfoConfig);
+    List<Integer> serviceGrpcPortList = CIServiceBuilder.getServiceGrpcPortList(stageInfoConfig);
 
     if (((K8sDirectInfraYaml) infrastructure).getSpec() == null) {
       throw new CIStageExecutionException("Input infrastructure can not be empty");
@@ -188,12 +189,12 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
     K8sDirectInfraYaml k8sDirectInfraYaml = (K8sDirectInfraYaml) infrastructure;
     List<PodVolume> volumes = convertVolumes(k8sDirectInfraYaml.getSpec().getVolumes().getValue());
 
-    if (integrationStageConfig.getSharedPaths().isExpression()) {
-      ExceptionUtility.throwUnresolvedExpressionException(integrationStageConfig.getSharedPaths().getExpressionValue(),
+    if (stageInfoConfig.getSharedPaths().isExpression()) {
+      ExceptionUtility.throwUnresolvedExpressionException(stageInfoConfig.getSharedPaths().getExpressionValue(),
           "sharedPath", "stage with identifier: " + stageElementConfig.getIdentifier());
     }
     Map<String, String> volumeToMountPath =
-        getVolumeToMountPath((List<String>) integrationStageConfig.getSharedPaths().fetchFinalValue(), volumes);
+        getVolumeToMountPath((List<String>) stageInfoConfig.getSharedPaths().fetchFinalValue(), volumes);
     pods.add(PodSetupInfo.builder()
                  .podSetupParams(
                      PodSetupInfo.PodSetupParams.builder().containerDefinitionInfos(containerDefinitionInfos).build())
@@ -532,7 +533,6 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
   }
 
   private List<SecretNGVariable> getSecretVariables(StageElementConfig stageElementConfig) {
-    IntegrationStageConfig integrationStageConfig = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
     if (isEmpty(stageElementConfig.getVariables())) {
       return Collections.emptyList();
     }
@@ -562,9 +562,8 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
 
   private Map<String, K8BuildJobEnvInfo.ConnectorConversionInfo> getStepConnectorRefs(
       StageElementConfig stageElementConfig) {
-    IntegrationStageConfig integrationStageConfig = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
-
-    List<ExecutionWrapperConfig> executionWrappers = integrationStageConfig.getExecution().getSteps();
+    IntegrationStageInfoConfig stageInfoConfig = (IntegrationStageInfoConfig) stageElementConfig.getStageType();
+    List<ExecutionWrapperConfig> executionWrappers = stageInfoConfig.getExecution().getSteps();
     if (isEmpty(executionWrappers)) {
       return Collections.emptyMap();
     }
@@ -604,8 +603,6 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
   }
 
   private Map<String, String> getEnvVariables(StageElementConfig stageElementConfig) {
-    IntegrationStageConfig integrationStageConfig = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
-
     if (isEmpty(stageElementConfig.getVariables())) {
       return Collections.emptyMap();
     }

@@ -17,6 +17,7 @@ import io.harness.beans.dependencies.DependencyElement;
 import io.harness.beans.stages.IntegrationStageInfoConfig;
 import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.UseFromStageInfraYaml;
+import io.harness.beans.yaml.extended.volumes.CIVolume;
 import io.harness.plancreator.execution.ExecutionElementConfig;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
@@ -37,15 +38,15 @@ import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.annotation.TypeAlias;
 
-@OwnedBy(HarnessTeam.CI)
+@OwnedBy(HarnessTeam.STO)
 @Data
 @Builder
 @AllArgsConstructor
-@JsonTypeName("CI")
+@JsonTypeName("Security")
 @JsonIgnoreProperties(ignoreUnknown = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @TypeAlias("integrationStage")
-public class IntegrationStageConfig implements IntegrationStageInfoConfig {
+public class SecurityStageConfig implements IntegrationStageInfoConfig {
   @JsonProperty(YamlNode.UUID_FIELD_NAME)
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
   @ApiModelProperty(hidden = true)
@@ -54,6 +55,10 @@ public class IntegrationStageConfig implements IntegrationStageInfoConfig {
   @YamlSchemaTypes(value = {string})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   ParameterField<List<String>> sharedPaths;
+
+  @YamlSchemaTypes(value = {runtime})
+  @ApiModelProperty(dataType = "[Lio.harness.beans.yaml.extended.volumes.CIVolume;")
+  ParameterField<List<CIVolume>> volumes;
 
   ExecutionElementConfig execution;
   @NotNull
