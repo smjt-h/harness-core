@@ -52,7 +52,6 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(HarnessTeam.STO)
 public class SecurityStageFilterJsonCreator extends GenericStageFilterJsonCreator {
   @Inject ConnectorUtils connectorUtils;
-  @Inject private SimpleVisitorFactory simpleVisitorFactory;
 
   @Override
   public Set<String> getSupportedStageTypes() {
