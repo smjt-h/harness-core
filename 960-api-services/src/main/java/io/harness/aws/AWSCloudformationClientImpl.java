@@ -8,8 +8,10 @@
 package io.harness.aws;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.threading.Morpheus.sleep;
 
+import static java.lang.String.format;
 import static java.time.Duration.ofSeconds;
 import static java.util.Collections.emptyList;
 
@@ -37,6 +39,9 @@ import com.amazonaws.services.cloudformation.model.DescribeStackResourcesRequest
 import com.amazonaws.services.cloudformation.model.DescribeStackResourcesResult;
 import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
 import com.amazonaws.services.cloudformation.model.DescribeStacksResult;
+import com.amazonaws.services.cloudformation.model.GetTemplateSummaryRequest;
+import com.amazonaws.services.cloudformation.model.GetTemplateSummaryResult;
+import com.amazonaws.services.cloudformation.model.ParameterDeclaration;
 import com.amazonaws.services.cloudformation.model.Stack;
 import com.amazonaws.services.cloudformation.model.StackEvent;
 import com.amazonaws.services.cloudformation.model.StackResource;
@@ -60,6 +65,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 
 public class AWSCloudformationClientImpl implements AWSCloudformationClient {
+  private static final String S3STORE = "s3";
   @Inject AwsApiHelperService awsApiHelperService;
   @Inject AwsCloudformationPrintHelper awsCloudformationPrintHelper;
   @Inject private AwsCallTracker tracker;
@@ -222,7 +228,7 @@ public class AWSCloudformationClientImpl implements AWSCloudformationClient {
         }
         @Override
         public void onWaitFailure(Exception e) {
-          logCallback.saveExecutionLog(String.format("Stack deletion failed: %s", e.getMessage()));
+          logCallback.saveExecutionLog(format("Stack deletion failed: %s", e.getMessage()));
         }
       });
       while (!future.isDone()) {
@@ -246,15 +252,52 @@ public class AWSCloudformationClientImpl implements AWSCloudformationClient {
     }
   }
 
+  @Override
+  public List<ParameterDeclaration> getParamsData(
+      AwsInternalConfig awsConfig, String region, String data, AwsCFTemplatesType awsCFTemplatesType) {
+    try (CloseableAmazonWebServiceClient<AmazonCloudFormationClient> closeableAmazonCloudFormationClient =
+             new CloseableAmazonWebServiceClient(getAmazonCloudFormationClient(Regions.fromName(region), awsConfig))) {
+      GetTemplateSummaryRequest request = new GetTemplateSummaryRequest();
+      if (AwsCFTemplatesType.S3 == awsCFTemplatesType) {
+        request.withTemplateURL(normalizeS3TemplatePath(data));
+      } else {
+        request.withTemplateBody(data);
+      }
+      tracker.trackCFCall("Get Template Summary");
+      GetTemplateSummaryResult result = closeableAmazonCloudFormationClient.getClient().getTemplateSummary(request);
+      List<ParameterDeclaration> parameters = result.getParameters();
+      if (isNotEmpty(parameters)) {
+        return parameters;
+      }
+    } catch (AmazonServiceException amazonServiceException) {
+      awsApiHelperService.handleAmazonServiceException(amazonServiceException);
+    } catch (AmazonClientException amazonClientException) {
+      awsApiHelperService.handleAmazonClientException(amazonClientException);
+    } catch (Exception e) {
+      log.error("Exception getParamsData", e);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+    }
+    return emptyList();
+  }
+
   @VisibleForTesting
   AmazonCloudFormationClient getAmazonCloudFormationClient(Regions region, AwsInternalConfig awsConfig) {
     AmazonCloudFormationClientBuilder builder = AmazonCloudFormationClientBuilder.standard().withRegion(region);
     awsApiHelperService.attachCredentialsAndBackoffPolicy(builder, awsConfig);
     return (AmazonCloudFormationClient) builder.build();
   }
+
   @VisibleForTesting
   AmazonCloudFormationWaiters getAmazonCloudFormationWaiter(
       CloseableAmazonWebServiceClient<AmazonCloudFormationClient> closeableAmazonCloudFormationClient) {
     return new AmazonCloudFormationWaiters(closeableAmazonCloudFormationClient.getClient());
+  }
+
+  private String normalizeS3TemplatePath(String s3Path) {
+    String normalizedS3TemplatePath = s3Path;
+    if (isNotEmpty(normalizedS3TemplatePath) && normalizedS3TemplatePath.contains("+")) {
+      normalizedS3TemplatePath = s3Path.replaceAll("\\+", "%20");
+    }
+    return normalizedS3TemplatePath;
   }
 }

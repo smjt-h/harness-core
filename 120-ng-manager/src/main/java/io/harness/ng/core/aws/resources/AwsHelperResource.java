@@ -11,11 +11,13 @@ import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
-import io.harness.cdng.aws.service.AwsHelperResourceServiceImpl;
+import io.harness.cdng.aws.service.AwsResourceServiceImpl;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.utils.IdentifierRefHelper;
+
+import software.wings.service.impl.aws.model.AwsCFTemplateParamsData;
 
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
@@ -28,6 +30,7 @@ import java.util.Set;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -48,13 +51,35 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__({ @Inject }))
 @Slf4j
 public class AwsHelperResource {
-  private final AwsHelperResourceServiceImpl awsHelperService;
+  private final AwsResourceServiceImpl awsHelperService;
 
   @GET
   @Path("regions")
   @ApiOperation(value = "Get all the AWS regions defined in the application", nickname = "RegionsForAws")
   public ResponseDTO<Map<String, String>> listRegions() {
     return ResponseDTO.newResponse(awsHelperService.getRegions());
+  }
+
+  @POST
+  @Path("cf-parameters")
+  @ApiOperation(value = "Send a CF Template to AWS and retrieve the parameters contained in that",
+      nickname = "CFParametersForAws")
+  public ResponseDTO<List<AwsCFTemplateParamsData>>
+  listCFParameterKeys(@QueryParam("type") @NotNull String type, @QueryParam("region") @NotNull String region,
+      @QueryParam("isBranch") boolean isBranch, @QueryParam("branch") String branch,
+      @QueryParam("filePath") String templatePath, @QueryParam("commitId") String commitId,
+      @QueryParam("awsConnectorRef") @NotNull String awsConnectorRef,
+      @QueryParam("gitConnectorRef") String gitConnectorRefParam,
+      @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
+      @QueryParam(NGCommonEntityConstants.ORG_KEY) @NotNull String orgIdentifier,
+      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @NotNull String projectIdentifier, String data) {
+    IdentifierRef connectorRef =
+        IdentifierRefHelper.getIdentifierRef(awsConnectorRef, accountIdentifier, orgIdentifier, projectIdentifier);
+
+    List<AwsCFTemplateParamsData> keys = awsHelperService.getCFparametersKeys(
+        type, region, isBranch, branch, templatePath, commitId, connectorRef, data, gitConnectorRefParam);
+
+    return ResponseDTO.newResponse(keys);
   }
 
   @GET

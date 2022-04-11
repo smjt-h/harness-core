@@ -12,12 +12,14 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 
+import software.wings.service.impl.aws.model.AwsCFTemplateParamsData;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 @OwnedBy(CDP)
-public interface AwsHelperResourceService {
+public interface AwsResourceService {
   /**
    * Get the list of all the Capabilities in cloudformation
    *
@@ -49,4 +51,22 @@ public interface AwsHelperResourceService {
    * @return the list of rolesARNs
    */
   Map<String, String> getRolesARNs(IdentifierRef awsConnectorRef, String orgIdentifier, String projectIdentifier);
+
+  /**
+   * Get all parameter keys for a cloudformation template
+   *
+   * @param type Where the template is stored (GIT, S3, or inline)
+   * @param region AWS region
+   * @param isBranch For GIT, the fetchType, (branch or commit)
+   * @param branch The branch reference for GIT
+   * @param filePath The file path for the template
+   * @param commitId The commit id for GIT
+   * @param awsConnectorRef the IdentifierRef of the aws connector
+   * @param data the template data if inline is selected
+   * @param connectorDTO the IdentifierRef of the git connector
+   *
+   * @return the list of Cloudformation param keys
+   */
+  List<AwsCFTemplateParamsData> getCFparametersKeys(String type, String region, boolean isBranch, String branch,
+      String filePath, String commitId, IdentifierRef awsConnectorRef, String data, String connectorDTO);
 }

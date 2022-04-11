@@ -17,6 +17,7 @@ import com.amazonaws.services.cloudformation.model.DescribeStackEventsRequest;
 import com.amazonaws.services.cloudformation.model.DescribeStackResourcesRequest;
 import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
 import com.amazonaws.services.cloudformation.model.DescribeStacksResult;
+import com.amazonaws.services.cloudformation.model.ParameterDeclaration;
 import com.amazonaws.services.cloudformation.model.Stack;
 import com.amazonaws.services.cloudformation.model.StackEvent;
 import com.amazonaws.services.cloudformation.model.StackResource;
@@ -44,4 +45,7 @@ public interface AWSCloudformationClient {
 
   void waitForStackDeletionCompleted(DescribeStacksRequest describeStacksRequest, AwsInternalConfig awsConfig,
       String region, LogCallback logCallback, long stackEventsTs);
+
+  List<ParameterDeclaration> getParamsData(
+      AwsInternalConfig awsConfig, String region, String data, AwsCFTemplatesType awsCFTemplatesType);
 }

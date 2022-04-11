@@ -8,23 +8,34 @@
 package io.harness.cdng.aws.service;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.aws.AwsCFTemplatesType;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.common.resources.AwsResourceServiceHelper;
+import io.harness.cdng.common.resources.GitResourceServiceHelper;
+import io.harness.connector.ConnectorInfoDTO;
 import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.ErrorNotifyResponseData;
+import io.harness.delegate.beans.connector.awsconnector.AwsCFTaskParamsRequest;
+import io.harness.delegate.beans.connector.awsconnector.AwsCFTaskResponse;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsIAMRolesResponse;
 import io.harness.delegate.beans.connector.awsconnector.AwsTaskParams;
 import io.harness.delegate.beans.connector.awsconnector.AwsTaskType;
+import io.harness.delegate.beans.storeconfig.FetchType;
+import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
+import io.harness.exception.AwsCFException;
 import io.harness.exception.AwsIAMRolesException;
 import io.harness.exception.InvalidArgumentsException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.BaseNGAccess;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.TaskType;
+import software.wings.service.impl.aws.model.AwsCFTemplateParamsData;
 
 import com.amazonaws.services.cloudformation.model.Capability;
 import com.amazonaws.services.cloudformation.model.StackStatus;
@@ -48,16 +59,12 @@ import java.util.stream.Stream;
 
 @Singleton
 @OwnedBy(CDP)
-public class AwsHelperResourceServiceImpl implements AwsHelperResourceService {
+public class AwsResourceServiceImpl implements AwsResourceService {
   private Map<String, String> regionMap;
   private static final String regionNode = "awsRegionIdToName";
   private static final String yamlResourceFilePath = "aws/aws.yaml";
-  private final AwsResourceServiceHelper serviceHelper;
-
-  @Inject
-  AwsHelperResourceServiceImpl(AwsResourceServiceHelper serviceHelper) {
-    this.serviceHelper = serviceHelper;
-  }
+  @Inject private AwsResourceServiceHelper serviceHelper;
+  @Inject private GitResourceServiceHelper gitResourceServiceHelper;
 
   @Override
   public List<String> getCapabilities() {
@@ -112,10 +119,58 @@ public class AwsHelperResourceServiceImpl implements AwsHelperResourceService {
     return response.getRoles();
   }
 
+  public List<AwsCFTemplateParamsData> getCFparametersKeys(String type, String region, boolean isBranch, String branch,
+      String templatePath, String commitId, IdentifierRef awsConnectorRef, String dataInput, String connectorDTO) {
+    GitStoreDelegateConfig gitStoreDelegateConfig = null;
+    BaseNGAccess access = serviceHelper.getBaseNGAccess(awsConnectorRef.getAccountIdentifier(),
+        awsConnectorRef.getOrgIdentifier(), awsConnectorRef.getProjectIdentifier());
+
+    if (AwsCFTemplatesType.S3.getValue().equalsIgnoreCase(type)
+        || AwsCFTemplatesType.BODY.getValue().equalsIgnoreCase(type)) {
+      if (isEmpty(dataInput)) {
+        throw new InvalidRequestException("Data is empty");
+      }
+    } else if (AwsCFTemplatesType.GIT.getValue().equalsIgnoreCase(type)) {
+      if (isEmpty(connectorDTO) || (isEmpty(branch) && isEmpty(commitId))) {
+        throw new InvalidRequestException("Missing connector ID or branch and commid ID");
+      }
+      FetchType fetchType = isBranch ? FetchType.BRANCH : FetchType.COMMIT;
+
+      ConnectorInfoDTO connectorInfoDTO = gitResourceServiceHelper.getConnectorInfoDTO(connectorDTO, access);
+      gitStoreDelegateConfig = gitResourceServiceHelper.getGitStoreDelegateConfig(
+          connectorInfoDTO, access, fetchType, branch, commitId, templatePath);
+    } else {
+      throw new InvalidRequestException("Unknown source type");
+    }
+
+    AwsConnectorDTO awsConnector = serviceHelper.getAwsConnector(awsConnectorRef);
+    List<EncryptedDataDetail> encryptedData = serviceHelper.getAwsEncryptionDetails(awsConnector, access);
+
+    AwsCFTaskParamsRequest params = AwsCFTaskParamsRequest.builder()
+                                        .awsConnector(awsConnector)
+                                        .awsTaskType(AwsTaskType.CF_LIST_PARAMS)
+                                        .data(dataInput)
+                                        .fileStoreType(AwsCFTemplatesType.fromValue(type))
+                                        .encryptionDetails(encryptedData)
+                                        .gitStoreDelegateConfig(gitStoreDelegateConfig)
+                                        .region(region)
+                                        .accountId(awsConnectorRef.getAccountIdentifier())
+                                        .build();
+
+    return executeSyncTask(params, access);
+  }
+
   protected AwsIAMRolesResponse executeSyncTask(AwsTaskParams awsTaskParams, BaseNGAccess baseNGAccess) {
     DelegateResponseData responseData =
         serviceHelper.getResponseData(baseNGAccess, awsTaskParams, TaskType.NG_AWS_TASK.name());
     return getTaskExecutionResponse(responseData);
+  }
+
+  protected List<AwsCFTemplateParamsData> executeSyncTask(
+      AwsCFTaskParamsRequest awsTaskParams, BaseNGAccess baseNGAccess) {
+    DelegateResponseData responseData =
+        serviceHelper.getResponseData(baseNGAccess, awsTaskParams, TaskType.NG_AWS_TASK.name());
+    return getCFTaskExecutionResponse(responseData);
   }
 
   private AwsIAMRolesResponse getTaskExecutionResponse(DelegateResponseData responseData) {
@@ -129,5 +184,18 @@ public class AwsHelperResourceServiceImpl implements AwsHelperResourceService {
       throw new AwsIAMRolesException("Failed to get IAM roles");
     }
     return response;
+  }
+
+  private List<AwsCFTemplateParamsData> getCFTaskExecutionResponse(DelegateResponseData responseData) {
+    if (responseData instanceof ErrorNotifyResponseData) {
+      ErrorNotifyResponseData errorNotifyResponseData = (ErrorNotifyResponseData) responseData;
+      throw new AwsCFException("Failed to get CloudFormation template parameters"
+          + " : " + errorNotifyResponseData.getErrorMessage());
+    }
+    AwsCFTaskResponse response = (AwsCFTaskResponse) responseData;
+    if (response.getCommandExecutionStatus() != SUCCESS) {
+      throw new AwsCFException("Failed to get CloudFormation template parameters");
+    }
+    return response.getListOfParams();
   }
 }

@@ -125,6 +125,8 @@ import io.harness.delegate.beans.connector.appdynamicsconnector.AppDynamicsConne
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryValidationParams;
 import io.harness.delegate.beans.connector.awscodecommitconnector.AwsCodeCommitTaskParams;
 import io.harness.delegate.beans.connector.awscodecommitconnector.AwsCodeCommitValidationParams;
+import io.harness.delegate.beans.connector.awsconnector.AwsCFTaskParamsRequest;
+import io.harness.delegate.beans.connector.awsconnector.AwsCFTaskResponse;
 import io.harness.delegate.beans.connector.awsconnector.AwsDelegateTaskResponse;
 import io.harness.delegate.beans.connector.awsconnector.AwsIAMRolesResponse;
 import io.harness.delegate.beans.connector.awsconnector.AwsS3BucketResponse;
@@ -1145,16 +1147,18 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(PVCVolume.class, 543488);
     kryo.register(AwsCFTemplateParamsData.class, 5478);
     kryo.register(CloudformationTaskNGParameters.class, 543489);
-    kryo.register(CloudformationCommandUnit.class, 543490);
-    kryo.register(CloudformationTaskType.class, 543491);
-    kryo.register(CloudformationTaskNGResponse.class, 543492);
-    kryo.register(CloudFormationCreateStackNGResponse.class, 543493);
-    kryo.register(CloudFormationCommandNGResponse.class, 543494);
-    kryo.register(AwsS3FetchFileDelegateConfig.class, 543495);
-    kryo.register(AwsS3FetchFilesResponse.class, 543496);
-    kryo.register(AwsS3FetchFilesTaskParams.class, 543497);
-    kryo.register(S3FileDetailRequest.class, 543498);
-    kryo.register(S3FileDetailResponse.class, 543499);
-    kryo.register(AwsIAMRolesResponse.class, 543500);
+    kryo.register(CloudformationTaskNGResponse.class, 543490);
+    kryo.register(CloudformationCommandUnit.class, 543491);
+    kryo.register(CloudformationTaskType.class, 543492);
+    kryo.register(AwsIAMRolesResponse.class, 543493);
+    kryo.register(AwsCFTaskParamsRequest.class, 543494);
+    kryo.register(CloudFormationCreateStackNGResponse.class, 543495);
+    kryo.register(CloudFormationCommandNGResponse.class, 543496);
+    kryo.register(AwsS3FetchFileDelegateConfig.class, 543497);
+    kryo.register(AwsS3FetchFilesResponse.class, 543498);
+    kryo.register(AwsS3FetchFilesTaskParams.class, 543499);
+    kryo.register(S3FileDetailRequest.class, 543500);
+    kryo.register(S3FileDetailResponse.class, 543501);
+    kryo.register(AwsCFTaskResponse.class, 543502);
   }
 }

@@ -16,6 +16,7 @@ import io.harness.connector.ConnectorValidationResult;
 import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskResponse;
+import io.harness.delegate.beans.connector.awsconnector.AwsCFTaskParamsRequest;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsCredentialDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsCredentialType;
@@ -45,6 +46,7 @@ public class AwsDelegateTask extends AbstractDelegateRunnableTask {
   @Inject private NGErrorHelper ngErrorHelper;
   @Inject private AwsS3DelegateTaskHelper awsS3DelegateTaskHelper;
   @Inject private AwsIAMDelegateTaskHelper awsIAMDelegateTaskHelper;
+  @Inject private AwsCFDelegateTaskHelper awsCFDelegateTaskHelper;
 
   public AwsDelegateTask(DelegateTaskPackage delegateTaskPackage, ILogStreamingTaskClient logStreamingTaskClient,
       Consumer<DelegateTaskResponse> consumer, BooleanSupplier preExecute) {
@@ -78,6 +80,8 @@ public class AwsDelegateTask extends AbstractDelegateRunnableTask {
         return awsS3DelegateTaskHelper.getS3Buckets(awsTaskParams);
       case LIST_IAM_ROLES:
         return awsIAMDelegateTaskHelper.getIAMRoleList(awsTaskParams);
+      case CF_LIST_PARAMS:
+        return awsCFDelegateTaskHelper.getCFParamsList((AwsCFTaskParamsRequest) parameters);
       default:
         throw new InvalidRequestException("Task type not identified");
     }
