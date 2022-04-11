@@ -15,6 +15,7 @@ import static io.harness.NGCommonEntityConstants.ORG_PARAM_MESSAGE;
 import static io.harness.NGCommonEntityConstants.PROJECT_KEY;
 import static io.harness.NGCommonEntityConstants.PROJECT_PARAM_MESSAGE;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.ng.core.utils.NGUtils.validate;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
@@ -23,13 +24,16 @@ import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.ng.core.api.FileStoreService;
+import io.harness.ng.core.common.beans.NGTag;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.dto.filestore.FileDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 import io.harness.security.annotations.NextGenManagerAuth;
+import io.harness.serializer.JsonUtils;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -43,6 +47,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.File;
 import java.io.InputStream;
+import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
@@ -99,12 +104,15 @@ public class FileStoreResource {
              ACCOUNT_KEY) @EntityIdentifier String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) @EntityIdentifier(
           allowBlank = true) String orgIdentifier,
-      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) @EntityIdentifier(
-          allowBlank = true) String projectIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) @EntityIdentifier(allowBlank = true)
+      String projectIdentifier, @Parameter(description = "The file tags") @FormDataParam("tags") String tagsJson,
       @FormDataParam("content") InputStream content, @NotNull @Valid @BeanParam FileDTO file) {
     file.setAccountIdentifier(accountIdentifier);
     file.setOrgIdentifier(orgIdentifier);
     file.setProjectIdentifier(projectIdentifier);
+    file.setTags(JsonUtils.asList(tagsJson, new TypeReference<List<NGTag>>() {}));
+
+    validate(file);
 
     return ResponseDTO.newResponse(fileStoreService.create(file, content));
   }
@@ -124,10 +132,14 @@ public class FileStoreResource {
           allowBlank = true) String projectIdentifier,
       @Parameter(description = NGCommonEntityConstants.FILE_PARAM_MESSAGE) @EntityIdentifier @PathParam(
           NGCommonEntityConstants.IDENTIFIER_KEY) String identifier,
+      @Parameter(description = "The file tags") @FormDataParam("tags") String tagsJson,
       @NotNull @Valid @BeanParam FileDTO file, @FormDataParam("content") InputStream content) {
     file.setAccountIdentifier(accountIdentifier);
     file.setOrgIdentifier(orgIdentifier);
     file.setProjectIdentifier(projectIdentifier);
+    file.setTags(JsonUtils.asList(tagsJson, new TypeReference<List<NGTag>>() {}));
+
+    validate(file);
 
     return ResponseDTO.newResponse(fileStoreService.update(file, content, identifier));
   }

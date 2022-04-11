@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
@@ -56,7 +57,7 @@ public class FileDTO {
   @FormDataParam("parentIdentifier")
   private String parentIdentifier;
   @Schema(description = "Description of the File") @FormDataParam("description") private String description;
-  @Schema(description = "Tags") @FormDataParam("tags") private List<NGTag> tags;
+  @Schema(description = "Tags") @Valid private List<NGTag> tags;
   @Schema(description = "Content of the File") @FormDataParam("entityType") private EntityType entityType;
   @Schema(description = "Content of the File") @FormDataParam("entityId") private String entityId;
   @Schema(description = "Mime type of the File") @FormDataParam("mimeType") private String mimeType;
