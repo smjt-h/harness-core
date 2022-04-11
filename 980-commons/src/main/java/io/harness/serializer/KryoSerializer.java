@@ -58,9 +58,21 @@ public class KryoSerializer {
 
   private final KryoPool pool;
 
+  /**
+   * Create an instance using injected {@link KryoPoolConfiguration}.
+   */
   @Inject
   public KryoSerializer(Set<Class<? extends KryoRegistrar>> registrars, KryoPoolConfiguration kpConfig) {
     pool = new KryoPool.Builder(() -> kryo(registrars)).queue(createQueue(kpConfig)).softReferences().build();
+  }
+
+  /**
+   * Create an instance using default {@link KryoPoolConfiguration} values; An unbounded queue is one of them.
+   *
+   * Useful to keep previous behavior.
+   */
+  public KryoSerializer(Set<Class<? extends KryoRegistrar>> registrars) {
+    this(registrars, KryoPoolConfiguration.builder().queueCapacity(0).build());
   }
 
   private Queue<Kryo> createQueue(KryoPoolConfiguration kpConfig) {
