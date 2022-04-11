@@ -8,13 +8,15 @@
 package io.harness.serializer.kryo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
-import lombok.Data;
-import lombok.ToString;
+import com.google.inject.Singleton;
+import lombok.*;
 
 @Data
 @Builder
 @ToString
+@NoArgsConstructor
+@AllArgsConstructor
+@Singleton
 public class KryoPoolConfiguration {
 
     @JsonProperty(value = "queueCapacity")  private int queueCapacity;

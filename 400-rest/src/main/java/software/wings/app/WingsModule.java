@@ -1750,10 +1750,4 @@ public class WingsModule extends AbstractModule implements ServersModule {
     return Jackson.newObjectMapper();
   }
 
-  @Provides
-  @Singleton
-  public KryoPoolConfiguration kryoPoolConfiguration() {
-      return configuration.getKryoPoolConfig();
-  }
-
 }
