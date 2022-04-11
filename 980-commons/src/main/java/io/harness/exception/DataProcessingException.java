@@ -7,11 +7,11 @@
 
 package io.harness.exception;
 
+import static io.harness.eraro.ErrorCode.DATA_PROCESSING_ERROR;
+
 import io.harness.eraro.Level;
 
 import java.util.EnumSet;
-
-import static io.harness.eraro.ErrorCode.DATA_PROCESSING_ERROR;
 
 public class DataProcessingException extends WingsException {
   private static final String MESSAGE_ARG = "message";
