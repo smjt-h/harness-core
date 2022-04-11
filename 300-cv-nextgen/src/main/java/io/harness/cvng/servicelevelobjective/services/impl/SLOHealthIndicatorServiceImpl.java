@@ -129,7 +129,7 @@ public class SLOHealthIndicatorServiceImpl implements SLOHealthIndicatorService 
     Instant currentTimeMinute = DateTimeUtils.roundDownTo1MinBoundary(clock.instant());
     SLOGraphData sloGraphData = sliRecordService.getGraphData(serviceLevelIndicator.getUuid(),
         timePeriod.getStartTime(serviceLevelObjective.getZoneOffset()), currentTimeMinute, totalErrorBudgetMinutes,
-        serviceLevelIndicator.getSliMissingDataType(), serviceLevelIndicator.getVersion());
+        serviceLevelIndicator.getSliMissingDataType(), serviceLevelIndicator.getVersion(), null, null);
     if (Objects.isNull(sloHealthIndicator)) {
       SLOHealthIndicator newSloHealthIndicator =
           SLOHealthIndicator.builder()

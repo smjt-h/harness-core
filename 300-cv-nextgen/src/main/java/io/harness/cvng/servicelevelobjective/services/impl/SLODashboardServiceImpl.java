@@ -38,6 +38,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SLODashboardServiceImpl implements SLODashboardService {
@@ -58,7 +59,7 @@ public class SLODashboardServiceImpl implements SLODashboardService {
     List<SLODashboardWidget> sloDashboardWidgets =
         sloPageResponse.getContent()
             .stream()
-            .map(sloResponse -> getSloDashboardWidget(projectParams, sloResponse))
+            .map(sloResponse -> getSloDashboardWidget(projectParams, sloResponse, null, null))
             .collect(Collectors.toList());
     return PageResponse.<SLODashboardWidget>builder()
         .pageSize(sloPageResponse.getPageSize())
@@ -71,9 +72,14 @@ public class SLODashboardServiceImpl implements SLODashboardService {
   }
 
   @Override
-  public SLODashboardDetail getSloDashboardDetail(ProjectParams projectParams, String identifier) {
+  public SLODashboardDetail getSloDashboardDetail(
+      ProjectParams projectParams, String identifier, Instant startTime, Instant endTime) {
+    if (startTime.equals(Instant.ofEpochMilli(0)) || endTime.equals(Instant.ofEpochMilli(0))) {
+      startTime = null;
+      endTime = null;
+    }
     ServiceLevelObjectiveResponse sloResponse = serviceLevelObjectiveService.get(projectParams, identifier);
-    SLODashboardWidget sloDashboardWidget = getSloDashboardWidget(projectParams, sloResponse);
+    SLODashboardWidget sloDashboardWidget = getSloDashboardWidget(projectParams, sloResponse, startTime, endTime);
     return SLODashboardDetail.builder()
         .description(sloResponse.getServiceLevelObjectiveDTO().getDescription())
         .sloDashboardWidget(sloDashboardWidget)
@@ -87,7 +93,7 @@ public class SLODashboardServiceImpl implements SLODashboardService {
   }
 
   private SLODashboardWidget getSloDashboardWidget(
-      ProjectParams projectParams, ServiceLevelObjectiveResponse sloResponse) {
+      ProjectParams projectParams, ServiceLevelObjectiveResponse sloResponse, Instant startTime, Instant endTime) {
     Preconditions.checkState(sloResponse.getServiceLevelObjectiveDTO().getServiceLevelIndicators().size() == 1,
         "Only one service level indicator is supported");
     ServiceLevelIndicatorDTO serviceLevelIndicatorDTO =
@@ -114,7 +120,7 @@ public class SLODashboardServiceImpl implements SLODashboardService {
         currentLocalDate);
     SLODashboardWidget.SLOGraphData sloGraphData = sliRecordService.getGraphData(serviceLevelIndicator.getUuid(),
         timePeriod.getStartTime(serviceLevelObjective.getZoneOffset()), currentTimeMinute, totalErrorBudgetMinutes,
-        serviceLevelIndicator.getSliMissingDataType(), serviceLevelIndicator.getVersion());
+        serviceLevelIndicator.getSliMissingDataType(), serviceLevelIndicator.getVersion(), startTime, endTime);
     return SLODashboardWidget.withGraphData(sloGraphData)
         .sloIdentifier(slo.getIdentifier())
         .title(slo.getName())

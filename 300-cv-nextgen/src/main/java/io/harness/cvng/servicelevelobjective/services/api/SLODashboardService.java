@@ -15,11 +15,14 @@ import io.harness.cvng.servicelevelobjective.beans.SLODashboardDetail;
 import io.harness.cvng.servicelevelobjective.beans.SLODashboardWidget;
 import io.harness.ng.beans.PageResponse;
 
+import java.time.Instant;
+
 public interface SLODashboardService {
   PageResponse<SLODashboardWidget> getSloDashboardWidgets(
       ProjectParams projectParams, SLODashboardApiFilter filter, PageParams pageParams);
 
-  SLODashboardDetail getSloDashboardDetail(ProjectParams projectParams, String sloIdentifier);
+  SLODashboardDetail getSloDashboardDetail(
+      ProjectParams projectParams, String sloIdentifier, Instant startTime, Instant endTime);
 
   SLORiskCountResponse getRiskCount(ProjectParams projectParams, SLODashboardApiFilter serviceLevelObjectiveFilter);
 }

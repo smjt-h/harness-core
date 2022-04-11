@@ -133,9 +133,13 @@ public class SLIRecordServiceImpl implements SLIRecordService {
 
   @Override
   public SLOGraphData getGraphData(String sliId, Instant startTime, Instant endTime, int totalErrorBudgetMinutes,
-      SLIMissingDataType sliMissingDataType, int sliVersion) {
+      SLIMissingDataType sliMissingDataType, int sliVersion, Instant customStartTime, Instant customEndTime) {
     Preconditions.checkState(totalErrorBudgetMinutes != 0, "Total error budget minutes should not be zero.");
-    List<SLIRecord> sliRecords = sliRecords(sliId, startTime, endTime);
+    if (Objects.isNull(customStartTime) || Objects.isNull(customStartTime)) {
+      customStartTime = startTime;
+      customEndTime = endTime;
+    }
+    List<SLIRecord> sliRecords = sliRecords(sliId, startTime, endTime, customStartTime, customEndTime);
     List<Point> sliTread = new ArrayList<>();
     List<Point> errorBudgetBurndown = new ArrayList<>();
     double errorBudgetRemainingPercentage = 100;
@@ -184,10 +188,13 @@ public class SLIRecordServiceImpl implements SLIRecordService {
         .asList(new FindOptions().limit(count));
   }
 
-  private List<SLIRecord> sliRecords(String sliId, Instant startTime, Instant endTime) {
+  private List<SLIRecord> sliRecords(
+      String sliId, Instant startTimeSLO, Instant endTimeSLO, Instant startTime, Instant endTime) {
+    SLIRecord firstRecord = getFirstSLIRecord(sliId, startTimeSLO);
+    SLIRecord lastRecord = getLastSLIRecord(sliId, endTimeSLO);
     SLIRecord firstRecordInRange = getFirstSLIRecord(sliId, startTime);
     SLIRecord lastRecordInRange = getLastSLIRecord(sliId, endTime);
-    if (firstRecordInRange == null || lastRecordInRange == null) {
+    if (firstRecordInRange == null || lastRecordInRange == null || firstRecord == null || lastRecord == null) {
       return Collections.emptyList();
     } else {
       startTime = firstRecordInRange.getTimestamp();
@@ -200,13 +207,15 @@ public class SLIRecordServiceImpl implements SLIRecordService {
       diff = 1L;
     }
     // long reminder = totalMinutes % maxNumberOfPoints;
+    minutes.add(firstRecord.getTimestamp());
     minutes.add(startTime);
     Duration diffDuration = Duration.ofMinutes(diff);
     for (Instant current = startTime.plus(Duration.ofMinutes(diff)); current.isBefore(endTime);
          current = current.plus(diffDuration)) {
       minutes.add(current);
     }
-    minutes.add(endTime.minus(Duration.ofMinutes(1))); // always include start and end minute.
+    minutes.add(endTime.minus(Duration.ofMinutes(1)));
+    minutes.add(lastRecord.getTimestamp().minus(Duration.ofMinutes(1))); // always include start and end minute.
     return hPersistence.createQuery(SLIRecord.class, excludeAuthorityCount)
         .filter(SLIRecordKeys.sliId, sliId)
         .field(SLIRecordKeys.timestamp)

@@ -30,6 +30,7 @@ import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import java.time.Instant;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
@@ -75,8 +76,10 @@ public class SLODashboardResource {
   @NGAccessControlCheck(resourceType = SLO, permission = VIEW_PERMISSION)
   public ResponseDTO<SLODashboardDetail> getSloDashboardWidget(
       @ApiParam(required = true) @NotNull @PathParam("identifier") @ResourceIdentifier String identifier,
+      @QueryParam("startTime") long startTime, @QueryParam("endTime") long endTime,
       @NotNull @Valid @BeanParam ProjectParams projectParams) {
-    return ResponseDTO.newResponse(sloDashboardService.getSloDashboardDetail(projectParams, identifier));
+    return ResponseDTO.newResponse(sloDashboardService.getSloDashboardDetail(
+        projectParams, identifier, Instant.ofEpochMilli(startTime), Instant.ofEpochMilli(endTime)));
   }
 
   @GET
