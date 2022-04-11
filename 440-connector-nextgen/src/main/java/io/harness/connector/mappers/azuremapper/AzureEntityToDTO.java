@@ -11,6 +11,8 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.entities.embedded.azureconnector.AzureConfig;
 import io.harness.connector.entities.embedded.azureconnector.AzureManualCredential;
+import io.harness.connector.entities.embedded.azurerepoconnector.*;
+import io.harness.connector.entities.embedded.githubconnector.*;
 import io.harness.connector.mappers.ConnectorEntityToDTOMapper;
 import io.harness.delegate.beans.connector.azureconnector.AzureAuthDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureClientKeyCertDTO;
@@ -20,9 +22,15 @@ import io.harness.delegate.beans.connector.azureconnector.AzureCredentialDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
 import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureSecretType;
+import io.harness.delegate.beans.connector.scm.GitAuthType;
+import io.harness.delegate.beans.connector.scm.azurerepo.*;
+import io.harness.delegate.beans.connector.scm.github.*;
 import io.harness.encryption.SecretRefData;
 import io.harness.encryption.SecretRefHelper;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.UnknownEnumTypeException;
+import io.harness.govern.Switch;
+import io.harness.ng.userprofile.commons.AzureDevOpsSCMDTO;
 
 import com.google.inject.Singleton;
 
@@ -40,6 +48,30 @@ public class AzureEntityToDTO implements ConnectorEntityToDTOMapper<AzureConnect
       default:
         throw new InvalidRequestException("Invalid Credential type.");
     }
+  }
+
+  public static AzureRepoAuthenticationDTO buildAzureAuthentication(
+      GitAuthType authType, AzureRepoAuthentication authenticationDetails) {
+    AzureRepoCredentialsDTO credentialsDTO = null;
+    switch (authType) {
+      case SSH:
+        final AzureRepoSshAuthentication githubSshAuthentication = (AzureRepoSshAuthentication) authenticationDetails;
+        credentialsDTO = AzureRepoSshCredentialsDTO.builder()
+                             .sshKeyRef(SecretRefHelper.createSecretRef(githubSshAuthentication.getSshKeyRef()))
+                             .build();
+        break;
+      case HTTP:
+        final AzureRepoHttpAuthentication httpAuthentication = (AzureRepoHttpAuthentication) authenticationDetails;
+        final AzureRepoHttpAuthenticationType type = httpAuthentication.getType();
+        final AzureRepoHttpAuth auth = httpAuthentication.getAuth();
+        AzureRepoHttpCredentialsSpecDTO httpCredentialsSpecDTO = getHttpCredentialsSpecDTO(type, auth);
+        credentialsDTO =
+            AzureRepoHttpCredentialsDTO.builder().type(type).httpCredentialsSpec(httpCredentialsSpecDTO).build();
+        break;
+      default:
+        Switch.unhandled(authType);
+    }
+    return AzureRepoAuthenticationDTO.builder().authType(authType).credentials(credentialsDTO).build();
   }
 
   private AzureConnectorDTO buildManualCredential(AzureConfig connector) {
@@ -85,5 +117,27 @@ public class AzureEntityToDTO implements ConnectorEntityToDTOMapper<AzureConnect
                         .config(null)
                         .build())
         .build();
+  }
+
+  private static AzureRepoHttpCredentialsSpecDTO getHttpCredentialsSpecDTO(
+      AzureRepoHttpAuthenticationType type, Object auth) {
+    AzureRepoHttpCredentialsSpecDTO httpCredentialsSpecDTO = null;
+    switch (type) {
+      case USERNAME_AND_TOKEN:
+        final AzureRepoUsernameToken usernameToken = (AzureRepoUsernameToken) auth;
+        SecretRefData usernameReference = null;
+        if (usernameToken.getUsernameRef() != null) {
+          usernameReference = SecretRefHelper.createSecretRef(usernameToken.getUsernameRef());
+        }
+        httpCredentialsSpecDTO = AzureRepoUsernameTokenDTO.builder()
+                                     .username(usernameToken.getUsername())
+                                     .usernameRef(usernameReference)
+                                     .tokenRef(SecretRefHelper.createSecretRef(usernameToken.getTokenRef()))
+                                     .build();
+        break;
+      default:
+        Switch.unhandled(type);
+    }
+    return httpCredentialsSpecDTO;
   }
 }

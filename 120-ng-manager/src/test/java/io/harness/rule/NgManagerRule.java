@@ -106,7 +106,7 @@ public class NgManagerRule implements MethodRule, InjectorRuleMixin, MongoRuleMi
         sourceCodeManagerMapBinder.addBinding(SCMType.GITLAB).to(GitlabSCMMapper.class);
         sourceCodeManagerMapBinder.addBinding(SCMType.GITHUB).to(GithubSCMMapper.class);
         sourceCodeManagerMapBinder.addBinding(SCMType.AWS_CODE_COMMIT).to(AwsCodeCommitSCMMapper.class);
-        sourceCodeManagerMapBinder.addBinding(SCMType.AZURE_DEV_OPS).to(AzureDevOpsSCMMapper.class);
+        sourceCodeManagerMapBinder.addBinding(SCMType.AZURE_REPO).to(AzureDevOpsSCMMapper.class);
       }
     });
 

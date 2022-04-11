@@ -10,6 +10,7 @@ package io.harness.ng.userprofile.commons;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoAuthenticationDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubAuthenticationDTO;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -23,7 +24,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 
 @OwnedBy(PL)
-@JsonTypeName("AZURE_DEV_OPS")
+@JsonTypeName("AZURE_REPO")
 @Data
 @Schema(name = "AzureDevOpsSCM", description = "This Contains details of the Azure DevOps Source Code Manager")
 @SuperBuilder
@@ -31,9 +32,10 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class AzureDevOpsSCMDTO extends SourceCodeManagerDTO {
-  @JsonProperty("authentication") GithubAuthenticationDTO authentication;
+  @JsonProperty("authentication") AzureRepoAuthenticationDTO authentication;
+
   @Override
   public SCMType getType() {
-    return SCMType.AZURE_DEV_OPS;
+    return SCMType.AZURE_REPO;
   }
 }

@@ -10,7 +10,10 @@ package io.harness.ng.userprofile.entities;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.connector.entities.embedded.azurerepoconnector.AzureRepoAuthentication;
 import io.harness.connector.entities.embedded.githubconnector.GithubAuthentication;
+import io.harness.connector.mappers.azuremapper.AzureDTOToEntity;
+import io.harness.connector.mappers.azuremapper.AzureEntityToDTO;
 import io.harness.connector.mappers.githubconnector.GithubDTOToEntity;
 import io.harness.connector.mappers.githubconnector.GithubEntityToDTO;
 import io.harness.delegate.beans.connector.scm.GitAuthType;
@@ -26,6 +29,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.TypeAlias;
 
 @OwnedBy(PL)
@@ -40,11 +44,11 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("io.harness.ng.userprofile.entities.AzureDevOpsSCM")
 public class AzureDevOpsSCM extends SourceCodeManager {
   GitAuthType authType;
-  GithubAuthentication authenticationDetails;
+  AzureRepoAuthentication authenticationDetails;
 
   @Override
   public SCMType getType() {
-    return SCMType.AZURE_DEV_OPS;
+    return SCMType.AZURE_REPO;
   }
 
   public static class AzureDevOpsSCMMapper extends SourceCodeManagerMapper<AzureDevOpsSCMDTO, AzureDevOpsSCM> {
@@ -52,7 +56,7 @@ public class AzureDevOpsSCM extends SourceCodeManager {
     public AzureDevOpsSCM toSCMEntity(AzureDevOpsSCMDTO sourceCodeManagerDTO) {
       AzureDevOpsSCM azureDevOpsSCM = AzureDevOpsSCM.builder()
                                           .authType(sourceCodeManagerDTO.getAuthentication().getAuthType())
-                                          .authenticationDetails(GithubDTOToEntity.buildAuthenticationDetails(
+                                          .authenticationDetails(AzureDTOToEntity.buildAuthenticationDetails(
                                               sourceCodeManagerDTO.getAuthentication().getAuthType(),
                                               sourceCodeManagerDTO.getAuthentication().getCredentials()))
                                           .build();
@@ -61,10 +65,10 @@ public class AzureDevOpsSCM extends SourceCodeManager {
     }
 
     @Override
-    public AzureDevOpsSCMDTO toSCMDTO(AzureDevOpsSCM sourceCodeManager) {
+    public AzureDevOpsSCMDTO toSCMDTO(@NotNull AzureDevOpsSCM sourceCodeManager) {
       AzureDevOpsSCMDTO azureDevOpsSCMDTO =
           AzureDevOpsSCMDTO.builder()
-              .authentication(GithubEntityToDTO.buildGithubAuthentication(
+              .authentication(AzureEntityToDTO.buildAzureAuthentication(
                   sourceCodeManager.getAuthType(), sourceCodeManager.getAuthenticationDetails()))
               .build();
       setCommonFieldsDTO(sourceCodeManager, azureDevOpsSCMDTO);
