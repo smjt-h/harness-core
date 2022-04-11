@@ -13,9 +13,9 @@ import lombok.*;
 
 @Data
 @Builder
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 @Singleton
 public class KryoPoolConfiguration {
   @JsonProperty(value = "queueCapacity") private int queueCapacity;

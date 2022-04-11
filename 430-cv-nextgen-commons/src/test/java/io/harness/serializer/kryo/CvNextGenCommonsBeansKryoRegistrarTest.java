@@ -39,7 +39,7 @@ public class CvNextGenCommonsBeansKryoRegistrarTest extends CvNextGenCommonsTest
 
   @Before
   public void before() {
-    kryoSerializer = new KryoSerializer(new HashSet<>(Arrays.asList(CvNextGenCommonsBeansKryoRegistrar.class)), new KryoPoolConfiguration());
+    kryoSerializer = new KryoSerializer(new HashSet<>(Arrays.asList(CvNextGenCommonsBeansKryoRegistrar.class)));
   }
 
   @Test

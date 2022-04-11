@@ -1748,5 +1748,4 @@ public class WingsModule extends AbstractModule implements ServersModule {
   public ObjectMapper getYamlSchemaObjectMapperWithoutNamed() {
     return Jackson.newObjectMapper();
   }
-
 }
