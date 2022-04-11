@@ -26,7 +26,6 @@ import io.harness.beans.environment.pod.container.ContainerImageDetails;
 import io.harness.beans.quantity.unit.DecimalQuantityUnit;
 import io.harness.beans.quantity.unit.StorageQuantityUnit;
 import io.harness.beans.serializer.RunTimeInputHandler;
-import io.harness.beans.stages.IntegrationStageConfig;
 import io.harness.beans.stages.IntegrationStageInfoConfig;
 import io.harness.ci.config.CIExecutionServiceConfig;
 import io.harness.ci.utils.QuantityUtils;

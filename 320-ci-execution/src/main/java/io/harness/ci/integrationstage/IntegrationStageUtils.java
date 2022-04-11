@@ -33,7 +33,6 @@ import io.harness.beans.execution.ManualExecutionSource;
 import io.harness.beans.execution.PRWebhookEvent;
 import io.harness.beans.execution.WebhookExecutionSource;
 import io.harness.beans.serializer.RunTimeInputHandler;
-import io.harness.beans.stages.IntegrationStageConfig;
 import io.harness.beans.stages.IntegrationStageInfoConfig;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.connector.ConnectorType;

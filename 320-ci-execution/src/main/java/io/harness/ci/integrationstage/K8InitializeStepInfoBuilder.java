@@ -74,7 +74,6 @@ import io.harness.exception.ngexception.CIStageExecutionException;
 import io.harness.execution.CIExecutionConfigService;
 import io.harness.ff.CIFeatureFlagService;
 import io.harness.plancreator.execution.ExecutionWrapperConfig;
-import io.harness.plancreator.stages.StageElementWrapperConfig;
 import io.harness.plancreator.stages.stage.StageElementConfig;
 import io.harness.plancreator.steps.ParallelStepElementConfig;
 import io.harness.plancreator.steps.StepElementConfig;

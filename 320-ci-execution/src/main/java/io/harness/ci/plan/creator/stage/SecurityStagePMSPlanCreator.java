@@ -24,7 +24,6 @@ import io.harness.beans.execution.WebhookEvent;
 import io.harness.beans.execution.WebhookExecutionSource;
 import io.harness.beans.serializer.RunTimeInputHandler;
 import io.harness.beans.stages.IntegrationStageInfoConfig;
-import io.harness.beans.stages.SecurityStageConfig;
 import io.harness.beans.stages.SecurityStageStepParametersPMS;
 import io.harness.ci.integrationstage.CIIntegrationStageModifier;
 import io.harness.ci.integrationstage.IntegrationStageUtils;
