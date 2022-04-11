@@ -593,6 +593,8 @@ public class AuthServiceTest extends WingsBaseTest {
     Algorithm algorithm = Algorithm.HMAC256(AUTH_SECRET);
     JWTVerifier verifier = JWT.require(algorithm).withIssuer("Harness Inc").build();
     String authTokenId = JWT.decode(user.getToken()).getClaim("authToken").asString();
+    String accountId=JWT.decode(user.getToken()).getClaim("accountId").asString();
+    assertThat("kmpySmUISimoRrJL6NL73w").isEqualTo(accountId);
 
     String tokenString = user.getToken();
     AuthToken authToken = new AuthToken(ACCOUNT_ID, USER_ID, 8640000L);

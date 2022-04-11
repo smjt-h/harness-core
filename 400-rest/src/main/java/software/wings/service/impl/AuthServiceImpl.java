@@ -961,7 +961,8 @@ public class AuthServiceImpl implements AuthService {
                                           .withExpiresAt(new Date(System.currentTimeMillis() + duration))
                                           .withClaim("authToken", authToken.getUuid())
                                           .withClaim("usrId", authToken.getUserId())
-                                          .withClaim("env", configuration.getEnvPath());
+                                          .withClaim("env", configuration.getEnvPath())
+                                          .withClaim("accountId", authToken.getAccountId());
       // User Principal needed in token for environments without gateway as this token will be sent back to different
       // microservices
       addUserPrincipal(authToken.getUserId(), email, username, jwtBuilder, authToken.getAccountId());
