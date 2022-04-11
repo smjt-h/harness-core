@@ -9,9 +9,10 @@ package io.harness.serializer;
 
 import static java.lang.String.format;
 
-import com.esotericsoftware.kryo.Kryo;
 import io.harness.reflection.CodeUtils;
+import io.harness.serializer.kryo.KryoPoolConfiguration;
 
+import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.Registration;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -31,8 +32,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
-
-import io.harness.serializer.kryo.KryoPoolConfiguration;
 import lombok.extern.slf4j.Slf4j;
 
 @Singleton
