@@ -16,10 +16,12 @@ public class CCMConnectorRuntimeException extends RuntimeException {
   private String message;
   private String hint;
   private String explanation;
+  private int code;
 
-  public CCMConnectorRuntimeException(String message, String hint, String explanation) {
+  public CCMConnectorRuntimeException(String message, String hint, String explanation, int code) {
     this.message = message;
     this.hint = hint;
     this.explanation = explanation;
+    this.code = code;
   }
 }

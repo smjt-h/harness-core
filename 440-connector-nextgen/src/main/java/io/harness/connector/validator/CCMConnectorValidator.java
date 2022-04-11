@@ -57,9 +57,10 @@ public class CCMConnectorValidator extends AbstractConnectorValidator {
         List<ErrorDetail> errorDetails = response.getErrors();
         Set<String> hint = new HashSet<>(); // StringJoiner(",\n");
         Set<String> explanation = new HashSet<>();
+        int code = errorDetails.get(0).getCode();
         setHintAndExplanation(errorDetails, hint, explanation);
         throw new CCMConnectorRuntimeException(
-            response.getErrorSummary(), String.join(",\n", hint), String.join(",\n", explanation));
+            response.getErrorSummary(), String.join(",\n", hint), String.join(",\n", explanation), code);
       }
       return response;
     } catch (InvalidRequestException | UnexpectedException ex) {

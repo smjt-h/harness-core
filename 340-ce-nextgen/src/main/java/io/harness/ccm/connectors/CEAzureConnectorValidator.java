@@ -202,7 +202,8 @@ public class CEAzureConnectorValidator extends io.harness.ccm.connectors.Abstrac
         return ConnectorValidationResult.builder()
             .errors(ImmutableList.of(ErrorDetail.builder()
                                          .reason("Internal error with data processing")
-                                         .message("Contact Harness Support or Harness Community Forum.")
+                                         .message("") // UI adds "Contact Harness Support or Harness Community Forum." in this case
+                                         .code(500)
                                          .build()))
             .errorSummary("Error with processing data")
             .status(ConnectivityStatus.FAILURE)

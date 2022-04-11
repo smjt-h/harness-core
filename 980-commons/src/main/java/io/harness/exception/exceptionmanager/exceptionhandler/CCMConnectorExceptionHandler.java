@@ -2,6 +2,7 @@ package io.harness.exception.exceptionmanager.exceptionhandler;
 
 import static io.harness.exception.WingsException.USER;
 
+import io.harness.exception.DataProcessingException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.NestedExceptionUtils;
 import io.harness.exception.WingsException;
@@ -23,6 +24,10 @@ public class CCMConnectorExceptionHandler implements ExceptionHandler {
   public WingsException handleException(Exception exception) {
     CCMConnectorRuntimeException ex = (CCMConnectorRuntimeException) exception;
     log.info("Exception message: {}", ex.getMessage());
+    if (ex.getCode() == 500) {
+      return NestedExceptionUtils.hintWithExplanationException(
+              ex.getHint(), ex.getExplanation(), new DataProcessingException(ex.getMessage(), USER));
+    }
     return NestedExceptionUtils.hintWithExplanationException(
         ex.getHint(), ex.getExplanation(), new InvalidRequestException(ex.getMessage(), USER));
   }

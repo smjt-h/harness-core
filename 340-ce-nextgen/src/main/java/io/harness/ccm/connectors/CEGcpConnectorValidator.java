@@ -83,7 +83,8 @@ public class CEGcpConnectorValidator extends io.harness.ccm.connectors.AbstractC
                   ConnectorType.GCP_CLOUD_COST, ceConnectorsHelper.JOB_TYPE_CLOUDFUNCTION)) {
             errorList.add(ErrorDetail.builder()
                               .reason("Internal error with data processing")
-                              .message("Contact Harness Support or Harness Community Forum.")
+                              .message("")  // UI adds "Contact Harness Support or Harness Community Forum." in this case
+                              .code(500)
                               .build());
             return ConnectorValidationResult.builder()
                 .errorSummary("Error with processing data")
