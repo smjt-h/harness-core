@@ -106,7 +106,7 @@ public class FileStoreResource {
           allowBlank = true) String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) @EntityIdentifier(allowBlank = true)
       String projectIdentifier, @Parameter(description = "The file tags") @FormDataParam("tags") String tagsJson,
-      @FormDataParam("content") InputStream content, @NotNull @Valid @BeanParam FileDTO file) {
+      @FormDataParam("content") InputStream content, @NotNull @BeanParam FileDTO file) {
     file.setAccountIdentifier(accountIdentifier);
     file.setOrgIdentifier(orgIdentifier);
     file.setProjectIdentifier(projectIdentifier);
@@ -133,7 +133,7 @@ public class FileStoreResource {
       @Parameter(description = NGCommonEntityConstants.FILE_PARAM_MESSAGE) @EntityIdentifier @PathParam(
           NGCommonEntityConstants.IDENTIFIER_KEY) String identifier,
       @Parameter(description = "The file tags") @FormDataParam("tags") String tagsJson,
-      @NotNull @Valid @BeanParam FileDTO file, @FormDataParam("content") InputStream content) {
+      @NotNull @BeanParam FileDTO file, @FormDataParam("content") InputStream content) {
     file.setAccountIdentifier(accountIdentifier);
     file.setOrgIdentifier(orgIdentifier);
     file.setProjectIdentifier(projectIdentifier);

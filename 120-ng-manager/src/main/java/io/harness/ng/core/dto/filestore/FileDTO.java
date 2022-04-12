@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.Condition;
+import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.NGEntityName;
 import io.harness.ng.core.common.beans.NGTag;
 
@@ -46,7 +47,10 @@ public class FileDTO {
   @Schema(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) private String orgIdentifier;
   @Schema(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) private String projectIdentifier;
 
-  @Schema(description = "Identifier of the File") @FormDataParam("identifier") private String identifier;
+  @EntityIdentifier
+  @Schema(description = "Identifier of the File")
+  @FormDataParam("identifier")
+  private String identifier;
 
   @NGEntityName @Schema(description = "Name of the File") @FormDataParam("name") private String name;
   @Schema(description = "This specifies the file usage") @FormDataParam("fileUsage") private FileUsage fileUsage;
