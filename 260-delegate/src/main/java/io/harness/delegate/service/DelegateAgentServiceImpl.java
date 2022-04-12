@@ -1346,6 +1346,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     if (perpetualTaskWorker != null) {
       log.info("Stopping perpetual task workers");
       perpetualTaskWorker.stop();
+      log.info("Stopped perpetual task workers");
     }
 
     if (restartableServiceManager != null) {
@@ -1353,7 +1354,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
 
     if (chronicleEventTailer != null) {
+      log.info("Stopping chronicle event trailer");
       chronicleEventTailer.stopAsync().awaitTerminated();
+      log.info("Stopped chronicle event trailer");
     }
   }
 
@@ -2003,7 +2006,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         injector.injectMembers(delegateValidateTask);
         currentlyValidatingTasks.put(delegateTaskPackage.getDelegateTaskId(), delegateTaskPackage);
         updateCounterIfLessThanCurrent(maxValidatingTasksCount, currentlyValidatingTasks.size());
-        delegateValidateTask.validationResults(delegateTaskPackage.isNG());
+        delegateValidateTask.validationResults();
       } else if (delegateInstanceId.equals(delegateTaskPackage.getDelegateInstanceId())) {
         applyDelegateSecretFunctor(delegateTaskPackage);
         // Whitelisted. Proceed immediately.
