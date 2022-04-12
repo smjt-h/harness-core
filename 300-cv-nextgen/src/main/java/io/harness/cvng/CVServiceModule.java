@@ -7,12 +7,10 @@
 
 package io.harness.cvng;
 
-import static io.harness.AuthorizationServiceHeader.CV_NEXT_GEN;
 import static io.harness.cvng.beans.change.ChangeSourceType.HARNESS_CD;
 import static io.harness.cvng.cdng.services.impl.CVNGNotifyEventListener.CVNG_ORCHESTRATION;
 import static io.harness.eventsframework.EventsFrameworkConstants.SRM_STATEMACHINE_EVENT;
 
-import io.harness.AccessControlClientModule;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.retry.MethodExecutionHelper;
@@ -374,12 +372,10 @@ public class CVServiceModule extends AbstractModule {
                 .setUncaughtExceptionHandler((t, e) -> log.error("error while processing task", e))
                 .build()));
     install(PrimaryVersionManagerModule.getInstance());
-    install(AccessControlClientModule.getInstance(
-        this.verificationConfiguration.getAccessControlClientConfiguration(), CV_NEXT_GEN.getServiceId()));
     bind(HPersistence.class).to(MongoPersistence.class);
     bind(TimeSeriesRecordService.class).to(TimeSeriesRecordServiceImpl.class);
     bind(OrchestrationService.class).to(OrchestrationServiceImpl.class);
-    bind(AnalysisStateMachineService.class).to(AnalysisStateMachineServiceImpl.class);
+    bind(AnalysisStateMachineService.class).to(AnalysisStateMachineServiceImpl.class).in(Scopes.SINGLETON);
     bind(TimeSeriesAnalysisService.class).to(TimeSeriesAnalysisServiceImpl.class);
     bind(TrendAnalysisService.class).to(TrendAnalysisServiceImpl.class);
     bind(LearningEngineTaskService.class).to(LearningEngineTaskServiceImpl.class);
@@ -496,7 +492,7 @@ public class CVServiceModule extends AbstractModule {
     dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.DATADOG_METRICS)
         .to(DatadogMetricDataCollectionInfoMapper.class)
         .in(Scopes.SINGLETON);
-    dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.STACKDRIVER_LOG)
+    dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.STACKDRIVER)
         .to(StackdriverDataCollectionInfoMapper.class)
         .in(Scopes.SINGLETON);
     dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.CUSTOM_HEALTH_METRIC)

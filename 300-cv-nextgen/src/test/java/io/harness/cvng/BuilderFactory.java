@@ -14,6 +14,8 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 
 import io.harness.cvng.activity.entities.DeploymentActivity;
 import io.harness.cvng.activity.entities.DeploymentActivity.DeploymentActivityBuilder;
+import io.harness.cvng.activity.entities.HarnessCDCurrentGenActivity;
+import io.harness.cvng.activity.entities.HarnessCDCurrentGenActivity.HarnessCDCurrentGenActivityBuilder;
 import io.harness.cvng.activity.entities.KubernetesClusterActivity;
 import io.harness.cvng.activity.entities.KubernetesClusterActivity.KubernetesClusterActivityBuilder;
 import io.harness.cvng.activity.entities.KubernetesClusterActivity.RelatedAppMonitoredService;
@@ -25,6 +27,7 @@ import io.harness.cvng.beans.MonitoredServiceType;
 import io.harness.cvng.beans.change.ChangeEventDTO;
 import io.harness.cvng.beans.change.ChangeEventDTO.ChangeEventDTOBuilder;
 import io.harness.cvng.beans.change.ChangeSourceType;
+import io.harness.cvng.beans.change.HarnessCDCurrentGenEventMetadata;
 import io.harness.cvng.beans.change.HarnessCDEventMetadata;
 import io.harness.cvng.beans.change.KubernetesChangeEventMetadata;
 import io.harness.cvng.beans.change.KubernetesChangeEventMetadata.Action;
@@ -33,6 +36,7 @@ import io.harness.cvng.beans.change.PagerDutyEventMetaData;
 import io.harness.cvng.beans.customhealth.TimestampInfo;
 import io.harness.cvng.beans.cvnglog.ExecutionLogDTO;
 import io.harness.cvng.beans.cvnglog.ExecutionLogDTO.ExecutionLogDTOBuilder;
+import io.harness.cvng.beans.cvnglog.ExecutionLogDTO.LogLevel;
 import io.harness.cvng.beans.cvnglog.TraceableType;
 import io.harness.cvng.beans.job.Sensitivity;
 import io.harness.cvng.cdng.beans.CVNGStepInfo;
@@ -663,6 +667,27 @@ public class BuilderFactory {
         .activityStartTime(clock.instant());
   }
 
+  public HarnessCDCurrentGenActivityBuilder getHarnessCDCurrentGenActivityBuilder() {
+    return HarnessCDCurrentGenActivity.builder()
+        .accountId(context.getAccountId())
+        .orgIdentifier(context.getOrgIdentifier())
+        .projectIdentifier(context.getProjectIdentifier())
+        .monitoredServiceIdentifier(context.getMonitoredServiceParams().getMonitoredServiceIdentifier())
+        .eventTime(clock.instant())
+        .changeSourceIdentifier("changeSourceID")
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
+        .type(ChangeSourceType.HARNESS_CD.getActivityType())
+        .artifactType("artifactType")
+        .artifactName("artifactName")
+        .workflowEndTime(clock.instant())
+        .workflowStartTime(clock.instant())
+        .workflowId("workflowId")
+        .workflowExecutionId("workflowExecutionId")
+        .activityName(generateUuid())
+        .activityEndTime(clock.instant())
+        .activityStartTime(clock.instant());
+  }
+
   public KubernetesClusterActivityBuilder getKubernetesClusterActivityBuilder() {
     return KubernetesClusterActivity.builder()
         .accountId(context.getAccountId())
@@ -713,7 +738,7 @@ public class BuilderFactory {
                                               .build()));
   }
 
-  public ChangeEventDTOBuilder getHarnessCDChangeEventDTOBuilder() {
+  public ChangeEventDTOBuilder harnessCDChangeEventDTOBuilder() {
     return getChangeEventDTOBuilder()
         .type(ChangeSourceType.HARNESS_CD)
         .metadata(HarnessCDEventMetadata.builder()
@@ -728,6 +753,19 @@ public class BuilderFactory {
                       .artifactType("artifactType")
                       .artifactTag("artifactTag")
                       .status("status")
+                      .build());
+  }
+
+  public ChangeEventDTOBuilder harnessCDCurrentGenChangeEventDTOBuilder() {
+    return getChangeEventDTOBuilder()
+        .type(ChangeSourceType.HARNESS_CD_CURRENT_GEN)
+        .metadata(HarnessCDCurrentGenEventMetadata.builder()
+                      .artifactType("artifactType")
+                      .artifactName("artifactName")
+                      .workflowEndTime(clock.millis())
+                      .workflowStartTime(clock.millis())
+                      .workflowId("workflowId")
+                      .workflowExecutionId("workflowExecutionId")
                       .build());
   }
 
@@ -1035,7 +1073,7 @@ public class BuilderFactory {
         .accountId(context.getAccountId())
         .traceableId("traceableId")
         .log("Data Collection successfully completed.")
-        .logLevel(ExecutionLogDTO.LogLevel.INFO)
+        .logLevel(LogLevel.INFO)
         .startTime(startTime.toEpochMilli())
         .endTime(endTime.toEpochMilli())
         .createdAt(createdAt)

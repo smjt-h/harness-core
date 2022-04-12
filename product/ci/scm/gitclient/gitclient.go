@@ -10,9 +10,9 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+	"os"
 
 	"github.com/drone/go-scm/scm"
 	"github.com/drone/go-scm/scm/driver/azure"
@@ -64,14 +64,14 @@ func tlsConfig(skip bool, additionalCertsPath string, log *zap.SugaredLogger) *t
 	config := tls.Config{
 		InsecureSkipVerify: skip,
 	}
-	if skip {
+	if skip || additionalCertsPath == "" {
 		return &config
 	}
 	// Try to read 	additional certs and add them to the root CAs
 	// Create TLS config using cert PEM
-	rootPem, err := ioutil.ReadFile(additionalCertsPath)
+	rootPem, err := os.ReadFile(additionalCertsPath)
 	if err != nil {
-		log.Errorf("could not read certificate file (%s), error: %s", additionalCertsPath, err.Error())
+		log.Warnf("could not read certificate file (%s), error: %s", additionalCertsPath, err.Error())
 		return &config
 	}
 

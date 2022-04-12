@@ -8,7 +8,6 @@
 package io.harness.ci.integrationstage;
 
 import static io.harness.beans.serializer.RunTimeInputHandler.UNRESOLVED_PARAMETER;
-import static io.harness.beans.serializer.RunTimeInputHandler.resolveBooleanParameter;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveIntegerParameter;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveMapParameter;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveStringParameter;
@@ -94,6 +93,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -360,6 +360,10 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
     envVarMap.putAll(PluginSettingUtils.getPluginCompatibleEnvVariables(stepInfo, identifier, timeout, Type.K8));
     Integer runAsUser = resolveIntegerParameter(stepInfo.getRunAsUser(), null);
 
+    Boolean privileged = null;
+    if (CIStepInfoUtils.getPrivilegedMode(stepInfo) != null) {
+      privileged = CIStepInfoUtils.getPrivilegedMode(stepInfo).getValue();
+    }
     return ContainerDefinitionInfo.builder()
         .name(containerName)
         .commands(StepContainerUtils.getCommand())
@@ -373,12 +377,12 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
                 .build())
         .isHarnessManagedImage(true)
         .containerResourceParams(getStepContainerResource(stepInfo.getResources(), stepType, identifier, accountId))
-        .ports(Collections.singletonList(port))
+        .ports(Arrays.asList(port))
         .containerType(CIContainerType.PLUGIN)
         .stepIdentifier(identifier)
         .stepName(stepName)
         .imagePullPolicy(RunTimeInputHandler.resolveImagePullPolicy(CIStepInfoUtils.getImagePullPolicy(stepInfo)))
-        .privileged(resolveBooleanParameter(CIStepInfoUtils.getPrivilegedMode(stepInfo), false))
+        .privileged(privileged)
         .runAsUser(runAsUser)
         .build();
   }
@@ -405,7 +409,6 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
     if (!isEmpty(envvars)) {
       stepEnvVars.putAll(envvars);
     }
-    boolean privileged = resolveBooleanParameter(runStepInfo.getPrivileged(), false);
     Integer runAsUser = resolveIntegerParameter(runStepInfo.getRunAsUser(), null);
 
     return ContainerDefinitionInfo.builder()
@@ -422,10 +425,10 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
                                        "connectorRef", "Run", identifier, runStepInfo.getConnectorRef(), true))
                                    .build())
         .containerResourceParams(getStepContainerResource(runStepInfo.getResources(), "Run", identifier, accountId))
-        .ports(Collections.singletonList(port))
+        .ports(Arrays.asList(port))
         .containerType(CIContainerType.RUN)
         .stepName(name)
-        .privileged(privileged)
+        .privileged(runStepInfo.getPrivileged().getValue())
         .runAsUser(runAsUser)
         .imagePullPolicy(RunTimeInputHandler.resolveImagePullPolicy(runStepInfo.getImagePullPolicy()))
         .build();
@@ -453,7 +456,6 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
     if (!isEmpty(envvars)) {
       stepEnvVars.putAll(envvars);
     }
-    boolean privileged = resolveBooleanParameter(runTestsStepInfo.getPrivileged(), false);
     Integer runAsUser = resolveIntegerParameter(runTestsStepInfo.getRunAsUser(), null);
 
     return ContainerDefinitionInfo.builder()
@@ -471,9 +473,9 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
                                    .build())
         .containerResourceParams(
             getStepContainerResource(runTestsStepInfo.getResources(), "RunTests", identifier, accountId))
-        .ports(Collections.singletonList(port))
+        .ports(Arrays.asList(port))
         .containerType(CIContainerType.TEST_INTELLIGENCE)
-        .privileged(privileged)
+        .privileged(runTestsStepInfo.getPrivileged().getValue())
         .runAsUser(runAsUser)
         .imagePullPolicy(RunTimeInputHandler.resolveImagePullPolicy(runTestsStepInfo.getImagePullPolicy()))
         .build();
@@ -492,7 +494,6 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
       envVarMap.putAll(pluginStepInfo.getEnvVariables());
     }
 
-    boolean privileged = resolveBooleanParameter(pluginStepInfo.getPrivileged(), false);
     Integer runAsUser = resolveIntegerParameter(pluginStepInfo.getRunAsUser(), null);
 
     return ContainerDefinitionInfo.builder()
@@ -511,10 +512,10 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
         .containerResourceParams(
             getStepContainerResource(pluginStepInfo.getResources(), "Plugin", identifier, accountId))
         .isHarnessManagedImage(pluginStepInfo.isHarnessManagedImage())
-        .ports(Collections.singletonList(port))
+        .ports(Arrays.asList(port))
         .containerType(CIContainerType.PLUGIN)
         .stepName(name)
-        .privileged(privileged)
+        .privileged(pluginStepInfo.getPrivileged().getValue())
         .runAsUser(runAsUser)
         .imagePullPolicy(RunTimeInputHandler.resolveImagePullPolicy(pluginStepInfo.getImagePullPolicy()))
         .build();

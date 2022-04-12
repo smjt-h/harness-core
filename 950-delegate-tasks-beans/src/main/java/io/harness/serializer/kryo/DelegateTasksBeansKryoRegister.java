@@ -80,9 +80,11 @@ import io.harness.delegate.beans.ci.pod.CIK8ContainerParams;
 import io.harness.delegate.beans.ci.pod.CIK8PodParams;
 import io.harness.delegate.beans.ci.pod.CIK8ServicePodParams;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
+import io.harness.delegate.beans.ci.pod.ContainerCapabilities;
 import io.harness.delegate.beans.ci.pod.ContainerParams;
 import io.harness.delegate.beans.ci.pod.ContainerResourceParams;
 import io.harness.delegate.beans.ci.pod.ContainerSecrets;
+import io.harness.delegate.beans.ci.pod.ContainerSecurityContext;
 import io.harness.delegate.beans.ci.pod.EmptyDirVolume;
 import io.harness.delegate.beans.ci.pod.EncryptedVariableWithType;
 import io.harness.delegate.beans.ci.pod.EnvVariableEnum;
@@ -227,6 +229,7 @@ import io.harness.delegate.command.CommandExecutionResult;
 import io.harness.delegate.exception.DelegateRetryableException;
 import io.harness.delegate.exception.HelmNGException;
 import io.harness.delegate.exception.TaskNGDataException;
+import io.harness.delegate.task.ListNotifyResponseData;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
 import io.harness.delegate.task.artifacts.ArtifactTaskType;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
@@ -558,6 +561,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(YamlGitConfig.class, 5547);
     kryo.register(YamlGitConfig.SyncMode.class, 5548);
     kryo.register(SettingAttribute.SettingCategory.class, 5069);
+    kryo.register(ListNotifyResponseData.class, 5133);
     kryo.register(JenkinsExecutionResponse.class, 5146);
 
     kryo.register(software.wings.beans.yaml.GitCommand.GitCommandType.class, 5190);
@@ -1134,5 +1138,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(PVCVolume.class, 543488);
     kryo.register(AwsCFTemplateParamsData.class, 5478);
     kryo.register(PhysicalDataCenterConnectorValidationParams.class, 543489);
+    kryo.register(ContainerSecurityContext.class, 543490);
+    kryo.register(ContainerCapabilities.class, 543491);
   }
 }

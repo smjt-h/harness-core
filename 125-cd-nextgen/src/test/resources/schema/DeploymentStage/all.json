@@ -6,6 +6,12 @@
     "type"
   ],
   "properties": {
+    "delegateSelectors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "description": {
       "type": "string"
     },
@@ -264,8 +270,7 @@
       "type": "object",
       "required": [
         "disallowPipelineExecutor",
-        "minimumCount",
-        "userGroups"
+        "minimumCount"
       ],
       "properties": {
         "disallowPipelineExecutor": {
@@ -295,14 +300,17 @@
               "type": "array",
               "items": {
                 "type": "string"
-              }
+              },
+              "maxItems": 2147483647,
+              "minItems": 1
             },
             {
               "type": "string",
               "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
               "minLength": 1
             }
-          ]
+          ],
+          "minLength": 1
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -613,8 +621,7 @@
       "type": "object",
       "required": [
         "key",
-        "operator",
-        "value"
+        "operator"
       ],
       "properties": {
         "key": {
@@ -630,7 +637,8 @@
           ]
         },
         "value": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -716,6 +724,32 @@
           }
         }
       ]
+    },
+    "CustomArtifactConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ArtifactConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "version"
+          ],
+          "properties": {
+            "version": {
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/ParameterFieldString"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
     },
     "CustomPolicyStepSpec": {
       "allOf": [
@@ -919,6 +953,12 @@
         "type"
       ],
       "properties": {
+        "delegateSelectors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "description": {
           "type": "string"
         },
@@ -3955,7 +3995,8 @@
             "Gcr",
             "Ecr",
             "Nexus3Registry",
-            "ArtifactoryRegistry"
+            "ArtifactoryRegistry",
+            "CustomArtifact"
           ]
         }
       },
@@ -3973,6 +4014,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/ArtifactoryRegistryArtifactConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "CustomArtifact"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/CustomArtifactConfig"
               }
             }
           }
@@ -4393,7 +4450,8 @@
           "enum": [
             "Kubernetes",
             "NativeHelm",
-            "Ssh"
+            "Ssh",
+            "WinRm"
           ]
         }
       },
@@ -4443,6 +4501,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/SshServiceSpec"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "WinRm"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/WinRmServiceSpec"
               }
             }
           }
@@ -5051,7 +5125,8 @@
             "Gcr",
             "Ecr",
             "Nexus3Registry",
-            "ArtifactoryRegistry"
+            "ArtifactoryRegistry",
+            "CustomArtifact"
           ]
         }
       },
@@ -5069,6 +5144,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/ArtifactoryRegistryArtifactConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "CustomArtifact"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/CustomArtifactConfig"
               }
             }
           }
@@ -5734,6 +5825,12 @@
         "steps"
       ],
       "properties": {
+        "delegateSelectors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "failureStrategies": {
           "type": "array",
           "items": {
@@ -6532,6 +6629,22 @@
           "format": "int32"
         }
       },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "WinRmServiceSpec": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ServiceSpec"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "metadata": {
+              "type": "string"
+            }
+          }
+        }
+      ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     }
   }

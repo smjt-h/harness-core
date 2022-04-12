@@ -25,4 +25,11 @@ public interface EnvironmentGroupService {
 
   EnvironmentGroupEntity delete(
       String accountId, String orgIdentifier, String projectIdentifier, String envGroupId, Long version);
+
+  EnvironmentGroupEntity update(EnvironmentGroupEntity requestedEntity);
+
+  void deleteAllEnvGroupInProject(String accountId, String orgIdentifier, String projectIdentifier);
+
+  Criteria formCriteria(
+      String accountId, String orgIdentifier, String projectIdentifier, boolean deleted, String searchTerm);
 }

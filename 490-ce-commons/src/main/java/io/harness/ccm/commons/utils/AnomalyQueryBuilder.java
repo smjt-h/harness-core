@@ -23,11 +23,11 @@ import io.harness.ccm.commons.entities.CCMTimeFilter;
 import io.harness.exception.InvalidRequestException;
 import io.harness.timescaledb.tables.records.AnomaliesRecord;
 
-import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.Condition;
 import org.jooq.OrderField;
@@ -134,6 +134,10 @@ public class AnomalyQueryBuilder {
         return ANOMALIES.AWSACCOUNT;
       case AWS_SERVICE:
         return ANOMALIES.AWSSERVICE;
+      case AWS_USAGE_TYPE:
+        return ANOMALIES.AWSUSAGETYPE;
+      case AWS_INSTANCE_TYPE:
+        return ANOMALIES.AWSINSTANCETYPE;
       case GCP_PROJECT:
         return ANOMALIES.GCPPROJECT;
       case GCP_PRODUCT:
@@ -168,6 +172,10 @@ public class AnomalyQueryBuilder {
         return ANOMALIES.AWSACCOUNT;
       case AWS_SERVICE:
         return ANOMALIES.AWSSERVICE;
+      case AWS_USAGE_TYPE:
+        return ANOMALIES.AWSUSAGETYPE;
+      case AWS_INSTANCE_TYPE:
+        return ANOMALIES.AWSINSTANCETYPE;
       case GCP_PROJECT:
         return ANOMALIES.GCPPROJECT;
       case GCP_PRODUCT:

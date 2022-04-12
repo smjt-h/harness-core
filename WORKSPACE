@@ -132,7 +132,7 @@ go_repository(
 
 go_rules_dependencies()
 
-go_register_toolchains(version = "1.17.7")
+go_register_toolchains(version = "1.17.8")
 
 gazelle_dependencies()
 
@@ -1022,8 +1022,8 @@ go_repository(
 go_repository(
     name = "com_github_drone_go_scm",
     importpath = "github.com/drone/go-scm",
-    sum = "h1:Q8qc0DfuZmPLYacWV3F9Hnx7c/Q8alUWh4ERpI9SKCc=",
-    version = "v1.20.1-0.20220328110014-0c095d260cdf",
+    sum = "h1:ru1zBNVb04X0k576xgwkkETOrVVES+J1nEESHbxzGsc=",
+    version = "v1.20.1-0.20220404090931-cc4578ad43c3",
 )
 
 go_repository(
@@ -4470,7 +4470,7 @@ plain_artifacts = [
     "com.j256.two-factor-auth:two-factor-auth:1.0",
     "com.jakewharton.retrofit:retrofit1-okhttp3-client:1.1.0",
     "com.jayway.jsonpath:json-path:2.2.0",
-    "com.jcraft.harness:jsch-0-1-54-harness-patch:1.1",
+    "com.jcraft.harness:jsch-0-1-54-harness-patch:1.2",
     "com.jcraft:jzlib:1.1.3",
     "com.lmax:disruptor:jar:3.4.2",
     "com.mashape.unirest:unirest-java:1.4.9",
@@ -4731,7 +4731,7 @@ plain_artifacts = [
     "net.jodah:expiringmap:0.5.7",
     "net.jodah:failsafe:2.2.0",
     "net.minidev:accessors-smart:1.2",
-    "net.minidev:json-smart:2.3",
+    "net.minidev:json-smart:2.4.1",
     "net.openhft:affinity:3.2.2",
     "net.openhft:chronicle-bytes:2.19.0",
     "net.openhft:chronicle-core:2.19.0",

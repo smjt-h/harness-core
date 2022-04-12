@@ -77,20 +77,25 @@ public class K8SSyncEventTasklet extends EventWriter implements Tasklet {
 
   private void updateInactiveInstancesInTimescale(JobConstants jobConstants, List<PublishedMessage> publishedMessages) {
     for (PublishedMessage publishedMessage : publishedMessages) {
-      K8SClusterSyncEvent k8SClusterSyncEvent = (K8SClusterSyncEvent) publishedMessage.getMessage();
+      try {
+        K8SClusterSyncEvent k8SClusterSyncEvent = (K8SClusterSyncEvent) publishedMessage.getMessage();
 
-      Instant syncEventTime = HTimestamps.toInstant(k8SClusterSyncEvent.getLastProcessedTimestamp());
+        Instant syncEventTime = HTimestamps.toInstant(k8SClusterSyncEvent.getLastProcessedTimestamp());
 
-      if (k8SClusterSyncEvent.getVersion() == 2) {
-        instanceInfoTimescaleDAO.stopInactiveNodesAtTime(jobConstants, k8SClusterSyncEvent.getClusterId(),
-            syncEventTime, new ArrayList<>(k8SClusterSyncEvent.getActiveNodeUidsMapMap().keySet()));
-        instanceInfoTimescaleDAO.stopInactivePodsAtTime(jobConstants.getAccountId(), k8SClusterSyncEvent.getClusterId(),
-            syncEventTime, new ArrayList<>(k8SClusterSyncEvent.getActivePodUidsMapMap().keySet()));
-      } else {
-        instanceInfoTimescaleDAO.stopInactiveNodesAtTime(jobConstants, k8SClusterSyncEvent.getClusterId(),
-            syncEventTime, k8SClusterSyncEvent.getActiveNodeUidsList());
-        instanceInfoTimescaleDAO.stopInactivePodsAtTime(jobConstants.getAccountId(), k8SClusterSyncEvent.getClusterId(),
-            syncEventTime, k8SClusterSyncEvent.getActivePodUidsList());
+        if (k8SClusterSyncEvent.getVersion() == 2) {
+          instanceInfoTimescaleDAO.stopInactiveNodesAtTime(jobConstants, k8SClusterSyncEvent.getClusterId(),
+              syncEventTime, new ArrayList<>(k8SClusterSyncEvent.getActiveNodeUidsMapMap().keySet()));
+          instanceInfoTimescaleDAO.stopInactivePodsAtTime(jobConstants.getAccountId(),
+              k8SClusterSyncEvent.getClusterId(), syncEventTime,
+              new ArrayList<>(k8SClusterSyncEvent.getActivePodUidsMapMap().keySet()));
+        } else {
+          instanceInfoTimescaleDAO.stopInactiveNodesAtTime(jobConstants, k8SClusterSyncEvent.getClusterId(),
+              syncEventTime, k8SClusterSyncEvent.getActiveNodeUidsList());
+          instanceInfoTimescaleDAO.stopInactivePodsAtTime(jobConstants.getAccountId(),
+              k8SClusterSyncEvent.getClusterId(), syncEventTime, k8SClusterSyncEvent.getActivePodUidsList());
+        }
+      } catch (Exception ex) {
+        log.error("Exception while updating timescale ", ex);
       }
     }
   }
@@ -123,7 +128,9 @@ public class K8SSyncEventTasklet extends EventWriter implements Tasklet {
         Set<String> activeInstanceArns = new HashSet<>();
 
         if (k8SClusterSyncEvent.getVersion() == 2) {
-          activeInstanceArns.addAll(k8SClusterSyncEvent.getActiveNodeUidsMapMap().keySet());
+          Set<String> nodeUids = k8SClusterSyncEvent.getActiveNodeUidsMapMap().keySet();
+          log.info("Active nodeUids are {}", nodeUids.toString());
+          activeInstanceArns.addAll(nodeUids);
           activeInstanceArns.addAll(k8SClusterSyncEvent.getActivePodUidsMapMap().keySet());
           activeInstanceArns.addAll(k8SClusterSyncEvent.getActivePvUidsMapMap().keySet());
         } else {
