@@ -260,6 +260,8 @@ helper shell scripts:
 * `git clang-format` - makes sure all staged in git files are reformatted
 
 * `find . -iname *.java | xargs clang-format -i` - formats all java files from the current directory down
+  
+* check your binary for clang-format, if it is clang-format-11 you need to use clang-format-11 instead of clang-format.
 
 ### IntelliJ Setup
 
@@ -286,6 +288,8 @@ helper shell scripts:
    Configure the tool to look like shown on the image:
 
    ![config image](img/clang-format-config.png).
+  
+    For clang-format version 11, use clang-format-11 in program (refer above image).
 
    Then follow these instructions https://www.jetbrains.com/help/idea/configuring-keyboard-shortcuts.html to
    assign whatever key combination you would like it to be triggered on.
