@@ -10,6 +10,7 @@ package io.harness.cdng.ssh;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.ssh.SshCommandUnitConstants;
@@ -21,7 +22,7 @@ import javax.annotation.Nonnull;
 
 @OwnedBy(CDP)
 public interface SshSpecParameters extends SpecParameters {
-  @JsonIgnore ParameterField<List<String>> getDelegateSelectors();
+  @JsonIgnore ParameterField<List<TaskSelectorYaml>> getDelegateSelectors();
 
   @Nonnull
   @JsonIgnore

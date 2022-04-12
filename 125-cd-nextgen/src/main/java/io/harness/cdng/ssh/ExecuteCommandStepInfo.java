@@ -13,6 +13,7 @@ import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.pipeline.CDStepInfo;
 import io.harness.executions.steps.StepSpecTypeConstants;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
@@ -46,7 +47,7 @@ public class ExecuteCommandStepInfo extends ExecuteCommandBaseStepInfo implement
 
   @Builder(builderMethodName = "infoBuilder")
   public ExecuteCommandStepInfo(ShellType shell, ShellScriptSourceWrapper source, List<TailFilePattern> tailFiles,
-      ParameterField<Boolean> onDelegate, ParameterField<List<String>> delegateSelectors,
+      ParameterField<Boolean> onDelegate, ParameterField<List<TaskSelectorYaml>> delegateSelectors,
       ParameterField<String> workingDirectory, List<NGVariable> environmentVariables) {
     super(shell, source, tailFiles, onDelegate, delegateSelectors, workingDirectory);
     this.environmentVariables = environmentVariables;

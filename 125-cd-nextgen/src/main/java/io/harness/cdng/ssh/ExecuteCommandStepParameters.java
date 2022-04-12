@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.steps.shellscript.ShellScriptSourceWrapper;
 import io.harness.steps.shellscript.ShellType;
@@ -34,7 +35,7 @@ public class ExecuteCommandStepParameters extends ExecuteCommandBaseStepInfo imp
 
   @Builder(builderMethodName = "infoBuilder")
   public ExecuteCommandStepParameters(ShellType shell, ShellScriptSourceWrapper source, List<TailFilePattern> tailFiles,
-      ParameterField<Boolean> onDelegate, ParameterField<List<String>> delegateSelectors,
+      ParameterField<Boolean> onDelegate, ParameterField<List<TaskSelectorYaml>> delegateSelectors,
       ParameterField<String> workingDirectory, Map<String, Object> environmentVariables) {
     super(shell, source, tailFiles, onDelegate, delegateSelectors, workingDirectory);
     this.environmentVariables = environmentVariables;

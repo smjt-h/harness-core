@@ -17,6 +17,7 @@ import io.harness.delegate.task.shell.CommandTaskResponse;
 import io.harness.delegate.task.shell.SshCommandTaskParameters;
 import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.logging.UnitProgress;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.rollback.TaskExecutableWithRollbackAndRbac;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -76,7 +77,7 @@ public class ExecuteCommandStep extends TaskExecutableWithRollbackAndRbac<Comman
     String taskName = TaskType.COMMAND_TASK_NG.getDisplayName();
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         executeCommandStepParameters.getCommandUnits(), taskName,
-        StepUtils.getTaskSelectors(executeCommandStepParameters.getDelegateSelectors()),
+        TaskSelectorYaml.toTaskSelector(executeCommandStepParameters.getDelegateSelectors()),
         stepHelper.getEnvironmentType(ambiance));
   }
 

@@ -23,6 +23,7 @@ import io.harness.cdng.infra.beans.PdcInfrastructureOutcome;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.delegate.task.shell.SshCommandTaskParameters;
 import io.harness.delegate.task.ssh.PdcSshInfraDelegateConfig;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.refobjects.RefObject;
 import io.harness.pms.contracts.refobjects.RefType;
@@ -105,7 +106,7 @@ public class SshCommandStepHelperTest extends CategoryTest {
                                          .tailFile(ParameterField.createValueField("nohup.out"))
                                          .tailPattern(ParameterField.createValueField("*Successfull"))
                                          .build()))
-            .delegateSelectors(ParameterField.createValueField(Arrays.asList("ssh-delegate")))
+            .delegateSelectors(ParameterField.createValueField(Arrays.asList(new TaskSelectorYaml("ssh-delegate"))))
             .onDelegate(ParameterField.createValueField(false))
             .source(
                 ShellScriptSourceWrapper.builder()
