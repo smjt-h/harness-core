@@ -28,6 +28,8 @@ import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.ChangeType;
 import io.harness.gitsync.FileInfo;
+import io.harness.gitsync.GetFileRequest;
+import io.harness.gitsync.GetFileResponse;
 import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.PushInfo;
 import io.harness.gitsync.RepoDetails;
@@ -316,6 +318,11 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
               request.getAccountId(), entityReference.getOrgIdentifier(), entityReference.getProjectIdentifier()));
     }
     return gitFullSyncJob.get().getTriggeredBy();
+  }
+
+  @Override
+  public GetFileResponse getFile(GetFileRequest getFileRequest) {
+    return null;
   }
 
   private InfoForGitPush getInfoForGitPush(

@@ -20,6 +20,7 @@ service HarnessToGitPushInfoService {
   rpc pushFile(FileInfo) returns (PushFileResponse);
   rpc isGitSyncEnabledForScope(io.harness.eventsframework.schemas.entity.EntityScopeInfo) returns (IsGitSyncEnabled);
   rpc getDefaultBranch(RepoDetails) returns (BranchDetails);
+  rpc getFile(GetFileRequest) returns (GetFileResponse);
 }
 
 message PushInfo {
@@ -84,4 +85,24 @@ message RepoDetails {
 message BranchDetails {
   string default_branch = 1;
   string error = 2;
+}
+
+message GetFileRequest {
+  string repoName = 1;
+  string branchName = 2;
+  string filePath = 3;
+  string connectorRef = 4;
+}
+
+message GetFileResponse {
+  int32 status = 1;
+  string fileContent = 2;
+  string error = 3;
+  GitMetaData gitMetaData = 4;
+}
+
+message GitMetaData {
+  string repoName = 1;
+  string branchName = 2;
+  string commitId = 3;
 }
