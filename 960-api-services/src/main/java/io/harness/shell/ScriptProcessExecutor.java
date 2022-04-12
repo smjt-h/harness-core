@@ -251,6 +251,7 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
     }
 
     Map<String, String> envVariablesMap = new HashMap<>();
+    ProcessExecutor processExecutor = new ProcessExecutor();
     try (FileOutputStream outputStream = new FileOutputStream(scriptFile)) {
       outputStream.write(command.getBytes(Charset.forName("UTF-8")));
 
@@ -260,7 +261,7 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
       log.info("Done setting file permissions for script {}", scriptFile);
 
       String[] commandList = new String[] {"/bin/bash", scriptFilename};
-      ProcessExecutor processExecutor = new ProcessExecutor()
+      processExecutor = new ProcessExecutor()
                                             .command(commandList)
                                             .directory(workingDirectory)
                                             .environment(environment)
@@ -296,6 +297,24 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
       saveExecutionLog(
           format("Command completed with ExitCode (%d)", processResult.getExitValue()), INFO, commandExecutionStatus);
     } catch (InterruptedException e) {
+      processExecutor.command("ps -ef | grep " + scriptFilename);
+      try (BufferedReader br =
+                   new BufferedReader(new InputStreamReader(new FileInputStream(envVariablesOutputFile), "UTF-8"))) {
+      ProcessResult processResult = processExecutor.execute();
+      commandExecutionStatus = processResult.getExitValue() == 0 ? SUCCESS : FAILURE;
+      if (commandExecutionStatus == SUCCESS && envVariablesOutputFile != null) {
+          String line = br.readLine();
+          String pid = line.split(" ")[0];
+          processExecutor.command("ps -9 " + pid);
+          processExecutor.execute();
+        }
+      } catch (IOException ioe) {
+        saveExecutionLog("IOException:" + ioe, ERROR);
+      } catch (InterruptedException ie) {
+        handleException(executionDataBuilder, envVariablesMap, commandExecutionStatus, ie, "Script execution interrupted");
+      } catch (TimeoutException te) {
+        handleException(executionDataBuilder, envVariablesMap, commandExecutionStatus, te, "Script execution timed out");
+      }
       Thread.currentThread().interrupt();
       handleException(executionDataBuilder, envVariablesMap, commandExecutionStatus, e, "Script execution interrupted");
     } catch (TimeoutException e) {

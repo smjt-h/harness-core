@@ -32,6 +32,7 @@ import io.harness.beans.PageRequest;
 import io.harness.beans.PageResponse;
 import io.harness.beans.SearchFilter.Operator;
 import io.harness.beans.WorkflowType;
+import io.harness.exception.GraphQLException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.ff.FeatureFlagService;
@@ -82,6 +83,9 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.swagger.annotations.Api;
+import software.wings.sm.states.ApprovalState;
+import software.wings.sm.states.ApprovalState.ApprovalStateType;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
