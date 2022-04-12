@@ -893,7 +893,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(AppContainer.class, 5064);
     kryo.register(ManifestFile.class, 5539);
     kryo.register(ArtifactFile.class, 5066);
-    kryo.register(ArtifactStreamAttributes.class, 5007);
     kryo.register(AzureConfig.class, 5242);
     kryo.register(AzureKubernetesCluster.class, 5538);
     kryo.register(BambooConfig.class, 5009);

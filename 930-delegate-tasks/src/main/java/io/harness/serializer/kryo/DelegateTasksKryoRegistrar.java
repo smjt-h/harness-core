@@ -18,6 +18,7 @@ import software.wings.beans.EcrConfig;
 import software.wings.beans.ElkConfig;
 import software.wings.beans.NewRelicConfig;
 import software.wings.beans.SumoConfig;
+import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.beans.config.LogzConfig;
 import software.wings.beans.trigger.WebHookTriggerResponseData;
@@ -98,5 +99,6 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(DelegateStateType.class, 8601);
     kryo.register(ArtifactType.class, 5117);
     kryo.register(BuildCollectParameters.class, 8602);
+    kryo.register(ArtifactStreamAttributes.class, 5007);
   }
 }
