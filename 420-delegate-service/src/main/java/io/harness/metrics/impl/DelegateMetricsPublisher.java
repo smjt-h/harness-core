@@ -34,10 +34,12 @@ public class DelegateMetricsPublisher implements MetricsPublisher {
   @Inject private MetricService metricService;
   @Inject private HPersistence persistence;
   private static final String ACTIVE_DELEGATES_COUNT = "active_delegates_count";
-
+  private boolean shouldPublishDelegateMetrics = false;
   @Override
   public void recordMetrics() {
-    sendTaskStatusMetrics();
+    if(shouldPublishDelegateMetrics){
+      sendTaskStatusMetrics();
+    }
   }
 
   @VisibleForTesting
@@ -73,5 +75,10 @@ public class DelegateMetricsPublisher implements MetricsPublisher {
   private static class DelegateLabel {
     String accountId;
     String version;
+  }
+
+  public boolean enableDelegateMetricPublisher(boolean shouldPublishDelegateMetrics) {
+    this.shouldPublishDelegateMetrics = shouldPublishDelegateMetrics;
+    return shouldPublishDelegateMetrics;
   }
 }

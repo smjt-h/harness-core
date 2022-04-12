@@ -99,6 +99,7 @@ import io.harness.manifest.ManifestCollectionPTaskServiceClient;
 import io.harness.marketplace.gcp.GcpMarketplaceSubscriberService;
 import io.harness.metrics.HarnessMetricRegistry;
 import io.harness.metrics.MetricRegistryModule;
+import io.harness.metrics.impl.DelegateMetricsPublisher;
 import io.harness.metrics.jobs.RecordMetricsJob;
 import io.harness.metrics.service.api.MetricService;
 import io.harness.migrations.MigrationModule;
@@ -1550,6 +1551,7 @@ public class WingsApplication extends Application<MainConfiguration> {
   }
 
   private void initMetrics(Injector injector) {
+    injector.getInstance(DelegateMetricsPublisher.class).enableDelegateMetricPublisher(true);
     injector.getInstance(MetricService.class).initializeMetrics();
     injector.getInstance(RecordMetricsJob.class).scheduleMetricsTasks();
   }
