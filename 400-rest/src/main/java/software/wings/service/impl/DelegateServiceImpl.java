@@ -2380,7 +2380,7 @@ public class DelegateServiceImpl implements DelegateService {
         : getProjectIdentifierUsingTokenFromGlobalContext(delegateParams.getAccountId()).orElse(null);
 
     DelegateSetupDetails delegateSetupDetails = DelegateSetupDetails.builder()
-                                                    .name(delegateParams.getHostName())
+                                                    .name(delegateParams.getDelegateName())
                                                     .orgIdentifier(orgIdentifier)
                                                     .projectIdentifier(projectIdentifier)
                                                     .description(delegateParams.getDescription())
