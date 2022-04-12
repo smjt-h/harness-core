@@ -7,8 +7,7 @@
 
 package io.harness.cvng.core.utils;
 
-import static io.harness.rule.OwnerRule.KAMAL;
-import static io.harness.rule.OwnerRule.SOWMYA;
+import static io.harness.rule.OwnerRule.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -65,6 +64,57 @@ public class DateTimeUtilsTest extends CategoryTest {
     assertThatThrownBy(() -> DateTimeUtils.roundDownToMinBoundary(Instant.parse("2020-04-22T10:26:00Z"), 60))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Minute boundary need to be between 1 to 59");
+  }
+
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testRoundDownToHourBoundary() {
+    assertThat(DateTimeUtils.roundDownToHourBoundary(Instant.parse("2020-04-22T10:02:06Z"), 1))
+        .isEqualTo(Instant.parse("2020-04-22T10:00:00Z"));
+    assertThat(DateTimeUtils.roundDownToHourBoundary(Instant.parse("2020-04-22T10:00:00Z"), 1))
+        .isEqualTo(Instant.parse("2020-04-22T10:00:00Z"));
+    assertThat(DateTimeUtils.roundDownToHourBoundary(Instant.parse("2020-04-22T10:02:06Z"), 3))
+        .isEqualTo(Instant.parse("2020-04-22T09:00:00Z"));
+    assertThatThrownBy(() -> DateTimeUtils.roundDownToHourBoundary(Instant.parse("2020-04-22T10:26:00Z"), 24))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Hour boundary need to be between 1 and 23");
+  }
+
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testRoundDownTodayBoundary() {
+    assertThat(DateTimeUtils.roundDownToDayBoundary(Instant.parse("2020-04-22T10:02:06Z"), 3))
+        .isEqualTo(Instant.parse("2020-04-20T00:00:00Z"));
+    assertThat(DateTimeUtils.roundDownToDayBoundary(Instant.parse("2020-04-20T10:02:06Z"), 1))
+        .isEqualTo(Instant.parse("2020-04-20T00:00:00Z"));
+    assertThat(DateTimeUtils.roundDownToDayBoundary(Instant.parse("2020-04-20T00:00:00Z"), 1))
+        .isEqualTo(Instant.parse("2020-04-20T00:00:00Z"));
+  }
+
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testRoundDownToOneWeekBoundary() {
+    assertThat(DateTimeUtils.roundDownToOneWeekBoundary(Instant.parse("2020-04-22T10:02:06Z")))
+        .isEqualTo(Instant.parse("2020-04-20T00:00:00Z"));
+    assertThat(DateTimeUtils.roundDownToOneWeekBoundary(Instant.parse("2020-04-20T10:02:06Z")))
+        .isEqualTo(Instant.parse("2020-04-20T00:00:00Z"));
+    assertThat(DateTimeUtils.roundDownToOneWeekBoundary(Instant.parse("2020-04-20T00:00:00Z")))
+        .isEqualTo(Instant.parse("2020-04-20T00:00:00Z"));
+  }
+
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testRoundDownToOneMonthBoundary() {
+    assertThat(DateTimeUtils.roundDownToOneMonthBoundary(Instant.parse("2020-04-22T10:02:06Z")))
+        .isEqualTo(Instant.parse("2020-04-01T00:00:00Z"));
+    assertThat(DateTimeUtils.roundDownToOneMonthBoundary(Instant.parse("2020-04-01T10:02:06Z")))
+        .isEqualTo(Instant.parse("2020-04-01T00:00:00Z"));
+    assertThat(DateTimeUtils.roundDownToOneMonthBoundary(Instant.parse("2020-04-01T00:00:00Z")))
+        .isEqualTo(Instant.parse("2020-04-01T00:00:00Z"));
   }
 
   @Test

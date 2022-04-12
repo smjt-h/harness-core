@@ -10,6 +10,7 @@ package io.harness.cvng.core.beans.monitoredService;
 import java.time.Duration;
 
 public enum DurationDTO {
+  ONE_HOUR(Duration.ofHours(1)),
   FOUR_HOURS(Duration.ofHours(4)),
   TWENTY_FOUR_HOURS(Duration.ofDays(1)),
   THREE_DAYS(Duration.ofDays(3)),

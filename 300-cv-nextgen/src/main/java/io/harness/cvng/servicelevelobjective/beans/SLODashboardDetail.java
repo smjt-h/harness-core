@@ -15,4 +15,6 @@ import lombok.Value;
 public class SLODashboardDetail {
   SLODashboardWidget sloDashboardWidget;
   String description;
+  Long createdAt;
+  Long lastModifiedAt;
 }

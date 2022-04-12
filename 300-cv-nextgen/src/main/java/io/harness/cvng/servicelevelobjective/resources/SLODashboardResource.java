@@ -13,6 +13,7 @@ import io.harness.accesscontrol.OrgIdentifier;
 import io.harness.accesscontrol.ProjectIdentifier;
 import io.harness.accesscontrol.ResourceIdentifier;
 import io.harness.annotations.ExposeInternalException;
+import io.harness.cvng.core.beans.monitoredService.DurationDTO;
 import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.servicelevelobjective.SLORiskCountResponse;
@@ -76,10 +77,10 @@ public class SLODashboardResource {
   @NGAccessControlCheck(resourceType = SLO, permission = VIEW_PERMISSION)
   public ResponseDTO<SLODashboardDetail> getSloDashboardWidget(
       @ApiParam(required = true) @NotNull @PathParam("identifier") @ResourceIdentifier String identifier,
-      @QueryParam("startTime") long startTime, @QueryParam("endTime") long endTime,
-      @NotNull @Valid @BeanParam ProjectParams projectParams) {
+      @QueryParam("duration") DurationDTO durationDTO, @QueryParam("startTime") long startTime,
+      @QueryParam("endTime") long endTime, @NotNull @Valid @BeanParam ProjectParams projectParams) {
     return ResponseDTO.newResponse(sloDashboardService.getSloDashboardDetail(
-        projectParams, identifier, Instant.ofEpochMilli(startTime), Instant.ofEpochMilli(endTime)));
+        projectParams, identifier, Instant.ofEpochMilli(startTime), Instant.ofEpochMilli(endTime), durationDTO));
   }
 
   @GET

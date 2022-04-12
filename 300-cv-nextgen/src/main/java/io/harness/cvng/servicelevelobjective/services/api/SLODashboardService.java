@@ -7,6 +7,7 @@
 
 package io.harness.cvng.servicelevelobjective.services.api;
 
+import io.harness.cvng.core.beans.monitoredService.DurationDTO;
 import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.servicelevelobjective.SLORiskCountResponse;
@@ -22,7 +23,7 @@ public interface SLODashboardService {
       ProjectParams projectParams, SLODashboardApiFilter filter, PageParams pageParams);
 
   SLODashboardDetail getSloDashboardDetail(
-      ProjectParams projectParams, String sloIdentifier, Instant startTime, Instant endTime);
+      ProjectParams projectParams, String sloIdentifier, Instant startTime, Instant endTime, DurationDTO durationDTO);
 
   SLORiskCountResponse getRiskCount(ProjectParams projectParams, SLODashboardApiFilter serviceLevelObjectiveFilter);
 }

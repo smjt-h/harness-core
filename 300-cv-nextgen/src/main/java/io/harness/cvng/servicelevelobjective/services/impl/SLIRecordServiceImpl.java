@@ -133,10 +133,22 @@ public class SLIRecordServiceImpl implements SLIRecordService {
 
   @Override
   public SLOGraphData getGraphData(String sliId, Instant startTime, Instant endTime, int totalErrorBudgetMinutes,
+      SLIMissingDataType sliMissingDataType, int sliVersion) {
+    return getGraphData(sliId, startTime, endTime, totalErrorBudgetMinutes, sliMissingDataType, sliVersion, null, null);
+  }
+
+  @Override
+  public SLOGraphData getGraphData(String sliId, Instant startTime, Instant endTime, int totalErrorBudgetMinutes,
       SLIMissingDataType sliMissingDataType, int sliVersion, Instant customStartTime, Instant customEndTime) {
     Preconditions.checkState(totalErrorBudgetMinutes != 0, "Total error budget minutes should not be zero.");
     if (Objects.isNull(customStartTime) || Objects.isNull(customStartTime)) {
       customStartTime = startTime;
+      customEndTime = endTime;
+    }
+    if (customStartTime.isBefore(startTime)) {
+      customStartTime = startTime;
+    }
+    if (customEndTime.isAfter(endTime)) {
       customEndTime = endTime;
     }
     List<SLIRecord> sliRecords = sliRecords(sliId, startTime, endTime, customStartTime, customEndTime);

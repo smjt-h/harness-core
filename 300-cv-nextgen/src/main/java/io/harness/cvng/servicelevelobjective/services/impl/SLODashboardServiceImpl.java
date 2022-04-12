@@ -8,6 +8,7 @@
 package io.harness.cvng.servicelevelobjective.services.impl;
 
 import io.harness.cvng.client.NextGenService;
+import io.harness.cvng.core.beans.monitoredService.DurationDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
 import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
@@ -37,8 +38,9 @@ import com.google.inject.Inject;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class SLODashboardServiceImpl implements SLODashboardService {
@@ -73,17 +75,49 @@ public class SLODashboardServiceImpl implements SLODashboardService {
 
   @Override
   public SLODashboardDetail getSloDashboardDetail(
-      ProjectParams projectParams, String identifier, Instant startTime, Instant endTime) {
-    if (startTime.equals(Instant.ofEpochMilli(0)) || endTime.equals(Instant.ofEpochMilli(0))) {
-      startTime = null;
-      endTime = null;
-    }
+      ProjectParams projectParams, String identifier, Instant startTime, Instant endTime, DurationDTO durationDTO) {
+    List<Instant> customTime = getCustomTimeRange(startTime, endTime, durationDTO);
+    startTime = customTime.get(0);
+    endTime = customTime.get(1);
     ServiceLevelObjectiveResponse sloResponse = serviceLevelObjectiveService.get(projectParams, identifier);
     SLODashboardWidget sloDashboardWidget = getSloDashboardWidget(projectParams, sloResponse, startTime, endTime);
     return SLODashboardDetail.builder()
         .description(sloResponse.getServiceLevelObjectiveDTO().getDescription())
+        .createdAt(sloResponse.getCreatedAt())
+        .lastModifiedAt(sloResponse.getLastModifiedAt())
         .sloDashboardWidget(sloDashboardWidget)
         .build();
+  }
+
+  private List<Instant> getCustomTimeRange(Instant startTime, Instant endTime, DurationDTO durationDTO) {
+    if (!Objects.isNull(durationDTO)) {
+      endTime = DateTimeUtils.roundDownTo1MinBoundary(clock.instant());
+      switch (durationDTO) {
+        case ONE_HOUR:
+          startTime = DateTimeUtils.roundDownToHourBoundary(clock.instant(), 1);
+          break;
+        case TWENTY_FOUR_HOURS:
+          startTime = DateTimeUtils.roundDownToHourBoundary(clock.instant(), 23);
+          break;
+        case SEVEN_DAYS:
+          startTime = DateTimeUtils.roundDownToOneWeekBoundary(clock.instant());
+          break;
+        case THIRTY_DAYS:
+          startTime = DateTimeUtils.roundDownToOneMonthBoundary(clock.instant());
+          break;
+        default:
+          startTime = null;
+      }
+    } else {
+      if (startTime.equals(Instant.ofEpochMilli(0)) || endTime.equals(Instant.ofEpochMilli(0))) {
+        startTime = null;
+        endTime = null;
+      }
+    }
+    List<Instant> customTimelist = new ArrayList<Instant>();
+    customTimelist.add(startTime);
+    customTimelist.add(endTime);
+    return customTimelist;
   }
 
   @Override

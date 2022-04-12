@@ -9,6 +9,7 @@ package io.harness.cvng.core.utils;
 
 import com.google.common.base.Preconditions;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +34,36 @@ public class DateTimeUtils {
         zonedDateTime.getDayOfMonth(), zonedDateTime.getHour(), minute, 0, 0, ZoneOffset.UTC);
     return zonedDateTime.toInstant();
   }
+
+  public static Instant roundDownToHourBoundary(Instant instant, int hourBoundary) {
+    Preconditions.checkArgument(hourBoundary > 0 && hourBoundary < 24, "Hour boundary need to be between 1 and 23");
+    ZonedDateTime zonedDateTime = instant.atZone(ZoneOffset.UTC);
+    int hour = zonedDateTime.getHour();
+    hour = hour - hour % hourBoundary;
+    zonedDateTime = ZonedDateTime.of(zonedDateTime.getYear(), zonedDateTime.getMonthValue(),
+        zonedDateTime.getDayOfMonth(), hour, 0, 0, 0, ZoneOffset.UTC);
+    return zonedDateTime.toInstant();
+  }
+
+  public static Instant roundDownToDayBoundary(Instant instant, int dayBoundary) {
+    Preconditions.checkArgument(dayBoundary > 0, "Day Boundary should be greater than 0.");
+    ZonedDateTime zonedDateTime = instant.atZone(ZoneOffset.UTC);
+    zonedDateTime = zonedDateTime.minusDays(dayBoundary - 1);
+    zonedDateTime = ZonedDateTime.of(zonedDateTime.getYear(), zonedDateTime.getMonthValue(),
+        zonedDateTime.getDayOfMonth(), 0, 0, 0, 0, ZoneOffset.UTC);
+    return zonedDateTime.toInstant();
+  }
+
+  public static Instant roundDownToOneWeekBoundary(Instant instant) {
+    ZonedDateTime zonedDateTime = instant.atZone(ZoneOffset.UTC);
+    return roundDownToDayBoundary(instant, zonedDateTime.getDayOfWeek().getValue());
+  }
+
+  public static Instant roundDownToOneMonthBoundary(Instant instant) {
+    ZonedDateTime zonedDateTime = instant.atZone(ZoneOffset.UTC);
+    return roundDownToDayBoundary(instant, zonedDateTime.getDayOfMonth());
+  }
+
   public static long instantToEpochMinute(Instant instant) {
     return TimeUnit.MILLISECONDS.toMinutes(instant.toEpochMilli());
   }

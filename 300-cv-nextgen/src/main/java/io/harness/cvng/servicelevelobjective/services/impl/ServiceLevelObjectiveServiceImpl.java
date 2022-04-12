@@ -330,7 +330,7 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
 
       SLOGraphData sloGraphData = sliRecordService.getGraphData(serviceLevelIndicator.getUuid(),
           timePeriod.getStartTime(serviceLevelObjective.getZoneOffset()), currentTimeMinute, totalErrorBudgetMinutes,
-          serviceLevelIndicator.getSliMissingDataType(), serviceLevelIndicator.getVersion(), null, null);
+          serviceLevelIndicator.getSliMissingDataType(), serviceLevelIndicator.getVersion());
       serviceLevelObjectiveSLOGraphDataMap.put(serviceLevelObjective, sloGraphData);
     }
     return serviceLevelObjectiveSLOGraphDataMap;
