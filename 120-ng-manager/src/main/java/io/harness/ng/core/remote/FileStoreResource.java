@@ -137,6 +137,7 @@ public class FileStoreResource {
     file.setAccountIdentifier(accountIdentifier);
     file.setOrgIdentifier(orgIdentifier);
     file.setProjectIdentifier(projectIdentifier);
+    file.setIdentifier(identifier);
     file.setTags(JsonUtils.asList(tagsJson, new TypeReference<List<NGTag>>() {}));
 
     validate(file);

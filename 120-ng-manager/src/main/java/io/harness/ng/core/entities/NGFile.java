@@ -35,7 +35,6 @@ import javax.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Singular;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.FieldNameConstants;
@@ -93,7 +92,7 @@ public class NGFile implements PersistentEntity, UuidAware, NGAccountAccess, NGO
 
   @EntityIdentifier String identifier;
   @Size(max = 1024) String description;
-  @Singular @Size(max = 128) List<NGTag> tags;
+  @Size(max = 128) List<NGTag> tags;
   @NotEmpty String parentId;
   @NotNull FileUsage fileUsage;
   @NotNull NGFileType type;
@@ -102,10 +101,10 @@ public class NGFile implements PersistentEntity, UuidAware, NGAccountAccess, NGO
   @NotEmpty String entityId;
   @NotEmpty String fileUuid;
   @NotEmpty String name;
-  @Builder.Default ChecksumType checksumType = ChecksumType.MD5;
+  ChecksumType checksumType;
   String checksum;
   String mimeType;
-  long size;
+  Long size;
 
   @JsonIgnore
   public boolean isFolder() {

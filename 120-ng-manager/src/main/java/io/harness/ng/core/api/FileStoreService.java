@@ -7,6 +7,8 @@
 
 package io.harness.ng.core.api;
 
+import io.harness.annotations.dev.HarnessTeam;
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.core.dto.filestore.FileDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 
@@ -14,6 +16,7 @@ import java.io.File;
 import java.io.InputStream;
 import javax.validation.constraints.NotNull;
 
+@OwnedBy(HarnessTeam.CDP)
 public interface FileStoreService {
   /**
    * Create file.

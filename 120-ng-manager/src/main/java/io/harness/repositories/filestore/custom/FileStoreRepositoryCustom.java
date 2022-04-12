@@ -10,9 +10,13 @@ package io.harness.repositories.filestore.custom;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ng.core.entities.NGFile;
 
+import java.util.List;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.query.Criteria;
 
 @OwnedBy(CDP)
 public interface FileStoreRepositoryCustom {
@@ -25,4 +29,13 @@ public interface FileStoreRepositoryCustom {
    * @return the aggregation results
    */
   <T> AggregationResults<T> aggregate(Aggregation aggregation, Class<T> classToFillResultIn);
+
+  /**
+   * List all NG files sorted by sort criteria
+   *
+   * @param criteria the query criteria
+   * @param sortBy the sort by criteria
+   * @return sorted list of NG files
+   */
+  List<NGFile> findAllAndSort(Criteria criteria, Sort sortBy);
 }

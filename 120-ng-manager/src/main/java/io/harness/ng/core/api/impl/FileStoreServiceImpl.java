@@ -15,6 +15,7 @@ import static java.lang.String.format;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
+import io.harness.beans.Scope;
 import io.harness.exception.DuplicateEntityException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.file.beans.NGBaseFile;
@@ -27,6 +28,7 @@ import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 import io.harness.ng.core.entities.NGFile;
 import io.harness.ng.core.mapper.FileDTOMapper;
 import io.harness.ng.core.mapper.FileStoreNodeDTOMapper;
+import io.harness.repositories.filestore.FileStoreRepositoryCriteriaCreator;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
 import io.harness.stream.BoundedInputStream;
 import io.harness.utils.IdentifierRefHelper;
@@ -181,8 +183,9 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   private String getDuplicateEntityMessage(@NotNull FileDTO fileDto) {
-    return format("Try creating another %s, %s with identifier [%s] already exists in the parent folder",
-        fileDto.getType().name().toLowerCase(), fileDto.getType().name().toLowerCase(), fileDto.getIdentifier());
+    return format("Try creating another %s, %s with identifier [%s] already exists in the parent folder [%s]",
+        fileDto.getType().name().toLowerCase(), fileDto.getType().name().toLowerCase(), fileDto.getIdentifier(),
+        fileDto.getParentIdentifier());
   }
 
   private void saveFile(FileDTO fileDto, NGFile ngFile, @NotNull InputStream content) {
@@ -220,8 +223,10 @@ public class FileStoreServiceImpl implements FileStoreService {
 
   private List<NGFile> listFilesByParentIdentifier(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String parentIdentifier) {
-    return fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndParentIdentifier(
-        accountIdentifier, orgIdentifier, projectIdentifier, parentIdentifier);
+    return fileStoreRepository.findAllAndSort(
+        FileStoreRepositoryCriteriaCreator.createCriteriaByScopeAndParentIdentifier(
+            Scope.of(accountIdentifier, orgIdentifier, projectIdentifier), parentIdentifier),
+        FileStoreRepositoryCriteriaCreator.createSortByLastModifiedAtDesc());
   }
 
   private void validateIsReferencedBy(NGFile fileOrFolder) {

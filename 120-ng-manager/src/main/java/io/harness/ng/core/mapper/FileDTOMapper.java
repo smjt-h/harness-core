@@ -82,6 +82,13 @@ public class FileDTOMapper {
   }
 
   public NGFile updateNGFile(FileDTO fileDto, NGFile file) {
+    if (fileDto.isFolder()) {
+      file.setType(fileDto.getType());
+      file.setParentIdentifier(fileDto.getParentIdentifier());
+      file.setName(fileDto.getName());
+      return file;
+    }
+
     file.setFileUsage(fileDto.getFileUsage());
     file.setType(fileDto.getType());
     file.setParentIdentifier(fileDto.getParentIdentifier());
