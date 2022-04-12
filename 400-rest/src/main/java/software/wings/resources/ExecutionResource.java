@@ -77,15 +77,14 @@ import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.sm.ExecutionInterrupt;
 import software.wings.sm.RollbackConfirmation;
 import software.wings.sm.StateExecutionData;
+import software.wings.sm.states.ApprovalState;
+import software.wings.sm.states.ApprovalState.ApprovalStateType;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.swagger.annotations.Api;
-import software.wings.sm.states.ApprovalState;
-import software.wings.sm.states.ApprovalState.ApprovalStateType;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

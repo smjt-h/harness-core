@@ -262,22 +262,22 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
 
       String[] commandList = new String[] {"/bin/bash", scriptFilename};
       processExecutor = new ProcessExecutor()
-                                            .command(commandList)
-                                            .directory(workingDirectory)
-                                            .environment(environment)
-                                            .readOutput(true)
-                                            .redirectOutput(new LogOutputStream() {
-                                              @Override
-                                              protected void processLine(String line) {
-                                                saveExecutionLog(line, INFO);
-                                              }
-                                            })
-                                            .redirectError(new LogOutputStream() {
-                                              @Override
-                                              protected void processLine(String line) {
-                                                saveExecutionLog(line, ERROR);
-                                              }
-                                            });
+                            .command(commandList)
+                            .directory(workingDirectory)
+                            .environment(environment)
+                            .readOutput(true)
+                            .redirectOutput(new LogOutputStream() {
+                              @Override
+                              protected void processLine(String line) {
+                                saveExecutionLog(line, INFO);
+                              }
+                            })
+                            .redirectError(new LogOutputStream() {
+                              @Override
+                              protected void processLine(String line) {
+                                saveExecutionLog(line, ERROR);
+                              }
+                            });
 
       if (timeoutInMillis != null) {
         processExecutor.timeout(timeoutInMillis, TimeUnit.MILLISECONDS);
@@ -299,10 +299,10 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
     } catch (InterruptedException e) {
       processExecutor.command("ps -ef | grep " + scriptFilename);
       try (BufferedReader br =
-                   new BufferedReader(new InputStreamReader(new FileInputStream(envVariablesOutputFile), "UTF-8"))) {
-      ProcessResult processResult = processExecutor.execute();
-      commandExecutionStatus = processResult.getExitValue() == 0 ? SUCCESS : FAILURE;
-      if (commandExecutionStatus == SUCCESS && envVariablesOutputFile != null) {
+               new BufferedReader(new InputStreamReader(new FileInputStream(envVariablesOutputFile), "UTF-8"))) {
+        ProcessResult processResult = processExecutor.execute();
+        commandExecutionStatus = processResult.getExitValue() == 0 ? SUCCESS : FAILURE;
+        if (commandExecutionStatus == SUCCESS && envVariablesOutputFile != null) {
           String line = br.readLine();
           String pid = line.split(" ")[0];
           processExecutor.command("ps -9 " + pid);
@@ -311,9 +311,11 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
       } catch (IOException ioe) {
         saveExecutionLog("IOException:" + ioe, ERROR);
       } catch (InterruptedException ie) {
-        handleException(executionDataBuilder, envVariablesMap, commandExecutionStatus, ie, "Script execution interrupted");
+        handleException(
+            executionDataBuilder, envVariablesMap, commandExecutionStatus, ie, "Script execution interrupted");
       } catch (TimeoutException te) {
-        handleException(executionDataBuilder, envVariablesMap, commandExecutionStatus, te, "Script execution timed out");
+        handleException(
+            executionDataBuilder, envVariablesMap, commandExecutionStatus, te, "Script execution timed out");
       }
       Thread.currentThread().interrupt();
       handleException(executionDataBuilder, envVariablesMap, commandExecutionStatus, e, "Script execution interrupted");
