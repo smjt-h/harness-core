@@ -65,13 +65,21 @@ public class CloudformationCreateStackStepInfo
           (RemoteCloudformationTemplateFileSpec) cloudformationStepConfiguration.getTemplateFile().getSpec();
       connectorRefMap.put("configuration.spec.templateFile.store.spec.connectorRef",
           remoteTemplateFile.getStore().getSpec().getConnectorReference());
-
-      cloudformationStepConfiguration.getParametersFilesSpecs().forEach(cloudformationParametersFileSpec -> {
-        connectorRefMap.put("configuration.spec.parameters." + cloudformationParametersFileSpec.getIdentifier()
-                + ".store.spec.connectorRef",
-            cloudformationParametersFileSpec.getStore().getSpec().getConnectorReference());
-      });
     }
+
+    if (cloudformationStepConfiguration.getTags().getSpec().getType().equals(CloudformationTagsFileTypes.Remote)) {
+      RemoteCloudformationTagsFileSpec remoteTemplateFile =
+          (RemoteCloudformationTagsFileSpec) cloudformationStepConfiguration.getTags().getSpec();
+      connectorRefMap.put("configuration.spec.tags.store.spec.connectorRef",
+          remoteTemplateFile.getStore().getSpec().getConnectorReference());
+    }
+
+    cloudformationStepConfiguration.getParametersFilesSpecs().forEach(cloudformationParametersFileSpec -> {
+      connectorRefMap.put("configuration.spec.parameters." + cloudformationParametersFileSpec.getIdentifier()
+              + ".store.spec.connectorRef",
+          cloudformationParametersFileSpec.getStore().getSpec().getConnectorReference());
+    });
+
     return connectorRefMap;
   }
 
@@ -85,6 +93,7 @@ public class CloudformationCreateStackStepInfo
   public String getFacilitatorType() {
     return OrchestrationFacilitatorType.TASK_CHAIN;
   }
+
   @Override
   public SpecParameters getSpecParameters() {
     validateSpecParameters();
@@ -94,6 +103,7 @@ public class CloudformationCreateStackStepInfo
         .configuration(cloudformationStepConfiguration)
         .build();
   }
+
   void validateSpecParameters() {
     Validator.notNullCheck("Terraform Step configuration is null", cloudformationStepConfiguration);
     cloudformationStepConfiguration.validateParams();

@@ -106,6 +106,15 @@ public class CloudformationCreateStackStep
             entityDetailList.add(entityDetail);
           });
     }
+
+    // AWS connector
+    String connectorRef =
+        getParameterFieldValue(cloudformationCreateStackStepParameters.getConfiguration().getConnectorRef());
+    IdentifierRef identifierRef =
+        IdentifierRefHelper.getIdentifierRef(connectorRef, accountId, orgIdentifier, projectIdentifier);
+    EntityDetail entityDetail = EntityDetail.builder().type(EntityType.CONNECTORS).entityRef(identifierRef).build();
+    entityDetailList.add(entityDetail);
+
     pipelineRbacHelper.checkRuntimePermissions(ambiance, entityDetailList, true);
   }
 

@@ -678,7 +678,7 @@
           "type": "string"
         },
         "tags": {
-          "type": "string"
+          "$ref": "#/definitions/CloudformationTags"
         },
         "templateFile": {
           "$ref": "#/definitions/CloudformationTemplateFile"
@@ -833,6 +833,63 @@
         },
         "store": {
           "$ref": "#/definitions/StoreConfigWrapper"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "CloudformationTags": {
+      "type": "object",
+      "required": [
+        "spec",
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Inline"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/InlineCloudformationTagsFileSpec"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Remote"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/RemoteCloudformationTagsFileSpec"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "CloudformationTagsFileSpec": {
+      "type": "object",
+      "discriminator": "type",
+      "properties": {
+        "type": {
+          "type": "string"
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2352,6 +2409,25 @@
               "type": "string"
             },
             "stackName": {
+              "type": "string"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "InlineCloudformationTagsFileSpec": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/CloudformationTagsFileSpec"
+        },
+        {
+          "type": "object",
+          "required": [
+            "content"
+          ],
+          "properties": {
+            "content": {
               "type": "string"
             }
           }
@@ -4211,6 +4287,25 @@
           }
         }
       ]
+    },
+    "RemoteCloudformationTagsFileSpec": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/CloudformationTagsFileSpec"
+        },
+        {
+          "type": "object",
+          "required": [
+            "store"
+          ],
+          "properties": {
+            "store": {
+              "$ref": "#/definitions/StoreConfigWrapper"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
     },
     "RemoteCloudformationTemplateFileSpec": {
       "allOf": [

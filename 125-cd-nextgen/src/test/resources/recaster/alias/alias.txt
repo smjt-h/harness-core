@@ -298,3 +298,5 @@ io.harness.cdng.provision.cloudformation.InlineCloudformationTemplateFileSpec
 io.harness.cdng.provision.cloudformation.S3UrlCloudformationTemplateFileSpec
 io.harness.cdng.provision.cloudformation.RemoteCloudformationTemplateFileSpec
 io.harness.cdng.manifest.yaml.S3UrlStoreConfig
+io.harness.cdng.provision.cloudformation.RemoteCloudformationTagsFileSpec
+io.harness.cdng.provision.cloudformation.InlineCloudformationTagsFileSpec

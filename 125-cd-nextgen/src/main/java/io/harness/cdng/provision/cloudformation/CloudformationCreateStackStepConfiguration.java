@@ -42,7 +42,7 @@ public class CloudformationCreateStackStepConfiguration {
   @YamlSchemaTypes(value = {string})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   ParameterField<List<String>> capabilities;
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> tags;
+  CloudformationTags tags;
   @YamlSchemaTypes(value = {string})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   ParameterField<List<String>> skipOnStackStatuses;

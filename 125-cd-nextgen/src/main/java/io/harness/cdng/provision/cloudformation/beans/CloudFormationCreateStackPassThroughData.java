@@ -21,6 +21,7 @@ import lombok.experimental.Accessors;
 @RecasterAlias("io.harness.cdng.provision.cloudformation.beans.CloudFormationCreateStackPassThroughData")
 public class CloudFormationCreateStackPassThroughData implements PassThroughData {
   String templateBody;
+  String tags;
   @Builder.Default LinkedHashMap<String, List<String>> parametersFilesContent = new LinkedHashMap<>();
   @Accessors(fluent = true) boolean hasGitFiles;
   @Accessors(fluent = true) boolean hasS3Files;
