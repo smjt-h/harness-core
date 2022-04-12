@@ -14,6 +14,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.DelegateTaskRequest;
 import io.harness.callback.DelegateCallbackToken;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.delegate.TaskSelector;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.task.HDelegateTask;
 import io.harness.delegate.task.TaskParameters;
@@ -22,6 +23,7 @@ import io.harness.grpc.DelegateServiceGrpcClient;
 
 import com.google.inject.Inject;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
@@ -42,12 +44,13 @@ public class CIDelegateTaskExecutor {
     this.delegateCallbackTokenSupplier = delegateCallbackTokenSupplier;
   }
 
-  public String queueTask(Map<String, String> setupAbstractions, HDelegateTask task) {
+  public String queueTask(Map<String, String> setupAbstractions, HDelegateTask task, List<TaskSelector> selectors) {
     String accountId = task.getAccountId();
     TaskData taskData = task.getData();
     final DelegateTaskRequest delegateTaskRequest = DelegateTaskRequest.builder()
                                                         .parked(taskData.isParked())
                                                         .accountId(accountId)
+                                                         .taskSelectors()
                                                         .taskType(taskData.getTaskType())
                                                         .taskParameters(extractTaskParameters(taskData))
                                                         .executionTimeout(Duration.ofHours(12))

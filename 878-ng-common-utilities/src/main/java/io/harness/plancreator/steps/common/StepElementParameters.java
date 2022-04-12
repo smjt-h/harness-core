@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import io.harness.advisers.rollback.OnFailRollbackParameters;
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.sdk.core.steps.io.StepParameters;
 import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
 import io.harness.pms.yaml.ParameterField;
@@ -45,7 +46,7 @@ public class StepElementParameters implements StepParameters {
   String type;
   SpecParameters spec;
 
-  ParameterField<List<String>> delegateSelectors;
+  ParameterField<List<TaskSelectorYaml>> delegateSelectors;
 
   // Only for rollback failures
   OnFailRollbackParameters rollbackParameters;

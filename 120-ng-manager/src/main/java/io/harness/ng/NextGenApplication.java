@@ -478,9 +478,10 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
   }
 
   private void initializeMonitoring(NextGenConfiguration appConfig, Injector injector) {
+    injector.getInstance(MetricService.class).initializeMetrics();
+    injector.getInstance(RecordMetricsJob.class).scheduleMetricsTasks();
     if (appConfig.isExportMetricsToStackDriver()) {
-      injector.getInstance(MetricService.class).initializeMetrics();
-      injector.getInstance(RecordMetricsJob.class).scheduleMetricsTasks();
+
     }
   }
 

@@ -29,9 +29,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
+@AllArgsConstructor(onConstructor = @__({ @Inject }))
 public class DelegateMetricsPublisher implements MetricsPublisher {
-  @Inject private MetricService metricService;
+  private final MetricService metricService;
   @Inject private HPersistence persistence;
   private static final String ACTIVE_DELEGATES_COUNT = "active_delegates_count";
 
@@ -42,7 +42,7 @@ public class DelegateMetricsPublisher implements MetricsPublisher {
 
   @VisibleForTesting
   void sendTaskStatusMetrics() {
-    log.info("Starting getting delegate metrics.");
+    //log.info("Starting getting delegate metrics.");
     long startTime = Instant.now().toEpochMilli();
 
     Function<Delegate, DelegateLabel> compositeKey =
@@ -64,8 +64,8 @@ public class DelegateMetricsPublisher implements MetricsPublisher {
       }
     });
 
-    log.info("Total time taken to collect metrics for class {} {} (ms)", DelegateTask.class.getSimpleName(),
-        Instant.now().toEpochMilli() - startTime);
+    //log.info("Total time taken to collect metrics for class {} {} (ms)", DelegateTask.class.getSimpleName(),
+        //Instant.now().toEpochMilli() - startTime);
   }
 
   @Data

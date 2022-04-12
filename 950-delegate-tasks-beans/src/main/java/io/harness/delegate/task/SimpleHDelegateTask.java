@@ -24,4 +24,5 @@ public class SimpleHDelegateTask implements HDelegateTask {
   @Singular Map<String, String> setupAbstractions;
   String uuid;
   LinkedHashMap<String, String> logStreamingAbstractions;
+
 }

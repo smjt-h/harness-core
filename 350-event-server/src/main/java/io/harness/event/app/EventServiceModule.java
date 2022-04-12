@@ -99,7 +99,7 @@ public class EventServiceModule extends AbstractModule {
     install(new RegistrarsModule());
 
     install(new MetricsModule());
-    bind(MetricsPublisher.class).to(EventServiceMetricsPublisher.class).in(Scopes.SINGLETON);
+    bind(MetricsPublisher.class).to(EventServiceMetricsPublisher.class);
   }
 
   @Provides
