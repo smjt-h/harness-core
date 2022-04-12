@@ -283,8 +283,8 @@ public class SLODashboardServiceImplTest extends CvNextGenTestBase {
 
     serviceLevelObjectiveService.create(builderFactory.getProjectParams(), serviceLevelObjective);
 
-    SLODashboardDetail sloDashboardDetail = sloDashboardService.getSloDashboardDetail(
-        builderFactory.getProjectParams(), serviceLevelObjective.getIdentifier(), null, null, null);
+    SLODashboardDetail sloDashboardDetail = sloDashboardService.getSloDashboardDetail(builderFactory.getProjectParams(),
+        serviceLevelObjective.getIdentifier(), Instant.ofEpochMilli(0), Instant.ofEpochMilli(0), null);
     assertThat(sloDashboardDetail.getDescription()).isEqualTo("slo description");
     assertThat(sloDashboardDetail.getSloDashboardWidget().getSloIdentifier())
         .isEqualTo(serviceLevelObjective.getIdentifier());

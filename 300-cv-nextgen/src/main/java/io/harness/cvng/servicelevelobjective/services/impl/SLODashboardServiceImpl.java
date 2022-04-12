@@ -114,10 +114,10 @@ public class SLODashboardServiceImpl implements SLODashboardService {
         endTime = null;
       }
     }
-    List<Instant> customTimelist = new ArrayList<Instant>();
-    customTimelist.add(startTime);
-    customTimelist.add(endTime);
-    return customTimelist;
+    List<Instant> customTimeList = new ArrayList<>();
+    customTimeList.add(startTime);
+    customTimeList.add(endTime);
+    return customTimeList;
   }
 
   @Override
