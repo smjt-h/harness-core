@@ -21,4 +21,9 @@ public class PipelineMetricsPublisher implements MetricsPublisher {
   public void recordMetrics() {
     planExecutionMonitorService.registerActiveExecutionMetrics();
   }
+
+  @Override
+  public void enableMetricPublisher(boolean shouldPublishMetrics) {
+    // can be used to control metric publisher enablement
+  }
 }

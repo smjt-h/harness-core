@@ -23,4 +23,9 @@ public class EventServiceMetricsPublisher implements MetricsPublisher {
     // This method gets called once every minute. It can be used to capture instantaneous value of LastValue type
     // of metrics.
   }
+
+  @Override
+  public void enableMetricPublisher(boolean shouldPublishMetrics) {
+    // can be used to control metric publisher enablement
+  }
 }

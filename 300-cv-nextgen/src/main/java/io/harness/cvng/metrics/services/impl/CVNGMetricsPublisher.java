@@ -91,6 +91,12 @@ public class CVNGMetricsPublisher implements MetricsPublisher, MetricDefinitionI
   public void recordMetrics() {
     sendTaskStatusMetrics();
   }
+
+  @Override
+  public void enableMetricPublisher(boolean shouldPublishMetrics) {
+    // can be used to control metric publisher enablement
+  }
+
   @VisibleForTesting
   void sendTaskStatusMetrics() {
     TASKS_INFO.forEach((clazz, queryParams) -> {

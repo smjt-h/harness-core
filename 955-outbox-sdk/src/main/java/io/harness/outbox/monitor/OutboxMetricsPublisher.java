@@ -62,4 +62,9 @@ public class OutboxMetricsPublisher implements MetricsPublisher {
       }
     });
   }
+
+  @Override
+  public void enableMetricPublisher(boolean shouldPublishMetrics) {
+    // can be used to control metric publisher enablement
+  }
 }

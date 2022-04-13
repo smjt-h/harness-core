@@ -37,9 +37,14 @@ public class DelegateMetricsPublisher implements MetricsPublisher {
   private boolean shouldPublishDelegateMetrics = false;
   @Override
   public void recordMetrics() {
-    if(shouldPublishDelegateMetrics){
+    if (shouldPublishDelegateMetrics) {
       sendTaskStatusMetrics();
     }
+  }
+
+  @Override
+  public void enableMetricPublisher(boolean shouldPublishDelegateMetrics) {
+    this.shouldPublishDelegateMetrics = shouldPublishDelegateMetrics;
   }
 
   @VisibleForTesting
@@ -75,10 +80,5 @@ public class DelegateMetricsPublisher implements MetricsPublisher {
   private static class DelegateLabel {
     String accountId;
     String version;
-  }
-
-  public boolean enableDelegateMetricPublisher(boolean shouldPublishDelegateMetrics) {
-    this.shouldPublishDelegateMetrics = shouldPublishDelegateMetrics;
-    return shouldPublishDelegateMetrics;
   }
 }

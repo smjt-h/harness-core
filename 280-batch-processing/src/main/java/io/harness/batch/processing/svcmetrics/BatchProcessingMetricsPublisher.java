@@ -22,4 +22,9 @@ public class BatchProcessingMetricsPublisher implements MetricsPublisher {
   public void recordMetrics() {
     // Collect metrics snapshots e.g. queueSize, runningJobCount etc.
   }
+
+  @Override
+  public void enableMetricPublisher(boolean shouldPublishMetrics) {
+    // can be used to control metric publisher enablement
+  }
 }

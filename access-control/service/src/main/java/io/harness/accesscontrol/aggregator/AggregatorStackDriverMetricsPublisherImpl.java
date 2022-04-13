@@ -76,4 +76,9 @@ public class AggregatorStackDriverMetricsPublisherImpl implements MetricsPublish
       }
     }
   }
+
+  @Override
+  public void enableMetricPublisher(boolean shouldPublishMetrics) {
+    // can be used to control metric publisher enablement
+  }
 }
