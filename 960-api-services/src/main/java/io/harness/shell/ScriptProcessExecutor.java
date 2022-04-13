@@ -261,22 +261,22 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
 
       String[] commandList = new String[] {"/bin/bash", scriptFilename};
       ProcessExecutor processExecutor = new ProcessExecutor()
-                            .command(commandList)
-                            .directory(workingDirectory)
-                            .environment(environment)
-                            .readOutput(true)
-                            .redirectOutput(new LogOutputStream() {
-                              @Override
-                              protected void processLine(String line) {
-                                saveExecutionLog(line, INFO);
-                              }
-                            })
-                            .redirectError(new LogOutputStream() {
-                              @Override
-                              protected void processLine(String line) {
-                                saveExecutionLog(line, ERROR);
-                              }
-                            });
+                                            .command(commandList)
+                                            .directory(workingDirectory)
+                                            .environment(environment)
+                                            .readOutput(true)
+                                            .redirectOutput(new LogOutputStream() {
+                                              @Override
+                                              protected void processLine(String line) {
+                                                saveExecutionLog(line, INFO);
+                                              }
+                                            })
+                                            .redirectError(new LogOutputStream() {
+                                              @Override
+                                              protected void processLine(String line) {
+                                                saveExecutionLog(line, ERROR);
+                                              }
+                                            });
 
       if (timeoutInMillis != null) {
         processExecutor.timeout(timeoutInMillis, TimeUnit.MILLISECONDS);
@@ -296,11 +296,13 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
       saveExecutionLog(
           format("Command completed with ExitCode (%d)", processResult.getExitValue()), INFO, commandExecutionStatus);
     } catch (InterruptedException e) {
-      killScriptProcesses(executionDataBuilder, commandExecutionStatus, workingDirectory, scriptFilename, environment, envVariablesOutputFile, envVariablesMap);
+      killScriptProcesses(executionDataBuilder, commandExecutionStatus, workingDirectory, scriptFilename, environment,
+          envVariablesOutputFile, envVariablesMap);
       // Thread.currentThread().interrupt();
       handleException(executionDataBuilder, envVariablesMap, commandExecutionStatus, e, "Script execution interrupted");
     } catch (TimeoutException e) {
-      killScriptProcesses(executionDataBuilder, commandExecutionStatus, workingDirectory, scriptFilename, environment, envVariablesOutputFile, envVariablesMap);
+      killScriptProcesses(executionDataBuilder, commandExecutionStatus, workingDirectory, scriptFilename, environment,
+          envVariablesOutputFile, envVariablesMap);
       executionDataBuilder.expired(true);
       handleException(executionDataBuilder, envVariablesMap, commandExecutionStatus, e, "Script execution timed out");
     } catch (RuntimeException e) {
@@ -322,13 +324,15 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
     return executeCommandResponseBuilder.build();
   }
 
-  private CommandExecutionStatus killScriptProcesses(ShellExecutionDataBuilder executionDataBuilder, CommandExecutionStatus oldCommandExecutionStatus, File workingDirectory, String scriptFilename, Map<String, String> environment, File envVariablesOutputFile, Map<String, String> envVariablesMap) {
+  private CommandExecutionStatus killScriptProcesses(ShellExecutionDataBuilder executionDataBuilder,
+      CommandExecutionStatus oldCommandExecutionStatus, File workingDirectory, String scriptFilename,
+      Map<String, String> environment, File envVariablesOutputFile, Map<String, String> envVariablesMap) {
     ProcessExecutor processExecutor = new ProcessExecutor()
-            .command("/bin/bash", "-c", "ps -ef | grep " + scriptFilename)
-            .directory(workingDirectory)
-            .environment(environment)
-            .readOutput(true);
-    File scriptFile = new File(workingDirectory, "kill-"+scriptFilename);
+                                          .command("/bin/bash", "-c", "ps -ef | grep " + scriptFilename)
+                                          .directory(workingDirectory)
+                                          .environment(environment)
+                                          .readOutput(true);
+    File scriptFile = new File(workingDirectory, "kill-" + scriptFilename);
     try (FileOutputStream outputStream = new FileOutputStream(scriptFile)) {
       ProcessResult processResult = processExecutor.execute();
       CommandExecutionStatus commandExecutionStatus = processResult.getExitValue() == 0 ? SUCCESS : FAILURE;
@@ -336,20 +340,21 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
         String line = processResult.getOutput().getUTF8();
         log.info("Output of ps -ef {}", line);
         String pid = line.split(" ")[3];
-        String command =  "list_descendants ()\n" +
-                "{\n" +
-                "  local children=$(ps -o pid= --ppid \"$1\")\n" +
-                "\n" +
-                "  for pid in $children\n" +
-                "  do\n" +
-                "    list_descendants \"$pid\"\n" +
-                "  done\n" +
-                "\n" +
-                "  echo \"$children\"\n" +
-                "}\n" +
-                "\n" + "kill $(list_descendants " + pid + ")";
+        String command = "list_descendants ()\n"
+            + "{\n"
+            + "  local children=$(ps -o pid= --ppid \"$1\")\n"
+            + "\n"
+            + "  for pid in $children\n"
+            + "  do\n"
+            + "    list_descendants \"$pid\"\n"
+            + "  done\n"
+            + "\n"
+            + "  echo \"$children\"\n"
+            + "}\n"
+            + "\n"
+            + "kill $(list_descendants " + pid + ")";
         outputStream.write(command.getBytes(Charset.forName("UTF-8")));
-        processExecutor.command("/bin/bash", "kill-"+scriptFilename );
+        processExecutor.command("/bin/bash", "kill-" + scriptFilename);
         processExecutor.execute();
       }
     } catch (IOException ioe) {
