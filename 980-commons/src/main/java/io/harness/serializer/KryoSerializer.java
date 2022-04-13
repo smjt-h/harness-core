@@ -74,7 +74,11 @@ public class KryoSerializer {
     this(registrars, KryoPoolConfiguration.builder().queueCapacity(0).build());
   }
 
-  private Queue<Kryo> createQueue(KryoPoolConfiguration kpConfig) {
+  /**
+   * Create a bounded queue using an {@link ArrayBlockingQueue} when queue capacity is great than zero. Otherwise create
+   * an unbounded of {@link ConcurrentLinkedQueue}
+   */
+  Queue<Kryo> createQueue(KryoPoolConfiguration kpConfig) {
     log.info("Queue capacity set to {}", kpConfig.getQueueCapacity());
     if (kpConfig.getQueueCapacity() > 0) {
       return new ArrayBlockingQueue<>(kpConfig.getQueueCapacity());
