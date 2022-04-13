@@ -64,7 +64,7 @@ public class SshEntityHelper {
         PdcInfrastructureOutcome pdcDirectInfrastructure = (PdcInfrastructureOutcome) infrastructure;
         PhysicalDataCenterConnectorDTO pdcConnectorDTO =
             (connectorDTO != null) ? (PhysicalDataCenterConnectorDTO) connectorDTO.getConnectorConfig() : null;
-        SSHKeySpecDTO sshKeySpecDto = getSshKeySpecDto(pdcDirectInfrastructure, pdcConnectorDTO, ambiance);
+        SSHKeySpecDTO sshKeySpecDto = getSshKeySpecDto(pdcDirectInfrastructure, ambiance);
         List<String> hosts = extractHostNames(pdcDirectInfrastructure, pdcConnectorDTO);
         return PdcSshInfraDelegateConfig.builder()
             .hosts(hosts)
@@ -93,9 +93,8 @@ public class SshEntityHelper {
     return hosts.stream().map(host -> host.getHostName()).collect(Collectors.toList());
   }
 
-  private SSHKeySpecDTO getSshKeySpecDto(PdcInfrastructureOutcome pdcDirectInfrastructure,
-      PhysicalDataCenterConnectorDTO pdcConnectorDTO, Ambiance ambiance) {
-    String sshKeyRef = getSshKeyRef(pdcDirectInfrastructure, pdcConnectorDTO);
+  private SSHKeySpecDTO getSshKeySpecDto(PdcInfrastructureOutcome pdcDirectInfrastructure, Ambiance ambiance) {
+    String sshKeyRef = pdcDirectInfrastructure.getSshKeyRef();
     if (isEmpty(sshKeyRef)) {
       throw new InvalidRequestException("Missing SSH key for configured host(s)");
     }
@@ -112,12 +111,6 @@ public class SshEntityHelper {
     SecretDTOV2 secret = secretResponseWrapper.getSecret();
 
     return (SSHKeySpecDTO) secret.getSpec();
-  }
-
-  private String getSshKeyRef(
-      PdcInfrastructureOutcome pdcDirectInfrastructure, PhysicalDataCenterConnectorDTO pdcConnectorDTO) {
-    return pdcDirectInfrastructure.useInfrastructureHosts() ? pdcDirectInfrastructure.getSshKeyRef()
-                                                            : pdcConnectorDTO.getSshKeyRef().toSecretRefStringValue();
   }
 
   private List<EncryptedDataDetail> getEncryptionDataDetails(NGAccess ngAccess, SSHKeySpecDTO sshKeySpecDto) {

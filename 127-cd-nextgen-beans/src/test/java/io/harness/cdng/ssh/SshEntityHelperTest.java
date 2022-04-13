@@ -32,8 +32,6 @@ import io.harness.delegate.beans.connector.pdcconnector.HostDTO;
 import io.harness.delegate.beans.connector.pdcconnector.PhysicalDataCenterConnectorDTO;
 import io.harness.delegate.task.ssh.PdcSshInfraDelegateConfig;
 import io.harness.delegate.task.ssh.SshInfraDelegateConfig;
-import io.harness.encryption.Scope;
-import io.harness.encryption.SecretRefData;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
 import io.harness.ng.core.dto.secrets.SecretDTOV2;
@@ -79,11 +77,6 @@ public class SshEntityHelperTest extends CategoryTest {
                                      .connectorType(ConnectorType.PDC)
                                      .connectorConfig(PhysicalDataCenterConnectorDTO.builder()
                                                           .hosts(Arrays.asList(new HostDTO("host1", null)))
-                                                          .sshKeyRef(SecretRefData.builder()
-                                                                         .scope(Scope.PROJECT)
-                                                                         .identifier("sshKeyRef")
-                                                                         .decryptedValue("sshKeyRef".toCharArray())
-                                                                         .build())
                                                           .build())
                                      .build())
                       .build());
