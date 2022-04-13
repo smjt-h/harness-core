@@ -1002,3 +1002,8 @@ fi
 if [[ "" != "$INCORRECT_ATTEMPTS_UNTIL_SECOPS_NOTIFIED" ]]; then
  yq write -i config.yml totp.incorrectAttemptsUntilSecOpsNotified "$INCORRECT_ATTEMPTS_UNTIL_SECOPS_NOTIFIED"
 fi
+
+if [[ "" != "$KRYO_POOL_QUEUE_CAPACITY" ]]; then
+ yq write -i config.yml kryoPool.queueCapacity "$KRYO_POOL_QUEUE_CAPACITY"
+fi
+
