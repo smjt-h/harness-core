@@ -45,8 +45,8 @@ public class AppManifestSettingAttributePTaskManager implements SettingAttribute
   @Inject private HelmChartService helmChartService;
 
   private final EnumSet<SettingVariableTypes> helmSettingAttributeTypes =
-      EnumSet.of(SettingVariableTypes.HTTP_HELM_REPO, SettingVariableTypes.AMAZON_S3_HELM_REPO,
-          SettingVariableTypes.GCS_HELM_REPO);
+      EnumSet.of(SettingVariableTypes.HTTP_HELM_REPO, SettingVariableTypes.OCI_HELM_REPO,
+          SettingVariableTypes.AMAZON_S3_HELM_REPO, SettingVariableTypes.GCS_HELM_REPO);
 
   @Override
   public void onSaved(SettingAttribute settingAttribute) {

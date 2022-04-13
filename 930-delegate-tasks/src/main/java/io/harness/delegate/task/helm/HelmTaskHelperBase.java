@@ -259,11 +259,11 @@ public class HelmTaskHelperBase {
     return encloseWithQuotesIfNeeded(k8sGlobalConfigService.getHelmPath(helmVersion));
   }
 
-  private String getUsername(String username) {
+  public String getUsername(String username) {
     return isBlank(username) ? "" : "--username " + username;
   }
 
-  private String getPassword(char[] password) {
+  public String getPassword(char[] password) {
     if (password == null) {
       return "";
     }
