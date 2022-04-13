@@ -13,6 +13,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.DelegateTaskRequest;
 import io.harness.callback.DelegateCallbackToken;
+import io.harness.data.structure.CollectionUtils;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.TaskSelector;
 import io.harness.delegate.beans.TaskData;
@@ -50,7 +51,7 @@ public class CIDelegateTaskExecutor {
     final DelegateTaskRequest delegateTaskRequest = DelegateTaskRequest.builder()
                                                         .parked(taskData.isParked())
                                                         .accountId(accountId)
-                                                         .taskSelectors()
+                                                        .taskSelectors(CollectionUtils.emptyIfNull(selectors))
                                                         .taskType(taskData.getTaskType())
                                                         .taskParameters(extractTaskParameters(taskData))
                                                         .executionTimeout(Duration.ofHours(12))
