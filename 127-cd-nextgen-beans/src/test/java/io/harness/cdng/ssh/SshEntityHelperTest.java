@@ -71,15 +71,15 @@ public class SshEntityHelperTest extends CategoryTest {
                                         .putSetupAbstractions(SetupAbstractionKeys.orgIdentifier, "testOrg")
                                         .build();
 
-  private final Optional<ConnectorResponseDTO> connectorDTO =
-      Optional.of(ConnectorResponseDTO.builder()
-                      .connector(ConnectorInfoDTO.builder()
-                                     .connectorType(ConnectorType.PDC)
-                                     .connectorConfig(PhysicalDataCenterConnectorDTO.builder()
-                                                          .hosts(Arrays.asList(new HostDTO("host1", null)))
-                                                          .build())
-                                     .build())
-                      .build());
+  private final Optional<ConnectorResponseDTO> connectorDTO = Optional.of(
+      ConnectorResponseDTO.builder()
+          .connector(
+              ConnectorInfoDTO.builder()
+                  .connectorType(ConnectorType.PDC)
+                  .connectorConfig(
+                      PhysicalDataCenterConnectorDTO.builder().hosts(Arrays.asList(new HostDTO("host1", null))).build())
+                  .build())
+          .build());
 
   private final SSHKeySpecDTO sshKeySpecDTO = SSHKeySpecDTO.builder().build();
 

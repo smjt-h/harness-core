@@ -1165,6 +1165,6 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(CommandTaskParameters.class, 543504);
     kryo.register(SshCommandTaskParameters.class, 543505);
     kryo.register(TailFilePatternDto.class, 543506);
-      kryo.register(PdcSshInfraDelegateConfig.class, 543507);
+    kryo.register(PdcSshInfraDelegateConfig.class, 543507);
   }
 }
