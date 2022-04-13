@@ -101,16 +101,25 @@ message GetFileResponse {
   string fileContent = 2;
   string error = 3;
   GitMetaData gitMetaData = 4;
+  AdditionalMetaData additionalMetaData = 5;
 }
 
 message GitMetaData {
   string repoName = 1;
   string branchName = 2;
   string commitId = 3;
+  string filePath = 4;
+  string blobId = 5;
 }
 
 message ScopeIdentifiers {
   string accountIdentifier = 1;
   string orgIdentifier = 2;
   string projectIdentifier = 3;
+}
+
+// not being used rn, need to check if required
+message AdditionalMetaData {
+  string connectorIdentifier = 1;
+  string connectorName = 2;
 }
