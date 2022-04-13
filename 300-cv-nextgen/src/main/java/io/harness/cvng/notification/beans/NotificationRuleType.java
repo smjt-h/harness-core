@@ -5,11 +5,11 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.delegate.beans.connector.azureconnector;
+package io.harness.cvng.notification.beans;
 
-import io.harness.annotations.dev.HarnessTeam;
-import io.harness.annotations.dev.OwnedBy;
-import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@OwnedBy(HarnessTeam.CDP)
-public interface AzureDelegateTaskResponse extends DelegateTaskNotifyResponseData {}
+public enum NotificationRuleType {
+  @JsonProperty("monitoredService") MONITORED_SERVICE,
+  @JsonProperty("slo") SLO;
+}
