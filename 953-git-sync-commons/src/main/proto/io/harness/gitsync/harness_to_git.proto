@@ -91,8 +91,9 @@ message GetFileRequest {
   string repoName = 1;
   string branchName = 2;
   string filePath = 3;
-  string connectorRef = 4;
-  ScopeIdentifiers scopeIdentifiers = 5;
+  string commitId = 4;
+  string connectorRef = 5;
+  ScopeIdentifiers scopeIdentifiers = 6;
 }
 
 message GetFileResponse {
