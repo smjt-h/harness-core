@@ -8,6 +8,7 @@
 package io.harness.gitsync.common.helper;
 
 import static io.harness.annotations.dev.HarnessTeam.DX;
+import static io.harness.exception.WingsException.USER;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
@@ -24,6 +25,7 @@ import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabApiAccessDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabConnectorDTO;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
+import io.harness.exception.ConnectorNotFoundException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.common.service.YamlGitConfigService;
@@ -133,6 +135,30 @@ public class GitSyncConnectorHelper {
       throw new NotImplementedException(
           String.format("The scm apis for the provider type %s is not supported", scmConnector.getClass()));
     }
+  }
+
+  public ScmConnector getDecryptedConnectorByRef(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef) {
+    Optional<ConnectorResponseDTO> connectorDTO =
+        connectorService.getByRef(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
+    if (connectorDTO.isPresent()) {
+      ConnectorInfoDTO connectorInfoDTO = connectorDTO.get().getConnector();
+      ConnectorConfigDTO connectorConfigDTO = connectorInfoDTO.getConnectorConfig();
+      if (connectorConfigDTO instanceof ScmConnector) {
+        ScmConnector gitConnectorConfig = (ScmConnector) connectorInfoDTO.getConnectorConfig();
+        return getDecryptedConnector(accountIdentifier, orgIdentifier, projectIdentifier, gitConnectorConfig);
+      } else {
+        throw new UnexpectedException(String.format(
+            "The connector with the  identifier [%s], accountIdentifier [%s], orgIdentifier [%s], projectIdentifier [%s] is not an scm connector",
+            connectorInfoDTO.getIdentifier(), accountIdentifier, orgIdentifier, projectIdentifier));
+      }
+    }
+
+    throw new ConnectorNotFoundException(
+        String.format(
+            "No connector found for accountIdentifier: [%s], orgIdentifier : [%s], projectIdentifier : [%s], connectorRef : [%s]",
+            accountIdentifier, orgIdentifier, projectIdentifier, connectorDTO),
+        USER);
   }
 
   private void checkAPIAccessFieldPresence(GithubConnectorDTO githubConnectorDTO) {
