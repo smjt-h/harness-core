@@ -19,6 +19,7 @@ import io.harness.context.MdcGlobalContextData;
 import io.harness.eraro.ErrorCode;
 import io.harness.eraro.Level;
 import io.harness.eraro.ResponseMessage;
+import io.harness.exception.AdviserResponseHandlerException;
 import io.harness.exception.ExplanationException;
 import io.harness.exception.FailureType;
 import io.harness.exception.FunctorException;
@@ -205,6 +206,7 @@ public class HKryo extends Kryo {
     register(UnexpectedException.class, 5330);
     register(WingsException.ReportTarget.class, 5348);
     register(WingsException.class, 5174);
+    register(AdviserResponseHandlerException.class, 5328);
 
     register(JSONArray.class, 5583);
     register(JSONObject.class, 5584);

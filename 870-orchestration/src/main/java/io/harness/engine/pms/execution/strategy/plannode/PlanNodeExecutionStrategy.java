@@ -31,6 +31,8 @@ import io.harness.engine.pms.execution.strategy.EndNodeExecutionHelper;
 import io.harness.engine.pms.resume.NodeResumeHelper;
 import io.harness.engine.pms.start.NodeStartHelper;
 import io.harness.eraro.ResponseMessage;
+import io.harness.exception.AdviserResponseHandlerException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.exceptionmanager.ExceptionManager;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
@@ -260,6 +262,9 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
           nodeExecutionId, ops -> ops.set(NodeExecutionKeys.adviserResponse, adviserResponse));
       AdviserResponseHandler adviserResponseHandler = adviseHandlerFactory.obtainHandler(adviserResponse.getType());
       adviserResponseHandler.handleAdvise(updatedNodeExecution, adviserResponse);
+    } catch (Exception ex) {
+      AdviserResponseHandlerException exception = new AdviserResponseHandlerException(ex.getMessage(), ex);
+      handleError(ambiance, exception);
     }
   }
 
@@ -298,7 +303,7 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
         AmbianceUtils.obtainCurrentRuntimeId(ambiance), NodeProjectionUtils.withStatus);
     NodeExecution updatedNodeExecution = endNodeExecutionHelper.handleStepResponsePreAdviser(ambiance, stepResponse);
     if (updatedNodeExecution == null) {
-      return;
+      throw new InvalidRequestException("test");
     }
 
     nodeAdviseHelper.queueAdvisingEvent(updatedNodeExecution, planNode, nodeExecution.getStatus());
@@ -328,6 +333,8 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
     } catch (Exception ex) {
       // Smile if you see irony in this
       log.error("This is very BAD!!!. Exception Occurred while handling Exception. Erroring out Execution", ex);
+      nodeExecutionService.errorOutActiveNodes(ambiance.getPlanExecutionId());
+      orchestrationEngine.handleError(AmbianceUtils.clone(ambiance, 0), ex);
     }
   }
 }

@@ -144,6 +144,9 @@ public class PlanExecutionStrategy implements NodeExecutionStrategy<Plan, PlanEx
 
   @Override
   public void handleError(Ambiance ambiance, Exception exception) {
-    // TODO: Add implementation here
+    PlanExecution planExecution = planExecutionService.updateStatus(
+        ambiance.getPlanExecutionId(), ERRORED, ops -> ops.set(PlanExecutionKeys.endTs, System.currentTimeMillis()));
+    eventEmitter.emitEvent(buildEndEvent(ambiance, planExecution.getStatus()));
+    orchestrationEndSubject.fireInform(OrchestrationEndObserver::onEnd, ambiance);
   }
 }
