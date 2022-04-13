@@ -33,6 +33,7 @@ import io.harness.gitsync.GetFileResponse;
 import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.PushInfo;
 import io.harness.gitsync.RepoDetails;
+import io.harness.gitsync.ScopeIdentifiers;
 import io.harness.gitsync.common.beans.BranchSyncStatus;
 import io.harness.gitsync.common.beans.GitBranch;
 import io.harness.gitsync.common.beans.GitSyncDirection;
@@ -322,6 +323,10 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
 
   @Override
   public GetFileResponse getFile(GetFileRequest getFileRequest) {
+    ScopeIdentifiers scopeIdentifiers = getFileRequest.getScopeIdentifiers();
+    ScmConnector connector = gitSyncConnectorHelper.getDecryptedConnectorByRef(scopeIdentifiers.getAccountIdentifier(),
+        scopeIdentifiers.getOrgIdentifier(), scopeIdentifiers.getProjectIdentifier(), getFileRequest.getConnectorRef());
+
     return null;
   }
 
