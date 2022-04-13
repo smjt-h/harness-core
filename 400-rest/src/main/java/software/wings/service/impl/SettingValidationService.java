@@ -100,6 +100,7 @@ import software.wings.beans.settings.helm.HelmRepoConfig;
 import software.wings.beans.settings.helm.HelmRepoConfigValidationResponse;
 import software.wings.beans.settings.helm.HelmRepoConfigValidationTaskParams;
 import software.wings.beans.settings.helm.HttpHelmRepoConfig;
+import software.wings.beans.settings.helm.OciHelmRepoConfig;
 import software.wings.delegatetasks.DelegateProxyFactory;
 import software.wings.dl.WingsPersistence;
 import software.wings.helpers.ext.azure.AzureHelperService;
@@ -692,6 +693,16 @@ public class SettingValidationService {
 
         httpHelmRepoConfig.setChartRepoUrl(getTrimmedValue(httpHelmRepoConfig.getChartRepoUrl()));
         httpHelmRepoConfig.setUsername(getTrimmedValue(httpHelmRepoConfig.getUsername()));
+
+        break;
+      case OCI_HELM_REPO:
+        OciHelmRepoConfig ociHelmRepoConfig = (OciHelmRepoConfig) helmRepoConfig;
+        if (isBlank(ociHelmRepoConfig.getChartRepoUrl())) {
+          throw new InvalidRequestException("OCI Registry based Helm repository URL cannot be empty", USER);
+        }
+
+        ociHelmRepoConfig.setChartRepoUrl(getTrimmedValue(ociHelmRepoConfig.getChartRepoUrl()));
+        ociHelmRepoConfig.setUsername(getTrimmedValue(ociHelmRepoConfig.getUsername()));
 
         break;
       case AMAZON_S3_HELM_REPO:

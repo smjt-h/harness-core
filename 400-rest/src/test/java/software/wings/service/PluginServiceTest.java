@@ -70,6 +70,7 @@ import software.wings.beans.settings.azureartifacts.AzureArtifactsPATConfig;
 import software.wings.beans.settings.helm.AmazonS3HelmRepoConfig;
 import software.wings.beans.settings.helm.GCSHelmRepoConfig;
 import software.wings.beans.settings.helm.HttpHelmRepoConfig;
+import software.wings.beans.settings.helm.OciHelmRepoConfig;
 import software.wings.helpers.ext.mail.SmtpConfig;
 import software.wings.service.impl.PluginServiceImpl;
 import software.wings.service.intfc.PluginService;
@@ -363,6 +364,14 @@ public class PluginServiceTest extends CategoryTest {
                 .withIsEnabled(true)
                 .withDisplayName(SettingVariableTypes.HTTP_HELM_REPO.getDisplayName())
                 .withType(SettingVariableTypes.HTTP_HELM_REPO.name())
+                .withPluginCategories(asList(HelmRepo))
+                .build(),
+            anAccountPlugin()
+                .withSettingClass(OciHelmRepoConfig.class)
+                .withAccountId(accountId)
+                .withIsEnabled(true)
+                .withDisplayName(SettingVariableTypes.OCI_HELM_REPO.getDisplayName())
+                .withType(SettingVariableTypes.OCI_HELM_REPO.name())
                 .withPluginCategories(asList(HelmRepo))
                 .build(),
             anAccountPlugin()

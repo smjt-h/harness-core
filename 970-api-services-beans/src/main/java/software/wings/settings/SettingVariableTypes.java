@@ -270,6 +270,8 @@ public enum SettingVariableTypes {
 
   HTTP_HELM_REPO("HTTP Helm Repository"),
 
+  OCI_HELM_REPO("OCI Registry Helm Repository"),
+
   AMAZON_S3_HELM_REPO("Amazon S3 Helm Repository"),
 
   GCS_HELM_REPO("GCS Helm Repository"),

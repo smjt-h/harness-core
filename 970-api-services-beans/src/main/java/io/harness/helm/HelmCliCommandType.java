@@ -21,6 +21,7 @@ public enum HelmCliCommandType {
   VERSION,
   REPO_ADD_CHART_MEUSEUM,
   REPO_ADD_HTTP,
+  OCI_REGISTRY_LOGIN,
   FETCH,
   REPO_REMOVE,
   INIT,

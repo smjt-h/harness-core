@@ -145,6 +145,9 @@ public class ConnectorsController {
         return QLSftpConnector.builder();
       case HTTP_HELM_REPO:
         return QLHttpHelmRepoConnector.builder();
+      case OCI_HELM_REPO:
+        return null;
+      // TODO: 13/04/22 add QL connector here for OCI
       case AMAZON_S3_HELM_REPO:
         return QLAmazonS3HelmRepoConnector.builder();
       case GCS_HELM_REPO:

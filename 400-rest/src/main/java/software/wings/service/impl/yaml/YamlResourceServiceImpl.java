@@ -610,6 +610,7 @@ public class YamlResourceServiceImpl implements YamlResourceService {
       case ACR:
       case AMAZON_S3:
       case HTTP_HELM_REPO:
+      case OCI_HELM_REPO:
       case AMAZON_S3_HELM_REPO:
       case GCS_HELM_REPO:
       case AZURE_ARTIFACTS_PAT:

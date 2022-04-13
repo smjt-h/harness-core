@@ -36,6 +36,7 @@ import software.wings.beans.settings.helm.HelmRepoConfig;
 import software.wings.beans.settings.helm.HelmRepoConfigValidationResponse;
 import software.wings.beans.settings.helm.HelmRepoConfigValidationTaskParams;
 import software.wings.beans.settings.helm.HttpHelmRepoConfig;
+import software.wings.beans.settings.helm.OciHelmRepoConfig;
 import software.wings.delegatetasks.helm.HelmTaskHelper;
 import software.wings.service.intfc.security.EncryptionService;
 
@@ -116,6 +117,9 @@ public class HelmRepoConfigValidationTask extends AbstractDelegateRunnableTask {
         tryAddingHttpHelmRepo(helmRepoConfig, repoName, taskParams.getRepoDisplayName(), workingDirectory);
         break;
 
+      case OCI_HELM_REPO:
+        tryLoginOciRegistry(helmRepoConfig, defaultHelmVersion, workingDirectory);
+        break;
       case AMAZON_S3_HELM_REPO:
         tryAddingAmazonS3HelmRepo(helmRepoConfig, repoName, taskParams, workingDirectory);
         break;
@@ -131,6 +135,11 @@ public class HelmRepoConfigValidationTask extends AbstractDelegateRunnableTask {
 
     helmTaskHelper.removeRepo(repoName, workingDirectory, defaultHelmVersion, DEFAULT_TIMEOUT_IN_MILLIS);
     helmTaskHelper.cleanup(workingDirectory);
+  }
+
+  private void tryLoginOciRegistry(HelmRepoConfig helmRepoConfig, HelmVersion helmVersion, String workingDirectory) {
+    helmTaskHelper.loginOciRegistry(
+        (OciHelmRepoConfig) helmRepoConfig, helmVersion, DEFAULT_TIMEOUT_IN_MILLIS, workingDirectory);
   }
 
   private void tryAddingGCSHelmRepo(HelmRepoConfig helmRepoConfig, String repoName,

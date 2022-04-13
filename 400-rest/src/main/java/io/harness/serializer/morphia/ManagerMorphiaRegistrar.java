@@ -411,6 +411,7 @@ import software.wings.beans.settings.azureartifacts.AzureArtifactsPATConfig;
 import software.wings.beans.settings.helm.AmazonS3HelmRepoConfig;
 import software.wings.beans.settings.helm.GCSHelmRepoConfig;
 import software.wings.beans.settings.helm.HttpHelmRepoConfig;
+import software.wings.beans.settings.helm.OciHelmRepoConfig;
 import software.wings.beans.shellscript.provisioner.ShellScriptInfrastructureProvisioner;
 import software.wings.beans.sso.LdapSettings;
 import software.wings.beans.sso.OauthSettings;
@@ -1266,6 +1267,7 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     w.put("beans.settings.helm.AmazonS3HelmRepoConfig", AmazonS3HelmRepoConfig.class);
     w.put("beans.settings.helm.GCSHelmRepoConfig", GCSHelmRepoConfig.class);
     w.put("beans.settings.helm.HttpHelmRepoConfig", HttpHelmRepoConfig.class);
+    w.put("beans.settings.helm.OciHelmRepoConfig", OciHelmRepoConfig.class);
     w.put("beans.SftpConfig", SftpConfig.class);
     w.put("beans.SlackConfig", SlackConfig.class);
     w.put("beans.SmbConfig", SmbConfig.class);
