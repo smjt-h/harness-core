@@ -92,6 +92,7 @@ message GetFileRequest {
   string branchName = 2;
   string filePath = 3;
   string connectorRef = 4;
+  ScopeIdentifiers scopeIdentifiers = 5;
 }
 
 message GetFileResponse {
@@ -105,4 +106,10 @@ message GitMetaData {
   string repoName = 1;
   string branchName = 2;
   string commitId = 3;
+}
+
+message ScopeIdentifiers {
+  string accountIdentifier = 1;
+  string orgIdentifier = 2;
+  string projectIdentifier = 3;
 }
