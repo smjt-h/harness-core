@@ -8,8 +8,12 @@
 package software.wings.service.impl.yaml.handler.setting.sourcerepoprovider;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.exception.WingsException.USER;
+
+import static software.wings.beans.CGConstants.ENCRYPTED_VALUE_STR;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.exception.InvalidRequestException;
 
 import software.wings.beans.GitConfig;
 import software.wings.beans.GitConfig.Yaml;
@@ -57,24 +61,31 @@ public class GitConfigYamlHandler extends SourceRepoProviderYamlHandler<Yaml, Gi
     String uuid = previous != null ? previous.getUuid() : null;
     Yaml yaml = changeContext.getYaml();
     String accountId = changeContext.getChange().getAccountId();
+    String password = yaml.getPassword();
+    String sshSettingId =
+        yaml.getSshKeyName() != null ? settingsService.getSSHSettingId(accountId, yaml.getSshKeyName()) : null;
+    if (password == ENCRYPTED_VALUE_STR && sshSettingId == null) {
+      throw new InvalidRequestException("Both SSH key and password cannot be null", USER);
+    }
+    if (password != ENCRYPTED_VALUE_STR && sshSettingId != null) {
+      throw new InvalidRequestException("Cannot use both the encryption types SSH key and password at once", USER);
+    }
 
-    GitConfig config =
-        GitConfig.builder()
-            .accountId(accountId)
-            .repoUrl(yaml.getUrl())
-            .branch(yaml.getBranch())
-            .encryptedPassword(yaml.getPassword())
-            .username(yaml.getUsername())
-            .keyAuth(yaml.isKeyAuth())
-            .sshSettingId(
-                yaml.getSshKeyName() != null ? settingsService.getSSHSettingId(accountId, yaml.getSshKeyName()) : null)
-            .authorName(yaml.getAuthorName())
-            .authorEmailId(yaml.getAuthorEmailId())
-            .commitMessage(yaml.getCommitMessage())
-            .urlType(yaml.getUrlType())
-            .delegateSelectors(yaml.getDelegateSelectors())
-            .providerType(yaml.getProviderType())
-            .build();
+    GitConfig config = GitConfig.builder()
+                           .accountId(accountId)
+                           .repoUrl(yaml.getUrl())
+                           .branch(yaml.getBranch())
+                           .encryptedPassword(password)
+                           .username(yaml.getUsername())
+                           .keyAuth(yaml.isKeyAuth())
+                           .sshSettingId(sshSettingId)
+                           .authorName(yaml.getAuthorName())
+                           .authorEmailId(yaml.getAuthorEmailId())
+                           .commitMessage(yaml.getCommitMessage())
+                           .urlType(yaml.getUrlType())
+                           .delegateSelectors(yaml.getDelegateSelectors())
+                           .providerType(yaml.getProviderType())
+                           .build();
     return buildSettingAttribute(accountId, changeContext.getChange().getFilePath(), uuid, config);
   }
 

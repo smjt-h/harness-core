@@ -8,10 +8,16 @@
 package software.wings.yaml.handler.connectors.configyamlhandlers;
 
 import static io.harness.rule.OwnerRule.DHRUV;
+import static io.harness.rule.OwnerRule.PRATYUSH;
+
+import static software.wings.beans.CGConstants.ENCRYPTED_VALUE_STR;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doReturn;
 
 import io.harness.category.element.UnitTests;
+import io.harness.exception.InvalidRequestException;
 import io.harness.rule.Owner;
 
 import software.wings.beans.GitConfig;
@@ -22,6 +28,7 @@ import software.wings.beans.yaml.ChangeContext;
 import software.wings.beans.yaml.YamlType;
 import software.wings.service.impl.yaml.handler.setting.sourcerepoprovider.GitConfigYamlHandler;
 import software.wings.service.impl.yaml.handler.templatelibrary.SettingValueConfigYamlHandlerTestBase;
+import software.wings.service.intfc.SettingsService;
 import software.wings.settings.SettingValue;
 
 import com.google.inject.Inject;
@@ -29,9 +36,11 @@ import java.util.Collections;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 
 public class GitConfigYamlHandlerTest extends SettingValueConfigYamlHandlerTestBase {
   @InjectMocks @Inject private GitConfigYamlHandler yamlHandler;
+  @Mock private SettingsService settingsService;
   public static final String username = "dummyUsername";
   public static final String password = "dummyPassword";
   public static final String SAMPLE_STRING = "sample-string";
@@ -115,5 +124,76 @@ public class GitConfigYamlHandlerTest extends SettingValueConfigYamlHandlerTestB
     assertThat(yaml.getSshKeyName()).isEqualTo(null);
     assertThat(yaml.getDelegateSelectors()).isEqualTo(Collections.emptyList());
     assertThat(yaml.getProviderType()).isEqualTo(ProviderType.GIT);
+  }
+
+  @Test
+  @Owner(developers = PRATYUSH)
+  @Category(UnitTests.class)
+  public void testToBeanWithSSHKeyNameAndPassword() {
+    GitConfig.Yaml yaml = GitConfig.Yaml.builder()
+                              .branch(SAMPLE_STRING)
+                              .reference(SAMPLE_STRING)
+                              .keyAuth(true)
+                              .sshKeyName(SAMPLE_STRING)
+                              .authorName(SAMPLE_STRING)
+                              .authorEmailId(SAMPLE_STRING)
+                              .commitMessage(SAMPLE_STRING)
+                              .description(SAMPLE_STRING)
+                              .password(SAMPLE_STRING)
+                              .username(SAMPLE_STRING)
+                              .url(SAMPLE_STRING)
+                              .delegateSelectors(Collections.emptyList())
+                              .providerType(ProviderType.GIT)
+                              .build();
+
+    Change change = Change.Builder.aFileChange()
+                        .withAccountId("ABC")
+                        .withFilePath("Setup/Source Repo Provider/test-harness.yaml")
+                        .build();
+    ChangeContext<GitConfig.Yaml> changeContext = ChangeContext.Builder.aChangeContext()
+                                                      .withYamlType(YamlType.SOURCE_REPO_PROVIDER)
+                                                      .withYaml(yaml)
+                                                      .withChange(change)
+                                                      .build();
+
+    doReturn(SAMPLE_STRING).when(settingsService).getSSHSettingId("ABC", yaml.getSshKeyName());
+    assertThatThrownBy(() -> yamlHandler.toBean(null, changeContext, null))
+        .isInstanceOf(InvalidRequestException.class)
+        .matches(ex -> ex.getMessage().equals("Cannot use both the encryption types SSH key and password at once"));
+  }
+
+  @Test
+  @Owner(developers = PRATYUSH)
+  @Category(UnitTests.class)
+  public void testToBeanWithoutSSHKeyNameAndPassword() {
+    GitConfig.Yaml yaml = GitConfig.Yaml.builder()
+                              .branch(SAMPLE_STRING)
+                              .reference(SAMPLE_STRING)
+                              .keyAuth(true)
+                              .sshKeyName(null)
+                              .authorName(SAMPLE_STRING)
+                              .authorEmailId(SAMPLE_STRING)
+                              .commitMessage(SAMPLE_STRING)
+                              .description(SAMPLE_STRING)
+                              .password(ENCRYPTED_VALUE_STR)
+                              .username(SAMPLE_STRING)
+                              .url(SAMPLE_STRING)
+                              .delegateSelectors(Collections.emptyList())
+                              .providerType(ProviderType.GIT)
+                              .build();
+
+    Change change = Change.Builder.aFileChange()
+                        .withAccountId("ABC")
+                        .withFilePath("Setup/Source Repo Provider/test-harness.yaml")
+                        .build();
+    ChangeContext<GitConfig.Yaml> changeContext = ChangeContext.Builder.aChangeContext()
+                                                      .withYamlType(YamlType.SOURCE_REPO_PROVIDER)
+                                                      .withYaml(yaml)
+                                                      .withChange(change)
+                                                      .build();
+
+    assertThatThrownBy(() -> yamlHandler.toBean(null, changeContext, null))
+        .isInstanceOf(InvalidRequestException.class)
+        .matches(ex -> ex.getMessage().equals("Both SSH key and password cannot be null"));
   }
 }
