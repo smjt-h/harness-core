@@ -19,9 +19,9 @@
 accountId: kmpySmUISimoRrJL6NL73w
 accountSecret: 2f6b0988b6fb3370073c3d0505baee59
 dynamicHandlingOfRequestEnabled: false
-managerUrl: https://goku.delegate.pr.harness.io/api/
-verificationServiceUrl: https://pr.harness.io/johannes-delegate-mtls/verification/
-cvNextGenUrl: https://pr.harness.io/johannes-delegate-mtls/cv/api/
+managerUrl: https://test.delegate.pr.harness.io/api/
+verificationServiceUrl: https://test.delegate.pr.harness.io/verification/
+cvNextGenUrl: https://test.delegate.pr.harness.io/cv/api/
 watcherCheckLocation: https://qa.harness.io/public/pr/premium/watchers/current.version
 heartbeatIntervalMs: 60000
 doUpgrade: false
@@ -32,7 +32,7 @@ useCdn: true
 cdnUrl: https://qa.harness.io
 grpcServiceEnabled:
 grpcServiceConnectorPort:
-logStreamingServiceBaseUrl: https://pr.harness.io/johannes-delegate-mtls/log-service/
+logStreamingServiceBaseUrl: https://test.delegate.pr.harness.io/log-service/
 clientToolsDownloadDisabled: true
 installClientToolsInBackground: false
 clientCertificateFilePath: /Users/johannesbatzill/Workspaces/Sandbox/Certs/CA/goku.ca/certs/client1.goku.io/cert.crt

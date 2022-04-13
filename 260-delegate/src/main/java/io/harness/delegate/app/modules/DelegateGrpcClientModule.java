@@ -25,10 +25,10 @@ public class DelegateGrpcClientModule extends AbstractManagerGrpcClientModule {
   @Override
   public ManagerGrpcClientModule.Config config() {
     return ManagerGrpcClientModule.Config.builder()
-        .target("goku.delegate.pr.harness.io")
+        .target("test.delegate.pr.harness.io")
         //        .target(Optional.ofNullable(configuration.getManagerTarget())
         //                    .orElseGet(() -> extractTarget(configuration.getManagerUrl())))
-        .authority("goku.delegate.pr.harness.io")
+        .authority("test.delegate.pr.harness.io")
         //        .authority(Optional.ofNullable(configuration.getManagerAuthority())
         //                       .orElseGet(() -> extractAuthority(configuration.getManagerUrl(), "manager")))
         .scheme(extractScheme(configuration.getManagerUrl()))
