@@ -13,7 +13,6 @@ provisioner:
             roleArn:
             templateFile:
             parameters:
-              - identifier:
             stackName:
             parameterOverrides:
             skipOnStakStatuses:
