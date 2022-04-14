@@ -33,7 +33,7 @@ import lombok.experimental.FieldDefaults;
 @OwnedBy(HarnessTeam.CDP)
 @RecasterAlias("io.harness.cdng.provision.cloudformation.CloudformationCreateStackStepConfiguration")
 public class CloudformationCreateStackStepConfiguration {
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> stackName;
+  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> stackName;
   @NotNull CloudformationTemplateFile templateFile;
   @JsonProperty("parameters") List<CloudformationParametersFileSpec> parametersFilesSpecs;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> connectorRef;

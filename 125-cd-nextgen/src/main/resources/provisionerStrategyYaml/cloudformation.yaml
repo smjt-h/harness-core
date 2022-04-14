@@ -15,7 +15,7 @@ provisioner:
             parameters:
             stackName:
             parameterOverrides:
-            skipOnStakStatuses:
+            skipOnStackStatuses:
             capabilities:
             tags:
     - step:

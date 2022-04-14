@@ -7,6 +7,8 @@
 
 package io.harness.cdng.provision.cloudformation;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -67,18 +69,20 @@ public class CloudformationCreateStackStepInfo
           remoteTemplateFile.getStore().getSpec().getConnectorReference());
     }
 
-    if (cloudformationStepConfiguration.getTags().getSpec().getType().equals(CloudformationTagsFileTypes.Remote)) {
+    if (cloudformationStepConfiguration.getTags() != null
+        && cloudformationStepConfiguration.getTags().getSpec().getType().equals(CloudformationTagsFileTypes.Remote)) {
       RemoteCloudformationTagsFileSpec remoteTemplateFile =
           (RemoteCloudformationTagsFileSpec) cloudformationStepConfiguration.getTags().getSpec();
       connectorRefMap.put("configuration.spec.tags.store.spec.connectorRef",
           remoteTemplateFile.getStore().getSpec().getConnectorReference());
     }
 
-    cloudformationStepConfiguration.getParametersFilesSpecs().forEach(cloudformationParametersFileSpec -> {
-      connectorRefMap.put("configuration.spec.parameters." + cloudformationParametersFileSpec.getIdentifier()
-              + ".store.spec.connectorRef",
-          cloudformationParametersFileSpec.getStore().getSpec().getConnectorReference());
-    });
+    if (isNotEmpty(cloudformationStepConfiguration.getParametersFilesSpecs())) {
+      cloudformationStepConfiguration.getParametersFilesSpecs().forEach(cloudformationParametersFileSpec
+          -> connectorRefMap.put("configuration.spec.parameters." + cloudformationParametersFileSpec.getIdentifier()
+                  + ".store.spec.connectorRef",
+              cloudformationParametersFileSpec.getStore().getSpec().getConnectorReference()));
+    }
 
     return connectorRefMap;
   }
