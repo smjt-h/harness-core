@@ -92,8 +92,6 @@ public class ManagerExecutor {
 
     final Path config = Paths.get(directory.getPath(), "360-cg-manager", "modified_config.yml");
 
-    String alpn = Alpn.location();
-
     for (int i = 0; i < 10; i++) {
       log.info("***");
     }
@@ -105,7 +103,6 @@ public class ManagerExecutor {
     addGCVMOptions(command);
 
     command.add("-Dfile.encoding=UTF-8");
-    command.add("-Xbootclasspath/p:" + alpn);
 
     addJacocoAgentVM(jar, command);
 
