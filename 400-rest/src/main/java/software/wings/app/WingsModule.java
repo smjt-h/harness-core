@@ -1752,6 +1752,11 @@ public class WingsModule extends AbstractModule implements ServersModule {
 
   @Provides
   public KryoPoolConfiguration kryoPoolConfiguration() {
-    return configuration.getKryoPoolConfig();
+    KryoPoolConfiguration kpConfig = configuration.getKryoPoolConfig();
+    if (kpConfig == null) {
+      log.warn("Kryo pool configuration not set, switching to default values");
+      kpConfig = KryoPoolConfiguration.builder().build();
+    }
+    return kpConfig;
   }
 }
