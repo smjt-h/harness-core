@@ -44,7 +44,8 @@ public class CIDelegateTaskExecutor {
     this.delegateCallbackTokenSupplier = delegateCallbackTokenSupplier;
   }
 
-  public String queueTask(Map<String, String> setupAbstractions, HDelegateTask task, List<TaskSelector> delegateSelectors) {
+  public String queueTask(
+      Map<String, String> setupAbstractions, HDelegateTask task, List<TaskSelector> delegateSelectors) {
     String accountId = task.getAccountId();
     TaskData taskData = task.getData();
     final DelegateTaskRequest delegateTaskRequest = DelegateTaskRequest.builder()

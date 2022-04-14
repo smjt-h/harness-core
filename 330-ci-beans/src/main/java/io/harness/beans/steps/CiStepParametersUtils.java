@@ -7,29 +7,29 @@
 
 package io.harness.beans.steps;
 
+import static io.harness.pms.yaml.YAMLFieldNameConstants.PIPELINE;
+import static io.harness.pms.yaml.YAMLFieldNameConstants.STAGE;
+import static io.harness.pms.yaml.YAMLFieldNameConstants.STEP;
+import static io.harness.pms.yaml.YAMLFieldNameConstants.STEP_GROUP;
+
 import io.harness.advisers.rollback.OnFailRollbackParameters;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.delegate.TaskSelector;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.StepElementParameters.StepElementParametersBuilder;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.yaml.ParameterField;
-import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.steps.StepUtils;
 import io.harness.utils.TimeoutUtils;
 
-import lombok.experimental.UtilityClass;
-
-import java.util.ArrayList;
 import java.util.List;
-
-import static io.harness.pms.yaml.YAMLFieldNameConstants.*;
-import static io.harness.pms.yaml.YAMLFieldNameConstants.STAGE;
+import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
 @UtilityClass
 @OwnedBy(HarnessTeam.CI)
+@Slf4j
 public class CiStepParametersUtils {
   public StepElementParametersBuilder getStepParameters(CIAbstractStepNode stepNode) {
     StepElementParametersBuilder stepBuilder = StepElementParameters.builder();
@@ -51,13 +51,19 @@ public class CiStepParametersUtils {
     return stepBuilder;
   }
 
-  public ParameterField<List<TaskSelectorYaml>> getDelegateSelectors(PlanCreationContext ctx){
+  public ParameterField<List<TaskSelectorYaml>> getDelegateSelectors(PlanCreationContext ctx) {
     ParameterField<List<TaskSelectorYaml>> delegateSelectors = null;
-    try{
-       delegateSelectors = StepUtils.delegateSelectorsFromFqn(ctx, STEP_GROUP);
+    try {
+      // there should not be any selectors at step level for CI
+      if (!ParameterField.isNull(StepUtils.delegateSelectorsFromFqn(ctx, STEP))) {
+        log.warn("Getting delegate selectors at step level in CI");
+      }
+
+      // Delegate Selector Precedence: 1)stepGroup -> 2)Stage ->  3)Pipeline
+      delegateSelectors = StepUtils.delegateSelectorsFromFqn(ctx, STEP_GROUP);
       if (!ParameterField.isNull(delegateSelectors)) {
         delegateSelectors.getValue().forEach(selector -> selector.setOrigin(STEP_GROUP));
-         return delegateSelectors;
+        return delegateSelectors;
       }
 
       delegateSelectors = StepUtils.delegateSelectorsFromFqn(ctx, STAGE);
@@ -71,13 +77,9 @@ public class CiStepParametersUtils {
         delegateSelectors.getValue().forEach(selector -> selector.setOrigin(PIPELINE));
         return delegateSelectors;
       }
-      return delegateSelectors;
-
-    }catch (Exception e){
-
+    } catch (Exception e) {
+      log.error("Exception while getting delegate selectors from yaml.", e);
     }
-
-
     return delegateSelectors;
   }
 }

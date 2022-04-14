@@ -95,7 +95,6 @@ import io.harness.yaml.core.timeout.Timeout;
 
 import com.google.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -163,8 +162,8 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
       return executeK8AsyncAfterRbac(ambiance, stepIdentifier, runtimeId, ciStepInfo, stepParametersName, accountId,
           logKey, timeoutInMillis, stringTimeout);
     } else if (stageInfraType == StageInfraDetails.Type.VM) {
-      return executeVmAsyncAfterRbac(
-          ambiance, stepIdentifier, runtimeId, ciStepInfo, accountId, logKey, timeoutInMillis, stringTimeout,delegateSelectors);
+      return executeVmAsyncAfterRbac(ambiance, stepIdentifier, runtimeId, ciStepInfo, accountId, logKey,
+          timeoutInMillis, stringTimeout, delegateSelectors);
     } else {
       throw new CIStageExecutionException(format("Invalid infra type: %s", stageInfraType));
     }
@@ -190,7 +189,8 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
   }
 
   private AsyncExecutableResponse executeVmAsyncAfterRbac(Ambiance ambiance, String stepIdentifier, String runtimeId,
-      CIStepInfo ciStepInfo, String accountId, String logKey, long timeoutInMillis, String stringTimeout, List<TaskSelector> delegateSelectors) {
+      CIStepInfo ciStepInfo, String accountId, String logKey, long timeoutInMillis, String stringTimeout,
+      List<TaskSelector> delegateSelectors) {
     OptionalSweepingOutput optionalSweepingOutput = executionSweepingOutputResolver.resolveOptional(
         ambiance, RefObjectUtils.getSweepingOutputRefObject(ContextElement.stageDetails));
     if (!optionalSweepingOutput.isFound()) {
@@ -230,7 +230,8 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
                                            .logKey(logKey)
                                            .workingDir(vmStageInfraDetails.getWorkDir())
                                            .build();
-    String taskId = queueDelegateTask(ambiance, timeoutInMillis, accountId, ciDelegateTaskExecutor, params, delegateSelectors);
+    String taskId =
+        queueDelegateTask(ambiance, timeoutInMillis, accountId, ciDelegateTaskExecutor, params, delegateSelectors);
     return AsyncExecutableResponse.newBuilder()
         .addCallbackIds(taskId)
         .addAllLogKeys(CollectionUtils.emptyIfNull(singletonList(logKey)))
