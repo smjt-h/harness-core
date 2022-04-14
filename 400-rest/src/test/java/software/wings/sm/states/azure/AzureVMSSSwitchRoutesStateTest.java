@@ -109,9 +109,8 @@ public class AzureVMSSSwitchRoutesStateTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testSwitchRouteFailure() {
     ExecutionContextImpl mockContext = mock(ExecutionContextImpl.class);
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(azureVMSSStateHelper)
+    doAnswer(invocation -> { throw new Exception(); })
+        .when(azureVMSSStateHelper)
         .createAndSaveActivity(eq(mockContext), eq(null), anyString(), anyString(), any(), any());
     switchRoutesState.execute(mockContext);
   }
@@ -121,9 +120,8 @@ public class AzureVMSSSwitchRoutesStateTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testSwitchRouteWingsExceptionFailure() {
     ExecutionContextImpl mockContext = mock(ExecutionContextImpl.class);
-    doAnswer(invocation -> {
-      throw new WingsException("");
-    }).when(azureVMSSStateHelper)
+    doAnswer(invocation -> { throw new WingsException(""); })
+        .when(azureVMSSStateHelper)
         .createAndSaveActivity(eq(mockContext), eq(null), anyString(), anyString(), any(), any());
     switchRoutesState.execute(mockContext);
   }
@@ -190,9 +188,7 @@ public class AzureVMSSSwitchRoutesStateTest extends WingsBaseTest {
                 AzureVMSSSwitchRoutesResponse.builder().delegateMetaInfo(DelegateMetaInfo.builder().build()).build())
             .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
             .build();
-    doAnswer(invocation -> {
-      throw new WingsException("");
-    }).when(azureVMSSStateHelper).getExecutionStatus(any());
+    doAnswer(invocation -> { throw new WingsException(""); }).when(azureVMSSStateHelper).getExecutionStatus(any());
     switchRoutesState.handleAsyncResponse(mockContext, ImmutableMap.of(ACTIVITY_ID, taskExecutionResponse));
   }
 
@@ -223,9 +219,8 @@ public class AzureVMSSSwitchRoutesStateTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testSwitchRouteRollBackFailure() {
     ExecutionContextImpl mockContext = mock(ExecutionContextImpl.class);
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(azureVMSSStateHelper)
+    doAnswer(invocation -> { throw new Exception(); })
+        .when(azureVMSSStateHelper)
         .createAndSaveActivity(eq(mockContext), eq(null), anyString(), anyString(), any(), any());
     switchRouteRollbackState.execute(mockContext);
   }
@@ -235,9 +230,8 @@ public class AzureVMSSSwitchRoutesStateTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testSwitchRouteRollBackWingsExceptionFailure() {
     ExecutionContextImpl mockContext = mock(ExecutionContextImpl.class);
-    doAnswer(invocation -> {
-      throw new WingsException("");
-    }).when(azureVMSSStateHelper)
+    doAnswer(invocation -> { throw new WingsException(""); })
+        .when(azureVMSSStateHelper)
         .createAndSaveActivity(eq(mockContext), eq(null), anyString(), anyString(), any(), any());
     switchRouteRollbackState.execute(mockContext);
   }
@@ -310,9 +304,7 @@ public class AzureVMSSSwitchRoutesStateTest extends WingsBaseTest {
     doReturn(SUCCESS).when(azureVMSSStateHelper).getExecutionStatus(any());
 
     if (!isSuccess) {
-      doAnswer(invocation -> {
-        throw new Exception();
-      }).when(delegateService).queueTask(any());
+      doAnswer(invocation -> { throw new Exception(); }).when(delegateService).queueTask(any());
     }
     return mockContext;
   }
