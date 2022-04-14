@@ -16,6 +16,7 @@ import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.plancreator.stages.stage.StageInfoConfig;
 import io.harness.steps.StepSpecTypeConstants;
+import io.harness.yaml.core.VariableExpression;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -39,6 +40,7 @@ public class IntegrationStageNode extends IntegrationAbstractStageNode {
 
   @JsonProperty("spec")
   @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
+  @VariableExpression
   IntegrationStageConfig integrationStageConfig;
   @Override
   public String getType() {

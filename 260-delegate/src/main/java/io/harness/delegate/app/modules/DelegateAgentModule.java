@@ -61,7 +61,6 @@ public class DelegateAgentModule extends AbstractModule {
 
     final String deployMode = System.getenv().get(DEPLOY_MODE);
     if (!ONPREM.name().equals(deployMode)) {
-      install(new PerpetualTaskWorkerModule());
     }
 
     if (!isOnPrem(deployMode)) {
