@@ -13,9 +13,12 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.exception.HintException.HINT_AWS_CONNECTOR_NG_DOCUMENTATION;
 import static io.harness.exception.HintException.IAM_DETAILS_COMMAND;
 
+import static software.wings.service.impl.aws.model.AwsConstants.AWS_DEFAULT_REGION;
+
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.StringUtils.defaultString;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.aws.beans.AwsInternalConfig;
@@ -473,10 +476,16 @@ public class AwsClientImpl implements AwsClient {
     }
     return emptyMap();
   }
+
   @VisibleForTesting
   AmazonIdentityManagementClient getAmazonIdentityManagementClient(AwsInternalConfig awsConfig) {
-    AmazonIdentityManagementClientBuilder builder = AmazonIdentityManagementClient.builder();
+    AmazonIdentityManagementClientBuilder builder =
+        AmazonIdentityManagementClient.builder().withRegion(getRegion(awsConfig));
     awsApiHelperService.attachCredentialsAndBackoffPolicy(builder, awsConfig);
     return (AmazonIdentityManagementClient) builder.build();
+  }
+
+  private String getRegion(AwsInternalConfig awsConfig) {
+    return isNotBlank(awsConfig.getDefaultRegion()) ? awsConfig.getDefaultRegion() : AWS_DEFAULT_REGION;
   }
 }
