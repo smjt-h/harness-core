@@ -7,6 +7,8 @@
 
 package io.harness.plancreator.pipeline;
 
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
@@ -15,9 +17,11 @@ import io.harness.data.validator.EntityName;
 import io.harness.notification.bean.NotificationRules;
 import io.harness.plancreator.flowcontrol.FlowControlConfig;
 import io.harness.plancreator.stages.StageElementWrapperConfig;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.validator.NGRegexValidatorConstants;
+import io.harness.yaml.YamlSchemaTypes;
 import io.harness.yaml.core.VariableExpression;
 import io.harness.yaml.core.properties.NGProperties;
 import io.harness.yaml.core.timeout.Timeout;
@@ -89,4 +93,8 @@ public class PipelineInfoConfig {
   ParameterField<Timeout> timeout;
 
   @VariableExpression(skipVariableExpression = true) boolean allowStageExecutions;
+
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
+  @YamlSchemaTypes(value = {runtime})
+  ParameterField<List<TaskSelectorYaml>> delegateSelectors;
 }
