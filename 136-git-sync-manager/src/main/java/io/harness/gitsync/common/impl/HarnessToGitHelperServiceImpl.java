@@ -372,4 +372,14 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     // Return dummy commit id in other cases, will not be used anywhere
     return "";
   }
+
+  private String fetchLastCommitIdForFile(
+      FileInfo request, EntityDetail entityDetailDTO, ScmConnector connectorConfig) {
+    // Perform fetch commit id ops for only bitbucket for now
+    if (ConnectorType.BITBUCKET.equals(connectorConfig.getConnectorType())) {
+      return fetchLastCommitIdForFile(request, entityDetailDTO);
+    }
+    // Return dummy commit id in other cases, will not be used anywhere
+    return "";
+  }
 }

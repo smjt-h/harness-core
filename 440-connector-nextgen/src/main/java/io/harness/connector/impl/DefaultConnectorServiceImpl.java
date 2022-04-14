@@ -820,7 +820,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
       }
       return validationFailureBuilder.build();
     } catch (WingsException wingsException) {
-      log.error("An error occurred while validating the Connector ", wingsException);
+      log.error("An error occurred while validating the Connector");
       // handle flows which are registered to error handling framework
       throw wingsException;
     } catch (Exception ex) {
