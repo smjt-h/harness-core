@@ -394,9 +394,11 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
 
   @Override
   public CreateFileResponse createFile(InfoForGitPush infoForPush) {
+    System.out.println("okkkkkkkkk--");
     GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(),
         infoForPush.getFilePath(), infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch(),
         SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()), infoForPush.getCommitId());
+    System.out.println("okkkkkkkkk--" + gitFileDetails.toString());
     final List<EncryptedDataDetail> encryptionDetails = getEncryptedDataDetails(infoForPush.getAccountId(),
         infoForPush.getOrgIdentifier(), infoForPush.getProjectIdentifier(), infoForPush.getScmConnector());
     ScmPushTaskParams scmPushTaskParams = ScmPushTaskParams.builder()

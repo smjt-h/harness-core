@@ -194,6 +194,7 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
 
   @Override
   public CreateFileResponse createFile(InfoForGitPush infoForPush) {
+    System.out.println("okkkkkkkkk++");
     ScmConnector decryptedConnector = gitSyncConnectorHelper.getDecryptedConnector(infoForPush.getAccountId(),
         infoForPush.getOrgIdentifier(), infoForPush.getProjectIdentifier(), infoForPush.getScmConnector());
     if (infoForPush.isNewBranch()) {

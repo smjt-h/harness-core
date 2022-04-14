@@ -34,6 +34,8 @@ import io.harness.delegate.beans.connector.scm.awscodecommit.AwsCodeCommitAuthen
 import io.harness.delegate.beans.connector.scm.awscodecommit.AwsCodeCommitHttpsAuthType;
 import io.harness.delegate.beans.connector.scm.awscodecommit.AwsCodeCommitHttpsCredentialsDTO;
 import io.harness.delegate.beans.connector.scm.awscodecommit.AwsCodeCommitSecretKeyAccessKeyDTO;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoAuthenticationDTO;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoSshCredentialsDTO;
 import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketAuthenticationDTO;
 import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketSshCredentialsDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubAuthenticationDTO;
@@ -295,11 +297,11 @@ public class SourceCodeManagerServiceImplTest extends NgManagerTestBase {
   }
 
   private SourceCodeManagerDTO azureDevOpsSCMDTOCreate() {
-    GithubAuthenticationDTO githubAuthenticationDTO =
-        GithubAuthenticationDTO.builder()
+    AzureRepoAuthenticationDTO githubAuthenticationDTO =
+        AzureRepoAuthenticationDTO.builder()
             .authType(GitAuthType.SSH)
             .credentials(
-                GithubSshCredentialsDTO.builder().sshKeyRef(SecretRefHelper.createSecretRef(sshKeyRef)).build())
+                AzureRepoSshCredentialsDTO.builder().sshKeyRef(SecretRefHelper.createSecretRef(sshKeyRef)).build())
             .build();
     return AzureDevOpsSCMDTO.builder()
         .userIdentifier(userIdentifier)

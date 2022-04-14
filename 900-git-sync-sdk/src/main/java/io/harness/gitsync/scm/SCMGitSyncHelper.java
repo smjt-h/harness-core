@@ -61,7 +61,7 @@ public class SCMGitSyncHelper {
     }
 
     final FileInfo fileInfo = getFileInfo(gitBranchInfo, yaml, changeType, entityDetail);
-
+    System.out.println("-------" + fileInfo.toString());
     final PushFileResponse pushFileResponse =
         GitSyncGrpcClientUtils.retryAndProcessException(harnessToGitPushInfoServiceBlockingStub::pushFile, fileInfo);
     try {
@@ -139,6 +139,7 @@ public class SCMGitSyncHelper {
 
   @VisibleForTesting
   protected void checkForError(PushFileResponse pushFileResponse) {
+    System.out.println(pushFileResponse.toString());
     if (pushFileResponse.getStatus() != 1) {
       final String errorMessage =
           isNotEmpty(pushFileResponse.getError()) ? pushFileResponse.getError() : "Error in doing git push";

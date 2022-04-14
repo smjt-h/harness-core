@@ -246,6 +246,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
 
   @Override
   public PushFileResponse pushFile(FileInfo request) {
+    System.out.println("++++++++++++++++++++ reached");
     final EntityDetail entityDetailDTO = entityDetailRestToProtoMapper.createEntityDetailDTO(request.getEntityDetail());
     final EntityReference entityReference = entityDetailDTO.getEntityRef();
     final String accountId = request.getAccountId();
@@ -253,8 +254,8 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     final ChangeType changeType = request.getChangeType();
     final YamlGitConfigDTO yamlGitConfig = yamlGitConfigService.get(
         entityReference.getProjectIdentifier(), entityReference.getOrgIdentifier(), accountId, yamlGitConfigId);
-
     final InfoForGitPush infoForGitPush = getInfoForGitPush(request, entityDetailDTO, accountId, yamlGitConfig);
+    System.out.println("++++++++++++++++++++" + infoForGitPush.toString());
 
     switch (changeType) {
       case MODIFY:
@@ -272,10 +273,12 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
             .setCommitId(updateFileResponse.getCommitId())
             .build();
       case ADD:
+        System.out.println("|||||||||||" + infoForGitPush.toString());
         final CreateFileResponse createFileResponse =
             scmOrchestratorService.processScmRequest(scmClientFacilitatorService
                 -> scmClientFacilitatorService.createFile(infoForGitPush),
                 entityReference.getProjectIdentifier(), entityReference.getOrgIdentifier(), accountId);
+        System.out.println("|||||||||||" + createFileResponse.toString());
         return PushFileResponse.newBuilder()
             .setAccountId(accountId)
             .setError(createFileResponse.getError())
@@ -324,7 +327,9 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     if (request.getIsFullSyncFlow()) {
       principal = Principal.newBuilder().setUserPrincipal(userProfileHelper.getUserPrincipal()).build();
     }
+    System.out.println("---------reachhh");
     final Optional<ConnectorResponseDTO> connector = getConnector(accountId, yamlGitConfig, principal);
+    System.out.println("---------reachhh2");
     if (!connector.isPresent()) {
       throw new InvalidRequestException(
           String.format("Connector with identifier %s deleted", yamlGitConfig.getGitConnectorRef()));
