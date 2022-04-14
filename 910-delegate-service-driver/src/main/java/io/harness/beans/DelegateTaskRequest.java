@@ -7,6 +7,7 @@
 
 package io.harness.beans;
 
+import io.harness.delegate.TaskSelector;
 import io.harness.delegate.task.TaskParameters;
 
 import java.time.Duration;
@@ -31,4 +32,5 @@ public class DelegateTaskRequest {
   LinkedHashMap<String, String> logStreamingAbstractions;
   boolean forceExecute;
   int expressionFunctorToken;
+  List<TaskSelector> delegateSelectors;
 }

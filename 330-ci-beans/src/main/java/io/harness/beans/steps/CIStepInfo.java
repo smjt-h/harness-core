@@ -28,6 +28,7 @@ import io.harness.beans.steps.stepinfo.UploadToS3StepInfo;
 import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.plancreator.steps.common.StepElementParameters.StepElementParametersBuilder;
 import io.harness.plancreator.steps.common.WithStepElementParameters;
+import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.steps.io.StepParameters;
 import io.harness.yaml.core.StepSpecType;
 
@@ -67,10 +68,12 @@ public interface CIStepInfo extends StepSpecType, WithStepElementParameters, Spe
   }
 
   default StepParameters getStepParameters(
-      CIAbstractStepNode stepElementConfig, OnFailRollbackParameters failRollbackParameters) {
+      CIAbstractStepNode stepElementConfig, OnFailRollbackParameters failRollbackParameters, PlanCreationContext ctx) {
     StepElementParametersBuilder stepParametersBuilder =
         CiStepParametersUtils.getStepParameters(stepElementConfig, failRollbackParameters);
     stepParametersBuilder.spec(getSpecParameters());
+    stepParametersBuilder.delegateSelectors(CiStepParametersUtils.getDelegateSelectors(ctx));
     return stepParametersBuilder.build();
   }
+
 }

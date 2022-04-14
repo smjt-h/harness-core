@@ -10,12 +10,23 @@ package io.harness.beans.steps;
 import io.harness.advisers.rollback.OnFailRollbackParameters;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.TaskSelector;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.StepElementParameters.StepElementParametersBuilder;
+import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.pms.yaml.YAMLFieldNameConstants;
+import io.harness.steps.StepUtils;
 import io.harness.utils.TimeoutUtils;
 
 import lombok.experimental.UtilityClass;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static io.harness.pms.yaml.YAMLFieldNameConstants.*;
+import static io.harness.pms.yaml.YAMLFieldNameConstants.STAGE;
 
 @UtilityClass
 @OwnedBy(HarnessTeam.CI)
@@ -24,7 +35,6 @@ public class CiStepParametersUtils {
     StepElementParametersBuilder stepBuilder = StepElementParameters.builder();
     stepBuilder.name(stepNode.getName());
     stepBuilder.identifier(stepNode.getIdentifier());
-    stepBuilder.delegateSelectors(stepNode.getDelegateSelectors());
     stepBuilder.description(stepNode.getDescription());
     stepBuilder.skipCondition(stepNode.getSkipCondition());
     stepBuilder.timeout(ParameterField.createValueField(TimeoutUtils.getTimeoutString(stepNode.getTimeout())));
@@ -39,5 +49,35 @@ public class CiStepParametersUtils {
     StepElementParametersBuilder stepBuilder = getStepParameters(stepNode);
     stepBuilder.rollbackParameters(failRollbackParameters);
     return stepBuilder;
+  }
+
+  public ParameterField<List<TaskSelectorYaml>> getDelegateSelectors(PlanCreationContext ctx){
+    ParameterField<List<TaskSelectorYaml>> delegateSelectors = null;
+    try{
+       delegateSelectors = StepUtils.delegateSelectorsFromFqn(ctx, STEP_GROUP);
+      if (!ParameterField.isNull(delegateSelectors)) {
+        delegateSelectors.getValue().forEach(selector -> selector.setOrigin(STEP_GROUP));
+         return delegateSelectors;
+      }
+
+      delegateSelectors = StepUtils.delegateSelectorsFromFqn(ctx, STAGE);
+      if (!ParameterField.isNull(delegateSelectors)) {
+        delegateSelectors.getValue().forEach(selector -> selector.setOrigin(STAGE));
+        return delegateSelectors;
+      }
+
+      delegateSelectors = StepUtils.delegateSelectorsFromFqn(ctx, PIPELINE);
+      if (!ParameterField.isNull(delegateSelectors)) {
+        delegateSelectors.getValue().forEach(selector -> selector.setOrigin(PIPELINE));
+        return delegateSelectors;
+      }
+      return delegateSelectors;
+
+    }catch (Exception e){
+
+    }
+
+
+    return delegateSelectors;
   }
 }

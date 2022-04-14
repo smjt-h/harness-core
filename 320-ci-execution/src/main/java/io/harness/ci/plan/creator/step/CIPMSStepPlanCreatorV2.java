@@ -319,7 +319,7 @@ public abstract class CIPMSStepPlanCreatorV2<T extends CIAbstractStepNode> exten
       stepElement.setTimeout(TimeoutUtils.getTimeout(stepElement.getTimeout()));
       return ((CIStepInfo) stepElement.getStepSpecType())
           .getStepParameters(stepElement,
-              getRollbackParameters(ctx.getCurrentField(), Collections.emptySet(), RollbackStrategy.UNKNOWN));
+              getRollbackParameters(ctx.getCurrentField(), Collections.emptySet(), RollbackStrategy.UNKNOWN), ctx);
     }
 
     return stepElement.getStepSpecType().getStepParameters();

@@ -31,7 +31,6 @@ public class StepParameterCommonUtils {
     StepElementParametersBuilder stepBuilder = StepElementParameters.builder();
     stepBuilder.name(stepElementConfig.getName());
     stepBuilder.identifier(stepElementConfig.getIdentifier());
-    stepBuilder.delegateSelectors(stepElementConfig.getDelegateSelectors());
     stepBuilder.description(stepElementConfig.getDescription());
     stepBuilder.failureStrategies(stepElementConfig.getFailureStrategies());
     stepBuilder.skipCondition(stepElementConfig.getSkipCondition());
