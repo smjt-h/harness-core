@@ -158,9 +158,7 @@ public class TimeoutInstanceRemoverTest extends OrchestrationTestBase {
                                       .build();
     NodeUpdateInfo nodeUpdateInfo = NodeUpdateInfo.builder().nodeExecution(nodeExecution).build();
 
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(timeoutEngine).deleteTimeouts(anyList());
+    doAnswer(invocation -> { throw new Exception(); }).when(timeoutEngine).deleteTimeouts(anyList());
     when(nodeExecutionService.removeTimeoutInstances(anyString())).thenReturn(true);
 
     Logger logger = (Logger) LoggerFactory.getLogger(TimeoutInstanceRemover.class);

@@ -244,9 +244,8 @@ public class AzureWebAppSlotSwapTest extends WingsBaseTest {
     }
 
     if (failActivityCreation) {
-      doAnswer(invocation -> {
-        throw new Exception();
-      }).when(azureVMSSStateHelper)
+      doAnswer(invocation -> { throw new Exception(); })
+          .when(azureVMSSStateHelper)
           .createAndSaveActivity(any(), any(), anyString(), anyString(), any(), anyListOf(CommandUnit.class));
     } else {
       doReturn(activity)
@@ -267,9 +266,7 @@ public class AzureWebAppSlotSwapTest extends WingsBaseTest {
       return (String) args[0];
     });
     if (!successEnequeueDelegateTask) {
-      doAnswer(invocation -> {
-        throw new Exception();
-      }).when(delegateService).queueTask(any());
+      doAnswer(invocation -> { throw new Exception(); }).when(delegateService).queueTask(any());
     }
     return mockContext;
   }
@@ -291,9 +288,9 @@ public class AzureWebAppSlotSwapTest extends WingsBaseTest {
         .getAppServiceExecutionStatus(eq(taskExecutionResponse));
 
     if (genericFailure) {
-      doAnswer(invocation -> {
-        throw new Exception();
-      }).when(azureVMSSStateHelper).getAppServiceExecutionStatus(eq(taskExecutionResponse));
+      doAnswer(invocation -> { throw new Exception(); })
+          .when(azureVMSSStateHelper)
+          .getAppServiceExecutionStatus(eq(taskExecutionResponse));
     } else {
       doReturn(isSuccess ? SUCCESS : FAILED)
           .when(azureVMSSStateHelper)

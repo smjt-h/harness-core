@@ -20,8 +20,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -178,36 +178,36 @@ public class AzureAppServiceDeploymentServiceTest extends WingsBaseTest {
             .connSettingsToRemove(connSettingsToRemove)
             .build();
 
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(mockAzureWebClient).deleteDeploymentSlotAppSettings(any(), any(), any());
+    doAnswer(invocation -> { throw new Exception(); })
+        .when(mockAzureWebClient)
+        .deleteDeploymentSlotAppSettings(any(), any(), any());
     assertThatThrownBy(()
                            -> azureAppServiceDeploymentService.deployDockerImage(azureAppServiceDockerDeploymentContext,
                                AzureAppServicePreDeploymentData.builder().build()))
         .isInstanceOf(Exception.class);
 
     reset(mockAzureWebClient);
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(mockAzureWebClient).stopDeploymentSlotAsync(any(), any(), any());
+    doAnswer(invocation -> { throw new Exception(); })
+        .when(mockAzureWebClient)
+        .stopDeploymentSlotAsync(any(), any(), any());
     assertThatThrownBy(()
                            -> azureAppServiceDeploymentService.deployDockerImage(azureAppServiceDockerDeploymentContext,
                                AzureAppServicePreDeploymentData.builder().build()))
         .isInstanceOf(Exception.class);
 
     reset(mockAzureWebClient);
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(mockAzureWebClient).startDeploymentSlotAsync(any(), any(), any());
+    doAnswer(invocation -> { throw new Exception(); })
+        .when(mockAzureWebClient)
+        .startDeploymentSlotAsync(any(), any(), any());
     assertThatThrownBy(()
                            -> azureAppServiceDeploymentService.deployDockerImage(azureAppServiceDockerDeploymentContext,
                                AzureAppServicePreDeploymentData.builder().build()))
         .isInstanceOf(Exception.class);
 
     reset(mockAzureWebClient);
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(mockAzureWebClient).deleteDeploymentSlotDockerSettings(any(), any());
+    doAnswer(invocation -> { throw new Exception(); })
+        .when(mockAzureWebClient)
+        .deleteDeploymentSlotDockerSettings(any(), any());
     assertThatThrownBy(()
                            -> azureAppServiceDeploymentService.deployDockerImage(azureAppServiceDockerDeploymentContext,
                                AzureAppServicePreDeploymentData.builder().build()))

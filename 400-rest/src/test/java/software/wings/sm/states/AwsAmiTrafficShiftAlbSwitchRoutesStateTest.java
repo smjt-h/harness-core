@@ -115,11 +115,9 @@ public class AwsAmiTrafficShiftAlbSwitchRoutesStateTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testSwitchRouteExecuteSetupElementFailure() {
     ExecutionContextImpl mockContext = initializeMockSetup(switchRoutesState, false, false);
-    doAnswer(invocation -> {
-      throw new NullPointerException();
-    })
-            .when(awsAmiServiceHelper)
-            .getSetupElementFromSweepingOutput(mockContext, AMI_ALB_SETUP_SWEEPING_OUTPUT_NAME);
+    doAnswer(invocation -> { throw new NullPointerException(); })
+        .when(awsAmiServiceHelper)
+        .getSetupElementFromSweepingOutput(mockContext, AMI_ALB_SETUP_SWEEPING_OUTPUT_NAME);
     ExecutionResponse response = switchRoutesState.execute(mockContext);
     assertThat(response.getExecutionStatus()).isEqualTo(FAILED);
   }
@@ -238,9 +236,7 @@ public class AwsAmiTrafficShiftAlbSwitchRoutesStateTest extends WingsBaseTest {
         .when(spotinstStateHelper)
         .createActivity(eq(mockContext), eq(null), anyString(), anyString(), any(), any());
     if (!isSuccess) {
-      doAnswer(invocation -> {
-        throw new Exception();
-      }).when(delegateService).queueTask(any());
+      doAnswer(invocation -> { throw new Exception(); }).when(delegateService).queueTask(any());
     }
     return mockContext;
   }

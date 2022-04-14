@@ -390,9 +390,8 @@ public class PcfCommandTaskHandlerTest extends CategoryTest {
     assertThat(pcfInfraMappingDataResponse.getRunningInstanceCount()).isEqualTo(2);
 
     // Fetch running count failure
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(cfDeploymentManager)
+    doAnswer(invocation -> { throw new Exception(); })
+        .when(cfDeploymentManager)
         .getPreviousReleases(any(CfRequestConfig.class), eq(appNamePrefix));
     cfCommandExecutionResponse =
         pcfDataFetchCommandTaskHandler.executeTaskInternal(pcfCommandRequest, null, logStreamingTaskClient, false);

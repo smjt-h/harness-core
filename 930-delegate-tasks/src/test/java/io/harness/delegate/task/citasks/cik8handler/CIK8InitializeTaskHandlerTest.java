@@ -117,9 +117,7 @@ public class CIK8InitializeTaskHandlerTest extends CategoryTest {
 
     when(k8sConnectorHelper.getKubernetesConfig(any(ConnectorDetails.class))).thenReturn(kubernetesConfig);
     when(cik8JavaClientHandler.createRegistrySecret(eq(coreV1Api), eq(namespace), any(), eq(imageDetailsWithConnector)))
-            .thenAnswer(invocation -> {
-              throw new ApiException();
-            });
+        .thenAnswer(invocation -> { throw new ApiException(); });
 
     K8sTaskExecutionResponse response =
         cik8BuildTaskHandler.executeTaskInternal(cik8InitializeTaskParams, logStreamingTaskClient, "");
@@ -142,11 +140,8 @@ public class CIK8InitializeTaskHandlerTest extends CategoryTest {
     when(cik8JavaClientHandler.createRegistrySecret(coreV1Api, namespace, secretName, imageDetailsWithConnector))
         .thenReturn(imgSecret);
     when(podSpecBuilder.createSpec((PodParams) cik8InitializeTaskParams.getCik8PodParams())).thenReturn(podBuilder);
-    when(cik8JavaClientHandler
-            .createOrReplacePodWithRetries(coreV1Api, podBuilder.build(), namespace))
-            .thenAnswer(invocation -> {
-              throw new ApiException();
-            });
+    when(cik8JavaClientHandler.createOrReplacePodWithRetries(coreV1Api, podBuilder.build(), namespace))
+        .thenAnswer(invocation -> { throw new ApiException(); });
 
     K8sTaskExecutionResponse response =
         cik8BuildTaskHandler.executeTaskInternal(cik8InitializeTaskParams, logStreamingTaskClient, "");

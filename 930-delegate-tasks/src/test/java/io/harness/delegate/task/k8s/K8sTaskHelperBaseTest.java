@@ -2011,9 +2011,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
     doReturn(process).when(startedProcess).getProcess();
     doReturn(process).when(process).destroyForcibly();
 
-    doAnswer(invocation -> {
-      throw new TimeoutException();
-    })
+    doAnswer(invocation -> { throw new TimeoutException(); })
         .when(spyK8sTaskHelperBase)
         .doStatusCheckForCustomResources(any(Kubectl.class), any(KubernetesResourceId.class), eq("false"),
             any(K8sDelegateTaskParams.class), any(LogCallback.class), eq(isErrorFrameworkEnabled));
@@ -3128,9 +3126,9 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
 
     InvalidRequestException exception = new InvalidRequestException("Unable to retrieve k8s version. Code: 401");
 
-    doAnswer(invocation -> {
-      throw exception;
-    }).when(mockKubernetesContainerService).validateCredentials(kubernetesConfig);
+    doAnswer(invocation -> { throw exception; })
+        .when(mockKubernetesContainerService)
+        .validateCredentials(kubernetesConfig);
     assertThatThrownBy(() -> k8sTaskHelperBase.validate(clusterConfigDTO, emptyList())).isSameAs(exception);
   }
 
@@ -3223,9 +3221,9 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
         .createKubernetesConfigFromClusterConfig(any(KubernetesClusterConfigDTO.class));
     doReturn(ErrorDetail.builder().message(DEFAULT).build()).when(ngErrorHelper).createErrorDetail(anyString());
     doReturn(DEFAULT).when(ngErrorHelper).getErrorSummary(anyString());
-    doAnswer(invocation -> {
-      throw new ApiException();
-    }).when(mockKubernetesContainerService).validateMetricsServer(any(KubernetesConfig.class));
+    doAnswer(invocation -> { throw new ApiException(); })
+        .when(mockKubernetesContainerService)
+        .validateMetricsServer(any(KubernetesConfig.class));
 
     ConnectorValidationResult result =
         k8sTaskHelperBase.validateCEKubernetesCluster(connector, DEFAULT, emptyList(), emptyList());

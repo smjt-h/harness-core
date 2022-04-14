@@ -1578,19 +1578,19 @@ public class DelegateServiceImpl implements DelegateService {
           false);
 
       ImmutableMap<String, String> watcherScriptParams = getJarAndScriptRunTimeParamMap(
-              TemplateParameters.builder()
-                      .accountId(accountId)
-                      .version(version)
-                      .managerHost(managerHost)
-                      .verificationHost(verificationUrl)
-                      .delegateName(delegateName)
-                      .delegateProfile(delegateProfile)
-                      .delegateType(SHELL_SCRIPT)
-                      .watcher(true)
-                      .logStreamingServiceBaseUrl(mainConfiguration.getLogStreamingServiceConfig().getBaseUrl())
-                      .delegateTokenName(tokenName)
-                      .build(),
-              false);
+          TemplateParameters.builder()
+              .accountId(accountId)
+              .version(version)
+              .managerHost(managerHost)
+              .verificationHost(verificationUrl)
+              .delegateName(delegateName)
+              .delegateProfile(delegateProfile)
+              .delegateType(SHELL_SCRIPT)
+              .watcher(true)
+              .logStreamingServiceBaseUrl(mainConfiguration.getLogStreamingServiceConfig().getBaseUrl())
+              .delegateTokenName(tokenName)
+              .build(),
+          false);
 
       File start = File.createTempFile("start", ".sh");
       saveProcessedTemplate(watcherScriptParams, start, "start.sh.ftl");

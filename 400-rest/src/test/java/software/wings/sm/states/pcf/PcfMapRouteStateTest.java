@@ -655,15 +655,11 @@ public class PcfMapRouteStateTest extends WingsBaseTest {
     assertThat(executionResponse.getExecutionStatus()).isEqualTo(ExecutionStatus.SUCCESS);
     assertThat(executionResponse.getStateExecutionData().getStatus()).isEqualTo(ExecutionStatus.SUCCESS);
 
-    doAnswer(invocation -> {
-      throw new WingsException("");
-    }).when(activityService).updateStatus(any(), any(), any());
+    doAnswer(invocation -> { throw new WingsException(""); }).when(activityService).updateStatus(any(), any(), any());
     assertThatThrownBy(() -> pcfRouteSwapState.handleAsyncResponse(context, ImmutableMap.of(ACTIVITY_ID, response)))
         .isInstanceOf(WingsException.class);
 
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(activityService).updateStatus(any(), any(), any());
+    doAnswer(invocation -> { throw new Exception(); }).when(activityService).updateStatus(any(), any(), any());
     assertThatThrownBy(() -> pcfRouteSwapState.handleAsyncResponse(context, ImmutableMap.of(ACTIVITY_ID, response)))
         .isInstanceOf(InvalidRequestException.class);
   }

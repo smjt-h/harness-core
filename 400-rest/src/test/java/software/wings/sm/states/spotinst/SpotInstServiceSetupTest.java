@@ -139,12 +139,11 @@ public class SpotInstServiceSetupTest extends WingsBaseTest {
     ExecutionResponse executionResponse = state.handleAsyncResponse(mockContext, responseMap);
 
     verify(mockSweepingOutputService).save(argThat(new ArgumentMatcher<SweepingOutputInstance>() {
-
       @Override
       public boolean matches(SweepingOutputInstance sweepingOutputInstance) {
         SpotInstSetupContextElement contextElement = (SpotInstSetupContextElement) sweepingOutputInstance.getValue();
         return contextElement.getOldElastiGroupOriginalConfig().getName().equals("foo__1")
-                && contextElement.getNewElastiGroupOriginalConfig().getName().equals("foo__2");
+            && contextElement.getNewElastiGroupOriginalConfig().getName().equals("foo__2");
       }
     }));
 

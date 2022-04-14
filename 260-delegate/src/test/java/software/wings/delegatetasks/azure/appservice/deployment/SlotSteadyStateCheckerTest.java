@@ -138,9 +138,7 @@ public class SlotSteadyStateCheckerTest extends CategoryTest {
         .isInstanceOf(InvalidRequestException.class)
         .hasMessageContaining("Timed out waiting for executing operation");
 
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(deploymentSlot).state();
+    doAnswer(invocation -> { throw new Exception(); }).when(deploymentSlot).state();
     assertThatThrownBy(()
                            -> slotSteadyStateChecker.waitUntilCompleteWithTimeout(
                                10, 10, mockLogCallback, START_DEPLOYMENT_SLOT, statusVerifier))

@@ -175,9 +175,7 @@ public class AzureVMSSSwitchRoutesStateTest extends WingsBaseTest {
                 AzureVMSSSwitchRoutesResponse.builder().delegateMetaInfo(DelegateMetaInfo.builder().build()).build())
             .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
             .build();
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(azureVMSSStateHelper).getExecutionStatus(any());
+    doAnswer(invocation -> { throw new Exception(); }).when(azureVMSSStateHelper).getExecutionStatus(any());
     switchRoutesState.handleAsyncResponse(mockContext, ImmutableMap.of(ACTIVITY_ID, taskExecutionResponse));
   }
 
