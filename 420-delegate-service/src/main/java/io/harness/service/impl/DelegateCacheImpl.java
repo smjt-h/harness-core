@@ -61,7 +61,7 @@ public class DelegateCacheImpl implements DelegateCache {
   private LoadingCache<ImmutablePair<String, String>, DelegateGroup> delegateGroupCache =
       CacheBuilder.newBuilder()
           .maximumSize(10000)
-          .expireAfterAccess(5, TimeUnit.MINUTES)
+          .expireAfterAccess(1, TimeUnit.MINUTES)
           .build(new CacheLoader<ImmutablePair<String, String>, DelegateGroup>() {
             @Override
             public DelegateGroup load(ImmutablePair<String, String> delegateGroupKey) {
