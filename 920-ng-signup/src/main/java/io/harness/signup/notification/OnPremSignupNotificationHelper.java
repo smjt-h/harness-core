@@ -18,9 +18,8 @@ import io.harness.notification.notificationclient.NotificationClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
-import lombok.val;
-
 import java.util.Collections;
+import lombok.val;
 
 public class OnPremSignupNotificationHelper implements SignupNotificationHelper {
   private final NotificationClient notificationClient;
@@ -32,14 +31,13 @@ public class OnPremSignupNotificationHelper implements SignupNotificationHelper 
 
   @Override
   public void sendSignupNotification(UserInfo userInfo, EmailType emailType, String defaultTemplateId, String url) {
-    val builder = EmailChannel
-            .builder()
-            .accountId(userInfo.getDefaultAccountId())
-            .team(Team.GTM)
-            .recipients(Lists.newArrayList(userInfo.getEmail()))
-            .templateId(defaultTemplateId)
-            .templateData(ImmutableMap.of("url", url))
-            .userGroups(Collections.emptyList());
+    val builder = EmailChannel.builder()
+                      .accountId(userInfo.getDefaultAccountId())
+                      .team(Team.GTM)
+                      .recipients(Lists.newArrayList(userInfo.getEmail()))
+                      .templateId(defaultTemplateId)
+                      .templateData(ImmutableMap.of("url", url))
+                      .userGroups(Collections.emptyList());
     notificationClient.sendNotificationAsync(builder.build());
   }
 }
