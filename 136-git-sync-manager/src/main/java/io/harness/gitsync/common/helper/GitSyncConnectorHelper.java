@@ -139,26 +139,9 @@ public class GitSyncConnectorHelper {
 
   public ScmConnector getDecryptedConnectorByRef(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef) {
-    Optional<ConnectorResponseDTO> connectorDTO =
-        connectorService.getByRef(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
-    if (connectorDTO.isPresent()) {
-      ConnectorInfoDTO connectorInfoDTO = connectorDTO.get().getConnector();
-      ConnectorConfigDTO connectorConfigDTO = connectorInfoDTO.getConnectorConfig();
-      if (connectorConfigDTO instanceof ScmConnector) {
-        ScmConnector gitConnectorConfig = (ScmConnector) connectorInfoDTO.getConnectorConfig();
-        return getDecryptedConnector(accountIdentifier, orgIdentifier, projectIdentifier, gitConnectorConfig);
-      } else {
-        throw new UnexpectedException(String.format(
-            "The connector with the  identifier [%s], accountIdentifier [%s], orgIdentifier [%s], projectIdentifier [%s] is not an scm connector",
-            connectorInfoDTO.getIdentifier(), accountIdentifier, orgIdentifier, projectIdentifier));
-      }
-    }
-
-    throw new ConnectorNotFoundException(
-        String.format(
-            "No connector found for accountIdentifier: [%s], orgIdentifier : [%s], projectIdentifier : [%s], connectorRef : [%s]",
-            accountIdentifier, orgIdentifier, projectIdentifier, connectorDTO),
-        USER);
+    ScmConnector gitConnectorConfig =
+        getScmConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
+    return getDecryptedConnector(accountIdentifier, orgIdentifier, projectIdentifier, gitConnectorConfig);
   }
 
   private void checkAPIAccessFieldPresence(GithubConnectorDTO githubConnectorDTO) {
@@ -196,6 +179,28 @@ public class GitSyncConnectorHelper {
       throw new InvalidRequestException(String.format("Ref Connector [{}] doesn't exist.", connectorRef));
     }
     return (ScmConnector) connectorResponseDTO.get().getConnector().getConnectorConfig();
+  }
+
+  public ScmConnector getScmConnector(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef) {
+    Optional<ConnectorResponseDTO> connectorDTO =
+        connectorService.getByRef(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
+    if (connectorDTO.isPresent()) {
+      ConnectorInfoDTO connectorInfoDTO = connectorDTO.get().getConnector();
+      ConnectorConfigDTO connectorConfigDTO = connectorInfoDTO.getConnectorConfig();
+      if (connectorConfigDTO instanceof ScmConnector) {
+        return (ScmConnector) connectorInfoDTO.getConnectorConfig();
+      } else {
+        throw new UnexpectedException(String.format(
+            "The connector with the  identifier [%s], accountIdentifier [%s], orgIdentifier [%s], projectIdentifier [%s] is not an scm connector",
+            connectorInfoDTO.getIdentifier(), accountIdentifier, orgIdentifier, projectIdentifier));
+      }
+    }
+    throw new ConnectorNotFoundException(
+        String.format(
+            "No connector found for accountIdentifier: [%s], orgIdentifier : [%s], projectIdentifier : [%s], connectorRef : [%s]",
+            accountIdentifier, orgIdentifier, projectIdentifier, connectorDTO),
+        USER);
   }
 
   public ScmConnector getDecryptedConnector(

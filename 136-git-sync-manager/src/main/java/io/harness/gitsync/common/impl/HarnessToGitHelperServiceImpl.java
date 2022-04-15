@@ -326,13 +326,13 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
   @Override
   public GetFileResponse getFile(GetFileRequest getFileRequest) {
     ScopeIdentifiers scopeIdentifiers = getFileRequest.getScopeIdentifiers();
-    FileContent fileContent = scmOrchestratorService.processScmRequest(scmClientFacilitatorService
+    FileContent fileContent = scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
         -> scmClientFacilitatorService.getFile(scopeIdentifiers.getAccountIdentifier(),
             scopeIdentifiers.getOrgIdentifier(), scopeIdentifiers.getProjectIdentifier(),
             getFileRequest.getConnectorRef(), getFileRequest.getRepoName(), getFileRequest.getBranchName(),
             getFileRequest.getFilePath(), getFileRequest.getCommitId()),
         scopeIdentifiers.getProjectIdentifier(), scopeIdentifiers.getOrgIdentifier(),
-        scopeIdentifiers.getAccountIdentifier());
+        scopeIdentifiers.getAccountIdentifier(), getFileRequest.getConnectorRef());
     return prepareGetFileResponse(getFileRequest, fileContent);
   }
 
