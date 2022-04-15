@@ -9,6 +9,7 @@ package io.harness.ng.core.remote;
 
 import static io.harness.NGCommonEntityConstants.ACCOUNT_KEY;
 import static io.harness.NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.ENTITY_TYPE;
 import static io.harness.NGCommonEntityConstants.FILE_PARAM_MESSAGE;
 import static io.harness.NGCommonEntityConstants.ORG_KEY;
 import static io.harness.NGCommonEntityConstants.ORG_PARAM_MESSAGE;
@@ -20,8 +21,10 @@ import static io.harness.ng.core.utils.NGUtils.validate;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 
+import io.harness.EntityType;
 import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ng.core.EntityDetail;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.ng.core.api.FileStoreService;
 import io.harness.ng.core.common.beans.NGTag;
@@ -30,6 +33,7 @@ import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.dto.filestore.FileDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
+import io.harness.ngmigration.beans.NgEntityDetail;
 import io.harness.security.annotations.NextGenManagerAuth;
 import io.harness.serializer.JsonUtils;
 
@@ -213,5 +217,30 @@ public class FileStoreResource {
       @NotNull FolderNodeDTO folderNodeDTO) {
     return ResponseDTO.newResponse(
         fileStoreService.listFolderNodes(accountIdentifier, orgIdentifier, projectIdentifier, folderNodeDTO));
+  }
+
+  @GET
+  @Consumes({"application/json"})
+  @Path("referenced-by")
+  @ApiOperation(value = "Get referenced by entities", nickname = "getReferencedBy")
+  @Operation(operationId = "getReferencedBy", summary = "Get Referenced by Entities.",
+          responses =
+                  {
+                          @io.swagger.v3.oas.annotations.responses.
+                                  ApiResponse(responseCode = "default", description = "Returns the list of entities file is referenced by")
+                  })
+  public ResponseDTO<List<EntityDetail>>
+  listFolderNodes(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
+          ACCOUNT_KEY) @EntityIdentifier String accountIdentifier,
+                  @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) @EntityIdentifier(
+                          allowBlank = true) String orgIdentifier,
+                  @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) @EntityIdentifier(
+                          allowBlank = true) String projectIdentifier,
+                  @Parameter(description = FILE_PARAM_MESSAGE) @EntityIdentifier @QueryParam(
+                          NGCommonEntityConstants.IDENTIFIER_KEY) String identifier,
+                  @Parameter(description = "Entity type") @QueryParam(
+                          ENTITY_TYPE) EntityType entityType) {
+    return ResponseDTO.newResponse(
+            fileStoreService.getReferencedBy(accountIdentifier, orgIdentifier, projectIdentifier, identifier, entityType));
   }
 }
