@@ -24,6 +24,7 @@ import io.harness.security.encryption.EncryptedDataDetail;
 import software.wings.beans.BambooConfig;
 import software.wings.beans.artifact.Artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
+import software.wings.collect.artifacts.ArtifactCollectionTaskHelper;
 import software.wings.helpers.ext.bamboo.BambooService;
 
 import com.google.inject.Inject;

@@ -23,6 +23,7 @@ import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.config.NexusConfig;
+import software.wings.collect.artifacts.ArtifactCollectionTaskHelper;
 import software.wings.delegatetasks.DelegateFileManager;
 import software.wings.helpers.ext.nexus.NexusService;
 import software.wings.service.intfc.security.EncryptionService;

@@ -27,7 +27,7 @@ import software.wings.beans.artifact.Artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.artifact.ArtifactStreamType;
 import software.wings.delegatetasks.DelegateFileManager;
-import software.wings.delegatetasks.collect.artifacts.ArtifactCollectionTaskHelper;
+import software.wings.collect.artifacts.ArtifactCollectionTaskHelper;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
