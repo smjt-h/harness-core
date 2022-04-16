@@ -49,6 +49,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -232,6 +233,7 @@ public class ScmFacilitatorResource {
   @GET
   @Path("get-file")
   @ApiOperation(value = "get file", nickname = "getFile")
+  @Hidden
   @Operation(operationId = "getFile", summary = "get file",
       responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Successfully created a PR") },
       hidden = true)
