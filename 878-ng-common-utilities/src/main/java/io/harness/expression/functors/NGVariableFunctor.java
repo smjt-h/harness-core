@@ -21,12 +21,17 @@ import io.harness.variable.remote.VariableClient;
 
 import com.google.inject.Inject;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class NGVariableFunctor implements SdkFunctor {
   public static final String NG_VARIABLE = "variable";
   @Inject VariableClient variableClient;
   @Override
   public String get(Ambiance ambiance, String... args) {
+    log.info("Fetching ng variables with args: {}", Arrays.asList(args));
     NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
     Scope ambianceScope =
         Scope.of(ngAccess.getAccountIdentifier(), ngAccess.getOrgIdentifier(), ngAccess.getProjectIdentifier());
@@ -58,6 +63,8 @@ public class NGVariableFunctor implements SdkFunctor {
   }
 
   private void validateAccess(ScopeLevel ambianceScopeLevel, ScopeLevel variableScopeLevel) {
+    log.info("Validating scope bases access. Ambiance Scope: {} | Variable scope: {}", ambianceScopeLevel,
+        variableScopeLevel);
     if (variableScopeLevel.ordinal() > ambianceScopeLevel.ordinal()) {
       throw new IllegalArgumentException(
           String.format("Variable of %s scope cannot be used at %s scope", variableScopeLevel, ambianceScopeLevel));
