@@ -96,6 +96,10 @@ public class GithubConnectorDTO
 
   @Override
   public String getGitConnectionUrl(String repoName) {
-    return "";
+    if (connectionType == GitConnectionType.REPO) {
+      // check if we need to put any validation for repoName in this case
+      return getUrl();
+    }
+    return getUrl() + "/" + repoName;
   }
 }
