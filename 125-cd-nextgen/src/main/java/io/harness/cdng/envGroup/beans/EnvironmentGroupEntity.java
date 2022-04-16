@@ -17,11 +17,14 @@ import io.harness.gitsync.persistance.GitSyncableEntity;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.core.common.beans.NGTag;
+import io.harness.ng.core.envGroup.dto.EnvGroupUserInfo;
 import io.harness.persistence.PersistentEntity;
 
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import javax.validation.constraints.Size;
+
+import io.harness.pms.contracts.plan.TriggeredBy;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -81,6 +84,9 @@ public class EnvironmentGroupEntity implements PersistentEntity, GitSyncableEnti
 
   // Linked Environment Identifiers
   @Wither private List<String> envIdentifiers;
+
+  // User Info
+  @Wither private EnvGroupUserInfo userInfo;
 
   // Git Sync
   @Wither @NonFinal String objectIdOfYaml;

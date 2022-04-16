@@ -24,11 +24,14 @@ public class EnvironmentGroupResponse {
   @Schema(description = "Environment Group Entity") EnvironmentGroupResponseDTO envGroup;
   @Schema(description = NGCommonEntityConstants.CREATED_AT_MESSAGE) Long createdAt;
   @Schema(description = NGCommonEntityConstants.UPDATED_AT_MESSAGE) Long lastModifiedAt;
+  @Schema(description = NGCommonEntityConstants.UPDATED_AT_MESSAGE)
+  EnvGroupUserInfo userInfo;
 
   @Builder
-  public EnvironmentGroupResponse(EnvironmentGroupResponseDTO environment, Long createdAt, Long lastModifiedAt) {
+  public EnvironmentGroupResponse(EnvironmentGroupResponseDTO environment, Long createdAt, Long lastModifiedAt, EnvGroupUserInfo userInfo) {
     this.envGroup = environment;
     this.createdAt = createdAt;
     this.lastModifiedAt = lastModifiedAt;
+    this.userInfo = userInfo;
   }
 }

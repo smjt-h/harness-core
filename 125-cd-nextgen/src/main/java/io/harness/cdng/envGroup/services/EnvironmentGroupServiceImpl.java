@@ -165,6 +165,7 @@ public class EnvironmentGroupServiceImpl implements EnvironmentGroupService {
                                                .withColor(requestedEntity.getColor())
                                                .withEnvIdentifiers(requestedEntity.getEnvIdentifiers())
                                                .withTags(requestedEntity.getTags())
+            .withUserInfo(requestedEntity.getUserInfo())
                                                .withYaml(requestedEntity.getYaml());
     EnvironmentGroupEntity savedEntity = environmentRepository.update(updatedEntity, originalEntity);
     setupUsagesForEnvironmentList(savedEntity);

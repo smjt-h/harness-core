@@ -7,6 +7,8 @@
 
 package io.harness.cdng.envGroup.resource;
 
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
 import static io.harness.ng.core.utils.NGUtils.validate;
 import static io.harness.pms.rbac.NGResourceType.ENVIRONMENT;
 import static io.harness.utils.PageUtils.getNGPageResponse;
@@ -41,6 +43,7 @@ import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.ng.core.envGroup.dto.EnvGroupUserInfo;
 import io.harness.ng.core.envGroup.dto.EnvironmentGroupDeleteResponse;
 import io.harness.ng.core.envGroup.dto.EnvironmentGroupResponse;
 import io.harness.ng.core.environment.beans.Environment;
@@ -49,10 +52,13 @@ import io.harness.ng.core.environment.mappers.EnvironmentMapper;
 import io.harness.ng.core.environment.services.EnvironmentService;
 import io.harness.pms.rbac.NGResourceType;
 import io.harness.rbac.CDNGRbacPermissions;
+import io.harness.security.PrincipalHelper;
+import io.harness.security.SecurityContextBuilder;
 import io.harness.security.annotations.NextGenManagerAuth;
 import io.harness.utils.PageUtils;
 
 import com.google.inject.Inject;
+import io.harness.security.dto.Principal;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -193,6 +199,9 @@ public class EnvironmentGroupResource {
     // validate view permissions for each environment linked with environment group
     validatePermissionForEnvironment(entity);
 
+    // update entity with user info
+    entity = updateEntityWithUserInfo(entity);
+
     EnvironmentGroupEntity savedEntity = environmentGroupService.create(entity);
 
     // fetching Environments from list of identifiers
@@ -202,7 +211,7 @@ public class EnvironmentGroupResource {
     return ResponseDTO.newResponse(EnvironmentGroupMapper.toResponseWrapper(savedEntity, envResponseList));
   }
 
-  @GET
+  @POST
   @Path("/list")
   @ApiOperation(value = "Gets Environment Group list", nickname = "getEnvironmentGroupList")
   @Operation(operationId = "getEnvironmentGroupList", summary = "Gets Environment Group list for a Project",
@@ -317,6 +326,9 @@ public class EnvironmentGroupResource {
     // updating the version if any
     requestedEntity.setVersion(isNumeric(ifMatch) ? parseLong(ifMatch) : null);
 
+    // update entity with user info
+    requestedEntity = updateEntityWithUserInfo(requestedEntity);
+
     EnvironmentGroupEntity updatedEntity = environmentGroupService.update(requestedEntity);
 
     // fetching Environments from list of identifiers
@@ -346,5 +358,13 @@ public class EnvironmentGroupResource {
     envIdentifiers.forEach(envId
         -> accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgId, projectId),
             Resource.of(ENVIRONMENT, envId), CDNGRbacPermissions.ENVIRONMENT_VIEW_PERMISSION));
+  }
+
+  private EnvironmentGroupEntity updateEntityWithUserInfo(EnvironmentGroupEntity entity) {
+    Principal principal = SecurityContextBuilder.getPrincipal();
+    EnvGroupUserInfo userInfo = EnvGroupUserInfo.builder().id(emptyIfNull(PrincipalHelper.getUuid(principal)))
+            .name(emptyIfNull(PrincipalHelper.getUsername(principal)))
+            .email(emptyIfNull(PrincipalHelper.getEmail(principal))).build();
+    return entity.withUserInfo(userInfo);
   }
 }
