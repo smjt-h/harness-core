@@ -1,4 +1,7 @@
 version: v1
+build:
+  excludes:
+    - 867-polling-contracts/src/main/proto
 breaking:
   use:
     - PACKAGE
