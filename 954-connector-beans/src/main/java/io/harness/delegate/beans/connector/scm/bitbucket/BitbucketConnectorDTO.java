@@ -91,6 +91,9 @@ public class BitbucketConnectorDTO extends ConnectorConfigDTO implements ScmConn
 
   @Override
   public String getGitConnectionUrl(String repoName) {
-    return "";
+    if (connectionType == GitConnectionType.REPO) {
+      return getUrl();
+    }
+    return getUrl() + "/" + repoName;
   }
 }
