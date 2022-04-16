@@ -39,7 +39,7 @@ public class StringVariableDTO extends VariableConfigDTO {
   @RegEx String regex;
 
   @Override
-  String getValue() {
+  public String getValue() {
     switch (getVariableValueType()) {
       case FIXED:
         return fixedValue;

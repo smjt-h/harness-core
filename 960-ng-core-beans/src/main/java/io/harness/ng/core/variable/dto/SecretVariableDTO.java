@@ -27,7 +27,7 @@ import org.hibernate.validator.constraints.NotBlank;
 public class SecretVariableDTO extends VariableConfigDTO {
   @NotBlank String secretRef;
   @Override
-  String getValue() {
+  public String getValue() {
     return String.format(SECRET_VALUE_FORMAT, secretRef);
   }
 }

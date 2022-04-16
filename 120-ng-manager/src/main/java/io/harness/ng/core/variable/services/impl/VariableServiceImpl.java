@@ -63,8 +63,9 @@ public class VariableServiceImpl implements VariableService {
 
   @Override
   public Optional<Variable> get(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, String variableIdentifier) {
-    return Optional.empty();
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier) {
+    return variableRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
+        accountIdentifier, orgIdentifier, projectIdentifier, identifier);
   }
 
   @Override

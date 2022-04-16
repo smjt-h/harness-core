@@ -32,6 +32,6 @@ public abstract class VariableConfigDTO {
   public static final String REGEX_VALUE_FORMAT = "<+input>.regex(%s)";
   public static final String SECRET_VALUE_FORMAT = "<+secrets.getValue(\"%s\")";
   @NotNull VariableValueType variableValueType;
-  abstract String getValue();
+  public abstract String getValue();
   public void validate(){};
 }

@@ -65,6 +65,7 @@ public abstract class Variable implements PersistentEntity, NGAccountAccess {
                  .field(VariableKeys.orgIdentifier)
                  .field(VariableKeys.projectIdentifier)
                  .field(VariableKeys.identifier)
+                 .unique(true)
                  .build())
         .build();
   }

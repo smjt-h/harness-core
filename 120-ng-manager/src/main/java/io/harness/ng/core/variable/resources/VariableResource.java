@@ -43,15 +43,14 @@ public class VariableResource {
   private final VariableMapper variableMapper;
 
   @GET
-  @Path("{variableIdentifier}")
-  public ResponseDTO<VariableResponseDTO> get(@PathParam("variableIdentifier") String variableIdentifier,
+  @Path("{identifier}")
+  public ResponseDTO<VariableResponseDTO> get(@PathParam("identifier") String identifier,
       @QueryParam("accountIdentifier") String accountIdentifier, @QueryParam("orgIdentifier") String orgIdentifier,
       @QueryParam("projectIdentifier") String projectIdentifier) {
-    Optional<Variable> variable =
-        variableService.get(accountIdentifier, orgIdentifier, projectIdentifier, variableIdentifier);
+    Optional<Variable> variable = variableService.get(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
     if (!variable.isPresent()) {
       throw new NotFoundException(String.format("Variable with identifier [%s] in project [%s] and org [%s] not found",
-          variableIdentifier, projectIdentifier, orgIdentifier));
+          identifier, projectIdentifier, orgIdentifier));
     }
     return ResponseDTO.newResponse(variableMapper.toResponseWrapper(variable.get()));
   }
