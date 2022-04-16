@@ -42,6 +42,7 @@ import io.harness.event.OrchestrationStartEventHandler;
 import io.harness.exception.GeneralException;
 import io.harness.execution.consumers.InitiateNodeEventRedisConsumer;
 import io.harness.execution.consumers.SdkResponseEventRedisConsumer;
+import io.harness.expression.functors.NGVariableFunctor;
 import io.harness.gitsync.AbstractGitSyncSdkModule;
 import io.harness.gitsync.GitSdkConfiguration;
 import io.harness.gitsync.GitSyncEntitiesConfiguration;
@@ -114,6 +115,7 @@ import io.harness.pms.sdk.PmsSdkInitHelper;
 import io.harness.pms.sdk.PmsSdkInstanceCacheMonitor;
 import io.harness.pms.sdk.PmsSdkModule;
 import io.harness.pms.sdk.core.SdkDeployMode;
+import io.harness.pms.sdk.core.execution.expression.SdkFunctor;
 import io.harness.pms.sdk.core.governance.JsonExpansionHandlerInfo;
 import io.harness.pms.sdk.execution.events.facilitators.FacilitatorEventRedisConsumer;
 import io.harness.pms.sdk.execution.events.interrupts.InterruptEventRedisConsumer;
@@ -605,6 +607,7 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
         .engineFacilitators(PipelineServiceFacilitatorRegistrar.getEngineFacilitators())
         .engineAdvisers(PipelineServiceUtilAdviserRegistrar.getEngineAdvisers())
         .staticAliases(getStaticAliases())
+        .sdkFunctors(getSdkFunctor())
         .jsonExpansionHandlers(getJsonExpansionHandlers())
         .engineEventHandlersMap(of())
         .executionSummaryModuleInfoProviderClass(PmsExecutionServiceInfoProvider.class)
@@ -614,6 +617,12 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
         .planCreatorServiceInternalConfig(config.getPmsPlanCreatorServicePoolConfig())
         .pipelineSdkRedisEventsConfig(config.getPipelineSdkRedisEventsConfig())
         .build();
+  }
+
+  private Map<String, Class<? extends SdkFunctor>> getSdkFunctor() {
+    Map<String, Class<? extends SdkFunctor>> sdkFunctorMap = new HashMap<>();
+    sdkFunctorMap.put(NGVariableFunctor.NG_VARIABLE, NGVariableFunctor.class);
+    return sdkFunctorMap;
   }
 
   @VisibleForTesting

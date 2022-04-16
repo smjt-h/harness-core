@@ -147,6 +147,7 @@ import io.harness.token.TokenClientModule;
 import io.harness.tracing.AbstractPersistenceTracerModule;
 import io.harness.user.UserClientModule;
 import io.harness.usergroups.UserGroupClientModule;
+import io.harness.variable.VariableClientModule;
 import io.harness.version.VersionInfoManager;
 import io.harness.webhook.WebhookEventClientModule;
 import io.harness.yaml.YamlSdkModule;
@@ -297,6 +298,8 @@ public class PipelineServiceModule extends AbstractModule {
         this.configuration.getNgManagerServiceSecret(), PIPELINE_SERVICE.getServiceId()));
     install(new WebhookEventClientModule(this.configuration.getNgManagerServiceHttpClientConfig(),
         this.configuration.getNgManagerServiceSecret(), PIPELINE_SERVICE.getServiceId()));
+    install(new VariableClientModule(configuration.getNgManagerServiceHttpClientConfig(),
+        configuration.getNgManagerServiceSecret(), PIPELINE_SERVICE.getServiceId()));
     install(new AbstractTelemetryModule() {
       @Override
       public TelemetryConfiguration telemetryConfiguration() {
