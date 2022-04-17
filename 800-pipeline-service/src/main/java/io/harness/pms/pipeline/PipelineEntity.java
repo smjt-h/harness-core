@@ -16,6 +16,8 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityName;
 import io.harness.data.validator.Trimmed;
 import io.harness.gitsync.persistance.GitSyncableEntity;
+import io.harness.gitsync.v2.GitAware;
+import io.harness.gitsync.v2.StoreType;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.MongoIndex;
@@ -67,7 +69,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @ChangeDataCapture(table = "tags_info", dataStore = "pms-harness", fields = {}, handler = "TagsInfoCD")
 @ChangeDataCapture(table = "pipelines", dataStore = "ng-harness", fields = {}, handler = "Pipelines")
 public class PipelineEntity
-    implements GitSyncableEntity, PersistentEntity, AccountAccess, UuidAware, CreatedAtAware, UpdatedAtAware {
+    implements GitAware, GitSyncableEntity, PersistentEntity, AccountAccess, UuidAware, CreatedAtAware, UpdatedAtAware {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -151,5 +153,30 @@ public class PipelineEntity
 
   public boolean shouldAllowStageExecutions() {
     return allowStageExecutions != null && allowStageExecutions;
+  }
+
+  @Override
+  public StoreType getStoreType() {
+    return null;
+  }
+
+  @Override
+  public String getData() {
+    return null;
+  }
+
+  @Override
+  public String getRepo() {
+    return null;
+  }
+
+  @Override
+  public String getPath() {
+    return null;
+  }
+
+  @Override
+  public String getConnectorRef() {
+    return null;
   }
 }
