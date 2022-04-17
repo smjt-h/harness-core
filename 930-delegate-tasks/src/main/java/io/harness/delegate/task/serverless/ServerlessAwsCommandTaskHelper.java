@@ -94,7 +94,7 @@ public class ServerlessAwsCommandTaskHelper {
                                           .secret(serverlessAwsLambdaConfig.getSecretKey())
                                           .overwrite(overwrite);
     return ServerlessCommandTaskHelper.executeCommand(
-        command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true, timeoutInMillis);
+        command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, false, timeoutInMillis);
   }
 
   public ServerlessCliResponse deploy(ServerlessClient serverlessClient,
@@ -150,8 +150,7 @@ public class ServerlessAwsCommandTaskHelper {
   }
 
   public ServerlessAwsLambdaManifestSchema parseServerlessManifest(
-      ServerlessAwsLambdaManifestConfig serverlessManifestConfig, LogCallback executionLogCallback) {
-    String manifestContent = serverlessManifestConfig.getManifestContent();
+      LogCallback executionLogCallback, String manifestContent) {
     YamlUtils yamlUtils = new YamlUtils();
     try {
       return yamlUtils.read(manifestContent, ServerlessAwsLambdaManifestSchema.class);

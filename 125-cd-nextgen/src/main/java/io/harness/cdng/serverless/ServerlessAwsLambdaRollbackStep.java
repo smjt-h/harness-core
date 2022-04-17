@@ -139,6 +139,7 @@ public class ServerlessAwsLambdaRollbackStep extends TaskExecutableWithRollbackA
             .commandName(SERVERLESS_AWS_LAMBDA_ROLLBACK_COMMAND_NAME)
             .commandUnitsProgress(CommandUnitsProgress.builder().build())
             .timeoutIntervalInMin(CDStepHelper.getTimeoutInMin(stepElementParameters))
+            .manifestContent(serverlessGitFetchOutcome.getManifestFileOverrideContent())
             .build();
     return serverlessStepCommonHelper
         .queueServerlessTask(stepElementParameters, serverlessRollbackRequest, ambiance,

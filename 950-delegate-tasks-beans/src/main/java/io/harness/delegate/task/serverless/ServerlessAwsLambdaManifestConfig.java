@@ -7,10 +7,7 @@
 
 package io.harness.delegate.task.serverless;
 
-import static io.harness.expression.Expression.ALLOW_SECRETS;
-
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
-import io.harness.expression.Expression;
 
 import lombok.Builder;
 import lombok.Value;
@@ -18,7 +15,6 @@ import lombok.Value;
 @Value
 @Builder
 public class ServerlessAwsLambdaManifestConfig implements ServerlessManifestConfig {
-  @Expression(ALLOW_SECRETS) String manifestContent;
   String manifestPath;
   String configOverridePath;
   GitStoreDelegateConfig gitStoreDelegateConfig;

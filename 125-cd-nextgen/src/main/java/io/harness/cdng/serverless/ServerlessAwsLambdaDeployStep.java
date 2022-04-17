@@ -125,6 +125,7 @@ public class ServerlessAwsLambdaDeployStep
             .serverlessArtifactConfig(serverlessArtifactConfig)
             .commandUnitsProgress(UnitProgressDataMapper.toCommandUnitsProgress(unitProgressData))
             .timeoutIntervalInMin(CDStepHelper.getTimeoutInMin(stepElementParameters))
+            .manifestContent(manifestFileOverrideContent)
             .build();
     return serverlessStepCommonHelper.queueServerlessTask(
         stepElementParameters, serverlessDeployRequest, ambiance, executionPassThroughData);

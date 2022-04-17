@@ -7,6 +7,8 @@
 
 package io.harness.delegate.task.serverless.request;
 
+import static io.harness.expression.Expression.ALLOW_SECRETS;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
@@ -15,6 +17,8 @@ import io.harness.delegate.task.serverless.ServerlessCommandType;
 import io.harness.delegate.task.serverless.ServerlessDeployConfig;
 import io.harness.delegate.task.serverless.ServerlessInfraConfig;
 import io.harness.delegate.task.serverless.ServerlessManifestConfig;
+import io.harness.expression.Expression;
+import io.harness.expression.ExpressionReflectionUtils.NestedAnnotationResolver;
 
 import lombok.Builder;
 import lombok.Value;
@@ -22,7 +26,7 @@ import lombok.Value;
 @Value
 @Builder
 @OwnedBy(HarnessTeam.CDP)
-public class ServerlessDeployRequest implements ServerlessCommandRequest {
+public class ServerlessDeployRequest implements ServerlessCommandRequest, NestedAnnotationResolver {
   String accountId;
   ServerlessCommandType serverlessCommandType;
   String commandName;
@@ -32,4 +36,5 @@ public class ServerlessDeployRequest implements ServerlessCommandRequest {
   ServerlessInfraConfig serverlessInfraConfig;
   ServerlessDeployConfig serverlessDeployConfig;
   Integer timeoutIntervalInMin;
+  @Expression(ALLOW_SECRETS) String manifestContent;
 }

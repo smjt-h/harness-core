@@ -38,6 +38,7 @@ import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.beans.logstreaming.NGDelegateLogCallback;
+import io.harness.delegate.beans.serverless.ServerlessAwsLambdaManifestSchema;
 import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.task.artifactory.ArtifactoryRequestMapper;
@@ -203,11 +204,27 @@ public class ServerlessTaskHelperBase {
   }
 
   public void replaceManifestWithRenderedContent(ServerlessDelegateTaskParams serverlessDelegateTaskParams,
-      ServerlessAwsLambdaManifestConfig serverlessManifestConfig) throws IOException {
+      ServerlessAwsLambdaManifestConfig serverlessManifestConfig, String manifestOverrideContent,
+      ServerlessAwsLambdaManifestSchema serverlessManifestSchema) throws IOException {
     String manifestFilePath =
         Paths.get(serverlessDelegateTaskParams.getWorkingDirectory(), serverlessManifestConfig.getManifestPath())
             .toString();
-    updateManifestFileContent(manifestFilePath, serverlessManifestConfig.getManifestContent());
+    manifestOverrideContent = removePluginVersion(manifestOverrideContent, serverlessManifestSchema);
+    updateManifestFileContent(manifestFilePath, manifestOverrideContent);
+  }
+
+  private String removePluginVersion(
+      String manifestContent, ServerlessAwsLambdaManifestSchema serverlessManifestSchema) {
+    if (EmptyPredicate.isEmpty(serverlessManifestSchema.getPlugins())) {
+      return manifestContent;
+    }
+    for (String plugin : serverlessManifestSchema.getPlugins()) {
+      int index = plugin.indexOf('@');
+      if (index != -1) {
+        manifestContent = manifestContent.replace(plugin, plugin.substring(0, index));
+      }
+    }
+    return manifestContent;
   }
 
   private void updateManifestFileContent(String manifestFilePath, String manifestContent) throws IOException {

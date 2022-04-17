@@ -8,9 +8,12 @@
 package io.harness.delegate.beans.storeconfig;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.expression.Expression.ALLOW_SECRETS;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
+import io.harness.expression.Expression;
+import io.harness.expression.ExpressionReflectionUtils.NestedAnnotationResolver;
 import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
 import io.harness.security.encryption.EncryptedDataDetail;
 
@@ -22,9 +25,9 @@ import lombok.Value;
 @Value
 @Builder
 @OwnedBy(CDP)
-public class GitStoreDelegateConfig implements StoreDelegateConfig {
-  String branch;
-  String commitId;
+public class GitStoreDelegateConfig implements StoreDelegateConfig, NestedAnnotationResolver {
+  @Expression(ALLOW_SECRETS) String branch;
+  @Expression(ALLOW_SECRETS) String commitId;
   String connectorName;
   @Singular List<String> paths;
   FetchType fetchType;

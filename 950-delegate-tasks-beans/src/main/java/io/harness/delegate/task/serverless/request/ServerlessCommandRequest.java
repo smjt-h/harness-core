@@ -88,7 +88,7 @@ public interface ServerlessCommandRequest extends TaskParameters, ExecutionCapab
             serverlessArtifactoryArtifactConfig.getConnectorDTO().getConnectorConfig(), maskingEvaluator));
       }
     }
-    capabilities.add(ServerlessInstallationCapability.builder().build());
+    capabilities.add(ServerlessInstallationCapability.builder().criteria("Serverless Installed").build());
     return capabilities;
   }
 }

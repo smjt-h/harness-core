@@ -7,9 +7,13 @@
 
 package io.harness.delegate.task.serverless;
 
+import static io.harness.expression.Expression.ALLOW_SECRETS;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
+import io.harness.expression.Expression;
+import io.harness.expression.ExpressionReflectionUtils.NestedAnnotationResolver;
 
 import lombok.Builder;
 import lombok.Value;
@@ -17,10 +21,10 @@ import lombok.Value;
 @Value
 @Builder
 @OwnedBy(HarnessTeam.CDP)
-public class ServerlessGitFetchFileConfig {
+public class ServerlessGitFetchFileConfig implements NestedAnnotationResolver {
   String identifier;
   String manifestType;
-  GitStoreDelegateConfig gitStoreDelegateConfig;
-  String configOverridePath;
+  @Expression(ALLOW_SECRETS) GitStoreDelegateConfig gitStoreDelegateConfig;
+  @Expression(ALLOW_SECRETS) String configOverridePath;
   boolean succeedIfFileNotFound;
 }

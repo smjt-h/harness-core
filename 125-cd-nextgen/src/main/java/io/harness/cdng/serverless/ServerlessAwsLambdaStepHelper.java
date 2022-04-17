@@ -100,11 +100,9 @@ public class ServerlessAwsLambdaStepHelper implements ServerlessStepHelper {
           (ServerlessAwsLambdaManifestOutcome) manifestOutcome;
       Pair<String, String> manifestFilePathContent =
           (Pair<String, String>) manifestParams.get("manifestFilePathContent");
-      String manifestFileOverrideContent = (String) manifestParams.get("manifestFileOverrideContent");
       GitStoreConfig gitStoreConfig = (GitStoreConfig) serverlessAwsLambdaManifestOutcome.getStore();
       return ServerlessAwsLambdaManifestConfig.builder()
           .manifestPath(manifestFilePathContent.getKey())
-          .manifestContent(manifestFileOverrideContent)
           .configOverridePath(getConfigOverridePath(manifestOutcome))
           .gitStoreDelegateConfig(
               serverlessStepUtils.getGitStoreDelegateConfig(ambiance, gitStoreConfig, manifestOutcome))

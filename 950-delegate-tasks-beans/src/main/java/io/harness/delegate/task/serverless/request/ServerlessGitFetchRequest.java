@@ -7,6 +7,8 @@
 
 package io.harness.delegate.task.serverless.request;
 
+import static io.harness.expression.Expression.ALLOW_SECRETS;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.connector.scm.GitCapabilityHelper;
@@ -18,7 +20,9 @@ import io.harness.delegate.capability.EncryptedDataDetailsCapabilityHelper;
 import io.harness.delegate.task.ActivityAccess;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.serverless.ServerlessGitFetchFileConfig;
+import io.harness.expression.Expression;
 import io.harness.expression.ExpressionEvaluator;
+import io.harness.expression.ExpressionReflectionUtils.NestedAnnotationResolver;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,11 +32,12 @@ import lombok.Value;
 @Value
 @Builder
 @OwnedBy(HarnessTeam.CDP)
-public class ServerlessGitFetchRequest implements ActivityAccess, TaskParameters, ExecutionCapabilityDemander {
+public class ServerlessGitFetchRequest
+    implements ActivityAccess, TaskParameters, ExecutionCapabilityDemander, NestedAnnotationResolver {
   String executionLogName;
   String activityId;
   String accountId;
-  ServerlessGitFetchFileConfig serverlessGitFetchFileConfig;
+  @Expression(ALLOW_SECRETS) ServerlessGitFetchFileConfig serverlessGitFetchFileConfig;
   @Builder.Default boolean shouldOpenLogStream = true;
   boolean closeLogStream;
 

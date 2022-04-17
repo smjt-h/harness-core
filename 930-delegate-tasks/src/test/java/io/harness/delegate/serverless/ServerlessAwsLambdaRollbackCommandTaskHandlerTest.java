@@ -114,9 +114,9 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
         .getLogCallback(
             iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true, commandUnitsProgress);
     doReturn(serverlessAwsLambdaConfig).when(serverlessInfraConfigHelper).createServerlessConfig(serverlessInfraConfig);
-    doReturn(serverlessAwsLambdaManifestSchema)
-        .when(serverlessAwsCommandTaskHelper)
-        .parseServerlessManifest((ServerlessAwsLambdaManifestConfig) serverlessManifestConfig, initLogCallback);
+    //    doReturn(serverlessAwsLambdaManifestSchema)
+    //        .when(serverlessAwsCommandTaskHelper)
+    //        .parseServerlessManifest((ServerlessAwsLambdaManifestConfig) serverlessManifestConfig, initLogCallback);
 
     ServerlessClient serverlessClient = ServerlessClient.client(serverlessDelegateTaskParams.getServerlessClientPath());
 

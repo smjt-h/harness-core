@@ -127,9 +127,12 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
         serverlessRollbackRequest.getAccountId(), executionLogCallback, serverlessDelegateTaskParams);
 
     executionLogCallback.saveExecutionLog("Resolving expressions in serverless config file..\n");
-    serverlessTaskHelperBase.replaceManifestWithRenderedContent(serverlessDelegateTaskParams, serverlessManifestConfig);
-    executionLogCallback.saveExecutionLog(color("successfully resolved with config file content:", White, Bold));
-    executionLogCallback.saveExecutionLog(serverlessManifestConfig.getManifestContent());
+    serverlessManifestSchema = serverlessAwsCommandTaskHelper.parseServerlessManifest(
+        executionLogCallback, serverlessRollbackRequest.getManifestContent());
+    serverlessTaskHelperBase.replaceManifestWithRenderedContent(serverlessDelegateTaskParams, serverlessManifestConfig,
+        serverlessRollbackRequest.getManifestContent(), serverlessManifestSchema);
+    executionLogCallback.saveExecutionLog(color("Successfully resolved with config file content:", White, Bold));
+    executionLogCallback.saveExecutionLog(serverlessRollbackRequest.getManifestContent());
 
     serverlessAwsLambdaConfig = (ServerlessAwsLambdaConfig) serverlessInfraConfigHelper.createServerlessConfig(
         serverlessRollbackRequest.getServerlessInfraConfig());
@@ -147,8 +150,8 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
           CONFIG_CREDENTIAL_FAILED_EXPLANATION, new ServerlessAwsLambdaRuntimeException(CONFIG_CREDENTIAL_FAILED));
     }
 
-    serverlessManifestSchema =
-        serverlessAwsCommandTaskHelper.parseServerlessManifest(serverlessManifestConfig, executionLogCallback);
+    serverlessManifestSchema = serverlessAwsCommandTaskHelper.parseServerlessManifest(
+        executionLogCallback, serverlessRollbackRequest.getManifestContent());
     serverlessAwsCommandTaskHelper.installPlugins(serverlessManifestSchema, serverlessDelegateTaskParams,
         executionLogCallback, serverlessClient, timeoutInMillis, serverlessManifestConfig);
     executionLogCallback.saveExecutionLog("Done..\n", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
