@@ -153,7 +153,8 @@ public class ServerlessAwsLambdaStepHelperTest extends CategoryTest {
         .getGitStoreDelegateConfig(ambiance, gitStoreConfig, manifestOutcome);
     ServerlessManifestConfig serverlessManifestConfig =
         serverlessAwsLambdaStepHelper.getServerlessManifestConfig(manifestOutcome, ambiance, manifestParams);
-    assertThat(((ServerlessAwsLambdaManifestConfig) serverlessManifestConfig).getManifestContent()).isEqualTo("c");
+    //    assertThat(((ServerlessAwsLambdaManifestConfig)
+    //    serverlessManifestConfig).getManifestContent()).isEqualTo("c");
     assertThat(((ServerlessAwsLambdaManifestConfig) serverlessManifestConfig).getManifestPath()).isEqualTo("a");
     assertThat(((ServerlessAwsLambdaManifestConfig) serverlessManifestConfig).getGitStoreDelegateConfig())
         .isEqualTo(gitStoreDelegateConfig);

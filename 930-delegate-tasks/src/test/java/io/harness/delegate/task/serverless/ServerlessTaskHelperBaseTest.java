@@ -93,8 +93,8 @@ public class ServerlessTaskHelperBaseTest extends CategoryTest {
                                                           .repositoryName(repositoryName)
                                                           .build();
   @Mock LogCallback logCallback;
-  ServerlessManifestConfig serverlessManifestConfig =
-      ServerlessAwsLambdaManifestConfig.builder().manifestContent(manifestContent).build();
+  //  ServerlessManifestConfig serverlessManifestConfig =
+  //      ServerlessAwsLambdaManifestConfig.builder().manifestContent(manifestContent).build();
 
   @Test
   @Owner(developers = PIYUSH_BHUWALKA)
