@@ -14,6 +14,7 @@ import io.harness.filter.dto.FilterPropertiesDTO;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import io.harness.ng.core.common.beans.NGTag;
 import io.swagger.annotations.ApiModel;
 import java.util.List;
 import lombok.AccessLevel;
@@ -37,6 +38,7 @@ public class EnvironmentGroupFilterPropertiesDTO extends FilterPropertiesDTO {
   private String description;
   private String envGroupName;
   private List<String> envIdentifiers;
+  private List<NGTag> envGroupTags;
 
   @Override
   public FilterType getFilterType() {
