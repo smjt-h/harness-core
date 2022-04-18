@@ -172,10 +172,7 @@ public class SamlBasedAuthHandler implements AuthHandler {
       String uuid = user.getUuid();
       try (AutoLogContext ignore = new UserLogContext(accountId, uuid, OVERRIDE_ERROR)) {
         log.info("Authenticating via SAML in account {}", accountId);
-        Account account = authenticationUtils.getAccount(accountId);
-        if (account == null) {
-          account = authenticationUtils.getDefaultAccount(user);
-        }
+        Account account = authenticationUtils.getDefaultAccount(user);
         if (!domainWhitelistCheckerService.isDomainWhitelisted(user, account)) {
           domainWhitelistCheckerService.throwDomainWhitelistFilterException();
         }
