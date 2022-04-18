@@ -63,7 +63,7 @@ public class EnvironmentGroupMapper {
         .environment(writeDTO(envGroup, envResponseList))
         .createdAt(envGroup.getCreatedAt())
         .lastModifiedAt(envGroup.getLastModifiedAt())
-            .userInfo(envGroup.getUserInfo())
+        .userInfo(envGroup.getUserInfo())
         .build();
   }
 

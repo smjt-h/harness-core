@@ -8,6 +8,7 @@
 package io.harness.cdng.envGroup.services;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 
@@ -20,6 +21,10 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.filter.FilterType;
 import io.harness.filter.dto.FilterDTO;
 import io.harness.filter.service.FilterService;
+import io.harness.ng.core.envGroup.dto.EnvGroupUserInfo;
+import io.harness.security.PrincipalHelper;
+import io.harness.security.SecurityContextBuilder;
+import io.harness.security.dto.Principal;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -79,5 +84,15 @@ public class EnvironmentGroupServiceHelper {
     }
     populateEnvGroupFilter(
         filterCriteria, (EnvironmentGroupFilterPropertiesDTO) pipelineFilterDTO.getFilterProperties());
+  }
+
+  public EnvironmentGroupEntity updateEntityWithUserInfo(EnvironmentGroupEntity entity) {
+    Principal principal = SecurityContextBuilder.getPrincipal();
+    EnvGroupUserInfo userInfo = EnvGroupUserInfo.builder()
+                                    .id(emptyIfNull(PrincipalHelper.getUuid(principal)))
+                                    .name(emptyIfNull(PrincipalHelper.getUsername(principal)))
+                                    .email(emptyIfNull(PrincipalHelper.getEmail(principal)))
+                                    .build();
+    return entity.withUserInfo(userInfo);
   }
 }

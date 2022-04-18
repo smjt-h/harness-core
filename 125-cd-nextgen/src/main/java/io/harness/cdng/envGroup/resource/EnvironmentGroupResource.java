@@ -55,10 +55,10 @@ import io.harness.rbac.CDNGRbacPermissions;
 import io.harness.security.PrincipalHelper;
 import io.harness.security.SecurityContextBuilder;
 import io.harness.security.annotations.NextGenManagerAuth;
+import io.harness.security.dto.Principal;
 import io.harness.utils.PageUtils;
 
 import com.google.inject.Inject;
-import io.harness.security.dto.Principal;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -199,9 +199,6 @@ public class EnvironmentGroupResource {
     // validate view permissions for each environment linked with environment group
     validatePermissionForEnvironment(entity);
 
-    // update entity with user info
-    entity = updateEntityWithUserInfo(entity);
-
     EnvironmentGroupEntity savedEntity = environmentGroupService.create(entity);
 
     // fetching Environments from list of identifiers
@@ -326,9 +323,6 @@ public class EnvironmentGroupResource {
     // updating the version if any
     requestedEntity.setVersion(isNumeric(ifMatch) ? parseLong(ifMatch) : null);
 
-    // update entity with user info
-    requestedEntity = updateEntityWithUserInfo(requestedEntity);
-
     EnvironmentGroupEntity updatedEntity = environmentGroupService.update(requestedEntity);
 
     // fetching Environments from list of identifiers
@@ -358,13 +352,5 @@ public class EnvironmentGroupResource {
     envIdentifiers.forEach(envId
         -> accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgId, projectId),
             Resource.of(ENVIRONMENT, envId), CDNGRbacPermissions.ENVIRONMENT_VIEW_PERMISSION));
-  }
-
-  private EnvironmentGroupEntity updateEntityWithUserInfo(EnvironmentGroupEntity entity) {
-    Principal principal = SecurityContextBuilder.getPrincipal();
-    EnvGroupUserInfo userInfo = EnvGroupUserInfo.builder().id(emptyIfNull(PrincipalHelper.getUuid(principal)))
-            .name(emptyIfNull(PrincipalHelper.getUsername(principal)))
-            .email(emptyIfNull(PrincipalHelper.getEmail(principal))).build();
-    return entity.withUserInfo(userInfo);
   }
 }

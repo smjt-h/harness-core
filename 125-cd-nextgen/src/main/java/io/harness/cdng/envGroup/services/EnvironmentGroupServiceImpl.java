@@ -88,6 +88,9 @@ public class EnvironmentGroupServiceImpl implements EnvironmentGroupService {
 
   @Override
   public EnvironmentGroupEntity create(EnvironmentGroupEntity entity) {
+    // adding userInfo
+    entity = environmentGroupServiceHelper.updateEntityWithUserInfo(entity);
+
     EnvironmentGroupEntity savedEntity = environmentRepository.create(entity);
     setupUsagesForEnvironmentList(entity);
     return savedEntity;
@@ -120,6 +123,10 @@ public class EnvironmentGroupServiceImpl implements EnvironmentGroupService {
               envGroupId, projectIdentifier, orgIdentifier));
     }
     EnvironmentGroupEntity entityWithDelete = existingEntity.withDeleted(true);
+
+    // adding userInfo
+    entityWithDelete = environmentGroupServiceHelper.updateEntityWithUserInfo(entityWithDelete);
+
     try {
       EnvironmentGroupEntity deletedEntity = environmentRepository.deleteEnvGroup(entityWithDelete);
 
@@ -159,13 +166,16 @@ public class EnvironmentGroupServiceImpl implements EnvironmentGroupService {
           originalEntity.getIdentifier(), originalEntity.getProjectIdentifier(), originalEntity.getOrgIdentifier()));
     }
 
+    // adding userInfo
+    originalEntity = environmentGroupServiceHelper.updateEntityWithUserInfo(originalEntity);
+
     EnvironmentGroupEntity updatedEntity = originalEntity.withName(requestedEntity.getName())
                                                .withDescription(requestedEntity.getDescription())
                                                .withLastModifiedAt(System.currentTimeMillis())
                                                .withColor(requestedEntity.getColor())
                                                .withEnvIdentifiers(requestedEntity.getEnvIdentifiers())
                                                .withTags(requestedEntity.getTags())
-            .withUserInfo(requestedEntity.getUserInfo())
+                                               .withUserInfo(requestedEntity.getUserInfo())
                                                .withYaml(requestedEntity.getYaml());
     EnvironmentGroupEntity savedEntity = environmentRepository.update(updatedEntity, originalEntity);
     setupUsagesForEnvironmentList(savedEntity);
