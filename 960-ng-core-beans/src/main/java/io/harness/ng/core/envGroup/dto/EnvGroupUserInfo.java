@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 @Builder
 public class EnvGroupUserInfo {
-  @Schema(description = "User Id") String id;
-  @Schema(description = "Email of the User") String email;
-  @Schema(description = "Name of the User") String name;
+  @Schema(description = "Id of the User who last updated the Entity") String id;
+  @Schema(description = "Email of the User who last updated the Entity") String email;
+  @Schema(description = "Name of the User who last updated the Entity") String name;
 }
