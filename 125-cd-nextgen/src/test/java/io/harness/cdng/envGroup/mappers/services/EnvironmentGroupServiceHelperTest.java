@@ -34,7 +34,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.data.mongodb.core.query.Criteria;
 
-public class EnvironmentGroupServiceHlelperTest extends CategoryTest {
+public class EnvironmentGroupServiceHelperTest extends CategoryTest {
   private String ACC_ID = "accId";
   private String ORG_ID = "orgId";
   private String PRO_ID = "proId";
