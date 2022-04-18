@@ -9,6 +9,10 @@ package software.wings.service.intfc.aws.delegate;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
+import com.amazonaws.services.s3.model.ListObjectsV2Request;
+import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
@@ -22,4 +26,12 @@ import java.util.List;
 @OwnedBy(CDP)
 public interface AwsS3HelperServiceDelegate {
   List<String> listBucketNames(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails);
+  ListObjectsV2Result listObjectsInS3(
+          AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, ListObjectsV2Request listObjectsV2Request);
+  boolean isVersioningEnabledForBucket(
+          AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String bucketName);
+  ObjectMetadata getObjectMetadataFromS3(
+          AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String bucketName, String key);
+  S3Object getObjectFromS3(
+          AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String bucketName, String key);
 }
