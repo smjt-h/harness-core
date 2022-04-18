@@ -224,6 +224,7 @@ import software.wings.beans.MultiServiceOrchestrationWorkflow;
 import software.wings.beans.Notification;
 import software.wings.beans.NotificationBatch;
 import software.wings.beans.NotificationGroup;
+import software.wings.beans.NotificationReceiverInfo;
 import software.wings.beans.PcfInfrastructureMapping;
 import software.wings.beans.Permit;
 import software.wings.beans.PhysicalDataCenterConfig;
@@ -928,6 +929,7 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     set.add(Notification.class);
     set.add(NotificationBatch.class);
     set.add(NotificationGroup.class);
+    set.add(NotificationReceiverInfo.class);
     set.add(NotificationRulesStatus.class);
     set.add(OauthSettings.class);
     set.add(PcfInfrastructureMapping.class);
