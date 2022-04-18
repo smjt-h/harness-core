@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
 
+import okhttp3.Request;
 import software.wings.beans.SlackMessage;
 import software.wings.beans.TaskType;
 import software.wings.delegatetasks.DelegateTaskType;
@@ -19,4 +20,7 @@ import software.wings.delegatetasks.DelegateTaskType;
 public interface SlackMessageSender {
   @DelegateTaskType(TaskType.SLACK)
   void send(SlackMessage slackMessage, boolean forceProxyCallForDelegate, boolean isCertValidationRequired);
+
+  @DelegateTaskType(TaskType.SLACK)
+  void sendJSON(Request slackRequest);
 }

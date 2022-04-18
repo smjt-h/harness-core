@@ -93,22 +93,24 @@ public class SlackNotificationServiceImpl implements SlackNotificationService {
   }
 
   @Override
-  public void sendJSONMessage(String message, List<String> slackWebhooks) {
-    for (String slackWebHook : slackWebhooks) {
-      try {
-        RequestBody body = RequestBody.create(APPLICATION_JSON, message);
-        Request request = new Request.Builder()
-                              .url(slackWebHook)
-                              .post(body)
-                              .addHeader("Content-Type", "application/json")
-                              .addHeader("Accept", "*/*")
-                              .addHeader("Cache-Control", "no-cache")
-                              .addHeader("Host", "hooks.slack.com")
-                              .addHeader("accept-encoding", "gzip, deflate")
-                              .addHeader("content-length", "798")
-                              .addHeader("Connection", "keep-alive")
-                              .addHeader("cache-control", "no-cache")
-                              .build();
+  public void sendJSONMessage(String message, List<String> slackWebhooks, String accountId) {
+    if (featureFlagService.isEnabled(FeatureName.SEND_SLACK_NOTIFICATION_FROM_DELEGATE, accountId)) {
+      for (String slackWebHook : slackWebhooks) {
+        log.info("Sending message via delegate");
+        SyncTaskContext syncTaskContext = SyncTaskContext.builder()
+            .accountId(accountId)
+            .appId(GLOBAL_APP_ID)
+            .timeout(DEFAULT_SYNC_CALL_TIMEOUT)
+            .build();
+        log.info("Sending message for account {} via delegate", accountId);
+        Request request = createRequestBody(message, slackWebHook);
+
+        delegateProxyFactory.get(SlackMessageSender.class, syncTaskContext)
+            .sendJSON(request);
+      }
+    } else {
+      for (String slackWebHook : slackWebhooks) {
+        Request request = createRequestBody(message, slackWebHook);
 
         try (Response response = client.newCall(request).execute()) {
           if (!response.isSuccessful()) {
@@ -116,10 +118,58 @@ public class SlackNotificationServiceImpl implements SlackNotificationService {
 
             log.error("Response not Successful. Response body: {}", bodyString);
           }
+        } catch (Exception e) {
+          log.error("Error sending post data", e);
         }
-      } catch (Exception e) {
-        log.error("Error sending post data", e);
       }
     }
+  }
+
+//  public void sendJSONMessage(String message, List<String> slackWebhooks, String accountId) {
+//    for (String slackWebHook : slackWebhooks) {
+//      try {
+//        RequestBody body = RequestBody.create(APPLICATION_JSON, message);
+//        Request request = new Request.Builder()
+//            .url(slackWebHook)
+//            .post(body)
+//            .addHeader("Content-Type", "application/json")
+//            .addHeader("Accept", "*/*")
+//            .addHeader("Cache-Control", "no-cache")
+//            .addHeader("Host", "hooks.slack.com")
+//            .addHeader("accept-encoding", "gzip, deflate")
+//            .addHeader("content-length", "798")
+//            .addHeader("Connection", "keep-alive")
+//            .addHeader("cache-control", "no-cache")
+//            .build();
+//
+//        try (Response response = client.newCall(request).execute()) {
+//          if (!response.isSuccessful()) {
+//            String bodyString = (null != response.body()) ? response.body().string() : "null";
+//
+//            log.error("Response not Successful. Response body: {}", bodyString);
+//          }
+//        }
+//      } catch (Exception e) {
+//        log.error("Error sending post data", e);
+//      }
+//    }
+//  }
+
+  private Request createRequestBody(String message, String slackWebHook) {
+    RequestBody body = RequestBody.create(APPLICATION_JSON, message);
+    Request request = new Request.Builder()
+        .url(slackWebHook)
+        .post(body)
+        .addHeader("Content-Type", "application/json")
+        .addHeader("Accept", "*/*")
+        .addHeader("Cache-Control", "no-cache")
+        .addHeader("Host", "hooks.slack.com")
+        .addHeader("accept-encoding", "gzip, deflate")
+        .addHeader("content-length", "798")
+        .addHeader("Connection", "keep-alive")
+        .addHeader("cache-control", "no-cache")
+        .build();
+
+    return request;
   }
 }

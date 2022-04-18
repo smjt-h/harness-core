@@ -19,6 +19,9 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
 import io.harness.network.Http;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import software.wings.beans.SlackMessage;
 import software.wings.common.NotificationMessageResolver;
 import software.wings.service.intfc.SlackMessageSender;
@@ -42,6 +45,8 @@ import retrofit2.http.Url;
 @OwnedBy(CDC)
 @Slf4j
 public class SlackMessageSenderImpl implements SlackMessageSender {
+  private OkHttpClient client = new OkHttpClient();
+
   @Override
   public void send(SlackMessage slackMessage, boolean sendFromDelegate, boolean isCertValidationRequired) {
     String outgoingWebhookUrl = slackMessage.getOutgoingWebhookUrl();
@@ -84,6 +89,19 @@ public class SlackMessageSenderImpl implements SlackMessageSender {
       webhookClient.post(payload);
     } else {
       sendGenericHttpPostRequest(outgoingWebhookUrl, payload, isCertValidationRequired);
+    }
+  }
+
+  @Override
+  public void sendJSON(Request slackRequest) {
+    try (Response response = client.newCall(slackRequest).execute()) {
+      if (!response.isSuccessful()) {
+        String bodyString = (null != response.body()) ? response.body().string() : "null";
+
+        log.error("Response not Successful. Response body: {}", bodyString);
+      }
+    } catch (Exception e) {
+      log.error("Error sending post data", e);
     }
   }
 
