@@ -4533,7 +4533,6 @@ plain_artifacts = [
     "com.squareup.okhttp3:logging-interceptor:3.14.9",
     "com.squareup.okhttp3:okhttp:3.14.9",
     "com.squareup.okhttp3:okhttp-urlconnection:3.14.9",
-    "com.squareup.okio:okio:1.17.2",
     "com.squareup.retrofit2:adapter-rxjava:2.9.0",
     "com.squareup.retrofit2:converter-gson:2.3.0",
     "com.squareup.retrofit2:converter-jackson:2.9.0",
