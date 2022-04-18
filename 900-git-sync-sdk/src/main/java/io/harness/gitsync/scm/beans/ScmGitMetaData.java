@@ -16,10 +16,13 @@ import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 
 @OwnedBy(HarnessTeam.PL)
+@Builder
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Builder
-public class ScmGetFileResponse {
-  String fileContent;
-  ScmGitMetaData gitMetaData;
+public class ScmGitMetaData {
+  String repoName;
+  String branchName;
+  String commitId;
+  String filePath;
+  String blobId;
 }

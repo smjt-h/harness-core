@@ -22,6 +22,7 @@ import io.harness.git.model.ChangeType;
 import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.GetFileRequest;
 import io.harness.gitsync.GetFileResponse;
+import io.harness.gitsync.GitMetaData;
 import io.harness.gitsync.HarnessToGitPushInfoServiceGrpc.HarnessToGitPushInfoServiceBlockingStub;
 import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.common.helper.ChangeTypeMapper;
@@ -32,6 +33,7 @@ import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.scm.beans.SCMNoOpResponse;
 import io.harness.gitsync.scm.beans.ScmGetFileResponse;
+import io.harness.gitsync.scm.beans.ScmGitMetaData;
 import io.harness.gitsync.scm.beans.ScmPushResponse;
 import io.harness.impl.ScmResponseStatusUtils;
 import io.harness.ng.core.EntityDetail;
@@ -79,7 +81,12 @@ public class SCMGitSyncHelper {
     final GetFileRequest getFileRequest = null;
     final GetFileResponse getFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::getFile, getFileRequest);
-    return ScmGetFileResponse.builder().build();
+
+    // Add Error Handling
+    return ScmGetFileResponse.builder()
+        .fileContent(getFileResponse.getFileContent())
+        .gitMetaData(getGitMetaData(getFileResponse.getGitMetaData()))
+        .build();
   }
 
   @VisibleForTesting
@@ -190,5 +197,15 @@ public class SCMGitSyncHelper {
       default:
         throw new InvalidRequestException("Principal type not set.");
     }
+  }
+
+  private ScmGitMetaData getGitMetaData(GitMetaData gitMetaData) {
+    return ScmGitMetaData.builder()
+        .blobId(gitMetaData.getBlobId())
+        .branchName(gitMetaData.getBranchName())
+        .repoName(gitMetaData.getRepoName())
+        .filePath(gitMetaData.getFilePath())
+        .commitId(gitMetaData.getCommitId())
+        .build();
   }
 }
