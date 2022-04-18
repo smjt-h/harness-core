@@ -90,6 +90,7 @@ public class SignupServiceImplTest extends CategoryTest {
   @Mock LicenseService licenseService;
   @Mock VersionInfoManager versionInfoManager;
 
+  private static final String TOKEN = "token";
   private static final String EMAIL = "test@test.com";
   private static final String INVALID_EMAIL = "test";
   private static final String PASSWORD = "admin12345";
@@ -174,10 +175,9 @@ public class SignupServiceImplTest extends CategoryTest {
     SignupVerificationToken verificationToken =
 
         SignupVerificationToken.builder().email(EMAIL).validUntil(Long.MAX_VALUE).build();
-
-    when(verificationTokenRepository.findByToken("token")).thenReturn(Optional.of(verificationToken));
+    when(verificationTokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(verificationToken));
     when(accessControlClient.hasAccess(any(), any(), any())).thenReturn(true);
-    UserInfo userInfo = signupServiceImpl.completeSignupInvite("token");
+    UserInfo userInfo = signupServiceImpl.completeSignupInvite(TOKEN);
 
     verify(telemetryReporter, times(1)).sendIdentifyEvent(eq(EMAIL), any(), any());
     verify(telemetryReporter, times(1))
@@ -194,8 +194,8 @@ public class SignupServiceImplTest extends CategoryTest {
   @Owner(developers = ZHUO)
   @Category(UnitTests.class)
   public void testCompleteSignupInviteWithInvalidToken() throws IOException {
-    when(verificationTokenRepository.findByToken("token")).thenReturn(Optional.ofNullable(null));
-    signupServiceImpl.completeSignupInvite("token");
+    when(verificationTokenRepository.findByToken(TOKEN)).thenReturn(Optional.ofNullable(null));
+    signupServiceImpl.completeSignupInvite(TOKEN);
   }
 
   @Test
@@ -243,7 +243,7 @@ public class SignupServiceImplTest extends CategoryTest {
     try {
       signupServiceImpl.signup(signupDTO, null);
     } catch (SignupException e) {
-      verify(telemetryReporter, times(1))
+      verify(telemetryReporter, times(2))
           .sendTrackEvent(
               eq(FAILED_EVENT_NAME), eq(INVALID_EMAIL), any(), any(), any(), eq(io.harness.telemetry.Category.SIGN_UP));
       throw e;
@@ -258,8 +258,8 @@ public class SignupServiceImplTest extends CategoryTest {
     doThrow(new RuntimeException("")).when(reCaptchaVerifier).verifyInvisibleCaptcha(any());
     try {
       signupServiceImpl.signup(signupDTO, null);
-    } catch (RuntimeException e) {
-      verify(telemetryReporter, times(1))
+    } catch (WingsException e) {
+      verify(telemetryReporter, times(2))
           .sendTrackEvent(
               eq(FAILED_EVENT_NAME), eq(INVALID_EMAIL), any(), any(), any(), eq(io.harness.telemetry.Category.SIGN_UP));
       throw e;
@@ -277,7 +277,7 @@ public class SignupServiceImplTest extends CategoryTest {
     try {
       signupServiceImpl.oAuthSignup(oAuthSignupDTO);
     } catch (SignupException e) {
-      verify(telemetryReporter, times(1))
+      verify(telemetryReporter, times(2))
           .sendTrackEvent(
               eq(FAILED_EVENT_NAME), eq(INVALID_EMAIL), any(), any(), any(), eq(io.harness.telemetry.Category.SIGN_UP));
       throw e;
