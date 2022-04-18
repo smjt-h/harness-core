@@ -10,6 +10,7 @@ package io.harness.gitsync;
 import "google/protobuf/wrappers.proto";
 import "970-ng-commons/src/main/proto/io/harness/eventsframework/schemas/entity/entity_detail.proto";
 import "970-ng-commons/src/main/proto/io/harness/eventsframework/schemas/entity/entity_scope_info.proto";
+import "970-ng-commons/src/main/proto/io/harness/scope_identifiers.proto";
 import "io/harness/gitsync/change_type.proto";
 import "980-commons/src/main/proto/io/harness/security/principal.proto";
 
@@ -110,10 +111,4 @@ message GitMetaData {
   string commitId = 3;
   string filePath = 4;
   string blobId = 5;
-}
-
-message ScopeIdentifiers {
-  string accountIdentifier = 1;
-  string orgIdentifier = 2;
-  string projectIdentifier = 3;
 }
