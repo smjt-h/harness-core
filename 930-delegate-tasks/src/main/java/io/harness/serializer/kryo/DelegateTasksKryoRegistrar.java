@@ -12,7 +12,26 @@ import io.harness.delegate.task.executioncapability.BatchCapabilityCheckTaskResp
 import io.harness.delegate.task.winrm.AuthenticationScheme;
 import io.harness.serializer.KryoRegistrar;
 
-import software.wings.beans.*;
+import software.wings.beans.AppDynamicsConfig;
+import software.wings.beans.AzureConfig;
+import software.wings.beans.BambooConfig;
+import software.wings.beans.BaseVaultConfig;
+import software.wings.beans.DockerConfig;
+import software.wings.beans.DynaTraceConfig;
+import software.wings.beans.EcrConfig;
+import software.wings.beans.ElkConfig;
+import software.wings.beans.GcpConfig;
+import software.wings.beans.HostConnectionAttributes;
+import software.wings.beans.InstanaConfig;
+import software.wings.beans.JiraConfig;
+import software.wings.beans.NewRelicConfig;
+import software.wings.beans.PcfConfig;
+import software.wings.beans.SSHVaultConfig;
+import software.wings.beans.ServiceNowConfig;
+import software.wings.beans.SftpConfig;
+import software.wings.beans.SmbConfig;
+import software.wings.beans.SplunkConfig;
+import software.wings.beans.SumoConfig;
 import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.artifact.ArtifactFile;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
