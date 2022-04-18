@@ -36,12 +36,14 @@ import io.harness.ng.beans.PageResponse;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class SLODashboardServiceImpl implements SLODashboardService {
   @Inject private ServiceLevelObjectiveService serviceLevelObjectiveService;
@@ -76,9 +78,9 @@ public class SLODashboardServiceImpl implements SLODashboardService {
   @Override
   public SLODashboardDetail getSloDashboardDetail(
       ProjectParams projectParams, String identifier, Instant startTime, Instant endTime, DurationDTO durationDTO) {
-    List<Instant> customTime = getCustomTimeRange(startTime, endTime, durationDTO);
-    startTime = customTime.get(0);
-    endTime = customTime.get(1);
+    Pair<Instant, Instant> customTime = durationDTO.getCustomTimeRange(startTime, endTime, durationDTO);
+    startTime = customTime.getLeft();
+    endTime = customTime.getRight();
     ServiceLevelObjectiveResponse sloResponse = serviceLevelObjectiveService.get(projectParams, identifier);
     SLODashboardWidget sloDashboardWidget = getSloDashboardWidget(projectParams, sloResponse, startTime, endTime);
     return SLODashboardDetail.builder()
@@ -87,37 +89,6 @@ public class SLODashboardServiceImpl implements SLODashboardService {
         .lastModifiedAt(sloResponse.getLastModifiedAt())
         .sloDashboardWidget(sloDashboardWidget)
         .build();
-  }
-
-  private List<Instant> getCustomTimeRange(Instant startTime, Instant endTime, DurationDTO durationDTO) {
-    if (!Objects.isNull(durationDTO)) {
-      endTime = DateTimeUtils.roundDownTo1MinBoundary(clock.instant());
-      switch (durationDTO) {
-        case ONE_HOUR:
-          startTime = DateTimeUtils.roundDownToHourBoundary(clock.instant(), 1);
-          break;
-        case TWENTY_FOUR_HOURS:
-          startTime = DateTimeUtils.roundDownToHourBoundary(clock.instant(), 23);
-          break;
-        case SEVEN_DAYS:
-          startTime = DateTimeUtils.roundDownToOneWeekBoundary(clock.instant());
-          break;
-        case THIRTY_DAYS:
-          startTime = DateTimeUtils.roundDownToOneMonthBoundary(clock.instant());
-          break;
-        default:
-          startTime = null;
-      }
-    } else {
-      if (startTime.equals(Instant.ofEpochMilli(0)) || endTime.equals(Instant.ofEpochMilli(0))) {
-        startTime = null;
-        endTime = null;
-      }
-    }
-    List<Instant> customTimeList = new ArrayList<>();
-    customTimeList.add(startTime);
-    customTimeList.add(endTime);
-    return customTimeList;
   }
 
   @Override

@@ -151,6 +151,7 @@ public class SLIRecordServiceImpl implements SLIRecordService {
     if (customEndTime.isAfter(endTime)) {
       customEndTime = endTime;
     }
+
     List<SLIRecord> sliRecords = sliRecords(sliId, startTime, endTime, customStartTime, customEndTime);
     List<Point> sliTread = new ArrayList<>();
     List<Point> errorBudgetBurndown = new ArrayList<>();
@@ -182,6 +183,16 @@ public class SLIRecordServiceImpl implements SLIRecordService {
       }
       errorBudgetRemainingPercentage = errorBudgetBurndown.get(errorBudgetBurndown.size() - 1).getValue();
       errorBudgetRemaining = totalErrorBudgetMinutes - sliValue.getBadCount();
+    }
+
+    if (sliTread.size() > 0
+        && Instant.ofEpochMilli(sliTread.get(sliTread.size() - 1).getTimestamp()).isAfter(customEndTime)) {
+      sliTread.remove(sliTread.size() - 1);
+      errorBudgetBurndown.remove(errorBudgetBurndown.size() - 1);
+    }
+    if (sliTread.size() > 0 && Instant.ofEpochMilli(sliTread.get(0).getTimestamp()).isBefore(customStartTime)) {
+      sliTread.remove(0);
+      errorBudgetBurndown.remove(0);
     }
     return SLOGraphData.builder()
         .errorBudgetBurndown(errorBudgetBurndown)
