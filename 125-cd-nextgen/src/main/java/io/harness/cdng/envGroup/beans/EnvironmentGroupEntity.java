@@ -19,7 +19,6 @@ import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.core.common.beans.NGTag;
 import io.harness.ng.core.envGroup.dto.EnvGroupUserInfo;
 import io.harness.persistence.PersistentEntity;
-import io.harness.pms.contracts.plan.TriggeredBy;
 
 import com.google.common.collect.ImmutableList;
 import java.util.List;

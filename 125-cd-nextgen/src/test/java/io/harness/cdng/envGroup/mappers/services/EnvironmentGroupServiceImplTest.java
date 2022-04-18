@@ -96,6 +96,7 @@ public class EnvironmentGroupServiceImplTest extends CategoryTest {
   public void testCreate() {
     EnvironmentGroupEntity savedEntity = getEnvironmentGroupEntity(ACC_ID, ORG_ID, PRO_ID, ENV_GROUP_ID);
     doReturn(savedEntity).when(environmentGroupRepository).create(savedEntity);
+    doReturn(savedEntity).when(environmentGroupServiceHelper).updateEntityWithUserInfo(savedEntity);
     mockIdentifierRefProto(savedEntity);
 
     environmentGroupService.create(savedEntity);
@@ -150,6 +151,7 @@ public class EnvironmentGroupServiceImplTest extends CategoryTest {
         .listAllEntityUsage(
             0, 10, entity.getAccountId(), identifierRef.getFullyQualifiedName(), EntityType.ENVIRONMENT_GROUP, "");
     EnvironmentGroupEntity deletedEntity = entity.withDeleted(true);
+    doReturn(deletedEntity).when(environmentGroupServiceHelper).updateEntityWithUserInfo(any());
     doReturn(deletedEntity).when(environmentGroupRepository).deleteEnvGroup(deletedEntity);
     EnvironmentGroupEntity isDeletedEntity = environmentGroupService.delete(ACC_ID, ORG_ID, PRO_ID, ENV_GROUP_ID, null);
 
@@ -205,6 +207,7 @@ public class EnvironmentGroupServiceImplTest extends CategoryTest {
     doReturn(updatedEntity)
         .when(environmentGroupRepository)
         .update(captorForUpdatedEntity.capture(), captorForOriginalEntity.capture());
+    doReturn(updatedEntity).when(environmentGroupServiceHelper).updateEntityWithUserInfo(any());
     environmentGroupService.update(updatedEntity);
 
     EnvironmentGroupEntity capturedUpdatedEntity = captorForUpdatedEntity.getValue();
