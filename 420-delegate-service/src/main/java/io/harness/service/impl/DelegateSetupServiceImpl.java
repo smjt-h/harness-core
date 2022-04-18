@@ -498,13 +498,20 @@ public class DelegateSetupServiceImpl implements DelegateSetupService {
 
     List<String> delegateGroupIds = getDelegateGroupIds(accountId, orgId, projectId, filterProperties, searchTerm);
 
-    final Map<String, List<Delegate>> delegatesByGroup = persistence.createQuery(Delegate.class)
-                                                             .filter(DelegateKeys.accountId, accountId)
-                                                             .field(DelegateKeys.delegateGroupId)
-                                                             .in(delegateGroupIds)
-                                                             .asList()
-                                                             .stream()
-                                                             .collect(groupingBy(Delegate::getDelegateGroupId));
+    Query<Delegate> delegateQuery = persistence.createQuery(Delegate.class)
+                                        .filter(DelegateKeys.accountId, accountId)
+                                        .field(DelegateKeys.delegateGroupId)
+                                        .in(delegateGroupIds);
+
+    // Status filed is not populated in DelegateGroup, if filtering is done on status (ex: ENABLED), we need
+    // to filter it using Delegate Collection.
+
+    if (filterProperties != null && isNotEmpty(filterProperties.getStatus().toString())) {
+      delegateQuery.filter(DelegateKeys.status, filterProperties.getStatus().toString());
+    }
+
+    final Map<String, List<Delegate>> delegatesByGroup =
+        delegateQuery.asList().stream().collect(groupingBy(Delegate::getDelegateGroupId));
 
     List<DelegateGroupDetails> delegateGroupDetails =
         delegateGroupIds.stream()
@@ -565,12 +572,7 @@ public class DelegateSetupServiceImpl implements DelegateSetupService {
         delegateGroupQuery.field(DelegateGroupKeys.description).contains(filterProperties.getDescription());
       }
     }
-    return delegateGroupQuery.field(DelegateGroupKeys.status)
-        .notEqual(DelegateGroupStatus.DELETED)
-        .asKeyList()
-        .stream()
-        .map(key -> (String) key.getId())
-        .collect(toList());
+    return delegateGroupQuery.asKeyList().stream().map(key -> (String) key.getId()).collect(toList());
   }
 
   @Override
