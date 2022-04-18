@@ -36,6 +36,7 @@ import com.google.inject.Singleton;
 import io.fabric8.utils.Lists;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -184,8 +185,13 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
       delegateId = delegate.getHostName();
     }
     String message = String.format("%s : [%s]", TASK_ASSIGNED, delegateId);
+
+    Set<String> delegateIds = new HashSet<>();
+    delegateIds.add(delegateTask.getDelegateId());
+
     save(DelegateSelectionLog.builder()
              .accountId(delegateTask.getAccountId())
+             .delegateIds(delegateIds)
              .taskId(delegateTask.getUuid())
              .conclusion(ASSIGNED)
              .message(message)
@@ -304,7 +310,12 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
   }
 
   private DelegateSelectionLogParams buildSelectionLogParams(DelegateSelectionLog selectionLog) {
+    String delegateId = null;
+    if (!selectionLog.getDelegateIds().isEmpty()) {
+      delegateId = selectionLog.getDelegateIds().iterator().next();
+    }
     return DelegateSelectionLogParams.builder()
+        .delegateId(delegateId)
         .conclusion(selectionLog.getConclusion())
         .message(selectionLog.getMessage())
         .eventTimestamp(selectionLog.getEventTimestamp())

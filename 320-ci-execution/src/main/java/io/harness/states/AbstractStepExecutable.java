@@ -227,7 +227,7 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
                                            .logKey(logKey)
                                            .workingDir(vmStageInfraDetails.getWorkDir())
                                            .build();
-    List<String> taskSelectors = Collections.emptyList();
+    List<String> taskSelectors = new ArrayList<>();
     if (isNotEmpty(vmDetailsOutcome.getDelegateId())) {
       taskSelectors.add(vmDetailsOutcome.getDelegateId());
     }

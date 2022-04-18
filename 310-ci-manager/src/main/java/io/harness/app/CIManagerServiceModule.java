@@ -8,6 +8,7 @@
 package io.harness.app;
 
 import static io.harness.AuthorizationServiceHeader.CI_MANAGER;
+import static io.harness.AuthorizationServiceHeader.PIPELINE_SERVICE;
 import static io.harness.lock.DistributedLockImplementation.MONGO;
 
 import io.harness.AccessControlClientModule;
@@ -20,6 +21,7 @@ import io.harness.app.intfc.CIYamlSchemaService;
 import io.harness.callback.DelegateCallback;
 import io.harness.callback.DelegateCallbackToken;
 import io.harness.callback.MongoDatabase;
+import io.harness.client.DelegateSelectionLogHttpClientModule;
 import io.harness.concurrent.HTimeLimiter;
 import io.harness.connector.ConnectorResourceClientModule;
 import io.harness.core.ci.services.BuildNumberService;
@@ -221,7 +223,8 @@ public class CIManagerServiceModule extends AbstractModule {
     install(new TokenClientModule(ciManagerConfiguration.getNgManagerClientConfig(),
         ciManagerConfiguration.getNgManagerServiceSecret(), CI_MANAGER.getServiceId()));
     install(PersistentLockModule.getInstance());
-
+    install(new DelegateSelectionLogHttpClientModule(ciManagerConfiguration.getManagerClientConfig(),
+        ciManagerConfiguration.getManagerServiceSecret(), CI_MANAGER.getServiceId()));
     install(new AbstractManagerGrpcClientModule() {
       @Override
       public ManagerGrpcClientModule.Config config() {
