@@ -37,7 +37,6 @@ import software.wings.beans.s3.S3FetchFileResult;
 import software.wings.beans.s3.S3File;
 import software.wings.beans.s3.S3FileRequest;
 import software.wings.delegatetasks.DelegateLogService;
-import software.wings.service.impl.AwsHelperService;
 import software.wings.service.intfc.aws.delegate.AwsS3HelperServiceDelegate;
 import software.wings.service.intfc.security.EncryptionService;
 
@@ -59,7 +58,6 @@ import org.springframework.util.StreamUtils;
 public class S3FetchFilesTask extends AbstractDelegateRunnableTask {
   @Inject private EncryptionService encryptionService;
   @Inject private AwsS3HelperServiceDelegate awsS3HelperServiceDelegate;
-  @Inject private AwsHelperService awsHelperService;
   @Inject private DelegateLogService delegateLogService;
 
   public S3FetchFilesTask(DelegateTaskPackage delegateTaskPackage, ILogStreamingTaskClient logStreamingTaskClient,

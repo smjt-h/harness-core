@@ -18,11 +18,11 @@ import io.harness.expression.ExpressionEvaluator;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.AwsConfig;
-import software.wings.delegatetasks.delegatecapability.CapabilityHelper;
 
 import java.util.List;
 import lombok.Builder;
 import lombok.Value;
+import software.wings.delegatetasks.utils.CapablityUtility;
 
 @Value
 @Builder
@@ -39,6 +39,6 @@ public class FetchS3FilesCommandParams implements TaskParameters, ExecutionCapab
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
-    return CapabilityHelper.generateDelegateCapabilities(awsConfig, getEncryptionDetails(), maskingEvaluator);
+    return CapablityUtility.generateDelegateCapabilities(awsConfig, getEncryptionDetails(), maskingEvaluator);
   }
 }
