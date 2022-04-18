@@ -10,11 +10,12 @@ package io.harness.gitsync.persistance;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.gitsync.v2.GitAware;
+import io.harness.gitsync.v2.StoreType;
 
 import java.util.Optional;
 
 @OwnedBy(HarnessTeam.PL)
-public interface GitAwarePersistenceV2 extends GitAwarePersistence {
+public interface GitAwarePersistenceV2 {
   <B extends GitAware> Optional<B> findOne(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, Class<B> entityClass);
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, Class entityClass, StoreType storeType);
 }

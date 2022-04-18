@@ -9,30 +9,24 @@ package io.harness.gitsync.persistance;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.gitsync.entityInfo.GitSdkEntityHandlerInterface;
-import io.harness.gitsync.scm.SCMGitSyncHelper;
 import io.harness.gitsync.v2.GitAware;
-import io.harness.pms.pipeline.PipelineEntity;
+import io.harness.gitsync.v2.StoreType;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Map;
+import com.google.inject.Inject;
 import java.util.Optional;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.transaction.support.TransactionTemplate;
 
 @OwnedBy(HarnessTeam.PL)
-public class GitAwarePersistenceV2Impl extends GitAwarePersistenceNewImpl implements GitAwarePersistenceV2 {
-  public GitAwarePersistenceV2Impl(MongoTemplate mongoTemplate, GitSyncSdkService gitSyncSdkService,
-      Map<String, GitSdkEntityHandlerInterface> gitPersistenceHelperServiceMap, SCMGitSyncHelper scmGitSyncHelper,
-      GitSyncMsvcHelper gitSyncMsvcHelper, ObjectMapper objectMapper, TransactionTemplate transactionTemplate) {
-    super(mongoTemplate, gitSyncSdkService, gitPersistenceHelperServiceMap, scmGitSyncHelper, gitSyncMsvcHelper,
-        objectMapper, transactionTemplate);
-  }
+public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
+  @Inject GitAwarePersistence gitAwarePersistence;
 
   @Override
-  public <B extends GitAware> Optional<B> findOne(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, Class<B> entityClass) {
-    return super.findOne(null, "abc", "abc", entityClass);
+  public <B extends GitAware> Optional<B> findOne(String accountIdentifier, String orgIdentifier,
+      String projectIdentifier, Class entityClass, StoreType storeType) {
+    if (storeType == null) {
+      return gitAwarePersistence.findOne(null, null, null, entityClass);
+    }
+
+    // put your logic
     //        return Optional.empty();
   }
 }
