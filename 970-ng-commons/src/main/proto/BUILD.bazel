@@ -6,6 +6,7 @@ harness_grpc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//970-ng-commons/src/main/proto/io/harness/eventsframework/schemas/entity:970_ng_commons_proto",
+        "//970-ng-commons/src/main/proto/io/harness:970_ng_commons_proto",
     ],
 )
 
@@ -14,5 +15,6 @@ harness_grpc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//970-ng-commons/src/main/proto/io/harness/eventsframework/schemas/entity:970_ng_commons_proto",
+        "//970-ng-commons/src/main/proto/io/harness:970_ng_commons_proto",
     ],
 )

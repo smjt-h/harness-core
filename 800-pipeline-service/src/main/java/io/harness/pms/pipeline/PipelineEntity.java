@@ -69,7 +69,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @ChangeDataCapture(table = "tags_info", dataStore = "pms-harness", fields = {}, handler = "TagsInfoCD")
 @ChangeDataCapture(table = "pipelines", dataStore = "ng-harness", fields = {}, handler = "Pipelines")
 public class PipelineEntity
-    implements GitAware, GitSyncableEntity, PersistentEntity, AccountAccess, UuidAware, CreatedAtAware, UpdatedAtAware {
+    implements GitSyncableEntity, PersistentEntity, AccountAccess, UuidAware, CreatedAtAware, UpdatedAtAware, GitAware {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -123,6 +123,7 @@ public class PipelineEntity
 
   @Wither @Setter @NonFinal @Default Boolean templateReference = false;
 
+  // git experience parameters before simplification
   @Wither @Setter @NonFinal String objectIdOfYaml;
   @Setter @NonFinal Boolean isFromDefaultBranch;
   @Setter @NonFinal String branch;
@@ -130,6 +131,21 @@ public class PipelineEntity
   @Setter @NonFinal String filePath;
   @Setter @NonFinal String rootFolder;
   @Getter(AccessLevel.NONE) @Wither @NonFinal Boolean isEntityInvalid;
+
+  // git experience parameters after simplification
+  StoreType storeType;
+  String repo;
+  String path;
+  String connectorRef;
+
+  @Override
+  public String getData() {
+    if (storeType == null || storeType == StoreType.INLINE) {
+      return yaml;
+    }
+    // TODO: add proper impl here for remote store type
+    return null;
+  }
 
   @Override
   public String getAccountIdentifier() {
