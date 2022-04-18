@@ -64,6 +64,7 @@ import software.wings.service.impl.aws.model.AwsResponse;
 import software.wings.service.impl.aws.model.AwsS3ListBucketNamesRequest;
 import software.wings.service.impl.aws.model.AwsS3ListBucketNamesResponse;
 import software.wings.service.impl.aws.model.AwsS3Request;
+import software.wings.service.impl.aws.model.AwsS3Request.AwsS3RequestType;
 import software.wings.service.impl.dynatrace.DynaTraceApplication;
 import software.wings.service.impl.dynatrace.DynaTraceDataCollectionInfo;
 import software.wings.service.impl.dynatrace.DynaTraceMetricDataResponse;
@@ -139,7 +140,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(LogElement.class, 5486);
     kryo.register(SetupTestNodeData.class, 5530);
     kryo.register(AwsS3Request.class, 7266);
-    kryo.register(AwsS3Request.AwsS3RequestType.class, 7267);
+    kryo.register(AwsS3RequestType.class, 7267);
     kryo.register(AwsS3ListBucketNamesRequest.class, 7268);
     kryo.register(AwsS3ListBucketNamesResponse.class, 7269);
     kryo.register(AzureArtifactsPATConfig.class, 7284);
