@@ -60,7 +60,7 @@ import org.mockito.Mock;
 public class AmazonS3ServiceTest extends WingsBaseTest {
   @Mock AwsHelperService awsHelperService;
   @Mock AwsS3HelperServiceDelegate awsS3HelperServiceDelegate;
-  @Mock AwsS3HelperServiceDelegate mockAwsS3HelperServiceDelegate;
+//  @Mock AwsS3HelperServiceDelegate mockAwsS3HelperServiceDelegate;
   @Inject private AmazonS3Service amazonS3Service;
   @Inject @InjectMocks private DelegateFileManager delegateFileManager;
 
@@ -72,15 +72,14 @@ public class AmazonS3ServiceTest extends WingsBaseTest {
 
   @Before
   public void setUp() throws IllegalAccessException {
-    FieldUtils.writeField(amazonS3Service, "awsHelperService", awsHelperService, true);
-    FieldUtils.writeField(amazonS3Service, "awsS3HelperServiceDelegate", mockAwsS3HelperServiceDelegate, true);
+    FieldUtils.writeField(amazonS3Service, "awsS3HelperServiceDelegate", awsS3HelperServiceDelegate, true);
   }
 
   @Test
   @Owner(developers = RAMA)
   @Category(UnitTests.class)
   public void shouldGetBuckets() {
-    when(mockAwsS3HelperServiceDelegate.listBucketNames(awsConfig, null)).thenReturn(Lists.newArrayList("bucket1"));
+    when(awsS3HelperServiceDelegate.listBucketNames(awsConfig, null)).thenReturn(Lists.newArrayList("bucket1"));
     Map<String, String> buckets = amazonS3Service.getBuckets(awsConfig, null);
     assertThat(buckets).hasSize(1).containsKeys("bucket1");
   }
