@@ -1674,6 +1674,8 @@ public class DelegateModule extends AbstractModule {
         .to(CVConnectorValidationHandler.class);
     connectorTypeToConnectorValidationHandlerMap.addBinding(ConnectorType.AZURE.getDisplayName())
         .to(AzureValidationHandler.class);
+    connectorTypeToConnectorValidationHandlerMap.addBinding(ConnectorType.AZURE_REPO.getDisplayName())
+        .to(GitValidationHandler.class);
   }
 
   private void bindExceptionHandlers() {
