@@ -138,6 +138,8 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
     return null;
   }
 
+  // some old ng delegates are using accountKey as token, and the value of acccountKey is same as default token in cg
+  // which is not encoded. So we should not decode it.
   @Override
   public String getDelegateTokenValue(String accountId, String name) {
     DelegateToken delegateToken = matchNameTokenQuery(accountId, name).get();
@@ -148,7 +150,7 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
         return delegateToken.getValue();
       }
     }
-    log.warn("Not able to fetch delegate token {} for account {} . Please verify manually.", name, accountId);
+    log.warn("Not able to find delegate token {} for account {} . Please verify manually.", name, accountId);
     return null;
   }
 

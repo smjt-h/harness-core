@@ -333,7 +333,7 @@ public class K8sTaskHelperBase {
       return ProcessResponse.builder()
           .processResult(
               command.execute(k8sDelegateTaskParams.getWorkingDirectory(), logOutputStream, logErrorStream, true))
-          .errorMessage(errorCaptureStream.toString())
+          .errorMessage(ExceptionMessageSanitizer.sanitizeMessage(errorCaptureStream.toString()))
           .kubectlPath(k8sDelegateTaskParams.getKubectlPath())
           .printableCommand(getPrintableCommand(command.command()))
           .build();
@@ -868,7 +868,7 @@ public class K8sTaskHelperBase {
         throw new KubernetesCliTaskRuntimeException(response, KubernetesCliCommandType.APPLY);
       }
 
-      executionLogCallback.saveExecutionLog("\nFailed.", INFO, FAILURE);
+      logExecutableFailed(result, executionLogCallback);
       return false;
     }
 
@@ -890,7 +890,8 @@ public class K8sTaskHelperBase {
     ProcessResponse response = runK8sExecutable(k8sDelegateTaskParams, executionLogCallback, deleteCommand);
     ProcessResult result = response.getProcessResult();
     if (result.getExitValue() != 0) {
-      log.warn("Failed to delete manifests. Error {}", result.getOutput());
+      log.warn("Failed to delete manifests with exit code: {}. Error {}", result.getExitValue(),
+          result.hasOutput() ? result.outputUTF8() : "Empty output");
     }
 
     executionLogCallback.saveExecutionLog("\nDone.", INFO, CommandExecutionStatus.SUCCESS);
@@ -922,8 +923,8 @@ public class K8sTaskHelperBase {
       executionLogCallback.saveExecutionLog("\nDone.", INFO, CommandExecutionStatus.SUCCESS);
       return true;
     } else {
-      executionLogCallback.saveExecutionLog("\nFailed.", INFO, FAILURE);
-      log.warn("Failed to scale workload. Error {}", result.getOutput());
+      logExecutableFailed(result, executionLogCallback);
+      log.warn("Failed to scale workload. Error {}", result.hasOutput() ? result.outputUTF8() : "empty output");
       if (isErrorFrameworkEnabled) {
         throw new KubernetesCliTaskRuntimeException(response, KubernetesCliCommandType.SCALE);
       }
@@ -1136,7 +1137,7 @@ public class K8sTaskHelperBase {
       ProcessResponse response = runK8sExecutable(k8sDelegateTaskParams, executionLogCallback, dryrun);
       ProcessResult result = response.getProcessResult();
       if (result.getExitValue() != 0) {
-        executionLogCallback.saveExecutionLog("\nFailed.", INFO, FAILURE);
+        logExecutableFailed(result, executionLogCallback);
         if (isErrorFrameworkEnabled) {
           throw new KubernetesCliTaskRuntimeException(response, KubernetesCliCommandType.DRY_RUN);
         }
@@ -1239,12 +1240,13 @@ public class K8sTaskHelperBase {
       if (!success) {
         log.warn(result.outputUTF8());
         if (isErrorFrameworkEnabled) {
-          ProcessResponse processResponse = ProcessResponse.builder()
-                                                .errorMessage(errorCaptureStream.toString())
-                                                .processResult(result)
-                                                .printableCommand(printableExecutedCommand)
-                                                .kubectlPath(kubectlPath)
-                                                .build();
+          ProcessResponse processResponse =
+              ProcessResponse.builder()
+                  .errorMessage(ExceptionMessageSanitizer.sanitizeMessage(errorCaptureStream.toString()))
+                  .processResult(result)
+                  .printableCommand(printableExecutedCommand)
+                  .kubectlPath(kubectlPath)
+                  .build();
           throw new KubernetesCliTaskRuntimeException(processResponse, KubernetesCliCommandType.STEADY_STATE_CHECK);
         }
       }
@@ -1462,12 +1464,13 @@ public class K8sTaskHelperBase {
       if (!success) {
         log.warn(result.outputUTF8());
         if (isErrorFrameworkEnabled) {
-          ProcessResponse processResponse = ProcessResponse.builder()
-                                                .errorMessage(errorCaptureStream.toString())
-                                                .processResult(result)
-                                                .printableCommand(printableExecutedCommand)
-                                                .kubectlPath(k8sDelegateTaskParams.getKubectlPath())
-                                                .build();
+          ProcessResponse processResponse =
+              ProcessResponse.builder()
+                  .errorMessage(ExceptionMessageSanitizer.sanitizeMessage(errorCaptureStream.toString()))
+                  .processResult(result)
+                  .printableCommand(printableExecutedCommand)
+                  .kubectlPath(k8sDelegateTaskParams.getKubectlPath())
+                  .build();
           throw new KubernetesCliTaskRuntimeException(processResponse, KubernetesCliCommandType.STEADY_STATE_CHECK);
         }
       }
@@ -2849,6 +2852,16 @@ public class K8sTaskHelperBase {
         .filter(resourceId -> !resourceId.isVersioned())
         .filter(resource -> !currentResources.contains(resource))
         .collect(toList());
+  }
+
+  private void logExecutableFailed(ProcessResult result, LogCallback logCallback) {
+    String output = result.hasOutput() ? result.outputUTF8() : null;
+    if (isNotEmpty(output)) {
+      logCallback.saveExecutionLog(
+          format("\nFailed with exit code: %d and output: %s.", result.getExitValue(), output), INFO, FAILURE);
+    } else {
+      logCallback.saveExecutionLog(format("\nFailed with exit code: %d.", result.getExitValue()), INFO, FAILURE);
+    }
   }
 
   public List<KubernetesResourceId> getResourcesToBePrunedInOrder(

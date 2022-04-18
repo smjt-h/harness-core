@@ -185,12 +185,14 @@ public class WatcherServiceImpl implements WatcherService {
   private long delegateRestartedToUpgradeJreAt;
   private boolean watcherRestartedToUpgradeJre;
 
+  private static final String DELEGATE_NAME =
+      isNotBlank(System.getenv().get("DELEGATE_NAME")) ? System.getenv().get("DELEGATE_NAME") : "";
+
   private final boolean delegateNg = isNotBlank(System.getenv().get("DELEGATE_SESSION_IDENTIFIER"))
       || (isNotBlank(System.getenv().get("NEXT_GEN")) && Boolean.parseBoolean(System.getenv().get("NEXT_GEN")));
   private final SecureRandom random = new SecureRandom();
 
   private static final boolean multiVersion;
-  private static boolean accountVersion;
 
   private final Map<String, Process> delegateProcessMap = new ConcurrentHashMap<>();
 
@@ -979,9 +981,6 @@ public class WatcherServiceImpl implements WatcherService {
         if (config != null && config.getAction() == SELF_DESTRUCT) {
           selfDestruct();
         }
-        if (config != null && config.isAccountVersion()) {
-          accountVersion = true;
-        }
 
         return config != null ? config.getDelegateVersions() : null;
       } else {
@@ -1022,16 +1021,15 @@ public class WatcherServiceImpl implements WatcherService {
     }
 
     // Get patched version
-    final String patchVersion = !accountVersion ? substringAfter(version, "-") : "";
-    final String updatedVersion =
-        !accountVersion ? (version.contains("-") ? substringBefore(version, "-") : version) : "";
+    final String patchVersion = substringAfter(version, "-");
+    final String updatedVersion = version.contains("-") ? substringBefore(version, "-") : version;
     RestResponse<DelegateScripts> restResponse = null;
     if (!delegateNg) {
       log.info(format("Calling getDelegateScripts with version %s and patch %s", updatedVersion, patchVersion));
       restResponse = callInterruptible21(timeLimiter, ofMinutes(1),
           ()
-              -> SafeHttpCall.execute(
-                  managerClient.getDelegateScripts(watcherConfiguration.getAccountId(), updatedVersion, patchVersion)));
+              -> SafeHttpCall.execute(managerClient.getDelegateScripts(
+                  watcherConfiguration.getAccountId(), updatedVersion, patchVersion, DELEGATE_NAME)));
     } else {
       log.info(format("Calling getDelegateScriptsNg with version %s and patch %s", updatedVersion, patchVersion));
       restResponse = callInterruptible21(timeLimiter, ofMinutes(1),
