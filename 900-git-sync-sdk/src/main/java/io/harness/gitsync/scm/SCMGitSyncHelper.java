@@ -20,6 +20,8 @@ import io.harness.exception.WingsException;
 import io.harness.exception.ngexception.beans.ScmErrorMetadataDTO;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.FileInfo;
+import io.harness.gitsync.GetFileRequest;
+import io.harness.gitsync.GetFileResponse;
 import io.harness.gitsync.HarnessToGitPushInfoServiceGrpc.HarnessToGitPushInfoServiceBlockingStub;
 import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.common.helper.ChangeTypeMapper;
@@ -29,6 +31,7 @@ import io.harness.gitsync.exceptions.GitSyncException;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.scm.beans.SCMNoOpResponse;
+import io.harness.gitsync.scm.beans.ScmGetFileResponse;
 import io.harness.gitsync.scm.beans.ScmPushResponse;
 import io.harness.impl.ScmResponseStatusUtils;
 import io.harness.ng.core.EntityDetail;
@@ -70,6 +73,13 @@ public class SCMGitSyncHelper {
       throwDifferentExceptionInCaseOfChangeTypeAdd(gitBranchInfo, changeType, e);
     }
     return ScmGitUtils.createScmPushResponse(yaml, gitBranchInfo, pushFileResponse, entityDetail, changeType);
+  }
+
+  public ScmGetFileResponse getFile() {
+    final GetFileRequest getFileRequest = null;
+    final GetFileResponse getFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
+        harnessToGitPushInfoServiceBlockingStub::getFile, getFileRequest);
+    return ScmGetFileResponse.builder().build();
   }
 
   @VisibleForTesting

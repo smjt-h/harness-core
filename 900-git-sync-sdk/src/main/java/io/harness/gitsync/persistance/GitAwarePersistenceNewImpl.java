@@ -49,7 +49,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @OwnedBy(DX)
 @Slf4j
 public class GitAwarePersistenceNewImpl implements GitAwarePersistence {
-  private MongoTemplate mongoTemplate;
+  protected MongoTemplate mongoTemplate;
   private GitSyncSdkService gitSyncSdkService;
   private Map<String, GitSdkEntityHandlerInterface> gitPersistenceHelperServiceMap;
   private SCMGitSyncHelper scmGitSyncHelper;
@@ -331,5 +331,9 @@ public class GitAwarePersistenceNewImpl implements GitAwarePersistence {
       String accountId, String orgIdentifier, String projectIdentifier, Class entityClass, Criteria criteria) {
     Criteria gitSyncCriteria = getCriteriaWithGitSync(projectIdentifier, orgIdentifier, accountId, entityClass);
     return criteria == null ? gitSyncCriteria : new Criteria().andOperator(criteria, gitSyncCriteria);
+  }
+
+  GitSdkEntityHandlerInterface getGitSdkEntityHandlerInterface(Class entityClass) {
+    return gitPersistenceHelperServiceMap.get(entityClass.getCanonicalName());
   }
 }

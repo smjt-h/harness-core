@@ -10,12 +10,16 @@ package io.harness.gitsync.persistance;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.gitsync.v2.GitAware;
-import io.harness.gitsync.v2.StoreType;
 
 import java.util.Optional;
+import org.springframework.data.mongodb.core.query.Criteria;
 
 @OwnedBy(HarnessTeam.PL)
 public interface GitAwarePersistenceV2 {
+  //  <B extends GitAware> Optional<B> findOne(
+  //      String accountIdentifier, String orgIdentifier, String projectIdentifier, Class entityClass, StoreType
+  //      storeType);
+
   <B extends GitAware> Optional<B> findOne(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, Class entityClass, StoreType storeType);
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, Class entityClass, Criteria criteria);
 }

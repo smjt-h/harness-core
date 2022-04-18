@@ -9,24 +9,43 @@ package io.harness.gitsync.persistance;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.gitsync.entityInfo.GitSdkEntityHandlerInterface;
+import io.harness.gitsync.scm.SCMGitSyncHelper;
 import io.harness.gitsync.v2.GitAware;
 import io.harness.gitsync.v2.StoreType;
 
-import com.google.inject.Inject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Singleton;
+import java.util.Map;
 import java.util.Optional;
+import org.apache.commons.lang3.EnumUtils;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.transaction.support.TransactionTemplate;
 
+@Singleton
 @OwnedBy(HarnessTeam.PL)
-public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
-  @Inject GitAwarePersistence gitAwarePersistence;
+public class GitAwarePersistenceV2Impl extends GitAwarePersistenceNewImpl implements GitAwarePersistenceV2 {
+  public GitAwarePersistenceV2Impl(MongoTemplate mongoTemplate, GitSyncSdkService gitSyncSdkService,
+      Map<String, GitSdkEntityHandlerInterface> gitPersistenceHelperServiceMap, SCMGitSyncHelper scmGitSyncHelper,
+      GitSyncMsvcHelper gitSyncMsvcHelper, ObjectMapper objectMapper, TransactionTemplate transactionTemplate) {
+    super(mongoTemplate, gitSyncSdkService, gitPersistenceHelperServiceMap, scmGitSyncHelper, gitSyncMsvcHelper,
+        objectMapper, transactionTemplate);
+  }
 
   @Override
-  public <B extends GitAware> Optional<B> findOne(String accountIdentifier, String orgIdentifier,
-      String projectIdentifier, Class entityClass, StoreType storeType) {
-    if (storeType == null) {
-      return gitAwarePersistence.findOne(null, null, null, entityClass);
-    }
+  public <B extends GitAware> Optional<B> findOne(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, Class entityClass, Criteria criteria) {
+    Criteria gitSyncCriteria = getCriteriaWithGitSync(projectIdentifier, orgIdentifier, accountIdentifier, entityClass);
+    Criteria gitAwareCriteria = Criteria.where(getGitSdkEntityHandlerInterface(entityClass).getStoreTypeKey())
+                                    .in(EnumUtils.getEnumList(StoreType.class));
 
-    // put your logic
-    //        return Optional.empty();
+    Query query = new Query().addCriteria(
+        new Criteria().andOperator(criteria, new Criteria().orOperator(gitSyncCriteria, gitAwareCriteria)));
+    final B fetchedObject = (B) mongoTemplate.findOne(query, entityClass);
+    if (fetchedObject.getStoreType() == StoreType.REMOTE) {
+      // fetch yaml from git
+    }
   }
 }
