@@ -21,6 +21,7 @@ public class YAMLFieldNameConstants {
   public final String CI_CODE_BASE = "codebase";
   public final String PROPERTIES = "properties";
   public final String CI = "ci";
+  public final String SECURITY = "security";
   public final String PARALLEL = "parallel";
   public final String SPEC = "spec";
   public final String STAGE = "stage";
@@ -57,4 +58,5 @@ public class YAMLFieldNameConstants {
   public final String PIPELINE_INFRASTRUCTURE = "infrastructure";
   public final String COMMAND_TYPE = "commandType";
   public final String STOP_STEPS_SEQUENCE = "stopStepsSequence";
+  public final String DELEGATE_SELECTORS = "delegateSelectors";
 }
