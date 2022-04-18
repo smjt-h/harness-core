@@ -56,7 +56,7 @@ public class FilePathUtils {
   }
 
   public static String addEndingSlashIfMissing(String filePath) {
-    if (isNotEmpty(filePath) && filePath.charAt(filePath.length() - 1) == '/') {
+    if (isNotEmpty(filePath) && filePath.endsWith("/")) {
       return filePath;
     }
     return filePath + "/";
