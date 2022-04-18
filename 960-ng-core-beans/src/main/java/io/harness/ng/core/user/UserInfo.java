@@ -13,7 +13,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.core.dto.GatewayAccountRequestDTO;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import io.swagger.annotations.ApiModelProperty;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -29,7 +28,7 @@ import lombok.experimental.FieldDefaults;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @OwnedBy(PL)
 public class UserInfo {
-  @EqualsAndHashCode.Include @ApiModelProperty(required = true) String uuid;
+  @EqualsAndHashCode.Include String uuid;
   String name;
   String email;
   String token;
