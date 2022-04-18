@@ -182,6 +182,7 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
     try {
       return FileContent.parseFrom(gitFileTaskResponseData.getFileContent());
     } catch (InvalidProtocolBufferException e) {
+      log.error("Error while getFile SCM Ops", e);
       throw new UnexpectedException("Unexpected error occurred while doing scm operation", e);
     }
   }
