@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.UNSYNCED;
 
+import io.harness.ScopeIdentifiers;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.common.EntityReference;
@@ -34,7 +35,6 @@ import io.harness.gitsync.GitMetaData;
 import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.PushInfo;
 import io.harness.gitsync.RepoDetails;
-import io.harness.gitsync.ScopeIdentifiers;
 import io.harness.gitsync.common.beans.BranchSyncStatus;
 import io.harness.gitsync.common.beans.GitBranch;
 import io.harness.gitsync.common.beans.GitSyncDirection;

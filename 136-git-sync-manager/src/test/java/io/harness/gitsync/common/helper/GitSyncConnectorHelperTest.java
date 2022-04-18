@@ -75,7 +75,6 @@ public class GitSyncConnectorHelperTest extends GitSyncTestBase {
                            -> gitSyncConnectorHelper.getScmConnector(
                                ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, CONNECTOR_REF))
         .isInstanceOf(ConnectorNotFoundException.class);
-    ;
   }
 
   @Test
@@ -92,6 +91,5 @@ public class GitSyncConnectorHelperTest extends GitSyncTestBase {
                            -> gitSyncConnectorHelper.getScmConnector(
                                ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, CONNECTOR_REF))
         .isInstanceOf(UnexpectedException.class);
-    ;
   }
 }
