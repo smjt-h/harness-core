@@ -10,10 +10,13 @@ package io.harness.gitsync.scm.beans;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.experimental.FieldDefaults;
 
 @OwnedBy(HarnessTeam.PL)
 @Getter
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class ScmGetFileResponse {
   String content;
   String filePath;
