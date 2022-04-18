@@ -40,7 +40,7 @@ public enum ModuleType {
     this.internal = internal;
   }
 
-  @JsonCreator
+  @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static ModuleType fromString(String moduleType) {
     for (ModuleType moduleEnum : ModuleType.values()) {
       if (moduleEnum.name().equalsIgnoreCase(moduleType)) {

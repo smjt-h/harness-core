@@ -115,7 +115,7 @@ public enum NGStepType {
     this.yamlName = yamlName;
   }
 
-  @JsonCreator
+  @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static NGStepType getNGStepType(@JsonProperty("type") String yamlName) {
     for (NGStepType ngStepType : NGStepType.values()) {
       if (ngStepType.yamlName.equalsIgnoreCase(yamlName)) {
@@ -137,7 +137,6 @@ public enum NGStepType {
     return ngStepType.category;
   }
 
-  @JsonValue
   public String getYamlName(NGStepType ngStepType) {
     return ngStepType.yamlName;
   }
