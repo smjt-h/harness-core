@@ -36,6 +36,7 @@ import io.harness.authenticationservice.recaptcha.ReCaptchaVerifier;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.SignupException;
+import io.harness.exception.WingsException;
 import io.harness.licensing.services.LicenseService;
 import io.harness.ng.core.dto.AccountDTO;
 import io.harness.ng.core.dto.GatewayAccountRequestDTO;
