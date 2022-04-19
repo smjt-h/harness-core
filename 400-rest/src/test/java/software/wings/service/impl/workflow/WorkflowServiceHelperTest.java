@@ -154,7 +154,6 @@ import software.wings.service.intfc.InfrastructureMappingService;
 import software.wings.service.intfc.ServiceResourceService;
 import software.wings.sm.StateType;
 import software.wings.sm.states.customdeployment.InstanceFetchState.InstanceFetchStateKeys;
-import software.wings.utils.ArtifactType;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
