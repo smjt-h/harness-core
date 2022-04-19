@@ -9,30 +9,29 @@ package io.harness.connector.validator.scmValidators;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.ConnectorValidationResult;
 import io.harness.delegate.beans.connector.ConnectorConfigDTO;
 import io.harness.delegate.beans.connector.scm.adapter.AzureRepoToGitMapper;
-import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoConnectorDTO;
+import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 
 @OwnedBy(HarnessTeam.PL)
 public class AzureRepoConnectorValidator extends AbstractGitConnectorValidator {
-    @Override
-    public GitConfigDTO getGitConfigFromConnectorConfig(ConnectorConfigDTO connectorConfig) {
-        return AzureRepoToGitMapper.mapToGitConfigDTO((AzureRepoConnectorDTO) connectorConfig);
-    }
+  @Override
+  public GitConfigDTO getGitConfigFromConnectorConfig(ConnectorConfigDTO connectorConfig) {
+    return AzureRepoToGitMapper.mapToGitConfigDTO((AzureRepoConnectorDTO) connectorConfig);
+  }
 
-    @Override
-    public ConnectorValidationResult validate(ConnectorConfigDTO connectorConfigDTO, String accountIdentifier,
-                                              String orgIdentifier, String projectIdentifier, String identifier) {
-        return super.validate(connectorConfigDTO, accountIdentifier, orgIdentifier, projectIdentifier, identifier);
-    }
+  @Override
+  public ConnectorValidationResult validate(ConnectorConfigDTO connectorConfigDTO, String accountIdentifier,
+      String orgIdentifier, String projectIdentifier, String identifier) {
+    return super.validate(connectorConfigDTO, accountIdentifier, orgIdentifier, projectIdentifier, identifier);
+  }
 
-    @Override
-    public ConnectorValidationResult validate(ConnectorResponseDTO connectorResponseDTO, String accountIdentifier,
-                                              String orgIdentifier, String projectIdentifier, String identifier) {
-        return null;
-    }
+  @Override
+  public ConnectorValidationResult validate(ConnectorResponseDTO connectorResponseDTO, String accountIdentifier,
+      String orgIdentifier, String projectIdentifier, String identifier) {
+    return null;
+  }
 }

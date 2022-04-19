@@ -9,14 +9,13 @@ package io.harness.delegate.beans.connector.scm.adapter;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-
 import io.harness.delegate.beans.connector.scm.GitAuthType;
 import io.harness.delegate.beans.connector.scm.GitConnectionType;
-import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoConnectorDTO;
 import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoHttpCredentialsDTO;
 import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoSshCredentialsDTO;
 import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoUsernameTokenDTO;
+import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 import io.harness.encryption.SecretRefData;
 import io.harness.exception.InvalidRequestException;
 
@@ -25,35 +24,35 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 @OwnedBy(HarnessTeam.PL)
 public class AzureRepoToGitMapper {
-    public static GitConfigDTO mapToGitConfigDTO(AzureRepoConnectorDTO azureRepoConnectorDTO) {
-        final GitAuthType authType = azureRepoConnectorDTO.getAuthentication().getAuthType();
-        final GitConnectionType connectionType = azureRepoConnectorDTO.getConnectionType();
-        final String url = azureRepoConnectorDTO.getUrl();
-        final String validationRepo = azureRepoConnectorDTO.getValidationRepo();
-        if (authType == GitAuthType.HTTP) {
-            final AzureRepoHttpCredentialsDTO credentials =
-                    (AzureRepoHttpCredentialsDTO) azureRepoConnectorDTO.getAuthentication().getCredentials();
-            String username;
-            SecretRefData usernameRef, tokenRef;
-            final AzureRepoUsernameTokenDTO azureRepoUsernameTokenDTO =
-                        (AzureRepoUsernameTokenDTO) credentials.getHttpCredentialsSpec();
-            username = azureRepoUsernameTokenDTO.getUsername();
-            usernameRef = azureRepoUsernameTokenDTO.getUsernameRef();
-            tokenRef = azureRepoUsernameTokenDTO.getTokenRef();
-            GitConfigDTO gitConfigForHttp = GitConfigCreater.getGitConfigForHttp(connectionType, url, validationRepo,
-                    username, usernameRef, tokenRef, azureRepoConnectorDTO.getDelegateSelectors());
-            gitConfigForHttp.setExecuteOnDelegate(true);
-            return gitConfigForHttp;
+  public static GitConfigDTO mapToGitConfigDTO(AzureRepoConnectorDTO azureRepoConnectorDTO) {
+    final GitAuthType authType = azureRepoConnectorDTO.getAuthentication().getAuthType();
+    final GitConnectionType connectionType = azureRepoConnectorDTO.getConnectionType();
+    final String url = azureRepoConnectorDTO.getUrl();
+    final String validationRepo = azureRepoConnectorDTO.getValidationRepo();
+    if (authType == GitAuthType.HTTP) {
+      final AzureRepoHttpCredentialsDTO credentials =
+          (AzureRepoHttpCredentialsDTO) azureRepoConnectorDTO.getAuthentication().getCredentials();
+      String username;
+      SecretRefData usernameRef, tokenRef;
+      final AzureRepoUsernameTokenDTO azureRepoUsernameTokenDTO =
+          (AzureRepoUsernameTokenDTO) credentials.getHttpCredentialsSpec();
+      username = azureRepoUsernameTokenDTO.getUsername();
+      usernameRef = azureRepoUsernameTokenDTO.getUsernameRef();
+      tokenRef = azureRepoUsernameTokenDTO.getTokenRef();
+      GitConfigDTO gitConfigForHttp = GitConfigCreater.getGitConfigForHttp(connectionType, url, validationRepo,
+          username, usernameRef, tokenRef, azureRepoConnectorDTO.getDelegateSelectors());
+      gitConfigForHttp.setExecuteOnDelegate(true);
+      return gitConfigForHttp;
 
-        } else if (authType == GitAuthType.SSH) {
-            final AzureRepoSshCredentialsDTO credentials =
-                    (AzureRepoSshCredentialsDTO) azureRepoConnectorDTO.getAuthentication().getCredentials();
-            final SecretRefData sshKeyRef = credentials.getSshKeyRef();
-            GitConfigDTO gitConfigForSsh = GitConfigCreater.getGitConfigForSsh(
-                    connectionType, url, validationRepo, sshKeyRef, azureRepoConnectorDTO.getDelegateSelectors());
-            gitConfigForSsh.setExecuteOnDelegate(true);
-            return gitConfigForSsh;
-        }
-        throw new InvalidRequestException("Unknown auth type: " + authType);
+    } else if (authType == GitAuthType.SSH) {
+      final AzureRepoSshCredentialsDTO credentials =
+          (AzureRepoSshCredentialsDTO) azureRepoConnectorDTO.getAuthentication().getCredentials();
+      final SecretRefData sshKeyRef = credentials.getSshKeyRef();
+      GitConfigDTO gitConfigForSsh = GitConfigCreater.getGitConfigForSsh(
+          connectionType, url, validationRepo, sshKeyRef, azureRepoConnectorDTO.getDelegateSelectors());
+      gitConfigForSsh.setExecuteOnDelegate(true);
+      return gitConfigForSsh;
     }
+    throw new InvalidRequestException("Unknown auth type: " + authType);
+  }
 }
