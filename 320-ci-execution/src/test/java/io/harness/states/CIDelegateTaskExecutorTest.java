@@ -82,7 +82,7 @@ public class CIDelegateTaskExecutorTest extends CIExecutionTestBase {
     when(delegateCallbackTokenSupplier.get()).thenReturn(DelegateCallbackToken.newBuilder().build());
     when(delegateServiceGrpcClient.submitAsyncTask(eq(expectedDelegateTaskRequest), any(), any())).thenReturn(TASK_ID);
 
-    String taskId = ciDelegateTaskExecutor.queueTask(new HashMap<>(), task);
+    String taskId = ciDelegateTaskExecutor.queueTask(new HashMap<>(), task, any());
     assertThat(taskId).isEqualTo(TASK_ID);
   }
 
@@ -106,7 +106,7 @@ public class CIDelegateTaskExecutorTest extends CIExecutionTestBase {
     when(delegateServiceGrpcClient.submitAsyncTask(eq(expectedDelegateTaskRequestWithEmptyParams), any(), any()))
         .thenReturn(TASK_ID);
 
-    String taskId = ciDelegateTaskExecutor.queueTask(new HashMap<>(), task);
+    String taskId = ciDelegateTaskExecutor.queueTask(new HashMap<>(), task, any());
     assertThat(taskId).isEqualTo(TASK_ID);
   }
 
@@ -130,7 +130,7 @@ public class CIDelegateTaskExecutorTest extends CIExecutionTestBase {
     when(delegateServiceGrpcClient.submitAsyncTask(eq(expectedDelegateTaskRequestWithEmptyParams), any(), any()))
         .thenReturn(TASK_ID);
 
-    assertThatThrownBy(() -> ciDelegateTaskExecutor.queueTask(new HashMap<>(), task))
+    assertThatThrownBy(() -> ciDelegateTaskExecutor.queueTask(new HashMap<>(), task, null))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage("Task Execution not supported for type");
   }
