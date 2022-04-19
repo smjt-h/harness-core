@@ -178,7 +178,7 @@ public class UserGroupServiceImpl implements UserGroupService {
     }
     AccountPermissions accountPermissions =
         Optional.ofNullable(userGroup.getAccountPermissions()).orElse(AccountPermissions.builder().build());
-    userGroup.setAccountPermissions(accountPermissions);
+    userGroup.setAccountPermissions(addDefaultCePermissions(accountPermissions));
     UserGroup savedUserGroup = wingsPersistence.saveAndGet(UserGroup.class, userGroup);
     Account account = accountService.get(userGroup.getAccountId());
     notNullCheck("account", account);
@@ -201,6 +201,16 @@ public class UserGroupServiceImpl implements UserGroupService {
     if (!matcher.matches()) {
       throw new InvalidRequestException("User group name is not valid.");
     }
+  }
+
+  private AccountPermissions addDefaultCePermissions(AccountPermissions accountPermissions) {
+    Set<PermissionType> accountPermissionsSet =
+        Optional.ofNullable(accountPermissions.getPermissions()).orElse(new HashSet<>());
+    accountPermissionsSet.add(PermissionType.CE_VIEWER);
+    if (accountPermissionsSet.contains(PermissionType.ACCOUNT_MANAGEMENT)) {
+      accountPermissionsSet.add(PermissionType.CE_ADMIN);
+    }
+    return AccountPermissions.builder().permissions(accountPermissionsSet).build();
   }
 
   private void checkForUserGroupWithSameName(UserGroup userGroup) {
