@@ -29,7 +29,12 @@ import io.harness.delegate.beans.connector.scm.gitlab.GitlabConnectorDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabTokenSpecDTO;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.git.GitClientHelper;
-import io.harness.product.ci.scm.proto.*;
+import io.harness.product.ci.scm.proto.AzureProvider;
+import io.harness.product.ci.scm.proto.BitbucketCloudProvider;
+import io.harness.product.ci.scm.proto.BitbucketServerProvider;
+import io.harness.product.ci.scm.proto.GithubProvider;
+import io.harness.product.ci.scm.proto.GitlabProvider;
+import io.harness.product.ci.scm.proto.Provider;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
