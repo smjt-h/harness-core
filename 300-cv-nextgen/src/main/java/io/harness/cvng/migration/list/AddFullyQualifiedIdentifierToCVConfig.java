@@ -34,7 +34,6 @@ public class AddFullyQualifiedIdentifierToCVConfig implements CVNGMigration {
         CVConfig cvConfig = iterator.next();
         UpdateResults updateResults = hPersistence.update(cvConfig,
             hPersistence.createUpdateOperations(CVConfig.class)
-                .set(CVConfigKeys.fullyQualifiedIdentifier, cvConfig.getIdentifier())
                 .set(CVConfigKeys.healthSourceIdentifier,
                     HealthSourceService.getNameSpaceAndIdentifier(cvConfig.getIdentifier()).getValue()));
         log.info("Updated CVConfig {}", updateResults);

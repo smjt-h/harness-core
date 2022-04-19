@@ -16,8 +16,10 @@ import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.StoreIn;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
+import io.harness.cvng.cdng.beans.HealthSource;
 import io.harness.cvng.core.beans.TimeRange;
 import io.harness.cvng.core.services.api.UpdatableEntity;
+import io.harness.cvng.core.services.api.monitoredService.HealthSourceService;
 import io.harness.cvng.models.VerificationType;
 import io.harness.iterator.PersistentRegularIterable;
 import io.harness.mongo.index.CompoundMongoIndex;
@@ -113,27 +115,11 @@ public abstract class CVConfig
   @NotNull private String monitoringSourceName;
   private boolean isDemo;
 
-  public void setIdentifier(String identifier) {
-    this.identifier = identifier;
-    this.fullyQualifiedIdentifier = identifier;
-  }
-
-  public abstract static class CVConfigBuilder<C extends CVConfig, B extends CVConfigBuilder<C, B>> {
-    private String identifier;
-    private String fullyQualifiedIdentifier;
-
-    public B identifier(String identifier) {
-      this.identifier = identifier;
-      this.fullyQualifiedIdentifier = identifier;
-      return self();
-    }
-  }
-
   public String getFullyQualifiedIdentifier() {
-    if (Objects.isNull(fullyQualifiedIdentifier)) {
+    if (Objects.isNull(this.healthSourceIdentifier)) {
       return identifier;
     }
-    return fullyQualifiedIdentifier;
+    return HealthSourceService.getNameSpacedIdentifier(this.monitoredServiceIdentifier, this.healthSourceIdentifier);
   }
 
   public abstract boolean isSLIEnabled();
