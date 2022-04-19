@@ -11,8 +11,8 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.network.Http.connectableHttpUrl;
 import static io.harness.validation.Validator.equalCheck;
+import static software.wings.service.HarnessConstants.ARTIFACT_RETENTION_SIZE;
 
-import static software.wings.service.impl.artifact.ArtifactServiceImpl.ARTIFACT_RETENTION_SIZE;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.eraro.ErrorCode;

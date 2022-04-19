@@ -37,8 +37,8 @@ import static software.wings.beans.artifact.ArtifactStreamType.SFTP;
 import static software.wings.beans.artifact.ArtifactStreamType.SMB;
 import static software.wings.expression.SecretFunctor.Mode.CASCADING;
 import static software.wings.helpers.ext.jenkins.BuildDetails.Builder.aBuildDetails;
+import static software.wings.service.HarnessConstants.ARTIFACT_RETENTION_SIZE;
 import static software.wings.service.impl.ArtifactoryBuildServiceImpl.MANUAL_PULL_ARTIFACTORY_LIMIT;
-import static software.wings.service.impl.artifact.ArtifactServiceImpl.ARTIFACT_RETENTION_SIZE;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;

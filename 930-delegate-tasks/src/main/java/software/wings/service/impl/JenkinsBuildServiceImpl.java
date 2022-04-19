@@ -16,9 +16,9 @@ import static io.harness.validation.Validator.equalCheck;
 
 import static software.wings.helpers.ext.jenkins.JobDetails.JobParameter;
 import static software.wings.helpers.ext.jenkins.model.ParamPropertyType.BooleanParameterDefinition;
-import static software.wings.service.impl.artifact.ArtifactServiceImpl.ARTIFACT_RETENTION_SIZE;
 
 import static java.util.stream.Collectors.toList;
+import static software.wings.service.HarnessConstants.ARTIFACT_RETENTION_SIZE;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.ArtifactServerException;
