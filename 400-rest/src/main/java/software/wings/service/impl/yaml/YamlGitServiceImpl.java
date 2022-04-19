@@ -1118,7 +1118,7 @@ public class YamlGitServiceImpl implements YamlGitService {
   private GitConnectionErrorAlert getGitConnectionErrorAlert(
       String accountId, GitSyncFailureAlertDetails gitFailureDetails) {
     if (gitFailureDetails == null) {
-      throw new UnexpectedException("The git error detials supplied for the connection error is empty");
+      throw new UnexpectedException("The git error details supplied for the connection error is empty");
     }
     return GitConnectionErrorAlert.builder()
         .accountId(accountId)
