@@ -12,7 +12,9 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
 import static io.harness.gitsync.interceptor.GitSyncConstants.DEFAULT;
 
+import io.harness.ScopeIdentifiers;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.Scope;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
@@ -45,9 +47,11 @@ import io.harness.security.dto.ServicePrincipal;
 import io.harness.security.dto.UserPrincipal;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.StringValue;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 
@@ -77,8 +81,22 @@ public class SCMGitSyncHelper {
     return ScmGitUtils.createScmPushResponse(yaml, gitBranchInfo, pushFileResponse, entityDetail, changeType);
   }
 
-  public ScmGetFileResponse getFile() {
-    final GetFileRequest getFileRequest = null;
+  public ScmGetFileResponse getFile(Scope scope, String repoName, String branchName, String filePath, String commitId,
+      String connectoRef, Map<String, String> contextMap) {
+    final GetFileRequest getFileRequest =
+        GetFileRequest.newBuilder()
+            .setRepoName(repoName)
+            .setConnectorRef(connectoRef)
+            .setCommitId(Strings.nullToEmpty(commitId))
+            .setBranchName(Strings.nullToEmpty(branchName))
+            .setFilePath(filePath)
+            .putAllContextMap(contextMap)
+            .setScopeIdentifiers(ScopeIdentifiers.newBuilder()
+                                     .setAccountIdentifier(scope.getAccountIdentifier())
+                                     .setOrgIdentifier(Strings.nullToEmpty(scope.getOrgIdentifier()))
+                                     .setProjectIdentifier(Strings.nullToEmpty(scope.getProjectIdentifier()))
+                                     .build())
+            .build();
     final GetFileResponse getFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::getFile, getFileRequest);
 

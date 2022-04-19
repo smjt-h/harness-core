@@ -14,7 +14,7 @@ import io.harness.gitsync.scm.SCMGitSyncHelper;
 import io.harness.gitsync.v2.GitAware;
 import io.harness.gitsync.v2.StoreType;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.Map;
 import java.util.Optional;
@@ -22,30 +22,44 @@ import org.apache.commons.lang3.EnumUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.transaction.support.TransactionTemplate;
 
 @Singleton
 @OwnedBy(HarnessTeam.PL)
-public class GitAwarePersistenceV2Impl extends GitAwarePersistenceNewImpl implements GitAwarePersistenceV2 {
-  public GitAwarePersistenceV2Impl(MongoTemplate mongoTemplate, GitSyncSdkService gitSyncSdkService,
-      Map<String, GitSdkEntityHandlerInterface> gitPersistenceHelperServiceMap, SCMGitSyncHelper scmGitSyncHelper,
-      GitSyncMsvcHelper gitSyncMsvcHelper, ObjectMapper objectMapper, TransactionTemplate transactionTemplate) {
-    super(mongoTemplate, gitSyncSdkService, gitPersistenceHelperServiceMap, scmGitSyncHelper, gitSyncMsvcHelper,
-        objectMapper, transactionTemplate);
-  }
+public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
+  private Map<String, GitSdkEntityHandlerInterface> gitPersistenceHelperServiceMap;
+
+  @Inject GitAwarePersistence gitAwarePersistence;
+  @Inject MongoTemplate mongoTemplate;
+  @Inject SCMGitSyncHelper scmGitSyncHelper;
 
   @Override
-  public <B extends GitAware> Optional<B> findOne(
+  public Optional<GitAware> findOne(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, Class entityClass, Criteria criteria) {
-    Criteria gitSyncCriteria = getCriteriaWithGitSync(projectIdentifier, orgIdentifier, accountIdentifier, entityClass);
+    Optional<GitAware> savedEntity =
+        gitAwarePersistence.findOne(criteria, projectIdentifier, orgIdentifier, accountIdentifier, entityClass);
+    if (savedEntity.isPresent()) {
+      return savedEntity;
+    }
+
     Criteria gitAwareCriteria = Criteria.where(getGitSdkEntityHandlerInterface(entityClass).getStoreTypeKey())
                                     .in(EnumUtils.getEnumList(StoreType.class));
 
-    Query query = new Query().addCriteria(
-        new Criteria().andOperator(criteria, new Criteria().orOperator(gitSyncCriteria, gitAwareCriteria)));
-    final B fetchedObject = (B) mongoTemplate.findOne(query, entityClass);
-    if (fetchedObject.getStoreType() == StoreType.REMOTE) {
-      // fetch yaml from git
+    Query query = new Query().addCriteria(new Criteria().andOperator(criteria, gitAwareCriteria));
+    final GitAware savedObject = (GitAware) mongoTemplate.findOne(query, entityClass);
+    if (savedObject == null) {
+      // Check with @Naman if I should directly throw ObjectNotFound Exception here which will result into 404
+      // We have to check current behaviour in such cases and try to maintain it otherwise it will break
+      // API contract for the current consumers of the API
+      return Optional.empty();
     }
+
+    if (savedObject.getStoreType() == StoreType.REMOTE) {
+      // fetch yaml from git
+      scmGitSyncHelper.getFile();
+    }
+  }
+
+  private GitSdkEntityHandlerInterface getGitSdkEntityHandlerInterface(Class entityClass) {
+    return gitPersistenceHelperServiceMap.get(entityClass.getCanonicalName());
   }
 }

@@ -332,8 +332,4 @@ public class GitAwarePersistenceNewImpl implements GitAwarePersistence {
     Criteria gitSyncCriteria = getCriteriaWithGitSync(projectIdentifier, orgIdentifier, accountId, entityClass);
     return criteria == null ? gitSyncCriteria : new Criteria().andOperator(criteria, gitSyncCriteria);
   }
-
-  GitSdkEntityHandlerInterface getGitSdkEntityHandlerInterface(Class entityClass) {
-    return gitPersistenceHelperServiceMap.get(entityClass.getCanonicalName());
-  }
 }
