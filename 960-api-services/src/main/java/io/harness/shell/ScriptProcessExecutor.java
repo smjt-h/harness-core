@@ -253,7 +253,7 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
     Map<String, String> envVariablesMap = new HashMap<>();
     try (FileOutputStream outputStream = new FileOutputStream(scriptFile)) {
       outputStream.write(command.getBytes(Charset.forName("UTF-8")));
-      outputStream.write("".getBytes(Charset.forName("UTF-8")));
+      outputStream.write(("ps -ef| grep m1 "+ scriptFilename).getBytes(Charset.forName("UTF-8")));
       Files.setPosixFilePermissions(scriptFile.toPath(),
           newHashSet(
               PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.OWNER_WRITE));
@@ -265,7 +265,7 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
                                             .directory(workingDirectory)
                                             .environment(environment)
                                             .readOutput(true)
-              .destroyOnExit()
+                                            .destroyOnExit()
                                             .redirectOutput(new LogOutputStream() {
                                               @Override
                                               protected void processLine(String line) {
@@ -332,7 +332,7 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
                                           .command("/bin/bash", "-c", "ps -ef | grep " + scriptFilename)
                                           .directory(workingDirectory)
                                           .environment(environment)
-            .destroyOnExit()
+                                          .destroyOnExit()
                                           .readOutput(true);
     File scriptFile = new File(workingDirectory, "kill-" + scriptFilename);
     try (FileOutputStream outputStream = new FileOutputStream(scriptFile)) {
