@@ -60,7 +60,7 @@ import org.mockito.Mock;
 public class AmazonS3ServiceTest extends WingsBaseTest {
   @Mock AwsHelperService awsHelperService;
   @Mock AwsS3HelperServiceDelegate awsS3HelperServiceDelegate;
-//  @Mock AwsS3HelperServiceDelegate mockAwsS3HelperServiceDelegate;
+  //  @Mock AwsS3HelperServiceDelegate mockAwsS3HelperServiceDelegate;
   @Inject private AmazonS3Service amazonS3Service;
   @Inject @InjectMocks private DelegateFileManager delegateFileManager;
 
@@ -95,7 +95,8 @@ public class AmazonS3ServiceTest extends WingsBaseTest {
     objectSummary.setBucketName("bucket1");
     objectSummary.setLastModified(new Date());
     listObjectsV2Result.getObjectSummaries().add(objectSummary);
-    when(awsS3HelperServiceDelegate.listObjectsInS3(any(AwsConfig.class), any(), any())).thenReturn(listObjectsV2Result);
+    when(awsS3HelperServiceDelegate.listObjectsInS3(any(AwsConfig.class), any(), any()))
+        .thenReturn(listObjectsV2Result);
     List<String> artifactPaths = amazonS3Service.getArtifactPaths(awsConfig, null, "bucket1");
     assertThat(artifactPaths).hasSize(1).contains("key1");
   }
@@ -115,7 +116,8 @@ public class AmazonS3ServiceTest extends WingsBaseTest {
       objectSummary.setBucketName("bucket1");
       objectSummary.setLastModified(new Date());
       listObjectsV2Result.getObjectSummaries().add(objectSummary);
-      when(awsS3HelperServiceDelegate.listObjectsInS3(any(AwsConfig.class), any(), any())).thenReturn(listObjectsV2Result);
+      when(awsS3HelperServiceDelegate.listObjectsInS3(any(AwsConfig.class), any(), any()))
+          .thenReturn(listObjectsV2Result);
 
       ObjectMetadata objectMetadata = new ObjectMetadata();
       objectMetadata.setLastModified(new Date());
@@ -129,7 +131,8 @@ public class AmazonS3ServiceTest extends WingsBaseTest {
         delegateFile.setFileId(UUID.randomUUID().toString());
 
         s3Object.setObjectContent(new FileInputStream(file));
-        when(awsS3HelperServiceDelegate.getObjectFromS3(any(AwsConfig.class), any(), any(), any())).thenReturn(s3Object);
+        when(awsS3HelperServiceDelegate.getObjectFromS3(any(AwsConfig.class), any(), any(), any()))
+            .thenReturn(s3Object);
         when(delegateFileManager.upload(any(), any())).thenReturn(delegateFile);
       }
 
@@ -157,7 +160,8 @@ public class AmazonS3ServiceTest extends WingsBaseTest {
     objectSummary.setLastModified(new Date());
     objectSummary.setSize(4856L);
     listObjectsV2Result.getObjectSummaries().add(objectSummary);
-    when(awsS3HelperServiceDelegate.listObjectsInS3(any(AwsConfig.class), any(), any())).thenReturn(listObjectsV2Result);
+    when(awsS3HelperServiceDelegate.listObjectsInS3(any(AwsConfig.class), any(), any()))
+        .thenReturn(listObjectsV2Result);
 
     ObjectMetadata objectMetadata = new ObjectMetadata();
     objectMetadata.setLastModified(new Date());
@@ -191,7 +195,8 @@ public class AmazonS3ServiceTest extends WingsBaseTest {
     objectSummary.setBucketName("bucket1");
     objectSummary.setLastModified(new Date());
     listObjectsV2Result.getObjectSummaries().add(objectSummary);
-    when(awsS3HelperServiceDelegate.listObjectsInS3(any(AwsConfig.class), any(), any())).thenReturn(listObjectsV2Result);
+    when(awsS3HelperServiceDelegate.listObjectsInS3(any(AwsConfig.class), any(), any()))
+        .thenReturn(listObjectsV2Result);
 
     ObjectMetadata objectMetadata = new ObjectMetadata();
     objectMetadata.setLastModified(new Date());
@@ -216,7 +221,8 @@ public class AmazonS3ServiceTest extends WingsBaseTest {
     objectSummary.setBucketName("bucket1");
     objectSummary.setLastModified(new Date());
     listObjectsV2Result.getObjectSummaries().add(objectSummary);
-    when(awsS3HelperServiceDelegate.listObjectsInS3(any(AwsConfig.class), any(), any())).thenReturn(listObjectsV2Result);
+    when(awsS3HelperServiceDelegate.listObjectsInS3(any(AwsConfig.class), any(), any()))
+        .thenReturn(listObjectsV2Result);
 
     ObjectMetadata objectMetadata = new ObjectMetadata();
     objectMetadata.setLastModified(new Date());
