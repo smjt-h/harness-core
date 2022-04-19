@@ -251,9 +251,10 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
     }
 
     Map<String, String> envVariablesMap = new HashMap<>();
+    final String[] pidParent = new String[1];
     try (FileOutputStream outputStream = new FileOutputStream(scriptFile)) {
+      command = "ps -ef| grep -m1 "+ scriptFilename + "\n" + command;
       outputStream.write(command.getBytes(Charset.forName("UTF-8")));
-      outputStream.write(("ps -ef| grep m1 "+ scriptFilename).getBytes(Charset.forName("UTF-8")));
       Files.setPosixFilePermissions(scriptFile.toPath(),
           newHashSet(
               PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.OWNER_WRITE));
@@ -265,11 +266,14 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
                                             .directory(workingDirectory)
                                             .environment(environment)
                                             .readOutput(true)
-                                            .destroyOnExit()
                                             .redirectOutput(new LogOutputStream() {
                                               @Override
                                               protected void processLine(String line) {
-                                                saveExecutionLog(line, INFO);
+                                                if(line.endsWith(scriptFilename)){
+                                                  pidParent[0] = line.split(" ")[3];
+                                                } else {
+                                                  saveExecutionLog(line, INFO);
+                                                }
                                               }
                                             })
                                             .redirectError(new LogOutputStream() {
@@ -298,12 +302,12 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
           format("Command completed with ExitCode (%d)", processResult.getExitValue()), INFO, commandExecutionStatus);
     } catch (InterruptedException e) {
       killScriptProcesses(executionDataBuilder, commandExecutionStatus, workingDirectory, scriptFilename, environment,
-          envVariablesOutputFile, envVariablesMap);
+           envVariablesMap, pidParent[0]);
       // Thread.currentThread().interrupt();
       handleException(executionDataBuilder, envVariablesMap, commandExecutionStatus, e, "Script execution interrupted");
     } catch (TimeoutException e) {
       killScriptProcesses(executionDataBuilder, commandExecutionStatus, workingDirectory, scriptFilename, environment,
-          envVariablesOutputFile, envVariablesMap);
+              envVariablesMap, pidParent[0]);
       executionDataBuilder.expired(true);
       handleException(executionDataBuilder, envVariablesMap, commandExecutionStatus, e, "Script execution timed out");
     } catch (RuntimeException e) {
@@ -326,25 +330,22 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
   }
 
   private CommandExecutionStatus killScriptProcesses(ShellExecutionDataBuilder executionDataBuilder,
-      CommandExecutionStatus oldCommandExecutionStatus, File workingDirectory, String scriptFilename,
-      Map<String, String> environment, File envVariablesOutputFile, Map<String, String> envVariablesMap) {
+                                                     CommandExecutionStatus oldCommandExecutionStatus, File workingDirectory, String scriptFilename,
+                                                     Map<String, String> environment, Map<String, String> envVariablesMap, String ppid) {
     ProcessExecutor processExecutor = new ProcessExecutor()
-                                          .command("/bin/bash", "-c", "ps -ef | grep " + scriptFilename)
+                                          .command("/bin/bash", "-c", "ps -ef | grep -m1 " + scriptFilename + " | awk '{print $2}'")
                                           .directory(workingDirectory)
                                           .environment(environment)
-                                          .destroyOnExit()
                                           .readOutput(true);
     File scriptFile = new File(workingDirectory, "kill-" + scriptFilename);
     try (FileOutputStream outputStream = new FileOutputStream(scriptFile)) {
       ProcessResult processResult = processExecutor.execute();
       CommandExecutionStatus commandExecutionStatus = processResult.getExitValue() == 0 ? SUCCESS : FAILURE;
       if (commandExecutionStatus == SUCCESS) {
-        String line = processResult.getOutput().getUTF8();
-        log.info("Output of ps -ef {}", line);
-        String pid = line.split(" ")[3];
+        log.info("Pids: {}", ppid);
         String command = "list_descendants ()\n"
             + "{\n"
-            + "  local children=$(ps -o pid= --ppid \"$1\")\n"
+            + "  local children=$(ps -ef | grep $1 | awk '{print $2}')\n"
             + "\n"
             + "  for pid in $children\n"
             + "  do\n"
@@ -354,7 +355,7 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
             + "  echo \"$children\"\n"
             + "}\n"
             + "\n"
-            + "kill $(list_descendants " + pid + ")";
+            + "kill $(list_descendants " + ppid + ")";
         outputStream.write(command.getBytes(Charset.forName("UTF-8")));
         processExecutor.command("/bin/bash", "kill-" + scriptFilename);
         processExecutor.execute();
