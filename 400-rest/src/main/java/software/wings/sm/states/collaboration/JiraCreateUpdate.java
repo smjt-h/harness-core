@@ -13,9 +13,12 @@ import static io.harness.beans.ExecutionStatus.FAILED;
 import static io.harness.beans.OrchestrationWorkflowType.BUILD;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.delegate.beans.TaskData.DEFAULT_ASYNC_CALL_TIMEOUT;
+import static io.harness.delegate.beans.TaskData.DEFAULT_SYNC_CALL_TIMEOUT;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.validation.Validator.notNullCheck;
 
+import static java.lang.String.valueOf;
 import static software.wings.beans.CGConstants.GLOBAL_ENV_ID;
 import static software.wings.beans.TaskType.JIRA;
 
@@ -189,7 +192,7 @@ public class JiraCreateUpdate extends State implements SweepingOutputStateMixin 
 
     if (areRequiredFieldsTemplatized) {
       createMeta = jiraHelperService.getCreateMetadata(
-          jiraConnectorId, null, project, accountId, context.getAppId(), getTimeoutMillis());
+          jiraConnectorId, null, project, accountId, context.getAppId(), getTimeoutMillis() != null ? getTimeoutMillis() : DEFAULT_SYNC_CALL_TIMEOUT);
       try {
         validateRequiredFields(createMeta, context);
       } catch (HarnessJiraException e) {
@@ -200,7 +203,7 @@ public class JiraCreateUpdate extends State implements SweepingOutputStateMixin 
 
     if (EmptyPredicate.isNotEmpty(customFields)) {
       JiraCreateMetaResponse createMetadata = createMeta == null ? jiraHelperService.getCreateMetadata(jiraConnectorId,
-                                                  null, project, accountId, context.getAppId(), getTimeoutMillis())
+                                                  null, project, accountId, context.getAppId(), getTimeoutMillis() != null ? getTimeoutMillis() : DEFAULT_SYNC_CALL_TIMEOUT)
                                                                  : createMeta;
 
       Map<String, String> customFieldsIdToNameMap = mapCustomFieldsIdsToNames(createMetadata);
@@ -276,7 +279,7 @@ public class JiraCreateUpdate extends State implements SweepingOutputStateMixin 
                       .async(true)
                       .taskType(JIRA.name())
                       .parameters(new Object[] {parameters})
-                      .timeout(getTimeoutMillis())
+                      .timeout(getTimeoutMillis() != null ? getTimeoutMillis() : DEFAULT_ASYNC_CALL_TIMEOUT)
                       .build())
             .tags(jiraConfig.getDelegateSelectors())
             .workflowExecutionId(context.getWorkflowExecutionId())
