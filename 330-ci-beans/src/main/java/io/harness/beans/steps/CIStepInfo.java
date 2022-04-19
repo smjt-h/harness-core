@@ -75,5 +75,4 @@ public interface CIStepInfo extends StepSpecType, WithStepElementParameters, Spe
     stepParametersBuilder.delegateSelectors(CiStepParametersUtils.getDelegateSelectors(ctx));
     return stepParametersBuilder.build();
   }
-
 }
