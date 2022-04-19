@@ -506,7 +506,7 @@ public class DelegateSetupServiceImpl implements DelegateSetupService {
     // Status filed is not populated in DelegateGroup, if filtering is done on status (ex: ENABLED), we need
     // to filter it using Delegate Collection.
 
-    if (filterProperties != null && isNotEmpty(filterProperties.getStatus().toString())) {
+    if (filterProperties != null && filterProperties.getStatus() != null) {
       delegateQuery.filter(DelegateKeys.status, filterProperties.getStatus().toString());
     }
 

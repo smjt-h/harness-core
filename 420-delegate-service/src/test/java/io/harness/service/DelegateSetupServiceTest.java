@@ -9,6 +9,7 @@ package io.harness.service;
 
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.delegate.beans.DelegateType.KUBERNETES;
+import static io.harness.rule.OwnerRule.ANUPAM;
 import static io.harness.rule.OwnerRule.BOJAN;
 import static io.harness.rule.OwnerRule.MARKO;
 import static io.harness.rule.OwnerRule.MARKOM;
@@ -253,10 +254,10 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
     DelegateGroupListing delegateGroupListing = delegateSetupService.listDelegateGroupDetailsV2(
         TEST_ACCOUNT_ID, null, null, "", "", DelegateFilterPropertiesDTO.builder().build());
 
-    assertThat(delegateGroupListing.getDelegateGroupDetails()).hasSize(3);
+    assertThat(delegateGroupListing.getDelegateGroupDetails()).hasSize(4);
     assertThat(delegateGroupListing.getDelegateGroupDetails())
         .extracting(DelegateGroupDetails::getGroupName)
-        .containsOnly("grp1", "grp2", "grp4");
+        .containsOnly("grp1", "grp2", "grp3", "grp4");
   }
 
   @Test(expected = InvalidRequestException.class)
@@ -344,10 +345,25 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
     DelegateGroupListing delegateGroupListing = delegateSetupService.listDelegateGroupDetailsV2(
         TEST_ACCOUNT_ID, null, null, "", "commonTag", DelegateFilterPropertiesDTO.builder().build());
 
-    assertThat(delegateGroupListing.getDelegateGroupDetails()).hasSize(1);
+    assertThat(delegateGroupListing.getDelegateGroupDetails()).hasSize(4);
     assertThat(delegateGroupListing.getDelegateGroupDetails())
         .extracting(DelegateGroupDetails::getGroupName)
         .containsOnly("grp2");
+  }
+
+  @Test
+  @Owner(developers = ANUPAM)
+  @Category(UnitTests.class)
+  public void listV2ShouldReturnDelegateGroupsFilteredByDelegateStatus() {
+    prepareInitialData();
+
+    DelegateGroupListing delegateGroupListing = delegateSetupService.listDelegateGroupDetailsV2(TEST_ACCOUNT_ID, null,
+        null, "", "", DelegateFilterPropertiesDTO.builder().status(DelegateInstanceStatus.ENABLED).build());
+
+    assertThat(delegateGroupListing.getDelegateGroupDetails()).hasSize(4);
+    assertThat(delegateGroupListing.getDelegateGroupDetails())
+        .extracting(DelegateGroupDetails::getGroupName)
+        .containsOnly("grp1", "grp2", "grp3", "grp4");
   }
 
   @Test
