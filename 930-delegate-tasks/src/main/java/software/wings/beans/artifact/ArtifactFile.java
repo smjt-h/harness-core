@@ -9,12 +9,10 @@ package software.wings.beans.artifact;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
-import com.github.reinert.jjschema.SchemaIgnore;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.delegate.beans.ChecksumType;
-
 import io.harness.file.HarnessFile;
 import io.harness.mongo.index.FdIndex;
 import io.harness.persistence.CreatedAtAware;
@@ -23,13 +21,15 @@ import io.harness.persistence.UpdatedAtAware;
 import io.harness.persistence.UuidAware;
 import io.harness.validation.Create;
 import io.harness.validation.Update;
+
+import software.wings.beans.entityinterface.ApplicationAccess;
+
+import com.github.reinert.jjschema.SchemaIgnore;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.mongodb.morphia.annotations.Id;
-import software.wings.beans.entityinterface.ApplicationAccess;
-
-import javax.validation.constraints.NotNull;
 
 /**
  * The Class ArtifactFile.
@@ -37,7 +37,8 @@ import javax.validation.constraints.NotNull;
 @OwnedBy(CDC)
 @TargetModule(HarnessModule._957_CG_BEANS)
 @Data
-public class ArtifactFile implements PersistentEntity, HarnessFile, UuidAware, CreatedAtAware, UpdatedAtAware, ApplicationAccess {
+public class ArtifactFile
+    implements PersistentEntity, HarnessFile, UuidAware, CreatedAtAware, UpdatedAtAware, ApplicationAccess {
   @Id @NotNull(groups = {Update.class}) @SchemaIgnore private String uuid;
   @FormDataParam("name") private String name;
   private String fileUuid;

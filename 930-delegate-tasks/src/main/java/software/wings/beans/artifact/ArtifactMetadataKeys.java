@@ -8,23 +8,23 @@
 package software.wings.beans.artifact;
 
 public interface ArtifactMetadataKeys {
-    String artifactFileName = "artifactFileName";
-    String artifactFileSize = "artifactFileSize";
-    String artifactPath = "artifactPath";
-    String bucketName = "bucketName";
-    String buildFullDisplayName = "buildFullDisplayName";
-    String buildNo = "buildNo";
-    String key = "key";
-    String url = "url";
-    String image = "image";
-    String tag = "tag";
-    String repositoryName = "repositoryName";
-    String nexusPackageName = "package";
-    String version = "version";
-    String nexusGroupId = "groupId";
-    String nexusArtifactId = "artifactId";
-    String versionId = "versionId";
-    String publishDate = "publishDate";
-    String extension = "extension";
-    String classifier = "classifier";
+  String artifactFileName = "artifactFileName";
+  String artifactFileSize = "artifactFileSize";
+  String artifactPath = "artifactPath";
+  String bucketName = "bucketName";
+  String buildFullDisplayName = "buildFullDisplayName";
+  String buildNo = "buildNo";
+  String key = "key";
+  String url = "url";
+  String image = "image";
+  String tag = "tag";
+  String repositoryName = "repositoryName";
+  String nexusPackageName = "package";
+  String version = "version";
+  String nexusGroupId = "groupId";
+  String nexusArtifactId = "artifactId";
+  String versionId = "versionId";
+  String publishDate = "publishDate";
+  String extension = "extension";
+  String classifier = "classifier";
 }
