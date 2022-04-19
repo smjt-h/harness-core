@@ -18,6 +18,7 @@ import io.harness.expression.ExpressionEvaluator;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.config.ArtifactoryConfig;
+import software.wings.delegatetasks.utils.CapablityUtility;
 
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import software.wings.delegatetasks.utils.CapablityUtility;
 
 @TargetModule(HarnessModule._950_DELEGATE_TASKS_BEANS)
 @OwnedBy(HarnessTeam.DEL)
