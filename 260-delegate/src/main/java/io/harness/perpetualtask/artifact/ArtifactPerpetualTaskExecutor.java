@@ -41,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import software.wings.service.impl.artifact.DelegateArtifactCollectionUtils;
 
 @Singleton
 @Slf4j
@@ -230,7 +231,7 @@ public class ArtifactPerpetualTaskExecutor implements PerpetualTaskExecutor {
 
   private ArtifactsPublishedCache<BuildDetails> getArtifactsPublishedCached(
       String artifactStreamId, BuildSourceParameters buildSourceParameters) {
-    Function<BuildDetails, String> buildDetailsKeyFn = ArtifactCollectionUtils.getBuildDetailsKeyFn(
+    Function<BuildDetails, String> buildDetailsKeyFn = DelegateArtifactCollectionUtils.getBuildDetailsKeyFn(
         buildSourceParameters.getArtifactStreamType(), buildSourceParameters.getArtifactStreamAttributes());
     boolean enableCleanup = ArtifactCollectionUtils.supportsCleanup(buildSourceParameters.getArtifactStreamType());
     return cache.get(artifactStreamId,

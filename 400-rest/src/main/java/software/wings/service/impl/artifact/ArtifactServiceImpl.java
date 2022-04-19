@@ -269,7 +269,7 @@ public class ArtifactServiceImpl implements ArtifactService {
     if (AMI.name().equals(artifactStreamType)) {
       key = ArtifactKeys.revision;
       value = artifact.getRevision();
-    } else if (ArtifactCollectionUtils.isGenericArtifactStream(artifactStreamType, artifactStreamAttributes)) {
+    } else if (DelegateArtifactCollectionUtils.isGenericArtifactStream(artifactStreamType, artifactStreamAttributes)) {
       key = ArtifactKeys.metadata_artifactPath;
       value = artifact.getArtifactPath();
     } else {
@@ -297,7 +297,7 @@ public class ArtifactServiceImpl implements ArtifactService {
     String key;
     if (AMI.name().equals(artifactStreamType)) {
       key = ArtifactKeys.revision;
-    } else if (ArtifactCollectionUtils.isGenericArtifactStream(artifactStreamType, artifactStreamAttributes)) {
+    } else if (DelegateArtifactCollectionUtils.isGenericArtifactStream(artifactStreamType, artifactStreamAttributes)) {
       key = ArtifactKeys.metadata_artifactPath;
     } else {
       key = ArtifactKeys.metadata_buildNo;
