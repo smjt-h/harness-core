@@ -9,6 +9,7 @@ package io.harness.delegate.beans.ci.docker;
 
 import io.harness.delegate.beans.DelegateMetaInfo;
 import io.harness.delegate.beans.ci.CITaskExecutionResponse;
+import io.harness.delegate.beans.ci.vm.VmServiceStatus;
 import io.harness.logging.CommandExecutionStatus;
 
 import java.util.List;
@@ -21,9 +22,10 @@ import lombok.Data;
 public class DockerTaskExecutionResponse implements CITaskExecutionResponse {
     private DelegateMetaInfo delegateMetaInfo;
     private String errorMessage;
+    private String ipAddress;
     private Map<String, String> outputVars;
-    private String status;
-    @Builder.Default private static final CITaskExecutionResponse.Type type = Type.VM;
+    private CommandExecutionStatus commandExecutionStatus;
+    @Builder.Default private static final CITaskExecutionResponse.Type type = Type.DOCKER;
 
     @Override
     public CITaskExecutionResponse.Type getType() {

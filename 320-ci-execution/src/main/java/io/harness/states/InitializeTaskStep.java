@@ -49,6 +49,8 @@ import io.harness.delegate.beans.ci.vm.VmServiceStatus;
 import io.harness.delegate.beans.ci.vm.VmTaskExecutionResponse;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.ngexception.CIStageExecutionException;
+import io.harness.helpers.docker.CIDockerExecuteStepConverter;
+import io.harness.helpers.docker.CIDockerInitializeStepConverter;
 import io.harness.k8s.model.ImageDetails;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logstreaming.LogStreamingHelper;
@@ -92,16 +94,17 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.cloudfoundry.operations.applications.Docker;
 
 /**
- * This state will setup the build infra e.g. pod or VM.
+ * This state will setup the build infra e.g. pod, VM or docker container.
  */
 
 @Slf4j
 @OwnedBy(CI)
 public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementParameters, CITaskExecutionResponse> {
   public static final String TASK_TYPE_INITIALIZATION_PHASE = "INITIALIZATION_PHASE";
-  public static final String TASK_TYPE_CI_DOCKER = "CI_DOCKER_RUNNER_TASK";
+  public static final String TASK_TYPE_CI_INITIALIZATION_DOCKER = "CI_DOCKER_INITIALIZE_TASK";
   public static final String LE_STATUS_TASK_TYPE = "CI_LE_STATUS";
   @Inject private BuildSetupUtils buildSetupUtils;
   @Inject private VmInitializeTaskUtils vmInitializeTaskUtils;
@@ -151,25 +154,28 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
         buildSetupUtils.getBuildSetupTaskParams(stepParameters, ambiance, taskIds, logPrefix, stepLogKeys);
     log.info("Created params for build task: {}", buildSetupTaskParams);
 
-    // Convert the task params to a Task type understood by the runner
-
-    final TaskData taskData = TaskData.builder()
-                                  .async(true)
-                                  .timeout(stepParameters.getTimeout())
-                                  .taskType(TASK_TYPE_CI_DOCKER)
-                                  .parameters(new Object[] {convertInitTaskRequestToTask(buildSetupTaskParams)})
-                                  .build();
+    TaskData taskData;
+    // For docker runners, the task parameters are different. They are converted to the exact request expected
+    // by the runner.
+    if (buildSetupTaskParams.getType() == CIInitializeTaskParams.Type.DOCKER) {
+      CIDockerInitializeTaskParams dockerParams = (CIDockerInitializeTaskParams) buildSetupTaskParams;
+      CIDockerInitializeStepConverter converter = new CIDockerInitializeStepConverter();
+      taskData = TaskData.builder()
+              .async(true)
+              .timeout(stepParameters.getTimeout())
+              .taskType(TASK_TYPE_CI_INITIALIZATION_DOCKER)
+              .parameters(new Object[] {converter.convert(dockerParams)})
+              .build();
+    } else {
+      taskData = TaskData.builder()
+              .async(true)
+              .timeout(stepParameters.getTimeout())
+              .taskType(TASK_TYPE_INITIALIZATION_PHASE)
+              .parameters(new Object[] {buildSetupTaskParams})
+              .build();
+    }
 
     return StepUtils.prepareTaskRequest(ambiance, taskData, kryoSerializer);
-  }
-
-  public TaskExecutionResponse convertInitTaskRequestToTask(CIInitializeTaskParams params) {
-    CIDockerInitializeTaskParams dockerParams = (CIDockerInitializeTaskParams) params;
-    CIDockerInitializeTaskRequest req = vmInitializeTaskUtils.convertSetup(dockerParams);
-    String blah = JsonUtils.asJson(req);
-    log.info(blah);
-    TaskExecutionResponse response = TaskExecutionResponse.builder().taskType("DOCKER_INIT_TASK").data(blah).build();
-    return response;
   }
 
   @Override
@@ -180,7 +186,8 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
     if (ciTaskExecutionResponse.getType() == CITaskExecutionResponse.Type.K8) {
       return handleK8TaskResponse(ambiance, stepElementParameters, ciTaskExecutionResponse);
     } else if (ciTaskExecutionResponse.getType() == CITaskExecutionResponse.Type.VM) {
-//      return handleVmTaskResponse(ambiance, stepElementParameters, ciTaskExecutionResponse);
+      return handleVmTaskResponse(ambiance, stepElementParameters, ciTaskExecutionResponse);
+    } else if (ciTaskExecutionResponse.getType() == CITaskExecutionResponse.Type.DOCKER) {
       return handleDockerTaskResponse(ambiance, stepElementParameters, ciTaskExecutionResponse);
     } else {
       throw new CIStageExecutionException(
@@ -190,8 +197,6 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
 
   private StepResponse handleK8TaskResponse(
       Ambiance ambiance, StepElementParameters stepElementParameters, CITaskExecutionResponse ciTaskExecutionResponse) {
-    TaskExecutionResponse t = (TaskExecutionResponse) ciTaskExecutionResponse;
-    log.info(t.getData());
     K8sTaskExecutionResponse k8sTaskExecutionResponse = (K8sTaskExecutionResponse) ciTaskExecutionResponse;
     InitializeStepInfo stepParameters = (InitializeStepInfo) stepElementParameters.getSpec();
 
@@ -202,7 +207,6 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
 
     StepResponse.StepOutcome stepOutcome =
         StepResponse.StepOutcome.builder().name(DEPENDENCY_OUTCOME).outcome(dependencyOutcome).build();
-    k8sTaskExecutionResponse.setCommandExecutionStatus(CommandExecutionStatus.SUCCESS);
     if (k8sTaskExecutionResponse.getCommandExecutionStatus() == CommandExecutionStatus.SUCCESS) {
       log.info(
           "LiteEngineTaskStep pod creation task executed successfully with response [{}]", k8sTaskExecutionResponse);
@@ -234,27 +238,23 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
 
   private StepResponse handleDockerTaskResponse(
           Ambiance ambiance, StepElementParameters stepElementParameters, CITaskExecutionResponse ciTaskExecutionResponse) {
-    TaskExecutionResponse taskExecutionResponse = (TaskExecutionResponse) ciTaskExecutionResponse;
-    Gson gson = new Gson();
+    DockerTaskExecutionResponse dockerTaskExecutionResponse = (DockerTaskExecutionResponse) ciTaskExecutionResponse;
 
-    DockerTaskExecutionResponse dockerTaskExecutionResponse = gson.fromJson(taskExecutionResponse.getData(), DockerTaskExecutionResponse.class);
-//    DependencyOutcome dependencyOutcome = getVmDependencyOutcome(vmTaskExecutionResponse);
-//    StepResponse.StepOutcome stepOutcome =
-//            StepResponse.StepOutcome.builder().name(DEPENDENCY_OUTCOME).outcome(dependencyOutcome).build();
+    // TODO: Handle service dependencies and dependency outcomes
 
-    if (dockerTaskExecutionResponse.getStatus().equals("SUCCESS")) {
+    if (dockerTaskExecutionResponse.getCommandExecutionStatus() == CommandExecutionStatus.STATUS) {
       return StepResponse.builder()
               .status(Status.SUCCEEDED)
-//              .stepOutcome(
-//                      StepResponse.StepOutcome.builder()
-//                              .name(VM_DETAILS_OUTCOME)
-//                              .group(StepOutcomeGroup.STAGE.name())
-//                              .outcome(VmDetailsOutcome.builder().ipAddress(vmTaskExecutionResponse.getIpAddress()).build())
-//                              .build())
+              .stepOutcome(
+                      StepResponse.StepOutcome.builder()
+                              .name(DOCKER_DETAILS_OUTCOME)
+                              .group(StepOutcomeGroup.STAGE.name())
+                              .outcome(DockerDetailsOutcome.builder().ipAddress(dockerTaskExecutionResponse.getIpAddress()).build())
+                              .build())
               .build();
     } else {
       log.error("Docker initialize step execution finished with status [{}] and response [{}]",
-              dockerTaskExecutionResponse.getStatus(), dockerTaskExecutionResponse);
+              dockerTaskExecutionResponse.getCommandExecutionStatus(), dockerTaskExecutionResponse);
       StepResponseBuilder stepResponseBuilder = StepResponse.builder().status(Status.FAILED);
       if (dockerTaskExecutionResponse.getErrorMessage() != null) {
         stepResponseBuilder.failureInfo(
@@ -263,8 +263,6 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
       return stepResponseBuilder.build();
     }
   }
-
-
 
   private StepResponse handleVmTaskResponse(
       Ambiance ambiance, StepElementParameters stepElementParameters, CITaskExecutionResponse ciTaskExecutionResponse) {

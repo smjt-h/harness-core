@@ -18,6 +18,7 @@ import io.harness.ccm.cluster.entities.EcsCluster;
 import io.harness.ccm.license.CeLicenseInfo;
 import io.harness.ccm.license.CeLicenseType;
 import io.harness.cvng.state.CVNGVerificationTask;
+import io.harness.delegate.beans.ci.docker.DockerTaskExecutionResponse;
 import io.harness.delegate.task.ListNotifyResponseData;
 import io.harness.perpetualtask.PerpetualTaskSchedule;
 import io.harness.perpetualtask.internal.AssignmentTaskResponse;
@@ -1683,5 +1684,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(UserGroupEntityReference.class, 50010);
     kryo.register(K8sRollingDeployRollbackResponse.class, 50011);
     kryo.register(TaskExecutionResponse.class, 50012);
+    kryo.register(DockerTaskExecutionResponse.class, 50013);
   }
 }

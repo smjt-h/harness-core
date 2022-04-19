@@ -89,4 +89,5 @@ public class CIDockerInitializeTaskRequest {
         @JsonProperty("name") String name;
         @JsonProperty("path") String path;
     }
+
 }

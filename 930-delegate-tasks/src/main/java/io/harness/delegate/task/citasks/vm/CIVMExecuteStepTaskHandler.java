@@ -100,7 +100,6 @@ public class CIVMExecuteStepTaskHandler implements CIExecuteStepTaskHandler {
     ImageAuth imageAuth = stepExecutionHelper.getImageAuth(runStep.getImage(), runStep.getImageConnector());
     if (imageAuth != null) {
       configBuilder.imageAuth(imageAuth);
-      secrets.add(imageAuth.getPassword());
     }
     configBuilder.kind(RUN_STEP_KIND)
         .runConfig(ExecuteStepRequest.RunConfig.builder()

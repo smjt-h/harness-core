@@ -66,6 +66,9 @@ import io.harness.delegate.beans.ci.CIInitializeTaskParams;
 import io.harness.delegate.beans.ci.CITaskExecutionResponse;
 import io.harness.delegate.beans.ci.ExecuteCommandTaskParams;
 import io.harness.delegate.beans.ci.ShellScriptType;
+import io.harness.delegate.beans.ci.docker.CIDockerCleanupStepRequest;
+import io.harness.delegate.beans.ci.docker.CIDockerExecuteStepRequest;
+import io.harness.delegate.beans.ci.docker.CIDockerInitializeTaskRequest;
 import io.harness.delegate.beans.ci.k8s.CIContainerStatus;
 import io.harness.delegate.beans.ci.k8s.CIK8CleanupTaskParams;
 import io.harness.delegate.beans.ci.k8s.CIK8ExecuteStepTaskParams;
@@ -1132,5 +1135,8 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(EmptyDirVolume.class, 543486);
     kryo.register(HostPathVolume.class, 543487);
     kryo.register(PVCVolume.class, 543488);
+    kryo.register(CIDockerInitializeTaskRequest.class, 543489);
+    kryo.register(CIDockerExecuteStepRequest.class, 543490);
+    kryo.register(CIDockerCleanupStepRequest.class, 543491);
   }
 }

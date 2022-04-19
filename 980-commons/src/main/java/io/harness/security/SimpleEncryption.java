@@ -116,6 +116,7 @@ public class SimpleEncryption implements EncryptionInterface {
       return null;
     }
     byte[] encrypted = this.encrypt(CHARSET.encode(CharBuffer.wrap(content)).array());
+    char[] x = decryptChars(CHARSET.decode(ByteBuffer.wrap(encrypted)).array());
     return CHARSET.decode(ByteBuffer.wrap(encrypted)).array();
   }
 
@@ -152,7 +153,7 @@ public class SimpleEncryption implements EncryptionInterface {
 
   private SecretKey generateSecretKey(char[] key, byte[] salt) {
     try {
-      FACTORY = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_256");
+        FACTORY = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_256");
       KeySpec spec = new PBEKeySpec(key, salt, 65536, 256);
       SecretKey tmp = FACTORY.generateSecret(spec);
       return new SecretKeySpec(tmp.getEncoded(), "AES");

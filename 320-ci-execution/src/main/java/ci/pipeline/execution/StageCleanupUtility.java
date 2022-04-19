@@ -13,6 +13,7 @@ import static io.harness.beans.sweepingoutputs.StageInfraDetails.STAGE_INFRA_DET
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.sweepingoutputs.ContextElement;
+import io.harness.beans.sweepingoutputs.DockerStageInfraDetails;
 import io.harness.beans.sweepingoutputs.K8StageInfraDetails;
 import io.harness.beans.sweepingoutputs.PodCleanupDetails;
 import io.harness.beans.sweepingoutputs.StageDetails;
@@ -21,6 +22,7 @@ import io.harness.beans.sweepingoutputs.VmStageInfraDetails;
 import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.K8sDirectInfraYaml;
 import io.harness.delegate.beans.ci.CICleanupTaskParams;
+import io.harness.delegate.beans.ci.docker.CIDockerCleanupTaskParams;
 import io.harness.delegate.beans.ci.k8s.CIK8CleanupTaskParams;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.ci.vm.CIVmCleanupTaskParams;
@@ -69,6 +71,9 @@ public class StageCleanupUtility {
     } else if (stageInfraDetails.getType() == StageInfraDetails.Type.VM) {
       VmStageInfraDetails vmStageInfraDetails = (VmStageInfraDetails) stageInfraDetails;
       return buildVmCleanupParameters(ambiance, vmStageInfraDetails);
+    } else if (stageInfraDetails.getType() == StageInfraDetails.Type.DOCKER) {
+      DockerStageInfraDetails dockerStageInfraDetails = (DockerStageInfraDetails) stageInfraDetails;
+      return buildDockerCleanupParameters(ambiance, dockerStageInfraDetails);
     } else {
       throw new CIStageExecutionException("Unknown infra type");
     }
@@ -113,5 +118,18 @@ public class StageCleanupUtility {
         .stageRuntimeId(stageDetails.getStageRuntimeID())
         .poolId(vmStageInfraDetails.getPoolId())
         .build();
+  }
+
+  public CIDockerCleanupTaskParams buildDockerCleanupParameters(Ambiance ambiance, DockerStageInfraDetails dockerStageInfraDetails) {
+    OptionalSweepingOutput optionalSweepingOutput = executionSweepingOutputResolver.resolveOptional(
+            ambiance, RefObjectUtils.getSweepingOutputRefObject(ContextElement.stageDetails));
+    if (!optionalSweepingOutput.isFound()) {
+      throw new CIStageExecutionException("Stage details sweeping output cannot be empty");
+    }
+
+    StageDetails stageDetails = (StageDetails) optionalSweepingOutput.getOutput();
+    return CIDockerCleanupTaskParams.builder()
+            .stageRuntimeId(stageDetails.getStageRuntimeID())
+            .build();
   }
 }

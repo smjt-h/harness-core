@@ -342,7 +342,9 @@ public enum TaskType {
   SERVICENOW_TASK_NG(TaskGroup.SERVICENOW_NG, "ServiceNow Task"),
   RANCHER_RESOLVE_CLUSTERS(TaskGroup.K8S, "Rancher Resolve Clusters"),
   NG_AZURE_TASK(TaskGroup.AZURE_RESOURCE),
-  CI_DOCKER_RUNNER_TASK(TaskGroup.CI);
+  CI_DOCKER_INITIALIZE_TASK(TaskGroup.CI),
+  CI_DOCKER_EXECUTE_TASK(TaskGroup.CI),
+  CI_DOCKER_CLEANUP_TASK(TaskGroup.CI);
 
   private final TaskGroup taskGroup;
   private final String displayName;
