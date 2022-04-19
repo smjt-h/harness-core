@@ -18,10 +18,10 @@ import static io.harness.delegate.beans.TaskData.DEFAULT_SYNC_CALL_TIMEOUT;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.validation.Validator.notNullCheck;
 
-import static java.lang.String.valueOf;
 import static software.wings.beans.CGConstants.GLOBAL_ENV_ID;
 import static software.wings.beans.TaskType.JIRA;
 
+import static java.lang.String.valueOf;
 import static java.util.stream.Collectors.toMap;
 
 import io.harness.annotations.dev.HarnessModule;
@@ -191,8 +191,8 @@ public class JiraCreateUpdate extends State implements SweepingOutputStateMixin 
     renderExpressions(context);
 
     if (areRequiredFieldsTemplatized) {
-      createMeta = jiraHelperService.getCreateMetadata(
-          jiraConnectorId, null, project, accountId, context.getAppId(), getTimeoutMillis() != null ? getTimeoutMillis() : DEFAULT_SYNC_CALL_TIMEOUT);
+      createMeta = jiraHelperService.getCreateMetadata(jiraConnectorId, null, project, accountId, context.getAppId(),
+          getTimeoutMillis() != null ? getTimeoutMillis() : DEFAULT_SYNC_CALL_TIMEOUT);
       try {
         validateRequiredFields(createMeta, context);
       } catch (HarnessJiraException e) {
@@ -202,9 +202,10 @@ public class JiraCreateUpdate extends State implements SweepingOutputStateMixin 
     }
 
     if (EmptyPredicate.isNotEmpty(customFields)) {
-      JiraCreateMetaResponse createMetadata = createMeta == null ? jiraHelperService.getCreateMetadata(jiraConnectorId,
-                                                  null, project, accountId, context.getAppId(), getTimeoutMillis() != null ? getTimeoutMillis() : DEFAULT_SYNC_CALL_TIMEOUT)
-                                                                 : createMeta;
+      JiraCreateMetaResponse createMetadata = createMeta == null
+          ? jiraHelperService.getCreateMetadata(jiraConnectorId, null, project, accountId, context.getAppId(),
+              getTimeoutMillis() != null ? getTimeoutMillis() : DEFAULT_SYNC_CALL_TIMEOUT)
+          : createMeta;
 
       Map<String, String> customFieldsIdToNameMap = mapCustomFieldsIdsToNames(createMetadata);
       Map<String, Map<Object, Object>> customFieldsValueToIdMap =
