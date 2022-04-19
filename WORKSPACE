@@ -4468,6 +4468,7 @@ plain_artifacts = [
     "com.hubspot.jackson:jackson-datatype-protobuf:0.9.11-jackson2.7",
     "com.intellij:annotations:12.0",
     "com.j256.two-factor-auth:two-factor-auth:1.0",
+    "com.jakewharton.retrofit:retrofit1-okhttp3-client:1.1.0",
     "com.jayway.jsonpath:json-path:2.2.0",
     "com.jcraft.harness:jsch-0-1-54-harness-patch:1.2",
     "com.jcraft:jzlib:1.1.3",
