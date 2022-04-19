@@ -49,7 +49,7 @@ import io.harness.exception.ExceptionUtils;
 import io.harness.exception.FileCreationException;
 import io.harness.exception.NestedExceptionUtils;
 import io.harness.exception.YamlException;
-import io.harness.exception.runtime.serverless.ServerlessAwsLambdaRuntimeException;
+import io.harness.exception.runtime.serverless.ServerlessCommandExecutionException;
 import io.harness.filesystem.FileIo;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
@@ -135,7 +135,7 @@ public class ServerlessTaskHelperBase {
       executionLogCallback.saveExecutionLog(
           "Failed to download manifest files from git. " + ExceptionUtils.getMessage(sanitizedException), ERROR,
           CommandExecutionStatus.FAILURE);
-      throw new ServerlessAwsLambdaRuntimeException(
+      throw new ServerlessCommandExecutionException(
           format("Failed while trying to fetch files from git connector: '%s' in manifest with identifier: %s",
               gitStoreDelegateConfig.getConnectorName(), gitStoreDelegateConfig.getManifestId()),
           e.getCause());
@@ -145,7 +145,7 @@ public class ServerlessTaskHelperBase {
       executionLogCallback.saveExecutionLog(
           "Failed to download manifest files from git. " + ExceptionUtils.getMessage(sanitizedException), ERROR,
           CommandExecutionStatus.FAILURE);
-      throw new ServerlessAwsLambdaRuntimeException(
+      throw new ServerlessCommandExecutionException(
           format("Failed while trying to fetch files from git connector: '%s' in manifest with identifier: %s",
               gitStoreDelegateConfig.getConnectorName(), gitStoreDelegateConfig.getManifestId()),
           e);
@@ -251,7 +251,7 @@ public class ServerlessTaskHelperBase {
           "artifactPath or artifactPathFilter is blank", ERROR, CommandExecutionStatus.FAILURE);
       throw NestedExceptionUtils.hintWithExplanationException(BLANK_ARTIFACT_PATH_HINT,
           String.format(BLANK_ARTIFACT_PATH_EXPLANATION, artifactoryArtifactConfig.getIdentifier()),
-          new ServerlessAwsLambdaRuntimeException(BLANK_ARTIFACT_PATH));
+          new ServerlessCommandExecutionException(BLANK_ARTIFACT_PATH));
     }
     ArtifactoryConnectorDTO artifactoryConnectorDTO =
         (ArtifactoryConnectorDTO) artifactoryArtifactConfig.getConnectorDTO().getConnectorConfig();
@@ -269,11 +269,6 @@ public class ServerlessTaskHelperBase {
     artifactMetadata.put(ARTIFACTORY_ARTIFACT_NAME, artifactPath);
     String artifactFilePath = Paths.get(artifactoryDirectory, ARTIFACT_FILE_NAME).toAbsolutePath().toString();
     File artifactFile = new File(artifactFilePath);
-    executionLogCallback.saveExecutionLog("\n"
-        + color(format("Downloading %s artifact with identifier: %s",
-                    artifactoryArtifactConfig.getServerlessArtifactType(), artifactoryArtifactConfig.getIdentifier()),
-            White, Bold));
-    executionLogCallback.saveExecutionLog("Artifactory Artifact Path: " + artifactPath);
     if (!artifactFile.createNewFile()) {
       log.error("Failed to create new file");
       executionLogCallback.saveExecutionLog(
@@ -281,6 +276,11 @@ public class ServerlessTaskHelperBase {
       throw new FileCreationException("Failed to create file " + artifactFile.getCanonicalPath(), null,
           ErrorCode.FILE_CREATE_ERROR, Level.ERROR, USER, null);
     }
+    executionLogCallback.saveExecutionLog("\n"
+        + color(format("Downloading %s artifact with identifier: %s",
+                    artifactoryArtifactConfig.getServerlessArtifactType(), artifactoryArtifactConfig.getIdentifier()),
+            White, Bold));
+    executionLogCallback.saveExecutionLog("Artifactory Artifact Path: " + artifactPath);
     try (InputStream artifactInputStream = artifactoryNgService.downloadArtifacts(artifactoryConfigRequest,
              artifactoryArtifactConfig.getRepositoryName(), artifactMetadata, ARTIFACTORY_ARTIFACT_PATH,
              ARTIFACTORY_ARTIFACT_NAME);
@@ -292,7 +292,7 @@ public class ServerlessTaskHelperBase {
         throw NestedExceptionUtils.hintWithExplanationException(DOWNLOAD_FROM_ARTIFACTORY_HINT,
             String.format(
                 DOWNLOAD_FROM_ARTIFACTORY_EXPLANATION, artifactPath, artifactoryConfigRequest.getArtifactoryUrl()),
-            new ServerlessAwsLambdaRuntimeException(DOWNLOAD_FROM_ARTIFACTORY_FAILED));
+            new ServerlessCommandExecutionException(DOWNLOAD_FROM_ARTIFACTORY_FAILED));
       }
       IOUtils.copy(artifactInputStream, outputStream);
       executionLogCallback.saveExecutionLog(color("Successfully downloaded artifact..%n", White, Bold));
@@ -302,7 +302,7 @@ public class ServerlessTaskHelperBase {
       executionLogCallback.saveExecutionLog(
           "Failed to download artifact from artifactory. " + ExceptionUtils.getMessage(sanitizedException), ERROR,
           CommandExecutionStatus.FAILURE);
-      throw new ServerlessAwsLambdaRuntimeException(
+      throw new ServerlessCommandExecutionException(
           format("Failed while trying to download artifact from artifactory with identifier: %s",
               artifactoryArtifactConfig.getIdentifier()),
           e);

@@ -17,8 +17,8 @@ import lombok.experimental.UtilityClass;
 public class ServerlessAwsLambdaExceptionConstants {
   public final String CONFIG_CREDENTIAL_FAILED = "failed to setup aws credentials";
 
-  public final String CONFIG_CREDENTIAL_FAILED_HINT = "Aws access key or Aws secret access key might be wrong,"
-      + " please check it";
+  public final String CONFIG_CREDENTIAL_FAILED_HINT = "Please check the AWS Connector credentials."
+      + " The Access Key and/or Secret Key might be incorrect";
 
   public final String CONFIG_CREDENTIAL_FAILED_EXPLANATION = "serverless config credential command failed";
 
@@ -31,8 +31,9 @@ public class ServerlessAwsLambdaExceptionConstants {
 
   public final String DOWNLOAD_FROM_ARTIFACTORY_FAILED = "Failed to download artifact file";
 
-  public final String DOWNLOAD_FROM_ARTIFACTORY_HINT = "Please check if artifact details point to an "
-      + "existing artifact file";
+  public final String DOWNLOAD_FROM_ARTIFACTORY_HINT = "Please review the Artifact Details and check the File/Folder "
+      + "Path to the artifact. We recommend also checking for the artifact in the given path in your"
+      + " Artifactory Repository. ";
 
   public final String DOWNLOAD_FROM_ARTIFACTORY_EXPLANATION = "Failed to download artifact: %s from"
       + " Artifactory: %s";
@@ -46,8 +47,7 @@ public class ServerlessAwsLambdaExceptionConstants {
   public final String SERVERLESS_MANIFEST_PROCESSING_FAILED = "failed to process serverless manifest file";
 
   public final String SERVERLESS_MANIFEST_PROCESSING_HINT =
-      "please check that serverless manifest file has a valid yaml"
-      + " or json content.";
+      "Please check that the serverless manifest file is properly formatted in either JSON or YAML";
 
   public final String SERVERLESS_MANIFEST_PROCESSING_EXPLANATION = "serverless manifest file has an invalid yaml or "
       + "json content.";

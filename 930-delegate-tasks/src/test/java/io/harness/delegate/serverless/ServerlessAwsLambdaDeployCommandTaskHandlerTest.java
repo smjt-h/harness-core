@@ -114,9 +114,10 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
         .getLogCallback(
             iLogStreamingTaskClient, ServerlessCommandUnitConstants.deploy.toString(), true, commandUnitsProgress);
     doReturn(serverlessAwsLambdaConfig).when(serverlessInfraConfigHelper).createServerlessConfig(serverlessInfraConfig);
-    //    doReturn(serverlessAwsLambdaManifestSchema)
-    //        .when(serverlessAwsCommandTaskHelper)
-    //        .parseServerlessManifest((ServerlessAwsLambdaManifestConfig) serverlessManifestConfig, initLogCallback);
+    doReturn(serverlessAwsLambdaManifestSchema)
+        .when(serverlessAwsCommandTaskHelper)
+        .parseServerlessManifest(
+            initLogCallback, ((ServerlessDeployRequest) serverlessCommandRequest).getManifestContent());
 
     ServerlessClient serverlessClient = ServerlessClient.client(serverlessDelegateTaskParams.getServerlessClientPath());
 

@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Builder;
 import lombok.Value;
+import lombok.experimental.NonFinal;
 
 @Value
 @Builder
@@ -37,7 +38,7 @@ public class ServerlessGitFetchRequest
   String executionLogName;
   String activityId;
   String accountId;
-  @Expression(ALLOW_SECRETS) ServerlessGitFetchFileConfig serverlessGitFetchFileConfig;
+  @NonFinal @Expression(ALLOW_SECRETS) ServerlessGitFetchFileConfig serverlessGitFetchFileConfig;
   @Builder.Default boolean shouldOpenLogStream = true;
   boolean closeLogStream;
 

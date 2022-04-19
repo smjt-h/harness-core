@@ -7,16 +7,21 @@
 
 package io.harness.delegate.task.serverless;
 
+import static io.harness.expression.Expression.ALLOW_SECRETS;
+
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
+import io.harness.expression.Expression;
+import io.harness.expression.ExpressionReflectionUtils.NestedAnnotationResolver;
 
 import lombok.Builder;
 import lombok.Value;
+import lombok.experimental.NonFinal;
 
 @Value
 @Builder
-public class ServerlessAwsLambdaManifestConfig implements ServerlessManifestConfig {
-  String manifestPath;
-  String configOverridePath;
+public class ServerlessAwsLambdaManifestConfig implements ServerlessManifestConfig, NestedAnnotationResolver {
+  @NonFinal @Expression(ALLOW_SECRETS) String manifestPath;
+  @NonFinal @Expression(ALLOW_SECRETS) String configOverridePath;
   GitStoreDelegateConfig gitStoreDelegateConfig;
 
   @Override

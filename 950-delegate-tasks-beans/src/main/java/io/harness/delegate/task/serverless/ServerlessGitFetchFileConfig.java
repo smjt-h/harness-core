@@ -17,6 +17,7 @@ import io.harness.expression.ExpressionReflectionUtils.NestedAnnotationResolver;
 
 import lombok.Builder;
 import lombok.Value;
+import lombok.experimental.NonFinal;
 
 @Value
 @Builder
@@ -24,7 +25,7 @@ import lombok.Value;
 public class ServerlessGitFetchFileConfig implements NestedAnnotationResolver {
   String identifier;
   String manifestType;
-  @Expression(ALLOW_SECRETS) GitStoreDelegateConfig gitStoreDelegateConfig;
-  @Expression(ALLOW_SECRETS) String configOverridePath;
+  GitStoreDelegateConfig gitStoreDelegateConfig;
+  @NonFinal @Expression(ALLOW_SECRETS) String configOverridePath;
   boolean succeedIfFileNotFound;
 }

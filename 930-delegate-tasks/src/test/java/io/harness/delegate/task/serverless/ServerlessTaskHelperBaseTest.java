@@ -70,7 +70,6 @@ public class ServerlessTaskHelperBaseTest extends CategoryTest {
 
   private static final String ARTIFACT_DIRECTORY = "./repository/serverless/";
   private static final String ARTIFACTORY_PATH = "asdffasd.zip";
-  String manifestContent = "afsdf : <+artifact.path> ";
   String repositoryName = "dfsgvgasd";
 
   ArtifactoryConfigRequest artifactoryConfigRequest = ArtifactoryConfigRequest.builder().build();
@@ -93,8 +92,6 @@ public class ServerlessTaskHelperBaseTest extends CategoryTest {
                                                           .repositoryName(repositoryName)
                                                           .build();
   @Mock LogCallback logCallback;
-  //  ServerlessManifestConfig serverlessManifestConfig =
-  //      ServerlessAwsLambdaManifestConfig.builder().manifestContent(manifestContent).build();
 
   @Test
   @Owner(developers = PIYUSH_BHUWALKA)

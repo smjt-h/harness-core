@@ -12,10 +12,10 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotations.dev.OwnedBy;
 
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 
 @OwnedBy(CDP)
-@Value
+@Data
 @Builder
 public class ServerlessAwsLambdaDeployConfig implements ServerlessDeployConfig {
   String commandOptions;

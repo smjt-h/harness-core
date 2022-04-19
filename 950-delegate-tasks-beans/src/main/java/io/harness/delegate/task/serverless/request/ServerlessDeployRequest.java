@@ -22,6 +22,7 @@ import io.harness.expression.ExpressionReflectionUtils.NestedAnnotationResolver;
 
 import lombok.Builder;
 import lombok.Value;
+import lombok.experimental.NonFinal;
 
 @Value
 @Builder
@@ -30,11 +31,11 @@ public class ServerlessDeployRequest implements ServerlessCommandRequest, Nested
   String accountId;
   ServerlessCommandType serverlessCommandType;
   String commandName;
-  ServerlessArtifactConfig serverlessArtifactConfig;
+  @NonFinal @Expression(ALLOW_SECRETS) ServerlessArtifactConfig serverlessArtifactConfig;
   CommandUnitsProgress commandUnitsProgress;
-  ServerlessManifestConfig serverlessManifestConfig;
-  ServerlessInfraConfig serverlessInfraConfig;
-  ServerlessDeployConfig serverlessDeployConfig;
+  @NonFinal @Expression(ALLOW_SECRETS) ServerlessManifestConfig serverlessManifestConfig;
+  @NonFinal @Expression(ALLOW_SECRETS) ServerlessInfraConfig serverlessInfraConfig;
+  @NonFinal @Expression(ALLOW_SECRETS) ServerlessDeployConfig serverlessDeployConfig;
   Integer timeoutIntervalInMin;
   @Expression(ALLOW_SECRETS) String manifestContent;
 }

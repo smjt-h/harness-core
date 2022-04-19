@@ -118,7 +118,13 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
     LogCallback deployLogCallback = serverlessTaskHelperBase.getLogCallback(
         iLogStreamingTaskClient, ServerlessCommandUnitConstants.deploy.toString(), true, commandUnitsProgress);
     try {
-      return deploy(serverlessDeployRequest, deployLogCallback, serverlessDelegateTaskParams);
+      ServerlessDeployResponse serverlessDeployResponse =
+          deploy(serverlessDeployRequest, deployLogCallback, serverlessDelegateTaskParams);
+      if (serverlessDeployResponse.getCommandExecutionStatus() == CommandExecutionStatus.FAILURE) {
+        throw new ServerlessAwsLambdaRuntimeException(
+            "serverless deploy command failed. Pls check logs for more details.");
+      }
+      return serverlessDeployResponse;
     } catch (Exception ex) {
       deployLogCallback.saveExecutionLog(color(format("%n Deployment failed."), LogColor.Red, LogWeight.Bold),
           LogLevel.ERROR, CommandExecutionStatus.FAILURE);
@@ -162,7 +168,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
       executionLogCallback.saveExecutionLog(
           color(format("%nConfig Credential command failed..%n"), LogColor.Red, LogWeight.Bold), ERROR,
           CommandExecutionStatus.FAILURE);
-      throw NestedExceptionUtils.hintWithExplanationException(CONFIG_CREDENTIAL_FAILED_HINT,
+      throw NestedExceptionUtils.hintWithExplanationException(format(CONFIG_CREDENTIAL_FAILED_HINT, "tyr"),
           CONFIG_CREDENTIAL_FAILED_EXPLANATION, new ServerlessAwsLambdaRuntimeException(CONFIG_CREDENTIAL_FAILED));
     }
 

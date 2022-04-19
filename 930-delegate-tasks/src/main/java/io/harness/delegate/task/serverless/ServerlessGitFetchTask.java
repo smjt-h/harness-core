@@ -42,7 +42,7 @@ import io.harness.delegate.task.git.TaskStatus;
 import io.harness.delegate.task.serverless.request.ServerlessGitFetchRequest;
 import io.harness.delegate.task.serverless.response.ServerlessGitFetchResponse;
 import io.harness.exception.NestedExceptionUtils;
-import io.harness.exception.runtime.serverless.ServerlessAwsLambdaRuntimeException;
+import io.harness.exception.runtime.serverless.ServerlessCommandExecutionException;
 import io.harness.git.model.FetchFilesResult;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
@@ -191,7 +191,7 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
         ERROR);
     throw NestedExceptionUtils.hintWithExplanationException(format(NO_SERVERLESS_MANIFEST_HINT, folderPath),
         format(NO_SERVERLESS_MANIFEST_EXPLANATION, folderPath),
-        new ServerlessAwsLambdaRuntimeException(NO_SERVERLESS_MANIFEST_FAILED));
+        new ServerlessCommandExecutionException(NO_SERVERLESS_MANIFEST_FAILED));
   }
 
   private Optional<FetchFilesResult> fetchServerlessManifestFileFromRepo(GitStoreDelegateConfig gitStoreDelegateConfig,

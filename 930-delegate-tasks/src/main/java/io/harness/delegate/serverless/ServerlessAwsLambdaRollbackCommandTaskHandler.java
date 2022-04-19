@@ -109,7 +109,13 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandler extends ServerlessCom
     LogCallback rollbackLogCallback = serverlessTaskHelperBase.getLogCallback(
         iLogStreamingTaskClient, ServerlessCommandUnitConstants.rollback.toString(), true, commandUnitsProgress);
     try {
-      return rollback(serverlessRollbackRequest, rollbackLogCallback, serverlessDelegateTaskParams);
+      ServerlessRollbackResponse serverlessRollbackResponse =
+          rollback(serverlessRollbackRequest, rollbackLogCallback, serverlessDelegateTaskParams);
+      if (serverlessRollbackResponse.getCommandExecutionStatus() == CommandExecutionStatus.FAILURE) {
+        throw new ServerlessAwsLambdaRuntimeException(
+            "serverless rollback command failed. Pls check logs for more details.");
+      }
+      return serverlessRollbackResponse;
     } catch (Exception ex) {
       rollbackLogCallback.saveExecutionLog(color(format("%n Rollback failed."), LogColor.Red, LogWeight.Bold),
           LogLevel.ERROR, CommandExecutionStatus.FAILURE);
