@@ -80,7 +80,7 @@ public class ScmGitProviderMapper {
     AzureRepoTokenSpecDTO bitbucketUsernameTokenApiAccessDTO = (AzureRepoTokenSpecDTO) apiAccess.getSpec();
     String pat = String.valueOf(bitbucketUsernameTokenApiAccessDTO.getTokenRef().getDecryptedValue());
     AzureProvider.Builder azureProvider =
-            AzureProvider.newBuilder().setOrganization(org).setProject(project).setPersonalAccessToken(pat);
+        AzureProvider.newBuilder().setOrganization(org).setProject(project).setPersonalAccessToken(pat);
     Provider.Builder builder = Provider.newBuilder().setDebug(debug).setAzure(azureProvider);
     return builder.setSkipVerify(skipVerify).setAdditionalCertsPath(getAdditionalCertsPath()).build();
   }

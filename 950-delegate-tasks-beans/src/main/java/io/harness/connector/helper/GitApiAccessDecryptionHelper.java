@@ -73,7 +73,7 @@ public class GitApiAccessDecryptionHelper {
 
   private boolean hasAPIAccess(AzureRepoConnectorDTO azureRepoConnectorDTO) {
     return !(azureRepoConnectorDTO == null || azureRepoConnectorDTO.getApiAccess() == null
-            || azureRepoConnectorDTO.getApiAccess().getSpec() == null);
+        || azureRepoConnectorDTO.getApiAccess().getSpec() == null);
   }
 
   public DecryptableEntity getAPIAccessDecryptableEntity(GithubConnectorDTO githubConnectorDTO) {
@@ -141,7 +141,7 @@ public class GitApiAccessDecryptionHelper {
   }
 
   public void setAPIAccessDecryptableEntity(
-          AzureRepoConnectorDTO azureRepoConnectorDTO, DecryptableEntity decryptableEntity) {
+      AzureRepoConnectorDTO azureRepoConnectorDTO, DecryptableEntity decryptableEntity) {
     if (azureRepoConnectorDTO == null || azureRepoConnectorDTO.getApiAccess() == null) {
       throw new InvalidRequestException("The given connector doesn't have api access field set");
     }
