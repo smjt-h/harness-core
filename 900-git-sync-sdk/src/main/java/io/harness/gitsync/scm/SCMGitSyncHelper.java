@@ -82,11 +82,11 @@ public class SCMGitSyncHelper {
   }
 
   public ScmGetFileResponse getFile(Scope scope, String repoName, String branchName, String filePath, String commitId,
-      String connectoRef, Map<String, String> contextMap) {
+      String connectorRef, Map<String, String> contextMap) {
     final GetFileRequest getFileRequest =
         GetFileRequest.newBuilder()
             .setRepoName(repoName)
-            .setConnectorRef(connectoRef)
+            .setConnectorRef(connectorRef)
             .setCommitId(Strings.nullToEmpty(commitId))
             .setBranchName(Strings.nullToEmpty(branchName))
             .setFilePath(filePath)

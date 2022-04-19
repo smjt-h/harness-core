@@ -9,16 +9,20 @@ package io.harness.gitsync.persistance;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.Scope;
 import io.harness.gitsync.entityInfo.GitSdkEntityHandlerInterface;
+import io.harness.gitsync.helpers.GitContextHelper;
+import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.scm.SCMGitSyncHelper;
+import io.harness.gitsync.scm.beans.ScmGetFileResponse;
 import io.harness.gitsync.v2.GitAware;
 import io.harness.gitsync.v2.StoreType;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
-import org.apache.commons.lang3.EnumUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -26,24 +30,24 @@ import org.springframework.data.mongodb.core.query.Query;
 @Singleton
 @OwnedBy(HarnessTeam.PL)
 public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
-  private Map<String, GitSdkEntityHandlerInterface> gitPersistenceHelperServiceMap;
-
-  @Inject GitAwarePersistence gitAwarePersistence;
-  @Inject MongoTemplate mongoTemplate;
-  @Inject SCMGitSyncHelper scmGitSyncHelper;
+  @Inject private Map<String, GitSdkEntityHandlerInterface> gitPersistenceHelperServiceMap;
+  @Inject private GitAwarePersistence gitAwarePersistence;
+  @Inject private MongoTemplate mongoTemplate;
+  @Inject private SCMGitSyncHelper scmGitSyncHelper;
 
   @Override
-  public Optional<GitAware> findOne(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, Class entityClass, Criteria criteria) {
-    Optional<GitAware> savedEntity =
-        gitAwarePersistence.findOne(criteria, projectIdentifier, orgIdentifier, accountIdentifier, entityClass);
-    if (savedEntity.isPresent()) {
-      return savedEntity;
+  public Optional<GitAware> findOne(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      StoreType storeType, Class entityClass, Criteria criteria) {
+    if (storeType == null) {
+      Optional<GitAware> savedEntity =
+          gitAwarePersistence.findOne(criteria, projectIdentifier, orgIdentifier, accountIdentifier, entityClass);
+      if (savedEntity.isPresent()) {
+        return savedEntity;
+      }
     }
 
-    Criteria gitAwareCriteria = Criteria.where(getGitSdkEntityHandlerInterface(entityClass).getStoreTypeKey())
-                                    .in(EnumUtils.getEnumList(StoreType.class));
-
+    Criteria gitAwareCriteria =
+        Criteria.where(getGitSdkEntityHandlerInterface(entityClass).getStoreTypeKey()).is(storeType);
     Query query = new Query().addCriteria(new Criteria().andOperator(criteria, gitAwareCriteria));
     final GitAware savedObject = (GitAware) mongoTemplate.findOne(query, entityClass);
     if (savedObject == null) {
@@ -55,8 +59,19 @@ public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
 
     if (savedObject.getStoreType() == StoreType.REMOTE) {
       // fetch yaml from git
-      scmGitSyncHelper.getFile();
+      GitEntityInfo gitEntityInfo = GitContextHelper.getGitEntityInfoV2();
+      ScmGetFileResponse scmGetFileResponse = scmGitSyncHelper.getFile(Scope.builder()
+                                                                           .accountIdentifier(accountIdentifier)
+                                                                           .orgIdentifier(orgIdentifier)
+                                                                           .projectIdentifier(projectIdentifier)
+                                                                           .build(),
+          savedObject.getRepo(), gitEntityInfo.getBranch(), gitEntityInfo.getFilePath(), gitEntityInfo.getCommitId(),
+          savedObject.getConnectorRef(), Collections.emptyMap());
+      savedObject.setData(scmGetFileResponse.getFileContent());
     }
+
+    // set git metadata into global context
+    return Optional.of(savedObject);
   }
 
   private GitSdkEntityHandlerInterface getGitSdkEntityHandlerInterface(Class entityClass) {
