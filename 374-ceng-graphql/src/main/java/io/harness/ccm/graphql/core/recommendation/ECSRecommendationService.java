@@ -31,8 +31,10 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 @Singleton
+@Slf4j
 public class ECSRecommendationService {
   private static final int NUMBER_OF_BUCKETS = 1000;
   @Inject private ECSRecommendationDAO ecsRecommendationDAO;
@@ -52,6 +54,7 @@ public class ECSRecommendationService {
     final List<ECSPartialRecommendationHistogram> histogramList =
         ecsRecommendationDAO.fetchPartialRecommendationHistograms(accountIdentifier, recommendation.getClusterId(),
             recommendation.getServiceArn(), startTime.toInstant(), endTime.toInstant());
+    log.info("Partial Histograms: {}", histogramList);
     return mergeHistogram(histogramList, recommendation);
   }
 
@@ -71,13 +74,15 @@ public class ECSRecommendationService {
       partialCpuHistogram.loadFromCheckPoint(partialHistogram.getCpuHistogram());
       cpuHistogram.merge(partialCpuHistogram);
     }
+    log.info("Memory Histogram: {}", memoryHistogram);
+    log.info("CPU Histogram: {}", cpuHistogram);
 
     HistogramCheckpoint memoryHistogramCp = memoryHistogram.saveToCheckpoint();
     HistogramCheckpoint cpuHistogramCp = cpuHistogram.saveToCheckpoint();
     StrippedHistogram memStripped = StrippedHistogram.fromCheckpoint(memoryHistogramCp, NUMBER_OF_BUCKETS);
     StrippedHistogram cpuStripped = StrippedHistogram.fromCheckpoint(cpuHistogramCp, NUMBER_OF_BUCKETS);
 
-    return ECSRecommendationDTO.builder()
+    ECSRecommendationDTO ecsRecommendationDTO = ECSRecommendationDTO.builder()
         .id(recommendation.getUuid())
         .clusterName(recommendation.getClusterName())
         .serviceArn(recommendation.getServiceArn())
@@ -102,6 +107,8 @@ public class ECSRecommendationService {
                           .totalWeight(cpuHistogramCp.getTotalWeight())
                           .build())
         .build();
+    log.info("ECS Recommendation DTO: {}", ecsRecommendationDTO);
+    return ecsRecommendationDTO;
   }
 
   private static Histogram newHistogram(long maxUnits) {
