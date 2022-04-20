@@ -23,18 +23,8 @@ import static io.harness.filesystem.FileIo.deleteDirectoryAndItsContentIfExists;
 import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.logging.LogLevel.INFO;
 import static io.harness.logging.LogLevel.WARN;
-import static io.harness.provision.TerraformConstants.TERRAFORM_APPLY_PLAN_FILE_VAR_NAME;
-import static io.harness.provision.TerraformConstants.TERRAFORM_DESTROY_PLAN_FILE_OUTPUT_NAME;
-import static io.harness.provision.TerraformConstants.TERRAFORM_DESTROY_PLAN_FILE_VAR_NAME;
-import static io.harness.provision.TerraformConstants.TERRAFORM_PLAN_FILE_OUTPUT_NAME;
-import static io.harness.provision.TerraformConstants.TERRAFORM_PLAN_JSON_FILE_NAME;
-import static io.harness.provision.TerraformConstants.TERRAFORM_STATE_FILE_NAME;
-import static io.harness.provision.TerraformConstants.TERRAFORM_VARIABLES_FILE_NAME;
-import static io.harness.provision.TerraformConstants.TF_BASE_DIR;
-import static io.harness.provision.TerraformConstants.TF_SCRIPT_DIR;
-import static io.harness.provision.TerraformConstants.TF_WORKING_DIR;
-import static io.harness.provision.TerraformConstants.USER_DIR_KEY;
-import static io.harness.provision.TerraformConstants.WORKSPACE_STATE_FILE_PATH_FORMAT;
+import static io.harness.provision.TerraformConstants.*;
+import static io.harness.provision.TerraformConstants.GIT_SSH_COMMAND;
 
 import static software.wings.beans.LogHelper.color;
 
@@ -95,6 +85,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -813,6 +804,33 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
     }
     return sshSessionConfigMapper.getSSHSessionConfig(
         gitStoreDelegateConfig.getSshKeySpecDTO(), gitStoreDelegateConfig.getEncryptedDataDetails());
+  }
+
+  public void exportingSSHKey(TerraformTaskNGParameters taskParameters, GitStoreDelegateConfig conFileFileGitStore)
+      throws IOException {
+    GitConfigDTO gitConfigDTO = (GitConfigDTO) conFileFileGitStore.getGitConfigDTO();
+    if (gitConfigDTO.getGitAuthType() == SSH) {
+      SshSessionConfig sshSessionConfig = getSshSessionConfig(conFileFileGitStore);
+      String sshKey = String.valueOf(sshSessionConfig.getKey());
+      String workingDir = getBaseDir(taskParameters.getEntityId());
+      String baseDir = Paths.get(Paths.get(System.getProperty(USER_DIR_KEY)).toString(), workingDir).toString();
+      Files.createDirectories(Paths.get(baseDir, "sshKeyDir"));
+      String sshKeyPath = Paths.get(baseDir, "sshKeyDir", "sshKey").toString();
+      FileIo.writeUtf8StringToFile(sshKeyPath, sshKey);
+      File file = new File(Paths.get(sshKeyPath).toString());
+
+      file.setWritable(false, false);
+      file.setExecutable(false, false);
+      file.setReadable(false, false);
+      file.setReadable(true);
+
+      String newSSHArg = TF_SSH_COMMAND_ARG + sshKeyPath;
+
+      String sshCommand =
+          System.getenv(GIT_SSH_COMMAND) == null ? "ssh" + newSSHArg : System.getenv(GIT_SSH_COMMAND) + newSSHArg;
+
+      taskParameters.getEnvironmentVariables().put(GIT_SSH_COMMAND, sshCommand);
+    }
   }
 
   public void performCleanupOfTfDirs(TerraformTaskNGParameters parameters, LogCallback logCallback) {
