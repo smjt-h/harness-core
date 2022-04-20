@@ -125,9 +125,7 @@ public class PerpetualTaskLifecycleManagerTest extends CategoryTest {
   public void testRunOnceWhenExceptionWhileExecuting() {
     PerpetualTaskResponse perpetualTaskResponse =
         PerpetualTaskResponse.builder().responseCode(500).responseMessage("failed").build();
-    when(perpetualTaskExecutor.runOnce(any(), any(), any())).thenAnswer(invocation -> {
-      throw new Exception();
-    });
+    when(perpetualTaskExecutor.runOnce(any(), any(), any())).thenAnswer(invocation -> { throw new Exception(); });
     when(currentlyExecutingPerpetualTasksCount.get()).thenReturn(1);
     perpetualTaskLifecycleManager.call();
     verify(perpetualTaskServiceGrpcClient)

@@ -152,9 +152,9 @@ public class AwsAmiServiceTrafficShiftAlbDeployStateTest extends WingsBaseTest {
             .delegateMetaInfo(DelegateMetaInfo.builder().build())
             .instancesAdded(Collections.singletonList(new Instance()))
             .build();
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(state.awsAmiServiceHelper).populateAlbTrafficShiftSetupData(any());
+    doAnswer(invocation -> { throw new Exception(); })
+        .when(state.awsAmiServiceHelper)
+        .populateAlbTrafficShiftSetupData(any());
     ExecutionResponse response =
         state.handleAsyncResponse(mockContext, ImmutableMap.of(ACTIVITY_ID, amiServiceDeployResponse));
     assertThat(response).isNotNull();
@@ -257,9 +257,7 @@ public class AwsAmiServiceTrafficShiftAlbDeployStateTest extends WingsBaseTest {
     doReturn(false).when(featureFlagService).isEnabled(any(), anyString());
 
     if (!isSuccess) {
-      doAnswer(invocation -> {
-        throw new Exception();
-      }).when(delegateService).queueTask(any());
+      doAnswer(invocation -> { throw new Exception(); }).when(delegateService).queueTask(any());
     }
 
     AwsAmiDeployStateExecutionData awsAmiDeployStateExecutionData = AwsAmiDeployStateExecutionData.builder().build();

@@ -430,9 +430,9 @@ public class AzureWebAppSlotSetupTest extends WingsBaseTest {
         .when(azureVMSSStateHelper)
         .createAndSaveActivity(any(), any(), anyString(), anyString(), any(), anyListOf(CommandUnit.class));
     doReturn(managerExecutionLogCallback).when(azureVMSSStateHelper).getExecutionLogCallback(activity);
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(azureVMSSStateHelper).populateAzureAppServiceData(eq(context), any(Artifact.class));
+    doAnswer(invocation -> { throw new Exception(); })
+        .when(azureVMSSStateHelper)
+        .populateAzureAppServiceData(eq(context), any(Artifact.class));
 
     assertThatThrownBy(() -> state.execute(context)).isInstanceOf(InvalidRequestException.class);
   }

@@ -129,18 +129,14 @@ public class SlotSteadyStateCheckerTest extends CategoryTest {
     verify(deploymentSlot, Mockito.atLeast(1)).state();
 
     // Failure
-    doAnswer(invocation -> {
-      throw new UncheckedTimeoutException();
-    }).when(deploymentSlot).state();
+    doAnswer(invocation -> { throw new UncheckedTimeoutException(); }).when(deploymentSlot).state();
     assertThatThrownBy(()
                            -> slotSteadyStateChecker.waitUntilCompleteWithTimeout(
                                10, 10, mockLogCallback, START_DEPLOYMENT_SLOT, statusVerifier))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessageContaining("Timed out waiting for executing operation");
 
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(deploymentSlot).state();
+    doAnswer(invocation -> { throw new Exception(); }).when(deploymentSlot).state();
     assertThatThrownBy(()
                            -> slotSteadyStateChecker.waitUntilCompleteWithTimeout(
                                10, 10, mockLogCallback, START_DEPLOYMENT_SLOT, statusVerifier))

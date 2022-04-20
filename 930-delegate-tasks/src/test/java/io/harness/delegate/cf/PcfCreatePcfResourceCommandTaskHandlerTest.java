@@ -90,9 +90,7 @@ public class PcfCreatePcfResourceCommandTaskHandlerTest extends CategoryTest {
             .timeoutIntervalInMin(10)
             .build();
     List<EncryptedDataDetail> encryptedDataDetails = Collections.emptyList();
-    doAnswer(invocation -> {
-      throw new Exception();
-    })
+    doAnswer(invocation -> { throw new Exception(); })
         .when(pcfDeploymentManager)
         .createRouteMap(
             any(CfRequestConfig.class), anyString(), anyString(), anyString(), anyBoolean(), anyBoolean(), anyInt());

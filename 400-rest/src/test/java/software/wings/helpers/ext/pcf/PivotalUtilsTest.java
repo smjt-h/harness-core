@@ -62,9 +62,7 @@ public class PivotalUtilsTest extends WingsBaseTest {
     assertThat(PcfUtils.checkIfAppAutoscalarInstalled(DEFAULT_CF_CLI_PATH, CfCliVersion.V6)).isFalse(); // null
     assertThat(PcfUtils.checkIfAppAutoscalarInstalled(DEFAULT_CF_CLI_PATH, CfCliVersion.V6)).isFalse(); // empty
 
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(processExecutor).execute();
+    doAnswer(invocation -> { throw new Exception(); }).when(processExecutor).execute();
     try {
       PcfUtils.checkIfAppAutoscalarInstalled(DEFAULT_CF_CLI_PATH, CfCliVersion.V6);
     } catch (Exception e) {

@@ -137,9 +137,9 @@ public class AzureWebAppSlotSetupTaskHandlerTest extends WingsBaseTest {
     doReturn(AzureAppServicePreDeploymentData.builder())
         .when(azureAppServiceService)
         .getDefaultPreDeploymentDataBuilder(any(), any());
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(azureAppServiceDeploymentService).deployDockerImage(any(), any());
+    doAnswer(invocation -> { throw new Exception(); })
+        .when(azureAppServiceDeploymentService)
+        .deployDockerImage(any(), any());
 
     AzureTaskExecutionResponse azureTaskExecutionResponse = azureWebAppSlotSetupTaskHandler.executeTask(
         setupParameters, azureConfig, mockLogStreamingTaskClient, artifactStreamAttributes);
@@ -159,9 +159,9 @@ public class AzureWebAppSlotSetupTaskHandlerTest extends WingsBaseTest {
     AzureConfig azureConfig = buildAzureConfig();
     AzureAppServiceTaskParameters setupParameters = buildAzureAppServiceTaskParameters(false);
     ArtifactStreamAttributes artifactStreamAttributes = buildArtifactStreamAttributes(true);
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(azureAppServiceService).getDefaultPreDeploymentDataBuilder(any(), any());
+    doAnswer(invocation -> { throw new Exception(); })
+        .when(azureAppServiceService)
+        .getDefaultPreDeploymentDataBuilder(any(), any());
 
     AzureTaskExecutionResponse azureTaskExecutionResponse = azureWebAppSlotSetupTaskHandler.executeTask(
         setupParameters, azureConfig, mockLogStreamingTaskClient, artifactStreamAttributes);

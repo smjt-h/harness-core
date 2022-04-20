@@ -160,9 +160,7 @@ public class AzureVMSSDeployTaskHandlerTest extends WingsBaseTest {
   public void testScaleSetDeployFailure() {
     AzureConfig azureConfig = AzureConfig.builder().build();
     AzureVMSSDeployTaskParameters deployTaskParameters = buildDeployTaskParameters();
-    doAnswer(invocation -> {
-      throw new Exception();
-    })
+    doAnswer(invocation -> { throw new Exception(); })
         .when(azureComputeClient)
         .getVirtualMachineScaleSetByName(eq(azureConfig), eq(deployTaskParameters.getSubscriptionId()),
             eq(deployTaskParameters.getResourceGroupName()),
@@ -213,9 +211,7 @@ public class AzureVMSSDeployTaskHandlerTest extends WingsBaseTest {
     AzureVMSSDeployTaskParameters deployTaskParameters = buildDeployTaskParameters();
     deployTaskParameters.setNewDesiredCount(0);
 
-    doAnswer(invocation -> {
-      throw new Exception();
-    })
+    doAnswer(invocation -> { throw new Exception(); })
         .when(azureComputeClient)
         .deleteVirtualMachineScaleSetById(eq(azureConfig), anyString(), anyString());
 

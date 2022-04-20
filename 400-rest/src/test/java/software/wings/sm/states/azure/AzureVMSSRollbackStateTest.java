@@ -137,9 +137,7 @@ public class AzureVMSSRollbackStateTest extends WingsBaseTest {
     SweepingOutputInquiryBuilder sweepingOutputInquiryBuilder = SweepingOutputInquiry.builder();
     when(context.prepareSweepingOutputInquiryBuilder()).thenReturn(sweepingOutputInquiryBuilder);
 
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(sweepingOutputService).findSweepingOutput(any());
+    doAnswer(invocation -> { throw new Exception(); }).when(sweepingOutputService).findSweepingOutput(any());
     assertThatThrownBy(() -> rollbackState.execute(context)).isInstanceOf(InvalidRequestException.class);
   }
 
@@ -152,9 +150,7 @@ public class AzureVMSSRollbackStateTest extends WingsBaseTest {
     SweepingOutputInquiryBuilder sweepingOutputInquiryBuilder = SweepingOutputInquiry.builder();
     when(context.prepareSweepingOutputInquiryBuilder()).thenReturn(sweepingOutputInquiryBuilder);
 
-    doAnswer(invocation -> {
-      throw new WingsException("");
-    }).when(sweepingOutputService).findSweepingOutput(any());
+    doAnswer(invocation -> { throw new WingsException(""); }).when(sweepingOutputService).findSweepingOutput(any());
     rollbackState.execute(context);
   }
 
@@ -198,15 +194,11 @@ public class AzureVMSSRollbackStateTest extends WingsBaseTest {
     rollbackState.handleAsyncResponse(context, responseMap);
     verify(rollbackState, times(1)).markAllPhaseRollbackDone(context);
 
-    doAnswer(invocation -> {
-      throw new Exception();
-    }).when(sweepingOutputService).save(any());
+    doAnswer(invocation -> { throw new Exception(); }).when(sweepingOutputService).save(any());
     assertThatThrownBy(() -> rollbackState.handleAsyncResponse(context, responseMap))
         .isInstanceOf(InvalidRequestException.class);
 
-    doAnswer(invocation -> {
-      throw new WingsException("");
-    }).when(sweepingOutputService).save(any());
+    doAnswer(invocation -> { throw new WingsException(""); }).when(sweepingOutputService).save(any());
     assertThatThrownBy(() -> rollbackState.handleAsyncResponse(context, responseMap))
         .isInstanceOf(WingsException.class);
   }

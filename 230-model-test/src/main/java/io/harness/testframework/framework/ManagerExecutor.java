@@ -21,7 +21,6 @@ import static java.time.Duration.ofSeconds;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.filesystem.FileIo;
-import io.harness.project.Alpn;
 import io.harness.resource.Project;
 import io.harness.testframework.framework.utils.FileUtils;
 import io.harness.threading.Poller;

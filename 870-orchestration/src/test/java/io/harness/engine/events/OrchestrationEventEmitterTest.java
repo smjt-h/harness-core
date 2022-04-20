@@ -77,9 +77,7 @@ public class OrchestrationEventEmitterTest extends OrchestrationTestBase {
 
     when(eventSender.sendEvent(any(Ambiance.class), any(ByteString.class), eq(PmsEventCategory.ORCHESTRATION_EVENT),
              eq("serviceName"), eq(true)))
-        .thenAnswer(invocation -> {
-          throw new Exception();
-        });
+        .thenAnswer(invocation -> { throw new Exception(); });
 
     assertThatThrownBy(() -> orchestrationEventEmitter.emitEvent(orchestrationEvent)).isInstanceOf(Exception.class);
 

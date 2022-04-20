@@ -118,7 +118,8 @@ public class ConnectorUtilsTest extends CIExecutionTestBase {
     assertThat(connectorDetails.getProjectIdentifier())
         .isEqualTo(gitHubConnectorDto.getConnectorInfo().getProjectIdentifier());
     verify(connectorResourceClient, times(1)).get(eq(connectorId01), eq(ACCOUNT_ID), eq(ORG_ID), eq(PROJ_ID));
-    verify(secretManagerClientService, times(1)).getEncryptionDetails(eq(ngAccess), any(GithubHttpCredentialsSpecDTO.class));
+    verify(secretManagerClientService, times(1))
+        .getEncryptionDetails(eq(ngAccess), any(GithubHttpCredentialsSpecDTO.class));
   }
 
   @Test
@@ -306,6 +307,7 @@ public class ConnectorUtilsTest extends CIExecutionTestBase {
     assertThat(connectorDetails.getProjectIdentifier())
         .isEqualTo(awsCodeCommitConnectorDto.getConnectorInfo().getProjectIdentifier());
     verify(connectorResourceClient, times(1)).get(eq(connectorId05), eq(ACCOUNT_ID), eq(ORG_ID), eq(PROJ_ID));
-    verify(secretManagerClientService, times(1)).getEncryptionDetails(eq(ngAccess), any(AwsCodeCommitHttpsCredentialsSpecDTO.class));
+    verify(secretManagerClientService, times(1))
+        .getEncryptionDetails(eq(ngAccess), any(AwsCodeCommitHttpsCredentialsSpecDTO.class));
   }
 }

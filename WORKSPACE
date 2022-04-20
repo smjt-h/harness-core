@@ -5156,7 +5156,6 @@ maven_install(
                 "org.slf4j:slf4j-log4j12",
             ],
         ),
-
         maven_test_artifact("com.github.tomakehurst:wiremock-jre8-standalone:2.27.2"),
         maven_test_artifact("com.icegreen:greenmail:1.5.0"),
         maven_test_artifact("com.squareup.okhttp3:mockwebserver:3.6.0"),
@@ -5178,7 +5177,6 @@ maven_install(
         maven_test_artifact("org.glassfish.jersey.test-framework:jersey-test-framework-core:2.23.1"),
         maven_test_artifact("org.mockito:mockito-core:3.2.0"),
         maven_test_artifact("org.springframework.boot:spring-boot-starter-test:2.1.6.RELEASE"),
-#        maven_test_artifact("org.springframework.boot:spring-boot-starter-test:2.6.6"),
         maven_test_artifact("pl.pragmatists:JUnitParams:1.0.4"),
     ],
     excluded_artifacts = [],

@@ -229,9 +229,7 @@ public class AzureWebAppSlotShiftTrafficTest extends WingsBaseTest {
       return (String) args[0];
     });
     if (!isSuccess) {
-      doAnswer(invocation -> {
-        throw new Exception();
-      }).when(delegateService).queueTask(any());
+      doAnswer(invocation -> { throw new Exception(); }).when(delegateService).queueTask(any());
     }
     state.setTrafficWeightExpr("20");
     return mockContext;
