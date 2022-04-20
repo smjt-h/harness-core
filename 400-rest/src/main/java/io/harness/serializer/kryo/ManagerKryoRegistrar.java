@@ -704,7 +704,6 @@ import software.wings.sm.states.GcbState;
 import software.wings.sm.states.HttpState.HttpStateExecutionResponse;
 import software.wings.sm.states.KubernetesSteadyStateCheckResponse;
 import software.wings.sm.states.KubernetesSwapServiceSelectorsResponse;
-import software.wings.sm.states.ParameterEntry;
 import software.wings.sm.states.RepeatState.RepeatStateExecutionData;
 import software.wings.sm.states.ShellScriptState;
 import software.wings.sm.states.azure.AzureVMSSDeployExecutionSummary;
@@ -1401,7 +1400,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(AccountEvent.class, 7445);
     kryo.register(AccountEventType.class, 7446);
     kryo.register(TechStack.class, 7447);
-    kryo.register(ParameterEntry.class, 7448);
     kryo.register(K8sHelmDeploymentElement.class, 7449);
     kryo.register(ServiceNowFieldType.class, 7452);
     kryo.register(io.harness.dashboard.Action.class, 7453);
