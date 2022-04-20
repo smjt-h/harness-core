@@ -1,6 +1,6 @@
 # Any edit in this file should accompany an increment in version.
 name: rolesConfiguration
-version: 20
+version: 21
 roles:
     - identifier: _project_admin
       name: Project Admin
@@ -86,6 +86,10 @@ roles:
         - chi_slo_view
         - chi_slo_edit
         - chi_slo_delete
+        - core_file_view
+        - core_file_edit
+        - core_file_delete
+        - core_file_access
       allowedScopeLevels:
         - project
       managed: true
@@ -118,6 +122,7 @@ roles:
         - ff_target_view
         - ff_environment_apiKeyView
         - ff_environment_view
+        - core_file_view
       allowedScopeLevels:
         - project
       managed: true
@@ -211,6 +216,10 @@ roles:
         - ff_featureflag_toggle
         - core_dashboards_view
         - core_dashboards_edit
+        - core_file_view
+        - core_file_edit
+        - core_file_delete
+        - core_file_access
       allowedScopeLevels:
         - organization
       managed: true
@@ -245,6 +254,7 @@ roles:
         - ff_environment_apiKeyView
         - ff_environment_view
         - core_dashboards_view
+        - core_file_view
       allowedScopeLevels:
         - organization
       managed: true
@@ -345,6 +355,10 @@ roles:
         - ff_environment_edit
         - ff_environment_view
         - ff_featureflag_toggle
+        - core_file_view
+        - core_file_edit
+        - core_file_delete
+        - core_file_access
       allowedScopeLevels:
         - account
       managed: true
@@ -382,6 +396,7 @@ roles:
         - ff_environment_apiKeyView
         - ff_environment_view
         - core_dashboards_view
+        - core_file_view
       allowedScopeLevels:
         - account
       managed: true
@@ -406,6 +421,8 @@ roles:
         - core_user_view
         - core_role_view
         - core_resourcegroup_view
+        - core_file_view
+        - core_file_access
       allowedScopeLevels:
         - project
       managed: true

@@ -13,12 +13,12 @@ import static io.harness.delegate.beans.FileBucket.FILE_STORE;
 
 import static java.lang.String.format;
 
+import io.harness.FileStoreConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.exception.DuplicateEntityException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.file.beans.NGBaseFile;
-import io.harness.filestore.FileStoreConstants;
 import io.harness.filestore.NGFileType;
 import io.harness.ng.core.api.FileStoreService;
 import io.harness.ng.core.dto.filestore.FileDTO;
