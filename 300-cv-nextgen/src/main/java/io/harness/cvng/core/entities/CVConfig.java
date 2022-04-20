@@ -16,7 +16,6 @@ import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.StoreIn;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
-import io.harness.cvng.cdng.beans.HealthSource;
 import io.harness.cvng.core.beans.TimeRange;
 import io.harness.cvng.core.services.api.UpdatableEntity;
 import io.harness.cvng.core.services.api.monitoredService.HealthSourceService;
