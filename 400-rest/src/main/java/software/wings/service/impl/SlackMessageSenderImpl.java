@@ -19,10 +19,13 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
 import io.harness.network.Http;
 
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import software.wings.beans.SlackMessage;
+import software.wings.beans.SlackMessageJSON;
 import software.wings.common.NotificationMessageResolver;
 import software.wings.service.intfc.SlackMessageSender;
 
@@ -46,6 +49,8 @@ import retrofit2.http.Url;
 @Slf4j
 public class SlackMessageSenderImpl implements SlackMessageSender {
   private OkHttpClient client = new OkHttpClient();
+
+  public static final MediaType APPLICATION_JSON = MediaType.parse("application/json; charset=utf-8");
 
   @Override
   public void send(SlackMessage slackMessage, boolean sendFromDelegate, boolean isCertValidationRequired) {
@@ -93,16 +98,38 @@ public class SlackMessageSenderImpl implements SlackMessageSender {
   }
 
   @Override
-  public void sendJSON(Request slackRequest) {
-    try (Response response = client.newCall(slackRequest).execute()) {
+  public void sendJSON(SlackMessageJSON slackMessage) {
+    try {
+      Request slackRequest = createRequest(slackMessage);
+      Response response = client.newCall(slackRequest).execute();
       if (!response.isSuccessful()) {
         String bodyString = (null != response.body()) ? response.body().string() : "null";
 
         log.error("Response not Successful. Response body: {}", bodyString);
+        return;
       }
+      log.info("Slack json message response was successful");
     } catch (Exception e) {
       log.error("Error sending post data", e);
     }
+  }
+
+  private Request createRequest(SlackMessageJSON slackMessage) {
+    RequestBody body = RequestBody.create(APPLICATION_JSON, slackMessage.getMessage());
+    Request request = new Request.Builder()
+        .url(slackMessage.getOutgoingWebhookUrl())
+        .post(body)
+        .addHeader("Content-Type", "application/json")
+        .addHeader("Accept", "*/*")
+        .addHeader("Cache-Control", "no-cache")
+        .addHeader("Host", "hooks.slack.com")
+        .addHeader("accept-encoding", "gzip, deflate")
+        .addHeader("content-length", "798")
+        .addHeader("Connection", "keep-alive")
+        .addHeader("cache-control", "no-cache")
+        .build();
+
+    return request;
   }
 
   SlackWebhookClient getWebhookClient(final String webhookUrl) {

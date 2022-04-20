@@ -17,6 +17,7 @@ import io.harness.beans.FeatureName;
 import io.harness.ff.FeatureFlagService;
 
 import software.wings.beans.SlackMessage;
+import software.wings.beans.SlackMessageJSON;
 import software.wings.beans.SyncTaskContext;
 import software.wings.beans.notification.SlackNotificationConfiguration;
 import software.wings.beans.notification.SlackNotificationSetting;
@@ -103,16 +104,16 @@ public class SlackNotificationServiceImpl implements SlackNotificationService {
             .timeout(DEFAULT_SYNC_CALL_TIMEOUT)
             .build();
         log.info("Sending message for account {} via delegate", accountId);
-        Request request = createRequestBody(message, slackWebHook);
 
         delegateProxyFactory.get(SlackMessageSender.class, syncTaskContext)
-            .sendJSON(request);
+            .sendJSON(new SlackMessageJSON(slackWebHook, message));
       }
     } else {
       for (String slackWebHook : slackWebhooks) {
-        Request request = createRequestBody(message, slackWebHook);
+        try {
+          Request request = createRequestBody(message, slackWebHook);
+          Response response = client.newCall(request).execute();
 
-        try (Response response = client.newCall(request).execute()) {
           if (!response.isSuccessful()) {
             String bodyString = (null != response.body()) ? response.body().string() : "null";
 
@@ -124,36 +125,6 @@ public class SlackNotificationServiceImpl implements SlackNotificationService {
       }
     }
   }
-
-//  public void sendJSONMessage(String message, List<String> slackWebhooks, String accountId) {
-//    for (String slackWebHook : slackWebhooks) {
-//      try {
-//        RequestBody body = RequestBody.create(APPLICATION_JSON, message);
-//        Request request = new Request.Builder()
-//            .url(slackWebHook)
-//            .post(body)
-//            .addHeader("Content-Type", "application/json")
-//            .addHeader("Accept", "*/*")
-//            .addHeader("Cache-Control", "no-cache")
-//            .addHeader("Host", "hooks.slack.com")
-//            .addHeader("accept-encoding", "gzip, deflate")
-//            .addHeader("content-length", "798")
-//            .addHeader("Connection", "keep-alive")
-//            .addHeader("cache-control", "no-cache")
-//            .build();
-//
-//        try (Response response = client.newCall(request).execute()) {
-//          if (!response.isSuccessful()) {
-//            String bodyString = (null != response.body()) ? response.body().string() : "null";
-//
-//            log.error("Response not Successful. Response body: {}", bodyString);
-//          }
-//        }
-//      } catch (Exception e) {
-//        log.error("Error sending post data", e);
-//      }
-//    }
-//  }
 
   private Request createRequestBody(String message, String slackWebHook) {
     RequestBody body = RequestBody.create(APPLICATION_JSON, message);
