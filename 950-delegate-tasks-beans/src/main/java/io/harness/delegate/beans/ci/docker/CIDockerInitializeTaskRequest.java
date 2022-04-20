@@ -11,6 +11,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Map;
+
+import io.harness.delegate.beans.ci.CICleanupTaskParams;
+import io.harness.delegate.beans.ci.CIInitializeTaskParams;
+import io.harness.delegate.task.TaskParameters;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Value;
@@ -18,7 +22,7 @@ import lombok.Value;
 @Value
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CIDockerInitializeTaskRequest {
+public class CIDockerInitializeTaskRequest implements CIInitializeTaskParams {
     @JsonProperty("id") String id;
     @JsonProperty("correlation_id") String correlationID;
     @JsonProperty("pool_id") String poolID;
@@ -88,6 +92,12 @@ public class CIDockerInitializeTaskRequest {
         @JsonProperty("id") String id;
         @JsonProperty("name") String name;
         @JsonProperty("path") String path;
+    }
+
+    @Builder.Default private static final CIInitializeTaskParams.Type type = CIInitializeTaskParams.Type.DOCKER;
+    @Override
+    public CIInitializeTaskParams.Type getType() {
+        return type;
     }
 
 }

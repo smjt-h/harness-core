@@ -69,6 +69,7 @@ import io.harness.delegate.beans.ci.ShellScriptType;
 import io.harness.delegate.beans.ci.docker.CIDockerCleanupStepRequest;
 import io.harness.delegate.beans.ci.docker.CIDockerExecuteStepRequest;
 import io.harness.delegate.beans.ci.docker.CIDockerInitializeTaskRequest;
+import io.harness.delegate.beans.ci.docker.DockerTaskExecutionResponse;
 import io.harness.delegate.beans.ci.k8s.CIContainerStatus;
 import io.harness.delegate.beans.ci.k8s.CIK8CleanupTaskParams;
 import io.harness.delegate.beans.ci.k8s.CIK8ExecuteStepTaskParams;
@@ -78,7 +79,6 @@ import io.harness.delegate.beans.ci.k8s.K8ExecCommandParams;
 import io.harness.delegate.beans.ci.k8s.K8ExecuteCommandTaskParams;
 import io.harness.delegate.beans.ci.k8s.K8sTaskExecutionResponse;
 import io.harness.delegate.beans.ci.k8s.PodStatus;
-import io.harness.delegate.beans.ci.k8s.TaskExecutionResponse;
 import io.harness.delegate.beans.ci.pod.CIContainerType;
 import io.harness.delegate.beans.ci.pod.CIK8ContainerParams;
 import io.harness.delegate.beans.ci.pod.CIK8PodParams;
@@ -807,7 +807,6 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(NexusArtifactDelegateResponse.class, 19456);
     kryo.register(ArtifactoryArtifactDelegateRequest.class, 19472);
     kryo.register(ArtifactoryArtifactDelegateResponse.class, 19473);
-    kryo.register(TaskExecutionResponse.class, 19482);
 
     kryo.register(DeploymentSlotData.class, 19457);
     kryo.register(ShellScriptTaskParametersNG.class, 19463);
@@ -1138,5 +1137,23 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(CIDockerInitializeTaskRequest.class, 543489);
     kryo.register(CIDockerExecuteStepRequest.class, 543490);
     kryo.register(CIDockerCleanupStepRequest.class, 543491);
+    kryo.register(DockerTaskExecutionResponse.class, 543492);
+    kryo.register(CIDockerInitializeTaskRequest.Config.class, 543493);
+      kryo.register(CIDockerInitializeTaskRequest.LogConfig.class, 543494);
+      kryo.register(CIDockerInitializeTaskRequest.TIConfig.class, 543495);
+      kryo.register(CIDockerInitializeTaskRequest.Network.class, 543496);
+      kryo.register(CIDockerInitializeTaskRequest.Volume.class, 543497);
+      kryo.register(CIDockerInitializeTaskRequest.HostVolume.class, 543498);
+      kryo.register(CIDockerExecuteStepRequest.Config.class, 543499);
+      kryo.register(CIDockerExecuteStepRequest.ImageAuth.class, 543500);
+      kryo.register(CIDockerExecuteStepRequest.TestReport.class, 543501);
+      kryo.register(CIDockerExecuteStepRequest.JunitReport.class, 543502);
+      kryo.register(CIDockerExecuteStepRequest.VolumeMount.class, 543503);
+      kryo.register(CIDockerExecuteStepRequest.RunConfig.class, 543504);
+      kryo.register(CIDockerExecuteStepRequest.RunTestConfig.class, 543505);
   }
+
+    private Class<?> load(String name) throws ClassNotFoundException {
+        return Class.forName(name, false, getClass().getClassLoader());
+    }
 }

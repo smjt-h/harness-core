@@ -30,15 +30,16 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.delegate.task.citasks.vm.helper.CIVMConstants.RUN_STEP_KIND;
 
 public class CIDockerExecuteStepConverter {
+    @Inject private ImageSecretBuilder imageSecretBuilder;
+    @Inject private SecretSpecBuilder secretSpecBuilder;
+
     private static final String DOCKER_REGISTRY_ENV = "PLUGIN_REGISTRY";
-    @Inject StepExecutionHelper stepExecutionHelper;
-    @Inject ImageSecretBuilder imageSecretBuilder;
-    @Inject SecretSpecBuilder secretSpecBuilder;
     public static final String IMAGE_PATH_SPLIT_REGEX = ":";
     // Convert task params into a task request to be sent to the runner
     public CIDockerExecuteStepRequest convert(CIDockerExecuteTaskParams params) {
         CIDockerExecuteStepRequest.Config.ConfigBuilder configBuilder = CIDockerExecuteStepRequest.Config.builder()
                 .id(params.getStepRuntimeId())
+                .stageRuntimeID(params.getStageRuntimeId())
                 .name(params.getStepId())
                 .logKey(params.getLogKey())
                 .workingDir(params.getWorkingDir())
@@ -55,7 +56,6 @@ public class CIDockerExecuteStepConverter {
         }
         return CIDockerExecuteStepRequest.builder()
                 .correlationID("manualTaskId") // TODO: fix
-                .poolId(params.getPoolId())
                 .config(configBuilder.build())
                 .build();
     }

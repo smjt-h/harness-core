@@ -32,9 +32,6 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CIDockerInitializeTaskParams
         extends ConnectorTaskParams implements CIInitializeTaskParams, ExecutionCapabilityDemander {
-    // Add some extra stuff which currently is added by the delegate agent
-
-    @NotNull private String poolID;
     @NotNull private String workingDir;
 
     @NotNull private String logKey;
@@ -59,7 +56,7 @@ public class CIDockerInitializeTaskParams
 
     private String stageRuntimeId;
     @Expression(ALLOW_SECRETS) private List<VmServiceDependency> serviceDependencies;
-    @Builder.Default private static final Type type = Type.VM;
+    @Builder.Default private static final Type type = Type.DOCKER;
 
     @Override
     public Type getType() {
@@ -68,6 +65,6 @@ public class CIDockerInitializeTaskParams
 
     @Override
     public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
-        return Collections.singletonList(CIVmConnectionCapability.builder().poolId(poolID).build());
+        return Collections.singletonList(CIVmConnectionCapability.builder().build());
     }
 }

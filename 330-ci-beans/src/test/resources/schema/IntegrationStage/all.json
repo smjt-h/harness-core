@@ -399,7 +399,8 @@
           "type": "string",
           "enum": [
             "K8",
-            "VM"
+            "VM",
+            "DOCKER"
           ]
         }
       },
@@ -1916,6 +1917,9 @@
             },
             {
               "$ref": "#/definitions/VmInfraYaml"
+            },
+            {
+              "$ref": "#/definitions/DockerInfraYaml"
             }
           ]
         },
@@ -5748,6 +5752,49 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "DockerBuildJobInfo": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BuildJobEnvInfo"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ciExecutionArgs": {
+              "$ref": "#/definitions/CIExecutionArgs"
+            },
+            "connectorRefs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "serviceDependencies": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DependencyElement"
+              }
+            },
+            "stageVars": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/NGVariable"
+              }
+            },
+            "volToMountPath": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "workDir": {
+              "type": "string"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "VmInfraSpec": {
       "type": "object",
       "discriminator": "type",
@@ -5785,7 +5832,33 @@
               "enum": [
                 "KubernetesDirect",
                 "UseFromStage",
-                "VM"
+                "VM",
+                "DOCKER"
+              ]
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "DockerInfraYaml": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Infrastructure"
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "KubernetesDirect",
+                "UseFromStage",
+                "VM",
+                "DOCKER"
               ]
             }
           }

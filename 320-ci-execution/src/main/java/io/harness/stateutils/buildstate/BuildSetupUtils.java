@@ -28,16 +28,17 @@ import lombok.extern.slf4j.Slf4j;
 public class BuildSetupUtils {
   @Inject private K8BuildSetupUtils k8BuildSetupUtils;
   @Inject private VmInitializeTaskUtils vmInitializeTaskUtils;
+  @Inject private DockerInitializeTaskUtils dockerInitializeTaskUtils;
 
   public CIInitializeTaskParams getBuildSetupTaskParams(InitializeStepInfo initializeStepInfo, Ambiance ambiance,
       Map<String, String> taskIds, String logPrefix, Map<String, String> stepLogKeys) {
     switch (initializeStepInfo.getBuildJobEnvInfo().getType()) {
       case K8:
         return k8BuildSetupUtils.getCIk8BuildTaskParams(initializeStepInfo, ambiance, taskIds, logPrefix, stepLogKeys);
-//        return dockerInitializeTaskUtils.getInitializeTaskParams(initializeStepInfo, ambiance, logPrefix);
       case VM:
-        return vmInitializeTaskUtils.getInitializeTaskParamsDocker(initializeStepInfo, ambiance, logPrefix);
-//        return dockerInitializeTaskUtils.getInitializeTaskParams(initializeStepInfo, ambiance, logPrefix);
+        return vmInitializeTaskUtils.getInitializeTaskParams(initializeStepInfo, ambiance, logPrefix);
+      case DOCKER:
+        return dockerInitializeTaskUtils.getInitializeTaskParams(initializeStepInfo, ambiance, logPrefix);
       default:
         unhandled(initializeStepInfo.getBuildJobEnvInfo().getType());
     }

@@ -16,15 +16,12 @@ import static io.harness.common.CIExecutionConstants.LITE_ENGINE_PORT;
 import static io.harness.common.CIExecutionConstants.TMP_PATH;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.delegate.task.citasks.vm.helper.CIVMConstants.RUN_STEP_KIND;
 import static io.harness.states.InitializeTaskStep.LE_STATUS_TASK_TYPE;
-import static io.harness.states.InitializeTaskStep.TASK_TYPE_CI_DOCKER;
 import static io.harness.steps.StepUtils.buildAbstractions;
 
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 
-import com.google.gson.Gson;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.outcomes.LiteEnginePodDetailsOutcome;
 import io.harness.beans.outcomes.VmDetailsOutcome;
@@ -40,6 +37,7 @@ import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
 import io.harness.beans.sweepingoutputs.CodeBaseConnectorRefSweepingOutput;
 import io.harness.beans.sweepingoutputs.ContainerPortDetails;
 import io.harness.beans.sweepingoutputs.ContextElement;
+import io.harness.beans.sweepingoutputs.DockerStageInfraDetails;
 import io.harness.beans.sweepingoutputs.StageDetails;
 import io.harness.beans.sweepingoutputs.StageInfraDetails;
 import io.harness.beans.sweepingoutputs.VmStageInfraDetails;
@@ -52,15 +50,11 @@ import io.harness.ci.serializer.vm.VmStepSerializer;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.ci.CIExecuteStepTaskParams;
-import io.harness.delegate.beans.ci.docker.CIDockerExecuteStepRequest;
 import io.harness.delegate.beans.ci.docker.CIDockerExecuteTaskParams;
 import io.harness.delegate.beans.ci.docker.DockerTaskExecutionResponse;
 import io.harness.delegate.beans.ci.k8s.CIK8ExecuteStepTaskParams;
-import io.harness.delegate.beans.ci.k8s.TaskExecutionResponse;
 import io.harness.delegate.beans.ci.vm.CIVmExecuteStepTaskParams;
 import io.harness.delegate.beans.ci.vm.VmTaskExecutionResponse;
-import io.harness.delegate.beans.ci.vm.steps.VmPluginStep;
-import io.harness.delegate.beans.ci.vm.steps.VmRunStep;
 import io.harness.delegate.beans.ci.vm.steps.VmStepInfo;
 import io.harness.delegate.task.HDelegateTask;
 import io.harness.delegate.task.stepstatus.StepExecutionStatus;
@@ -93,7 +87,6 @@ import io.harness.pms.sdk.core.steps.io.StepResponse.StepResponseBuilder;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.product.ci.engine.proto.ExecuteStepRequest;
 import io.harness.product.ci.engine.proto.UnitStep;
-import io.harness.serializer.JsonUtils;
 import io.harness.stateutils.buildstate.ConnectorUtils;
 import io.harness.steps.StepUtils;
 import io.harness.steps.executable.AsyncExecutableWithRbac;
@@ -104,9 +97,7 @@ import io.harness.yaml.core.timeout.Timeout;
 
 import com.google.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,9 +108,11 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(CI)
 public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<StepElementParameters> {
   public static final String CI_EXECUTE_STEP = "CI_EXECUTE_STEP";
+  public static final String CI_DOCKER_EXECUTE_STEP = "CI_DOCKER_EXECUTE_TASK";
   public static final long bufferTimeMillis =
       5 * 1000; // These additional 5 seconds are approx time spent on creating delegate ask and receiving response
 
+  @Inject private CIDockerExecuteStepConverter ciDockerExecuteStepConverter;
   @Inject private RunStepProtobufSerializer runStepProtobufSerializer;
   @Inject private PluginStepProtobufSerializer pluginStepProtobufSerializer;
   @Inject private RunTestsStepProtobufSerializer runTestsStepProtobufSerializer;
@@ -280,14 +273,12 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
             .logKey(logKey)
             .workingDir(dockerStageInfraDetails.getWorkDir())
             .build();
-    CIDockerExecuteStepConverter converter = new CIDockerExecuteStepConverter();
-    CIDockerExecuteStepRequest req = converter.convert(params);
 
     final TaskData taskData = TaskData.builder()
             .async(true)
             .parked(false)
-            .taskType(TASK_TYPE_CI_DOCKER)
-            .parameters(new Object[] {req})
+            .taskType(CI_DOCKER_EXECUTE_STEP)
+            .parameters(new Object[] {ciDockerExecuteStepConverter.convert(params)})
             .expressionFunctorToken((int) ambiance.getExpressionFunctorToken())
             .build();
 
@@ -413,7 +404,7 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
               .build();
     }
 
-    if (dockerTaskExecutionResponse.getCommandExecutionStatus() == CommandExecutionStatus.SUCCESS) {
+    if (dockerTaskExecutionResponse.getCommandExecutionStatus().equals("SUCCESS")) {
       StepResponseBuilder stepResponseBuilder = StepResponse.builder().status(Status.SUCCEEDED);
       if (isNotEmpty(dockerTaskExecutionResponse.getOutputVars())) {
         StepResponse.StepOutcome stepOutcome =
@@ -424,7 +415,7 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
         stepResponseBuilder.stepOutcome(stepOutcome);
       }
       return stepResponseBuilder.build();
-    } else if (dockerTaskExecutionResponse.getCommandExecutionStatus() == CommandExecutionStatus.SKIPPED) {
+    } else if (dockerTaskExecutionResponse.getCommandExecutionStatus().equals("SKIPPED")) {
       return StepResponse.builder().status(Status.SKIPPED).build();
     } else {
       String errMsg = "";

@@ -8,6 +8,7 @@
 package io.harness.states;
 
 import static io.harness.annotations.dev.HarnessTeam.CI;
+import static io.harness.beans.outcomes.DockerDetailsOutcome.DOCKER_DETAILS_OUTCOME;
 import static io.harness.beans.outcomes.LiteEnginePodDetailsOutcome.POD_DETAILS_OUTCOME;
 import static io.harness.beans.outcomes.VmDetailsOutcome.VM_DETAILS_OUTCOME;
 import static io.harness.beans.steps.stepinfo.InitializeStepInfo.LOG_KEYS;
@@ -16,17 +17,18 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import static java.lang.String.format;
 
-import com.google.gson.Gson;
 import io.harness.EntityType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.beans.dependencies.ServiceDependency;
+import io.harness.beans.environment.DockerBuildJobInfo;
 import io.harness.beans.environment.K8BuildJobEnvInfo;
 import io.harness.beans.environment.VmBuildJobInfo;
 import io.harness.beans.environment.pod.PodSetupInfo;
 import io.harness.beans.environment.pod.container.ContainerDefinitionInfo;
 import io.harness.beans.environment.pod.container.ContainerImageDetails;
 import io.harness.beans.outcomes.DependencyOutcome;
+import io.harness.beans.outcomes.DockerDetailsOutcome;
 import io.harness.beans.outcomes.LiteEnginePodDetailsOutcome;
 import io.harness.beans.outcomes.VmDetailsOutcome;
 import io.harness.beans.steps.stepinfo.InitializeStepInfo;
@@ -39,17 +41,14 @@ import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.ci.CIInitializeTaskParams;
 import io.harness.delegate.beans.ci.CITaskExecutionResponse;
 import io.harness.delegate.beans.ci.docker.CIDockerInitializeTaskParams;
-import io.harness.delegate.beans.ci.docker.CIDockerInitializeTaskRequest;
 import io.harness.delegate.beans.ci.docker.DockerTaskExecutionResponse;
 import io.harness.delegate.beans.ci.k8s.CIContainerStatus;
 import io.harness.delegate.beans.ci.k8s.CiK8sTaskResponse;
 import io.harness.delegate.beans.ci.k8s.K8sTaskExecutionResponse;
-import io.harness.delegate.beans.ci.k8s.TaskExecutionResponse;
 import io.harness.delegate.beans.ci.vm.VmServiceStatus;
 import io.harness.delegate.beans.ci.vm.VmTaskExecutionResponse;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.ngexception.CIStageExecutionException;
-import io.harness.helpers.docker.CIDockerExecuteStepConverter;
 import io.harness.helpers.docker.CIDockerInitializeStepConverter;
 import io.harness.k8s.model.ImageDetails;
 import io.harness.logging.CommandExecutionStatus;
@@ -74,7 +73,6 @@ import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.pms.sdk.core.steps.io.StepResponse.StepResponseBuilder;
-import io.harness.serializer.JsonUtils;
 import io.harness.serializer.KryoSerializer;
 import io.harness.stateutils.buildstate.BuildSetupUtils;
 import io.harness.stateutils.buildstate.VmInitializeTaskUtils;
@@ -94,7 +92,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.cloudfoundry.operations.applications.Docker;
 
 /**
  * This state will setup the build infra e.g. pod, VM or docker container.
@@ -106,6 +103,7 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
   public static final String TASK_TYPE_INITIALIZATION_PHASE = "INITIALIZATION_PHASE";
   public static final String TASK_TYPE_CI_INITIALIZATION_DOCKER = "CI_DOCKER_INITIALIZE_TASK";
   public static final String LE_STATUS_TASK_TYPE = "CI_LE_STATUS";
+  @Inject private CIDockerInitializeStepConverter dockerInitializeStepConverter;
   @Inject private BuildSetupUtils buildSetupUtils;
   @Inject private VmInitializeTaskUtils vmInitializeTaskUtils;
   @Inject private ExecutionSweepingOutputService executionSweepingOutputResolver;
@@ -159,12 +157,11 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
     // by the runner.
     if (buildSetupTaskParams.getType() == CIInitializeTaskParams.Type.DOCKER) {
       CIDockerInitializeTaskParams dockerParams = (CIDockerInitializeTaskParams) buildSetupTaskParams;
-      CIDockerInitializeStepConverter converter = new CIDockerInitializeStepConverter();
       taskData = TaskData.builder()
               .async(true)
               .timeout(stepParameters.getTimeout())
               .taskType(TASK_TYPE_CI_INITIALIZATION_DOCKER)
-              .parameters(new Object[] {converter.convert(dockerParams)})
+              .parameters(new Object[] {dockerInitializeStepConverter.convert(dockerParams)})
               .build();
     } else {
       taskData = TaskData.builder()
@@ -241,8 +238,8 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
     DockerTaskExecutionResponse dockerTaskExecutionResponse = (DockerTaskExecutionResponse) ciTaskExecutionResponse;
 
     // TODO: Handle service dependencies and dependency outcomes
-
-    if (dockerTaskExecutionResponse.getCommandExecutionStatus() == CommandExecutionStatus.STATUS) {
+    // TODO: Use command execution status
+    if (dockerTaskExecutionResponse.getCommandExecutionStatus().equals("SUCCESS")) {
       return StepResponse.builder()
               .status(Status.SUCCEEDED)
               .stepOutcome(
@@ -449,7 +446,8 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
           accountIdentifier, projectIdentifier, orgIdentifier));
     }
 
-    if (infrastructure.getType() == Infrastructure.Type.VM) {
+    if (infrastructure.getType() == Infrastructure.Type.VM
+    ) {
       ArrayList<String> connectorRefs = ((VmBuildJobInfo) initializeStepInfo.getBuildJobEnvInfo()).getConnectorRefs();
       if (!isEmpty(connectorRefs)) {
         entityDetails.addAll(
@@ -457,6 +455,18 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
                 .map(connectorIdentifier
                     -> createEntityDetails(connectorIdentifier, accountIdentifier, projectIdentifier, orgIdentifier))
                 .collect(Collectors.toList()));
+      }
+      return entityDetails;
+    }
+
+    if (infrastructure.getType() == Infrastructure.Type.DOCKER) {
+      ArrayList<String> connectorRefs = ((DockerBuildJobInfo) initializeStepInfo.getBuildJobEnvInfo()).getConnectorRefs();
+      if (!isEmpty(connectorRefs)) {
+        entityDetails.addAll(
+                connectorRefs.stream()
+                        .map(connectorIdentifier
+                                -> createEntityDetails(connectorIdentifier, accountIdentifier, projectIdentifier, orgIdentifier))
+                        .collect(Collectors.toList()));
       }
       return entityDetails;
     }

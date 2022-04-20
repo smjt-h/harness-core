@@ -1683,7 +1683,5 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(RancherStateExecutionData.class, 50009);
     kryo.register(UserGroupEntityReference.class, 50010);
     kryo.register(K8sRollingDeployRollbackResponse.class, 50011);
-    kryo.register(TaskExecutionResponse.class, 50012);
-    kryo.register(DockerTaskExecutionResponse.class, 50013);
   }
 }

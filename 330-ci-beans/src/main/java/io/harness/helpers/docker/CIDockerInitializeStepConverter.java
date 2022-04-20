@@ -69,7 +69,7 @@ public class CIDockerInitializeStepConverter {
         CIDockerInitializeTaskRequest.Config config = CIDockerInitializeTaskRequest.Config.builder()
                 .envs(env)
                 .secrets(secrets)
-                .network(CIDockerInitializeTaskRequest.Network.builder().id(NETWORK_ID).build())
+                .network(CIDockerInitializeTaskRequest.Network.builder().id(NETWORK_ID + "-" + params.getStageRuntimeId()).build())
                 .logConfig(CIDockerInitializeTaskRequest.LogConfig.builder()
                         .url(params.getLogStreamUrl())
                         .token(params.getLogSvcToken())
@@ -81,7 +81,6 @@ public class CIDockerInitializeStepConverter {
                 .build();
         return CIDockerInitializeTaskRequest.builder()
                 .id(params.getStageRuntimeId())
-                .poolID(params.getPoolID())
                 .config(config)
                 .logKey(params.getLogKey())
                 .build();

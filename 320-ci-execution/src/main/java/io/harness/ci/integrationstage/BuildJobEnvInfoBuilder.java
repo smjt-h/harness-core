@@ -21,6 +21,7 @@ import io.harness.exception.ngexception.CIStageExecutionException;
 import io.harness.plancreator.execution.ExecutionWrapperConfig;
 import io.harness.plancreator.stages.stage.StageElementConfig;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.stateutils.buildstate.DockerInitializeTaskUtils;
 import io.harness.yaml.core.timeout.Timeout;
 
 import com.google.inject.Inject;
@@ -34,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class BuildJobEnvInfoBuilder {
   @Inject private InitializeStepInfoBuilder initializeStepInfoBuilder;
   @Inject private VmInitializeStepUtils vmInitializeStepUtils;
+  @Inject private DockerInitializeStepUtils dockerInitializeStepUtils;
 
   public BuildJobEnvInfo getCIBuildJobEnvInfo(StageElementConfig stageElementConfig, Infrastructure infrastructure,
       CIExecutionArgs ciExecutionArgs, List<ExecutionWrapperConfig> steps, String accountId) {
@@ -47,6 +49,8 @@ public class BuildJobEnvInfoBuilder {
           stageElementConfig, ciExecutionArgs, steps, accountId);
     } else if (infrastructure.getType() == Type.VM) {
       return vmInitializeStepUtils.getInitializeStepInfoBuilder(stageElementConfig, ciExecutionArgs, steps, accountId);
+    } else if (infrastructure.getType() == Type.DOCKER) {
+      return dockerInitializeStepUtils.getInitializeStepInfoBuilder(stageElementConfig, ciExecutionArgs, steps, accountId);
     } else {
       throw new IllegalArgumentException("Input infrastructure type is not of type kubernetes or VM");
     }

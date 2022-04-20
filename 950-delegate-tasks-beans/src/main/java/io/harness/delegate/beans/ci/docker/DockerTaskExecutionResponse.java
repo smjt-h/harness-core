@@ -24,7 +24,7 @@ public class DockerTaskExecutionResponse implements CITaskExecutionResponse {
     private String errorMessage;
     private String ipAddress;
     private Map<String, String> outputVars;
-    private CommandExecutionStatus commandExecutionStatus;
+    private String commandExecutionStatus;
     @Builder.Default private static final CITaskExecutionResponse.Type type = Type.DOCKER;
 
     @Override

@@ -11,6 +11,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Map;
+
+import io.harness.delegate.beans.ci.CIExecuteStepTaskParams;
+import io.harness.delegate.beans.ci.CIInitializeTaskParams;
+import io.harness.delegate.task.TaskParameters;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Singular;
@@ -19,7 +23,7 @@ import lombok.Value;
 @Value
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CIDockerExecuteStepRequest {
+public class CIDockerExecuteStepRequest implements CIExecuteStepTaskParams {
     @JsonProperty("correlation_id") String correlationID;
     @JsonProperty("ip_address") String ipAddress;
     @JsonProperty("pool_id") String poolId;
@@ -30,6 +34,7 @@ public class CIDockerExecuteStepRequest {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Config {
         @JsonProperty("id") String id;
+        @JsonProperty("stage_runtime_id") String stageRuntimeID;
         @JsonProperty("detach") boolean detach;
         @JsonProperty("environment") Map<String, String> envs;
         @JsonProperty("name") String name;
@@ -104,5 +109,11 @@ public class CIDockerExecuteStepRequest {
         @JsonProperty("packages") String packages;
         @JsonProperty("run_only_selected_tests") boolean runOnlySelectedTests;
         @JsonProperty("test_annotations") String testAnnotations;
+    }
+
+    @Builder.Default private static final CIExecuteStepTaskParams.Type type = CIExecuteStepTaskParams.Type.DOCKER;
+    @Override
+    public CIExecuteStepTaskParams.Type getType() {
+        return type;
     }
 }
