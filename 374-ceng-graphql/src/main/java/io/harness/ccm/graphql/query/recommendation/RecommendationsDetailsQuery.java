@@ -102,7 +102,7 @@ public class RecommendationsDetailsQuery {
       case ECS_SERVICE:
         RecommendationDetailsDTO rec = ecsRecommendationService.getECSRecommendationById(accountIdentifier, id,
             firstNonNull(startTime, OffsetDateTime.now().minusDays(7)), firstNonNull(endTime, OffsetDateTime.now()));
-        log.info("rec0: {}", rec);
+        log.info("recommendation 0: {}", rec);
         return rec;
       default:
         throw new InvalidRequestException(String.format("Recommendation not yet implemented for %s", resourceType));
