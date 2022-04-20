@@ -23,6 +23,7 @@ import com.google.inject.Singleton;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.commons.lang.enums.EnumUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -36,18 +37,16 @@ public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
   @Inject private SCMGitSyncHelper scmGitSyncHelper;
 
   @Override
-  public Optional<GitAware> findOne(String accountIdentifier, String orgIdentifier, String projectIdentifier,
-      StoreType storeType, Class entityClass, Criteria criteria) {
-    if (storeType == null) {
-      Optional<GitAware> savedEntity =
-          gitAwarePersistence.findOne(criteria, projectIdentifier, orgIdentifier, accountIdentifier, entityClass);
-      if (savedEntity.isPresent()) {
-        return savedEntity;
-      }
+  public Optional<GitAware> findOne(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, Class entityClass, Criteria criteria) {
+    Optional<GitAware> savedEntity =
+        gitAwarePersistence.findOne(criteria, projectIdentifier, orgIdentifier, accountIdentifier, entityClass);
+    if (savedEntity.isPresent()) {
+      return savedEntity;
     }
 
-    Criteria gitAwareCriteria =
-        Criteria.where(getGitSdkEntityHandlerInterface(entityClass).getStoreTypeKey()).is(storeType);
+    Criteria gitAwareCriteria = Criteria.where(getGitSdkEntityHandlerInterface(entityClass).getStoreTypeKey())
+                                    .in(EnumUtils.getEnumList(StoreType.class));
     Query query = new Query().addCriteria(new Criteria().andOperator(criteria, gitAwareCriteria));
     final GitAware savedObject = (GitAware) mongoTemplate.findOne(query, entityClass);
     if (savedObject == null) {
