@@ -59,8 +59,10 @@ public class RecommendationsDetailsQuery {
       @GraphQLEnvironment final ResolutionEnvironment env) {
     final String accountIdentifier = graphQLUtils.getAccountIdentifier(env);
 
-    return recommendationDetailsInternal(
+    RecommendationDetailsDTO rec = recommendationDetailsInternal(
         accountIdentifier, nodeDTO.getResourceType(), nodeDTO.getId(), startTime, endTime);
+    log.info("rec1: {}", rec);
+    return rec;
   }
 
   @GraphQLQuery(description = "recommendation details/drillDown")
@@ -71,7 +73,9 @@ public class RecommendationsDetailsQuery {
       @GraphQLEnvironment final ResolutionEnvironment env) {
     final String accountIdentifier = graphQLUtils.getAccountIdentifier(env);
 
-    return recommendationDetailsInternal(accountIdentifier, resourceType, id, startTime, endTime);
+    RecommendationDetailsDTO rec = recommendationDetailsInternal(accountIdentifier, resourceType, id, startTime, endTime);
+    log.info("rec2: {}", rec);
+    return rec;
   }
 
   @GraphQLQuery(name = "nodeRecommendationRequest")
@@ -96,8 +100,10 @@ public class RecommendationsDetailsQuery {
       case NODE_POOL:
         return nodeRecommendationService.getRecommendation(accountIdentifier, id);
       case ECS_SERVICE:
-        return ecsRecommendationService.getECSRecommendationById(accountIdentifier, id,
+        RecommendationDetailsDTO rec = ecsRecommendationService.getECSRecommendationById(accountIdentifier, id,
             firstNonNull(startTime, OffsetDateTime.now().minusDays(7)), firstNonNull(endTime, OffsetDateTime.now()));
+        log.info("rec0: {}", rec);
+        return rec;
       default:
         throw new InvalidRequestException(String.format("Recommendation not yet implemented for %s", resourceType));
     }
