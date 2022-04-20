@@ -137,7 +137,6 @@ public class PipelineEntity
   String path;
   String connectorRef;
 
-  @Override
   public String getData() {
     if (storeType == null || storeType == StoreType.INLINE) {
       return yaml;
