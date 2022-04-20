@@ -11,10 +11,13 @@ import static io.harness.exception.WingsException.USER_SRE;
 import static io.harness.outbox.TransactionOutboxModule.OUTBOX_TRANSACTION_TEMPLATE;
 import static io.harness.springdata.TransactionUtils.DEFAULT_TRANSACTION_RETRY_POLICY;
 
+import io.harness.beans.Scope;
+import io.harness.beans.ScopeLevel;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.ng.core.events.VariableCreateEvent;
 import io.harness.ng.core.variable.dto.VariableDTO;
 import io.harness.ng.core.variable.entity.Variable;
+import io.harness.ng.core.variable.entity.Variable.VariableKeys;
 import io.harness.ng.core.variable.mappers.VariableMapper;
 import io.harness.ng.core.variable.services.VariableService;
 import io.harness.outbox.api.OutboxService;
@@ -22,10 +25,15 @@ import io.harness.repositories.variable.spring.VariableRepository;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import javax.ws.rs.NotFoundException;
 import net.jodah.failsafe.Failsafe;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.transaction.support.TransactionTemplate;
 
 public class VariableServiceImpl implements VariableService {
@@ -69,6 +77,47 @@ public class VariableServiceImpl implements VariableService {
   }
 
   @Override
+  public VariableDTO getVariableInNearestScope(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier) {
+    ScopeLevel variableScopeLevel = ScopeLevel.of(Scope.of(accountIdentifier, orgIdentifier, projectIdentifier));
+    Optional<Variable> variable = Optional.ofNullable(null);
+    List<ScopeLevel> reversedScopeLevels = Arrays.asList(ScopeLevel.values().clone());
+    Collections.reverse(reversedScopeLevels);
+    for (ScopeLevel level : reversedScopeLevels) {
+      if (level.ordinal() > variableScopeLevel.ordinal()) {
+        continue;
+      }
+      variable = getVariableByScope(accountIdentifier, orgIdentifier, projectIdentifier, identifier, level);
+    }
+    if (variable.isPresent()) {
+      return variableMapper.writeDTO(variable.get());
+    } else {
+      String parentScopeMessage = " or any parent scope";
+      if (variableScopeLevel.equals(ScopeLevel.ACCOUNT)) {
+        parentScopeMessage = "";
+      }
+      throw new NotFoundException(
+          String.format("Variable [%s] not found in %s scope%s", identifier, variableScopeLevel, parentScopeMessage));
+    }
+  }
+
+  private Optional<Variable> getVariableByScope(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier, ScopeLevel scope) {
+    switch (scope) {
+      case ACCOUNT:
+        return variableRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
+            accountIdentifier, null, null, identifier);
+      case ORGANIZATION:
+        return variableRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
+            accountIdentifier, orgIdentifier, null, identifier);
+      default:
+      case PROJECT:
+        return variableRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
+            accountIdentifier, orgIdentifier, projectIdentifier, identifier);
+    }
+  }
+
+  @Override
   public List<Variable> get(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, List<String> variableIdentifier) {
     return null;
@@ -76,6 +125,18 @@ public class VariableServiceImpl implements VariableService {
 
   @Override
   public List<Variable> get(String accountIdentifier, String orgIdentifier, String projectIdentifier) {
-    return null;
+    Criteria criteria = Criteria.where(VariableKeys.accountIdentifier)
+                            .is(accountIdentifier)
+                            .and(VariableKeys.orgIdentifier)
+                            .is(orgIdentifier)
+                            .and(VariableKeys.projectIdentifier)
+                            .is(projectIdentifier);
+    return variableRepository.findAll(criteria);
+  }
+
+  @Override
+  public List<VariableDTO> listVariableDTOs(String accountIdentifier, String orgIdentifier, String projectIdentifier) {
+    List<Variable> variableList = get(accountIdentifier, orgIdentifier, projectIdentifier);
+    return variableList.stream().map(variableMapper::writeDTO).collect(Collectors.toList());
   }
 }

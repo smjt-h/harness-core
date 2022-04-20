@@ -16,7 +16,10 @@ import java.util.Optional;
 public interface VariableService {
   Variable create(String accountIdentifier, VariableDTO variableDTO);
   Optional<Variable> get(String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier);
+  VariableDTO getVariableInNearestScope(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier);
   List<Variable> get(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, List<String> variableIdentifier);
   List<Variable> get(String accountIdentifier, String orgIdentifier, String projectIdentifier);
+  List<VariableDTO> listVariableDTOs(String accountIdentifier, String orgIdentifier, String projectIdentifier);
 }
