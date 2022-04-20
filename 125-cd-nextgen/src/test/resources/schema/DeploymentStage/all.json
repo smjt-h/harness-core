@@ -4066,10 +4066,10 @@
             "DockerRegistry",
             "Gcr",
             "Ecr",
-            "Acr",
             "Nexus3Registry",
             "ArtifactoryRegistry",
-            "CustomArtifact"
+            "CustomArtifact",
+            "Acr"
           ]
         }
       },
@@ -5213,10 +5213,10 @@
             "DockerRegistry",
             "Gcr",
             "Ecr",
-            "Acr",
             "Nexus3Registry",
             "ArtifactoryRegistry",
-            "CustomArtifact"
+            "CustomArtifact",
+            "Acr"
           ]
         }
       },
