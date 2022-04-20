@@ -33,7 +33,6 @@ cp ../../platform-service/cert.pem .
 cp ../../platform-service/build/container/Dockerfile-platform-service-jenkins-k8-openjdk ./Dockerfile
 cp ../../platform-service/build/container/Dockerfile-platform-service-jenkins-k8-gcr-openjdk ./Dockerfile-gcr
 cp -r ../../platform-service/build/container/scripts/ .
-cp ../../protocol.info .
 
 java -jar platform-service-capsule.jar scan-classpath-metadata
 
