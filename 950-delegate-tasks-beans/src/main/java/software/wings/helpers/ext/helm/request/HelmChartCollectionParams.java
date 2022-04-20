@@ -9,7 +9,6 @@ package software.wings.helpers.ext.helm.request;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
-import static software.wings.delegatetasks.helm.ArtifactoryHelmTaskHelper.shouldFetchHelmChartsFromArtifactory;
 
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
@@ -23,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.Builder;
 import lombok.Data;
+import software.wings.beans.settings.helm.HttpHelmRepoConfig;
 
 @Data
 @Builder
@@ -48,5 +48,11 @@ public class HelmChartCollectionParams implements ManifestCollectionParams {
       executionCapabilities.removeIf(capability -> CapabilityType.HELM_INSTALL.equals(capability.getCapabilityType()));
     }
     return executionCapabilities;
+  }
+
+  public static boolean shouldFetchHelmChartsFromArtifactory(HelmChartConfigParams helmChartConfigParams) {
+    return helmChartConfigParams != null && helmChartConfigParams.isBypassHelmFetch()
+            && helmChartConfigParams.getHelmRepoConfig() instanceof HttpHelmRepoConfig
+            && ((HttpHelmRepoConfig) helmChartConfigParams.getHelmRepoConfig()).getChartRepoUrl().contains("/artifactory/");
   }
 }
