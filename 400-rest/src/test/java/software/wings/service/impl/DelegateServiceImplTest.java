@@ -20,7 +20,6 @@ import static io.harness.rule.OwnerRule.GEORGE;
 import static io.harness.rule.OwnerRule.INDER;
 import static io.harness.rule.OwnerRule.JENNY;
 import static io.harness.rule.OwnerRule.MARKO;
-import static io.harness.rule.OwnerRule.MARKOM;
 import static io.harness.rule.OwnerRule.NICOLAS;
 import static io.harness.rule.OwnerRule.ROHITKARELIA;
 import static io.harness.rule.OwnerRule.UTSAV;
@@ -227,7 +226,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void whenDelegateImageProvidedByRingAndConfigThenUseRing() {
     final String delegateRingImage = "harness/delegate:ringImage";
@@ -242,7 +241,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void whenDelegateImageProvidedByRingThenUseRing() {
     final String delegateRingImage = "harness/delegate:ringImage";
@@ -254,7 +253,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void whenNoDelegateImageProvidedThanDefault() {
     final PortalConfig portal = mock(PortalConfig.class);
@@ -266,7 +265,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void whenImmutableButNotK8SDelegateThanDefault() {
     final String delegateRingImage = "harness/delegate:ringImage";
@@ -278,7 +277,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void whenNoUpgraderImageProvidedThanDefault() {
     final PortalConfig portal = mock(PortalConfig.class);
@@ -290,7 +289,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void whenDelegateImageProvidedThanReturnIt() {
     final String delegateImage = "harness/delegate:myimage";
@@ -303,7 +302,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void whenNoUpgraderImageProvidedThanReturnIt() {
     final String upgraderImage = "harness/upgrader:myimage";
