@@ -77,6 +77,7 @@ public class NGFile implements PersistentEntity, UuidAware, NGAccountAccess, NGO
   String checksum;
   String mimeType;
   Long size;
+  Boolean draft;
 
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
@@ -86,7 +87,7 @@ public class NGFile implements PersistentEntity, UuidAware, NGAccountAccess, NGO
                  .field(NGFiles.orgIdentifier)
                  .field(NGFiles.projectIdentifier)
                  .field(NGFiles.parentIdentifier)
-                 .field(NGFiles.identifier)
+                 .field(NGFiles.name)
                  .unique(true)
                  .collation(
                      Collation.builder().locale(CollationLocale.ENGLISH).strength(CollationStrength.PRIMARY).build())
@@ -96,7 +97,7 @@ public class NGFile implements PersistentEntity, UuidAware, NGAccountAccess, NGO
                 .field(NGFiles.accountIdentifier)
                 .field(NGFiles.orgIdentifier)
                 .field(NGFiles.projectIdentifier)
-                .field(NGFiles.parentIdentifier)
+                .field(NGFiles.identifier)
                 .build())
         .build();
   }
@@ -109,5 +110,10 @@ public class NGFile implements PersistentEntity, UuidAware, NGAccountAccess, NGO
   @JsonIgnore
   public boolean isFile() {
     return type == NGFileType.FILE;
+  }
+
+  @JsonIgnore
+  public boolean isDraft() {
+    return draft != null && draft;
   }
 }

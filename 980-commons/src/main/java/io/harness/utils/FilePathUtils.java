@@ -7,7 +7,7 @@
 
 package io.harness.utils;
 
-import static org.apache.commons.lang.StringUtils.isNotEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;

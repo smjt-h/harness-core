@@ -9,7 +9,7 @@ package io.harness.utils;
 
 import static io.harness.rule.OwnerRule.MOHIT_GARG;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessTeam;

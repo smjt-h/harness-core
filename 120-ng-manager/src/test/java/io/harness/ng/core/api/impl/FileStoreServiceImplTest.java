@@ -112,8 +112,9 @@ public class FileStoreServiceImplTest extends CategoryTest {
         .thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> fileStoreService.update(createFileDto(), null, "identifier1"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("File with identifier: identifier1 not found.");
+        .isInstanceOf(InvalidArgumentsException.class)
+        .hasMessage(
+            "File or folder with identifier [identifier1], account [null], org [null] and project [null] could not be retrieved from file store.");
   }
 
   @Test
@@ -137,7 +138,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
     assertThatThrownBy(
         () -> fileStoreService.downloadFile(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, FILE_IDENTIFIER))
         .isInstanceOf(InvalidArgumentsException.class)
-        .hasMessageContaining(format("Unable to find file, fileIdentifier: %s", FILE_IDENTIFIER));
+        .hasMessageContaining(format("File or folder with identifier [%s]", FILE_IDENTIFIER));
   }
 
   @Test
@@ -182,7 +183,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
     final FileDTO fileDto = aFileDto();
 
     // When
-    fileStoreService.create(fileDto, getStreamWithDummyContent());
+    fileStoreService.create(fileDto, getStreamWithDummyContent(), false);
 
     // Then
     NGFile expected = NGFile.builder()
@@ -192,6 +193,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
                           .name(fileDto.getName())
                           .type(fileDto.getType())
                           .checksumType(ChecksumType.MD5)
+                          .draft(false)
                           .tags(Collections.emptyList())
                           .size(0L)
                           .build();
@@ -207,7 +209,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
     final FileDTO fileDto = aFileDto();
 
     // When
-    fileStoreService.create(fileDto, getStreamWithDummyContent());
+    fileStoreService.create(fileDto, getStreamWithDummyContent(), false);
 
     // Then
     NGBaseFile baseFile = new NGBaseFile();
@@ -225,10 +227,48 @@ public class FileStoreServiceImplTest extends CategoryTest {
     final FileDTO folderDto = aFolderDto();
 
     // When
-    fileStoreService.create(folderDto, null);
+    fileStoreService.create(folderDto, null, false);
 
     // Then
     verifyZeroInteractions(fileService);
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void shouldNotInvokeSaveFileOnFileServiceForDraftFile() {
+    // Given
+    final FileDTO fileDto = aFileDto();
+
+    // When
+    fileStoreService.create(fileDto, getStreamWithDummyContent(), true);
+
+    // Then
+    verifyZeroInteractions(fileService);
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void shouldSaveDraftNgFile() {
+    // Given
+    final FileDTO fileDto = aFileDto();
+
+    // When
+    fileStoreService.create(fileDto, getStreamWithDummyContent(), true);
+
+    // Then
+    NGFile expected = NGFile.builder()
+                          .identifier(fileDto.getIdentifier())
+                          .accountIdentifier(fileDto.getAccountIdentifier())
+                          .description(fileDto.getDescription())
+                          .name(fileDto.getName())
+                          .type(fileDto.getType())
+                          .draft(true)
+                          .tags(Collections.emptyList())
+                          .build();
+
+    verify(fileStoreRepository).save(expected);
   }
 
   @Test
@@ -239,7 +279,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
 
     FileDTO folderDto = aFolderDto();
 
-    assertThatThrownBy(() -> fileStoreService.create(folderDto, null))
+    assertThatThrownBy(() -> fileStoreService.create(folderDto, null, false))
         .isInstanceOf(DuplicateEntityException.class)
         .hasMessageContaining(
             "Try creating another folder, folder with identifier [%s] already exists in the parent folder",
@@ -254,7 +294,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
 
     FileDTO fileDTO = aFileDto();
 
-    assertThatThrownBy(() -> fileStoreService.create(fileDTO, getStreamWithDummyContent()))
+    assertThatThrownBy(() -> fileStoreService.create(fileDTO, getStreamWithDummyContent(), false))
         .isInstanceOf(DuplicateEntityException.class)
         .hasMessageContaining(
             "Try creating another file, file with identifier [%s] already exists in the parent folder",
@@ -269,7 +309,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
 
     FileDTO fileDTO = aFileDto();
 
-    assertThatThrownBy(() -> fileStoreService.create(fileDTO, getStreamWithDummyContent()))
+    assertThatThrownBy(() -> fileStoreService.create(fileDTO, getStreamWithDummyContent(), false))
         .isInstanceOf(DuplicateEntityException.class)
         .hasMessageContaining(
             "Try creating another file, file with identifier [%s] already exists in the parent folder",
@@ -282,7 +322,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
   public void shouldHandleEmptyFileExceptionForFile() {
     FileDTO fileDTO = aFileDto();
 
-    assertThatThrownBy(() -> fileStoreService.create(fileDTO, null))
+    assertThatThrownBy(() -> fileStoreService.create(fileDTO, null, false))
         .isInstanceOf(InvalidArgumentsException.class)
         .hasMessageContaining("File content is empty. Identifier: " + fileDTO.getIdentifier(), fileDTO.getIdentifier());
   }
@@ -424,12 +464,11 @@ public class FileStoreServiceImplTest extends CategoryTest {
     when(fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndParentIdentifier(
              ACCOUNT_IDENTIFIER, null, null, folder1))
         .thenReturn(Arrays.asList(file));
-    boolean result =
-        fileStoreService.delete(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, "account." + folder1);
-    assertThat(result).isTrue();
-    verify(fileStoreRepository).delete(file);
-    verify(fileStoreRepository).delete(parentFolder);
-    verify(fileService).deleteFile(fileUuid, FileBucket.FILE_STORE);
+    assertThatThrownBy(
+        () -> fileStoreService.delete(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, "account." + folder1))
+        .isInstanceOf(InvalidArgumentsException.class)
+        .hasMessage(
+            "File or folder with identifier [account.folder1], account [accountIdentifier], org [orgIdentifier] and project [projectIdentifier] could not be retrieved from file store.");
   }
 
   @Test
