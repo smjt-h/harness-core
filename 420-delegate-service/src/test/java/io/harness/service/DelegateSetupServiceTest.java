@@ -345,7 +345,7 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
     DelegateGroupListing delegateGroupListing = delegateSetupService.listDelegateGroupDetailsV2(
         TEST_ACCOUNT_ID, null, null, "", "commonTag", DelegateFilterPropertiesDTO.builder().build());
 
-    assertThat(delegateGroupListing.getDelegateGroupDetails()).hasSize(4);
+    assertThat(delegateGroupListing.getDelegateGroupDetails()).hasSize(1);
     assertThat(delegateGroupListing.getDelegateGroupDetails())
         .extracting(DelegateGroupDetails::getGroupName)
         .containsOnly("grp2");
