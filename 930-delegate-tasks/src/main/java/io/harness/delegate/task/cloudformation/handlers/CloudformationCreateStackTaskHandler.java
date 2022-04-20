@@ -29,8 +29,6 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
 
-import software.wings.helpers.ext.cloudformation.response.ExistingStackInfo;
-
 import com.amazonaws.services.cloudformation.model.CreateStackRequest;
 import com.amazonaws.services.cloudformation.model.CreateStackResult;
 import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
@@ -124,7 +122,7 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
       }
     } catch (Exception ex) {
       String errorMessage = format("Exception: %s while creating stack: %s", ExceptionUtils.getMessage(ex), stackName);
-      logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+      logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
       builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
     }
     return builder.build();
@@ -168,7 +166,7 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
     } catch (Exception ex) {
       String errorMessage =
           format("# Exception: %s while Updating stack: %s", ExceptionUtils.getMessage(ex), stack.getStackName());
-      executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+      executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
       builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
     }
     CloudformationTaskNGResponse cloudformationTaskNGResponse = builder.build();
@@ -210,7 +208,7 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
           awsCloudformationClient.getAllStacks(createRequest.getRegion(), describeStacksRequest, awsInternalConfig);
       if (stacks.size() < 1) {
         String errorMessage = "# Error: received empty stack list from AWS";
-        logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+        logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
         builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
         return;
       }
@@ -222,7 +220,7 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
       switch (stack.getStackStatus()) {
         case "CREATE_COMPLETE": {
           logCallback.saveExecutionLog("# Stack creation Successful");
-          populateCloudformationTaskNGResponse(builder, stack, ExistingStackInfo.builder().stackExisted(false).build());
+          populateCloudformationTaskNGResponse(builder, stack, false);
           builder.commandExecutionStatus(SUCCESS);
           cloudformationBaseHelper.printStackResources(
               awsInternalConfig, createRequest.getRegion(), stack, logCallback);
@@ -230,7 +228,7 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
         }
         case "CREATE_FAILED": {
           errorMsg = format("# Error: %s while creating stack: %s", stack.getStackStatusReason(), stack.getStackName());
-          logCallback.saveExecutionLog(errorMsg, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+          logCallback.saveExecutionLog(errorMsg, LogLevel.ERROR);
           builder.errorMessage(errorMsg).commandExecutionStatus(CommandExecutionStatus.FAILURE);
           builder.cloudFormationCommandNGResponse(
               CloudFormationCreateStackNGResponse.builder().stackStatus(stack.getStackStatus()).build());
@@ -244,13 +242,13 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
         case "ROLLBACK_IN_PROGRESS": {
           errorMsg = format("Creation of stack failed, Rollback in progress. Stack Name: %s : Reason: %s",
               stack.getStackName(), stack.getStackStatusReason());
-          logCallback.saveExecutionLog(errorMsg, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+          logCallback.saveExecutionLog(errorMsg, LogLevel.ERROR);
           break;
         }
         case "ROLLBACK_FAILED": {
           errorMsg = format("# Creation of stack: %s failed, Rollback failed as well. Reason: %s", stack.getStackName(),
               stack.getStackStatusReason());
-          logCallback.saveExecutionLog(errorMsg, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+          logCallback.saveExecutionLog(errorMsg, LogLevel.ERROR);
           builder.errorMessage(errorMsg).commandExecutionStatus(CommandExecutionStatus.FAILURE);
           builder.cloudFormationCommandNGResponse(
               CloudFormationCreateStackNGResponse.builder().stackStatus(stack.getStackStatus()).build());
@@ -271,7 +269,7 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
         default: {
           String errorMessage = format("# Unexpected status: %s while Creating stack, Status reason: %s",
               stack.getStackStatus(), stack.getStackStatusReason());
-          logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+          logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
           builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
           builder.cloudFormationCommandNGResponse(
               CloudFormationCreateStackNGResponse.builder().stackStatus(stack.getStackStatus()).build());
@@ -283,7 +281,7 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
       sleep(ofSeconds(10));
     }
     String errorMessage = format("# Timing out while Creating stack: %s", createStackRequest.getStackName());
-    logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+    logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
     builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
     cloudformationBaseHelper.printStackResources(awsInternalConfig, createRequest.getRegion(), stack, logCallback);
   }
@@ -291,8 +289,6 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
   private void updateStackAndWaitWithEvents(CloudformationTaskNGParameters request, AwsInternalConfig awsInternalConfig,
       UpdateStackRequest updateStackRequest, CloudformationTaskNGResponseBuilder builder, Stack originalStack,
       LogCallback logCallback) {
-    ExistingStackInfo existingStackInfo =
-        cloudformationBaseHelper.getExistingStackInfo(awsInternalConfig, request.getRegion(), originalStack);
     logCallback.saveExecutionLog(format("# Calling Aws API to Update stack: %s", originalStack.getStackName()));
     long stackEventsTs = System.currentTimeMillis();
 
@@ -318,7 +314,7 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
           awsCloudformationClient.getAllStacks(request.getRegion(), describeStacksRequest, awsInternalConfig);
       if (stacks.isEmpty()) {
         String errorMessage = "# Error: received empty stack list from AWS";
-        logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+        logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
         builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
         return;
       }
@@ -330,7 +326,7 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
           case "UPDATE_COMPLETE":
           case "UPDATE_ROLLBACK_COMPLETE": {
             logCallback.saveExecutionLog(format("# Stack is already in %s state.", stack.getStackStatus()));
-            populateCloudformationTaskNGResponse(builder, stack, existingStackInfo);
+            populateCloudformationTaskNGResponse(builder, stack, true);
             builder.commandExecutionStatus(SUCCESS);
             cloudformationBaseHelper.printStackResources(awsInternalConfig, request.getRegion(), stack, logCallback);
             return;
@@ -339,9 +335,9 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
             String errorMessage =
                 format("# Existing stack with name %s is already in status: %s, therefore exiting with failure",
                     stack.getStackName(), stack.getStackStatus());
-            logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+            logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
             builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
-            populateCloudformationTaskNGResponse(builder, stack, existingStackInfo);
+            populateCloudformationTaskNGResponse(builder, stack, true);
             cloudformationBaseHelper.printStackResources(awsInternalConfig, request.getRegion(), stack, logCallback);
             return;
           }
@@ -355,7 +351,7 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
         case "CREATE_COMPLETE":
         case "UPDATE_COMPLETE": {
           logCallback.saveExecutionLog("# Update Successful for stack");
-          populateCloudformationTaskNGResponse(builder, stack, existingStackInfo);
+          populateCloudformationTaskNGResponse(builder, stack, true);
           builder.commandExecutionStatus(SUCCESS);
           cloudformationBaseHelper.printStackResources(awsInternalConfig, request.getRegion(), stack, logCallback);
           return;
@@ -367,9 +363,9 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
         case "UPDATE_ROLLBACK_FAILED": {
           String errorMessage = format("# Error: %s when updating stack: %s, Rolling back stack update failed",
               stack.getStackStatusReason(), stack.getStackName());
-          logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+          logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
           builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
-          populateCloudformationTaskNGResponse(builder, stack, existingStackInfo);
+          populateCloudformationTaskNGResponse(builder, stack, true);
           cloudformationBaseHelper.printStackResources(awsInternalConfig, request.getRegion(), stack, logCallback);
           return;
         }
@@ -390,16 +386,16 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
           String errorMsg = format("# Rollback of stack update: %s completed", stack.getStackName());
           logCallback.saveExecutionLog(errorMsg);
           builder.errorMessage(errorMsg).commandExecutionStatus(CommandExecutionStatus.FAILURE);
-          populateCloudformationTaskNGResponse(builder, stack, existingStackInfo);
+          populateCloudformationTaskNGResponse(builder, stack, true);
           cloudformationBaseHelper.printStackResources(awsInternalConfig, request.getRegion(), stack, logCallback);
           return;
         }
         default: {
           String errorMessage =
               format("# Unexpected status: %s while creating stack: %s ", stack.getStackStatus(), stack.getStackName());
-          logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+          logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
           builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
-          populateCloudformationTaskNGResponse(builder, stack, existingStackInfo);
+          populateCloudformationTaskNGResponse(builder, stack, true);
           cloudformationBaseHelper.printStackResources(awsInternalConfig, request.getRegion(), stack, logCallback);
           return;
         }
@@ -407,16 +403,16 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
       sleep(ofSeconds(10));
     }
     String errorMessage = format("# Timing out while Updating stack: %s", originalStack.getStackName());
-    logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
-    populateCloudformationTaskNGResponse(builder, stack, existingStackInfo);
+    logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
+    populateCloudformationTaskNGResponse(builder, stack, true);
     builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
     cloudformationBaseHelper.printStackResources(awsInternalConfig, request.getRegion(), stack, logCallback);
   }
 
   private void populateCloudformationTaskNGResponse(
-      CloudformationTaskNGResponseBuilder builder, Stack stack, ExistingStackInfo existingStackInfo) {
+      CloudformationTaskNGResponseBuilder builder, Stack stack, boolean existentStack) {
     CloudFormationCreateStackNGResponseBuilder cloudFormationCreateStackNGResponseBuilder =
-        CloudFormationCreateStackNGResponse.builder().existingStackInfo(existingStackInfo);
+        CloudFormationCreateStackNGResponse.builder().existentStack(existentStack);
     if (stack != null) {
       cloudFormationCreateStackNGResponseBuilder.stackId(stack.getStackId()).stackStatus(stack.getStackStatus());
       List<Output> outputs = stack.getOutputs();

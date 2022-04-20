@@ -300,3 +300,7 @@ io.harness.cdng.provision.cloudformation.RemoteCloudformationTemplateFileSpec
 io.harness.cdng.manifest.yaml.S3UrlStoreConfig
 io.harness.cdng.provision.cloudformation.RemoteCloudformationTagsFileSpec
 io.harness.cdng.provision.cloudformation.InlineCloudformationTagsFileSpec
+io.harness.cdng.provision.cloudformation.CloudformationRollbackStepConfiguration
+io.harness.cdng.provision.cloudformation.CloudformationRollbackStepInfo
+io.harness.cdng.provision.cloudformation.CloudformationRollbackStepNode
+io.harness.cdng.provision.cloudformation.CloudformationRollbackStepParameters

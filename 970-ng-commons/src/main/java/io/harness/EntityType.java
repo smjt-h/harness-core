@@ -216,7 +216,10 @@ public enum EntityType {
       IdentifierRef.class, EntityYamlRootNames.CLOUDFORMATION_CREATE_STACK_STEP),
   @JsonProperty(EntityTypeConstants.CLOUDFORMATION_DELETE_STACK_STEP)
   CLOUDFORMATION_DELETE_STACK_STEP(ModuleType.CD, EntityTypeConstants.CLOUDFORMATION_DELETE_STACK_STEP,
-      IdentifierRef.class, EntityYamlRootNames.CLOUDFORMATION_DELETE_STACK_STEP);
+      IdentifierRef.class, EntityYamlRootNames.CLOUDFORMATION_DELETE_STACK_STEP),
+  @JsonProperty(EntityTypeConstants.CLOUDFORMATION_ROLLBACK_STACK_STEP)
+  CLOUDFORMATION_ROLLBACK_STACK_STEP(ModuleType.CD, EntityTypeConstants.CLOUDFORMATION_ROLLBACK_STACK_STEP,
+      IdentifierRef.class, EntityYamlRootNames.CLOUDFORMATION_ROLLBACK_STACK_STEP);
 
   private final ModuleType moduleType;
   String yamlName;

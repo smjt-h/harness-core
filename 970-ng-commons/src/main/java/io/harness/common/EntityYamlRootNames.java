@@ -94,4 +94,5 @@ public class EntityYamlRootNames {
   public static String BUILD_AND_PUSH_DOCKER_REGISTRY = "BuildAndPushDockerRegistry";
   public static String CLOUDFORMATION_CREATE_STACK_STEP = "CreateStack";
   public static String CLOUDFORMATION_DELETE_STACK_STEP = "DeleteStack";
+  public static String CLOUDFORMATION_ROLLBACK_STACK_STEP = "RollbackStack";
 }

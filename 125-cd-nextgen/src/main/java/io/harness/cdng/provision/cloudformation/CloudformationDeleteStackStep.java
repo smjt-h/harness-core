@@ -16,7 +16,6 @@ import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
-import io.harness.cdng.common.resources.AwsResourceServiceHelper;
 import io.harness.cdng.provision.cloudformation.beans.CloudFormationInheritOutput;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.delegate.beans.TaskData;
@@ -30,7 +29,6 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.UnitProgress;
-import io.harness.ng.core.BaseNGAccess;
 import io.harness.ng.core.EntityDetail;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.rollback.TaskExecutableWithRollbackAndRbac;
@@ -67,7 +65,6 @@ public class CloudformationDeleteStackStep extends TaskExecutableWithRollbackAnd
                                                .setStepCategory(StepCategory.STEP)
                                                .build();
   @Inject private CloudformationStepHelper cloudFormationStepHelper;
-  @Inject private AwsResourceServiceHelper awsHelper;
   @Inject private KryoSerializer kryoSerializer;
   @Inject private PipelineRbacHelper pipelineRbacHelper;
   @Inject private StepHelper stepHelper;
@@ -105,6 +102,7 @@ public class CloudformationDeleteStackStep extends TaskExecutableWithRollbackAnd
         : response.getUnitProgressData().getUnitProgresses();
     builder.unitProgressList(unitProgresses);
     if (CommandExecutionStatus.SUCCESS == response.getCommandExecutionStatus()) {
+      // delete configs
       builder.status(Status.SUCCEEDED);
     } else {
       builder.status(Status.FAILED);
@@ -118,15 +116,13 @@ public class CloudformationDeleteStackStep extends TaskExecutableWithRollbackAnd
     CloudformationDeleteStackStepParameters parameters =
         (CloudformationDeleteStackStepParameters) stepParameters.getSpec();
     log.info("Starting execution Obtain Task after Rbac for the DeleteStack Step");
-    String accountId = AmbianceUtils.getAccountId(ambiance);
-    String orgIdentifier = AmbianceUtils.getOrgIdentifier(ambiance);
-    String projectIdentifier = AmbianceUtils.getProjectIdentifier(ambiance);
 
     String connectorRef;
     String region;
     String roleArn;
     String stackName;
     if (parameters.getConfiguration().getType().equals(CloudformationDeleteStackStepConfigurationTypes.Inline)) {
+      log.info("Obtaining task using Inline configuration");
       InlineCloudformationDeleteStackStepConfiguration configuration =
           (InlineCloudformationDeleteStackStepConfiguration) parameters.getConfiguration().getSpec();
       configuration.validateParams();
@@ -137,12 +133,17 @@ public class CloudformationDeleteStackStep extends TaskExecutableWithRollbackAnd
       stackName = getParameterFieldValue(configuration.getStackName());
     } else if (parameters.getConfiguration().getType().equals(
                    CloudformationDeleteStackStepConfigurationTypes.Inherited)) {
+      log.info("Obtaining task using Remote configuration");
+      String provisionerIdentifier = getParameterFieldValue(
+          ((InheritedCloudformationDeleteStackStepConfiguration) parameters.getConfiguration().getSpec())
+              .getProvisionerIdentifier());
       CloudFormationInheritOutput cloudFormationInheritOutput =
-          cloudFormationStepHelper.getSavedCloudFormationInheritOutput(
-              getParameterFieldValue(
-                  ((InheritedCloudformationDeleteStackStepConfiguration) parameters.getConfiguration().getSpec())
-                      .getProvisionerIdentifier()),
-              ambiance);
+          cloudFormationStepHelper.getSavedCloudFormationInheritOutput(provisionerIdentifier, ambiance);
+      if (cloudFormationInheritOutput == null) {
+        throw new InvalidRequestException(
+            format("Did not find any successfully executed Create Stack step for provisioner identifier: [%s]",
+                provisionerIdentifier));
+      }
 
       connectorRef = cloudFormationInheritOutput.getConnectorRef();
       region = cloudFormationInheritOutput.getRegion();
@@ -160,9 +161,10 @@ public class CloudformationDeleteStackStep extends TaskExecutableWithRollbackAnd
     if (isNotEmpty(roleArn)) {
       builder.cloudFormationRoleArn(cloudFormationStepHelper.renderValue(ambiance, roleArn));
     }
-    BaseNGAccess baseNGAccess = awsHelper.getBaseNGAccess(accountId, orgIdentifier, projectIdentifier);
-    List<EncryptedDataDetail> encryptionDetails = awsHelper.getAwsEncryptionDetails(connectorDTO, baseNGAccess);
-    builder.accountId(accountId)
+
+    List<EncryptedDataDetail> encryptionDetails =
+        cloudFormationStepHelper.getAwsEncryptionDetails(ambiance, connectorDTO);
+    builder.accountId(AmbianceUtils.getAccountId(ambiance))
         .taskType(CloudformationTaskType.DELETE_STACK)
         .cfCommandUnit(CloudformationCommandUnit.DeleteStack)
         .awsConnector(connectorDTO)

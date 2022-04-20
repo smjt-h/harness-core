@@ -27,6 +27,7 @@ import io.harness.cdng.creator.plan.steps.CDPMSStepFilterJsonCreatorV2;
 import io.harness.cdng.creator.plan.steps.CDPMSStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.CloudformationCreateStackStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.CloudformationDeleteStackStepPlanCreator;
+import io.harness.cdng.creator.plan.steps.CloudformationRollbackStackStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.HelmDeployStepPlanCreatorV2;
 import io.harness.cdng.creator.plan.steps.HelmRollbackStepPlanCreatorV2;
 import io.harness.cdng.creator.plan.steps.K8sApplyStepPlanCreator;
@@ -111,6 +112,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     planCreators.add(new ParallelPlanCreator());
     planCreators.add(new CloudformationCreateStackStepPlanCreator());
     planCreators.add(new CloudformationDeleteStackStepPlanCreator());
+    planCreators.add(new CloudformationRollbackStackStepPlanCreator());
     injectorUtils.injectMembers(planCreators);
     return planCreators;
   }
@@ -289,6 +291,16 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
                                                     .build())
                                .build();
 
+    StepInfo rollbackStack = StepInfo.newBuilder()
+                                 .setName("Cloudformation rollback stack")
+                                 .setType(StepSpecTypeConstants.CLOUDFORMATION_ROLLBACK_STACK)
+                                 .setFeatureRestrictionName(FeatureRestrictionName.ROLLBACK_STACK.name())
+                                 .setStepMetaData(StepMetaData.newBuilder()
+                                                      .addCategory(CLOUDFORMATION_STEP_METADATA)
+                                                      .addFolderPaths(CLOUDFORMATION_STEP_METADATA)
+                                                      .build())
+                                 .build();
+
     List<StepInfo> stepInfos = new ArrayList<>();
 
     stepInfos.add(k8sRolling);
@@ -308,6 +320,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     stepInfos.add(helmRollback);
     stepInfos.add(createStack);
     stepInfos.add(deleteStack);
+    stepInfos.add(rollbackStack);
     return stepInfos;
   }
 }

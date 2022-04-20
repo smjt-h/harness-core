@@ -22,6 +22,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.DecryptableEntity;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.CDStepHelper;
+import io.harness.cdng.expressions.CDExpressionResolveFunctor;
 import io.harness.cdng.k8s.K8sStepHelper;
 import io.harness.cdng.k8s.beans.StepExceptionPassThroughData;
 import io.harness.cdng.manifest.ManifestStoreType;
@@ -30,6 +31,7 @@ import io.harness.cdng.manifest.yaml.S3UrlStoreConfig;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
 import io.harness.cdng.provision.cloudformation.beans.CloudFormationCreateStackPassThroughData;
 import io.harness.cdng.provision.cloudformation.beans.CloudFormationInheritOutput;
+import io.harness.cdng.provision.cloudformation.beans.CloudformationConfig;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.services.ConnectorService;
@@ -58,6 +60,7 @@ import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
+import io.harness.expression.ExpressionEvaluatorUtils;
 import io.harness.git.model.FetchFilesResult;
 import io.harness.git.model.GitFile;
 import io.harness.k8s.K8sCommandUnitConstants;
@@ -189,12 +192,13 @@ public class CloudformationStepHelper {
           ((InlineCloudformationTagsFileSpec) stepConfiguration.getTags().getSpec()).getContent());
     }
 
+    populatePassThroughData(passThroughData, templateBody, templateUrl, tags);
     CloudformationTaskNGParameters cloudformationTaskNGParameters = getCloudformationTaskNGParameters(ambiance,
         stepElementParameters, (AwsConnectorDTO) connectorDTO.getConnectorConfig(),
         getInlineParameters(stepConfiguration), templateBody, templateUrl, tags);
 
     return cloudformationStepExecutor.executeCloudformationTask(
-        ambiance, stepElementParameters, cloudformationTaskNGParameters);
+        ambiance, stepElementParameters, cloudformationTaskNGParameters, passThroughData);
   }
 
   public TaskChainResponse executeNextLink(CloudformationStepExecutor cloudformationStepExecutor, Ambiance ambiance,
@@ -256,19 +260,20 @@ public class CloudformationStepHelper {
         .build();
   }
 
-  public void saveCloudFormationInheritOutput(
-      CloudformationCreateStackStepConfiguration configuration, String provisionerIdentifier, Ambiance ambiance) {
+  public void saveCloudFormationInheritOutput(CloudformationCreateStackStepConfiguration configuration,
+      String provisionerIdentifier, Ambiance ambiance, boolean stackExisted) {
     CloudFormationInheritOutput cloudFormationInheritOutput =
         CloudFormationInheritOutput.builder()
             .stackName(getParameterFieldValue(configuration.getStackName()))
             .connectorRef(getParameterFieldValue(configuration.getConnectorRef()))
             .region(getParameterFieldValue(configuration.getRegion()))
             .roleArn(getParameterFieldValue(configuration.getRoleArn()))
+            .existingStack(stackExisted)
             .build();
     String identifier = generateIdentifier(provisionerIdentifier, ambiance);
     String inheritOutputName = format(CLOUDFORMATION_INHERIT_OUTPUT_FORMAT, identifier);
     executionSweepingOutputService.consume(
-        ambiance, inheritOutputName, cloudFormationInheritOutput, StepOutcomeGroup.STAGE.name());
+        ambiance, inheritOutputName, cloudFormationInheritOutput, StepOutcomeGroup.PIPELINE.name());
   }
 
   public CloudFormationInheritOutput getSavedCloudFormationInheritOutput(
@@ -278,10 +283,38 @@ public class CloudformationStepHelper {
     OptionalSweepingOutput output = executionSweepingOutputService.resolveOptional(
         ambiance, RefObjectUtils.getSweepingOutputRefObject(inheritOutputName));
     if (!output.isFound()) {
-      throw new InvalidRequestException(
-          format("Did not find any Create Stack step for provisioner identifier: [%s]", provisionerIdentifier));
+      return null;
     }
     return (CloudFormationInheritOutput) output.getOutput();
+  }
+
+  public CloudformationConfig getCloudformationConfig(Ambiance ambiance, StepElementParameters stepParameters,
+      CloudFormationCreateStackPassThroughData passThroughData) {
+    CloudformationCreateStackStepParameters cloudformationCreateStackStepParameters =
+        (CloudformationCreateStackStepParameters) stepParameters.getSpec();
+    CloudformationCreateStackStepConfiguration stepConfiguration =
+        cloudformationCreateStackStepParameters.getConfiguration();
+
+    return CloudformationConfig.builder()
+        .accountId(AmbianceUtils.getAccountId(ambiance))
+        .orgId(AmbianceUtils.getOrgIdentifier(ambiance))
+        .projectId(AmbianceUtils.getProjectIdentifier(ambiance))
+        .provisionerIdentifier(
+            getParameterFieldValue(cloudformationCreateStackStepParameters.getProvisionerIdentifier()))
+        .pipelineExecutionId(ambiance.getPlanExecutionId())
+        .connectorRef(getParameterFieldValue(stepConfiguration.getConnectorRef()))
+        .region(getParameterFieldValue(stepConfiguration.getRegion()))
+        .templateUrl(passThroughData.getTemplateUrl())
+        .templateBody(passThroughData.getTemplateBody())
+        .parametersFiles(passThroughData.getParametersFilesContent())
+        .roleArn(getParameterFieldValue(stepConfiguration.getRoleArn()))
+        .stackName(getParameterFieldValue(stepConfiguration.getStackName()))
+        .parameterOverrides(getInlineParameters(stepConfiguration))
+        .capabilities(getParameterFieldValue(stepConfiguration.getCapabilities()))
+        .tags(isNotEmpty(passThroughData.getTags()) ? renderValue(ambiance, passThroughData.getTags())
+                                                    : passThroughData.getTags())
+        .stackStatusesToMarkAsSuccess(getParameterFieldValue(stepConfiguration.getSkipOnStackStatuses()))
+        .build();
   }
 
   private List<AwsS3FetchFileDelegateConfig> getAwsS3FetchFileDelegateConfigs(
@@ -411,31 +444,33 @@ public class CloudformationStepHelper {
     CloudformationCreateStackStepConfiguration stepConfiguration =
         cloudformationCreateStackStepParameters.getConfiguration();
 
-    return CloudformationTaskNGParameters.builder()
-        .accountId(AmbianceUtils.getAccountId(ambiance))
-        .taskType(CREATE_STACK)
-        .cfCommandUnit(CloudformationCommandUnit.CreateStack)
-        .templateUrl(templateUrl)
-        .templateBody(
-            isNotEmpty(templateBody) ? engineExpressionService.renderExpression(ambiance, templateBody) : templateBody)
-        .awsConnector(awsConnectorDTO)
-        .encryptedDataDetails(getAwsConnectorEncryptedDetails(ambiance, awsConnectorDTO))
-        .region(getParameterFieldValue(stepConfiguration.getRegion()))
-        .cloudFormationRoleArn(getParameterFieldValue(stepConfiguration.getRoleArn()))
-        .stackName(getParameterFieldValue(stepConfiguration.getStackName()))
-        .parameters(parameters)
-        .capabilities(getParameterFieldValue(stepConfiguration.getCapabilities()))
-        .tags(isNotEmpty(tags) ? engineExpressionService.renderExpression(ambiance, tags) : tags)
-        .stackStatusesToMarkAsSuccess(getParameterFieldValue(stepConfiguration.getSkipOnStackStatuses())
-                                          .stream()
-                                          .map(StackStatus::fromValue)
-                                          .collect(Collectors.toList()))
-        .timeoutInMs(StepUtils.getTimeoutMillis(stepElementParameters.getTimeout(), DEFAULT_TIMEOUT))
-        .build();
+    CloudformationTaskNGParameters cloudformationTaskNGParameters =
+        CloudformationTaskNGParameters.builder()
+            .accountId(AmbianceUtils.getAccountId(ambiance))
+            .taskType(CREATE_STACK)
+            .cfCommandUnit(CloudformationCommandUnit.CreateStack)
+            .templateUrl(templateUrl)
+            .templateBody(templateBody)
+            .awsConnector(awsConnectorDTO)
+            .encryptedDataDetails(getAwsConnectorEncryptedDetails(ambiance, awsConnectorDTO))
+            .region(getParameterFieldValue(stepConfiguration.getRegion()))
+            .cloudFormationRoleArn(getParameterFieldValue(stepConfiguration.getRoleArn()))
+            .stackName(getParameterFieldValue(stepConfiguration.getStackName()))
+            .parameters(parameters)
+            .capabilities(getParameterFieldValue(stepConfiguration.getCapabilities()))
+            .tags(tags)
+            .stackStatusesToMarkAsSuccess(getParameterFieldValue(stepConfiguration.getSkipOnStackStatuses())
+                                              .stream()
+                                              .map(StackStatus::fromValue)
+                                              .collect(Collectors.toList()))
+            .timeoutInMs(StepUtils.getTimeoutMillis(stepElementParameters.getTimeout(), DEFAULT_TIMEOUT))
+            .build();
+    ExpressionEvaluatorUtils.updateExpressions(
+        cloudformationTaskNGParameters, new CDExpressionResolveFunctor(engineExpressionService, ambiance));
+    return cloudformationTaskNGParameters;
   }
 
-  private List<EncryptedDataDetail> getAwsConnectorEncryptedDetails(
-      Ambiance ambiance, AwsConnectorDTO awsConnectorDTO) {
+  public List<EncryptedDataDetail> getAwsConnectorEncryptedDetails(Ambiance ambiance, AwsConnectorDTO awsConnectorDTO) {
     List<DecryptableEntity> awsDecryptableEntities = awsConnectorDTO.getDecryptableEntities();
     if (isNotEmpty(awsDecryptableEntities)) {
       return secretManagerClientService.getEncryptionDetails(
@@ -458,15 +493,11 @@ public class CloudformationStepHelper {
       }
     });
 
-    Map<String, String> parameters = new HashMap<>();
-    cloudFormationCreateStackPassThroughData.getParametersFilesContent().forEach(
-        (s, parametersFiles)
-            -> parametersFiles.forEach(parametersFile -> parameters.putAll(getParametersFromJson(parametersFile))));
-    parameters.putAll(getInlineParameters(stepConfiguration));
+    Map<String, String> parameters =
+        getParameters(ambiance, stepConfiguration, cloudFormationCreateStackPassThroughData);
 
     String templateBody = null;
     String templateUrl = null;
-
     CloudformationTemplateFileSpec cloudformationTemplateFileSpec = stepConfiguration.getTemplateFile().getSpec();
     if (isNotEmpty(cloudFormationCreateStackPassThroughData.getTemplateBody())) {
       templateBody = cloudFormationCreateStackPassThroughData.getTemplateBody();
@@ -479,21 +510,22 @@ public class CloudformationStepHelper {
     }
 
     String tags = null;
-    if (isNotEmpty(cloudFormationCreateStackPassThroughData.getTags())) {
-      tags = cloudFormationCreateStackPassThroughData.getTags();
-    } else if (isNotEmpty(responseData.getS3filesDetails().get(TAGS_FILE_IDENTIFIER))) {
+    if (isNotEmpty(responseData.getS3filesDetails().get(TAGS_FILE_IDENTIFIER))) {
       tags = responseData.getS3filesDetails().get(TAGS_FILE_IDENTIFIER).get(0).getFileContent();
     } else if (stepConfiguration.getTags().getType().equals(CloudformationTagsFileTypes.Inline)) {
       tags = getParameterFieldValue(
           ((InlineCloudformationTagsFileSpec) stepConfiguration.getTags().getSpec()).getContent());
+    } else if (isNotEmpty(cloudFormationCreateStackPassThroughData.getTags())) {
+      tags = cloudFormationCreateStackPassThroughData.getTags();
     }
 
+    populatePassThroughData(cloudFormationCreateStackPassThroughData, templateBody, templateUrl, tags);
     AwsConnectorDTO awsConnectorDTO = getAwsConnectorConfig(ambiance, stepConfiguration.getConnectorRef());
     CloudformationTaskNGParameters cloudformationTaskNGParameters = getCloudformationTaskNGParameters(
         ambiance, stepElementParameters, awsConnectorDTO, parameters, templateBody, templateUrl, tags);
 
     return cloudformationStepExecutor.executeCloudformationTask(
-        ambiance, stepElementParameters, cloudformationTaskNGParameters);
+        ambiance, stepElementParameters, cloudformationTaskNGParameters, cloudFormationCreateStackPassThroughData);
   }
 
   private TaskChainResponse handleGitFetchResponse(CloudformationStepExecutor cloudformationStepExecutor,
@@ -524,10 +556,8 @@ public class CloudformationStepHelper {
           stepElementParameters, cloudFormationCreateStackPassThroughData);
     }
 
-    Map<String, String> parameters = new HashMap<>();
-    cloudFormationCreateStackPassThroughData.getParametersFilesContent().forEach(
-        (s, parametersFiles) -> parametersFiles.forEach(this::getParametersFromJson));
-    parameters.putAll(getInlineParameters(stepConfiguration));
+    Map<String, String> parameters =
+        getParameters(ambiance, stepConfiguration, cloudFormationCreateStackPassThroughData);
 
     String templateBody = null;
     String templateUrl = null;
@@ -553,12 +583,34 @@ public class CloudformationStepHelper {
           ((InlineCloudformationTagsFileSpec) stepConfiguration.getTags().getSpec()).getContent());
     }
 
+    populatePassThroughData(cloudFormationCreateStackPassThroughData, templateBody, templateUrl, tags);
     AwsConnectorDTO awsConnectorDTO = getAwsConnectorConfig(ambiance, stepConfiguration.getConnectorRef());
     CloudformationTaskNGParameters cloudformationTaskNGParameters = getCloudformationTaskNGParameters(
         ambiance, stepElementParameters, awsConnectorDTO, parameters, templateBody, templateUrl, tags);
 
     return cloudformationStepExecutor.executeCloudformationTask(
-        ambiance, stepElementParameters, cloudformationTaskNGParameters);
+        ambiance, stepElementParameters, cloudformationTaskNGParameters, cloudFormationCreateStackPassThroughData);
+  }
+
+  private void populatePassThroughData(
+      CloudFormationCreateStackPassThroughData cloudFormationCreateStackPassThroughData, String templateBody,
+      String templateUrl, String tags) {
+    cloudFormationCreateStackPassThroughData.setTemplateBody(templateBody);
+    cloudFormationCreateStackPassThroughData.setTemplateUrl(templateUrl);
+    cloudFormationCreateStackPassThroughData.setTags(tags);
+  }
+
+  @NotNull
+  private Map<String, String> getParameters(Ambiance ambiance,
+      CloudformationCreateStackStepConfiguration stepConfiguration,
+      CloudFormationCreateStackPassThroughData cloudFormationCreateStackPassThroughData) {
+    Map<String, String> parameters = new HashMap<>();
+    cloudFormationCreateStackPassThroughData.getParametersFilesContent().forEach(
+        (s, parametersFiles)
+            -> parametersFiles.forEach(
+                parametersFile -> parameters.putAll(getParametersFromJson(ambiance, parametersFile))));
+    parameters.putAll(getInlineParameters(stepConfiguration));
+    return parameters;
   }
 
   private AwsConnectorDTO getAwsConnectorConfig(Ambiance ambiance, ParameterField<String> awsConnectorRef) {
@@ -568,18 +620,19 @@ public class CloudformationStepHelper {
 
   private Map<String, String> getInlineParameters(CloudformationCreateStackStepConfiguration stepConfiguration) {
     Map<String, Object> parameters = NGVariablesUtils.getMapOfVariables(stepConfiguration.getParameterOverrides(), 0L);
-    Map<String, String> res = new HashMap<>();
-    parameters.keySet().forEach(key -> res.put(key, ((ParameterField<?>) parameters.get(key)).getValue().toString()));
-    return res;
+    Map<String, String> inlineParameters = new HashMap<>();
+    parameters.keySet().forEach(
+        key -> inlineParameters.put(key, ((ParameterField<?>) parameters.get(key)).getValue().toString()));
+    return inlineParameters;
   }
 
-  private Map<String, String> getParametersFromJson(String parametersJson) {
+  public Map<String, String> getParametersFromJson(Ambiance ambiance, String parametersJson) {
     Map<String, String> parametersMap = new HashMap<>();
     ObjectMapper mapper = new ObjectMapper();
     List<Parameter> parameters;
     mapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
     try {
-      parameters = mapper.readValue(parametersJson, new TypeReference<List<Parameter>>() {});
+      parameters = mapper.readValue(renderValue(ambiance, parametersJson), new TypeReference<List<Parameter>>() {});
     } catch (IOException e) {
       throw new InvalidArgumentsException("Failed to Deserialize json" + e);
     }
@@ -704,7 +757,7 @@ public class CloudformationStepHelper {
     return S3FileDetailRequest.builder().bucketName(amazonS3URI.getBucket()).fileKey(amazonS3URI.getKey()).build();
   }
 
-  private List<EncryptedDataDetail> getAwsEncryptionDetails(Ambiance ambiance, AwsConnectorDTO awsConnectorDTO) {
+  public List<EncryptedDataDetail> getAwsEncryptionDetails(Ambiance ambiance, AwsConnectorDTO awsConnectorDTO) {
     if (isNotEmpty(awsConnectorDTO.getDecryptableEntities())) {
       return secretManagerClientService.getEncryptionDetails(
           AmbianceUtils.getNgAccess(ambiance), awsConnectorDTO.getDecryptableEntities().get(0));
@@ -742,11 +795,6 @@ public class CloudformationStepHelper {
     }
   }
 
-  public List<String> renderValues(Ambiance ambiance, @NonNull List<String> valuesFileContents) {
-    return valuesFileContents.stream()
-        .map(valuesFileContent -> engineExpressionService.renderExpression(ambiance, valuesFileContent))
-        .collect(Collectors.toList());
-  }
   public String renderValue(Ambiance ambiance, @NonNull String valueFileContent) {
     return engineExpressionService.renderExpression(ambiance, valueFileContent);
   }

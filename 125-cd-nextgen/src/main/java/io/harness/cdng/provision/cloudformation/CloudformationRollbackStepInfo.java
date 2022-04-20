@@ -21,7 +21,6 @@ import io.harness.validation.Validator;
 import io.harness.walktree.visitor.Visitable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.HashMap;
 import java.util.List;
@@ -39,37 +38,30 @@ import org.springframework.data.annotation.TypeAlias;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @OwnedBy(HarnessTeam.CDP)
-@TypeAlias("cloudformationDeleteStackStepInfo")
-@JsonTypeName(StepSpecTypeConstants.CLOUDFORMATION_DELETE_STACK)
+@TypeAlias("CloudformationRollbackStepInfo")
+@JsonTypeName(StepSpecTypeConstants.CLOUDFORMATION_ROLLBACK_STACK)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@RecasterAlias("io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepInfo")
-public class CloudformationDeleteStackStepInfo
-    extends CloudformationDeleteStackBaseStepInfo implements CDStepInfo, Visitable, WithConnectorRef {
-  @NotNull @JsonProperty("configuration") CloudformationDeleteStackStepConfiguration cloudformationStepConfiguration;
+@RecasterAlias("io.harness.cdng.provision.cloudformation.CloudformationRollbackStepInfo")
+public class CloudformationRollbackStepInfo
+    extends CloudformationRollbackBaseStepInfo implements CDStepInfo, Visitable, WithConnectorRef {
+  @NotNull CloudformationRollbackStepConfiguration configuration;
 
   @Builder(builderMethodName = "infoBuilder")
-  public CloudformationDeleteStackStepInfo(ParameterField<List<String>> delegateSelector,
-      CloudformationDeleteStackStepConfiguration cloudformationStepConfiguration) {
+  public CloudformationRollbackStepInfo(ParameterField<List<String>> delegateSelector,
+      CloudformationRollbackStepConfiguration cloudformationStepConfiguration) {
     super(delegateSelector);
-    this.cloudformationStepConfiguration = cloudformationStepConfiguration;
+    this.configuration = cloudformationStepConfiguration;
   }
 
   @Override
   public Map<String, ParameterField<String>> extractConnectorRefs() {
-    validateSpecParameters();
-    Map<String, ParameterField<String>> connectorRefMap = new HashMap<>();
-    if (cloudformationStepConfiguration.getType().equals(CloudformationDeleteStackStepConfigurationTypes.Inline)) {
-      connectorRefMap.put("configuration.spec.connectorRef",
-          ((InlineCloudformationDeleteStackStepConfiguration) cloudformationStepConfiguration.getSpec())
-              .getConnectorRef());
-    }
-    return connectorRefMap;
+    return new HashMap<>();
   }
 
   @Override
   @JsonIgnore
   public StepType getStepType() {
-    return CloudformationDeleteStackStep.STEP_TYPE;
+    return CloudformationRollbackStep.STEP_TYPE;
   }
 
   @Override
@@ -80,12 +72,13 @@ public class CloudformationDeleteStackStepInfo
   @Override
   public SpecParameters getSpecParameters() {
     validateSpecParameters();
-    return CloudformationDeleteStackStepParameters.infoBuilder()
+    return CloudformationRollbackStepParameters.infoBuilder()
         .delegateSelectors(getDelegateSelectors())
-        .configuration(cloudformationStepConfiguration)
+        .configuration(configuration)
         .build();
   }
   void validateSpecParameters() {
-    Validator.notNullCheck("CloudformationStepConfiguration is null", cloudformationStepConfiguration);
+    Validator.notNullCheck("Cloudformation Rollback configuration is null", configuration);
+    configuration.validateParams();
   }
 }

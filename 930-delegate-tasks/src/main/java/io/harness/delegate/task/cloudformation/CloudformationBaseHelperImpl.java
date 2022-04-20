@@ -141,11 +141,11 @@ public class CloudformationBaseHelperImpl implements CloudformationBaseHelper {
 
   private List<StackResource> getStackResources(AwsInternalConfig awsInternalConfig, String region, Stack stack) {
     return awsCloudformationClient.getAllStackResources(
-        region, new DescribeStackResourcesRequest().withStackName(stack.getStackName()), awsInternalConfig);
+        region, new DescribeStackResourcesRequest().withStackName(stack.getStackId()), awsInternalConfig);
   }
 
   private List<StackEvent> getStackEvents(AwsInternalConfig awsInternalConfig, String region, Stack stack) {
     return awsCloudformationClient.getAllStackEvents(
-        region, new DescribeStackEventsRequest().withStackName(stack.getStackName()), awsInternalConfig);
+        region, new DescribeStackEventsRequest().withStackName(stack.getStackId()), awsInternalConfig);
   }
 }

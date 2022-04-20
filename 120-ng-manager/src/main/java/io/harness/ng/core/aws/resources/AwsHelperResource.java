@@ -62,7 +62,7 @@ public class AwsHelperResource {
 
   @POST
   @Path("cf-parameters")
-  @ApiOperation(value = "Send a CF Template to AWS and retrieve the parameters contained in that",
+  @ApiOperation(value = "Get Cloudformation parameters from a template",
       nickname = "CFParametersForAws")
   public ResponseDTO<List<AwsCFTemplateParamsData>>
   listCFParameterKeys(@QueryParam("type") @NotNull String type, @QueryParam("region") @NotNull String region,

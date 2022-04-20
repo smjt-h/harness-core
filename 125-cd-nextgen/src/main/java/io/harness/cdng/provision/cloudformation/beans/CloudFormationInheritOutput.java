@@ -28,4 +28,5 @@ public class CloudFormationInheritOutput implements ExecutionSweepingOutput {
   String connectorRef;
   String region;
   String roleArn;
+  boolean existingStack;
 }
