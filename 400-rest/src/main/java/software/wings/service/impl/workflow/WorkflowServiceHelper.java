@@ -1074,6 +1074,12 @@ public class WorkflowServiceHelper {
               orchestrationWorkflowType != null ? orchestrationWorkflowType.name() : ""),
           USER);
     }
+    if (!featureFlagService.isEnabled(FeatureName.AZURE_WEBAPP, accountId)
+        && isAzureWebappNonContainerDeployment(appId, workflowPhase)) {
+      throw new InvalidRequestException(
+          format("Azure WebApp non-container deployment is disabled by feature flag for account id : %s", accountId),
+          USER);
+    }
   }
 
   private boolean isAzureWebappNonContainerDeployment(String appId, WorkflowPhase workflowPhase) {
