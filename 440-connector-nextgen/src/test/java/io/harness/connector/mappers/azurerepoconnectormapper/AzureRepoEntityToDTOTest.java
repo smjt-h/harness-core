@@ -33,70 +33,65 @@ import org.mockito.InjectMocks;
 import org.mockito.MockitoAnnotations;
 
 public class AzureRepoEntityToDTOTest extends CategoryTest {
-    @InjectMocks
-    AzureRepoEntityToDTO azureRepoEntityToDTO;
+  @InjectMocks AzureRepoEntityToDTO azureRepoEntityToDTO;
 
-    @Before
-    public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
-    }
+  @Before
+  public void setUp() throws Exception {
+    MockitoAnnotations.initMocks(this);
+  }
 
-    @Test
-    @Owner(developers = MANKRIT)
-    @Category(UnitTests.class)
-    public void testToConnectorEntity_0() throws IOException {
-        final String url = "url";
-        final String username = "username";
-        final String tokenRef = "tokenRef";
-        final String validationRepo = "validationRepo";
+  @Test
+  @Owner(developers = MANKRIT)
+  @Category(UnitTests.class)
+  public void testToConnectorEntity_0() throws IOException {
+    final String url = "url";
+    final String username = "username";
+    final String tokenRef = "tokenRef";
+    final String validationRepo = "validationRepo";
 
-        final AzureRepoAuthenticationDTO azureRepoAuthenticationDTO =
-                AzureRepoAuthenticationDTO.builder()
-                        .authType(HTTP)
-                        .credentials(AzureRepoHttpCredentialsDTO.builder()
-                                .type(AzureRepoHttpAuthenticationType.USERNAME_AND_TOKEN)
-                                .httpCredentialsSpec(AzureRepoUsernameTokenDTO.builder()
-                                        .username(username)
-                                        .tokenRef(SecretRefHelper.createSecretRef(tokenRef))
-                                        .build())
-                                .build())
-                        .build();
+    final AzureRepoAuthenticationDTO azureRepoAuthenticationDTO =
+        AzureRepoAuthenticationDTO.builder()
+            .authType(HTTP)
+            .credentials(AzureRepoHttpCredentialsDTO.builder()
+                             .type(AzureRepoHttpAuthenticationType.USERNAME_AND_TOKEN)
+                             .httpCredentialsSpec(AzureRepoUsernameTokenDTO.builder()
+                                                      .username(username)
+                                                      .tokenRef(SecretRefHelper.createSecretRef(tokenRef))
+                                                      .build())
+                             .build())
+            .build();
 
-        final AzureRepoApiAccessDTO azureRepoApiAccessDTO =
-                AzureRepoApiAccessDTO.builder()
-                        .type(AzureRepoApiAccessType.TOKEN)
-                        .spec(AzureRepoTokenSpecDTO.builder()
-                                .tokenRef(SecretRefHelper.createSecretRef(tokenRef))
-                                .build())
-                        .build();
-        final AzureRepoConnectorDTO azureRepoConnectorDTO = AzureRepoConnectorDTO.builder()
-                .url(url)
-                .validationRepo(validationRepo)
-                .connectionType(AzureRepoConnectionType.ORGANIZATION)
-                .authentication(azureRepoAuthenticationDTO)
-                .apiAccess(azureRepoApiAccessDTO)
-                .build();
+    final AzureRepoApiAccessDTO azureRepoApiAccessDTO =
+        AzureRepoApiAccessDTO.builder()
+            .type(AzureRepoApiAccessType.TOKEN)
+            .spec(AzureRepoTokenSpecDTO.builder().tokenRef(SecretRefHelper.createSecretRef(tokenRef)).build())
+            .build();
+    final AzureRepoConnectorDTO azureRepoConnectorDTO = AzureRepoConnectorDTO.builder()
+                                                            .url(url)
+                                                            .validationRepo(validationRepo)
+                                                            .connectionType(AzureRepoConnectionType.ORGANIZATION)
+                                                            .authentication(azureRepoAuthenticationDTO)
+                                                            .apiAccess(azureRepoApiAccessDTO)
+                                                            .build();
 
-        final AzureRepoConnector azureRepoConnector =
-                AzureRepoConnector.builder()
-                        .hasApiAccess(true)
-                        .url(url)
-                        .validationRepo(validationRepo)
-                        .azureRepoApiAccess(AzureRepoTokenApiAccess.builder()
-                                .tokenRef(tokenRef)
-                                .build())
-                        .apiAccessType(AzureRepoApiAccessType.TOKEN)
-                        .connectionType(AzureRepoConnectionType.ORGANIZATION)
-                        .authType(HTTP)
-                        .authenticationDetails(
-                                AzureRepoHttpAuthentication.builder()
-                                        .type(AzureRepoHttpAuthenticationType.USERNAME_AND_TOKEN)
-                                        .auth(AzureRepoUsernameToken.builder().username(username).tokenRef(tokenRef).build())
-                                        .build())
-                        .build();
-        final AzureRepoConnectorDTO azureRepoConnectorDTO1 = azureRepoEntityToDTO.createConnectorDTO(azureRepoConnector);
-        ObjectMapper objectMapper = new ObjectMapper();
-        assertThat(objectMapper.readTree(objectMapper.writeValueAsString(azureRepoConnectorDTO1)))
-                .isEqualTo(objectMapper.readTree(objectMapper.writeValueAsString(azureRepoConnectorDTO)));
-    }
+    final AzureRepoConnector azureRepoConnector =
+        AzureRepoConnector.builder()
+            .hasApiAccess(true)
+            .url(url)
+            .validationRepo(validationRepo)
+            .azureRepoApiAccess(AzureRepoTokenApiAccess.builder().tokenRef(tokenRef).build())
+            .apiAccessType(AzureRepoApiAccessType.TOKEN)
+            .connectionType(AzureRepoConnectionType.ORGANIZATION)
+            .authType(HTTP)
+            .authenticationDetails(
+                AzureRepoHttpAuthentication.builder()
+                    .type(AzureRepoHttpAuthenticationType.USERNAME_AND_TOKEN)
+                    .auth(AzureRepoUsernameToken.builder().username(username).tokenRef(tokenRef).build())
+                    .build())
+            .build();
+    final AzureRepoConnectorDTO azureRepoConnectorDTO1 = azureRepoEntityToDTO.createConnectorDTO(azureRepoConnector);
+    ObjectMapper objectMapper = new ObjectMapper();
+    assertThat(objectMapper.readTree(objectMapper.writeValueAsString(azureRepoConnectorDTO1)))
+        .isEqualTo(objectMapper.readTree(objectMapper.writeValueAsString(azureRepoConnectorDTO)));
+  }
 }
