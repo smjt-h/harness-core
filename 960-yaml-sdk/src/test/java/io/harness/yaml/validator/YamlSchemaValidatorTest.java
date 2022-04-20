@@ -13,6 +13,7 @@ import static io.harness.rule.OwnerRule.BRIJESH;
 import static junit.framework.TestCase.assertEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -83,6 +84,14 @@ public class YamlSchemaValidatorTest extends CategoryTest {
 
     final Set<String> type2IncorrectVal = yamlSchemaValidator.validate(type2Incorrect, EntityType.CONNECTORS);
     assertThat(type2IncorrectVal).isNotEmpty();
+
+    final String emptyStagePipeline = getYamlResource("validator/zero-stages-pipeline.yaml");
+    final String pipelineSchema = getYamlResource("testSchema/pipelineSchema.json");
+
+    // Validating a pipeline with empty stages list.
+    assertThatThrownBy(() -> yamlSchemaValidator.validate(emptyStagePipeline, pipelineSchema, true, 2))
+        .isInstanceOf(InvalidYamlException.class)
+        .hasMessage("$.pipeline.stages: there must be a minimum of 1 items in the array");
   }
 
   private String getYamlResource(String resource) throws IOException {

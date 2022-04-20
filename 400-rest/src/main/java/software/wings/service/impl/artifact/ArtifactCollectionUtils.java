@@ -50,6 +50,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.artifact.ArtifactCollectionResponseHandler;
 import io.harness.artifact.ArtifactUtilities;
+import io.harness.beans.ArtifactMetadata;
 import io.harness.beans.Cd1SetupFields;
 import io.harness.beans.DelegateTask;
 import io.harness.beans.DelegateTask.DelegateTaskBuilder;
@@ -99,6 +100,7 @@ import software.wings.beans.config.ArtifactoryConfig;
 import software.wings.beans.config.NexusConfig;
 import software.wings.beans.template.TemplateHelper;
 import software.wings.beans.template.artifactsource.CustomRepositoryMapping.AttributeMapping;
+import software.wings.delegatetasks.buildsource.BuildCollectParameters;
 import software.wings.delegatetasks.buildsource.BuildSourceParameters;
 import software.wings.delegatetasks.buildsource.BuildSourceParameters.BuildSourceParametersBuilder;
 import software.wings.delegatetasks.buildsource.BuildSourceParameters.BuildSourceRequestType;
@@ -211,9 +213,6 @@ public class ArtifactCollectionUtils {
     if (accountId != null) {
       builder.withAccountId(accountId);
     }
-    if (isNotEmpty(buildDetails.getLabels())) {
-      builder.withLabels(buildDetails.getLabels());
-    }
     return builder.build();
   }
 
@@ -232,10 +231,11 @@ public class ArtifactCollectionUtils {
     return artifactStream.fetchArtifactDisplayName(buildDetails.getNumber());
   }
 
-  private Map<String, String> getMetadata(ArtifactStream artifactStream, BuildDetails buildDetails) {
+  private ArtifactMetadata getMetadata(ArtifactStream artifactStream, BuildDetails buildDetails) {
     String artifactStreamType = artifactStream.getArtifactStreamType();
 
-    Map<String, String> metadata = buildDetails.getMetadata() == null ? new HashMap<>() : buildDetails.getMetadata();
+    ArtifactMetadata metadata =
+        buildDetails.getMetadata() == null ? new ArtifactMetadata() : new ArtifactMetadata(buildDetails.getMetadata());
     if (artifactStreamType.equals(ARTIFACTORY.name())) {
       if (buildDetails.getArtifactPath() != null) {
         metadata.put(ArtifactMetadataKeys.artifactPath, buildDetails.getArtifactPath());
@@ -324,7 +324,15 @@ public class ArtifactCollectionUtils {
   }
 
   public DelegateTaskBuilder fetchCustomDelegateTask(String waitId, ArtifactStream artifactStream,
-      ArtifactStreamAttributes artifactStreamAttributes, boolean isCollection) {
+      ArtifactStreamAttributes artifactStreamAttributes, boolean isCollection,
+      BuildSourceRequestType buildSourceRequestType) {
+    return fetchCustomDelegateTask(
+        waitId, artifactStream, artifactStreamAttributes, isCollection, buildSourceRequestType, null);
+  }
+
+  public DelegateTaskBuilder fetchCustomDelegateTask(String waitId, ArtifactStream artifactStream,
+      ArtifactStreamAttributes artifactStreamAttributes, boolean isCollection,
+      BuildSourceRequestType buildSourceRequestType, BuildCollectParameters buildCollectParameters) {
     String accountId = artifactStreamAttributes.getAccountId();
     DelegateTaskBuilder delegateTaskBuilder =
         DelegateTask.builder().waitId(waitId).expiry(getDelegateQueueTimeout(accountId));
@@ -336,16 +344,16 @@ public class ArtifactCollectionUtils {
 
     final TaskDataBuilder dataBuilder = TaskData.builder().async(true).taskType(TaskType.BUILD_SOURCE_TASK.name());
 
-    BuildSourceRequestType requestType = BuildSourceRequestType.GET_BUILDS;
-
     BuildSourceParametersBuilder buildSourceParametersBuilder =
         BuildSourceParameters.builder()
             .accountId(artifactStreamAttributes.getAccountId())
             .appId(artifactStream.fetchAppId())
             .artifactStreamAttributes(artifactStreamAttributes)
             .artifactStreamType(artifactStream.getArtifactStreamType())
-            .buildSourceRequestType(requestType)
-            .limit(ArtifactCollectionUtils.getLimit(artifactStream.getArtifactStreamType(), requestType, isCollection))
+            .buildSourceRequestType(buildSourceRequestType)
+            .limit(ArtifactCollectionUtils.getLimit(
+                artifactStream.getArtifactStreamType(), buildSourceRequestType, isCollection))
+            .buildCollectParameters(buildCollectParameters)
             .isCollection(isCollection);
 
     if (isCollection) {

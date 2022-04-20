@@ -17,6 +17,8 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.exceptionmanager.ExceptionManager;
 import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.FileInfo;
+import io.harness.gitsync.GetFileRequest;
+import io.harness.gitsync.GetFileResponse;
 import io.harness.gitsync.HarnessToGitPushInfoServiceGrpc.HarnessToGitPushInfoServiceImplBase;
 import io.harness.gitsync.IsGitSyncEnabled;
 import io.harness.gitsync.PushFileResponse;
@@ -37,6 +39,7 @@ import io.harness.serializer.KryoSerializer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
 
@@ -86,6 +89,20 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
     responseObserver.onCompleted();
   }
 
+  @Override
+  public void getFile(GetFileRequest request, StreamObserver<GetFileResponse> responseObserver) {
+    GetFileResponse getFileResponse;
+    try (GlobalContextManager.GlobalContextGuard guard = GlobalContextManager.ensureGlobalContextGuard();
+         MdcContextSetter ignore1 = new MdcContextSetter(request.getContextMapMap())) {
+      getFileResponse = harnessToGitHelperService.getFile(request);
+    } catch (Exception ex) {
+      final String errorMessage = ExceptionUtils.getMessage(ex);
+      getFileResponse = GetFileResponse.newBuilder().setStatus(500).setError(errorMessage).build();
+    }
+    responseObserver.onNext(getFileResponse);
+    responseObserver.onCompleted();
+  }
+
   @VisibleForTesting
   void setPrincipal(FileInfo request) {
     final Principal principalFromProto = request.getPrincipal();
@@ -124,11 +141,14 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
   @Override
   public void getDefaultBranch(RepoDetails request, StreamObserver<BranchDetails> responseObserver) {
     try (MdcContextSetter ignore1 = new MdcContextSetter(request.getContextMapMap())) {
-      log.debug("Grpc request received for getDefaultBranch");
+      log.info("Grpc request received for getDefaultBranch");
       final BranchDetails branchDetails = harnessToGitHelperService.getBranchDetails(request);
+      log.info("Grpc request completed for getDefaultBranch");
       responseObserver.onNext(branchDetails);
-      responseObserver.onCompleted();
-      log.debug("Grpc request completed for getDefaultBranch");
+    } catch (Exception ex) {
+      final String errorMessage = ExceptionUtils.getMessage(ex);
+      responseObserver.onError(Status.fromThrowable(ex).withDescription(errorMessage).asRuntimeException());
     }
+    responseObserver.onCompleted();
   }
 }

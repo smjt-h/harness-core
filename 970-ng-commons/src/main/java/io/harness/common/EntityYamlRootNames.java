@@ -28,6 +28,7 @@ public class EntityYamlRootNames {
   public static String PIPELINE_STEP = "pipelineStep";
   public static String CONNECTOR = "connector";
   public static String SECRET = "secret";
+  public static String FILE = "file";
   public static String SERVICE = "service";
   public static String ENVIRONMENT = "environment";
   public static String INPUT_SET = "inputSet";
@@ -81,6 +82,8 @@ public class EntityYamlRootNames {
   public static String RUN_TEST = "RunTests";
   public static String PLUGIN = "Plugin";
   public static String SECURITY = "Security";
+  public static String SECURITY_STAGE = "securityStage";
+  public static String SECURITY_STEP = "securityStep";
   public static String RESTORE_CACHE_GCS = "RestoreCacheGCS";
   public static String RESTORE_CACHE_S3 = "RestoreCacheS3";
   public static String SAVE_CACHE_GCS = "SaveCacheGCS";

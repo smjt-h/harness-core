@@ -207,8 +207,28 @@ public class DelegateSetupResourceV3 {
       })
   public RestResponse<Double>
   getConnectedRatioWithPrimary(@Parameter(description = "Target version for which the ratio is calculated") @QueryParam(
-      "targetVersion") @NotEmpty String targetVersion) {
-    return new RestResponse<>(delegateService.getConnectedRatioWithPrimary(targetVersion));
+                                   "targetVersion") @NotEmpty String targetVersion,
+      @QueryParam("accountId") String accountId) {
+    return new RestResponse<>(delegateService.getConnectedRatioWithPrimary(targetVersion, accountId));
+  }
+
+  @GET
+  @Path("connected-delegate-ratio")
+  @Timed
+  @ExceptionMetered
+  @PublicApi
+  @Operation(operationId = "getConnectedDelegatesRatio",
+      summary = "Calculates ratio of connected Delegates with specific version.",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(responseCode = "default", description = "Double value representing the calculated ratio.")
+      })
+  public RestResponse<Double>
+  getConnectedDelegatesRatio(@Parameter(description = "Target version for which the ratio is calculated") @QueryParam(
+                                 "targetVersion") @NotEmpty String targetVersion,
+      @QueryParam("accountId") String accountId) {
+    return new RestResponse<>(delegateService.getConnectedDelegatesRatio(targetVersion, accountId));
   }
 
   @GET
@@ -387,40 +407,6 @@ public class DelegateSetupResourceV3 {
 
     public void setExcludeScopeIds(List<String> excludeScopeIds) {
       this.excludeScopeIds = excludeScopeIds;
-    }
-  }
-
-  @PUT
-  @Path("{delegateId}/tags")
-  @Timed
-  @ExceptionMetered
-  @AuthRule(permissionType = ACCOUNT_MANAGEMENT)
-  @AuthRule(permissionType = MANAGE_DELEGATES)
-  @Operation(operationId = "updateDelegateTags", summary = "Updates tags for the delegate.",
-      responses =
-      {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default", description = "Updated delegate")
-      })
-  public RestResponse<Delegate>
-  updateTags(@Parameter(description = "Delegate UUID") @PathParam("delegateId") @NotEmpty String delegateId,
-      @Parameter(description = "Account UUID") @QueryParam("accountId") @NotEmpty String accountId,
-      @RequestBody(required = true, description = "List of tag values to be updated") DelegateTags delegateTags) {
-    try (AutoLogContext ignore1 = new AccountLogContext(accountId, OVERRIDE_ERROR);
-         AutoLogContext ignore2 = new DelegateLogContext(delegateId, OVERRIDE_ERROR)) {
-      Delegate delegate = delegateCache.get(accountId, delegateId, true);
-      delegate.setTags(delegateTags.getTags());
-      return new RestResponse<>(delegateService.updateTags(delegate));
-    }
-  }
-
-  @VisibleForTesting
-  protected static class DelegateTags {
-    private List<String> tags;
-    public List<String> getTags() {
-      return tags;
-    }
-    public void setTags(List<String> tags) {
-      this.tags = tags;
     }
   }
 

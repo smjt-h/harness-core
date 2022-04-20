@@ -91,6 +91,13 @@ public abstract class AbstractScmClientFacilitatorServiceImpl implements ScmClie
     return (ScmConnector) connectorResponseDTO.getConnector().getConnectorConfig();
   }
 
+  ScmConnector getSCMConnectorUsedInGitSyncConfig(String accountIdentifier, String orgIdentifier,
+      String projectIdentifier, String connectorIdentifierRef, String repoWhereConnectorIsStored,
+      String connectorBranch) {
+    return gitSyncConnectorHelper.getScmConnector(accountIdentifier, orgIdentifier, projectIdentifier,
+        connectorIdentifierRef, repoWhereConnectorIsStored, connectorBranch);
+  }
+
   YamlGitConfigDTO getYamlGitConfigDTO(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String yamlGitConfigIdentifier) {
     return yamlGitConfigService.get(projectIdentifier, orgIdentifier, accountIdentifier, yamlGitConfigIdentifier);
@@ -155,6 +162,14 @@ public abstract class AbstractScmClientFacilitatorServiceImpl implements ScmClie
         .userEmail(currentUser.getEmail())
         .commitId(commitId)
         .userName(isEmpty(scmUserName) ? currentUser.getName() : scmUserName);
+  }
+
+  ScmConnector getScmConnector(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef, String repoName) {
+    ScmConnector connector = gitSyncConnectorHelper.getDecryptedConnectorByRef(
+        accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
+    connector.setUrl(connector.getGitConnectionUrl(repoName));
+    return connector;
   }
 
   private String getScmUserName(String accountId, SCMType scmType) {

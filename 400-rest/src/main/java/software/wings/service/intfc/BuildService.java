@@ -13,6 +13,7 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.beans.ArtifactMetaInfo;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.AzureConfig;
@@ -79,6 +80,19 @@ public interface BuildService<T> {
   }
 
   default BuildDetails getBuild(String appId, ArtifactStreamAttributes artifactStreamAttributes, T config,
+      List<EncryptedDataDetail> encryptionDetails, String buildNo) {
+    throw new UnsupportedOperationException();
+  }
+
+  default BuildDetails getBuild(String appId, ArtifactStreamAttributes artifactStreamAttributes, T config,
+      List<EncryptedDataDetail> encryptionDetails, String buildNo, boolean isRegex) {
+    if (isRegex) {
+      return getBuildWithRegex(appId, artifactStreamAttributes, config, encryptionDetails, buildNo);
+    }
+    return getBuild(appId, artifactStreamAttributes, config, encryptionDetails, buildNo);
+  }
+
+  default BuildDetails getBuildWithRegex(String appId, ArtifactStreamAttributes artifactStreamAttributes, T config,
       List<EncryptedDataDetail> encryptionDetails, String buildNo) {
     throw new UnsupportedOperationException();
   }
@@ -375,6 +389,11 @@ public interface BuildService<T> {
 
   default List<AzureResourceGroup> listResourceGroups(
       AzureConfig config, List<EncryptedDataDetail> encryptionDetails, String subscriptionId) {
+    throw new UnsupportedOperationException();
+  }
+
+  default ArtifactMetaInfo getArtifactMetaInfo(ArtifactStreamAttributes artifactStreamAttributes, String buildNo,
+      T config, List<EncryptedDataDetail> encryptionDetails) {
     throw new UnsupportedOperationException();
   }
 }

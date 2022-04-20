@@ -20,6 +20,7 @@ import io.harness.delegate.beans.ConnectionMode;
 import io.harness.delegate.beans.Delegate;
 import io.harness.delegate.beans.DelegateApproval;
 import io.harness.delegate.beans.DelegateConnectionHeartbeat;
+import io.harness.delegate.beans.DelegateDTO;
 import io.harness.delegate.beans.DelegateGroup;
 import io.harness.delegate.beans.DelegateInitializationDetails;
 import io.harness.delegate.beans.DelegateParams;
@@ -29,6 +30,7 @@ import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.DelegateScripts;
 import io.harness.delegate.beans.DelegateSetupDetails;
 import io.harness.delegate.beans.DelegateSizeDetails;
+import io.harness.delegate.beans.DelegateTags;
 import io.harness.delegate.beans.DelegateUnregisterRequest;
 import io.harness.delegate.beans.FileBucket;
 import io.harness.exception.InvalidRequestException;
@@ -69,7 +71,9 @@ public interface DelegateService extends OwnedByAccount {
 
   List<String> getAvailableVersions(String accountId);
 
-  Double getConnectedRatioWithPrimary(String targetVersion);
+  Double getConnectedRatioWithPrimary(String targetVersion, String accountId);
+
+  Double getConnectedDelegatesRatio(String version, String accountId);
 
   Map<String, List<String>> getActiveDelegatesPerAccount(String targetVersion);
 
@@ -202,4 +206,12 @@ public interface DelegateService extends OwnedByAccount {
   long getCountOfRegisteredDelegates(String accountId);
 
   long getCountOfConnectedDelegates(String accountId);
+
+  DelegateDTO listDelegateTags(String accountId, String delegateId);
+
+  DelegateDTO addDelegateTags(String accountId, String delegateId, DelegateTags delegateTags);
+
+  DelegateDTO updateDelegateTags(String accountId, String delegateId, DelegateTags delegateTags);
+
+  DelegateDTO deleteDelegateTags(String accountId, String delegateId);
 }

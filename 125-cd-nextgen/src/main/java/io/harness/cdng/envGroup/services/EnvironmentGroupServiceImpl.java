@@ -7,13 +7,19 @@
 
 package io.harness.cdng.envGroup.services;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
 import static java.lang.String.format;
+import static org.springframework.data.mongodb.core.query.Criteria.where;
 
 import io.harness.EntityType;
+import io.harness.NGResourceFilterConstants;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.envGroup.beans.EnvironmentGroupEntity;
+import io.harness.cdng.envGroup.beans.EnvironmentGroupEntity.EnvironmentGroupKeys;
+import io.harness.cdng.envGroup.beans.EnvironmentGroupFilterPropertiesDTO;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.eventsframework.EventsFrameworkConstants;
 import io.harness.eventsframework.EventsFrameworkMetadataConstants;
@@ -27,6 +33,7 @@ import io.harness.eventsframework.schemas.entitysetupusage.EntitySetupUsageCreat
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.ng.core.EntityDetail;
+import io.harness.ng.core.common.beans.NGTag.NGTagKeys;
 import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
 import io.harness.ng.core.entitysetupusage.service.EntitySetupUsageService;
 import io.harness.ng.core.utils.CoreCriteriaUtils;
@@ -40,6 +47,7 @@ import com.google.protobuf.StringValue;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -57,15 +65,18 @@ public class EnvironmentGroupServiceImpl implements EnvironmentGroupService {
   private final Producer setupUsagesEventProducer;
   private final IdentifierRefProtoDTOHelper identifierRefProtoDTOHelper;
   private final EntitySetupUsageService entitySetupUsageService;
+  private final EnvironmentGroupServiceHelper environmentGroupServiceHelper;
 
   @Inject
   public EnvironmentGroupServiceImpl(EnvironmentGroupRepository environmentRepository,
       @Named(EventsFrameworkConstants.SETUP_USAGE) Producer setupUsagesEventProducer,
-      IdentifierRefProtoDTOHelper identifierRefProtoDTOHelper, EntitySetupUsageService entitySetupUsageService) {
+      IdentifierRefProtoDTOHelper identifierRefProtoDTOHelper, EntitySetupUsageService entitySetupUsageService,
+      EnvironmentGroupServiceHelper environmentGroupServiceHelper) {
     this.environmentRepository = environmentRepository;
     this.setupUsagesEventProducer = setupUsagesEventProducer;
     this.identifierRefProtoDTOHelper = identifierRefProtoDTOHelper;
     this.entitySetupUsageService = entitySetupUsageService;
+    this.environmentGroupServiceHelper = environmentGroupServiceHelper;
   }
 
   @Override
@@ -174,6 +185,52 @@ public class EnvironmentGroupServiceImpl implements EnvironmentGroupService {
         setupUsagesForEnvironmentList(deletedEntity);
       }
     }
+  }
+
+  @Override
+  public Criteria formCriteria(String accountId, String orgIdentifier, String projectIdentifier, boolean deleted,
+      String searchTerm, String filterIdentifier, EnvironmentGroupFilterPropertiesDTO filterProperties) {
+    Criteria criteria = new Criteria();
+    if (isNotEmpty(accountId)) {
+      criteria.and(EnvironmentGroupKeys.accountId).is(accountId);
+    }
+    if (isNotEmpty(orgIdentifier)) {
+      criteria.and(EnvironmentGroupKeys.orgIdentifier).is(orgIdentifier);
+    }
+    if (isNotEmpty(projectIdentifier)) {
+      criteria.and(EnvironmentGroupKeys.projectIdentifier).is(projectIdentifier);
+    }
+
+    criteria.and(EnvironmentGroupKeys.deleted).is(deleted);
+
+    Criteria filterCriteria = new Criteria();
+    if (EmptyPredicate.isNotEmpty(filterIdentifier) && filterProperties != null) {
+      throw new InvalidRequestException("Can not apply both filter properties and saved filter together");
+    } else if (EmptyPredicate.isNotEmpty(filterIdentifier) && filterProperties == null) {
+      environmentGroupServiceHelper.populateEnvGroupFilterUsingIdentifier(
+          filterCriteria, accountId, orgIdentifier, projectIdentifier, filterIdentifier);
+    } else if (EmptyPredicate.isEmpty(filterIdentifier) && filterProperties != null) {
+      environmentGroupServiceHelper.populateEnvGroupFilter(filterCriteria, filterProperties);
+    }
+
+    Criteria searchCriteria = new Criteria();
+    if (EmptyPredicate.isNotEmpty(searchTerm)) {
+      try {
+        searchCriteria.orOperator(where(EnvironmentGroupKeys.identifier)
+                                      .regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS),
+            where(EnvironmentGroupKeys.name)
+                .regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS),
+            where(EnvironmentGroupKeys.tags + "." + NGTagKeys.key)
+                .regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS),
+            where(EnvironmentGroupKeys.tags + "." + NGTagKeys.value)
+                .regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS));
+      } catch (PatternSyntaxException pex) {
+        throw new InvalidRequestException(pex.getMessage() + " Use \\\\ for special character", pex);
+      }
+    }
+
+    criteria.andOperator(filterCriteria, searchCriteria);
+    return criteria;
   }
 
   public void setupUsagesForEnvironmentList(EnvironmentGroupEntity envGroupEntity) {
