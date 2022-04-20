@@ -19,6 +19,7 @@ import io.harness.cdng.CDStepHelper;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.cdng.k8s.beans.StepExceptionPassThroughData;
 import io.harness.cdng.provision.cloudformation.beans.CloudFormationCreateStackPassThroughData;
+import io.harness.cdng.provision.cloudformation.beans.CloudformationConfig;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.exception.TaskNGDataException;
@@ -58,6 +59,7 @@ import software.wings.beans.TaskType;
 import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
@@ -75,6 +77,7 @@ public class CloudformationCreateStackStep
   @Inject private CDStepHelper cdStepHelper;
   @Inject private CloudformationStepHelper cloudformationStepHelper;
   @Inject private CDFeatureFlagHelper cdFeatureFlagHelper;
+  @Inject private CloudformationConfigDAL cloudformationConfigDAL;
 
   @Override
   public void validateResources(Ambiance ambiance, StepElementParameters stepParameters) {
@@ -163,16 +166,23 @@ public class CloudformationCreateStackStep
           cloudformationTaskNGResponse.getUnitProgressData().getUnitProgresses(),
           cloudformationTaskNGResponse.getErrorMessage());
     }
+    CloudFormationCreateStackNGResponse cloudFormationCreateStackNGResponse =
+        (CloudFormationCreateStackNGResponse) cloudformationTaskNGResponse.getCloudFormationCommandNGResponse();
+
     cloudformationStepHelper.saveCloudFormationInheritOutput(stepConfiguration,
-        getParameterFieldValue(cloudformationCreateStackStepParameters.getProvisionerIdentifier()), ambiance);
+        getParameterFieldValue(cloudformationCreateStackStepParameters.getProvisionerIdentifier()), ambiance,
+        cloudFormationCreateStackNGResponse.isExistentStack());
+    CloudformationConfig cloudformationConfig = cloudformationStepHelper.getCloudformationConfig(
+        ambiance, stepParameters, (CloudFormationCreateStackPassThroughData) passThroughData);
+    cloudformationConfigDAL.saveCloudformationConfig(cloudformationConfig);
     return StepResponse.builder()
         .unitProgressList(cloudformationTaskNGResponse.getUnitProgressData().getUnitProgresses())
         .stepOutcome(StepResponse.StepOutcome.builder()
                          .name(OutcomeExpressionConstants.OUTPUT)
                          .outcome(new CloudformationCreateStackOutcome(
-                             ((CloudFormationCreateStackNGResponse)
-                                     cloudformationTaskNGResponse.getCloudFormationCommandNGResponse())
-                                 .getCloudFormationOutputMap()))
+                             isNotEmpty(cloudFormationCreateStackNGResponse.getCloudFormationOutputMap())
+                                 ? cloudFormationCreateStackNGResponse.getCloudFormationOutputMap()
+                                 : new HashMap<>()))
                          .build())
         .status(Status.SUCCEEDED)
         .build();
@@ -190,22 +200,19 @@ public class CloudformationCreateStackStep
   }
 
   @Override
-  public TaskChainResponse executeCloudformationTask(
-      Ambiance ambiance, StepElementParameters stepParameters, CloudformationTaskNGParameters parameters) {
-    TaskData taskData = TaskData.builder()
-                            .async(true)
-                            .taskType(TaskType.CLOUDFORMATION_TASK_NG.name())
-                            .timeout(StepUtils.getTimeoutMillis(stepParameters.getTimeout(), "10m"))
-                            .parameters(new Object[] {parameters})
-                            .build();
+  public TaskChainResponse executeCloudformationTask(Ambiance ambiance, StepElementParameters stepParameters,
+      CloudformationTaskNGParameters parameters, CloudFormationCreateStackPassThroughData passThroughData) {
+    TaskData taskData =
+        TaskData.builder()
+            .async(true)
+            .taskType(TaskType.CLOUDFORMATION_TASK_NG.name())
+            .timeout(StepUtils.getTimeoutMillis(stepParameters.getTimeout(), CloudformationStepHelper.DEFAULT_TIMEOUT))
+            .parameters(new Object[] {parameters})
+            .build();
     final TaskRequest taskRequest = StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         Arrays.asList(K8sCommandUnitConstants.FetchFiles, CloudformationCommandUnit.CreateStack.name()),
         TaskType.CLOUDFORMATION_TASK_NG.getDisplayName(),
         StepUtils.getTaskSelectors(stepParameters.getDelegateSelectors()), stepHelper.getEnvironmentType(ambiance));
-    return TaskChainResponse.builder()
-        .taskRequest(taskRequest)
-        .passThroughData(CloudFormationCreateStackPassThroughData.builder().build())
-        .chainEnd(true)
-        .build();
+    return TaskChainResponse.builder().taskRequest(taskRequest).passThroughData(passThroughData).chainEnd(true).build();
   }
 }

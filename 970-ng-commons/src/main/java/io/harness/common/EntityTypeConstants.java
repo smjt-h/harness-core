@@ -88,4 +88,5 @@ public interface EntityTypeConstants {
   String NG_FILE = "NgFile";
   String CLOUDFORMATION_CREATE_STACK_STEP = "CreateStack";
   String CLOUDFORMATION_DELETE_STACK_STEP = "DeleteStack";
+  String CLOUDFORMATION_ROLLBACK_STACK_STEP = "RollbackStack";
 }

@@ -26,6 +26,7 @@ import io.harness.cdng.k8s.K8sScaleStepNode;
 import io.harness.cdng.pipeline.CDStepInfo;
 import io.harness.cdng.provision.cloudformation.CloudformationCreateStackStepNode;
 import io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepNode;
+import io.harness.cdng.provision.cloudformation.CloudformationRollbackStepNode;
 import io.harness.cdng.provision.terraform.TerraformApplyStepNode;
 import io.harness.cdng.provision.terraform.TerraformDestroyStepNode;
 import io.harness.cdng.provision.terraform.TerraformPlanStepNode;
@@ -301,6 +302,18 @@ public class CDNGRegistrars {
                    .availableAtOrgLevel(false)
                    .availableAtAccountLevel(false)
                    .clazz(CloudformationDeleteStackStepNode.class)
+                   .yamlSchemaMetadata(YamlSchemaMetadata.builder()
+                                           .namespace(SchemaNamespaceConstants.CD)
+                                           .modulesSupported(Collections.singletonList(ModuleType.CD))
+                                           .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
+                                           .build())
+                   .build())
+          .add(YamlSchemaRootClass.builder()
+                   .entityType(EntityType.CLOUDFORMATION_ROLLBACK_STACK_STEP)
+                   .availableAtProjectLevel(true)
+                   .availableAtOrgLevel(false)
+                   .availableAtAccountLevel(false)
+                   .clazz(CloudformationRollbackStepNode.class)
                    .yamlSchemaMetadata(YamlSchemaMetadata.builder()
                                            .namespace(SchemaNamespaceConstants.CD)
                                            .modulesSupported(Collections.singletonList(ModuleType.CD))

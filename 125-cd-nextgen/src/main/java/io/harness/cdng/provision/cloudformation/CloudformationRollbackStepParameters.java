@@ -16,7 +16,6 @@ import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.yaml.ParameterField;
 
 import java.util.List;
-import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -27,15 +26,13 @@ import lombok.NonNull;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@RecasterAlias("io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepParameters")
-public class CloudformationDeleteStackStepParameters
-    extends CloudformationDeleteStackBaseStepInfo implements SpecParameters {
-  @NotNull CloudformationDeleteStackStepConfiguration configuration;
-
+@RecasterAlias("io.harness.cdng.provision.cloudformation.CloudformationRollbackStepParameters")
+public class CloudformationRollbackStepParameters extends CloudformationRollbackBaseStepInfo implements SpecParameters {
+  @NonNull CloudformationRollbackStepConfiguration configuration;
   @Builder(builderMethodName = "infoBuilder")
-  public CloudformationDeleteStackStepParameters(ParameterField<List<TaskSelectorYaml>> delegateSelectors,
-      @NonNull CloudformationDeleteStackStepConfiguration configuration, String uuid) {
-    super(delegateSelectors, uuid);
+  public CloudformationRollbackStepParameters(ParameterField<List<TaskSelectorYaml>> delegateSelectors,
+      @NonNull CloudformationRollbackStepConfiguration configuration) {
+    super(delegateSelectors);
     this.configuration = configuration;
   }
 }

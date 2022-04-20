@@ -98,4 +98,5 @@ public class EntityYamlRootNames {
   public static final String NG_FILE = "NgFile";
   public static String CLOUDFORMATION_CREATE_STACK_STEP = "CreateStack";
   public static String CLOUDFORMATION_DELETE_STACK_STEP = "DeleteStack";
+  public static String CLOUDFORMATION_ROLLBACK_STACK_STEP = "RollbackStack";
 }

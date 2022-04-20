@@ -185,9 +185,6 @@ public class CloudformationCreateStackTaskHandlerTest {
     when(awsCloudformationClient.getAllStacks(anyString(), any(), any()))
         .thenReturn(Collections.singletonList(createdStack), Collections.singletonList(createdStack));
 
-    ExistingStackInfo existingStackInfo = ExistingStackInfo.builder().stackExisted(true).build();
-    when(cloudformationBaseHelper.getExistingStackInfo(any(), anyString(), any())).thenReturn(existingStackInfo);
-
     UpdateStackResult updatedStackResult = new UpdateStackResult();
     updatedStackResult.setStackId("stackId-123");
     when(awsCloudformationClient.updateStack(anyString(), any(), any())).thenReturn(updatedStackResult);
@@ -200,7 +197,6 @@ public class CloudformationCreateStackTaskHandlerTest {
     assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
     verify(cloudformationBaseHelper, times(1)).getCloudformationTags(anyString());
     verify(cloudformationBaseHelper, times(1)).getCapabilities(any(), anyString(), anyString(), any(), any());
-    verify(cloudformationBaseHelper, times(1)).getExistingStackInfo(any(), anyString(), any());
     verify(awsCloudformationClient, times(1)).updateStack(anyString(), any(), any());
     verify(awsCloudformationClient, times(2)).getAllStacks(anyString(), any(), any());
     verify(cloudformationBaseHelper, times(1)).printStackEvents(any(), anyString(), anyLong(), any(), any());
@@ -222,9 +218,6 @@ public class CloudformationCreateStackTaskHandlerTest {
     when(awsCloudformationClient.getAllStacks(anyString(), any(), any()))
         .thenReturn(Collections.singletonList(createdStack), Collections.singletonList(createdStack));
 
-    ExistingStackInfo existingStackInfo = ExistingStackInfo.builder().stackExisted(true).build();
-    when(cloudformationBaseHelper.getExistingStackInfo(any(), anyString(), any())).thenReturn(existingStackInfo);
-
     UpdateStackResult updatedStackResult = new UpdateStackResult();
     updatedStackResult.setStackId("stackId-123");
     when(awsCloudformationClient.updateStack(anyString(), any(), any())).thenReturn(updatedStackResult);
@@ -237,7 +230,6 @@ public class CloudformationCreateStackTaskHandlerTest {
     assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
     verify(cloudformationBaseHelper, times(1)).getCloudformationTags(anyString());
     verify(cloudformationBaseHelper, times(1)).getCapabilities(any(), anyString(), anyString(), any(), any());
-    verify(cloudformationBaseHelper, times(1)).getExistingStackInfo(any(), anyString(), any());
     verify(awsCloudformationClient, times(1)).updateStack(anyString(), any(), any());
     verify(awsCloudformationClient, times(2)).getAllStacks(anyString(), any(), any());
     verify(cloudformationBaseHelper, times(1)).printStackEvents(any(), anyString(), anyLong(), any(), any());
@@ -272,13 +264,9 @@ public class CloudformationCreateStackTaskHandlerTest {
 
     ArgumentCaptor<String> msgCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<LogLevel> logLevelCaptor = ArgumentCaptor.forClass(LogLevel.class);
-    ArgumentCaptor<CommandExecutionStatus> commandExecutionStatusCaptor =
-        ArgumentCaptor.forClass(CommandExecutionStatus.class);
 
-    verify(logCallback, atLeastOnce())
-        .saveExecutionLog(msgCaptor.capture(), logLevelCaptor.capture(), commandExecutionStatusCaptor.capture());
+    verify(logCallback, atLeastOnce()).saveExecutionLog(msgCaptor.capture(), logLevelCaptor.capture());
     assertThat(logLevelCaptor.getValue()).isEqualTo(ERROR);
-    assertThat(commandExecutionStatusCaptor.getValue()).isEqualTo(FAILURE);
   }
 
   @Test
@@ -305,8 +293,6 @@ public class CloudformationCreateStackTaskHandlerTest {
         createStackTaskHandler.executeTaskInternal(parameters.build(), "delegateId", "task-Id", logCallback);
 
     ArgumentCaptor<LogLevel> logLevelCaptor = ArgumentCaptor.forClass(LogLevel.class);
-    ArgumentCaptor<CommandExecutionStatus> commandExecutionStatusCaptor =
-        ArgumentCaptor.forClass(CommandExecutionStatus.class);
 
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(FAILURE);
@@ -315,10 +301,8 @@ public class CloudformationCreateStackTaskHandlerTest {
     verify(awsCloudformationClient, times(1)).updateStack(anyString(), any(), any());
     verify(awsCloudformationClient, times(1)).getAllStacks(anyString(), any(), any());
 
-    verify(logCallback, atLeastOnce())
-        .saveExecutionLog(anyString(), logLevelCaptor.capture(), commandExecutionStatusCaptor.capture());
+    verify(logCallback, atLeastOnce()).saveExecutionLog(anyString(), logLevelCaptor.capture());
     assertThat(logLevelCaptor.getValue()).isEqualTo(ERROR);
-    assertThat(commandExecutionStatusCaptor.getValue()).isEqualTo(FAILURE);
   }
 
   @Test

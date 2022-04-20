@@ -10,6 +10,7 @@ package io.harness.delegate.task.cloudformation.handlers;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.logging.CommandExecutionStatus.FAILURE;
+import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.logging.LogLevel.INFO;
 
@@ -55,8 +56,8 @@ public abstract class CloudformationAbstractTaskHandler {
       String taskId, LogCallback logCallback) throws Exception {
     try {
       CloudformationTaskNGResponse response = executeTaskInternal(taskNGParameters, delegateId, taskId, logCallback);
-      if (response.getCommandExecutionStatus().equals(CommandExecutionStatus.SUCCESS)) {
-        logCallback.saveExecutionLog("Execution finished successfully.", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
+      if (response.getCommandExecutionStatus().equals(SUCCESS)) {
+        logCallback.saveExecutionLog("Execution finished successfully.", LogLevel.INFO, SUCCESS);
       } else {
         logCallback.saveExecutionLog("Execution has been failed.", LogLevel.ERROR, FAILURE);
       }
@@ -94,7 +95,7 @@ public abstract class CloudformationAbstractTaskHandler {
           .build();
     }
     logCallback.saveExecutionLog("Stack deleted", INFO);
-    return CloudformationTaskNGResponse.builder().commandExecutionStatus(CommandExecutionStatus.SUCCESS).build();
+    return CloudformationTaskNGResponse.builder().commandExecutionStatus(SUCCESS).build();
   }
 
   protected List<Parameter> getParameters(Map<String, String> parameters) {

@@ -47,7 +47,7 @@ public class CloudformationTaskNGParameters
   @NonNull String stackName;
   @Expression(ALLOW_SECRETS) Map<String, String> parameters;
   List<String> capabilities;
-  String tags;
+  @Expression(ALLOW_SECRETS) String tags;
   List<StackStatus> stackStatusesToMarkAsSuccess;
   long timeoutInMs;
 

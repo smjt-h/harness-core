@@ -12,6 +12,7 @@ import static io.harness.rule.OwnerRule.NGONZALEZ;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -32,6 +33,7 @@ import io.harness.cdng.manifest.yaml.GithubStore;
 import io.harness.cdng.manifest.yaml.S3UrlStoreConfig;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
 import io.harness.cdng.provision.cloudformation.beans.CloudFormationCreateStackPassThroughData;
+import io.harness.cdng.provision.cloudformation.beans.CloudformationConfig;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
@@ -87,6 +89,7 @@ public class CloudformationCreateStackStepTest extends CategoryTest {
   @Mock CloudformationStepHelper cloudformationStepHelper;
   @Mock StepHelper stepHelper;
   @Mock CDFeatureFlagHelper cdFeatureFlagHelper;
+  @Mock CloudformationConfigDAL cloudformationConfigDAL;
 
   @InjectMocks private CloudformationCreateStackStep cloudformationCreateStackStep;
 
@@ -229,8 +232,9 @@ public class CloudformationCreateStackStepTest extends CategoryTest {
                                                                         .encryptedDataDetails(encryptedDataDetails)
                                                                         .stackName("test-stack-name")
                                                                         .build();
-    TaskChainResponse taskChainResponse = cloudformationCreateStackStep.executeCloudformationTask(
-        getAmbiance(), stepElementParameters, cloudformationTaskNGParameters);
+    TaskChainResponse taskChainResponse =
+        cloudformationCreateStackStep.executeCloudformationTask(getAmbiance(), stepElementParameters,
+            cloudformationTaskNGParameters, CloudFormationCreateStackPassThroughData.builder().build());
     assertThat(taskChainResponse).isNotNull();
     PowerMockito.verifyStatic(StepUtils.class, times(1));
     StepUtils.prepareCDTaskRequest(any(), taskDataArgumentCaptor.capture(), any(), any(), any(), any(), any());
@@ -259,6 +263,7 @@ public class CloudformationCreateStackStepTest extends CategoryTest {
     RemoteCloudformationTemplateFileSpec templateFileSpec = new RemoteCloudformationTemplateFileSpec();
     CloudformationParametersFileSpec parametersFileSpec = new CloudformationParametersFileSpec();
     CloudformationParametersFileSpec parametersFileSpec2 = new CloudformationParametersFileSpec();
+    CloudformationConfig cloudformationConfig = CloudformationConfig.builder().build();
 
     StoreConfigWrapper storeConfigWrapper = StoreConfigWrapper.builder()
                                                 .spec(S3UrlStoreConfig.builder()
@@ -295,10 +300,12 @@ public class CloudformationCreateStackStepTest extends CategoryTest {
                         UnitProgress.newBuilder().setUnitName("name").setStatus(UnitStatus.FAILURE).build()))
                     .build())
             .build();
-    doNothing().when(cloudformationStepHelper).saveCloudFormationInheritOutput(any(), any(), any());
+    doNothing().when(cloudformationStepHelper).saveCloudFormationInheritOutput(any(), any(), any(), anyBoolean());
+    doReturn(cloudformationConfig).when(cloudformationStepHelper).getCloudformationConfig(any(), any(), any());
     StepResponse response = cloudformationCreateStackStep.finalizeExecutionWithSecurityContext(
         getAmbiance(), stepElementParameters, passThroughData, () -> cloudformationTaskNGResponse);
     assertThat(response.getStatus()).isEqualTo(Status.SUCCEEDED);
+    verify(cloudformationConfigDAL).saveCloudformationConfig(eq(cloudformationConfig));
 
     // Verify now that if the passthorugh data is StepExceptionPassThroughData the cloudformation task is not executed
     cloudformationCreateStackStep.finalizeExecutionWithSecurityContext(getAmbiance(), stepElementParameters,

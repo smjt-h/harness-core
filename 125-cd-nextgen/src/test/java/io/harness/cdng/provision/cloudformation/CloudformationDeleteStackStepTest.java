@@ -8,6 +8,7 @@
 package io.harness.cdng.provision.cloudformation;
 
 import static io.harness.rule.OwnerRule.NGONZALEZ;
+import static io.harness.rule.OwnerRule.TMACARI;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -26,6 +27,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.common.resources.AwsResourceServiceHelper;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
+import io.harness.cdng.provision.cloudformation.beans.CloudFormationInheritOutput;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.connector.ConnectorType;
@@ -35,6 +37,7 @@ import io.harness.delegate.task.cloudformation.CloudformationTaskNGParameters;
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGResponse;
 import io.harness.delegate.task.cloudformation.CloudformationTaskType;
 import io.harness.exception.AccessDeniedException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.UnitProgress;
 import io.harness.ng.core.EntityDetail;
@@ -99,7 +102,7 @@ public class CloudformationDeleteStackStepTest extends CategoryTest {
     Mockito.doReturn(true).when(cdFeatureFlagHelper).isEnabled(anyString(), any());
 
     Ambiance ambiance = getAmbiance();
-    StepElementParameters stepElementParameters = createDeleteStackStep();
+    StepElementParameters stepElementParameters = createInlineDeleteStackStep();
     cloudformationDeleteStackStep.validateResources(ambiance, stepElementParameters);
 
     verify(pipelineRbacHelper, times(1)).checkRuntimePermissions(eq(ambiance), captor.capture(), eq(true));
@@ -117,7 +120,7 @@ public class CloudformationDeleteStackStepTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testValidateExceptionIsThrownIfFFisNotEnabled() {
     Ambiance ambiance = getAmbiance();
-    StepElementParameters stepElementParameters = createDeleteStackStep();
+    StepElementParameters stepElementParameters = createInlineDeleteStackStep();
     Mockito.doReturn(false).when(cdFeatureFlagHelper).isEnabled(anyString(), any());
 
     assertThatThrownBy(() -> cloudformationDeleteStackStep.validateResources(ambiance, stepElementParameters))
@@ -129,7 +132,7 @@ public class CloudformationDeleteStackStepTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testObtainTaskAfterRbac() {
     Ambiance ambiance = getAmbiance();
-    StepElementParameters stepElementParameters = createDeleteStackStep();
+    StepElementParameters stepElementParameters = createInlineDeleteStackStep();
     doReturn(ACCOUNT_TEST_ID + "/" + ORG_TEST_ID + "/" + PROJECT_TEST_ID)
         .when(cloudformationStepHelper)
         .generateIdentifier(any(), any());
@@ -146,8 +149,10 @@ public class CloudformationDeleteStackStepTest extends CategoryTest {
         .thenReturn(TaskRequest.newBuilder().build());
     ArgumentCaptor<TaskData> taskDataArgumentCaptor = ArgumentCaptor.forClass(TaskData.class);
     StepInputPackage stepInputPackage = StepInputPackage.builder().build();
+
     TaskRequest taskRequest =
         cloudformationDeleteStackStep.obtainTaskAfterRbac(ambiance, stepElementParameters, stepInputPackage);
+
     assertThat(taskRequest).isNotNull();
     PowerMockito.verifyStatic(StepUtils.class, times(1));
     StepUtils.prepareCDTaskRequest(any(), taskDataArgumentCaptor.capture(), any(), any(), any(), any(), any());
@@ -159,11 +164,101 @@ public class CloudformationDeleteStackStepTest extends CategoryTest {
   }
 
   @Test
+  @Owner(developers = TMACARI)
+  @Category(UnitTests.class)
+  public void testObtainTaskAfterRbacInherited() {
+    Ambiance ambiance = getAmbiance();
+    StepElementParameters stepElementParameters = createInheritedDeleteStackStep();
+    doReturn(ACCOUNT_TEST_ID + "/" + ORG_TEST_ID + "/" + PROJECT_TEST_ID)
+        .when(cloudformationStepHelper)
+        .generateIdentifier(any(), any());
+    ConnectorInfoDTO connectorInfoDTO = ConnectorInfoDTO.builder()
+                                            .connectorType(ConnectorType.AWS)
+                                            .identifier(CONNECTOR_TEST_ID)
+                                            .connectorConfig(AwsConnectorDTO.builder().build())
+                                            .build();
+    doReturn(connectorInfoDTO).when(cloudformationStepHelper).getConnectorDTO(any(), any());
+    doReturn(ROLE_ARN).when(cloudformationStepHelper).renderValue(any(), any());
+    doReturn(new ArrayList<>()).when(awsHelper).getAwsEncryptionDetails(any(), any());
+    doReturn(CloudFormationInheritOutput.builder()
+                 .connectorRef(CONNECTOR_TEST_ID)
+                 .region(REGION)
+                 .roleArn(ROLE_ARN)
+                 .stackName(STACK_TEST_ID)
+                 .build())
+        .when(cloudformationStepHelper)
+        .getSavedCloudFormationInheritOutput(any(), any());
+    mockStatic(StepUtils.class);
+    PowerMockito.when(StepUtils.prepareCDTaskRequest(any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(TaskRequest.newBuilder().build());
+    ArgumentCaptor<TaskData> taskDataArgumentCaptor = ArgumentCaptor.forClass(TaskData.class);
+    StepInputPackage stepInputPackage = StepInputPackage.builder().build();
+
+    TaskRequest taskRequest =
+        cloudformationDeleteStackStep.obtainTaskAfterRbac(ambiance, stepElementParameters, stepInputPackage);
+
+    verify(cloudformationStepHelper, times(1)).getSavedCloudFormationInheritOutput(any(), any());
+    assertThat(taskRequest).isNotNull();
+    PowerMockito.verifyStatic(StepUtils.class, times(1));
+    StepUtils.prepareCDTaskRequest(any(), taskDataArgumentCaptor.capture(), any(), any(), any(), any(), any());
+    assertThat(taskDataArgumentCaptor.getValue()).isNotNull();
+    assertThat(taskDataArgumentCaptor.getValue().getParameters()).isNotNull();
+    CloudformationTaskNGParameters taskParameters =
+        (CloudformationTaskNGParameters) taskDataArgumentCaptor.getValue().getParameters()[0];
+    assertThat(taskParameters.getTaskType()).isEqualTo(CloudformationTaskType.DELETE_STACK);
+  }
+
+  @Test
+  @Owner(developers = TMACARI)
+  @Category(UnitTests.class)
+  public void testObtainTaskAfterRbacInheritedNoInheritOutputFound() {
+    Ambiance ambiance = getAmbiance();
+    StepElementParameters stepElementParameters = createInheritedDeleteStackStep();
+    doReturn(ACCOUNT_TEST_ID + "/" + ORG_TEST_ID + "/" + PROJECT_TEST_ID)
+        .when(cloudformationStepHelper)
+        .generateIdentifier(any(), any());
+    ConnectorInfoDTO connectorInfoDTO = ConnectorInfoDTO.builder()
+                                            .connectorType(ConnectorType.AWS)
+                                            .identifier(CONNECTOR_TEST_ID)
+                                            .connectorConfig(AwsConnectorDTO.builder().build())
+                                            .build();
+    doReturn(connectorInfoDTO).when(cloudformationStepHelper).getConnectorDTO(any(), any());
+    doReturn(ROLE_ARN).when(cloudformationStepHelper).renderValue(any(), any());
+    doReturn(new ArrayList<>()).when(awsHelper).getAwsEncryptionDetails(any(), any());
+    doReturn(null).when(cloudformationStepHelper).getSavedCloudFormationInheritOutput(any(), any());
+
+    assertThatThrownBy(()
+                           -> cloudformationDeleteStackStep.obtainTaskAfterRbac(
+                               ambiance, stepElementParameters, StepInputPackage.builder().build()))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessageContaining("Did not find any successfully executed Create Stack step for provisioner identifier:");
+
+    verify(cloudformationStepHelper, times(1)).getSavedCloudFormationInheritOutput(any(), any());
+  }
+
+  @Test
+  @Owner(developers = TMACARI)
+  @Category(UnitTests.class)
+  public void testObtainTaskAfterRbacInvalidConfigurationType() {
+    Ambiance ambiance = getAmbiance();
+    StepElementParameters stepElementParameters = createInheritedDeleteStackStep();
+    CloudformationDeleteStackStepParameters cloudformationDeleteStackStepParameters =
+        (CloudformationDeleteStackStepParameters) stepElementParameters.getSpec();
+    cloudformationDeleteStackStepParameters.getConfiguration().setType("Invalid");
+
+    assertThatThrownBy(()
+                           -> cloudformationDeleteStackStep.obtainTaskAfterRbac(
+                               ambiance, stepElementParameters, StepInputPackage.builder().build()))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessageContaining("Invalid configuration type:");
+  }
+
+  @Test
   @Owner(developers = NGONZALEZ)
   @Category(UnitTests.class)
   public void testHandleTaskResultWithSecurityContext() throws Exception {
     Ambiance ambiance = getAmbiance();
-    StepElementParameters stepElementParameters = createDeleteStackStep();
+    StepElementParameters stepElementParameters = createInlineDeleteStackStep();
     doReturn(ACCOUNT_TEST_ID + "/" + ORG_TEST_ID + "/" + PROJECT_TEST_ID)
         .when(cloudformationStepHelper)
         .generateIdentifier(any(), any());
@@ -207,7 +302,7 @@ public class CloudformationDeleteStackStepTest extends CategoryTest {
     return statusMap;
   }
 
-  private StepElementParameters createDeleteStackStep() {
+  private StepElementParameters createInlineDeleteStackStep() {
     InlineCloudformationDeleteStackStepConfiguration spec =
         InlineCloudformationDeleteStackStepConfiguration.builder()
             .connectorRef(ParameterField.createValueField(CONNECTOR_TEST_ID))
@@ -219,6 +314,22 @@ public class CloudformationDeleteStackStepTest extends CategoryTest {
         CloudformationDeleteStackStepConfiguration.builder()
             .spec(spec)
             .type(CloudformationDeleteStackStepConfigurationTypes.Inline)
+            .build();
+
+    return StepElementParameters.builder()
+        .spec(CloudformationDeleteStackStepParameters.infoBuilder().configuration(configuration).build())
+        .build();
+  }
+
+  private StepElementParameters createInheritedDeleteStackStep() {
+    InheritedCloudformationDeleteStackStepConfiguration spec =
+        InheritedCloudformationDeleteStackStepConfiguration.builder()
+            .provisionerIdentifier(ParameterField.createValueField("provisionerIdentifier"))
+            .build();
+    CloudformationDeleteStackStepConfiguration configuration =
+        CloudformationDeleteStackStepConfiguration.builder()
+            .spec(spec)
+            .type(CloudformationDeleteStackStepConfigurationTypes.Inherited)
             .build();
 
     return StepElementParameters.builder()

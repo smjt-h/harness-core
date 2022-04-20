@@ -65,6 +65,7 @@ public enum FeatureRestrictionName {
   INTEGRATED_APPROVALS_WITH_SERVICE_NOW,
   CREATE_STACK,
   DELETE_STACK,
+  ROLLBACK_STACK,
 
   // STO Features
   SECURITY,

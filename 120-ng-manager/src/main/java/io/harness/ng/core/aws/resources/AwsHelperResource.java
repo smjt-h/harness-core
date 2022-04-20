@@ -62,13 +62,11 @@ public class AwsHelperResource {
 
   @POST
   @Path("cf-parameters")
-  @ApiOperation(value = "Send a CF Template to AWS and retrieve the parameters contained in that",
-      nickname = "CFParametersForAws")
-  public ResponseDTO<List<AwsCFTemplateParamsData>>
-  listCFParameterKeys(@QueryParam("type") @NotNull String type, @QueryParam("region") @NotNull String region,
-      @QueryParam("isBranch") boolean isBranch, @QueryParam("branch") String branch,
-      @QueryParam("filePath") String templatePath, @QueryParam("commitId") String commitId,
-      @QueryParam("awsConnectorRef") @NotNull String awsConnectorRef,
+  @ApiOperation(value = "Get Cloudformation parameters from a template", nickname = "CFParametersForAws")
+  public ResponseDTO<List<AwsCFTemplateParamsData>> listCFParameterKeys(@QueryParam("type") @NotNull String type,
+      @QueryParam("region") @NotNull String region, @QueryParam("isBranch") boolean isBranch,
+      @QueryParam("branch") String branch, @QueryParam("filePath") String templatePath,
+      @QueryParam("commitId") String commitId, @QueryParam("awsConnectorRef") @NotNull String awsConnectorRef,
       @QueryParam("gitConnectorRef") String gitConnectorRefParam,
       @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) @NotNull String orgIdentifier,

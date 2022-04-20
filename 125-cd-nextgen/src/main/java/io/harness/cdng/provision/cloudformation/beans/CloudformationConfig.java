@@ -5,7 +5,7 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.cdng.provision.cloudformation;
+package io.harness.cdng.provision.cloudformation.beans;
 
 import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.StoreIn;
@@ -18,7 +18,9 @@ import io.harness.persistence.CreatedAtAware;
 import io.harness.persistence.PersistentEntity;
 
 import com.google.common.collect.ImmutableList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
@@ -38,14 +40,14 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @StoreIn(DbAliases.NG_MANAGER)
 @OwnedBy(HarnessTeam.CDP)
 public class CloudformationConfig implements PersistentEntity, CreatedAtAware {
-  public static List<MongoIndex> mongoIndices() {
+  public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(SortCompoundMongoIndex.builder()
-                 .name("accountId_orgId_projectId_entityId_createdAt")
+                 .name("accountId_orgId_projectId_provisionerIdentifier_createdAt")
                  .field(CloudformationConfigKeys.accountId)
                  .field(CloudformationConfigKeys.orgId)
                  .field(CloudformationConfigKeys.projectId)
-                 .field(CloudformationConfigKeys.entityId)
+                 .field(CloudformationConfigKeys.provisionerIdentifier)
                  .descSortField(CloudformationConfigKeys.createdAt)
                  .build())
         .build();
@@ -54,7 +56,19 @@ public class CloudformationConfig implements PersistentEntity, CreatedAtAware {
   @NotNull String accountId;
   @NotNull String orgId;
   @NotNull String projectId;
-  @NotNull String entityId;
   @NotNull String pipelineExecutionId;
+  @NotNull String provisionerIdentifier;
   @NotNull long createdAt;
+
+  private String templateBody;
+  private String templateUrl;
+  private LinkedHashMap<String, List<String>> parametersFiles;
+  private Map<String, String> parameterOverrides;
+  private String stackName;
+  private String tags;
+  private String connectorRef;
+  private String region;
+  private String roleArn;
+  private List<String> capabilities;
+  private List<String> stackStatusesToMarkAsSuccess;
 }

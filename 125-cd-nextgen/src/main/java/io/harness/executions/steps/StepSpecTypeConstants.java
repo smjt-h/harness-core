@@ -15,6 +15,7 @@ import io.harness.annotations.dev.OwnedBy;
 public interface StepSpecTypeConstants {
   String CLOUDFORMATION_CREATE_STACK = "CreateStack";
   String CLOUDFORMATION_DELETE_STACK = "DeleteStack";
+  String CLOUDFORMATION_ROLLBACK_STACK = "RollbackStack";
   String K8S_ROLLING_DEPLOY = "K8sRollingDeploy";
   String K8S_ROLLING_ROLLBACK = "K8sRollingRollback";
   String K8S_BLUE_GREEN_DEPLOY = "K8sBlueGreenDeploy";

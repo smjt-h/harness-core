@@ -12,8 +12,6 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.logging.CommandExecutionStatus;
 
-import software.wings.helpers.ext.cloudformation.response.ExistingStackInfo;
-
 import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
@@ -25,17 +23,16 @@ import lombok.EqualsAndHashCode;
 public class CloudFormationCreateStackNGResponse extends CloudFormationCommandNGResponse {
   String stackId;
   Map<String, Object> cloudFormationOutputMap;
-  ExistingStackInfo existingStackInfo;
+  boolean existentStack;
   String stackStatus;
 
   @Builder
   public CloudFormationCreateStackNGResponse(CommandExecutionStatus commandExecutionStatus,
-      Map<String, Object> cloudFormationOutputMap, String stackId, ExistingStackInfo existingStackInfo,
-      String stackStatus) {
+      Map<String, Object> cloudFormationOutputMap, String stackId, boolean existentStack, String stackStatus) {
     super(commandExecutionStatus);
     this.stackId = stackId;
     this.cloudFormationOutputMap = cloudFormationOutputMap;
-    this.existingStackInfo = existingStackInfo;
+    this.existentStack = existentStack;
     this.stackStatus = stackStatus;
   }
 }

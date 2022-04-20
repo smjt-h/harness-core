@@ -11,6 +11,7 @@ import static io.harness.rule.OwnerRule.NGONZALEZ;
 import static io.harness.rule.OwnerRule.TMACARI;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -32,6 +33,7 @@ import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigType;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
 import io.harness.cdng.provision.cloudformation.beans.CloudFormationCreateStackPassThroughData;
 import io.harness.cdng.provision.cloudformation.beans.CloudFormationInheritOutput;
+import io.harness.cdng.provision.cloudformation.beans.CloudformationConfig;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.validator.scmValidators.GitConfigAuthenticationInfoHelper;
 import io.harness.delegate.beans.TaskData;
@@ -51,6 +53,7 @@ import io.harness.delegate.task.cloudformation.CloudformationTaskNGParameters;
 import io.harness.delegate.task.cloudformation.CloudformationTaskType;
 import io.harness.delegate.task.git.GitFetchRequest;
 import io.harness.delegate.task.git.GitFetchResponse;
+import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.git.model.FetchFilesResult;
 import io.harness.git.model.GitFile;
@@ -59,17 +62,21 @@ import io.harness.logging.UnitStatus;
 import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
+import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.tasks.TaskRequest;
 import io.harness.pms.expression.EngineExpressionService;
 import io.harness.pms.sdk.core.data.OptionalSweepingOutput;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.sdk.core.steps.executables.TaskChainResponse;
+import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.rule.Owner;
 import io.harness.secretmanagerclient.services.api.SecretManagerClientService;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.steps.StepHelper;
 import io.harness.steps.StepUtils;
+import io.harness.yaml.core.variables.NGVariable;
+import io.harness.yaml.core.variables.StringNGVariable;
 
 import software.wings.beans.TaskType;
 import software.wings.sm.states.provision.S3UriParser;
@@ -116,6 +123,12 @@ public class CloudformationStepHelperTest extends CategoryTest {
       + "  }\n"
       + "]"
       + "";
+  private static final String PARAMETERS_FILE_CONTENT = "[\n"
+      + "  {\n"
+      + "    \"ParameterKey\": \"AlarmEMail\",\n"
+      + "    \"ParameterValue\": \"nasser.gonzalez@harness.io\"\n"
+      + "  }\n"
+      + "]";
 
   @Test
   @Owner(developers = TMACARI)
@@ -125,14 +138,6 @@ public class CloudformationStepHelperTest extends CategoryTest {
     String expression = "expression";
     cloudformationStepHelper.renderValue(ambiance, expression);
     verify(engineExpressionService).renderExpression(ambiance, expression);
-  }
-
-  public Ambiance getAmbiance() {
-    Map<String, String> setupAbstractions = new HashMap<>();
-    setupAbstractions.put(SetupAbstractionKeys.accountId, "account1");
-    setupAbstractions.put(SetupAbstractionKeys.orgIdentifier, "org1");
-    setupAbstractions.put(SetupAbstractionKeys.projectIdentifier, "project1");
-    return Ambiance.newBuilder().putAllSetupAbstractions(setupAbstractions).build();
   }
 
   @Test(expected = InvalidRequestException.class)
@@ -330,7 +335,7 @@ public class CloudformationStepHelperTest extends CategoryTest {
     cloudformationStepHelper.startChainLink(cloudformationStepExecutor, getAmbiance(), stepElementParameters);
 
     doReturn("test-template").when(engineExpressionService).renderExpression(any(), eq("test-template"));
-    verify(cloudformationStepExecutor).executeCloudformationTask(any(), any(), taskDataArgumentCaptor.capture());
+    verify(cloudformationStepExecutor).executeCloudformationTask(any(), any(), taskDataArgumentCaptor.capture(), any());
     assertThat(taskDataArgumentCaptor.getValue()).isNotNull();
     assertThat(taskDataArgumentCaptor.getValue().getTaskType()).isEqualTo(CloudformationTaskType.CREATE_STACK);
     assertThat(taskDataArgumentCaptor.getValue().getRegion()).isEqualTo("region");
@@ -357,7 +362,7 @@ public class CloudformationStepHelperTest extends CategoryTest {
     cloudformationStepHelper.startChainLink(cloudformationStepExecutor, getAmbiance(), stepElementParameters);
 
     doReturn("test-template").when(engineExpressionService).renderExpression(any(), eq("test-template"));
-    verify(cloudformationStepExecutor).executeCloudformationTask(any(), any(), taskDataArgumentCaptor.capture());
+    verify(cloudformationStepExecutor).executeCloudformationTask(any(), any(), taskDataArgumentCaptor.capture(), any());
     assertThat(taskDataArgumentCaptor.getValue()).isNotNull();
     assertThat(taskDataArgumentCaptor.getValue().getTaskType()).isEqualTo(CloudformationTaskType.CREATE_STACK);
     assertThat(taskDataArgumentCaptor.getValue().getRegion()).isEqualTo("region");
@@ -383,7 +388,7 @@ public class CloudformationStepHelperTest extends CategoryTest {
         ArgumentCaptor.forClass(CloudformationTaskNGParameters.class);
     cloudformationStepHelper.startChainLink(cloudformationStepExecutor, getAmbiance(), stepElementParameters);
 
-    verify(cloudformationStepExecutor).executeCloudformationTask(any(), any(), taskDataArgumentCaptor.capture());
+    verify(cloudformationStepExecutor).executeCloudformationTask(any(), any(), taskDataArgumentCaptor.capture(), any());
     assertThat(taskDataArgumentCaptor.getValue()).isNotNull();
     assertThat(taskDataArgumentCaptor.getValue().getTemplateUrl()).isEqualTo("test-url");
     assertThat(taskDataArgumentCaptor.getValue().getTaskType()).isEqualTo(CloudformationTaskType.CREATE_STACK);
@@ -402,14 +407,9 @@ public class CloudformationStepHelperTest extends CategoryTest {
                     .credential(AwsCredentialDTO.builder().config(AwsManualConfigSpecDTO.builder().build()).build())
                     .build())
             .build();
-    doReturn(awsConnectorDTO).when(cdStepHelper).getConnector(any(), any());
-
     StepElementParameters stepElementParameters = createStepParametersWithGit(false);
-
     LinkedHashMap<String, List<String>> parameters = new LinkedHashMap<>();
-
     parameters.put("param1", null);
-
     CloudFormationCreateStackPassThroughData passThroughData = CloudFormationCreateStackPassThroughData.builder()
                                                                    .hasGitFiles(true)
                                                                    .hasS3Files(false)
@@ -417,18 +417,10 @@ public class CloudformationStepHelperTest extends CategoryTest {
                                                                    .build();
 
     Map<String, FetchFilesResult> filesFromMultiRepo = new HashMap<>();
-
     filesFromMultiRepo.put("param1",
         FetchFilesResult.builder()
-            .files(Collections.singletonList(GitFile.builder()
-                                                 .fileContent("[\n"
-                                                     + "  {\n"
-                                                     + "    \"ParameterKey\": \"AlarmEMail\",\n"
-                                                     + "    \"ParameterValue\": \"nasser.gonzalez@harness.io\"\n"
-                                                     + "  }\n"
-                                                     + "]")
-                                                 .filePath("file-path")
-                                                 .build()))
+            .files(Collections.singletonList(
+                GitFile.builder().fileContent(PARAMETERS_FILE_CONTENT).filePath("file-path").build()))
             .build());
     filesFromMultiRepo.put("tagsFile",
         FetchFilesResult.builder()
@@ -438,19 +430,21 @@ public class CloudformationStepHelperTest extends CategoryTest {
         FetchFilesResult.builder()
             .files(Collections.singletonList(GitFile.builder().fileContent("foobar").filePath("file-path").build()))
             .build());
-
     GitFetchResponse response = GitFetchResponse.builder().filesFromMultipleRepo(filesFromMultiRepo).build();
-
     ArgumentCaptor<CloudformationTaskNGParameters> taskDataArgumentCaptor =
         ArgumentCaptor.forClass(CloudformationTaskNGParameters.class);
 
+    doReturn(PARAMETERS_FILE_CONTENT)
+        .when(engineExpressionService)
+        .renderExpression(any(), eq(PARAMETERS_FILE_CONTENT));
+    doReturn(awsConnectorDTO).when(cdStepHelper).getConnector(any(), any());
     doReturn("foobar").when(engineExpressionService).renderExpression(any(), eq("foobar"));
     doReturn(TAGS).when(engineExpressionService).renderExpression(any(), eq(TAGS));
 
     cloudformationStepHelper.executeNextLink(
         cloudformationStepExecutor, getAmbiance(), stepElementParameters, passThroughData, () -> response);
 
-    verify(cloudformationStepExecutor).executeCloudformationTask(any(), any(), taskDataArgumentCaptor.capture());
+    verify(cloudformationStepExecutor).executeCloudformationTask(any(), any(), taskDataArgumentCaptor.capture(), any());
     assertThat(taskDataArgumentCaptor.getValue()).isNotNull();
     assertThat(taskDataArgumentCaptor.getValue().getTemplateBody()).isEqualTo("foobar");
     assertThat(taskDataArgumentCaptor.getValue().getTaskType()).isEqualTo(CloudformationTaskType.CREATE_STACK);
@@ -473,36 +467,23 @@ public class CloudformationStepHelperTest extends CategoryTest {
                     .build())
             .build();
     doReturn(awsConnectorDTO).when(cdStepHelper).getConnector(any(), any());
-
     LinkedHashMap<String, List<String>> parameters = new LinkedHashMap<>();
-
     parameters.put("param1", null);
-
     CloudFormationCreateStackPassThroughData passThroughData = CloudFormationCreateStackPassThroughData.builder()
                                                                    .hasGitFiles(true)
                                                                    .hasS3Files(false)
                                                                    .parametersFilesContent(parameters)
                                                                    .build();
-
     Map<String, FetchFilesResult> filesFromMultiRepo = new HashMap<>();
-
     filesFromMultiRepo.put("param1",
         FetchFilesResult.builder()
-            .files(Collections.singletonList(GitFile.builder()
-                                                 .fileContent("[\n"
-                                                     + "  {\n"
-                                                     + "    \"ParameterKey\": \"AlarmEMail\",\n"
-                                                     + "    \"ParameterValue\": \"nasser.gonzalez@harness.io\"\n"
-                                                     + "  }\n"
-                                                     + "]")
-                                                 .filePath("file-path")
-                                                 .build()))
+            .files(Collections.singletonList(
+                GitFile.builder().fileContent(PARAMETERS_FILE_CONTENT).filePath("file-path").build()))
             .build());
     filesFromMultiRepo.put("tagsFile",
         FetchFilesResult.builder()
             .files(Collections.singletonList(GitFile.builder().fileContent(TAGS).filePath("file-path").build()))
             .build());
-
     GitFetchResponse response = GitFetchResponse.builder().filesFromMultipleRepo(filesFromMultiRepo).build();
 
     // Test now the same scenario but with the template been Inline
@@ -510,6 +491,9 @@ public class CloudformationStepHelperTest extends CategoryTest {
     ArgumentCaptor<CloudformationTaskNGParameters> taskDataArgumentCaptorInline =
         ArgumentCaptor.forClass(CloudformationTaskNGParameters.class);
 
+    doReturn(PARAMETERS_FILE_CONTENT)
+        .when(engineExpressionService)
+        .renderExpression(any(), eq(PARAMETERS_FILE_CONTENT));
     doReturn("test-template").when(engineExpressionService).renderExpression(any(), eq("test-template"));
     doReturn(TAGS).when(engineExpressionService).renderExpression(any(), eq(TAGS));
 
@@ -517,7 +501,7 @@ public class CloudformationStepHelperTest extends CategoryTest {
         cloudformationStepExecutor, getAmbiance(), stepElementParametersInline, passThroughData, () -> response);
 
     verify(cloudformationStepExecutor, times(1))
-        .executeCloudformationTask(any(), any(), taskDataArgumentCaptorInline.capture());
+        .executeCloudformationTask(any(), any(), taskDataArgumentCaptorInline.capture(), any());
     assertThat(taskDataArgumentCaptorInline.getValue()).isNotNull();
     assertThat(taskDataArgumentCaptorInline.getValue().getTemplateBody()).isEqualTo("test-template");
     assertThat(taskDataArgumentCaptorInline.getValue().getTaskType()).isEqualTo(CloudformationTaskType.CREATE_STACK);
@@ -539,41 +523,30 @@ public class CloudformationStepHelperTest extends CategoryTest {
                     .credential(AwsCredentialDTO.builder().config(AwsManualConfigSpecDTO.builder().build()).build())
                     .build())
             .build();
-    doReturn(awsConnectorDTO).when(cdStepHelper).getConnector(any(), any());
-
     LinkedHashMap<String, List<String>> parameters = new LinkedHashMap<>();
-
     parameters.put("param1", null);
-
     CloudFormationCreateStackPassThroughData passThroughData = CloudFormationCreateStackPassThroughData.builder()
                                                                    .hasGitFiles(true)
                                                                    .hasS3Files(false)
                                                                    .parametersFilesContent(parameters)
                                                                    .build();
-
     Map<String, FetchFilesResult> filesFromMultiRepo = new HashMap<>();
-
     filesFromMultiRepo.put("param1",
         FetchFilesResult.builder()
-            .files(Collections.singletonList(GitFile.builder()
-                                                 .fileContent("[\n"
-                                                     + "  {\n"
-                                                     + "    \"ParameterKey\": \"AlarmEMail\",\n"
-                                                     + "    \"ParameterValue\": \"nasser.gonzalez@harness.io\"\n"
-                                                     + "  }\n"
-                                                     + "]")
-                                                 .filePath("file-path")
-                                                 .build()))
+            .files(Collections.singletonList(
+                GitFile.builder().fileContent(PARAMETERS_FILE_CONTENT).filePath("file-path").build()))
             .build());
     filesFromMultiRepo.put("tagsFile",
         FetchFilesResult.builder()
             .files(Collections.singletonList(GitFile.builder().fileContent(TAGS).filePath("file-path").build()))
             .build());
-
     GitFetchResponse response = GitFetchResponse.builder().filesFromMultipleRepo(filesFromMultiRepo).build();
-
     StepElementParameters stepElementParametersS3Url = createStepParameterS3WithNoParameterFiles();
 
+    doReturn(awsConnectorDTO).when(cdStepHelper).getConnector(any(), any());
+    doReturn(PARAMETERS_FILE_CONTENT)
+        .when(engineExpressionService)
+        .renderExpression(any(), eq(PARAMETERS_FILE_CONTENT));
     ArgumentCaptor<CloudformationTaskNGParameters> taskDataArgumentCaptorS3Url =
         ArgumentCaptor.forClass(CloudformationTaskNGParameters.class);
 
@@ -581,7 +554,7 @@ public class CloudformationStepHelperTest extends CategoryTest {
         cloudformationStepExecutor, getAmbiance(), stepElementParametersS3Url, passThroughData, () -> response);
 
     verify(cloudformationStepExecutor, times(1))
-        .executeCloudformationTask(any(), any(), taskDataArgumentCaptorS3Url.capture());
+        .executeCloudformationTask(any(), any(), taskDataArgumentCaptorS3Url.capture(), any());
     assertThat(taskDataArgumentCaptorS3Url.getValue()).isNotNull();
     assertThat(taskDataArgumentCaptorS3Url.getValue().getTemplateUrl()).isEqualTo("test-url");
     assertThat(taskDataArgumentCaptorS3Url.getValue().getTaskType()).isEqualTo(CloudformationTaskType.CREATE_STACK);
@@ -602,48 +575,35 @@ public class CloudformationStepHelperTest extends CategoryTest {
                     .credential(AwsCredentialDTO.builder().config(AwsManualConfigSpecDTO.builder().build()).build())
                     .build())
             .build();
-    doReturn(awsConnectorDTO).when(cdStepHelper).getConnector(any(), any());
-
     StepElementParameters stepElementParameters = createStepParametersWithS3(false);
-
     LinkedHashMap<String, List<String>> parameters = new LinkedHashMap<>();
-
     parameters.put("param1", null);
-
     CloudFormationCreateStackPassThroughData passThroughData = CloudFormationCreateStackPassThroughData.builder()
                                                                    .templateBody("template-from-git")
                                                                    .hasGitFiles(false)
                                                                    .hasS3Files(true)
                                                                    .parametersFilesContent(parameters)
                                                                    .build();
-
     Map<String, List<S3FileDetailResponse>> filesFromMultiRepo = new HashMap<>();
-
     filesFromMultiRepo.put("param1",
-        Collections.singletonList(S3FileDetailResponse.builder()
-                                      .fileContent("[\n"
-                                          + "  {\n"
-                                          + "    \"ParameterKey\": \"AlarmEMail\",\n"
-                                          + "    \"ParameterValue\": \"nasser.gonzalez@harness.io\"\n"
-                                          + "  }\n"
-                                          + "]")
-                                      .build()));
-
+        Collections.singletonList(S3FileDetailResponse.builder().fileContent(PARAMETERS_FILE_CONTENT).build()));
     filesFromMultiRepo.put(
         "tagsFile", Collections.singletonList(S3FileDetailResponse.builder().fileContent(TAGS).build()));
-
     AwsS3FetchFilesResponse response = AwsS3FetchFilesResponse.builder().s3filesDetails(filesFromMultiRepo).build();
-
     ArgumentCaptor<CloudformationTaskNGParameters> taskDataArgumentCaptor =
         ArgumentCaptor.forClass(CloudformationTaskNGParameters.class);
 
+    doReturn(awsConnectorDTO).when(cdStepHelper).getConnector(any(), any());
+    doReturn(PARAMETERS_FILE_CONTENT)
+        .when(engineExpressionService)
+        .renderExpression(any(), eq(PARAMETERS_FILE_CONTENT));
     doReturn("template-from-git").when(engineExpressionService).renderExpression(any(), eq("template-from-git"));
     doReturn(TAGS).when(engineExpressionService).renderExpression(any(), eq(TAGS));
 
     cloudformationStepHelper.executeNextLink(
         cloudformationStepExecutor, getAmbiance(), stepElementParameters, passThroughData, () -> response);
 
-    verify(cloudformationStepExecutor).executeCloudformationTask(any(), any(), taskDataArgumentCaptor.capture());
+    verify(cloudformationStepExecutor).executeCloudformationTask(any(), any(), taskDataArgumentCaptor.capture(), any());
     assertThat(taskDataArgumentCaptor.getValue()).isNotNull();
     assertThat(taskDataArgumentCaptor.getValue().getTemplateBody()).isEqualTo("template-from-git");
     assertThat(taskDataArgumentCaptor.getValue().getTaskType()).isEqualTo(CloudformationTaskType.CREATE_STACK);
@@ -665,40 +625,28 @@ public class CloudformationStepHelperTest extends CategoryTest {
                     .credential(AwsCredentialDTO.builder().config(AwsManualConfigSpecDTO.builder().build()).build())
                     .build())
             .build();
-    doReturn(awsConnectorDTO).when(cdStepHelper).getConnector(any(), any());
-
     LinkedHashMap<String, List<String>> parameters = new LinkedHashMap<>();
-
     parameters.put("param1", null);
-
     CloudFormationCreateStackPassThroughData passThroughData = CloudFormationCreateStackPassThroughData.builder()
                                                                    .templateBody("template-from-git")
                                                                    .hasGitFiles(false)
                                                                    .hasS3Files(true)
                                                                    .parametersFilesContent(parameters)
                                                                    .build();
-
     Map<String, List<S3FileDetailResponse>> filesFromMultiRepo = new HashMap<>();
-
     filesFromMultiRepo.put("param1",
-        Collections.singletonList(S3FileDetailResponse.builder()
-                                      .fileContent("[\n"
-                                          + "  {\n"
-                                          + "    \"ParameterKey\": \"AlarmEMail\",\n"
-                                          + "    \"ParameterValue\": \"nasser.gonzalez@harness.io\"\n"
-                                          + "  }\n"
-                                          + "]")
-                                      .build()));
+        Collections.singletonList(S3FileDetailResponse.builder().fileContent(PARAMETERS_FILE_CONTENT).build()));
     filesFromMultiRepo.put(
         "tagsFile", Collections.singletonList(S3FileDetailResponse.builder().fileContent(TAGS).build()));
-
     AwsS3FetchFilesResponse response = AwsS3FetchFilesResponse.builder().s3filesDetails(filesFromMultiRepo).build();
-
     StepElementParameters stepElementParametersInline = createStepParameterInline(false);
-
     ArgumentCaptor<CloudformationTaskNGParameters> taskDataArgumentCaptorInline =
         ArgumentCaptor.forClass(CloudformationTaskNGParameters.class);
 
+    doReturn(awsConnectorDTO).when(cdStepHelper).getConnector(any(), any());
+    doReturn(PARAMETERS_FILE_CONTENT)
+        .when(engineExpressionService)
+        .renderExpression(any(), eq(PARAMETERS_FILE_CONTENT));
     doReturn("template-from-git").when(engineExpressionService).renderExpression(any(), eq("template-from-git"));
     doReturn(TAGS).when(engineExpressionService).renderExpression(any(), eq(TAGS));
 
@@ -706,7 +654,7 @@ public class CloudformationStepHelperTest extends CategoryTest {
         cloudformationStepExecutor, getAmbiance(), stepElementParametersInline, passThroughData, () -> response);
 
     verify(cloudformationStepExecutor, times(1))
-        .executeCloudformationTask(any(), any(), taskDataArgumentCaptorInline.capture());
+        .executeCloudformationTask(any(), any(), taskDataArgumentCaptorInline.capture(), any());
     assertThat(taskDataArgumentCaptorInline.getValue()).isNotNull();
     assertThat(taskDataArgumentCaptorInline.getValue().getTemplateBody()).isEqualTo("template-from-git");
     assertThat(taskDataArgumentCaptorInline.getValue().getTaskType()).isEqualTo(CloudformationTaskType.CREATE_STACK);
@@ -728,47 +676,35 @@ public class CloudformationStepHelperTest extends CategoryTest {
                     .credential(AwsCredentialDTO.builder().config(AwsManualConfigSpecDTO.builder().build()).build())
                     .build())
             .build();
-    doReturn(awsConnectorDTO).when(cdStepHelper).getConnector(any(), any());
-
     LinkedHashMap<String, List<String>> parameters = new LinkedHashMap<>();
-
     parameters.put("param1", null);
-
     Map<String, List<S3FileDetailResponse>> filesFromMultiRepo = new HashMap<>();
-
     filesFromMultiRepo.put("param1",
-        Collections.singletonList(S3FileDetailResponse.builder()
-                                      .fileContent("[\n"
-                                          + "  {\n"
-                                          + "    \"ParameterKey\": \"AlarmEMail\",\n"
-                                          + "    \"ParameterValue\": \"nasser.gonzalez@harness.io\"\n"
-                                          + "  }\n"
-                                          + "]")
-                                      .build()));
+        Collections.singletonList(S3FileDetailResponse.builder().fileContent(PARAMETERS_FILE_CONTENT).build()));
     filesFromMultiRepo.put(
         "tagsFile", Collections.singletonList(S3FileDetailResponse.builder().fileContent(TAGS).build()));
-
     AwsS3FetchFilesResponse response = AwsS3FetchFilesResponse.builder().s3filesDetails(filesFromMultiRepo).build();
-
     CloudFormationCreateStackPassThroughData passThroughDataWithoutTemplate =
         CloudFormationCreateStackPassThroughData.builder()
             .hasGitFiles(false)
             .hasS3Files(true)
             .parametersFilesContent(parameters)
             .build();
-
     StepElementParameters stepElementParametersS3Url = createStepParameterS3WithNoParameterFiles();
-
     ArgumentCaptor<CloudformationTaskNGParameters> taskDataArgumentCaptorS3Url =
         ArgumentCaptor.forClass(CloudformationTaskNGParameters.class);
 
+    doReturn(awsConnectorDTO).when(cdStepHelper).getConnector(any(), any());
+    doReturn(PARAMETERS_FILE_CONTENT)
+        .when(engineExpressionService)
+        .renderExpression(any(), eq(PARAMETERS_FILE_CONTENT));
     doReturn(TAGS).when(engineExpressionService).renderExpression(any(), eq(TAGS));
 
     cloudformationStepHelper.executeNextLink(cloudformationStepExecutor, getAmbiance(), stepElementParametersS3Url,
         passThroughDataWithoutTemplate, () -> response);
 
     verify(cloudformationStepExecutor, times(1))
-        .executeCloudformationTask(any(), any(), taskDataArgumentCaptorS3Url.capture());
+        .executeCloudformationTask(any(), any(), taskDataArgumentCaptorS3Url.capture(), any());
 
     assertThat(taskDataArgumentCaptorS3Url.getValue()).isNotNull();
     assertThat(taskDataArgumentCaptorS3Url.getValue().getTemplateUrl()).isEqualTo("test-url");
@@ -826,20 +762,14 @@ public class CloudformationStepHelperTest extends CategoryTest {
                     .credential(AwsCredentialDTO.builder().config(AwsManualConfigSpecDTO.builder().build()).build())
                     .build())
             .build();
-    doReturn(awsConnectorDTO).when(cdStepHelper).getConnector(any(), any());
-
     StepElementParameters stepElementParameters = createStepParametersWithS3(false);
-
     LinkedHashMap<String, List<String>> parameters = new LinkedHashMap<>();
-
     parameters.put("param1", null);
-
     CloudFormationCreateStackPassThroughData passThroughData = CloudFormationCreateStackPassThroughData.builder()
                                                                    .hasGitFiles(false)
                                                                    .hasS3Files(true)
                                                                    .parametersFilesContent(parameters)
                                                                    .build();
-
     AwsS3FetchFilesResponse awsS3FetchFilesResponse =
         AwsS3FetchFilesResponse.builder()
             .unitProgressData(
@@ -848,6 +778,7 @@ public class CloudformationStepHelperTest extends CategoryTest {
                         UnitProgress.newBuilder().setUnitName("name").setStatus(UnitStatus.FAILURE).build()))
                     .build())
             .build();
+    doReturn(awsConnectorDTO).when(cdStepHelper).getConnector(any(), any());
     doReturn(UnitProgressData.builder()
                  .unitProgresses(Collections.singletonList(
                      UnitProgress.newBuilder().setUnitName("name").setStatus(UnitStatus.FAILURE).build()))
@@ -898,7 +829,7 @@ public class CloudformationStepHelperTest extends CategoryTest {
             .build();
 
     ArgumentCaptor<CloudFormationInheritOutput> dataCaptor = ArgumentCaptor.forClass(CloudFormationInheritOutput.class);
-    cloudformationStepHelper.saveCloudFormationInheritOutput(config, "id", getAmbiance());
+    cloudformationStepHelper.saveCloudFormationInheritOutput(config, "id", getAmbiance(), true);
     verify(executionSweepingOutputService).consume(any(), any(), dataCaptor.capture(), any());
     assertThat(dataCaptor.getValue()).isNotNull();
     assertThat(dataCaptor.getValue().getStackName()).isEqualTo("stack-name");
@@ -929,7 +860,64 @@ public class CloudformationStepHelperTest extends CategoryTest {
     assertThat(output.getRoleArn()).isEqualTo("role-arn");
   }
 
-  public StepElementParameters createStepParametersWithS3(boolean tags) {
+  @Test()
+  @Owner(developers = TMACARI)
+  @Category(UnitTests.class)
+  public void getCloudformationConfig() {
+    Ambiance ambiance = getAmbiance();
+    List<NGVariable> parameterOverrides = Collections.singletonList(
+        StringNGVariable.builder().name("name").value(ParameterField.createValueField("value")).build());
+    List<String> capabilities = Collections.singletonList("capability");
+    List<String> stackStatusesToMarkAsSuccess = Collections.singletonList("CREATE_COMPLETE");
+    LinkedHashMap<String, List<String>> parameters = new LinkedHashMap<>();
+    parameters.put("params", Collections.singletonList(PARAMETERS_FILE_CONTENT));
+    CloudFormationCreateStackPassThroughData passThroughData = CloudFormationCreateStackPassThroughData.builder()
+                                                                   .templateBody("templateBody")
+                                                                   .templateUrl("templateUrl")
+                                                                   .parametersFilesContent(parameters)
+                                                                   .tags(TAGS)
+                                                                   .build();
+    CloudformationCreateStackStepConfiguration configuration =
+        CloudformationCreateStackStepConfiguration.builder()
+            .region(ParameterField.createValueField("region"))
+            .connectorRef(ParameterField.createValueField("connectorRef"))
+            .parameterOverrides(parameterOverrides)
+            .stackName(ParameterField.createValueField("stackName"))
+            .roleArn(ParameterField.createValueField("roleArn"))
+            .capabilities(ParameterField.createValueField(capabilities))
+            .skipOnStackStatuses(ParameterField.createValueField(stackStatusesToMarkAsSuccess))
+            .build();
+    CloudformationCreateStackStepParameters stepParameters =
+        CloudformationCreateStackStepParameters.infoBuilder()
+            .provisionerIdentifier(ParameterField.createValueField("provisionerIdentifier"))
+            .configuration(configuration)
+            .build();
+    StepElementParameters stepElementParameters = StepElementParameters.builder().spec(stepParameters).build();
+    doReturn(TAGS).when(engineExpressionService).renderExpression(any(), eq(TAGS));
+
+    CloudformationConfig cloudformationConfig =
+        cloudformationStepHelper.getCloudformationConfig(ambiance, stepElementParameters, passThroughData);
+
+    assertThat(cloudformationConfig).isNotNull();
+    assertThat(cloudformationConfig.getAccountId()).isEqualTo("account");
+    assertThat(cloudformationConfig.getOrgId()).isEqualTo("org");
+    assertThat(cloudformationConfig.getProjectId()).isEqualTo("project");
+    assertThat(cloudformationConfig.getPipelineExecutionId()).isEqualTo("executionId");
+    assertThat(cloudformationConfig.getProvisionerIdentifier()).isEqualTo("provisionerIdentifier");
+    assertThat(cloudformationConfig.getTemplateBody()).isEqualTo("templateBody");
+    assertThat(cloudformationConfig.getTemplateUrl()).isEqualTo("templateUrl");
+    assertThat(cloudformationConfig.getParametersFiles()).isEqualTo(parameters);
+    assertThat(cloudformationConfig.getParameterOverrides().get("name")).isEqualTo("value");
+    assertThat(cloudformationConfig.getStackName()).isEqualTo("stackName");
+    assertThat(cloudformationConfig.getTags()).isEqualTo(TAGS);
+    assertThat(cloudformationConfig.getConnectorRef()).isEqualTo("connectorRef");
+    assertThat(cloudformationConfig.getRegion()).isEqualTo("region");
+    assertThat(cloudformationConfig.getRoleArn()).isEqualTo("roleArn");
+    assertThat(cloudformationConfig.getCapabilities()).isEqualTo(capabilities);
+    assertThat(cloudformationConfig.getStackStatusesToMarkAsSuccess()).isEqualTo(stackStatusesToMarkAsSuccess);
+  }
+
+  private StepElementParameters createStepParametersWithS3(boolean tags) {
     CloudformationCreateStackStepParameters parameters = new CloudformationCreateStackStepParameters();
     RemoteCloudformationTemplateFileSpec templateFileSpec = new RemoteCloudformationTemplateFileSpec();
     CloudformationParametersFileSpec parametersFileSpec = new CloudformationParametersFileSpec();
@@ -968,7 +956,7 @@ public class CloudformationStepHelperTest extends CategoryTest {
     return StepElementParameters.builder().spec(parameters).build();
   }
 
-  public StepElementParameters createStepParameterInline(boolean tags) {
+  private StepElementParameters createStepParameterInline(boolean tags) {
     CloudformationCreateStackStepParameters parameters = new CloudformationCreateStackStepParameters();
     InlineCloudformationTemplateFileSpec templateFileSpec = new InlineCloudformationTemplateFileSpec();
     InlineCloudformationTagsFileSpec tagsFileSpec = new InlineCloudformationTagsFileSpec();
@@ -990,7 +978,7 @@ public class CloudformationStepHelperTest extends CategoryTest {
     return StepElementParameters.builder().spec(parameters).build();
   }
 
-  public StepElementParameters createStepParameterS3WithNoParameterFiles() {
+  private StepElementParameters createStepParameterS3WithNoParameterFiles() {
     CloudformationCreateStackStepParameters parameters = new CloudformationCreateStackStepParameters();
     S3UrlCloudformationTemplateFileSpec templateFileSpec = new S3UrlCloudformationTemplateFileSpec();
     templateFileSpec.setTemplateUrl(ParameterField.createValueField("test-url"));
@@ -1005,7 +993,7 @@ public class CloudformationStepHelperTest extends CategoryTest {
     return StepElementParameters.builder().spec(parameters).build();
   }
 
-  public StepElementParameters createStepParametersWithGit(boolean tags) {
+  private StepElementParameters createStepParametersWithGit(boolean tags) {
     CloudformationCreateStackStepParameters parameters = new CloudformationCreateStackStepParameters();
     RemoteCloudformationTemplateFileSpec templateFileSpec = new RemoteCloudformationTemplateFileSpec();
     CloudformationParametersFileSpec parametersFileSpec = new CloudformationParametersFileSpec();
@@ -1043,5 +1031,55 @@ public class CloudformationStepHelperTest extends CategoryTest {
                               .build())
             .build());
     return StepElementParameters.builder().spec(parameters).build();
+  }
+
+  @Test
+  @Owner(developers = TMACARI)
+  @Category(UnitTests.class)
+  public void testGetParametersFromJson() {
+    String parametersJson =
+        "[{\"ParameterKey\": \"name\",\"ParameterValue\": \"value\"},{\"ParameterKey\": \"name2\",\"ParameterValue\": \"value2\"}]";
+    doReturn(parametersJson).when(engineExpressionService).renderExpression(any(), any());
+
+    Map<String, String> parameters = cloudformationStepHelper.getParametersFromJson(getAmbiance(), parametersJson);
+
+    assertThat(parameters.get("name")).isEqualTo("value");
+    assertThat(parameters.get("name2")).isEqualTo("value2");
+  }
+
+  @Test
+  @Owner(developers = TMACARI)
+  @Category(UnitTests.class)
+  public void testGetParametersFromJsonMalformedJson() {
+    String parametersJson =
+        "[{\"ParameterKey\": \"name\",\"ParameterValue: \"value\"},{\"ParameterKey\": \"name2\",\"ParameterValue\": \"value2\"}]";
+    doReturn(parametersJson).when(engineExpressionService).renderExpression(any(), any());
+
+    assertThatThrownBy(() -> cloudformationStepHelper.getParametersFromJson(getAmbiance(), parametersJson))
+        .isInstanceOf(InvalidArgumentsException.class)
+        .hasMessageContaining("Failed to Deserialize json");
+  }
+
+  @Test
+  @Owner(developers = TMACARI)
+  @Category(UnitTests.class)
+  public void testGetFailureResponse() {
+    List<UnitProgress> unitProgresses = new ArrayList<>();
+    String errorMessage = "errorMessage";
+
+    StepResponse stepResponse = cloudformationStepHelper.getFailureResponse(unitProgresses, errorMessage);
+
+    assertThat(stepResponse.getStatus()).isEqualTo(Status.FAILED);
+    assertThat(stepResponse.getUnitProgressList()).isEqualTo(unitProgresses);
+    assertThat(stepResponse.getFailureInfo().getErrorMessage()).isEqualTo(errorMessage);
+  }
+
+  private Ambiance getAmbiance() {
+    Map<String, String> setupAbstractions = new HashMap<>();
+    setupAbstractions.put(SetupAbstractionKeys.accountId, "account");
+    setupAbstractions.put(SetupAbstractionKeys.orgIdentifier, "org");
+    setupAbstractions.put(SetupAbstractionKeys.projectIdentifier, "project");
+
+    return Ambiance.newBuilder().putAllSetupAbstractions(setupAbstractions).setPlanExecutionId("executionId").build();
   }
 }
