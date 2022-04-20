@@ -43,8 +43,9 @@ public class BatchJobExecutionListener implements JobExecutionListener {
     long durationInSeconds = durationInMillis / 1000;
 
     log.info("Job execution completed in {} sec: accountId={} jobType={}", durationInSeconds, accountId, jobType);
-    try (BatchJobContext _ = new BatchJobContext(accountId, jobType)) {
-      metricService.recordMetric(BatchProcessingMetricName.JOB_EXECUTION_TIME_IN_SEC, durationInSeconds);
-    }
+    // disabling it for now --> Ingestion volume was high.
+    //    try (BatchJobContext _ = new BatchJobContext(accountId, jobType)) {
+    //      metricService.recordMetric(BatchProcessingMetricName.JOB_EXECUTION_TIME_IN_SEC, durationInSeconds);
+    //    }
   }
 }
