@@ -49,6 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @OwnedBy(CDP)
 public class FileResourceImpl implements Resource {
+  private static final String FILE = "FILE";
   FileStoreClient fileStoreClient;
 
   @Inject
@@ -74,7 +75,7 @@ public class FileResourceImpl implements Resource {
 
   @Override
   public String getType() {
-    return "FILE";
+    return FILE;
   }
 
   @Override
