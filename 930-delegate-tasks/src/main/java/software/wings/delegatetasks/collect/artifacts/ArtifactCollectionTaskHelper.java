@@ -79,7 +79,6 @@ public class ArtifactCollectionTaskHelper {
   private static final String ARTIFACT_STRING = "artifact/";
   private static final String ARTIFACT_FILE_SIZE_MESSAGE = "Getting artifact file size for artifact: ";
   private static final String ON_DELEGATE = " on delegate";
-  @Inject private DelegateFileManager delegateFileManager;
   @Inject private AmazonS3Service amazonS3Service;
   @Inject private DelegateLogService logService;
   @Inject private ArtifactoryService artifactoryService;
@@ -88,40 +87,6 @@ public class ArtifactCollectionTaskHelper {
   @Inject private JenkinsUtils jenkinsUtil;
   @Inject private BambooService bambooService;
   @Inject private NexusService nexusService;
-
-  public void addDataToResponse(Pair<String, InputStream> fileInfo, String artifactPath, ListNotifyResponseData res,
-      String delegateId, String taskId, String accountId) throws FileNotFoundException {
-    if (fileInfo == null) {
-      throw new FileNotFoundException("Unable to get artifact for path " + artifactPath);
-    }
-    log.info("Uploading the file {} for artifact path {}", fileInfo.getKey(), artifactPath);
-
-    DelegateFile delegateFile = aDelegateFile()
-                                    .withBucket(FileBucket.ARTIFACTS)
-                                    .withFileName(fileInfo.getKey())
-                                    .withDelegateId(delegateId)
-                                    .withTaskId(taskId)
-                                    .withAccountId(accountId)
-                                    .build(); // TODO: more about delegate and task info
-    DelegateFile fileRes = null;
-    try (InputStream in = fileInfo.getValue()) {
-      fileRes = delegateFileManager.upload(delegateFile, in);
-    } catch (IOException ignored) {
-    }
-
-    if (fileRes == null || fileRes.getFileId() == null) {
-      log.error(
-          "Failed to upload file name {} for artifactPath {} to manager. Artifact files will be uploaded during the deployment of Artifact Check Step",
-          fileInfo.getKey(), artifactPath);
-    } else {
-      log.info("Uploaded the file name {} and fileUuid {} for artifactPath {}", fileInfo.getKey(), fileRes.getFileId(),
-          artifactPath);
-      ArtifactFile artifactFile = new ArtifactFile();
-      artifactFile.setFileUuid(fileRes.getFileId());
-      artifactFile.setName(fileInfo.getKey());
-      res.addData(artifactFile);
-    }
-  }
 
   public Pair<String, InputStream> downloadArtifactAtRuntime(ArtifactStreamAttributes artifactStreamAttributes,
       String accountId, String appId, String activityId, String commandUnitName, String hostName) {

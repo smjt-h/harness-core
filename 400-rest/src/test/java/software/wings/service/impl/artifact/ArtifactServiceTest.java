@@ -72,6 +72,7 @@ import software.wings.beans.artifact.Artifact.ContentStatus;
 import software.wings.beans.artifact.ArtifactFile;
 import software.wings.beans.artifact.ArtifactStream.ArtifactStreamKeys;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
+import software.wings.beans.artifact.ArtifactView;
 import software.wings.beans.artifact.ArtifactoryArtifactStream;
 import software.wings.beans.artifact.BambooArtifactStream;
 import software.wings.beans.artifact.CustomArtifactStream;
@@ -595,7 +596,7 @@ public class ArtifactServiceTest extends WingsBaseTest {
     Artifact savedArtifact = artifactService.create(artifactBuilder.but().build(), true);
     Artifact updatedArtifact = artifactService.get(savedArtifact.getUuid());
     assertThat(updatedArtifact).isEqualTo(savedArtifact);
-    assertThat(updatedArtifact).extracting(Artifact::getServices).isNotNull();
+    //    assertThat(updatedArtifact).extracting(Artifact::getServices).isNotNull();
   }
 
   @Test
@@ -1371,7 +1372,7 @@ public class ArtifactServiceTest extends WingsBaseTest {
         true);
     when(artifactStreamServiceBindingService.listServices(APP_ID, ARTIFACT_STREAM_ID))
         .thenReturn(asList(Service.builder().name("Service1").build()));
-    Artifact artifact = artifactService.getWithServices(artifact1.getUuid(), APP_ID);
+    ArtifactView artifact = artifactService.getWithServices(artifact1.getUuid(), APP_ID);
     assertThat(artifact.getServices()).isNotEmpty();
     assertThat(artifact.getServices()).extracting(Service::getName).containsExactly("Service1");
   }
