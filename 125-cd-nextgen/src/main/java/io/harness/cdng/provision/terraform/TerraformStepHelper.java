@@ -300,6 +300,7 @@ public class TerraformStepHelper {
         Map<String, String> commitIdMap = terraformTaskNGResponse.getCommitIdForConfigFilesMap();
         builder.configFiles(getStoreConfigAtCommitId(
             configuration.getConfigFiles().getStore().getSpec(), commitIdMap.get(TF_CONFIG_FILES)));
+        builder.useConnectorCredentials(configuration.getConfigFiles().getModuleSource().isUseConnectorCredentials());
         break;
       case ARTIFACTORY:
         builder.fileStoreConfig((FileStorageStoreConfig) configuration.getConfigFiles().getStore().getSpec());
@@ -401,6 +402,7 @@ public class TerraformStepHelper {
             .pipelineExecutionId(ambiance.getPlanExecutionId())
             .configFiles(
                 inheritOutput.getConfigFiles() != null ? inheritOutput.getConfigFiles().toGitStoreConfigDTO() : null)
+            .useConnectorCredentials(inheritOutput.isUseConnectorCredentials())
             .fileStoreConfig(inheritOutput.getFileStoreConfig() != null
                     ? inheritOutput.getFileStoreConfig().toFileStorageConfigDTO()
                     : null)
@@ -478,6 +480,8 @@ public class TerraformStepHelper {
         builder.configFiles(
             getStoreConfigAtCommitId(spec.getConfigFiles().getStore().getSpec(), commitIdMap.get(TF_CONFIG_FILES))
                 .toGitStoreConfigDTO());
+        builder.useConnectorCredentials(
+            configuration.getSpec().getConfigFiles().getModuleSource().isUseConnectorCredentials());
         break;
       case ARTIFACTORY:
         builder.fileStoreConfig(((FileStorageStoreConfig) store.getSpec()).toFileStorageConfigDTO());

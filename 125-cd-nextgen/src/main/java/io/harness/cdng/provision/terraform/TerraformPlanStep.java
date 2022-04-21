@@ -52,6 +52,7 @@ import software.wings.beans.TaskType;
 import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -125,7 +126,8 @@ public class TerraformPlanStep extends TaskExecutableWithRollbackAndRbac<Terrafo
         .entityId(entityId)
         .tfModuleSourceInheritSSH(cdFeatureFlagHelper.isEnabled(
                                       AmbianceUtils.getAccountId(ambiance), FeatureName.TF_MODULE_SOURCE_INHERIT_SSH)
-            && configuration.getConfigFiles().getSourceModule().isUseConnectorCredentials())
+            && configuration.getConfigFiles().getModuleSource() != null
+            && configuration.getConfigFiles().getModuleSource().isUseConnectorCredentials())
         .currentStateFileId(helper.getLatestFileId(entityId))
         .workspace(ParameterFieldHelper.getParameterFieldValue(configuration.getWorkspace()))
         .configFile(helper.getGitFetchFilesConfig(
@@ -136,7 +138,9 @@ public class TerraformPlanStep extends TaskExecutableWithRollbackAndRbac<Terrafo
         .backendConfig(helper.getBackendConfig(configuration.getBackendConfig()))
         .targets(ParameterFieldHelper.getParameterFieldValue(configuration.getTargets()))
         .saveTerraformStateJson(false)
-        .environmentVariables(helper.getEnvironmentVariablesMap(configuration.getEnvironmentVariables()))
+        .environmentVariables(helper.getEnvironmentVariablesMap(configuration.getEnvironmentVariables()) == null
+                ? new HashMap<>()
+                : helper.getEnvironmentVariablesMap(configuration.getEnvironmentVariables()))
         .encryptionConfig(helper.getEncryptionConfig(ambiance, planStepParameters))
         .terraformCommand(TerraformPlanCommand.APPLY == planStepParameters.getConfiguration().getCommand()
                 ? TerraformCommand.APPLY
