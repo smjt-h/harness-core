@@ -1617,9 +1617,14 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     List<String> resolvedServiceIds =
         workflowService.getResolvedServiceIds(workflow, executionArgs.getWorkflowVariables());
     envId = resolveEnvId != null ? resolveEnvId : envId;
+    if (workflow.getOrchestrationWorkflow() != null
+        && !OrchestrationWorkflowType.BUILD.equals(workflow.getOrchestrationWorkflow().getOrchestrationWorkflowType())
+        && isEmpty(envId)) {
+      throw new InvalidRequestException("Environment is not provided in the workflow", USER);
+    }
     User user = UserThreadLocal.get();
 
-    // The workflow execution is direct workflow execution and not in Pipeline or trigger.
+    // The workflow execution is direct workWorkflowExecutionServiceTestflow execution and not in Pipeline or trigger.
     boolean isDirectExecution = trigger == null && user != null && isEmpty(pipelineExecutionId);
     if (isDirectExecution) {
       deploymentAuthHandler.authorizeWorkflowExecution(appId, workflowId);
@@ -5671,6 +5676,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
                                          .project(WorkflowExecutionKeys.endTs, true)
                                          .project(WorkflowExecutionKeys.name, true)
                                          .project(WorkflowExecutionKeys.envId, true)
+                                         .project(WorkflowExecutionKeys.pipelineExecutionId, true)
                                          .field("_id")
                                          .in(entityIds);
 
