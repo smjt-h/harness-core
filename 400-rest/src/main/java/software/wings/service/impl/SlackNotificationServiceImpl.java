@@ -34,7 +34,6 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.commons.lang3.StringUtils;
 
@@ -99,10 +98,10 @@ public class SlackNotificationServiceImpl implements SlackNotificationService {
       for (String slackWebHook : slackWebhooks) {
         log.info("Sending message via delegate");
         SyncTaskContext syncTaskContext = SyncTaskContext.builder()
-            .accountId(accountId)
-            .appId(GLOBAL_APP_ID)
-            .timeout(DEFAULT_SYNC_CALL_TIMEOUT)
-            .build();
+                                              .accountId(accountId)
+                                              .appId(GLOBAL_APP_ID)
+                                              .timeout(DEFAULT_SYNC_CALL_TIMEOUT)
+                                              .build();
         log.info("Sending message for account {} via delegate", accountId);
 
         delegateProxyFactory.get(SlackMessageSender.class, syncTaskContext)
