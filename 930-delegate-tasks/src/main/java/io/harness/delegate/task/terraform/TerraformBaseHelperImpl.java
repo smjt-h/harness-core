@@ -810,13 +810,20 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
       throws IOException {
     GitConfigDTO gitConfigDTO = (GitConfigDTO) conFileFileGitStore.getGitConfigDTO();
     if (gitConfigDTO.getGitAuthType() == SSH) {
+      String sshKeyPath;
       SshSessionConfig sshSessionConfig = getSshSessionConfig(conFileFileGitStore);
-      String sshKey = String.valueOf(sshSessionConfig.getKey());
-      String workingDir = getBaseDir(taskParameters.getEntityId());
-      String baseDir = Paths.get(Paths.get(System.getProperty(USER_DIR_KEY)).toString(), workingDir).toString();
-      Files.createDirectories(Paths.get(baseDir, "sshKeyDir"));
-      String sshKeyPath = Paths.get(baseDir, "sshKeyDir", "sshKey").toString();
-      FileIo.writeUtf8StringToFile(sshKeyPath, sshKey);
+      if (!sshSessionConfig.isKeyLess() && isNotEmpty(sshSessionConfig.getKey())) {
+        String sshKey = String.valueOf(sshSessionConfig.getKey());
+        String workingDir = getBaseDir(taskParameters.getEntityId());
+        String baseDir = Paths.get(Paths.get(System.getProperty(USER_DIR_KEY)).toString(), workingDir).toString();
+        Files.createDirectories(Paths.get(baseDir, "sshKeyDir"));
+        sshKeyPath = Paths.get(baseDir, "sshKeyDir", "sshKey").toString();
+        FileIo.writeUtf8StringToFile(sshKeyPath, sshKey);
+      } else if (sshSessionConfig.isKeyLess() && isNotEmpty(sshSessionConfig.getKeyPath())) {
+        sshKeyPath = Paths.get(System.getProperty(USER_DIR_KEY), sshSessionConfig.getKeyPath()).toString();
+      } else {
+        return;
+      }
       File file = new File(Paths.get(sshKeyPath).toString());
 
       file.setWritable(false, false);
