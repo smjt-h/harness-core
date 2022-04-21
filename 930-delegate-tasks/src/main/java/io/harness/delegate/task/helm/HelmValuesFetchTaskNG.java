@@ -34,6 +34,8 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 
 import com.google.inject.Inject;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
@@ -74,19 +76,20 @@ public class HelmValuesFetchTaskNG extends AbstractDelegateRunnableTask {
         helmValuesFetchRequest.getHelmChartManifestDelegateConfig();
     try {
       helmTaskHelperBase.decryptEncryptedDetails(helmChartManifestDelegateConfig);
-
-      String valuesFileContent = helmTaskHelperBase.fetchValuesYamlFromChart(
-          helmChartManifestDelegateConfig, helmValuesFetchRequest.getTimeout(), logCallback);
+      List<HelmChartValuesFetchFileConfig> helmChartValuesFetchFileConfigList =
+          helmValuesFetchRequest.getHelmChartValuesFetchFileConfigList();
+      Map<String, List<String>> helmChartValuesFileMapContents =
+          helmTaskHelperBase.fetchValuesYamlFromChart(helmChartManifestDelegateConfig,
+              helmValuesFetchRequest.getTimeout(), logCallback, helmChartValuesFetchFileConfigList);
 
       logCallback.saveExecutionLog("\nFetching helm values completed successfully.", INFO);
-
       if (helmValuesFetchRequest.isCloseLogStream()) {
         logCallback.saveExecutionLog("Done.", INFO, CommandExecutionStatus.SUCCESS);
       }
       return HelmValuesFetchResponse.builder()
           .commandExecutionStatus(SUCCESS)
           .unitProgressData(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))
-          .valuesFileContent(valuesFileContent)
+          .helmChartValuesFileMapContent(helmChartValuesFileMapContents)
           .build();
     } catch (Exception e) {
       String exceptionMsg = e.getMessage() == null ? ExceptionUtils.getMessage(e) : e.getMessage();

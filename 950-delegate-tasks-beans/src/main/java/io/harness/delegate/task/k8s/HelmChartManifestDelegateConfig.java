@@ -11,6 +11,7 @@ import io.harness.delegate.beans.storeconfig.StoreDelegateConfig;
 import io.harness.delegate.task.helm.HelmCommandFlag;
 import io.harness.k8s.model.HelmVersion;
 
+import java.util.List;
 import lombok.Builder;
 import lombok.Value;
 
@@ -25,6 +26,7 @@ public class HelmChartManifestDelegateConfig implements ManifestDelegateConfig {
   private boolean useRepoFlags;
   private boolean checkIncorrectChartVersion;
   private boolean deleteRepoCacheDir;
+  List<String> valuesPaths;
 
   @Override
   public ManifestType getManifestType() {

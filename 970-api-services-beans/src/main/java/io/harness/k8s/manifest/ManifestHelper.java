@@ -441,4 +441,20 @@ public class ManifestHelper {
 
     return folderPath.endsWith("/") ? folderPath : folderPath + "/";
   }
+
+  public static String normalizeAndExtractValuesYamlGitFilePath(String folderPath, String filePath) {
+    if (isBlank(folderPath)) {
+      return filePath;
+    }
+
+    return normalizeFolderPathForValuesYaml(folderPath) + filePath;
+  }
+
+  public static String normalizeFolderPathForValuesYaml(String folderPath) {
+    if (isBlank(folderPath)) {
+      return folderPath;
+    }
+    folderPath = folderPath.endsWith("/") ? folderPath.substring(0, folderPath.length() - 1) : folderPath;
+    return folderPath.substring(0, folderPath.lastIndexOf("/") + 1);
+  }
 }

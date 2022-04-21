@@ -10,7 +10,9 @@ package io.harness.cdng.manifest.yaml.kinds;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.beans.SwaggerConstants.BOOLEAN_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.STRING_CLASSPATH;
+import static io.harness.beans.SwaggerConstants.STRING_LIST_CLASSPATH;
 import static io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper.StoreConfigWrapperParameters;
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
 
 import io.harness.annotation.RecasterAlias;
@@ -68,6 +70,11 @@ public class HelmChartManifest implements ManifestAttributes, Visitable {
   @Wither @ApiModelProperty(dataType = STRING_CLASSPATH) @SkipAutoEvaluation ParameterField<String> chartVersion;
   @Wither HelmVersion helmVersion;
   @Wither
+  @ApiModelProperty(dataType = STRING_LIST_CLASSPATH)
+  @YamlSchemaTypes({runtime})
+  @SkipAutoEvaluation
+  ParameterField<List<String>> valuesPaths;
+  @Wither
   @ApiModelProperty(dataType = BOOLEAN_CLASSPATH)
   @YamlSchemaTypes({string})
   @SkipAutoEvaluation
@@ -95,6 +102,11 @@ public class HelmChartManifest implements ManifestAttributes, Visitable {
     if (helmChartManifest.getHelmVersion() != null) {
       resultantManifest = resultantManifest.withHelmVersion(helmChartManifest.getHelmVersion());
     }
+
+    if (!ParameterField.isNull(helmChartManifest.getValuesPaths())) {
+      resultantManifest = resultantManifest.withValuesPaths(helmChartManifest.getValuesPaths());
+    }
+
     if (helmChartManifest.getSkipResourceVersioning() != null) {
       resultantManifest = resultantManifest.withSkipResourceVersioning(helmChartManifest.getSkipResourceVersioning());
     }
@@ -127,7 +139,7 @@ public class HelmChartManifest implements ManifestAttributes, Visitable {
   public ManifestAttributeStepParameters getManifestAttributeStepParameters() {
     return new HelmChartManifestStepParameters(identifier,
         StoreConfigWrapperParameters.fromStoreConfigWrapper(store.getValue()), chartName, chartVersion, helmVersion,
-        skipResourceVersioning, commandFlags);
+        valuesPaths, skipResourceVersioning, commandFlags);
   }
 
   @Value
@@ -137,6 +149,7 @@ public class HelmChartManifest implements ManifestAttributes, Visitable {
     ParameterField<String> chartName;
     ParameterField<String> chartVersion;
     HelmVersion helmVersion;
+    ParameterField<List<String>> valuesPaths;
     ParameterField<Boolean> skipResourceVersioning;
     List<HelmManifestCommandFlag> commandFlags;
   }

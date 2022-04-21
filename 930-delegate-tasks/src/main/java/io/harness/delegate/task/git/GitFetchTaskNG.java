@@ -8,6 +8,7 @@
 package io.harness.delegate.task.git;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.helm.HelmConstants.VALUES_YAML;
 import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.logging.LogLevel.INFO;
 
@@ -107,8 +108,13 @@ public class GitFetchTaskNG extends AbstractDelegateRunnableTask {
               fetchFilesFromRepo(gitFetchFilesConfig, executionLogCallback, gitFetchRequest.getAccountId());
         } catch (Exception ex) {
           String exceptionMsg = gitFetchFilesTaskHelper.extractErrorMessage(ex);
+          // Find a better exception handling way
+          //          String shortExceptionMsg = ex.getMessage();
+          //          String file = shortExceptionMsg.substring(shortExceptionMsg.indexOf("/")+1);
 
           // Values.yaml in service spec is optional.
+          //          if (ex.getCause() instanceof NoSuchFileException && gitFetchFilesConfig.isSucceedIfFileNotFound()
+          //          && file.equals(VALUES_YAML)) {
           if (ex.getCause() instanceof NoSuchFileException && gitFetchFilesConfig.isSucceedIfFileNotFound()) {
             log.info("file not found. " + exceptionMsg, ex);
             executionLogCallback.saveExecutionLog(color(

@@ -67,6 +67,7 @@ import io.harness.cdng.manifest.yaml.GcsStoreConfig;
 import io.harness.cdng.manifest.yaml.GitLabStore;
 import io.harness.cdng.manifest.yaml.GitStore;
 import io.harness.cdng.manifest.yaml.GithubStore;
+import io.harness.cdng.manifest.yaml.HelmChartValuesStoreConfig;
 import io.harness.cdng.manifest.yaml.HttpStoreConfig;
 import io.harness.cdng.manifest.yaml.ManifestConfig;
 import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
@@ -225,5 +226,6 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(CustomArtifactConfig.class, 12563);
     kryo.register(AcrArtifactConfig.class, 12564);
     kryo.register(DeploymentTemplateServiceSpec.class, 12565);
+    kryo.register(HelmChartValuesStoreConfig.class, 12566);
   }
 }
