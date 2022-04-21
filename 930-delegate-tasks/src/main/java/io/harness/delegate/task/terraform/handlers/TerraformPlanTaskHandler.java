@@ -87,7 +87,7 @@ public class TerraformPlanTaskHandler extends TerraformAbstractTaskHandler {
       }
 
       if (taskParameters.isTfModuleSourceInheritSSH()) {
-        terraformBaseHelper.exportingSSHKey(taskParameters, conFileFileGitStore);
+        terraformBaseHelper.exportSSHKey(taskParameters, conFileFileGitStore);
       }
 
       GitBaseRequest gitBaseRequestForConfigFile = terraformBaseHelper.getGitBaseRequestForConfigFile(
