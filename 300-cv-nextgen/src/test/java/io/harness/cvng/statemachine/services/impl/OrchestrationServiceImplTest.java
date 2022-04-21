@@ -78,6 +78,7 @@ public class OrchestrationServiceImplTest extends CvNextGenTestBase {
   private String cvConfigId;
   private String verificationTaskId;
   private String accountId;
+  private String identifier;
   private DataGenerator dataGenerator;
   private TimeSeriesAnalysisState timeSeriesAnalysisState;
 
@@ -86,10 +87,12 @@ public class OrchestrationServiceImplTest extends CvNextGenTestBase {
     builderFactory = BuilderFactory.getDefault();
     cvConfigId = generateUuid();
     accountId = generateUuid();
+    identifier = "monitoredServiceId/healthSourceId";
     CVConfig cvConfig = new AppDynamicsCVConfig();
     cvConfig.setVerificationType(VerificationType.TIME_SERIES);
     cvConfig.setUuid(cvConfigId);
     cvConfig.setAccountId(accountId);
+    cvConfig.setIdentifier(identifier);
     hPersistence.save(cvConfig);
     dataGenerator = DataGenerator.builder().accountId(accountId).build();
     verificationTaskId =
