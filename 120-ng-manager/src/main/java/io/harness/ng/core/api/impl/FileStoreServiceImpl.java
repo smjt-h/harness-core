@@ -14,7 +14,6 @@ import static io.harness.delegate.beans.FileBucket.FILE_STORE;
 import static java.lang.String.format;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.IdentifierRef;
 import io.harness.beans.Scope;
 import io.harness.exception.DuplicateEntityException;
 import io.harness.exception.InvalidArgumentsException;
@@ -31,7 +30,6 @@ import io.harness.ng.core.mapper.FileStoreNodeDTOMapper;
 import io.harness.repositories.filestore.FileStoreRepositoryCriteriaCreator;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
 import io.harness.stream.BoundedInputStream;
-import io.harness.utils.IdentifierRefHelper;
 
 import software.wings.app.MainConfiguration;
 import software.wings.service.intfc.FileService;
@@ -43,7 +41,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -66,16 +63,16 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   @Override
-  public FileDTO create(@NotNull FileDTO fileDto, InputStream content) {
+  public FileDTO create(@NotNull FileDTO fileDto, InputStream content, boolean draft) {
     log.info("Creating {}: {}", fileDto.getType().name().toLowerCase(), fileDto);
 
     if (existInDatabase(fileDto)) {
       throw new DuplicateEntityException(getDuplicateEntityMessage(fileDto));
     }
 
-    NGFile ngFile = FileDTOMapper.getNGFileFromDTO(fileDto);
+    NGFile ngFile = FileDTOMapper.getNGFileFromDTO(fileDto, draft);
 
-    if (fileDto.isFile()) {
+    if (shouldStoreFileContent(ngFile)) {
       if (content == null) {
         throw new InvalidArgumentsException(format("File content is empty. Identifier: %s", fileDto.getIdentifier()));
       }
@@ -96,11 +93,8 @@ public class FileStoreServiceImpl implements FileStoreService {
       throw new InvalidArgumentsException("File identifier cannot be empty");
     }
 
-    NGFile existingFile =
-        fileStoreRepository
-            .findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
-                fileDto.getAccountIdentifier(), fileDto.getOrgIdentifier(), fileDto.getProjectIdentifier(), identifier)
-            .orElseThrow(() -> new IllegalArgumentException(format("File with identifier: %s not found.", identifier)));
+    NGFile existingFile = fetchFile(
+        fileDto.getAccountIdentifier(), fileDto.getOrgIdentifier(), fileDto.getProjectIdentifier(), identifier);
 
     FileDTOMapper.updateNGFile(fileDto, existingFile);
     if (content != null && fileDto.isFile()) {
@@ -121,13 +115,7 @@ public class FileStoreServiceImpl implements FileStoreService {
       throw new InvalidArgumentsException("Account identifier cannot be null or empty");
     }
 
-    Optional<NGFile> ngFileOpt =
-        fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
-            accountIdentifier, orgIdentifier, projectIdentifier, fileIdentifier);
-    if (!ngFileOpt.isPresent()) {
-      throw new InvalidArgumentsException(format("Unable to find file, fileIdentifier: %s", fileIdentifier));
-    }
-    NGFile ngFile = ngFileOpt.get();
+    NGFile ngFile = fetchFile(accountIdentifier, orgIdentifier, projectIdentifier, fileIdentifier);
     if (ngFile.isFolder()) {
       throw new InvalidArgumentsException(
           format("Downloading folder not supported, fileIdentifier: %s", fileIdentifier));
@@ -152,18 +140,7 @@ public class FileStoreServiceImpl implements FileStoreService {
           format("Root folder [%s] can not be deleted.", FileStoreConstants.ROOT_FOLDER_IDENTIFIER));
     }
 
-    IdentifierRef identifierRef =
-        IdentifierRefHelper.getIdentifierRef(identifier, accountIdentifier, orgIdentifier, projectIdentifier);
-    NGFile file =
-        fileStoreRepository
-            .findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
-                identifierRef.getAccountIdentifier(), identifierRef.getOrgIdentifier(),
-                identifierRef.getProjectIdentifier(), identifierRef.getIdentifier())
-            .orElseThrow(()
-                             -> new InvalidArgumentsException(
-                                 format("File or folder with identifier [%s], account [%s], org [%s] and project [%s] "
-                                         + "could not be retrieved from file store.",
-                                     identifier, accountIdentifier, orgIdentifier, projectIdentifier)));
+    NGFile file = fetchFile(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
 
     validateIsReferencedBy(file);
     return deleteFileOrFolder(file);
@@ -182,6 +159,22 @@ public class FileStoreServiceImpl implements FileStoreService {
         .isPresent();
   }
 
+  private boolean shouldStoreFileContent(NGFile ngFile) {
+    return !ngFile.isDraft() && ngFile.isFile();
+  }
+
+  private NGFile fetchFile(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier) {
+    return fileStoreRepository
+        .findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
+            accountIdentifier, orgIdentifier, projectIdentifier, identifier)
+        .orElseThrow(()
+                         -> new InvalidArgumentsException(
+                             format("File or folder with identifier [%s], account [%s], org [%s] and project [%s] "
+                                     + "could not be retrieved from file store.",
+                                 identifier, accountIdentifier, orgIdentifier, projectIdentifier)));
+  }
+
   private String getDuplicateEntityMessage(@NotNull FileDTO fileDto) {
     return format("Try creating another %s, %s with identifier [%s] already exists in the parent folder [%s]",
         fileDto.getType().name().toLowerCase(), fileDto.getType().name().toLowerCase(), fileDto.getIdentifier(),
@@ -197,6 +190,7 @@ public class FileStoreServiceImpl implements FileStoreService {
     ngFile.setFileUuid(ngBaseFile.getFileUuid());
     ngFile.setChecksumType(ngBaseFile.getChecksumType());
     ngFile.setChecksum(ngBaseFile.getChecksum());
+    ngFile.setDraft(false);
   }
 
   // in the case when we need to return the whole folder structure, create recursion on this method

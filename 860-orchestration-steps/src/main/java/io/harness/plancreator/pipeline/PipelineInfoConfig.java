@@ -20,6 +20,8 @@ import io.harness.plancreator.stages.StageElementWrapperConfig;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
+import io.harness.template.yaml.TemplateLinkConfig;
+import io.harness.validation.OneOfSet;
 import io.harness.validator.NGRegexValidatorConstants;
 import io.harness.yaml.YamlSchemaTypes;
 import io.harness.yaml.core.VariableExpression;
@@ -54,6 +56,11 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @TypeAlias("pipelineInfoConfig")
+@OneOfSet(
+    fields =
+        {"flowControl, properties, notificationRules, allowStageExecutions, timeout, stages, variables, delegateSelectors",
+            "template"},
+    requiredFieldNames = {"stages", "template"})
 public class PipelineInfoConfig {
   @JsonProperty(YamlNode.UUID_FIELD_NAME)
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
@@ -69,19 +76,13 @@ public class PipelineInfoConfig {
 
   @VariableExpression(skipVariableExpression = true) FlowControlConfig flowControl;
 
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
-  @VariableExpression
-  ParameterField<String> description;
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> description;
   @VariableExpression Map<String, String> tags;
 
   @VariableExpression List<NGVariable> variables;
   @VariableExpression NGProperties properties;
 
-  @NotNull
-  @Singular
-  @Size(min = 1)
-  @VariableExpression(skipVariableExpression = true)
-  List<StageElementWrapperConfig> stages;
+  @Singular @Size(min = 1) @VariableExpression(skipVariableExpression = true) List<StageElementWrapperConfig> stages;
   @VariableExpression(skipVariableExpression = true) List<NotificationRules> notificationRules;
 
   @VariableExpression(skipVariableExpression = true) String orgIdentifier;
@@ -91,6 +92,8 @@ public class PipelineInfoConfig {
   @Pattern(regexp = NGRegexValidatorConstants.TIMEOUT_PATTERN)
   @VariableExpression(skipVariableExpression = true)
   ParameterField<Timeout> timeout;
+
+  @VariableExpression(skipVariableExpression = true) TemplateLinkConfig template;
 
   @VariableExpression(skipVariableExpression = true) boolean allowStageExecutions;
 
