@@ -122,7 +122,10 @@ public abstract class CVConfig
 
   public String getHealthSourceIdentifier() {
     if (Objects.isNull(this.healthSourceIdentifier)) {
-      return HealthSourceService.getNameSpaceAndIdentifier(identifier).getValue();
+      if (identifier.contains("/")) {
+        return HealthSourceService.getNameSpaceAndIdentifier(identifier).getValue();
+      }
+      return "HealthSourceId";
     }
     return this.healthSourceIdentifier;
   }
