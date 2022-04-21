@@ -70,17 +70,16 @@ public class ScmGitProviderMapper {
   }
 
   private Provider mapToAzureRepoProvider(AzureRepoConnectorDTO azureRepoConnector, boolean debug) {
-    String url = StringUtils.substringBeforeLast(azureRepoConnector.getUrl(), "/_git/");
-    String orgAndProject = StringUtils.substringAfter(url, "dev.azure.com/");
-    String org = StringUtils.substringBefore(orgAndProject, "/");
-    String project = StringUtils.substringAfter(orgAndProject, "/");
-
     boolean skipVerify = checkScmSkipVerify();
+    String orgAndProject = GitClientHelper.getAzureRepoOrgAndProject(azureRepoConnector.getUrl());
+    String org = GitClientHelper.getAzureRepoOrg(orgAndProject);
+    String project = GitClientHelper.getAzureRepoProject(orgAndProject);
+
     AzureRepoApiAccessDTO apiAccess = azureRepoConnector.getApiAccess();
-    AzureRepoTokenSpecDTO bitbucketUsernameTokenApiAccessDTO = (AzureRepoTokenSpecDTO) apiAccess.getSpec();
-    String pat = String.valueOf(bitbucketUsernameTokenApiAccessDTO.getTokenRef().getDecryptedValue());
+    AzureRepoTokenSpecDTO azureRepoUsernameTokenApiAccessDTO = (AzureRepoTokenSpecDTO) apiAccess.getSpec();
+    String personalAccessToken = String.valueOf(azureRepoUsernameTokenApiAccessDTO.getTokenRef().getDecryptedValue());
     AzureProvider.Builder azureProvider =
-        AzureProvider.newBuilder().setOrganization(org).setProject(project).setPersonalAccessToken(pat);
+        AzureProvider.newBuilder().setOrganization(org).setProject(project).setPersonalAccessToken(personalAccessToken);
     Provider.Builder builder = Provider.newBuilder().setDebug(debug).setAzure(azureProvider);
     return builder.setSkipVerify(skipVerify).setAdditionalCertsPath(getAdditionalCertsPath()).build();
   }
