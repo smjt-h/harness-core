@@ -378,7 +378,6 @@ shared_dependencies = [
     "@maven//:org_mozilla_rhino",
     "@maven//:org_objenesis_objenesis",
     "@maven//:org_ow2_asm_asm",
-    "@maven//:org_postgresql_postgresql",
     "@maven//:org_quartz_scheduler_quartz",
     "@maven//:org_reactivestreams_reactive_streams",
     "@maven//:org_redisson_redisson",

@@ -318,7 +318,6 @@ java_library(
         "@maven//:org_mozilla_rhino",
         "@maven//:org_objenesis_objenesis",
         "@maven//:org_ow2_asm_asm",
-        "@maven//:org_postgresql_postgresql",
         "@maven//:org_projectlombok_lombok",
         "@maven//:org_quartz_scheduler_quartz",
         "@maven//:org_reactivestreams_reactive_streams",

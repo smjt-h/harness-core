@@ -62,7 +62,6 @@ shared_dependencies = [
     "@maven//:org_jooq_joor",
     "@maven//:org_modelmapper_modelmapper",
     "@maven//:org_mongodb_morphia_morphia",
-    "@maven//:org_postgresql_postgresql",
     "@maven//:org_reflections_reflections",
     "@maven//:org_slf4j_slf4j_api",
     "@maven//:org_springframework_data_spring_data_mongodb",
