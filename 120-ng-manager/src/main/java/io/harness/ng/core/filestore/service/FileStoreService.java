@@ -5,16 +5,23 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.ng.core.api;
+package io.harness.ng.core.filestore.service;
 
+import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ng.core.beans.SearchPageParams;
 import io.harness.ng.core.dto.filestore.FileDTO;
+import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
+import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Set;
 import javax.validation.constraints.NotNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @OwnedBy(HarnessTeam.CDP)
 public interface FileStoreService {
@@ -26,7 +33,7 @@ public interface FileStoreService {
    * @param draft whether file is draft or not
    * @return created file DTO object
    */
-  FileDTO create(@NotNull FileDTO fileDto, InputStream content, boolean draft);
+  FileDTO create(@NotNull FileDTO fileDto, InputStream content, Boolean draft);
 
   /**
    * Update file.
@@ -74,4 +81,21 @@ public interface FileStoreService {
    */
   FolderNodeDTO listFolderNodes(@NotNull String accountIdentifier, String orgIdentifier, String projectIdentifier,
       @NotNull FolderNodeDTO folderNodeDTO);
+
+  /**
+   * Get list of entities file is referenced by.
+   *
+   * @param accountIdentifier the account identifier
+   * @param orgIdentifier the organization identifier
+   * @param projectIdentifier the project identifier
+   * @param identifier the file identifier
+   * @return list of entities file is referenced by
+   */
+  Page<EntitySetupUsageDTO> listReferencedBy(SearchPageParams pageParams, @NotNull String accountIdentifier,
+      String orgIdentifier, String projectIdentifier, @NotNull String identifier, EntityType entityType);
+
+  Page<FileDTO> listFilesWithFilter(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      String filterIdentifier, String searchTerm, FilesFilterPropertiesDTO filesFilterPropertiesDTO, Pageable pageable);
+
+  Set<String> getCreatedByList(String accountIdentifier, String orgIdentifier, String projectIdentifier);
 }

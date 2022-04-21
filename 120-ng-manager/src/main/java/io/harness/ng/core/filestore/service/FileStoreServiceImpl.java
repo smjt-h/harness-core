@@ -5,29 +5,46 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.ng.core.api.impl;
+package io.harness.ng.core.filestore.service;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.delegate.beans.FileBucket.FILE_STORE;
+import static io.harness.filter.FilterType.FILESTORE;
+import static io.harness.repositories.filestore.FileStoreRepositoryCriteriaCreator.createCriteriaByScopeAndParentIdentifier;
+import static io.harness.repositories.filestore.FileStoreRepositoryCriteriaCreator.createFilesFilterCriteria;
+import static io.harness.repositories.filestore.FileStoreRepositoryCriteriaCreator.createScopeCriteria;
+import static io.harness.repositories.filestore.FileStoreRepositoryCriteriaCreator.createSortByLastModifiedAtDesc;
 
 import static java.lang.String.format;
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.group;
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.match;
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.sort;
 
+import io.harness.EntityType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.exception.DuplicateEntityException;
 import io.harness.exception.InvalidArgumentsException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.file.beans.NGBaseFile;
 import io.harness.filestore.FileStoreConstants;
 import io.harness.filestore.NGFileType;
-import io.harness.ng.core.api.FileStoreService;
+import io.harness.filter.dto.FilterDTO;
+import io.harness.filter.service.FilterService;
+import io.harness.ng.core.beans.SearchPageParams;
+import io.harness.ng.core.dto.filestore.CreatedBy;
 import io.harness.ng.core.dto.filestore.FileDTO;
+import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
 import io.harness.ng.core.dto.filestore.node.FileStoreNodeDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 import io.harness.ng.core.entities.NGFile;
+import io.harness.ng.core.entities.NGFile.NGFiles;
+import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
+import io.harness.ng.core.filestore.utils.FileReferencedByHelper;
 import io.harness.ng.core.mapper.FileDTOMapper;
 import io.harness.ng.core.mapper.FileStoreNodeDTOMapper;
-import io.harness.repositories.filestore.FileStoreRepositoryCriteriaCreator;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
 import io.harness.stream.BoundedInputStream;
 
@@ -41,10 +58,18 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.query.Criteria;
 
 @Singleton
 @OwnedBy(CDP)
@@ -53,29 +78,35 @@ public class FileStoreServiceImpl implements FileStoreService {
   private final FileService fileService;
   private final FileStoreRepository fileStoreRepository;
   private final MainConfiguration configuration;
+  private final FileReferencedByHelper fileReferencedByHelper;
+  private final FilterService filterService;
 
   @Inject
-  public FileStoreServiceImpl(
-      FileService fileService, FileStoreRepository fileStoreRepository, MainConfiguration configuration) {
+  public FileStoreServiceImpl(FileService fileService, FileStoreRepository fileStoreRepository,
+      MainConfiguration configuration, FileReferencedByHelper fileReferencedByHelper, FilterService filterService) {
     this.fileService = fileService;
     this.fileStoreRepository = fileStoreRepository;
     this.configuration = configuration;
+    this.fileReferencedByHelper = fileReferencedByHelper;
+    this.filterService = filterService;
   }
 
   @Override
-  public FileDTO create(@NotNull FileDTO fileDto, InputStream content, boolean draft) {
+  public FileDTO create(@NotNull FileDTO fileDto, InputStream content, Boolean draft) {
     log.info("Creating {}: {}", fileDto.getType().name().toLowerCase(), fileDto);
 
-    if (existInDatabase(fileDto)) {
-      throw new DuplicateEntityException(getDuplicateEntityMessage(fileDto));
+    if (isFileExistsByIdentifier(fileDto)) {
+      throw new DuplicateEntityException(getDuplicateEntityIdentifierMessage(fileDto));
+    }
+
+    if (isFileExistByName(fileDto)) {
+      throw new DuplicateEntityException(getDuplicateEntityNameMessage(fileDto));
     }
 
     NGFile ngFile = FileDTOMapper.getNGFileFromDTO(fileDto, draft);
 
-    if (shouldStoreFileContent(ngFile)) {
-      if (content == null) {
-        throw new InvalidArgumentsException(format("File content is empty. Identifier: %s", fileDto.getIdentifier()));
-      }
+    if (shouldStoreFileContent(content, ngFile)) {
+      log.info("Start creating file in file system, identifier: {}", fileDto.getIdentifier());
       saveFile(fileDto, ngFile, content);
     }
 
@@ -83,7 +114,7 @@ public class FileStoreServiceImpl implements FileStoreService {
       ngFile = fileStoreRepository.save(ngFile);
       return FileDTOMapper.getFileDTOFromNGFile(ngFile);
     } catch (DuplicateKeyException e) {
-      throw new DuplicateEntityException(getDuplicateEntityMessage(fileDto));
+      throw new DuplicateEntityException(format("This %s already exists.", fileDto.getType().name().toLowerCase()));
     }
   }
 
@@ -93,16 +124,16 @@ public class FileStoreServiceImpl implements FileStoreService {
       throw new InvalidArgumentsException("File identifier cannot be empty");
     }
 
-    NGFile existingFile = fetchFile(
+    NGFile existingFile = fetchFileOrThrow(
         fileDto.getAccountIdentifier(), fileDto.getOrgIdentifier(), fileDto.getProjectIdentifier(), identifier);
 
-    FileDTOMapper.updateNGFile(fileDto, existingFile);
-    if (content != null && fileDto.isFile()) {
+    NGFile updatedNGFile = FileDTOMapper.updateNGFile(fileDto, existingFile);
+    if (shouldStoreFileContent(content, updatedNGFile)) {
       log.info("Start updating file in file system, identifier: {}", identifier);
-      saveFile(fileDto, existingFile, content);
+      saveFile(fileDto, updatedNGFile, content);
     }
-    fileStoreRepository.save(existingFile);
-    return FileDTOMapper.getFileDTOFromNGFile(existingFile);
+    fileStoreRepository.save(updatedNGFile);
+    return FileDTOMapper.getFileDTOFromNGFile(updatedNGFile);
   }
 
   @Override
@@ -115,7 +146,7 @@ public class FileStoreServiceImpl implements FileStoreService {
       throw new InvalidArgumentsException("Account identifier cannot be null or empty");
     }
 
-    NGFile ngFile = fetchFile(accountIdentifier, orgIdentifier, projectIdentifier, fileIdentifier);
+    NGFile ngFile = fetchFileOrThrow(accountIdentifier, orgIdentifier, projectIdentifier, fileIdentifier);
     if (ngFile.isFolder()) {
       throw new InvalidArgumentsException(
           format("Downloading folder not supported, fileIdentifier: %s", fileIdentifier));
@@ -140,8 +171,7 @@ public class FileStoreServiceImpl implements FileStoreService {
           format("Root folder [%s] can not be deleted.", FileStoreConstants.ROOT_FOLDER_IDENTIFIER));
     }
 
-    NGFile file = fetchFile(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
-
+    NGFile file = fetchFileOrThrow(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
     validateIsReferencedBy(file);
     return deleteFileOrFolder(file);
   }
@@ -152,32 +182,78 @@ public class FileStoreServiceImpl implements FileStoreService {
     return populateFolderNode(folderNodeDTO, accountIdentifier, orgIdentifier, projectIdentifier);
   }
 
-  private boolean existInDatabase(FileDTO fileDto) {
-    return fileStoreRepository
-        .findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(fileDto.getAccountIdentifier(),
-            fileDto.getOrgIdentifier(), fileDto.getProjectIdentifier(), fileDto.getIdentifier())
-        .isPresent();
+  @Override
+  public Page<EntitySetupUsageDTO> listReferencedBy(SearchPageParams pageParams, @NotNull String accountIdentifier,
+      String orgIdentifier, String projectIdentifier, @NotNull String identifier, EntityType entityType) {
+    if (isEmpty(identifier)) {
+      throw new InvalidArgumentsException("File identifier cannot be empty");
+    }
+    if (isEmpty(accountIdentifier)) {
+      throw new InvalidArgumentsException("Account identifier cannot be null or empty");
+    }
+    NGFile file = fetchFileOrThrow(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
+    return fileReferencedByHelper.getReferencedBy(pageParams, file, entityType);
   }
 
-  private boolean shouldStoreFileContent(NGFile ngFile) {
-    return !ngFile.isDraft() && ngFile.isFile();
+  @Override
+  public Page<FileDTO> listFilesWithFilter(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      String filterIdentifier, String searchTerm, FilesFilterPropertiesDTO filterProperties, Pageable pageable) {
+    if (isNotEmpty(filterIdentifier) && filterProperties != null) {
+      throw new InvalidRequestException("Can not apply both filter properties and saved filter together");
+    }
+
+    if (isNotEmpty(filterIdentifier)) {
+      FilterDTO filterDTO =
+          filterService.get(accountIdentifier, orgIdentifier, projectIdentifier, filterIdentifier, FILESTORE);
+      filterProperties = (FilesFilterPropertiesDTO) filterDTO.getFilterProperties();
+    }
+
+    Scope scope = Scope.of(accountIdentifier, orgIdentifier, projectIdentifier);
+    Criteria criteria = createFilesFilterCriteria(scope, filterProperties, searchTerm);
+
+    Page<NGFile> ngFiles = fileStoreRepository.findAllAndSort(criteria, createSortByLastModifiedAtDesc(), pageable);
+    List<FileDTO> fileDTOS = ngFiles.stream().map(FileDTOMapper::getFileDTOFromNGFile).collect(Collectors.toList());
+    return new PageImpl<>(fileDTOS, pageable, ngFiles.getTotalElements());
   }
 
-  private NGFile fetchFile(
+  @Override
+  public Set<String> getCreatedByList(String accountIdentifier, String orgIdentifier, String projectIdentifier) {
+    Scope scope = Scope.of(accountIdentifier, orgIdentifier, projectIdentifier);
+    Criteria criteria = createScopeCriteria(scope);
+    criteria.and(NGFiles.type).is(NGFileType.FILE);
+
+    Aggregation aggregation = Aggregation.newAggregation(
+        match(criteria), group(NGFiles.createdBy), sort(Sort.Direction.ASC, NGFiles.createdBy));
+
+    AggregationResults<CreatedBy> aggregate = fileStoreRepository.aggregate(aggregation, CreatedBy.class);
+
+    return aggregate.getMappedResults().stream().map(CreatedBy::getCreatedBy).collect(Collectors.toSet());
+  }
+
+  private boolean shouldStoreFileContent(InputStream content, NGFile ngFile) {
+    return content != null && !ngFile.isDraft() && ngFile.isFile();
+  }
+
+  private NGFile fetchFileOrThrow(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier) {
     return fileStoreRepository
         .findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
             accountIdentifier, orgIdentifier, projectIdentifier, identifier)
-        .orElseThrow(()
-                         -> new InvalidArgumentsException(
-                             format("File or folder with identifier [%s], account [%s], org [%s] and project [%s] "
-                                     + "could not be retrieved from file store.",
-                                 identifier, accountIdentifier, orgIdentifier, projectIdentifier)));
+        .orElseThrow(
+            ()
+                -> new InvalidArgumentsException(format(
+                    "Not found file/folder with identifier [%s], accountIdentifier [%s], orgIdentifier [%s] and projectIdentifier [%s]",
+                    identifier, accountIdentifier, orgIdentifier, projectIdentifier)));
   }
 
-  private String getDuplicateEntityMessage(@NotNull FileDTO fileDto) {
-    return format("Try creating another %s, %s with identifier [%s] already exists in the parent folder [%s]",
-        fileDto.getType().name().toLowerCase(), fileDto.getType().name().toLowerCase(), fileDto.getIdentifier(),
+  private String getDuplicateEntityIdentifierMessage(@NotNull FileDTO fileDto) {
+    return format("Try creating another %s, %s with identifier [%s] already exists.",
+        fileDto.getType().name().toLowerCase(), fileDto.getType().name().toLowerCase(), fileDto.getIdentifier());
+  }
+
+  private String getDuplicateEntityNameMessage(@NotNull FileDTO fileDto) {
+    return format("Try creating another %s, %s with name [%s] already exists in the parent folder [%s].",
+        fileDto.getType().name().toLowerCase(), fileDto.getType().name().toLowerCase(), fileDto.getName(),
         fileDto.getParentIdentifier());
   }
 
@@ -219,9 +295,9 @@ public class FileStoreServiceImpl implements FileStoreService {
   private List<NGFile> listFilesByParentIdentifierSortedByLastModifiedAt(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String parentIdentifier) {
     return fileStoreRepository.findAllAndSort(
-        FileStoreRepositoryCriteriaCreator.createCriteriaByScopeAndParentIdentifier(
+        createCriteriaByScopeAndParentIdentifier(
             Scope.of(accountIdentifier, orgIdentifier, projectIdentifier), parentIdentifier),
-        FileStoreRepositoryCriteriaCreator.createSortByLastModifiedAtDesc());
+        createSortByLastModifiedAtDesc());
   }
 
   private void validateIsReferencedBy(NGFile fileOrFolder) {
@@ -230,6 +306,11 @@ public class FileStoreServiceImpl implements FileStoreService {
         throw new InvalidArgumentsException(format(
             "Folder [%s], or its subfolders, contain file(s) referenced by other entities and can not be deleted.",
             fileOrFolder.getIdentifier()));
+      }
+    } else {
+      if (isFileReferencedByOtherEntities(fileOrFolder)) {
+        throw new InvalidArgumentsException(
+            format("File [%s] is referenced by other entities and can not be deleted.", fileOrFolder.getIdentifier()));
       }
     }
   }
@@ -246,8 +327,12 @@ public class FileStoreServiceImpl implements FileStoreService {
     if (NGFileType.FOLDER.equals(fileOrFolder.getType())) {
       return anyFileInFolderHasReferences(fileOrFolder);
     } else {
-      return false;
+      return isFileReferencedByOtherEntities(fileOrFolder);
     }
+  }
+
+  private boolean isFileReferencedByOtherEntities(NGFile file) {
+    return fileReferencedByHelper.isFileReferencedByOtherEntities(file);
   }
 
   private boolean deleteFileOrFolder(NGFile fileOrFolder) {
@@ -289,5 +374,19 @@ public class FileStoreServiceImpl implements FileStoreService {
       log.error("Failed to delete file [{}].", file.getIdentifier(), e);
       return false;
     }
+  }
+
+  private boolean isFileExistsByIdentifier(FileDTO fileDto) {
+    return fileStoreRepository
+        .findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(fileDto.getAccountIdentifier(),
+            fileDto.getOrgIdentifier(), fileDto.getProjectIdentifier(), fileDto.getIdentifier())
+        .isPresent();
+  }
+  private boolean isFileExistByName(FileDTO fileDto) {
+    return fileStoreRepository
+        .findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndParentIdentifierAndName(
+            fileDto.getAccountIdentifier(), fileDto.getOrgIdentifier(), fileDto.getProjectIdentifier(),
+            fileDto.getParentIdentifier(), fileDto.getName())
+        .isPresent();
   }
 }

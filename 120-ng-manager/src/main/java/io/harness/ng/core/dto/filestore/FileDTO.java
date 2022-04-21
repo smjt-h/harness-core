@@ -74,6 +74,7 @@ public class FileDTO {
   @Schema(description = "Tags") @Valid private List<NGTag> tags;
   @Schema(description = "Mime type of the File") @FormDataParam("mimeType") private String mimeType;
   @Schema(description = "Whether File is draft or not") @JsonProperty(access = Access.READ_ONLY) private Boolean draft;
+  @NotBlank @Schema(description = "File created by user") @FormDataParam("createdBy") private String createdBy;
 
   @JsonIgnore
   public boolean isFile() {
@@ -85,10 +86,15 @@ public class FileDTO {
     return type == NGFileType.FOLDER;
   }
 
+  @JsonIgnore
+  public boolean isDraft() {
+    return draft != null && draft;
+  }
+
   @Builder
   public FileDTO(String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier,
       String name, FileUsage fileUsage, NGFileType type, String parentIdentifier, String description, List<NGTag> tags,
-      String mimeType, Boolean draft) {
+      String mimeType, Boolean draft, String createdBy) {
     this.accountIdentifier = accountIdentifier;
     this.orgIdentifier = orgIdentifier;
     this.projectIdentifier = projectIdentifier;
@@ -101,5 +107,6 @@ public class FileDTO {
     this.tags = tags;
     this.mimeType = mimeType;
     this.draft = draft;
+    this.createdBy = createdBy;
   }
 }
