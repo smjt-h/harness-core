@@ -42,11 +42,7 @@ public class KryoConverterFactory extends Factory {
   public Converter<ResponseBody, ?> responseBodyConverter(Type type, Annotation[] annotations, Retrofit retrofit) {
     if (stream(annotations).anyMatch(annotation -> annotation.annotationType().isAssignableFrom(KryoResponse.class))) {
       return value -> {
-        try {
           return kryoSerializer.asObject(value.bytes());
-        } finally {
-          value.close();
-        }
       };
     }
     return null;
