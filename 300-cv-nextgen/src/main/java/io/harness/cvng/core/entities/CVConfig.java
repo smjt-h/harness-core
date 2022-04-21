@@ -120,6 +120,13 @@ public abstract class CVConfig
     return HealthSourceService.getNameSpacedIdentifier(this.monitoredServiceIdentifier, this.healthSourceIdentifier);
   }
 
+  public String getHealthSourceIdentifier() {
+    if (Objects.isNull(this.healthSourceIdentifier)) {
+      return HealthSourceService.getNameSpaceAndIdentifier(identifier).getValue();
+    }
+    return this.healthSourceIdentifier;
+  }
+
   public abstract boolean isSLIEnabled();
   public abstract boolean isLiveMonitoringEnabled();
   public abstract boolean isDeploymentVerificationEnabled();
