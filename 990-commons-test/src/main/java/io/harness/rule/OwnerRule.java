@@ -109,6 +109,7 @@ public class OwnerRule implements TestRule {
   public static final String BRIJESH = "brijesh.dhakar";
   public static final String DEEPAK = "deepak.patankar";
   public static final String DHRUV = "dhruv.upadhyay";
+  public static final String DHRUVX = "dhruv";
   public static final String DINESH = "dinesh.garg";
   public static final String FILIP = "filip.petrovic";
   public static final String GARVIT = "garvit.pahal";
@@ -122,6 +123,7 @@ public class OwnerRule implements TestRule {
   public static final String IGOR = "igor.gere";
   public static final String INDER = "inderpreet.chera";
   public static final String JENNY = "jenny.james";
+  public static final String JOHANNES = "johannes.batzill";
   public static final String JUHI = "juhi.agrawal";
   public static final String KAMAL = "kamal.joshi";
   public static final String KARAN = "karan.siwach";
@@ -294,6 +296,7 @@ public class OwnerRule implements TestRule {
           .put(BRIJESH, defaultUserInfo(BRIJESH).slack("U015LRWS8KV").team(PL).build())
           .put(DEEPAK, defaultUserInfo(DEEPAK).slack("UK9EKBKQS").team(DX).build())
           .put(DHRUV, defaultUserInfo(DHRUV).slack("U012WHYL7G8").team(CDC).build())
+          .put(DHRUVX, defaultUserInfo(DHRUVX).slack("U038BLMCH6K").team(CV).build())
           .put(DINESH, UserInfo.builder().email("dinesh.garg@harness.io").slack("UQ0DMQG11").build())
           .put(GARVIT, defaultUserInfo(GARVIT).slack("UHH98EXDK").team(CDC).build())
           .put(GAURAV, UserInfo.builder().email("gaurav.jain@harness.io").build())
@@ -307,6 +310,7 @@ public class OwnerRule implements TestRule {
           .put(IGOR, defaultUserInfo(IGOR).slack("U0104P0SC03").team(DX).build())
           .put(INDER, defaultUserInfo(INDER).slack("U0155TBCW7R").team(CDC).build())
           .put(JENNY, defaultUserInfo(JENNY).slack("U01VA4SBXU0").team(DEL).build())
+          .put(JOHANNES, defaultUserInfo(JOHANNES).slack("U0315TEFG65").team(DEL).build())
           .put(JUHI, defaultUserInfo(JUHI).slack("UL1KX4K1S").build())
           .put(KAMAL, defaultUserInfo(KAMAL).slack("UKFQ1PQBH").team(CV).build())
           .put(KANHAIYA, defaultUserInfo(KANHAIYA).slack("U01HFBAT8A2").team(CV).build())
