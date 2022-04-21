@@ -18,20 +18,22 @@ import io.harness.delegate.task.serverless.ServerlessInfraConfig;
 import io.harness.delegate.task.serverless.ServerlessManifestConfig;
 import io.harness.delegate.task.serverless.ServerlessRollbackConfig;
 import io.harness.expression.Expression;
+import io.harness.expression.ExpressionReflectionUtils.NestedAnnotationResolver;
 
 import lombok.Builder;
 import lombok.Value;
+import lombok.experimental.NonFinal;
 
 @Value
 @Builder
 @OwnedBy(HarnessTeam.CDP)
-public class ServerlessRollbackRequest implements ServerlessCommandRequest {
+public class ServerlessRollbackRequest implements ServerlessCommandRequest, NestedAnnotationResolver {
   String accountId;
   ServerlessCommandType serverlessCommandType;
   String commandName;
   CommandUnitsProgress commandUnitsProgress;
-  ServerlessManifestConfig serverlessManifestConfig;
-  ServerlessInfraConfig serverlessInfraConfig;
+  @NonFinal @Expression(ALLOW_SECRETS) ServerlessManifestConfig serverlessManifestConfig;
+  @NonFinal @Expression(ALLOW_SECRETS) ServerlessInfraConfig serverlessInfraConfig;
   ServerlessRollbackConfig serverlessRollbackConfig;
   Integer timeoutIntervalInMin;
   @Expression(ALLOW_SECRETS) String manifestContent;

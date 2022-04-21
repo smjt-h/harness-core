@@ -174,12 +174,12 @@ public class ServerlessAwsLambdaDeployStep
     }
     serverlessRollbackDataOutcomeBuilder.previousVersionTimeStamp(
         serverlessAwsLambdaStepHelper.getPreviousVersion(serverlessDeployResponse));
+    executionSweepingOutputService.consume(ambiance,
+        OutcomeExpressionConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK_DATA_OUTCOME,
+        serverlessRollbackDataOutcomeBuilder.build(), StepOutcomeGroup.STEP.name());
     StepResponseBuilder stepResponseBuilder =
         StepResponse.builder().unitProgressList(serverlessDeployResponse.getUnitProgressData().getUnitProgresses());
     if (serverlessDeployResponse.getCommandExecutionStatus() != CommandExecutionStatus.SUCCESS) {
-      executionSweepingOutputService.consume(ambiance,
-          OutcomeExpressionConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK_DATA_OUTCOME,
-          serverlessRollbackDataOutcomeBuilder.build(), StepOutcomeGroup.STEP.name());
       return ServerlessStepCommonHelper.getFailureResponseBuilder(serverlessDeployResponse, stepResponseBuilder)
           .build();
     }

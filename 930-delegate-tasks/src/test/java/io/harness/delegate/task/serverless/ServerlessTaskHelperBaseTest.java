@@ -14,6 +14,7 @@ import static software.wings.beans.LogColor.White;
 import static software.wings.beans.LogHelper.color;
 import static software.wings.beans.LogWeight.Bold;
 
+import static java.lang.String.format;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
@@ -38,6 +39,7 @@ import io.harness.security.encryption.SecretDecryptionService;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -104,11 +106,23 @@ public class ServerlessTaskHelperBaseTest extends CategoryTest {
 
     String input = "asfd";
     InputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
+    String artifactPath = Paths
+                              .get(((ServerlessArtifactoryArtifactConfig) serverlessArtifactConfig).getRepositoryName(),
+                                  ((ServerlessArtifactoryArtifactConfig) serverlessArtifactConfig).getArtifactPath())
+                              .toString();
+
     doReturn(inputStream)
         .when(artifactoryNgService)
         .downloadArtifacts(artifactoryConfigRequest, repositoryName, artifactMetadata, ARTIFACTORY_ARTIFACT_PATH,
             ARTIFACTORY_ARTIFACT_NAME);
     serverlessTaskHelperBase.fetchArtifact(serverlessArtifactConfig, logCallback, ARTIFACT_DIRECTORY);
-    verify(logCallback).saveExecutionLog(color("Successfully downloaded artifact..", White, Bold));
+    verify(logCallback)
+        .saveExecutionLog("\n"
+            + color(format("Downloading %s artifact with identifier: %s",
+                        serverlessArtifactConfig.getServerlessArtifactType(),
+                        ((ServerlessArtifactoryArtifactConfig) serverlessArtifactConfig).getIdentifier()),
+                White, Bold));
+    verify(logCallback).saveExecutionLog("Artifactory Artifact Path: " + artifactPath);
+    verify(logCallback).saveExecutionLog(color("Successfully downloaded artifact..%n", White, Bold));
   }
 }
