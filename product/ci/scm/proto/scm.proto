@@ -485,11 +485,25 @@ message ListBranchesRequest {
   Provider provider = 3;
 }
 
+message ListBranchesV2Request {
+  string slug = 1;
+  PageRequest pagination = 2;
+  Provider provider = 3;
+}
+
 message ListBranchesResponse {
   repeated string branches = 1;
   PageResponse pagination = 2;
   int32 status = 3;
   string error = 4;
+}
+
+message ListBranchesV2Response {
+  repeated string branches = 1;
+  PageResponse pagination = 2;
+  int32 status = 3;
+  string error = 4;
+  string default_branch = 5;
 }
 
 message CompareCommitsRequest {
@@ -746,6 +760,7 @@ service SCM {
   rpc CreateBranch(CreateBranchRequest) returns (CreateBranchResponse);
   rpc GetLatestCommit(GetLatestCommitRequest) returns (GetLatestCommitResponse);
   rpc ListBranches(ListBranchesRequest) returns (ListBranchesResponse);
+  rpc ListBranchesV2(ListBranchesV2Request) returns (ListBranchesV2Response);
   rpc ListCommits(ListCommitsRequest) returns (ListCommitsResponse);
   rpc CompareCommits(CompareCommitsRequest) returns (CompareCommitsResponse);
   rpc GetLatestCommitOnFile(GetLatestCommitOnFileRequest) returns (GetLatestCommitOnFileResponse);

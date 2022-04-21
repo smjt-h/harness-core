@@ -149,6 +149,11 @@ func (h *handler) ListBranches(ctx context.Context, in *pb.ListBranchesRequest) 
 	return git.ListBranches(ctx, in, h.log)
 }
 
+// ListBranches is used to return a list of branches, along with the default branch
+func (h *handler) ListBranchesV2(ctx context.Context, in *pb.ListBranchesV2Request) (*pb.ListBranchesV2Response, error) {
+	return git.ListBranchesV2(ctx, in, h.log)
+}
+
 // ListCommits is used to return a list of commit ids given a ref or branch.
 func (h *handler) ListCommits(ctx context.Context, in *pb.ListCommitsRequest) (*pb.ListCommitsResponse, error) {
 	return git.ListCommits(ctx, in, h.log)

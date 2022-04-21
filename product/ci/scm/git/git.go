@@ -311,17 +311,18 @@ func ListBranches(ctx context.Context, request *pb.ListBranchesRequest, log *zap
 
 	branchesContent, response, err := client.Git.ListBranches(ctx, request.GetSlug(), scm.ListOptions{Page: int(request.GetPagination().GetPage())})
 	if err != nil {
-		log.Errorw("ListBranches failure", "provider", gitclient.GetProvider(*request.GetProvider()), "slug", request.GetSlug(), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
-		if response == nil {
-			return nil, err
-		}
-		// this is an error from the git provider, e.g. authentication.
-		out = &pb.ListBranchesResponse{
-			Status: int32(response.Status),
-			Error:  err.Error(),
-		}
-		return out, nil
+	    log.Errorw("ListBranches failure", "provider", gitclient.GetProvider(*request.GetProvider()), "slug", request.GetSlug(), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
+        if response == nil {
+        	return nil, err
+        }
+        // this is an error from the git provider, e.g. authentication.
+        out := &pb.ListBranchesResponse{
+        	Status: int32(response.Status),
+        	Error:  err.Error(),
+        }
+        return out, nil
 	}
+
 	log.Infow("ListBranches success", "slug", request.GetSlug(), "elapsed_time_ms", utils.TimeSince(start))
 	var branches []string
 	for _, v := range branchesContent {
@@ -336,6 +337,76 @@ func ListBranches(ctx context.Context, request *pb.ListBranchesRequest, log *zap
 	}
 	return out, nil
 }
+
+func ListBranchesV2(ctx context.Context, request *pb.ListBranchesV2Request, log *zap.SugaredLogger) (out *pb.ListBranchesV2Response, err error) {
+	start := time.Now()
+	log.Infow("ListBranchesV2 starting", "slug", request.GetSlug())
+
+	client, err := gitclient.GetGitClient(*request.GetProvider(), log)
+	if err != nil {
+		log.Errorw("ListBranchesV2 failure", "bad provider", gitclient.GetProvider(*request.GetProvider()), "slug", request.GetSlug(), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
+		return nil, err
+	}
+
+	branchesContent, response, err := client.Git.ListBranches(ctx, request.GetSlug(), scm.ListOptions{Page: int(request.GetPagination().GetPage())})
+	if err != nil {
+	    log.Errorw("ListBranchesV2 failure", "provider", gitclient.GetProvider(*request.GetProvider()), "slug", request.GetSlug(), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
+        return createListBranchesFailureResponse(response, err)
+	}
+
+	var getUserRepoRequest = &pb.GetUserRepoRequest{
+    	Slug : request.GetSlug(),
+    	Provider : request.GetProvider(),
+    }
+
+	log.Infow("ListBranchesV2 success", "slug", request.GetSlug(), "elapsed_time_ms", utils.TimeSince(start))
+	userRepoResponse, userRepoError := GetUserRepo(ctx, getUserRepoRequest, log)
+
+	if err != nil {
+	    log.Errorw("List Default Branch V2 failure", "provider", gitclient.GetProvider(*request.GetProvider()), "slug", request.GetSlug(), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
+	    return createGetUserRepoFailureResponse(userRepoResponse, userRepoError)
+	}
+
+    log.Infow("ListRepo success", "slug", request.GetSlug(), "elapsed_time_ms", utils.TimeSince(start))
+	var branches []string
+	for _, v := range branchesContent {
+		branches = append(branches, v.Name)
+	}
+
+	out = &pb.ListBranchesV2Response{
+		Branches: branches,
+		DefaultBranch: userRepoResponse.GetRepo().GetBranch(),
+		Pagination: &pb.PageResponse{
+			Next: int32(response.Page.Next),
+		},
+	}
+	return out, nil
+}
+
+func createListBranchesFailureResponse(response *scm.Response, err error) ( *pb.ListBranchesV2Response,  error) {
+		if response == nil {
+			return nil, err
+		}
+		// this is an error from the git provider, e.g. authentication.
+		out := &pb.ListBranchesV2Response{
+			Status: int32(response.Status),
+			Error:  err.Error(),
+		}
+		return out, nil
+}
+
+func createGetUserRepoFailureResponse(response *pb.GetUserRepoResponse, err error) ( *pb.ListBranchesV2Response,  error) {
+		if response == nil {
+			return nil, err
+		}
+		// this is an error from the git provider, e.g. authentication.
+		out := &pb.ListBranchesV2Response{
+			Status: response.GetStatus(),
+			Error:  response.GetError(),
+		}
+		return out, nil
+}
+
 
 func ListCommits(ctx context.Context, request *pb.ListCommitsRequest, log *zap.SugaredLogger) (out *pb.ListCommitsResponse, err error) {
 	start := time.Now()
