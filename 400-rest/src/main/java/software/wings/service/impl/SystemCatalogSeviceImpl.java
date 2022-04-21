@@ -18,6 +18,7 @@ import io.harness.delegate.beans.FileBucket;
 import io.harness.logging.Misc;
 import io.harness.stream.BoundedInputStream;
 
+import software.wings.beans.AppContainer;
 import software.wings.beans.SystemCatalog;
 import software.wings.dl.WingsPersistence;
 import software.wings.service.intfc.FileService;
@@ -47,7 +48,8 @@ public class SystemCatalogSeviceImpl implements SystemCatalogService {
   @Override
   public SystemCatalog save(SystemCatalog systemCatalog, String url, FileBucket fileBucket, long size) {
     uploadSystemCatalogFile(systemCatalog, url, fileBucket, size);
-    return wingsPersistence.saveAndGet(SystemCatalog.class, systemCatalog);
+    String systemCatalogKey = wingsPersistence.save(systemCatalog);
+    return wingsPersistence.getWithAppId(SystemCatalog.class, systemCatalog.getAppId(), systemCatalogKey);
   }
 
   @Override

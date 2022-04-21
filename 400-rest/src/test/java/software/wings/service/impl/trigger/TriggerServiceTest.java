@@ -3690,7 +3690,7 @@ public class TriggerServiceTest extends WingsBaseTest {
                                    .stream()
                                    .flatMap(executionArgs -> executionArgs.getArtifacts().stream())
                                    .collect(Collectors.toList());
-    assertThat(artifacts.stream().map(Base::getUuid).collect(Collectors.toList()))
+    assertThat(artifacts.stream().map(Artifact::getUuid).collect(Collectors.toList()))
         .containsExactlyInAnyOrder(ARTIFACT_ID, ARTIFACT_ID + 2);
   }
 
