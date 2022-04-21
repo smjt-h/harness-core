@@ -7,15 +7,15 @@
 
 package io.harness.ng.validator.service.api;
 
-import static io.harness.annotations.dev.HarnessTeam.CDP;
-
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.validator.dto.HostValidationDTO;
 
-import java.util.List;
-import java.util.Set;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
+import java.util.List;
+import java.util.Set;
+
+import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 @OwnedBy(CDP)
 public interface NGHostValidationService {
@@ -56,7 +56,8 @@ public interface NGHostValidationService {
    * @return the list of host validation results
    */
   List<HostValidationDTO> validateSSHHosts(@NotNull List<String> hosts, String accountIdentifier,
-      @Nullable String orgIdentifier, @Nullable String projectIdentifier, @NotNull String secretIdentifierWithScope);
+      @Nullable String orgIdentifier, @Nullable String projectIdentifier, @NotNull String secretIdentifierWithScope,
+      @Nullable Set<String> delegateSelectors);
 
   /**
    * Validate SSH host credentials and connectivity.
@@ -69,5 +70,5 @@ public interface NGHostValidationService {
    * @return host validation result
    */
   HostValidationDTO validateSSHHost(@NotNull String host, String accountIdentifier, @Nullable String orgIdentifier,
-      @Nullable String projectIdentifier, @NotNull String secretIdentifierWithScope);
+      @Nullable String projectIdentifier, @NotNull String secretIdentifierWithScope, @Nullable Set<String> delegateSelectors);
 }

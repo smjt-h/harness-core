@@ -7,16 +7,8 @@
 
 package io.harness.ng.validator.service;
 
-import static io.harness.rule.OwnerRule.IVAN;
-import static io.harness.rule.OwnerRule.VLAD;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
+import com.google.common.collect.Sets;
+import groovy.lang.Category;
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -42,19 +34,26 @@ import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.services.SshKeySpecDTOHelper;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.service.DelegateGrpcClientWrapper;
-
-import com.google.common.collect.Sets;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import static io.harness.rule.OwnerRule.IVAN;
+import static io.harness.rule.OwnerRule.VLAD;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @OwnedBy(HarnessTeam.CDP)
 @RunWith(MockitoJUnitRunner.class)
@@ -80,7 +79,7 @@ public class NGHostValidationServiceImplTest extends CategoryTest {
 
   @Test
   @Owner(developers = {VLAD, IVAN})
-  @Category(UnitTests.class)
+  @groovy.lang.Category(UnitTests.class)
   public void shouldValidateSshHost() {
     mockSecret(SecretType.SSHKey);
     mockEncryptionDetails();
@@ -98,7 +97,7 @@ public class NGHostValidationServiceImplTest extends CategoryTest {
 
   @Test
   @Owner(developers = IVAN)
-  @Category(UnitTests.class)
+  @groovy.lang.Category(UnitTests.class)
   public void testValidateSshHostWithFailedTaskResponse() {
     mockSecret(SecretType.SSHKey);
     mockEncryptionDetails();
@@ -123,7 +122,7 @@ public class NGHostValidationServiceImplTest extends CategoryTest {
 
   @Test
   @Owner(developers = IVAN)
-  @Category(UnitTests.class)
+  @groovy.lang.Category(UnitTests.class)
   public void testValidateSshHostMissingSecret() {
     assertThatThrownBy(()
                            -> hostValidationService.validateSSHHost(
@@ -134,7 +133,7 @@ public class NGHostValidationServiceImplTest extends CategoryTest {
 
   @Test
   @Owner(developers = IVAN)
-  @Category(UnitTests.class)
+  @groovy.lang.Category(UnitTests.class)
   public void testValidateSshHostMissingHost() {
     assertThatThrownBy(()
                            -> hostValidationService.validateSSHHost(
@@ -145,7 +144,7 @@ public class NGHostValidationServiceImplTest extends CategoryTest {
 
   @Test
   @Owner(developers = IVAN)
-  @Category(UnitTests.class)
+  @groovy.lang.Category(UnitTests.class)
   public void testValidateSshHostMissingSecretInDb() {
     when(ngSecretServiceV2.get(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER))
         .thenReturn(Optional.empty());
@@ -159,7 +158,7 @@ public class NGHostValidationServiceImplTest extends CategoryTest {
 
   @Test
   @Owner(developers = IVAN)
-  @Category(UnitTests.class)
+  @groovy.lang.Category(UnitTests.class)
   public void testValidateSshHostInvalidSecretType() {
     mockSecret(SecretType.SecretFile);
 
@@ -172,7 +171,7 @@ public class NGHostValidationServiceImplTest extends CategoryTest {
 
   @Test
   @Owner(developers = IVAN)
-  @Category(UnitTests.class)
+  @groovy.lang.Category(UnitTests.class)
   public void testValidateSSHHostInvalidHost() {
     mockSecret(SecretType.SSHKey);
     mockEncryptionDetails();
@@ -186,28 +185,28 @@ public class NGHostValidationServiceImplTest extends CategoryTest {
 
   @Test
   @Owner(developers = IVAN)
-  @Category(UnitTests.class)
+  @groovy.lang.Category(UnitTests.class)
   public void testValidateSshHostsWithEmptyHosts() {
     List<HostValidationDTO> hostValidationDTOs = hostValidationService.validateSSHHosts(
-        Collections.emptyList(), ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER);
+        Collections.emptyList(), ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER, Collections.emptySet());
 
     assertThat(hostValidationDTOs).isEmpty();
   }
 
   @Test
   @Owner(developers = IVAN)
-  @Category(UnitTests.class)
+  @groovy.lang.Category(UnitTests.class)
   public void testValidateSshHostsMissingSecret() {
     assertThatThrownBy(()
                            -> hostValidationService.validateSSHHosts(Collections.singletonList(HOST),
-                               ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER_NULL))
+                               ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER_NULL, Collections.emptySet()))
         .isInstanceOf(InvalidArgumentsException.class)
         .hasMessage("Secret identifier cannot be null or empty");
   }
 
   @Test
   @Owner(developers = {IVAN})
-  @Category(UnitTests.class)
+  @groovy.lang.Category(UnitTests.class)
   public void testValidateHostConnectivity() {
     mockTaskAbstractions();
 
@@ -232,7 +231,7 @@ public class NGHostValidationServiceImplTest extends CategoryTest {
 
   @Test
   @Owner(developers = {IVAN})
-  @Category(UnitTests.class)
+  @groovy.lang.Category(UnitTests.class)
   public void testValidateHostConnectivityWithFailedResponse() {
     mockTaskAbstractions();
 
@@ -255,7 +254,7 @@ public class NGHostValidationServiceImplTest extends CategoryTest {
 
   @Test
   @Owner(developers = {IVAN})
-  @Category(UnitTests.class)
+  @groovy.lang.Category(UnitTests.class)
   public void testValidateHostConnectivityWithErrorNotifyResponseData() {
     mockTaskAbstractions();
 

@@ -7,19 +7,6 @@
 
 package io.harness.ng.core.remote;
 
-import static io.harness.exception.WingsException.USER;
-import static io.harness.rule.OwnerRule.IVAN;
-import static io.harness.rule.OwnerRule.VLAD;
-import static io.harness.secrets.SecretPermissions.SECRET_ACCESS_PERMISSION;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
-
 import io.harness.CategoryTest;
 import io.harness.accesscontrol.NGAccessDeniedException;
 import io.harness.accesscontrol.acl.api.Resource;
@@ -29,19 +16,33 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ng.core.beans.HostValidationParams;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.validator.dto.HostValidationDTO;
 import io.harness.ng.validator.service.api.NGHostValidationService;
 import io.harness.rule.Owner;
-
-import java.util.Collections;
-import java.util.List;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+import static io.harness.exception.WingsException.USER;
+import static io.harness.rule.OwnerRule.IVAN;
+import static io.harness.rule.OwnerRule.VLAD;
+import static io.harness.secrets.SecretPermissions.SECRET_ACCESS_PERMISSION;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
 
 @RunWith(MockitoJUnitRunner.class)
 @OwnedBy(HarnessTeam.CDP)
@@ -60,7 +61,8 @@ public class HostValidationResourceTest extends CategoryTest {
   @Category(UnitTests.class)
   public void shouldValidateSshHosts() {
     String host1 = "host1";
-    List<String> hosts = Collections.singletonList(host1);
+    final List<String> hosts = Collections.singletonList(host1);
+    final Set<String> tags = Collections.emptySet();
     HostValidationDTO hostValidationDTO =
         HostValidationDTO.builder().host(host1).status(HostValidationDTO.HostValidationStatus.SUCCESS).build();
     doNothing()
@@ -68,10 +70,11 @@ public class HostValidationResourceTest extends CategoryTest {
         .checkForAccessOrThrow(any(ResourceScope.class), any(Resource.class), eq(SECRET_ACCESS_PERMISSION), any());
     doReturn(Collections.singletonList(hostValidationDTO))
         .when(hostValidationService)
-        .validateSSHHosts(hosts, ACCOUNT_IDENTIFIER, null, null, SECRET_IDENTIFIER);
+        .validateSSHHosts(hosts, ACCOUNT_IDENTIFIER, null, null, SECRET_IDENTIFIER, tags);
 
-    ResponseDTO<List<HostValidationDTO>> result = hostValidationResource.validateSshHost(
-        ACCOUNT_IDENTIFIER, null, null, SECRET_IDENTIFIER, Collections.singletonList(host1));
+    ResponseDTO<List<HostValidationDTO>> result = hostValidationResource.validateSshHost(ACCOUNT_IDENTIFIER, null, null,
+        SECRET_IDENTIFIER,
+        HostValidationParams.builder().hosts(Collections.singletonList(host1)).tags(Collections.emptyList()).build());
 
     assertThat(result.getData().get(0).getHost()).isEqualTo(host1);
     assertThat(result.getData().get(0).getStatus()).isEqualTo(HostValidationDTO.HostValidationStatus.SUCCESS);
@@ -83,15 +86,17 @@ public class HostValidationResourceTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testValidateSshHostsWithException() {
     final List<String> hosts = Collections.singletonList("host");
+    final Set<String> tags = Collections.emptySet();
     doNothing()
         .when(accessControlClient)
         .checkForAccessOrThrow(any(ResourceScope.class), any(Resource.class), eq(SECRET_ACCESS_PERMISSION), any());
     doThrow(new InvalidRequestException("Secret identifier is empty or null"))
         .when(hostValidationService)
-        .validateSSHHosts(hosts, ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER);
-    assertThatThrownBy(()
-                           -> hostValidationResource.validateSshHost(
-                               ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER, hosts))
+        .validateSSHHosts(hosts, ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER, tags);
+    assertThatThrownBy(
+        ()
+            -> hostValidationResource.validateSshHost(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER,
+                SECRET_IDENTIFIER, HostValidationParams.builder().hosts(hosts).tags(Collections.emptyList()).build()))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage("Secret identifier is empty or null");
   }
@@ -107,7 +112,7 @@ public class HostValidationResourceTest extends CategoryTest {
 
     assertThatThrownBy(()
                            -> hostValidationResource.validateSshHost(
-                               ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER, hosts))
+                               ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER, HostValidationParams.builder().hosts(hosts).build()))
         .isInstanceOf(NGAccessDeniedException.class)
         .hasMessage("Not enough permission");
   }
