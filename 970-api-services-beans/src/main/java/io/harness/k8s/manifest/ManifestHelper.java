@@ -454,7 +454,8 @@ public class ManifestHelper {
     if (isBlank(folderPath)) {
       return folderPath;
     }
-    folderPath = folderPath.endsWith("/") ? folderPath.substring(0, folderPath.length() - 1) : folderPath;
-    return folderPath.substring(0, folderPath.lastIndexOf("/") + 1);
+    String valuesYamlFolderPath =
+        folderPath.endsWith("/") ? folderPath.substring(0, folderPath.length() - 1) : folderPath;
+    return valuesYamlFolderPath.substring(0, valuesYamlFolderPath.lastIndexOf("/") + 1);
   }
 }

@@ -8,7 +8,6 @@
 package io.harness.delegate.task.git;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.helm.HelmConstants.VALUES_YAML;
 import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.logging.LogLevel.INFO;
 

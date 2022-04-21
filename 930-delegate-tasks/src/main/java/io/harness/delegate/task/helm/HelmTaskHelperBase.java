@@ -758,13 +758,8 @@ public class HelmTaskHelperBase {
       throws Exception {
     List<String> valueFileContentList = new ArrayList<>();
     for (String path : helmChartValuePaths) {
-      try {
-        String valueFileContent =
-            new String(Files.readAllBytes(Paths.get(chartDirectory, path)), StandardCharsets.UTF_8);
-        valueFileContentList.add(valueFileContent);
-      } catch (Exception ex) {
-        throw ex;
-      }
+      String valueFileContent = new String(Files.readAllBytes(Paths.get(chartDirectory, path)), StandardCharsets.UTF_8);
+      valueFileContentList.add(valueFileContent);
     }
     return valueFileContentList;
   }

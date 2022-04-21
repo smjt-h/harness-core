@@ -658,7 +658,7 @@ public class K8sStepHelperTest extends CategoryTest {
         K8sDirectInfrastructureOutcome.builder().namespace("default").build();
     GitStore gitStore = GitStore.builder()
                             .branch(ParameterField.createValueField("master"))
-                            .paths(ParameterField.createValueField(asList("path/to/k8s/manifest")))
+                            .paths(ParameterField.createValueField(asList("path/to/k8s/manifest/templates/")))
                             .connectorRef(ParameterField.createValueField("git-connector"))
                             .build();
     K8sManifestOutcome k8sManifestOutcome = K8sManifestOutcome.builder().identifier("k8s").store(gitStore).build();
