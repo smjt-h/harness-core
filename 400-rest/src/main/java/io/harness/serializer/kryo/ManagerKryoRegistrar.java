@@ -263,7 +263,6 @@ import software.wings.beans.WinRmConnectionAttributes;
 import software.wings.beans.appmanifest.AppManifestKind;
 import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.appmanifest.ApplicationManifest.ManifestCollectionStatus;
-import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.appmanifest.ManifestFile;
 import software.wings.beans.approval.ConditionalOperator;
 import software.wings.beans.approval.Criteria;
@@ -272,8 +271,6 @@ import software.wings.beans.artifact.AcrArtifactStream;
 import software.wings.beans.artifact.AmazonS3ArtifactStream;
 import software.wings.beans.artifact.AmiArtifactStream;
 import software.wings.beans.artifact.Artifact;
-import software.wings.beans.artifact.ArtifactFile;
-import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.artifact.ArtifactoryArtifactStream;
 import software.wings.beans.artifact.ArtifactoryCollectionTaskParameters;
 import software.wings.beans.artifact.AzureArtifactsArtifactStream;
@@ -892,7 +889,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(APMValidateCollectorConfig.class, 5323);
     kryo.register(AppContainer.class, 5064);
     kryo.register(ManifestFile.class, 5539);
-    kryo.register(ArtifactFile.class, 5066);
     kryo.register(AzureConfig.class, 5242);
     kryo.register(AzureKubernetesCluster.class, 5538);
     kryo.register(BambooConfig.class, 5009);
@@ -1281,7 +1277,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(AwsAsgGetRunningCountRequest.class, 7188);
     kryo.register(AwsAsgGetRunningCountResponse.class, 7189);
     kryo.register(StackDriverLogDataCollectionInfo.class, 7191);
-    kryo.register(Artifact.class, 7192);
     kryo.register(Artifact.ContentStatus.class, 7193);
     kryo.register(Artifact.Status.class, 7194);
     kryo.register(ArtifactVariable.class, 7195);
@@ -1290,7 +1285,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
 
     kryo.register(ManifestCollectionExecutionResponse.class, 71104);
     kryo.register(ManifestCollectionResponse.class, 71105);
-    kryo.register(HelmChart.class, 71106);
     kryo.register(ConfigFile.class, 71107);
     kryo.register(ConfigFile.ConfigOverrideType.class, 71108);
     kryo.register(EntityVersion.class, 71109);

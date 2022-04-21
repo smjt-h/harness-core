@@ -35,6 +35,9 @@ import software.wings.beans.PhaseStepType;
 import software.wings.beans.VMSSAuthType;
 import software.wings.beans.VMSSDeploymentType;
 import software.wings.beans.VariableType;
+import software.wings.beans.appmanifest.HelmChart;
+import software.wings.beans.artifact.Artifact;
+import software.wings.beans.artifact.ArtifactFile;
 import software.wings.beans.artifact.ArtifactStreamSummary;
 import software.wings.beans.artifact.ArtifactSummary;
 import software.wings.beans.trigger.WebhookSource;
@@ -86,5 +89,8 @@ public class CgOrchestrationBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(AmiDeploymentType.class, 400125);
     kryo.register(CloudProviderType.class, 400126);
     kryo.register(TerraformPlanParam.class, 7458);
+    kryo.register(ArtifactFile.class, 5066);
+    kryo.register(Artifact.class, 7192);
+    kryo.register(HelmChart.class, 71106);
   }
 }

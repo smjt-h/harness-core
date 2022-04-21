@@ -301,8 +301,6 @@ import software.wings.beans.approval.ApprovalPollingJobEntity;
 import software.wings.beans.artifact.AcrArtifactStream;
 import software.wings.beans.artifact.AmazonS3ArtifactStream;
 import software.wings.beans.artifact.AmiArtifactStream;
-import software.wings.beans.artifact.Artifact;
-import software.wings.beans.artifact.ArtifactFile;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.artifact.ArtifactoryArtifactStream;
 import software.wings.beans.artifact.AzureArtifactsArtifactStream;
@@ -806,7 +804,6 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     set.add(ApplicationManifest.class);
     set.add(ApprovalNotification.class);
     set.add(ApprovalPollingJobEntity.class);
-    set.add(Artifact.class);
     set.add(ArtifactoryArtifactStream.class);
     set.add(ArtifactStream.class);
     set.add(ArtifactStreamWithOnlyAuditNeededData.class);
@@ -1030,7 +1027,6 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     set.add(YamlHistory.class);
     set.add(YamlSuccessfulChange.class);
     set.add(YamlVersion.class);
-    set.add(HelmChart.class);
     set.add(GCPMarketplaceCustomer.class);
     set.add(DeletedEntity.class);
     set.add(ARMInfrastructureProvisioner.class);
@@ -1180,7 +1176,6 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     w.put("beans.alert.SSOSyncFailedAlert", SSOSyncFailedAlert.class);
     w.put("beans.alert.UsageLimitExceededAlert", UsageLimitExceededAlert.class);
     w.put("beans.APMVerificationConfig", APMVerificationConfig.class);
-    w.put("beans.artifact.ArtifactFile", ArtifactFile.class);
     w.put("beans.AzureConfig", AzureConfig.class);
     w.put("beans.BambooConfig", BambooConfig.class);
     w.put("beans.BasicOrchestrationWorkflow", BasicOrchestrationWorkflow.class);
