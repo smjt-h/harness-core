@@ -121,6 +121,7 @@ public class KryoSerializer {
   public Object asObject(byte[] bytes) {
     Input input = new Input(bytes);
     Object obj = pool.run(kryo -> kryo.readClassAndObject(input));
+    input.close();
     return obj;
   }
 
