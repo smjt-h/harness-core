@@ -807,7 +807,7 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
         gitStoreDelegateConfig.getSshKeySpecDTO(), gitStoreDelegateConfig.getEncryptedDataDetails());
   }
 
-  public void exportingSSHKey(TerraformTaskNGParameters taskParameters, GitStoreDelegateConfig conFileFileGitStore)
+  public void exportSSHKey(TerraformTaskNGParameters taskParameters, GitStoreDelegateConfig conFileFileGitStore)
       throws IOException {
     GitConfigDTO gitConfigDTO = (GitConfigDTO) conFileFileGitStore.getGitConfigDTO();
     if (gitConfigDTO.getGitAuthType() == SSH) {

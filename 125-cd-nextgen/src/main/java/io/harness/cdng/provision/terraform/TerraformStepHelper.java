@@ -13,13 +13,16 @@ import static io.harness.provision.TerraformConstants.TF_DESTROY_NAME_PREFIX;
 import static io.harness.provision.TerraformConstants.TF_NAME_PREFIX;
 import static io.harness.validation.Validator.notEmptyCheck;
 
+import static com.hazelcast.sql.impl.expression.predicate.TernaryLogic.isNotNull;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.FeatureName;
 import io.harness.beans.IdentifierRef;
+import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.cdng.fileservice.FileServiceClientFactory;
 import io.harness.cdng.k8s.K8sStepHelper;
 import io.harness.cdng.manifest.ManifestStoreType;
@@ -115,6 +118,7 @@ public class TerraformStepHelper {
   @Inject private FileServiceClientFactory fileService;
   @Named("PRIVILEGED") @Inject private SecretManagerClientService secretManagerClientService;
   @Inject private EngineExpressionService engineExpressionService;
+  @Inject private CDFeatureFlagHelper cdFeatureFlagHelper;
   @Inject public TerraformConfigDAL terraformConfigDAL;
 
   public static List<EntityDetail> prepareEntityDetailsForVarFiles(
@@ -480,8 +484,14 @@ public class TerraformStepHelper {
         builder.configFiles(
             getStoreConfigAtCommitId(spec.getConfigFiles().getStore().getSpec(), commitIdMap.get(TF_CONFIG_FILES))
                 .toGitStoreConfigDTO());
-        builder.useConnectorCredentials(
-            configuration.getSpec().getConfigFiles().getModuleSource().isUseConnectorCredentials());
+
+        if (cdFeatureFlagHelper.isEnabled(
+                AmbianceUtils.getAccountId(ambiance), FeatureName.TF_MODULE_SOURCE_INHERIT_SSH)
+            && isNotNull(configuration.getSpec().getConfigFiles().getModuleSource())) {
+          builder.useConnectorCredentials(
+              configuration.getSpec().getConfigFiles().getModuleSource().isUseConnectorCredentials());
+        }
+
         break;
       case ARTIFACTORY:
         builder.fileStoreConfig(((FileStorageStoreConfig) store.getSpec()).toFileStorageConfigDTO());
