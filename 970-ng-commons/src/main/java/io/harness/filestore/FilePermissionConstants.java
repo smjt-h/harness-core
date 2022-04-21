@@ -15,7 +15,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 @OwnedBy(CDP)
-public class FilePermissions {
+public class FilePermissionConstants {
   public static final String FILE_VIEW_PERMISSION = "core_file_view";
   public static final String FILE_DELETE_PERMISSION = "core_file_delete";
   public static final String FILE_ACCESS_PERMISSION = "core_file_access";

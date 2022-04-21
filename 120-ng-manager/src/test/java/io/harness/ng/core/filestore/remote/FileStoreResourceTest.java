@@ -8,9 +8,9 @@
 package io.harness.ng.core.filestore.remote;
 
 import static io.harness.exception.WingsException.USER;
-import static io.harness.filestore.FilePermissions.FILE_ACCESS_PERMISSION;
-import static io.harness.filestore.FilePermissions.FILE_DELETE_PERMISSION;
-import static io.harness.filestore.FilePermissions.FILE_VIEW_PERMISSION;
+import static io.harness.filestore.FilePermissionConstants.FILE_ACCESS_PERMISSION;
+import static io.harness.filestore.FilePermissionConstants.FILE_DELETE_PERMISSION;
+import static io.harness.filestore.FilePermissionConstants.FILE_VIEW_PERMISSION;
 import static io.harness.rule.OwnerRule.BOJAN;
 import static io.harness.rule.OwnerRule.IVAN;
 import static io.harness.rule.OwnerRule.VLAD;

@@ -9,7 +9,6 @@ package io.harness.filestore;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
-import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.filestore.remote.FileStoreClient;
 import io.harness.filestore.remote.FileStoreHttpClientFactory;
