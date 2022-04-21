@@ -154,6 +154,7 @@ import software.wings.service.intfc.InfrastructureMappingService;
 import software.wings.service.intfc.ServiceResourceService;
 import software.wings.sm.StateType;
 import software.wings.sm.states.customdeployment.InstanceFetchState.InstanceFetchStateKeys;
+import software.wings.utils.ArtifactType;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -1249,6 +1250,21 @@ public class WorkflowServiceHelperTest extends WingsBaseTest {
             AZURE_WEBAPP_SLOT_TRAFFIC_SHIFT, AZURE_WEBAPP_SLOT_SWAP, WRAP_UP);
     workflowPhase.getPhaseSteps().clear();
 
+    // webapp non-container tests
+    when(mockFeatureFlagService.isEnabled(FeatureName.AZURE_WEBAPP, ACCOUNT_ID)).thenReturn(true);
+
+    Service warService = Service.builder().artifactType(ArtifactType.WAR).uuid(SERVICE_ID).build();
+    when(serviceResourceService.getWithDetails(APP_ID, SERVICE_ID)).thenReturn(warService);
+
+    workflowServiceHelper.generateNewWorkflowPhaseStepsForAzureWebApp(
+        APP_ID, ACCOUNT_ID, workflowPhase, OrchestrationWorkflowType.CANARY, true, true);
+    phaseStepTypes =
+        workflowPhase.getPhaseSteps().stream().map(PhaseStep::getPhaseStepType).collect(Collectors.toList());
+    assertThat(phaseStepTypes)
+        .containsExactly(PROVISION_INFRASTRUCTURE, AZURE_WEBAPP_SLOT_SETUP, VERIFY_SERVICE,
+            AZURE_WEBAPP_SLOT_TRAFFIC_SHIFT, AZURE_WEBAPP_SLOT_SWAP, WRAP_UP);
+    workflowPhase.getPhaseSteps().clear();
+
     // unsupported deployment type test
     assertThatThrownBy(()
                            -> workflowServiceHelper.generateNewWorkflowPhaseStepsForAzureWebApp(
@@ -1273,6 +1289,38 @@ public class WorkflowServiceHelperTest extends WingsBaseTest {
                            -> workflowServiceHelper.generateNewWorkflowPhaseStepsForAzureWebApp(
                                APP_ID, ACCOUNT_ID, workflowPhase, OrchestrationWorkflowType.CANARY, true, false))
         .isInstanceOf(InvalidRequestException.class);
+
+    // webapp-non container FF
+    when(mockFeatureFlagService.isEnabled(FeatureName.AZURE_WEBAPP, ACCOUNT_ID)).thenReturn(true);
+
+    when(serviceResourceService.getWithDetails(APP_ID, SERVICE_ID)).thenReturn(warService);
+    workflowServiceHelper.generateNewWorkflowPhaseStepsForAzureWebApp(
+        APP_ID, ACCOUNT_ID, workflowPhase, OrchestrationWorkflowType.CANARY, true, false);
+    phaseStepTypes =
+        workflowPhase.getPhaseSteps().stream().map(PhaseStep::getPhaseStepType).collect(Collectors.toList());
+    assertThat(phaseStepTypes)
+        .containsExactly(PROVISION_INFRASTRUCTURE, AZURE_WEBAPP_SLOT_TRAFFIC_SHIFT, AZURE_WEBAPP_SLOT_SWAP, WRAP_UP);
+    workflowPhase.getPhaseSteps().clear();
+
+    Service nugetService = Service.builder().artifactType(ArtifactType.NUGET).uuid(SERVICE_ID).build();
+    when(serviceResourceService.getWithDetails(APP_ID, SERVICE_ID)).thenReturn(nugetService);
+    workflowServiceHelper.generateNewWorkflowPhaseStepsForAzureWebApp(
+        APP_ID, ACCOUNT_ID, workflowPhase, OrchestrationWorkflowType.CANARY, true, false);
+    phaseStepTypes =
+        workflowPhase.getPhaseSteps().stream().map(PhaseStep::getPhaseStepType).collect(Collectors.toList());
+    assertThat(phaseStepTypes)
+        .containsExactly(PROVISION_INFRASTRUCTURE, AZURE_WEBAPP_SLOT_TRAFFIC_SHIFT, AZURE_WEBAPP_SLOT_SWAP, WRAP_UP);
+    workflowPhase.getPhaseSteps().clear();
+
+    Service zipService = Service.builder().artifactType(ArtifactType.ZIP).uuid(SERVICE_ID).build();
+    when(serviceResourceService.getWithDetails(APP_ID, SERVICE_ID)).thenReturn(zipService);
+    workflowServiceHelper.generateNewWorkflowPhaseStepsForAzureWebApp(
+        APP_ID, ACCOUNT_ID, workflowPhase, OrchestrationWorkflowType.CANARY, true, false);
+    phaseStepTypes =
+        workflowPhase.getPhaseSteps().stream().map(PhaseStep::getPhaseStepType).collect(Collectors.toList());
+    assertThat(phaseStepTypes)
+        .containsExactly(PROVISION_INFRASTRUCTURE, AZURE_WEBAPP_SLOT_TRAFFIC_SHIFT, AZURE_WEBAPP_SLOT_SWAP, WRAP_UP);
+    workflowPhase.getPhaseSteps().clear();
   }
 
   @Test
