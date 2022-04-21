@@ -5,7 +5,7 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.ng.core.dto.filestore;
+package io.harness.ng.core.filestore.dto;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
@@ -13,9 +13,9 @@ import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.Condition;
 import io.harness.data.validator.EntityIdentifier;
-import io.harness.filestore.FileUsage;
-import io.harness.filestore.NGFileType;
 import io.harness.ng.core.common.beans.NGTag;
+import io.harness.ng.core.filestore.FileUsage;
+import io.harness.ng.core.filestore.NGFileType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

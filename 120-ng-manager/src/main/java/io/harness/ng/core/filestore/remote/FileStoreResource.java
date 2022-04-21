@@ -5,22 +5,30 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.ng.core.remote;
+package io.harness.ng.core.filestore.remote;
 
 import static io.harness.NGCommonEntityConstants.ACCOUNT_KEY;
 import static io.harness.NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE;
 import static io.harness.NGCommonEntityConstants.APPLICATION_YAML_MEDIA_TYPE;
 import static io.harness.NGCommonEntityConstants.ENTITY_TYPE;
+import static io.harness.NGCommonEntityConstants.FILE_LIST_IDENTIFIERS_PARAM_MESSAGE;
 import static io.harness.NGCommonEntityConstants.FILE_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.FILE_SEARCH_TERM_PARAM_MESSAGE;
 import static io.harness.NGCommonEntityConstants.IDENTIFIER_KEY;
 import static io.harness.NGCommonEntityConstants.ORG_KEY;
 import static io.harness.NGCommonEntityConstants.ORG_PARAM_MESSAGE;
 import static io.harness.NGCommonEntityConstants.PROJECT_KEY;
 import static io.harness.NGCommonEntityConstants.PROJECT_PARAM_MESSAGE;
 import static io.harness.NGResourceFilterConstants.FILTER_KEY;
+import static io.harness.NGResourceFilterConstants.IDENTIFIERS;
 import static io.harness.NGResourceFilterConstants.SEARCH_TERM_KEY;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.filestore.FilePermissions.FILE_ACCESS_PERMISSION;
+import static io.harness.filestore.FilePermissions.FILE_DELETE_PERMISSION;
+import static io.harness.filestore.FilePermissions.FILE_EDIT_PERMISSION;
+import static io.harness.filestore.FilePermissions.FILE_VIEW_PERMISSION;
 import static io.harness.ng.core.utils.NGUtils.validate;
+import static io.harness.pms.rbac.NGResourceType.FILE;
 import static io.harness.utils.PageUtils.getNGPageResponse;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
@@ -29,6 +37,9 @@ import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import io.harness.EntityType;
 import io.harness.NGCommonEntityConstants;
 import io.harness.NGResourceFilterConstants;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
+import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.ng.beans.PageRequest;
@@ -38,12 +49,13 @@ import io.harness.ng.core.common.beans.NGTag;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
-import io.harness.ng.core.dto.filestore.FileDTO;
-import io.harness.ng.core.dto.filestore.FileDtoYamlWrapper;
 import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
-import io.harness.ng.core.filestore.service.FileStoreService;
+import io.harness.ng.core.filestore.api.FileStoreService;
+import io.harness.ng.core.filestore.dto.FileDTO;
+import io.harness.ng.core.filestore.dto.FileFilterDTO;
+import io.harness.ng.core.filestore.dto.FileStoreRequest;
 import io.harness.security.annotations.NextGenManagerAuth;
 import io.harness.serializer.JsonUtils;
 import io.harness.utils.PageUtils;
@@ -112,6 +124,7 @@ import org.springframework.data.domain.Page;
 @Slf4j
 public class FileStoreResource {
   private final FileStoreService fileStoreService;
+  private final AccessControlClient accessControlClient;
 
   @POST
   @Consumes(MULTIPART_FORM_DATA)
@@ -124,6 +137,9 @@ public class FileStoreResource {
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
       @Parameter(description = "The file tags") @FormDataParam("tags") String tagsJson,
       @FormDataParam("content") InputStream content, @NotNull @BeanParam FileDTO file) {
+    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+        Resource.of(FILE, file.getIdentifier()), FILE_EDIT_PERMISSION);
+
     file.setAccountIdentifier(accountIdentifier);
     file.setOrgIdentifier(orgIdentifier);
     file.setProjectIdentifier(projectIdentifier);
@@ -147,6 +163,9 @@ public class FileStoreResource {
       @Parameter(description = FILE_PARAM_MESSAGE) @NotBlank @EntityIdentifier @PathParam(IDENTIFIER_KEY)
       String identifier, @Parameter(description = "The file tags") @FormDataParam("tags") String tagsJson,
       @NotNull @BeanParam FileDTO file, @FormDataParam("content") InputStream content) {
+    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+        Resource.of(FILE, file.getIdentifier()), FILE_EDIT_PERMISSION);
+
     file.setAccountIdentifier(accountIdentifier);
     file.setOrgIdentifier(orgIdentifier);
     file.setProjectIdentifier(projectIdentifier);
@@ -174,10 +193,36 @@ public class FileStoreResource {
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
       @Parameter(description = FILE_PARAM_MESSAGE) @PathParam(
           NGCommonEntityConstants.FILE_IDENTIFIER_KEY) @NotBlank @EntityIdentifier String fileIdentifier) {
+    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+        Resource.of(FILE, fileIdentifier), FILE_VIEW_PERMISSION);
+
     File file = fileStoreService.downloadFile(accountIdentifier, orgIdentifier, projectIdentifier, fileIdentifier);
     return Response.ok(file, APPLICATION_OCTET_STREAM)
         .header("Content-Disposition", "attachment; filename=" + file.getName())
         .build();
+  }
+
+  @GET
+  @ApiOperation(value = "List files and folders", nickname = "listFilesAndFolders")
+  @Operation(operationId = "listFilesAndFolders", summary = "List files and folders",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(responseCode = "default", description = "List files and folders")
+      })
+  public ResponseDTO<Page<FileDTO>>
+  list(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
+      @Parameter(description = FILE_LIST_IDENTIFIERS_PARAM_MESSAGE) @QueryParam(IDENTIFIERS) List<String> identifiers,
+      @Parameter(description = FILE_SEARCH_TERM_PARAM_MESSAGE) @QueryParam(SEARCH_TERM_KEY) String searchTerm,
+      @BeanParam PageRequest pageRequest) {
+    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+        Resource.of(FILE, null), FILE_VIEW_PERMISSION);
+
+    FileFilterDTO fileFilterDTO = FileFilterDTO.builder().identifiers(identifiers).searchTerm(searchTerm).build();
+    return ResponseDTO.newResponse(fileStoreService.listFilesAndFolders(
+        accountIdentifier, orgIdentifier, projectIdentifier, fileFilterDTO, PageUtils.getPageRequest(pageRequest)));
   }
 
   @DELETE
@@ -196,6 +241,9 @@ public class FileStoreResource {
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
       @Parameter(description = FILE_PARAM_MESSAGE) @NotBlank @EntityIdentifier @PathParam(
           IDENTIFIER_KEY) String identifier) {
+    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+        Resource.of(FILE, identifier), FILE_DELETE_PERMISSION);
+
     return ResponseDTO.newResponse(
         fileStoreService.delete(accountIdentifier, orgIdentifier, projectIdentifier, identifier));
   }
@@ -217,6 +265,9 @@ public class FileStoreResource {
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
       @RequestBody(required = true, description = "Folder node for which to return the list of nodes") @Valid
       @NotNull FolderNodeDTO folderNodeDTO) {
+    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+        Resource.of(FILE, null), FILE_VIEW_PERMISSION);
+
     return ResponseDTO.newResponse(
         fileStoreService.listFolderNodes(accountIdentifier, orgIdentifier, projectIdentifier, folderNodeDTO));
   }
@@ -233,8 +284,11 @@ public class FileStoreResource {
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
       @RequestBody(required = true,
-          description = "YAML definition of file or folder") @NotNull @Valid FileDtoYamlWrapper fileDtoYamlWrapper) {
-    FileDTO file = fileDtoYamlWrapper.getFile();
+          description = "YAML definition of file or folder") @NotNull @Valid FileStoreRequest fileStoreRequest) {
+    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+        Resource.of(FILE, fileStoreRequest.getFile().getIdentifier()), FILE_EDIT_PERMISSION);
+
+    FileDTO file = fileStoreRequest.getFile();
     file.setAccountIdentifier(accountIdentifier);
     file.setOrgIdentifier(orgIdentifier);
     file.setProjectIdentifier(projectIdentifier);
@@ -255,8 +309,11 @@ public class FileStoreResource {
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
       @Parameter(description = FILE_PARAM_MESSAGE) @PathParam(IDENTIFIER_KEY) @EntityIdentifier String identifier,
       @RequestBody(required = true,
-          description = "YAML definition of file or folder") @NotNull @Valid FileDtoYamlWrapper fileDtoYamlWrapper) {
-    FileDTO file = fileDtoYamlWrapper.getFile();
+          description = "YAML definition of file or folder") @NotNull @Valid FileStoreRequest fileStoreRequest) {
+    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+        Resource.of(FILE, fileStoreRequest.getFile().getIdentifier()), FILE_EDIT_PERMISSION);
+
+    FileDTO file = fileStoreRequest.getFile();
     file.setAccountIdentifier(accountIdentifier);
     file.setOrgIdentifier(orgIdentifier);
     file.setProjectIdentifier(projectIdentifier);
@@ -286,6 +343,9 @@ public class FileStoreResource {
       @Parameter(description = FILE_PARAM_MESSAGE) @NotBlank @EntityIdentifier @PathParam(IDENTIFIER_KEY)
       String identifier, @Parameter(description = "Entity type") @QueryParam(ENTITY_TYPE) EntityType entityType,
       @QueryParam(SEARCH_TERM_KEY) String searchTerm) {
+    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+        Resource.of(FILE, identifier), FILE_ACCESS_PERMISSION);
+
     return ResponseDTO.newResponse(getNGPageResponse(fileStoreService.listReferencedBy(
         SearchPageParams.builder().page(page).size(size).searchTerm(searchTerm).build(), accountIdentifier,
         orgIdentifier, projectIdentifier, identifier, entityType)));
@@ -307,6 +367,9 @@ public class FileStoreResource {
       @QueryParam(FILTER_KEY) String filterIdentifier, @QueryParam(SEARCH_TERM_KEY) String searchTerm,
       @RequestBody(description = "Details of the File filter properties to be applied")
       FilesFilterPropertiesDTO filesFilterPropertiesDTO) {
+    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+        Resource.of(FILE, null), FILE_VIEW_PERMISSION);
+
     return ResponseDTO.newResponse(
         fileStoreService.listFilesWithFilter(accountIdentifier, orgIdentifier, projectIdentifier, filterIdentifier,
             searchTerm, filesFilterPropertiesDTO, PageUtils.getPageRequest(pageRequest)));
@@ -325,6 +388,9 @@ public class FileStoreResource {
   getCreatedByList(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier) {
+    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+        Resource.of(FILE, null), FILE_VIEW_PERMISSION);
+
     return ResponseDTO.newResponse(
         fileStoreService.getCreatedByList(accountIdentifier, orgIdentifier, projectIdentifier));
   }

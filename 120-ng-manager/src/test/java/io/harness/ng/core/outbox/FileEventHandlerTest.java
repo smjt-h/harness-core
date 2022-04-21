@@ -22,7 +22,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
 import io.harness.ModuleType;
@@ -32,13 +31,14 @@ import io.harness.audit.ResourceTypeConstants;
 import io.harness.audit.beans.AuditEntry;
 import io.harness.audit.client.api.AuditClientService;
 import io.harness.category.element.UnitTests;
+import io.harness.context.GlobalContext;
 import io.harness.eventsframework.api.Producer;
 import io.harness.eventsframework.producer.Message;
-import io.harness.ng.core.dto.filestore.FileDTO;
-import io.harness.ng.core.dto.filestore.FileDtoYamlWrapper;
 import io.harness.ng.core.events.filestore.FileCreateEvent;
 import io.harness.ng.core.events.filestore.FileDeleteEvent;
 import io.harness.ng.core.events.filestore.FileUpdateEvent;
+import io.harness.ng.core.filestore.dto.FileDTO;
+import io.harness.ng.core.filestore.dto.FileStoreRequest;
 import io.harness.outbox.OutboxEvent;
 import io.harness.rule.Owner;
 
@@ -82,15 +82,14 @@ public class FileEventHandlerTest extends CategoryTest {
                                   .resourceScope(fileCreateEvent.getResourceScope())
                                   .resource(fileCreateEvent.getResource())
                                   .createdAt(Long.parseLong(randomNumeric(5)))
+                                  .globalContext(new GlobalContext())
                                   .build();
-
-    when(auditClientService.publishAudit(any(), any())).thenReturn(true);
 
     final ArgumentCaptor<AuditEntry> auditEntryArgumentCaptor = ArgumentCaptor.forClass(AuditEntry.class);
     final ArgumentCaptor<Message> messageArgumentCaptor = ArgumentCaptor.forClass(Message.class);
     fileEventHandler.handle(outboxEvent);
 
-    verify(auditClientService, times(1)).publishAudit(auditEntryArgumentCaptor.capture(), any());
+    verify(auditClientService, times(1)).publishAudit(auditEntryArgumentCaptor.capture(), any(), any());
     verify(eventProducer, times(1)).send(messageArgumentCaptor.capture());
 
     AuditEntry auditEntry = auditEntryArgumentCaptor.getValue();
@@ -98,11 +97,11 @@ public class FileEventHandlerTest extends CategoryTest {
     assertEquals(Action.CREATE, auditEntry.getAction());
     assertNull(auditEntry.getOldYaml());
 
-    String newYaml = getYamlString(FileDtoYamlWrapper.builder().file(fileDTO).build());
+    String newYaml = getYamlString(FileStoreRequest.builder().file(fileDTO).build());
     assertEquals(newYaml, auditEntry.getNewYaml());
 
     Message message = messageArgumentCaptor.getValue();
-    assertMessage(message, accountIdentifier, "FileCreated");
+    assertMessage(message, accountIdentifier, "create");
   }
 
   @Test
@@ -123,19 +122,18 @@ public class FileEventHandlerTest extends CategoryTest {
                                   .eventData(eventData)
                                   .resourceScope(secretUpdateEvent.getResourceScope())
                                   .resource(secretUpdateEvent.getResource())
+                                  .globalContext(new GlobalContext())
                                   .createdAt(Long.parseLong(randomNumeric(5)))
                                   .build();
 
-    String oldYaml = getYamlString(FileDtoYamlWrapper.builder().file(oldFileDTO).build());
-    String newYaml = getYamlString(FileDtoYamlWrapper.builder().file(newFileDTO).build());
-
-    when(auditClientService.publishAudit(any(), any())).thenReturn(true);
+    String oldYaml = getYamlString(FileStoreRequest.builder().file(oldFileDTO).build());
+    String newYaml = getYamlString(FileStoreRequest.builder().file(newFileDTO).build());
 
     final ArgumentCaptor<AuditEntry> auditEntryArgumentCaptor = ArgumentCaptor.forClass(AuditEntry.class);
     final ArgumentCaptor<Message> messageArgumentCaptor = ArgumentCaptor.forClass(Message.class);
     fileEventHandler.handle(outboxEvent);
 
-    verify(auditClientService, times(1)).publishAudit(auditEntryArgumentCaptor.capture(), any());
+    verify(auditClientService, times(1)).publishAudit(auditEntryArgumentCaptor.capture(), any(), any());
     verify(eventProducer, times(1)).send(messageArgumentCaptor.capture());
 
     AuditEntry auditEntry = auditEntryArgumentCaptor.getValue();
@@ -145,7 +143,7 @@ public class FileEventHandlerTest extends CategoryTest {
     assertEquals(newYaml, auditEntry.getNewYaml());
 
     Message message = messageArgumentCaptor.getValue();
-    assertMessage(message, accountIdentifier, "FileUpdated");
+    assertMessage(message, accountIdentifier, "update");
   }
 
   @Test
@@ -166,26 +164,25 @@ public class FileEventHandlerTest extends CategoryTest {
                                   .resourceScope(fileDeleteEvent.getResourceScope())
                                   .resource(fileDeleteEvent.getResource())
                                   .createdAt(Long.parseLong(randomNumeric(5)))
+                                  .globalContext(new GlobalContext())
                                   .build();
-
-    when(auditClientService.publishAudit(any(), any())).thenReturn(true);
 
     final ArgumentCaptor<AuditEntry> auditEntryArgumentCaptor = ArgumentCaptor.forClass(AuditEntry.class);
     final ArgumentCaptor<Message> messageArgumentCaptor = ArgumentCaptor.forClass(Message.class);
     fileEventHandler.handle(outboxEvent);
 
-    verify(auditClientService, times(1)).publishAudit(auditEntryArgumentCaptor.capture(), any());
+    verify(auditClientService, times(1)).publishAudit(auditEntryArgumentCaptor.capture(), any(), any());
     verify(eventProducer, times(1)).send(messageArgumentCaptor.capture());
 
     AuditEntry auditEntry = auditEntryArgumentCaptor.getValue();
     assertAuditEntry(accountIdentifier, orgIdentifier, identifier, auditEntry, outboxEvent);
     assertEquals(Action.DELETE, auditEntry.getAction());
     assertNull(auditEntry.getNewYaml());
-    String oldYaml = getYamlString(FileDtoYamlWrapper.builder().file(fileDTO).build());
+    String oldYaml = getYamlString(FileStoreRequest.builder().file(fileDTO).build());
     assertEquals(oldYaml, auditEntry.getOldYaml());
 
     Message message = messageArgumentCaptor.getValue();
-    assertMessage(message, accountIdentifier, "FileDeleted");
+    assertMessage(message, accountIdentifier, "delete");
   }
 
   private FileDTO getFileDTO(String orgIdentifier, String identifier) {

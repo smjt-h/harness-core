@@ -5,7 +5,7 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.ng.core.filestore.service;
+package io.harness.ng.core.filestore.api.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
@@ -13,6 +13,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.delegate.beans.FileBucket.FILE_STORE;
 import static io.harness.filter.FilterType.FILESTORE;
 import static io.harness.repositories.filestore.FileStoreRepositoryCriteriaCreator.createCriteriaByScopeAndParentIdentifier;
+import static io.harness.repositories.filestore.FileStoreRepositoryCriteriaCreator.createFilesAndFoldersFilterCriteria;
 import static io.harness.repositories.filestore.FileStoreRepositoryCriteriaCreator.createFilesFilterCriteria;
 import static io.harness.repositories.filestore.FileStoreRepositoryCriteriaCreator.createScopeCriteria;
 import static io.harness.repositories.filestore.FileStoreRepositoryCriteriaCreator.createSortByLastModifiedAtDesc;
@@ -30,19 +31,20 @@ import io.harness.exception.DuplicateEntityException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.file.beans.NGBaseFile;
-import io.harness.filestore.NGFileType;
 import io.harness.filter.dto.FilterDTO;
 import io.harness.filter.service.FilterService;
 import io.harness.ng.core.beans.SearchPageParams;
 import io.harness.ng.core.dto.filestore.CreatedBy;
-import io.harness.ng.core.dto.filestore.FileDTO;
 import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
 import io.harness.ng.core.dto.filestore.node.FileStoreNodeDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 import io.harness.ng.core.entities.NGFile;
 import io.harness.ng.core.entities.NGFile.NGFiles;
 import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
-import io.harness.ng.core.filestore.utils.FileReferencedByHelper;
+import io.harness.ng.core.filestore.NGFileType;
+import io.harness.ng.core.filestore.api.FileStoreService;
+import io.harness.ng.core.filestore.dto.FileDTO;
+import io.harness.ng.core.filestore.dto.FileFilterDTO;
 import io.harness.ng.core.mapper.FileDTOMapper;
 import io.harness.ng.core.mapper.FileStoreNodeDTOMapper;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
@@ -78,16 +80,16 @@ public class FileStoreServiceImpl implements FileStoreService {
   private final FileService fileService;
   private final FileStoreRepository fileStoreRepository;
   private final MainConfiguration configuration;
-  private final FileReferencedByHelper fileReferencedByHelper;
+  private final FileReferenceServiceImpl fileReferenceService;
   private final FilterService filterService;
 
   @Inject
   public FileStoreServiceImpl(FileService fileService, FileStoreRepository fileStoreRepository,
-      MainConfiguration configuration, FileReferencedByHelper fileReferencedByHelper, FilterService filterService) {
+      MainConfiguration configuration, FileReferenceServiceImpl fileReferenceService, FilterService filterService) {
     this.fileService = fileService;
     this.fileStoreRepository = fileStoreRepository;
     this.configuration = configuration;
-    this.fileReferencedByHelper = fileReferencedByHelper;
+    this.fileReferenceService = fileReferenceService;
     this.filterService = filterService;
   }
 
@@ -192,7 +194,22 @@ public class FileStoreServiceImpl implements FileStoreService {
       throw new InvalidArgumentsException("Account identifier cannot be null or empty");
     }
     NGFile file = fetchFileOrThrow(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
-    return fileReferencedByHelper.getReferencedBy(pageParams, file, entityType);
+    return fileReferenceService.getReferencedBy(pageParams, file, entityType);
+  }
+
+  @Override
+  public Page<FileDTO> listFilesAndFolders(@NotNull String accountIdentifier, String orgIdentifier,
+      String projectIdentifier, @NotNull FileFilterDTO fileFilterDTO, Pageable pageable) {
+    if (isEmpty(accountIdentifier)) {
+      throw new InvalidArgumentsException("Account identifier cannot be null or empty");
+    }
+
+    Scope scope = Scope.of(accountIdentifier, orgIdentifier, projectIdentifier);
+    Criteria criteria = createFilesAndFoldersFilterCriteria(scope, fileFilterDTO);
+
+    Page<NGFile> ngFiles = fileStoreRepository.findAll(criteria, pageable);
+    return new PageImpl<>(
+        ngFiles.map(FileDTOMapper::getFileDTOFromNGFile).getContent(), pageable, ngFiles.getTotalElements());
   }
 
   @Override
@@ -332,7 +349,7 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   private boolean isFileReferencedByOtherEntities(NGFile file) {
-    return fileReferencedByHelper.isFileReferencedByOtherEntities(file);
+    return fileReferenceService.isFileReferencedByOtherEntities(file);
   }
 
   private boolean deleteFileOrFolder(NGFile fileOrFolder) {

@@ -5,7 +5,7 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.ng.core.filestore.service;
+package io.harness.ng.core.filestore.api.impl;
 
 import static io.harness.ng.core.entities.NGFile.builder;
 import static io.harness.repositories.filestore.FileStoreRepositoryCriteriaCreator.createCriteriaByScopeAndParentIdentifier;
@@ -23,6 +23,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -40,14 +41,14 @@ import io.harness.exception.DuplicateEntityException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.file.beans.NGBaseFile;
-import io.harness.filestore.NGFileType;
 import io.harness.ng.core.dto.filestore.CreatedBy;
-import io.harness.ng.core.dto.filestore.FileDTO;
 import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
 import io.harness.ng.core.dto.filestore.node.FileNodeDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 import io.harness.ng.core.entities.NGFile;
-import io.harness.ng.core.filestore.utils.FileReferencedByHelper;
+import io.harness.ng.core.filestore.NGFileType;
+import io.harness.ng.core.filestore.dto.FileDTO;
+import io.harness.ng.core.filestore.dto.FileFilterDTO;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
 import io.harness.rule.Owner;
 
@@ -68,6 +69,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -90,7 +92,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
   @Mock private FileStoreRepository fileStoreRepository;
   @Mock private FileService fileService;
   @Mock private MainConfiguration configuration;
-  @Mock private FileReferencedByHelper fileReferencedByHelper;
+  @Mock private FileReferenceServiceImpl fileReferenceService;
 
   @InjectMocks private FileStoreServiceImpl fileStoreService;
 
@@ -102,7 +104,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
 
     givenThatDatabaseIsEmpty();
 
-    when(fileReferencedByHelper.isFileReferencedByOtherEntities(any())).thenReturn(false);
+    when(fileReferenceService.isFileReferencedByOtherEntities(any())).thenReturn(false);
   }
 
   @Test
@@ -524,6 +526,45 @@ public class FileStoreServiceImplTest extends CategoryTest {
         .contains(FileNodeDTO.builder().name("fileName").identifier("fileIdentifier").build(),
             FolderNodeDTO.builder().name("folderName1").identifier("folderIdentifier1").build(),
             FolderNodeDTO.builder().name("folderName2").identifier("folderIdentifier2").build());
+  }
+
+  @Test
+  @Owner(developers = IVAN)
+  @Category(UnitTests.class)
+  public void testListFilesAndFolders() {
+    FileFilterDTO fileFilterDTO =
+        FileFilterDTO.builder().searchTerm("searchTerm").identifiers(Collections.emptyList()).build();
+    final ArgumentCaptor<Criteria> criteriaArgumentCaptor = ArgumentCaptor.forClass(Criteria.class);
+
+    when(fileStoreRepository.findAll(any(), any()))
+        .thenReturn(new PageImpl<>(Lists.newArrayList(builder().name("filename1").build())));
+    Page<FileDTO> pageResponse = fileStoreService.listFilesAndFolders(
+        ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, fileFilterDTO, PageRequest.of(0, 10));
+
+    verify(fileStoreRepository, times(1)).findAll(criteriaArgumentCaptor.capture(), any());
+
+    assertThat(pageResponse).isNotNull();
+    assertThat(pageResponse.getContent().size()).isEqualTo(1);
+    assertThat(pageResponse.getContent().get(0).getName()).isEqualTo("filename1");
+
+    Criteria criteria = criteriaArgumentCaptor.getValue();
+    assertThat(criteria).isNotNull();
+    assertThat(criteria.getCriteriaObject().toString())
+        .isEqualTo(
+            "Document{{accountIdentifier=accountIdentifier, orgIdentifier=orgIdentifier, projectIdentifier=projectIdentifier, $or=[Document{{name=searchTerm}}, Document{{identifier=searchTerm}}, Document{{tags.key=searchTerm}}, Document{{tags.value=searchTerm}}]}}");
+  }
+
+  @Test
+  @Owner(developers = IVAN)
+  @Category(UnitTests.class)
+  public void testListFilesWithFoldersException() {
+    FileFilterDTO fileFilterDTO =
+        FileFilterDTO.builder().searchTerm("searchTerm").identifiers(Collections.emptyList()).build();
+    assertThatThrownBy(()
+                           -> fileStoreService.listFilesAndFolders(
+                               null, ORG_IDENTIFIER, PROJECT_IDENTIFIER, fileFilterDTO, PageRequest.of(0, 10)))
+        .isInstanceOf(InvalidArgumentsException.class)
+        .hasMessage("Account identifier cannot be null or empty");
   }
 
   @Test

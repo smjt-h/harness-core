@@ -12,8 +12,6 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.delegate.beans.ChecksumType;
-import io.harness.filestore.FileUsage;
-import io.harness.filestore.NGFileType;
 import io.harness.mongo.CollationLocale;
 import io.harness.mongo.CollationStrength;
 import io.harness.mongo.index.Collation;
@@ -23,6 +21,8 @@ import io.harness.ng.core.NGAccountAccess;
 import io.harness.ng.core.NGOrgAccess;
 import io.harness.ng.core.NGProjectAccess;
 import io.harness.ng.core.common.beans.NGTag;
+import io.harness.ng.core.filestore.FileUsage;
+import io.harness.ng.core.filestore.NGFileType;
 import io.harness.persistence.PersistentEntity;
 import io.harness.persistence.UuidAware;
 

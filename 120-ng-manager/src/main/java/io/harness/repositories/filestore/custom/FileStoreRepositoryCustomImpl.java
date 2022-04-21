@@ -22,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.query.Collation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.repository.support.PageableExecutionUtils;
@@ -48,5 +49,13 @@ public class FileStoreRepositoryCustomImpl implements FileStoreRepositoryCustom 
     List<NGFile> ngFiles = mongoTemplate.find(query, NGFile.class);
     return PageableExecutionUtils.getPage(
         ngFiles, pageable, () -> mongoTemplate.count(Query.of(query).limit(-1).skip(-1), NGFile.class));
+  }
+
+  @Override
+  public Page<NGFile> findAll(Criteria criteria, Pageable pageable) {
+    Query query = new Query(criteria).with(pageable);
+    List<NGFile> organizations = mongoTemplate.find(query, NGFile.class);
+    return PageableExecutionUtils.getPage(
+        organizations, pageable, () -> mongoTemplate.count(Query.of(query).limit(-1).skip(-1), NGFile.class));
   }
 }

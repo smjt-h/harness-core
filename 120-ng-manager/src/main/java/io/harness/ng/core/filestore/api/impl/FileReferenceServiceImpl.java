@@ -5,7 +5,7 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.ng.core.filestore.utils;
+package io.harness.ng.core.filestore.api.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.ng.core.EntityDetail.EntityDetailKeys;
@@ -20,6 +20,7 @@ import io.harness.ng.core.beans.SearchPageParams;
 import io.harness.ng.core.entities.NGFile;
 import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
 import io.harness.ng.core.entitysetupusage.service.EntitySetupUsageService;
+import io.harness.ng.core.filestore.api.FileReferenceService;
 import io.harness.utils.IdentifierRefHelper;
 
 import com.google.inject.Inject;
@@ -31,16 +32,17 @@ import org.springframework.data.domain.Sort;
 @OwnedBy(CDP)
 @Slf4j
 @Singleton
-public class FileReferencedByHelper {
-  protected static final String REFFERED_BY_IDENTIFIER_KEY =
+public class FileReferenceServiceImpl implements FileReferenceService {
+  public static final String REFERRED_BY_IDENTIFIER_KEY =
       EntitySetupUsageKeys.referredByEntity + "." + EntityDetailKeys.entityRef + "." + ResourceKeys.identifier;
   private final EntitySetupUsageService entitySetupUsageService;
 
   @Inject
-  public FileReferencedByHelper(EntitySetupUsageService entitySetupUsageService) {
+  public FileReferenceServiceImpl(EntitySetupUsageService entitySetupUsageService) {
     this.entitySetupUsageService = entitySetupUsageService;
   }
 
+  @Override
   public boolean isFileReferencedByOtherEntities(NGFile file) {
     IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRefFromEntityIdentifiers(
         file.getIdentifier(), file.getAccountIdentifier(), file.getOrgIdentifier(), file.getProjectIdentifier());
@@ -55,6 +57,7 @@ public class FileReferencedByHelper {
     }
   }
 
+  @Override
   public Page<EntitySetupUsageDTO> getReferencedBy(SearchPageParams pageParams, NGFile file, EntityType entityType) {
     IdentifierRef identifierRef = IdentifierRef.builder()
                                       .accountIdentifier(file.getAccountIdentifier())
@@ -65,6 +68,6 @@ public class FileReferencedByHelper {
     String referredEntityFQN = identifierRef.getFullyQualifiedName();
     return entitySetupUsageService.listAllEntityUsage(pageParams.getPage(), pageParams.getSize(),
         file.getAccountIdentifier(), referredEntityFQN, EntityType.FILES, entityType, pageParams.getSearchTerm(),
-        Sort.by(Sort.Direction.ASC, REFFERED_BY_IDENTIFIER_KEY));
+        Sort.by(Sort.Direction.ASC, REFERRED_BY_IDENTIFIER_KEY));
   }
 }

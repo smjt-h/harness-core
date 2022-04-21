@@ -20,7 +20,7 @@ import io.harness.ng.core.ProjectScope;
 import io.harness.ng.core.Resource;
 import io.harness.ng.core.ResourceConstants;
 import io.harness.ng.core.ResourceScope;
-import io.harness.ng.core.dto.filestore.FileDTO;
+import io.harness.ng.core.filestore.dto.FileDTO;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.HashMap;

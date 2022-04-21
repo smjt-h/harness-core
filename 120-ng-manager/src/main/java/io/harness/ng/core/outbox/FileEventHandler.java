@@ -36,10 +36,10 @@ import io.harness.exception.InvalidArgumentsException;
 import io.harness.ng.core.AccountScope;
 import io.harness.ng.core.OrgScope;
 import io.harness.ng.core.ProjectScope;
-import io.harness.ng.core.dto.filestore.FileDtoYamlWrapper;
 import io.harness.ng.core.events.filestore.FileCreateEvent;
 import io.harness.ng.core.events.filestore.FileDeleteEvent;
 import io.harness.ng.core.events.filestore.FileUpdateEvent;
+import io.harness.ng.core.filestore.dto.FileStoreRequest;
 import io.harness.ng.core.utils.NGYamlUtils;
 import io.harness.outbox.OutboxEvent;
 import io.harness.outbox.api.OutboxEventHandler;
@@ -98,7 +98,7 @@ public class FileEventHandler implements OutboxEventHandler {
         AuditEntry.builder()
             .action(Action.CREATE)
             .module(ModuleType.CORE)
-            .newYaml(NGYamlUtils.getYamlString(FileDtoYamlWrapper.builder().file(fileCreateEvent.getFile()).build()))
+            .newYaml(NGYamlUtils.getYamlString(FileStoreRequest.builder().file(fileCreateEvent.getFile()).build()))
             .timestamp(outboxEvent.getCreatedAt())
             .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
             .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
@@ -116,8 +116,8 @@ public class FileEventHandler implements OutboxEventHandler {
         AuditEntry.builder()
             .action(Action.UPDATE)
             .module(ModuleType.CORE)
-            .newYaml(NGYamlUtils.getYamlString(FileDtoYamlWrapper.builder().file(fileUpdateEvent.getNewFile()).build()))
-            .oldYaml(NGYamlUtils.getYamlString(FileDtoYamlWrapper.builder().file(fileUpdateEvent.getOldFile()).build()))
+            .newYaml(NGYamlUtils.getYamlString(FileStoreRequest.builder().file(fileUpdateEvent.getNewFile()).build()))
+            .oldYaml(NGYamlUtils.getYamlString(FileStoreRequest.builder().file(fileUpdateEvent.getOldFile()).build()))
             .timestamp(outboxEvent.getCreatedAt())
             .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
             .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
@@ -133,7 +133,7 @@ public class FileEventHandler implements OutboxEventHandler {
         AuditEntry.builder()
             .action(Action.DELETE)
             .module(ModuleType.CORE)
-            .oldYaml(NGYamlUtils.getYamlString(FileDtoYamlWrapper.builder().file(fileDeleteEvent.getFile()).build()))
+            .oldYaml(NGYamlUtils.getYamlString(FileStoreRequest.builder().file(fileDeleteEvent.getFile()).build()))
             .timestamp(outboxEvent.getCreatedAt())
             .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
             .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))

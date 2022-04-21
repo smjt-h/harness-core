@@ -12,8 +12,8 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.file.beans.NGBaseFile;
-import io.harness.ng.core.dto.filestore.FileDTO;
 import io.harness.ng.core.entities.NGFile;
+import io.harness.ng.core.filestore.dto.FileDTO;
 
 import java.util.Collections;
 import lombok.experimental.UtilityClass;

@@ -23,7 +23,7 @@ import io.harness.eventsframework.EventsFrameworkMetadataConstants;
 import io.harness.eventsframework.consumer.Message;
 import io.harness.eventsframework.entity_crud.EntityChangeDTO;
 import io.harness.filestore.remote.FileStoreClient;
-import io.harness.ng.core.filestore.FileStoreResponse;
+import io.harness.ng.core.filestore.dto.FileDTO;
 import io.harness.remote.client.NGRestUtils;
 import io.harness.resourcegroup.beans.ValidatorType;
 import io.harness.resourcegroup.framework.v1.service.Resource;
@@ -62,13 +62,13 @@ public class FileResourceImpl implements Resource {
       return Collections.emptyList();
     }
 
-    List<FileStoreResponse> files =
+    List<FileDTO> files =
         NGRestUtils
-            .getResponse(fileStoreClient.listFiles(scope.getAccountIdentifier(), scope.getOrgIdentifier(),
+            .getResponse(fileStoreClient.listFilesAndFolders(scope.getAccountIdentifier(), scope.getOrgIdentifier(),
                 scope.getProjectIdentifier(), resourceIds, 0, resourceIds.size()))
             .getContent();
 
-    Set<Object> validResourceIds = files.stream().map(e -> e.getFileDTO().getIdentifier()).collect(Collectors.toSet());
+    Set<Object> validResourceIds = files.stream().map(FileDTO::getIdentifier).collect(Collectors.toSet());
     return resourceIds.stream().map(validResourceIds::contains).collect(toList());
   }
 

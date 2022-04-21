@@ -19,8 +19,8 @@ import io.harness.ng.core.api.impl.AggregateAccountResourceServiceImpl;
 import io.harness.ng.core.api.impl.AggregateOrganizationServiceImpl;
 import io.harness.ng.core.api.impl.AggregateProjectServiceImpl;
 import io.harness.ng.core.api.impl.AggregateUserGroupServiceImpl;
-import io.harness.ng.core.filestore.service.FileStoreService;
-import io.harness.ng.core.filestore.service.FileStoreServiceImpl;
+import io.harness.ng.core.filestore.api.FileStoreService;
+import io.harness.ng.core.filestore.api.impl.FileStoreServiceImpl;
 import io.harness.ng.core.service.services.ServiceEntityManagementService;
 import io.harness.ng.core.service.services.ServiceEntityManagementServiceImpl;
 
