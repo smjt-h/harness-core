@@ -283,7 +283,6 @@ import software.wings.beans.approval.ApprovalPollingJobEntity;
 import software.wings.beans.artifact.AcrArtifactStream;
 import software.wings.beans.artifact.AmazonS3ArtifactStream;
 import software.wings.beans.artifact.AmiArtifactStream;
-import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.artifact.ArtifactoryArtifactStream;
 import software.wings.beans.artifact.AzureArtifactsArtifactStream;
@@ -762,7 +761,6 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     set.add(ApplicationManifest.class);
     set.add(ApprovalNotification.class);
     set.add(ApprovalPollingJobEntity.class);
-    set.add(Artifact.class);
     set.add(ArtifactoryArtifactStream.class);
     set.add(ArtifactStream.class);
     set.add(ArtifactStreamWithOnlyAuditNeededData.class);

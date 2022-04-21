@@ -968,7 +968,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(Tag.class, 7185);
     kryo.register(K8sApplyTaskParameters.class, 7186);
     kryo.register(K8sApplyResponse.class, 7187);
-    kryo.register(Artifact.class, 7192);
     kryo.register(Artifact.ContentStatus.class, 7193);
     kryo.register(Artifact.Status.class, 7194);
     kryo.register(ArtifactVariable.class, 7195);
