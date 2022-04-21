@@ -50,8 +50,6 @@ import retrofit2.http.Url;
 public class SlackMessageSenderImpl implements SlackMessageSender {
   private OkHttpClient client = new OkHttpClient();
 
-  public static final MediaType APPLICATION_JSON = MediaType.parse("application/json; charset=utf-8");
-
   @Override
   public void send(SlackMessage slackMessage, boolean sendFromDelegate, boolean isCertValidationRequired) {
     String outgoingWebhookUrl = slackMessage.getOutgoingWebhookUrl();
@@ -100,7 +98,7 @@ public class SlackMessageSenderImpl implements SlackMessageSender {
   @Override
   public void sendJSON(SlackMessageJSON slackMessage) {
     try {
-      Request slackRequest = createRequest(slackMessage);
+      Request slackRequest = SlackNotificationUtils.createHttpRequest(slackMessage.getMessage(), slackMessage.getOutgoingWebhookUrl());
       Response response = client.newCall(slackRequest).execute();
       if (!response.isSuccessful()) {
         String bodyString = (null != response.body()) ? response.body().string() : "null";
@@ -112,24 +110,6 @@ public class SlackMessageSenderImpl implements SlackMessageSender {
     } catch (Exception e) {
       log.error("Error sending post data", e);
     }
-  }
-
-  private Request createRequest(SlackMessageJSON slackMessage) {
-    RequestBody body = RequestBody.create(APPLICATION_JSON, slackMessage.getMessage());
-    Request request = new Request.Builder()
-        .url(slackMessage.getOutgoingWebhookUrl())
-        .post(body)
-        .addHeader("Content-Type", "application/json")
-        .addHeader("Accept", "*/*")
-        .addHeader("Cache-Control", "no-cache")
-        .addHeader("Host", "hooks.slack.com")
-        .addHeader("accept-encoding", "gzip, deflate")
-        .addHeader("content-length", "798")
-        .addHeader("Connection", "keep-alive")
-        .addHeader("cache-control", "no-cache")
-        .build();
-
-    return request;
   }
 
   SlackWebhookClient getWebhookClient(final String webhookUrl) {
