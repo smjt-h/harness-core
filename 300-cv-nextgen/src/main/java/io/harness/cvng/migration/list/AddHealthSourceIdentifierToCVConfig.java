@@ -21,7 +21,7 @@ import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.UpdateResults;
 
 @Slf4j
-public class AddFullyQualifiedIdentifierToCVConfig implements CVNGMigration {
+public class AddHealthSourceIdentifierToCVConfig implements CVNGMigration {
   @Inject private HPersistence hPersistence;
 
   @Override
