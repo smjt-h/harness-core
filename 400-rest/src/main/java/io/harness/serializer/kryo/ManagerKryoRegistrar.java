@@ -1277,8 +1277,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(AwsAsgGetRunningCountRequest.class, 7188);
     kryo.register(AwsAsgGetRunningCountResponse.class, 7189);
     kryo.register(StackDriverLogDataCollectionInfo.class, 7191);
-    kryo.register(Artifact.ContentStatus.class, 7193);
-    kryo.register(Artifact.Status.class, 7194);
     kryo.register(ArtifactVariable.class, 7195);
     kryo.register(UserLockoutInfo.class, 7196);
     kryo.register(AwsAmiAllPhaseRollbackData.class, 7197);
