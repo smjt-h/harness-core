@@ -10,7 +10,6 @@ package io.harness.gitsync.persistance;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
-import io.harness.exception.EntityNotFoundException;
 import io.harness.gitsync.entityInfo.GitSdkEntityHandlerInterface;
 import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
@@ -45,13 +44,15 @@ public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
         gitAwarePersistence.findOne(criteria, projectIdentifier, orgIdentifier, accountIdentifier, entityClass);
     if (savedEntityOptional.isPresent()) {
       GitAware savedEntity = savedEntityOptional.get();
-      GitContextHelper.updateScmGitMetaData(ScmGitMetaData.builder()
-                                                .repoName(savedEntity.getRepo())
-                                                .branchName(savedEntity.getBranch())
-                                                .blobId(savedEntity.getObjectIdOfYaml())
-                                                .filePath(savedEntity.getFilePath())
-                                                .build());
-      return savedEntityOptional;
+      if (savedEntity.getStoreType() == null) {
+        GitContextHelper.updateScmGitMetaData(ScmGitMetaData.builder()
+                                                  .repoName(savedEntity.getRepo())
+                                                  .branchName(savedEntity.getBranch())
+                                                  .blobId(savedEntity.getObjectIdOfYaml())
+                                                  .filePath(savedEntity.getFilePath())
+                                                  .build());
+        return savedEntityOptional;
+      }
     }
 
     Criteria gitAwareCriteria = Criteria.where(getGitSdkEntityHandlerInterface(entityClass).getStoreTypeKey())
@@ -59,9 +60,7 @@ public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
     Query query = new Query().addCriteria(new Criteria().andOperator(criteria, gitAwareCriteria));
     final GitAware savedEntity = (GitAware) mongoTemplate.findOne(query, entityClass);
     if (savedEntity == null) {
-      throw new EntityNotFoundException(
-          String.format("No entity found for accountIdentifier : %s, orgIdentifier : %s , projectIdentifier : %s",
-              accountIdentifier, orgIdentifier, projectIdentifier));
+      return Optional.empty();
     }
 
     if (savedEntity.getStoreType() == StoreType.REMOTE) {
