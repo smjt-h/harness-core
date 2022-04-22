@@ -12,6 +12,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.envGroup.beans.EnvironmentGroupWrapperConfig;
 import io.harness.morphia.MorphiaRegistrar;
+import io.harness.ng.core.dto.filestore.FileDtoYamlWrapper;
 import io.harness.ng.core.dto.secrets.SecretRequestWrapper;
 import io.harness.ng.core.environment.yaml.NGEnvironmentConfig;
 import io.harness.ng.core.service.yaml.NGServiceConfig;
@@ -42,7 +43,6 @@ public class NextGenRegistrars {
           .addAll(CDNGRegistrars.kryoRegistrars)
           .addAll(OutboxEventRegistrars.kryoRegistrars)
           .addAll(NGFileServiceRegistrars.kryoRegistrars)
-          .addAll(NGAuditCommonsRegistrars.kryoRegistrars)
           .addAll(NGCommonsRegistrars.kryoRegistrars)
           .addAll(LicenseManagerRegistrars.kryoRegistrars)
           .addAll(DelegateTaskRegistrars.kryoRegistrars)
@@ -107,6 +107,13 @@ public class NextGenRegistrars {
                    .availableAtAccountLevel(true)
                    .availableAtOrgLevel(true)
                    .clazz(EnvironmentGroupWrapperConfig.class)
+                   .build())
+          .add(YamlSchemaRootClass.builder()
+                   .entityType(EntityType.FILES)
+                   .availableAtProjectLevel(true)
+                   .availableAtOrgLevel(true)
+                   .availableAtAccountLevel(true)
+                   .clazz(FileDtoYamlWrapper.class)
                    .build())
           .build();
 

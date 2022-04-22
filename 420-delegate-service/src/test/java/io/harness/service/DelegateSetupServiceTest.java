@@ -11,7 +11,6 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.delegate.beans.DelegateType.KUBERNETES;
 import static io.harness.rule.OwnerRule.BOJAN;
 import static io.harness.rule.OwnerRule.MARKO;
-import static io.harness.rule.OwnerRule.MARKOM;
 import static io.harness.rule.OwnerRule.NICOLAS;
 import static io.harness.rule.OwnerRule.VLAD;
 import static io.harness.rule.OwnerRule.VUK;
@@ -358,16 +357,22 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
     String orgId = generateUuid();
     String projectId = generateUuid();
 
-    DelegateGroup acctGroup =
-        DelegateGroup.builder().accountId(accountId).ng(true).tags(ImmutableSet.of("custom-grp-tag")).build();
+    DelegateGroup acctGroup = DelegateGroup.builder()
+                                  .accountId(accountId)
+                                  .name("acctGroup")
+                                  .ng(true)
+                                  .tags(ImmutableSet.of("custom-grp-tag"))
+                                  .build();
     DelegateGroup orgGroup = DelegateGroup.builder()
                                  .accountId(accountId)
+                                 .name("orgGroup")
                                  .ng(true)
                                  .owner(DelegateEntityOwnerHelper.buildOwner(orgId, null))
                                  .build();
     DelegateGroup projectGroup = DelegateGroup.builder()
                                      .accountId(accountId)
                                      .ng(true)
+                                     .name("projectGroup")
                                      .owner(DelegateEntityOwnerHelper.buildOwner(orgId, projectId))
                                      .build();
     persistence.save(Arrays.asList(acctGroup, orgGroup, projectGroup));
@@ -545,11 +550,14 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
     DelegateSizeDetails grp1SizeDetails =
         DelegateSizeDetails.builder().size(DelegateSize.LARGE).cpu(2.5d).label("size").ram(2048).replicas(2).build();
 
+    DelegateEntityOwner owner = DelegateEntityOwner.builder().identifier("orgId/projectId").build();
+
     DelegateGroup delegateGroup1 = DelegateGroup.builder()
                                        .name("grp1")
                                        .identifier("identifier1")
                                        .accountId(accountId)
                                        .ng(true)
+                                       .owner(owner)
                                        .delegateType(KUBERNETES)
                                        .description("description")
                                        .sizeDetails(grp1SizeDetails)
@@ -557,10 +565,6 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
                                        .tags(ImmutableSet.of("custom-grp-tag"))
                                        .build();
     persistence.save(delegateGroup1);
-
-    DelegateEntityOwner owner = DelegateEntityOwner.builder().identifier("orgId/projectId").build();
-    when(delegateCache.getDelegateGroupByAccountAndOwnerAndIdentifier(accountId, owner, delegateGroup1.getIdentifier()))
-        .thenReturn(delegateGroup1);
 
     // Insights
     DelegateInsightsDetails delegateInsightsDetails =
@@ -809,7 +813,7 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
                             .build();
     persistence.save(delegate);
 
-    Set<String> tags = delegateSetupService.retrieveDelegateImplicitSelectors(delegate).keySet();
+    Set<String> tags = delegateSetupService.retrieveDelegateImplicitSelectors(delegate, false).keySet();
     assertThat(tags.size()).isEqualTo(5);
     assertThat(tags).containsExactlyInAnyOrder(delegateProfile.getName().toLowerCase(), "test", "jkl", "fgh", "host");
   }
@@ -839,7 +843,7 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
                             .build();
     persistence.save(delegate);
 
-    Set<String> selectors = delegateSetupService.retrieveDelegateImplicitSelectors(delegate).keySet();
+    Set<String> selectors = delegateSetupService.retrieveDelegateImplicitSelectors(delegate, false).keySet();
     assertThat(selectors.size()).isEqualTo(2);
     assertThat(selectors).containsExactly("fgh", "jkl");
   }
@@ -860,7 +864,7 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
                             .build();
     persistence.save(delegate);
 
-    Set<String> tags = delegateSetupService.retrieveDelegateImplicitSelectors(delegate).keySet();
+    Set<String> tags = delegateSetupService.retrieveDelegateImplicitSelectors(delegate, false).keySet();
     assertThat(tags.size()).isEqualTo(1);
   }
 
@@ -876,7 +880,8 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
                                       .name("group")
                                       .tags(ImmutableSet.of("custom-tag"))
                                       .build();
-    when(delegateCache.getDelegateGroup(accountId, delegateGroup.getUuid())).thenReturn(delegateGroup);
+
+    persistence.save(delegateGroup);
 
     Delegate delegate = Delegate.builder()
                             .accountId(accountId)
@@ -888,7 +893,7 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
                             .build();
     persistence.save(delegate);
 
-    Set<String> tags = delegateSetupService.retrieveDelegateImplicitSelectors(delegate).keySet();
+    Set<String> tags = delegateSetupService.retrieveDelegateImplicitSelectors(delegate, false).keySet();
     assertThat(tags.size()).isEqualTo(2);
     assertThat(tags).containsExactlyInAnyOrder("group", "custom-tag");
   }
@@ -1056,7 +1061,7 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void whenRetrieveDelegateGroupImplicitSelectorsAndNullGroupThenEmptyTags() {
     final Map<String, SelectorType> actual = delegateSetupService.retrieveDelegateGroupImplicitSelectors(null);
@@ -1064,7 +1069,7 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void whenRetrieveDelegateGroupImplicitSelectorsThenExpectedTags() {
     final String accountId = "accId";
@@ -1082,7 +1087,7 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void whenRetrieveDelegateGroupImplicitSelectorsAndNoProfileThenExpectedTags() {
     final String accountId = "accId";

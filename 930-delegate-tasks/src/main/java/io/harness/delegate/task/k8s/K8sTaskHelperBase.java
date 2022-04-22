@@ -163,6 +163,7 @@ import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.TimeLimiter;
 import com.google.common.util.concurrent.UncheckedTimeoutException;
 import com.google.inject.Inject;
@@ -905,8 +906,8 @@ public class K8sTaskHelperBase {
 
   @VisibleForTesting
   public ProcessResult executeCommandUsingUtils(String workingDirectory, LogOutputStream statusInfoStream,
-      LogOutputStream statusErrorStream, String command) throws Exception {
-    return Utils.executeScript(workingDirectory, command, statusInfoStream, statusErrorStream);
+      LogOutputStream statusErrorStream, String command, Map<String, String> environment) throws Exception {
+    return Utils.executeScript(workingDirectory, command, statusInfoStream, statusErrorStream, environment);
   }
 
   public boolean scale(Kubectl client, K8sDelegateTaskParams k8sDelegateTaskParams, KubernetesResourceId resourceId,
@@ -1030,9 +1031,10 @@ public class K8sTaskHelperBase {
 
   @VisibleForTesting
   public ProcessResult executeCommandUsingUtils(K8sDelegateTaskParams k8sDelegateTaskParams,
-      LogOutputStream statusInfoStream, LogOutputStream statusErrorStream, String command) throws Exception {
+      LogOutputStream statusInfoStream, LogOutputStream statusErrorStream, String command,
+      Map<String, String> environment) throws Exception {
     return executeCommandUsingUtils(
-        k8sDelegateTaskParams.getWorkingDirectory(), statusInfoStream, statusErrorStream, command);
+        k8sDelegateTaskParams.getWorkingDirectory(), statusInfoStream, statusErrorStream, command, environment);
   }
 
   public String getRolloutStatusCommandForDeploymentConfig(
@@ -1060,8 +1062,8 @@ public class K8sTaskHelperBase {
       String rolloutHistoryCommand = getRolloutHistoryCommandForDeploymentConfig(k8sDelegateTaskParams, resourceId);
 
       try (LogOutputStream emptyLogOutputStream = getEmptyLogOutputStream()) {
-        ProcessResult result = executeCommandUsingUtils(
-            k8sDelegateTaskParams, emptyLogOutputStream, emptyLogOutputStream, rolloutHistoryCommand);
+        ProcessResult result = executeCommandUsingUtils(k8sDelegateTaskParams, emptyLogOutputStream,
+            emptyLogOutputStream, rolloutHistoryCommand, Maps.newHashMap());
 
         if (result.getExitValue() == 0) {
           String[] lines = result.outputUTF8().split("\\r?\\n");
@@ -1222,7 +1224,8 @@ public class K8sTaskHelperBase {
 
         executionLogCallback.saveExecutionLog(printableExecutedCommand + "\n");
 
-        result = executeCommandUsingUtils(workingDirectory, statusInfoStream, statusErrorStream, rolloutStatusCommand);
+        result = executeCommandUsingUtils(
+            workingDirectory, statusInfoStream, statusErrorStream, rolloutStatusCommand, Maps.newHashMap());
       } else {
         RolloutStatusCommand rolloutStatusCommand = client.rollout()
                                                         .status()
@@ -1444,8 +1447,8 @@ public class K8sTaskHelperBase {
         printableExecutedCommand = rolloutStatusCommand.substring(rolloutStatusCommand.indexOf("oc --kubeconfig"));
         executionLogCallback.saveExecutionLog(printableExecutedCommand + "\n");
 
-        result =
-            executeCommandUsingUtils(k8sDelegateTaskParams, statusInfoStream, statusErrorStream, rolloutStatusCommand);
+        result = executeCommandUsingUtils(
+            k8sDelegateTaskParams, statusInfoStream, statusErrorStream, rolloutStatusCommand, Maps.newHashMap());
       } else {
         RolloutStatusCommand rolloutStatusCommand = client.rollout()
                                                         .status()

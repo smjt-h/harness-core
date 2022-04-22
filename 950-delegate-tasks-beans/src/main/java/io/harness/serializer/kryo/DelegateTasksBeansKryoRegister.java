@@ -163,6 +163,8 @@ import io.harness.delegate.beans.connector.k8Connector.K8sValidationParams;
 import io.harness.delegate.beans.connector.k8Connector.KubernetesConnectionTaskParams;
 import io.harness.delegate.beans.connector.k8Connector.KubernetesConnectionTaskResponse;
 import io.harness.delegate.beans.connector.nexusconnector.NexusValidationParams;
+import io.harness.delegate.beans.connector.pdcconnector.HostConnectivityTaskParams;
+import io.harness.delegate.beans.connector.pdcconnector.HostConnectivityTaskResponse;
 import io.harness.delegate.beans.connector.pdcconnector.PhysicalDataCenterConnectorValidationParams;
 import io.harness.delegate.beans.connector.scm.ScmValidationParams;
 import io.harness.delegate.beans.connector.servicenow.ServiceNowConnectionTaskParams;
@@ -225,6 +227,7 @@ import io.harness.delegate.beans.polling.ArtifactPollingDelegateResponse;
 import io.harness.delegate.beans.polling.ManifestPollingDelegateResponse;
 import io.harness.delegate.beans.polling.PollingDelegateResponse;
 import io.harness.delegate.beans.secrets.SSHConfigValidationTaskResponse;
+import io.harness.delegate.beans.secrets.WinRmConfigValidationTaskResponse;
 import io.harness.delegate.beans.storeconfig.ArtifactoryStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.delegate.beans.storeconfig.GcsHelmStoreDelegateConfig;
@@ -477,6 +480,8 @@ import io.harness.delegate.task.terraform.TerraformTaskNGParameters;
 import io.harness.delegate.task.terraform.TerraformTaskNGResponse;
 import io.harness.delegate.task.terraform.TerraformVarFileInfo;
 import io.harness.ng.core.dto.secrets.KerberosConfigDTO;
+import io.harness.ng.core.dto.secrets.KerberosWinRmConfigDTO;
+import io.harness.ng.core.dto.secrets.NTLMConfigDTO;
 import io.harness.ng.core.dto.secrets.SSHAuthDTO;
 import io.harness.ng.core.dto.secrets.SSHConfigDTO;
 import io.harness.ng.core.dto.secrets.SSHCredentialType;
@@ -487,9 +492,12 @@ import io.harness.ng.core.dto.secrets.SSHPasswordCredentialDTO;
 import io.harness.ng.core.dto.secrets.TGTGenerationMethod;
 import io.harness.ng.core.dto.secrets.TGTKeyTabFilePathSpecDTO;
 import io.harness.ng.core.dto.secrets.TGTPasswordSpecDTO;
+import io.harness.ng.core.dto.secrets.WinRmAuthDTO;
+import io.harness.ng.core.dto.secrets.WinRmCredentialsSpecDTO;
 import io.harness.secretmanagerclient.SSHAuthScheme;
 import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.ValueType;
+import io.harness.secretmanagerclient.WinRmAuthScheme;
 import io.harness.serializer.KryoRegistrar;
 
 import software.wings.beans.AwsConfig;
@@ -501,6 +509,11 @@ import software.wings.beans.SettingAttribute;
 import software.wings.beans.TaskType;
 import software.wings.beans.command.CodeDeployParams;
 import software.wings.beans.command.JenkinsTaskParams;
+import software.wings.beans.s3.FetchS3FilesCommandParams;
+import software.wings.beans.s3.FetchS3FilesExecutionResponse;
+import software.wings.beans.s3.S3Bucket;
+import software.wings.beans.s3.S3FetchFileResult;
+import software.wings.beans.s3.S3File;
 import software.wings.beans.s3.S3FileRequest;
 import software.wings.beans.servicenow.ServiceNowFields;
 import software.wings.beans.shellscript.provisioner.ShellScriptProvisionParameters;
@@ -551,6 +564,7 @@ import software.wings.service.impl.newrelic.NewRelicMetricData.NewRelicMetricSli
 import software.wings.service.impl.newrelic.NewRelicMetricData.NewRelicMetricTimeSlice;
 import software.wings.settings.validation.ConnectivityValidationAttributes;
 import software.wings.sm.states.JenkinsExecutionResponse;
+import software.wings.sm.states.ParameterEntry;
 import software.wings.yaml.gitSync.YamlGitConfig;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -599,6 +613,12 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(ShellScriptProvisionParameters.class, 7151);
     kryo.register(CCMConfig.class, 7248);
     kryo.register(GitConfig.UrlType.class, 7460);
+    kryo.register(S3Bucket.class, 8064);
+    kryo.register(S3FetchFileResult.class, 8065);
+    kryo.register(S3File.class, 8066);
+    kryo.register(FetchS3FilesExecutionResponse.class, 8068);
+    kryo.register(FetchS3FilesCommandParams.class, 8069);
+    kryo.register(FetchS3FilesExecutionResponse.FetchS3FilesCommandStatus.class, 8070);
     kryo.register(GitConfig.ProviderType.class, 40022);
     kryo.register(AlwaysFalseValidationCapability.class, 19036);
     kryo.register(AppDynamicsConnectionTaskParams.class, 19107);
@@ -1156,5 +1176,16 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(AcrArtifactDelegateResponse.class, 543500);
     kryo.register(AzureResourceGroupsResponse.class, 543501);
     kryo.register(AzureClustersResponse.class, 543502);
+    kryo.register(ParameterEntry.class, 7448);
+    kryo.register(HostConnectivityTaskParams.class, 543503);
+    kryo.register(HostConnectivityTaskResponse.class, 543504);
+
+    // WinRm
+    kryo.register(WinRmCredentialsSpecDTO.class, 600001);
+    kryo.register(WinRmAuthScheme.class, 600002);
+    kryo.register(NTLMConfigDTO.class, 600003);
+    kryo.register(KerberosWinRmConfigDTO.class, 600004);
+    kryo.register(WinRmAuthDTO.class, 600005);
+    kryo.register(WinRmConfigValidationTaskResponse.class, 600010);
   }
 }

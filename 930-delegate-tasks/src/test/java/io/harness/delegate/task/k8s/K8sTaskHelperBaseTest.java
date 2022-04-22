@@ -550,14 +550,18 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
         + "36\t\tComplete\tconfig change";
 
     ProcessResult processResult = new ProcessResult(0, new ProcessOutput(output.getBytes()));
-    doReturn(processResult).when(spyK8sTaskHelperBase).executeCommandUsingUtils(anyString(), any(), any(), anyString());
+    doReturn(processResult)
+        .when(spyK8sTaskHelperBase)
+        .executeCommandUsingUtils(anyString(), any(), any(), anyString(), any());
 
     String latestRevision =
         spyK8sTaskHelperBase.getLatestRevision(client, resource.getResourceId(), k8sDelegateTaskParams);
     assertThat(latestRevision).isEqualTo("36");
 
     processResult = new ProcessResult(1, new ProcessOutput("".getBytes()));
-    doReturn(processResult).when(spyK8sTaskHelperBase).executeCommandUsingUtils(anyString(), any(), any(), anyString());
+    doReturn(processResult)
+        .when(spyK8sTaskHelperBase)
+        .executeCommandUsingUtils(anyString(), any(), any(), anyString(), any());
 
     latestRevision = spyK8sTaskHelperBase.getLatestRevision(client, resource.getResourceId(), k8sDelegateTaskParams);
     assertThat(latestRevision).isEqualTo("");
@@ -1030,7 +1034,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
                      + "139\t\tComplete\tconfig change\n"
                      + "140\t\tComplete\tconfig change\n"))
         .when(spyK8sTaskHelperBase)
-        .executeCommandUsingUtils(any(K8sDelegateTaskParams.class), any(), any(), any());
+        .executeCommandUsingUtils(any(K8sDelegateTaskParams.class), any(), any(), any(), any());
     String latestRevision;
     latestRevision = spyK8sTaskHelperBase.getLatestRevision(Kubectl.client("kubectl", "kubeconfig"),
         K8sTestHelper.deploymentConfig().getResourceId(),
@@ -1046,8 +1050,8 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
                                           .kubeconfigPath("kubeconfig")
                                           .workingDirectory("./working-dir")
                                           .build()),
-            any(), any(),
-            eq("oc --kubeconfig=kubeconfig rollout history DeploymentConfig/test-dc --namespace=default"));
+            any(), any(), eq("oc --kubeconfig=kubeconfig rollout history DeploymentConfig/test-dc --namespace=default"),
+            any());
     assertThat(latestRevision).isEqualTo("140");
   }
 
@@ -1177,14 +1181,16 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
                                                       .build();
 
     ProcessResult processResult = new ProcessResult(0, new ProcessOutput("".getBytes()));
-    doReturn(processResult).when(spyK8sTaskHelperBase).executeCommandUsingUtils(any(String.class), any(), any(), any());
+    doReturn(processResult)
+        .when(spyK8sTaskHelperBase)
+        .executeCommandUsingUtils(any(String.class), any(), any(), any(), any());
 
     final String expectedCommand =
         "oc --kubeconfig=config-path rollout status DeploymentConfig/name --namespace=namespace --watch=true";
     final boolean result =
         spyK8sTaskHelperBase.doStatusCheck(client, resourceId, k8sDelegateTaskParams, executionLogCallback);
 
-    verify(spyK8sTaskHelperBase).executeCommandUsingUtils(eq("."), any(), any(), eq(expectedCommand));
+    verify(spyK8sTaskHelperBase).executeCommandUsingUtils(eq("."), any(), any(), eq(expectedCommand), any());
 
     assertThat(result).isEqualTo(true);
   }
@@ -1210,7 +1216,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
     ProcessResult processResult = new ProcessResult(0, new ProcessOutput("".getBytes()));
     doReturn(processResult)
         .when(spyK8sTaskHelperBase)
-        .executeCommandUsingUtils(any(K8sDelegateTaskParams.class), any(), any(), any());
+        .executeCommandUsingUtils(any(K8sDelegateTaskParams.class), any(), any(), any(), any());
 
     List<KubernetesResourceId> resourceIds = new ArrayList<>();
     resourceIds.add(resourceId);
@@ -1219,7 +1225,8 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
         client, resourceIds, k8sDelegateTaskParams, "name", executionLogCallback, false);
     verify(spyK8sTaskHelperBase)
         .executeCommandUsingUtils(eq(k8sDelegateTaskParams), any(), any(),
-            eq("oc --kubeconfig=config-path rollout status DeploymentConfig/name --namespace=namespace --watch=true"));
+            eq("oc --kubeconfig=config-path rollout status DeploymentConfig/name --namespace=namespace --watch=true"),
+            any());
 
     assertThat(result).isEqualTo(false);
   }
@@ -1243,7 +1250,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
     ProcessResult processResult = new ProcessResult(1, new ProcessOutput("Something went wrong".getBytes()));
     doReturn(processResult)
         .when(spyK8sTaskHelperBase)
-        .executeCommandUsingUtils(any(K8sDelegateTaskParams.class), any(), any(), any());
+        .executeCommandUsingUtils(any(K8sDelegateTaskParams.class), any(), any(), any(), any());
 
     assertThatThrownBy(()
                            -> spyK8sTaskHelperBase.doStatusCheckForAllResources(client, singletonList(deploymentConfig),
@@ -1276,7 +1283,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
     ProcessResult processResult = new ProcessResult(1, new ProcessOutput("Something went wrong".getBytes()));
     doReturn(processResult)
         .when(spyK8sTaskHelperBase)
-        .executeCommandUsingUtils(any(K8sDelegateTaskParams.class), any(), any(), any());
+        .executeCommandUsingUtils(any(K8sDelegateTaskParams.class), any(), any(), any(), any());
 
     assertThatThrownBy(()
                            -> spyK8sTaskHelperBase.doStatusCheckForAllResources(client, singletonList(deploymentConfig),
@@ -1310,7 +1317,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
     ProcessResult processResult = new ProcessResult(0, new ProcessOutput("".getBytes()));
     doReturn(processResult)
         .when(spyK8sTaskHelperBase)
-        .executeCommandUsingUtils(any(K8sDelegateTaskParams.class), any(), any(), any());
+        .executeCommandUsingUtils(any(K8sDelegateTaskParams.class), any(), any(), any(), any());
 
     List<KubernetesResourceId> resourceIds = new ArrayList<>();
     resourceIds.add(resourceId);
@@ -1320,7 +1327,8 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
 
     verify(spyK8sTaskHelperBase)
         .executeCommandUsingUtils(eq(k8sDelegateTaskParams), any(), any(),
-            eq("oc --kubeconfig=config-path rollout status DeploymentConfig/name --namespace=namespace --watch=true"));
+            eq("oc --kubeconfig=config-path rollout status DeploymentConfig/name --namespace=namespace --watch=true"),
+            any());
 
     assertThat(result).isEqualTo(false);
   }
@@ -1332,17 +1340,11 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
     when(delegateLocalConfigService.replacePlaceholdersWithLocalConfig(anyString()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class));
     final String workingDirectory = ".";
-    K8sDelegateTaskParams k8sDelegateTaskParams = K8sDelegateTaskParams.builder()
-                                                      .workingDirectory(workingDirectory)
-                                                      .ocPath("oc")
-                                                      .kubectlPath("kubectl")
-                                                      .kubeconfigPath("config-path")
-                                                      .build();
 
     ProcessResult processResult = new ProcessResult(0, new ProcessOutput("".getBytes()));
     doReturn(processResult)
         .when(spyK8sTaskHelperBase)
-        .executeCommandUsingUtils(any(K8sDelegateTaskParams.class), any(), any(), any());
+        .executeCommandUsingUtils(any(K8sDelegateTaskParams.class), any(), any(), any(), any());
 
     final List<FileData> manifestFiles = prepareSomeCorrectManifestFiles();
 
@@ -1391,7 +1393,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
     ProcessResult processResult = new ProcessResult(0, new ProcessOutput("".getBytes()));
     doReturn(processResult)
         .when(spyK8sTaskHelperBase)
-        .executeCommandUsingUtils(any(K8sDelegateTaskParams.class), any(), any(), any());
+        .executeCommandUsingUtils(any(K8sDelegateTaskParams.class), any(), any(), any(), any());
 
     final List<FileData> manifestFiles = prepareSomeCorrectManifestFiles();
     final List<KubernetesResource> resources =
