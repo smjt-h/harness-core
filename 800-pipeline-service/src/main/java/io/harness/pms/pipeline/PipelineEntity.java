@@ -52,6 +52,7 @@ import org.mongodb.morphia.annotations.Entity;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -100,6 +101,7 @@ public class PipelineEntity
   @NotEmpty String identifier;
 
   @Wither @NotEmpty @NonFinal String yaml;
+  @Transient @NonFinal String yamlFromRemote;
 
   @Setter @NonFinal @SchemaIgnore @FdIndex @CreatedDate long createdAt;
   @Setter @NonFinal @SchemaIgnore @NotNull @LastModifiedDate long lastUpdatedAt;
@@ -143,13 +145,16 @@ public class PipelineEntity
     if (storeType == null || storeType == StoreType.INLINE) {
       return yaml;
     }
-    // TODO: add proper impl here for remote store type
-    return null;
+    return yamlFromRemote;
   }
 
   @Override
   public void setData(String data) {
-    yaml = data;
+    if (storeType == null || storeType == StoreType.INLINE) {
+      yaml = data;
+    } else {
+      yamlFromRemote = data;
+    }
   }
 
   @Override
