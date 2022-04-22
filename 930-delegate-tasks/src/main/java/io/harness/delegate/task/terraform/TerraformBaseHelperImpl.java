@@ -832,9 +832,7 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
       SshSessionConfig sshSessionConfig = getSshSessionConfig(conFileFileGitStore);
       if (isNotEmpty(sshSessionConfig.getKeyPassphrase())) {
         logCallback.saveExecutionLog(
-            color(
-                "\nExporting SSH Key with Passphrase for Module Source is not Supported, Skipping the Export", Yellow),
-            WARN);
+            color("\nExporting SSH Key with Passphrase for Module Source is not Supported", Yellow), WARN);
         return;
       }
       if (!sshSessionConfig.isKeyLess() && isNotEmpty(sshSessionConfig.getKey())) {
@@ -850,16 +848,13 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
 
       } else {
         logCallback.saveExecutionLog(
-            color("\nExporting Username and Password with SSH for Module Source is not Supported, Skipping the Export",
-                Yellow),
-            WARN);
+            color("\nExporting Username and Password with SSH for Module Source is not Supported", Yellow), WARN);
         return;
       }
       exportSSHKey(taskParameters, sshKeyPath, logCallback);
     } else {
       logCallback.saveExecutionLog(
-          color("\nExporting Username and Password for Module Source is not Supported, Skipping the Export", Yellow),
-          WARN);
+          color("\nExporting Username and Password for Module Source is not Supported", Yellow), WARN);
     }
   }
 
@@ -869,7 +864,7 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
 
     File file = new File(Paths.get(sshKeyPath).toString());
 
-    // Giving Read Only Permission for the SSH File, This is needed to avoided security attack
+    // Giving Read Only Permission to ownerOnly for the SSH File, This is needed to avoided security attack
 
     file.setWritable(false, false);
     file.setExecutable(false, false);

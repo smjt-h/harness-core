@@ -147,14 +147,8 @@ public class TerraformDestroyStep extends TaskExecutableWithRollbackAndRbac<Terr
         .terraformCommand(TerraformCommand.DESTROY)
         .terraformCommandUnit(TerraformCommandUnit.Destroy)
         .entityId(entityId)
-        .tfModuleSourceInheritSSH(cdFeatureFlagHelper.isEnabled(
-                                      AmbianceUtils.getAccountId(ambiance), FeatureName.TF_MODULE_SOURCE_INHERIT_SSH)
-            && configuration.getSpec().getConfigFiles().getModuleSource() != null
-            && !ParameterField.isNull(
-                configuration.getSpec().getConfigFiles().getModuleSource().getUseConnectorCredentials())
-            && CDStepHelper.getParameterFieldBooleanValue(
-                configuration.getSpec().getConfigFiles().getModuleSource().getUseConnectorCredentials(),
-                USE_CONNECTOR_CREDENTIALS, stepElementParameters))
+        .tfModuleSourceInheritSSH(helper.isExportCredentialForSourceModule(
+            ambiance, configuration.getSpec().getConfigFiles(), stepElementParameters))
         .workspace(ParameterFieldHelper.getParameterFieldValue(spec.getWorkspace()))
         .configFile(helper.getGitFetchFilesConfig(
             spec.getConfigFiles().getStore().getSpec(), ambiance, TerraformStepHelper.TF_CONFIG_FILES))
