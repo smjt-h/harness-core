@@ -13,6 +13,7 @@ import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.StoreIn;
 import io.harness.annotations.ChangeDataCapture;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.validator.EntityName;
 import io.harness.data.validator.Trimmed;
 import io.harness.gitsync.v2.GitAware;
@@ -46,6 +47,7 @@ import lombok.Value;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.NonFinal;
 import lombok.experimental.Wither;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.mongodb.morphia.annotations.Entity;
 import org.springframework.data.annotation.CreatedDate;
@@ -57,6 +59,7 @@ import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @OwnedBy(PIPELINE)
+@Slf4j
 @Value
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -143,6 +146,9 @@ public class PipelineEntity
   public String getData() {
     if (storeType == null || storeType == StoreType.INLINE) {
       return yaml;
+    }
+    if (EmptyPredicate.isEmpty(yamlFromRemote)) {
+      log.warn(String.format("YAML for Remote Pipeline [%s] has not been set, but is being fetched.", identifier));
     }
     return yamlFromRemote;
   }
