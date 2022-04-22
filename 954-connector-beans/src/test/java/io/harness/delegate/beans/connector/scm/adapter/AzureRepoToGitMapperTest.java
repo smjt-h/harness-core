@@ -63,7 +63,7 @@ public class AzureRepoToGitMapperTest extends CategoryTest {
                              .type(AzureRepoHttpAuthenticationType.USERNAME_AND_TOKEN)
                              .httpCredentialsSpec(AzureRepoUsernameTokenDTO.builder()
                                                       .username(username)
-                                                      .usernameRef(usernameRef)
+                                                      .usernameRef(SecretRefHelper.createSecretRef(usernameRef))
                                                       .tokenRef(SecretRefHelper.createSecretRef(tokenRef))
                                                       .build())
                              .build())
@@ -71,7 +71,7 @@ public class AzureRepoToGitMapperTest extends CategoryTest {
 
     final AzureRepoApiAccessDTO azureRepoApiAccessDTO =
         AzureRepoApiAccessDTO.builder()
-            .type(AzureRepoConnectorConstants.TOKEN)
+            .type(AzureRepoApiAccessType.valueOf(AzureRepoConnectorConstants.TOKEN))
             .spec(AzureRepoTokenSpecDTO.builder().tokenRef(SecretRefHelper.createSecretRef(tokenRef)).build())
             .build();
     final AzureRepoConnectorDTO azureRepoConnectorDTO = AzureRepoConnectorDTO.builder()
@@ -92,7 +92,7 @@ public class AzureRepoToGitMapperTest extends CategoryTest {
     assertThat(gitConfigDTO.getValidationRepo()).isEqualTo(validationRepo);
     assertThat(gitAuthentication.getUsername()).isEqualTo(username);
     assertThat(gitAuthentication.getUsernameRef()).isEqualTo(usernameRef);
-    assertThat(gitAuthentication.getTokenRef().toSecretRefStringValue()).isEqualTo(tokenRef);
+    assertThat(gitAuthentication.getPasswordRef().toSecretRefStringValue()).isEqualTo(tokenRef);
   }
 
   @Test
