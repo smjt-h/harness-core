@@ -393,7 +393,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
 
   private GetFileResponse prepareGetFileResponse(GetFileRequest getFileRequest, FileContent fileContent) {
     return GetFileResponse.newBuilder()
-        .setStatus(fileContent.getStatus())
+        .setStatusCode(fileContent.getStatus())
         .setFileContent(fileContent.getContent())
         .setError(fileContent.getError())
         .setGitMetaData(GitMetaData.newBuilder()
