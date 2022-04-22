@@ -15,7 +15,6 @@ import io.harness.annotations.ChangeDataCapture;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityName;
 import io.harness.data.validator.Trimmed;
-import io.harness.gitsync.persistance.GitSyncableEntity;
 import io.harness.gitsync.v2.GitAware;
 import io.harness.gitsync.v2.StoreType;
 import io.harness.mongo.index.CompoundMongoIndex;
