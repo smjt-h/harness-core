@@ -29,6 +29,7 @@ import software.wings.beans.yaml.YamlType;
 import software.wings.service.impl.yaml.handler.setting.sourcerepoprovider.GitConfigYamlHandler;
 import software.wings.service.impl.yaml.handler.templatelibrary.SettingValueConfigYamlHandlerTestBase;
 import software.wings.service.intfc.SettingsService;
+import software.wings.service.intfc.security.SecretManager;
 import software.wings.settings.SettingValue;
 
 import com.google.inject.Inject;
@@ -41,6 +42,7 @@ import org.mockito.Mock;
 public class GitConfigYamlHandlerTest extends SettingValueConfigYamlHandlerTestBase {
   @InjectMocks @Inject private GitConfigYamlHandler yamlHandler;
   @Mock private SettingsService settingsService;
+  @Mock private SecretManager secretManager;
   public static final String username = "dummyUsername";
   public static final String password = "dummyPassword";
   public static final String SAMPLE_STRING = "sample-string";
@@ -49,7 +51,7 @@ public class GitConfigYamlHandlerTest extends SettingValueConfigYamlHandlerTestB
   @Test
   @Owner(developers = DHRUV)
   @Category(UnitTests.class)
-  public void testToBean() {
+  public void testToBeanWithPassword() {
     GitConfig.Yaml yaml = GitConfig.Yaml.builder()
                               .branch(SAMPLE_STRING)
                               .reference(SAMPLE_STRING)
@@ -94,36 +96,48 @@ public class GitConfigYamlHandlerTest extends SettingValueConfigYamlHandlerTestB
   @Test
   @Owner(developers = DHRUV)
   @Category(UnitTests.class)
-  public void testToYaml() {
-    GitConfig gitConfig = GitConfig.builder()
-                              .authorEmailId(SAMPLE_STRING)
-                              .authorName(SAMPLE_STRING)
-                              .commitMessage(SAMPLE_STRING)
+  public void testToBeanWithSshKey() {
+    GitConfig.Yaml yaml = GitConfig.Yaml.builder()
                               .branch(SAMPLE_STRING)
+                              .reference(SAMPLE_STRING)
+                              .keyAuth(true)
+                              .sshKeyName(SAMPLE_STRING)
+                              .authorName(SAMPLE_STRING)
+                              .authorEmailId(SAMPLE_STRING)
+                              .commitMessage(SAMPLE_STRING)
                               .description(SAMPLE_STRING)
-                              .sshSettingId(null)
+                              .username(SAMPLE_STRING)
+                              .url(SAMPLE_STRING)
                               .delegateSelectors(Collections.emptyList())
                               .providerType(ProviderType.GIT)
                               .build();
 
-    SettingValue settingValue = (SettingValue) gitConfig;
-    SettingAttribute settingAttribute = SettingAttribute.Builder.aSettingAttribute()
-                                            .withName(SAMPLE_STRING)
-                                            .withUuid(null)
-                                            .withValue(settingValue)
-                                            .build();
+    Change change = Change.Builder.aFileChange()
+                        .withAccountId("ABC")
+                        .withFilePath("Setup/Source Repo Provider/test-harness.yaml")
+                        .build();
+    ChangeContext<GitConfig.Yaml> changeContext = ChangeContext.Builder.aChangeContext()
+                                                      .withYamlType(YamlType.SOURCE_REPO_PROVIDER)
+                                                      .withYaml(yaml)
+                                                      .withChange(change)
+                                                      .build();
+    doReturn(SAMPLE_STRING)
+        .when(settingsService)
+        .getSSHSettingId(changeContext.getChange().getAccountId(), yaml.getSshKeyName());
+    SettingAttribute settingAttribute = yamlHandler.toBean(null, changeContext, null);
+    GitConfig gitConfig = (GitConfig) settingAttribute.getValue();
 
-    GitConfig.Yaml yaml = yamlHandler.toYaml(settingAttribute, null);
-
-    assertThat(yaml).isNotNull();
-    assertThat(yaml.getCommitMessage()).isEqualTo(SAMPLE_STRING);
-    assertThat(yaml.getAuthorEmailId()).isEqualTo(SAMPLE_STRING);
-    assertThat(yaml.getAuthorName()).isEqualTo(SAMPLE_STRING);
-    assertThat(yaml.getBranch()).isEqualTo(SAMPLE_STRING);
-    assertThat(yaml.getDescription()).isEqualTo(SAMPLE_STRING);
-    assertThat(yaml.getSshKeyName()).isEqualTo(null);
-    assertThat(yaml.getDelegateSelectors()).isEqualTo(Collections.emptyList());
-    assertThat(yaml.getProviderType()).isEqualTo(ProviderType.GIT);
+    assertThat(gitConfig).isNotNull();
+    assertThat(gitConfig.getCommitMessage()).isEqualTo(SAMPLE_STRING);
+    assertThat(gitConfig.getAuthorEmailId()).isEqualTo(SAMPLE_STRING);
+    assertThat(gitConfig.getAuthorName()).isEqualTo(SAMPLE_STRING);
+    assertThat(gitConfig.getSshSettingId()).isEqualTo(SAMPLE_STRING);
+    assertThat(gitConfig.getPassword()).isEqualTo(null);
+    assertThat(gitConfig.getUsername()).isEqualTo(SAMPLE_STRING);
+    assertThat(gitConfig.getBranch()).isEqualTo(SAMPLE_STRING);
+    assertThat(gitConfig.getRepoUrl()).isEqualTo(SAMPLE_STRING);
+    assertThat(gitConfig.getDelegateSelectors()).isEqualTo(Collections.emptyList());
+    assertThat(gitConfig.getProviderType()).isEqualTo(ProviderType.GIT);
   }
 
   @Test
@@ -139,7 +153,6 @@ public class GitConfigYamlHandlerTest extends SettingValueConfigYamlHandlerTestB
                               .authorEmailId(SAMPLE_STRING)
                               .commitMessage(SAMPLE_STRING)
                               .description(SAMPLE_STRING)
-                              .password(SAMPLE_STRING)
                               .username(SAMPLE_STRING)
                               .url(SAMPLE_STRING)
                               .delegateSelectors(Collections.emptyList())
@@ -193,6 +206,145 @@ public class GitConfigYamlHandlerTest extends SettingValueConfigYamlHandlerTestB
                                                       .build();
 
     assertThatThrownBy(() -> yamlHandler.toBean(null, changeContext, null))
+        .isInstanceOf(InvalidRequestException.class)
+        .matches(ex -> ex.getMessage().equals("Both SSH key and password cannot be null"));
+  }
+
+  @Test
+  @Owner(developers = DHRUV)
+  @Category(UnitTests.class)
+  public void testToYamlWithPassword() {
+    GitConfig gitConfig = GitConfig.builder()
+                              .authorEmailId(SAMPLE_STRING)
+                              .authorName(SAMPLE_STRING)
+                              .accountId(SAMPLE_STRING)
+                              .commitMessage(SAMPLE_STRING)
+                              .branch(SAMPLE_STRING)
+                              .description(SAMPLE_STRING)
+                              .sshSettingId(null)
+                              .encryptedPassword(SAMPLE_STRING)
+                              .delegateSelectors(Collections.emptyList())
+                              .providerType(ProviderType.GIT)
+                              .build();
+
+    SettingValue settingValue = (SettingValue) gitConfig;
+    SettingAttribute settingAttribute = SettingAttribute.Builder.aSettingAttribute()
+                                            .withName(SAMPLE_STRING)
+                                            .withUuid(null)
+                                            .withValue(settingValue)
+                                            .build();
+    doReturn(SAMPLE_STRING)
+        .when(secretManager)
+        .getEncryptedYamlRef(gitConfig.getAccountId(), gitConfig.getEncryptedPassword());
+    GitConfig.Yaml yaml = yamlHandler.toYaml(settingAttribute, null);
+
+    assertThat(yaml).isNotNull();
+    assertThat(yaml.getCommitMessage()).isEqualTo(SAMPLE_STRING);
+    assertThat(yaml.getAuthorEmailId()).isEqualTo(SAMPLE_STRING);
+    assertThat(yaml.getAuthorName()).isEqualTo(SAMPLE_STRING);
+    assertThat(yaml.getBranch()).isEqualTo(SAMPLE_STRING);
+    assertThat(yaml.getDescription()).isEqualTo(SAMPLE_STRING);
+    assertThat(yaml.getPassword()).isEqualTo(SAMPLE_STRING);
+    assertThat(yaml.getSshKeyName()).isEqualTo(null);
+    assertThat(yaml.getDelegateSelectors()).isEqualTo(Collections.emptyList());
+    assertThat(yaml.getProviderType()).isEqualTo(ProviderType.GIT);
+  }
+
+  @Test
+  @Owner(developers = PRATYUSH)
+  @Category(UnitTests.class)
+  public void testToYamlWithSshKey() {
+    GitConfig gitConfig = GitConfig.builder()
+                              .authorEmailId(SAMPLE_STRING)
+                              .authorName(SAMPLE_STRING)
+                              .accountId(SAMPLE_STRING)
+                              .commitMessage(SAMPLE_STRING)
+                              .branch(SAMPLE_STRING)
+                              .description(SAMPLE_STRING)
+                              .sshSettingId(SAMPLE_STRING)
+                              .delegateSelectors(Collections.emptyList())
+                              .providerType(ProviderType.GIT)
+                              .build();
+
+    SettingValue settingValue = (SettingValue) gitConfig;
+    SettingAttribute settingAttribute = SettingAttribute.Builder.aSettingAttribute()
+                                            .withName(SAMPLE_STRING)
+                                            .withUuid(null)
+                                            .withValue(settingValue)
+                                            .build();
+    doReturn(SAMPLE_STRING).when(settingsService).getSSHKeyName(gitConfig.getSshSettingId());
+    GitConfig.Yaml yaml = yamlHandler.toYaml(settingAttribute, null);
+
+    assertThat(yaml).isNotNull();
+    assertThat(yaml.getCommitMessage()).isEqualTo(SAMPLE_STRING);
+    assertThat(yaml.getAuthorEmailId()).isEqualTo(SAMPLE_STRING);
+    assertThat(yaml.getAuthorName()).isEqualTo(SAMPLE_STRING);
+    assertThat(yaml.getBranch()).isEqualTo(SAMPLE_STRING);
+    assertThat(yaml.getDescription()).isEqualTo(SAMPLE_STRING);
+    assertThat(yaml.getPassword()).isEqualTo(null);
+    assertThat(yaml.getSshKeyName()).isEqualTo(SAMPLE_STRING);
+    assertThat(yaml.getDelegateSelectors()).isEqualTo(Collections.emptyList());
+    assertThat(yaml.getProviderType()).isEqualTo(ProviderType.GIT);
+  }
+
+  @Test
+  @Owner(developers = PRATYUSH)
+  @Category(UnitTests.class)
+  public void testToYamlWithSshKeyAndPassword() {
+    GitConfig gitConfig = GitConfig.builder()
+                              .authorEmailId(SAMPLE_STRING)
+                              .authorName(SAMPLE_STRING)
+                              .accountId(SAMPLE_STRING)
+                              .commitMessage(SAMPLE_STRING)
+                              .branch(SAMPLE_STRING)
+                              .description(SAMPLE_STRING)
+                              .encryptedPassword(SAMPLE_STRING)
+                              .sshSettingId(SAMPLE_STRING)
+                              .delegateSelectors(Collections.emptyList())
+                              .providerType(ProviderType.GIT)
+                              .build();
+
+    SettingValue settingValue = (SettingValue) gitConfig;
+    SettingAttribute settingAttribute = SettingAttribute.Builder.aSettingAttribute()
+                                            .withName(SAMPLE_STRING)
+                                            .withUuid(null)
+                                            .withValue(settingValue)
+                                            .build();
+    doReturn(SAMPLE_STRING).when(settingsService).getSSHKeyName(gitConfig.getSshSettingId());
+    doReturn(SAMPLE_STRING)
+        .when(secretManager)
+        .getEncryptedYamlRef(gitConfig.getAccountId(), gitConfig.getEncryptedPassword());
+    assertThatThrownBy(() -> yamlHandler.toYaml(settingAttribute, null))
+        .isInstanceOf(InvalidRequestException.class)
+        .matches(ex -> ex.getMessage().equals("Cannot use both the encryption types SSH key and password at once"));
+  }
+
+  @Test
+  @Owner(developers = PRATYUSH)
+  @Category(UnitTests.class)
+  public void testToYamlWithoutSshKeyAndPassword() {
+    GitConfig gitConfig = GitConfig.builder()
+                              .authorEmailId(SAMPLE_STRING)
+                              .authorName(SAMPLE_STRING)
+                              .accountId(SAMPLE_STRING)
+                              .commitMessage(SAMPLE_STRING)
+                              .branch(SAMPLE_STRING)
+                              .description(SAMPLE_STRING)
+                              .delegateSelectors(Collections.emptyList())
+                              .providerType(ProviderType.GIT)
+                              .build();
+
+    SettingValue settingValue = (SettingValue) gitConfig;
+    SettingAttribute settingAttribute = SettingAttribute.Builder.aSettingAttribute()
+                                            .withName(SAMPLE_STRING)
+                                            .withUuid(null)
+                                            .withValue(settingValue)
+                                            .build();
+    doReturn(SAMPLE_STRING).when(settingsService).getSSHKeyName(gitConfig.getSshSettingId());
+    doReturn(SAMPLE_STRING)
+        .when(secretManager)
+        .getEncryptedYamlRef(gitConfig.getAccountId(), gitConfig.getEncryptedPassword());
+    assertThatThrownBy(() -> yamlHandler.toYaml(settingAttribute, null))
         .isInstanceOf(InvalidRequestException.class)
         .matches(ex -> ex.getMessage().equals("Both SSH key and password cannot be null"));
   }

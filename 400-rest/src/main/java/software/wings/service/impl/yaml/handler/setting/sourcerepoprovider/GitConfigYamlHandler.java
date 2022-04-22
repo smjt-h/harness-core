@@ -12,6 +12,9 @@ import static io.harness.exception.WingsException.USER;
 
 import static software.wings.beans.CGConstants.ENCRYPTED_VALUE_STR;
 
+import static java.util.Objects.isNull;
+import static org.apache.commons.lang.StringUtils.isBlank;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
 
@@ -29,28 +32,34 @@ public class GitConfigYamlHandler extends SourceRepoProviderYamlHandler<Yaml, Gi
   @Override
   public Yaml toYaml(SettingAttribute settingAttribute, String appId) {
     GitConfig gitConfig = (GitConfig) settingAttribute.getValue();
+    String password = !isNull(gitConfig.getEncryptedPassword())
+        ? getEncryptedYamlRef(gitConfig.getAccountId(), gitConfig.getEncryptedPassword())
+        : null;
+    String sshKeyName =
+        !isNull(gitConfig.getSshSettingId()) ? settingsService.getSSHKeyName(gitConfig.getSshSettingId()) : null;
+    if (isNull(password) && isNull(sshKeyName)) {
+      throw new InvalidRequestException("Both SSH key and password cannot be null", USER);
+    } else if (!isNull(password) && !isNull(sshKeyName)) {
+      throw new InvalidRequestException("Cannot use both the encryption types SSH key and password at once", USER);
+    }
 
-    Yaml yaml =
-        Yaml.builder()
-            .harnessApiVersion(getHarnessApiVersion())
-            .type(gitConfig.getType())
-            .url(gitConfig.getRepoUrl())
-            .username(gitConfig.getUsername())
-            .password(gitConfig.getEncryptedPassword() != null
-                    ? getEncryptedYamlRef(gitConfig.getAccountId(), gitConfig.getEncryptedPassword())
-                    : null)
-            .branch(gitConfig.getBranch())
-            .keyAuth(gitConfig.isKeyAuth())
-            .sshKeyName(
-                gitConfig.getSshSettingId() != null ? settingsService.getSSHKeyName(gitConfig.getSshSettingId()) : null)
-            .description(gitConfig.getDescription())
-            .authorName(gitConfig.getAuthorName())
-            .authorEmailId(gitConfig.getAuthorEmailId())
-            .commitMessage(gitConfig.getCommitMessage())
-            .urlType(gitConfig.getUrlType())
-            .delegateSelectors(gitConfig.getDelegateSelectors())
-            .providerType(gitConfig.getProviderType())
-            .build();
+    Yaml yaml = Yaml.builder()
+                    .harnessApiVersion(getHarnessApiVersion())
+                    .type(gitConfig.getType())
+                    .url(gitConfig.getRepoUrl())
+                    .username(gitConfig.getUsername())
+                    .password(password)
+                    .branch(gitConfig.getBranch())
+                    .keyAuth(gitConfig.isKeyAuth())
+                    .sshKeyName(sshKeyName)
+                    .description(gitConfig.getDescription())
+                    .authorName(gitConfig.getAuthorName())
+                    .authorEmailId(gitConfig.getAuthorEmailId())
+                    .commitMessage(gitConfig.getCommitMessage())
+                    .urlType(gitConfig.getUrlType())
+                    .delegateSelectors(gitConfig.getDelegateSelectors())
+                    .providerType(gitConfig.getProviderType())
+                    .build();
     toYaml(yaml, settingAttribute, appId);
     return yaml;
   }
@@ -63,11 +72,10 @@ public class GitConfigYamlHandler extends SourceRepoProviderYamlHandler<Yaml, Gi
     String accountId = changeContext.getChange().getAccountId();
     String password = yaml.getPassword();
     String sshSettingId =
-        yaml.getSshKeyName() != null ? settingsService.getSSHSettingId(accountId, yaml.getSshKeyName()) : null;
-    if (password == ENCRYPTED_VALUE_STR && sshSettingId == null) {
+        !isNull(yaml.getSshKeyName()) ? settingsService.getSSHSettingId(accountId, yaml.getSshKeyName()) : null;
+    if (checkForEmptyPassword(password) && isNull(sshSettingId)) {
       throw new InvalidRequestException("Both SSH key and password cannot be null", USER);
-    }
-    if (password != ENCRYPTED_VALUE_STR && sshSettingId != null) {
+    } else if (!checkForEmptyPassword(password) && !isNull(sshSettingId)) {
       throw new InvalidRequestException("Cannot use both the encryption types SSH key and password at once", USER);
     }
 
@@ -92,5 +100,9 @@ public class GitConfigYamlHandler extends SourceRepoProviderYamlHandler<Yaml, Gi
   @Override
   public Class getYamlClass() {
     return Yaml.class;
+  }
+
+  public boolean checkForEmptyPassword(String password) {
+    return isBlank(password) || password.equals(ENCRYPTED_VALUE_STR);
   }
 }
