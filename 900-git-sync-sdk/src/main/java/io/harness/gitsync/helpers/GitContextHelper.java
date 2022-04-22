@@ -80,4 +80,12 @@ public class GitContextHelper {
     GlobalContextManager.upsertGlobalContextRecord(
         ScmGitMetaDataContext.builder().scmGitMetaData(scmGitMetaData).build());
   }
+
+  public ScmGitMetaData getScmGitMetaData() {
+    ScmGitMetaDataContext gitMetaDataContext = GlobalContextManager.get(ScmGitMetaDataContext.NG_GIT_SYNC_CONTEXT);
+    if (gitMetaDataContext == null) {
+      throw new UnexpectedException("No SCM Git Metadata found in context");
+    }
+    return gitMetaDataContext.getScmGitMetaData();
+  }
 }
