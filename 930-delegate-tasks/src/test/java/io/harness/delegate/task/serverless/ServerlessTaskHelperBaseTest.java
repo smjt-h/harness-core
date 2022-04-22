@@ -117,11 +117,10 @@ public class ServerlessTaskHelperBaseTest extends CategoryTest {
             ARTIFACTORY_ARTIFACT_NAME);
     serverlessTaskHelperBase.fetchArtifact(serverlessArtifactConfig, logCallback, ARTIFACT_DIRECTORY);
     verify(logCallback)
-        .saveExecutionLog("\n"
-            + color(format("Downloading %s artifact with identifier: %s",
-                        serverlessArtifactConfig.getServerlessArtifactType(),
-                        ((ServerlessArtifactoryArtifactConfig) serverlessArtifactConfig).getIdentifier()),
-                White, Bold));
+        .saveExecutionLog(color(
+            format("Downloading %s artifact with identifier: %s", serverlessArtifactConfig.getServerlessArtifactType(),
+                ((ServerlessArtifactoryArtifactConfig) serverlessArtifactConfig).getIdentifier()),
+            White, Bold));
     verify(logCallback).saveExecutionLog("Artifactory Artifact Path: " + artifactPath);
     verify(logCallback).saveExecutionLog(color("Successfully downloaded artifact..%n", White, Bold));
   }

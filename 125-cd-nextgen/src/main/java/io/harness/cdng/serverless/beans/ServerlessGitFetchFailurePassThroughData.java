@@ -15,10 +15,12 @@ import io.harness.pms.sdk.core.steps.io.PassThroughData;
 
 import lombok.Builder;
 import lombok.Value;
+import org.springframework.data.annotation.TypeAlias;
 
 @OwnedBy(HarnessTeam.CDP)
 @Value
 @Builder
+@TypeAlias("serverlessGitFetchFailurePassThroughData")
 @RecasterAlias("io.harness.cdng.serverless.beans.ServerlessGitFetchExceptionPassThroughData")
 public class ServerlessGitFetchFailurePassThroughData implements PassThroughData {
   String errorMsg;

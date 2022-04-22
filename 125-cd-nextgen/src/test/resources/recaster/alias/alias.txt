@@ -303,3 +303,6 @@ io.harness.cdng.serverless.ServerlessGitFetchOutcome
 io.harness.cdng.serverless.ServerlessStepPassThroughData
 io.harness.cdng.serverless.beans.ServerlessExecutionPassThroughData
 io.harness.cdng.manifest.yaml.ServerlessAwsLambdaManifestOutcome
+io.harness.cdng.infra.beans.ServerlessAwsLambdaInfrastructureOutcome
+io.harness.cdng.serverless.beans.ServerlessStepExceptionPassThroughData
+io.harness.cdng.serverless.beans.ServerlessGitFetchExceptionPassThroughData
