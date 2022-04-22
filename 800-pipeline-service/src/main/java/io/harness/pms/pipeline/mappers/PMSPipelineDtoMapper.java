@@ -40,7 +40,7 @@ import lombok.experimental.UtilityClass;
 public class PMSPipelineDtoMapper {
   public PMSPipelineResponseDTO writePipelineDto(PipelineEntity pipelineEntity) {
     return PMSPipelineResponseDTO.builder()
-        .yamlPipeline(pipelineEntity.getData())
+        .yamlPipeline(pipelineEntity.getYaml())
         .version(pipelineEntity.getVersion())
         .modules(pipelineEntity.getFilters().keySet())
         .gitDetails(EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity))
