@@ -7,11 +7,14 @@
 
 package io.harness.cdng.provision.terraform;
 
+import static io.harness.provision.TerraformConstants.USE_CONNECTOR_CREDENTIALS;
+
 import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
 import io.harness.beans.IdentifierRef;
+import io.harness.cdng.CDStepHelper;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.common.ParameterFieldHelper;
 import io.harness.delegate.beans.TaskData;
@@ -40,6 +43,7 @@ import io.harness.pms.rbac.PipelineRbacHelper;
 import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.pms.sdk.core.steps.io.StepResponse.StepResponseBuilder;
+import io.harness.pms.yaml.ParameterField;
 import io.harness.provision.TerraformConstants;
 import io.harness.serializer.KryoSerializer;
 import io.harness.steps.StepHelper;
@@ -127,7 +131,10 @@ public class TerraformPlanStep extends TaskExecutableWithRollbackAndRbac<Terrafo
         .tfModuleSourceInheritSSH(cdFeatureFlagHelper.isEnabled(
                                       AmbianceUtils.getAccountId(ambiance), FeatureName.TF_MODULE_SOURCE_INHERIT_SSH)
             && configuration.getConfigFiles().getModuleSource() != null
-            && configuration.getConfigFiles().getModuleSource().isUseConnectorCredentials())
+            && !ParameterField.isNull(configuration.getConfigFiles().getModuleSource().getUseConnectorCredentials())
+            && CDStepHelper.getParameterFieldBooleanValue(
+                configuration.getConfigFiles().getModuleSource().getUseConnectorCredentials(),
+                USE_CONNECTOR_CREDENTIALS, stepElementParameters))
         .currentStateFileId(helper.getLatestFileId(entityId))
         .workspace(ParameterFieldHelper.getParameterFieldValue(configuration.getWorkspace()))
         .configFile(helper.getGitFetchFilesConfig(

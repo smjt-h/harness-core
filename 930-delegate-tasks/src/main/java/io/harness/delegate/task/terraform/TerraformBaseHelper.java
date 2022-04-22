@@ -82,8 +82,8 @@ public interface TerraformBaseHelper {
 
   String getBaseDir(String entityId);
 
-  void exportSSHKey(TerraformTaskNGParameters taskParameters, GitStoreDelegateConfig conFileFileGitStore)
-      throws IOException;
+  void configureCredentialsForModuleSource(TerraformTaskNGParameters taskParameters,
+      GitStoreDelegateConfig conFileFileGitStore, LogCallback logCallback) throws IOException;
 
   String uploadTfPlanJson(String accountId, String delegateId, String taskId, String entityId, String planName,
       String localFilePath) throws IOException;

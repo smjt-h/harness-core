@@ -8,12 +8,14 @@
 package io.harness.cdng.provision.terraform;
 
 import static io.harness.cdng.provision.terraform.TerraformPlanCommand.APPLY;
+import static io.harness.provision.TerraformConstants.USE_CONNECTOR_CREDENTIALS;
 
 import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
 import io.harness.beans.IdentifierRef;
+import io.harness.cdng.CDStepHelper;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.common.ParameterFieldHelper;
@@ -43,6 +45,7 @@ import io.harness.pms.rbac.PipelineRbacHelper;
 import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.pms.sdk.core.steps.io.StepResponse.StepResponseBuilder;
+import io.harness.pms.yaml.ParameterField;
 import io.harness.provision.TerraformConstants;
 import io.harness.serializer.KryoSerializer;
 import io.harness.steps.StepHelper;
@@ -146,7 +149,11 @@ public class TerraformApplyStep extends TaskExecutableWithRollbackAndRbac<Terraf
         .tfModuleSourceInheritSSH(cdFeatureFlagHelper.isEnabled(
                                       AmbianceUtils.getAccountId(ambiance), FeatureName.TF_MODULE_SOURCE_INHERIT_SSH)
             && configuration.getSpec().getConfigFiles().getModuleSource() != null
-            && configuration.getSpec().getConfigFiles().getModuleSource().isUseConnectorCredentials())
+            && !ParameterField.isNull(
+                configuration.getSpec().getConfigFiles().getModuleSource().getUseConnectorCredentials())
+            && CDStepHelper.getParameterFieldBooleanValue(
+                configuration.getSpec().getConfigFiles().getModuleSource().getUseConnectorCredentials(),
+                USE_CONNECTOR_CREDENTIALS, stepElementParameters))
         .workspace(ParameterFieldHelper.getParameterFieldValue(spec.getWorkspace()))
         .configFile(helper.getGitFetchFilesConfig(
             spec.getConfigFiles().getStore().getSpec(), ambiance, TerraformStepHelper.TF_CONFIG_FILES))
