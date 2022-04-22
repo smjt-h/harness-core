@@ -56,7 +56,7 @@ public class InstanceStatsIteratorHandler implements Handler<DeploymentAccounts>
         MongoPersistenceIterator.<DeploymentAccounts, MorphiaFilterExpander<DeploymentAccounts>>builder()
             .clazz(DeploymentAccounts.class)
             .fieldName(DeploymentAccountsKeys.instanceStatsMetricsPublisherIteration)
-            .targetInterval(ofMinutes(10))
+            .targetInterval(ofMinutes(30))
             .acceptableExecutionTime(ofSeconds(30))
             .acceptableNoAlertDelay(ofSeconds(30))
             .handler(this)
