@@ -60,6 +60,8 @@ public class BatchJobScheduledDataServiceImpl implements BatchJobScheduledDataSe
       }
     }
 
+    log.info("Instance time {}", instant);
+
     if (null != instant && batchJobType == BatchJobType.INSTANCE_BILLING_HOURLY_AGGREGATION) {
       Instant startInstant = Instant.now().minus(4, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS);
       instant = startInstant.isAfter(instant) ? startInstant : instant;
@@ -107,6 +109,7 @@ public class BatchJobScheduledDataServiceImpl implements BatchJobScheduledDataSe
         && !ImmutableSet.of(BatchJobType.AWS_ECS_CLUSTER_SYNC).contains(batchJobType)) {
       Instant startInstant = Instant.now().minus(2, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS);
       instant = startInstant.isAfter(instant) ? startInstant : instant;
+      log.info("instance 1 {}", instant);
     }
 
     if (null != instant && batchJobType == BatchJobType.K8S_WORKLOAD_RECOMMENDATION) {
@@ -119,13 +122,16 @@ public class BatchJobScheduledDataServiceImpl implements BatchJobScheduledDataSe
         && ImmutableSet.of(BatchJobType.K8S_NODE_RECOMMENDATION, BatchJobType.AWS_ECS_SERVICE_RECOMMENDATION)
                .contains(batchJobType)) {
       Instant startInstant = Instant.now().minus(2, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS);
+      log.info("instace {} stya ins {}", instant, startInstant);
       instant = startInstant.isAfter(instant) ? startInstant : instant;
+      log.info("instance 2 {}", instant);
     }
 
     if (null != instant && batchJobType == BatchJobType.CLUSTER_DATA_HOURLY_TO_BIG_QUERY) {
       Instant startInstant = Instant.now().minus(7, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS);
       instant = startInstant.isAfter(instant) ? startInstant : instant;
     }
+    log.info("instance 3 {}", instant);
     return instant;
   }
 
