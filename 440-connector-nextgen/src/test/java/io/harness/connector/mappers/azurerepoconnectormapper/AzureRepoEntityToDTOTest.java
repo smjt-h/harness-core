@@ -19,8 +19,15 @@ import io.harness.connector.entities.embedded.azurerepoconnector.AzureRepoHttpAu
 import io.harness.connector.entities.embedded.azurerepoconnector.AzureRepoTokenApiAccess;
 import io.harness.connector.entities.embedded.azurerepoconnector.AzureRepoUsernameToken;
 import io.harness.connector.mappers.azurerepomapper.AzureRepoEntityToDTO;
-import io.harness.delegate.beans.connector.scm.AzureRepoConnectionType;
-import io.harness.delegate.beans.connector.scm.azurerepo.*;
+import io.harness.delegate.beans.connector.scm.GitConnectionType;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoApiAccessDTO;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoApiAccessType;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoAuthenticationDTO;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoConnectorDTO;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoHttpAuthenticationType;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoHttpCredentialsDTO;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoTokenSpecDTO;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoUsernameTokenDTO;
 import io.harness.encryption.SecretRefHelper;
 import io.harness.rule.Owner;
 
@@ -69,7 +76,7 @@ public class AzureRepoEntityToDTOTest extends CategoryTest {
     final AzureRepoConnectorDTO azureRepoConnectorDTO = AzureRepoConnectorDTO.builder()
                                                             .url(url)
                                                             .validationRepo(validationRepo)
-                                                            .connectionType(AzureRepoConnectionType.ORGANIZATION)
+                                                            .connectionType(GitConnectionType.ACCOUNT)
                                                             .authentication(azureRepoAuthenticationDTO)
                                                             .apiAccess(azureRepoApiAccessDTO)
                                                             .build();
@@ -81,7 +88,7 @@ public class AzureRepoEntityToDTOTest extends CategoryTest {
             .validationRepo(validationRepo)
             .azureRepoApiAccess(AzureRepoTokenApiAccess.builder().tokenRef(tokenRef).build())
             .apiAccessType(AzureRepoApiAccessType.TOKEN)
-            .connectionType(AzureRepoConnectionType.ORGANIZATION)
+            .connectionType(GitConnectionType.ACCOUNT)
             .authType(HTTP)
             .authenticationDetails(
                 AzureRepoHttpAuthentication.builder()

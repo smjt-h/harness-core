@@ -15,10 +15,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
-import io.harness.connector.entities.embedded.azurerepoconnector.*;
+import io.harness.connector.entities.embedded.azurerepoconnector.AzureRepoConnector;
+import io.harness.connector.entities.embedded.azurerepoconnector.AzureRepoHttpAuthentication;
+import io.harness.connector.entities.embedded.azurerepoconnector.AzureRepoSshAuthentication;
+import io.harness.connector.entities.embedded.azurerepoconnector.AzureRepoTokenApiAccess;
+import io.harness.connector.entities.embedded.azurerepoconnector.AzureRepoUsernameToken;
 import io.harness.connector.mappers.azurerepomapper.AzureRepoDTOToEntity;
-import io.harness.delegate.beans.connector.scm.AzureRepoConnectionType;
 import io.harness.delegate.beans.connector.scm.GitAuthType;
+import io.harness.delegate.beans.connector.scm.GitConnectionType;
 import io.harness.delegate.beans.connector.scm.azurerepo.*;
 import io.harness.encryption.SecretRefHelper;
 import io.harness.rule.Owner;
@@ -65,7 +69,7 @@ public class AzureRepoDTOToEntityTest extends CategoryTest {
     final AzureRepoConnectorDTO azureRepoConnectorDTO = AzureRepoConnectorDTO.builder()
                                                             .url(url)
                                                             .validationRepo(validationRepo)
-                                                            .connectionType(AzureRepoConnectionType.ORGANIZATION)
+                                                            .connectionType(GitConnectionType.ACCOUNT)
                                                             .authentication(azureRepoAuthenticationDTO)
                                                             .apiAccess(azureRepoApiAccessDTO)
                                                             .build();
@@ -100,7 +104,7 @@ public class AzureRepoDTOToEntityTest extends CategoryTest {
 
     final AzureRepoConnectorDTO azureRepoConnectorDTO = AzureRepoConnectorDTO.builder()
                                                             .url(url)
-                                                            .connectionType(AzureRepoConnectionType.ORGANIZATION)
+                                                            .connectionType(GitConnectionType.ACCOUNT)
                                                             .authentication(azureRepoAuthenticationDTO)
                                                             .build();
 
@@ -138,7 +142,7 @@ public class AzureRepoDTOToEntityTest extends CategoryTest {
 
     final AzureRepoConnectorDTO azureRepoConnectorDTO = AzureRepoConnectorDTO.builder()
                                                             .url(url)
-                                                            .connectionType(AzureRepoConnectionType.REPO)
+                                                            .connectionType(GitConnectionType.REPO)
                                                             .authentication(azureRepoAuthenticationDTO)
                                                             .apiAccess(azureRepoApiAccessDTO)
                                                             .build();
@@ -172,7 +176,7 @@ public class AzureRepoDTOToEntityTest extends CategoryTest {
 
     final AzureRepoConnectorDTO azureRepoConnectorDTO = AzureRepoConnectorDTO.builder()
                                                             .url(url)
-                                                            .connectionType(AzureRepoConnectionType.REPO)
+                                                            .connectionType(GitConnectionType.REPO)
                                                             .authentication(azureRepoAuthenticationDTO)
                                                             .build();
 
