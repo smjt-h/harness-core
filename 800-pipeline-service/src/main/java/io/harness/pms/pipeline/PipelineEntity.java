@@ -59,7 +59,6 @@ import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @OwnedBy(PIPELINE)
-@Slf4j
 @Value
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -71,6 +70,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @StoreIn(DbAliases.PMS)
 @ChangeDataCapture(table = "tags_info", dataStore = "pms-harness", fields = {}, handler = "TagsInfoCD")
 @ChangeDataCapture(table = "pipelines", dataStore = "ng-harness", fields = {}, handler = "Pipelines")
+@Slf4j
 public class PipelineEntity
     implements GitAware, PersistentEntity, AccountAccess, UuidAware, CreatedAtAware, UpdatedAtAware {
   public static List<MongoIndex> mongoIndexes() {
