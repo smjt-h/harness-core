@@ -15,7 +15,7 @@ public class VersionCommand extends AbstractExecutable {
 
   @Override
   public String command() {
-    StringBuilder command = new StringBuilder();
+    StringBuilder command = new StringBuilder(2048);
     command.append(client.command()).append("--version ");
     return command.toString().trim();
   }

@@ -42,6 +42,8 @@ import lombok.experimental.UtilityClass;
 public class ArtifactUtils {
   public final String PRIMARY_ARTIFACT = "primary";
   public final String SIDECAR_ARTIFACT = "sidecars";
+  public final String GENERIC_PLACEHOLDER = "type: %s, artifactDirectory: %s, artifactPath/artifactPathFilter: %s,"
+      + " connectorRef: %s%n";
 
   public String getArtifactKey(ArtifactConfig artifactConfig) {
     return artifactConfig.isPrimaryArtifact() ? artifactConfig.getIdentifier()
@@ -132,9 +134,7 @@ public class ArtifactUtils {
         ArtifactoryRegistryArtifactConfig artifactoryRegistryArtifactConfig =
             (ArtifactoryRegistryArtifactConfig) artifactConfig;
         if (artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue().equals(generic.name())) {
-          String genericPlaceholder =
-              " type: %s, artifactDirectory: %s, artifactPath/artifactPathFilter: %s, connectorRef: %s\n";
-          return String.format(genericPlaceholder, sourceType,
+          return String.format(GENERIC_PLACEHOLDER, sourceType,
               artifactoryRegistryArtifactConfig.getArtifactDirectory().getValue(),
               ParameterField.isNull(artifactoryRegistryArtifactConfig.getArtifactPath())
                   ? artifactoryRegistryArtifactConfig.getArtifactPathFilter().getValue()

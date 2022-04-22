@@ -26,7 +26,7 @@ public class PluginCommand extends AbstractExecutable {
   }
   @Override
   public String command() {
-    StringBuilder command = new StringBuilder();
+    StringBuilder command = new StringBuilder(2048);
     command.append(client.command()).append("plugin install ");
     if (StringUtils.isNotBlank(this.pluginName)) {
       command.append(ServerlessClient.option(Option.name, this.pluginName));

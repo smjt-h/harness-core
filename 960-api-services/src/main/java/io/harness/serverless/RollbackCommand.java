@@ -36,7 +36,7 @@ public class RollbackCommand extends AbstractExecutable {
   }
   @Override
   public String command() {
-    StringBuilder command = new StringBuilder();
+    StringBuilder command = new StringBuilder(2048);
     command.append(client.command()).append("rollback ");
     if (StringUtils.isNotBlank(this.timeStamp)) {
       command.append(ServerlessClient.option(Option.timestamp, this.timeStamp));

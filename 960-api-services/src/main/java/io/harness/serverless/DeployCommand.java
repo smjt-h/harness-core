@@ -36,7 +36,7 @@ public class DeployCommand extends AbstractExecutable {
   }
   @Override
   public String command() {
-    StringBuilder command = new StringBuilder();
+    StringBuilder command = new StringBuilder(2048);
     command.append(client.command()).append("deploy ");
     if (StringUtils.isNotBlank(this.stage)) {
       command.append(ServerlessClient.option(Option.stage, this.stage));

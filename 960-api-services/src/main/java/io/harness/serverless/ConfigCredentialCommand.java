@@ -37,7 +37,7 @@ public class ConfigCredentialCommand extends AbstractExecutable {
 
   @Override
   public String command() {
-    StringBuilder command = new StringBuilder();
+    StringBuilder command = new StringBuilder(2048);
     command.append(client.command()).append("config credentials ");
     if (StringUtils.isNotBlank(this.provider)) {
       command.append(ServerlessClient.option(Option.provider, this.provider));
