@@ -1,0 +1,31 @@
+{
+  "connector": {
+    "name": "azure1",
+    "description": "",
+    "projectIdentifier": "defaultproject",
+    "orgIdentifier": "default",
+    "identifier": "azure1",
+    "tags": {},
+    "type": "AzureRepo",
+    "spec": {
+      "type": "Repo",
+      "url": "https://dev.azure.com/mankritsingh/adorepotemp",
+      "authentication": {
+        "type": "Http",
+        "spec": {
+          "type": "UsernameToken",
+          "spec": {
+            "username": "mankritsingh",
+            "tokenRef": "ado"
+          }
+        }
+      },
+      "apiAccess": {
+        "type": "Token",
+        "spec": {
+          "tokenRef": "ado"
+        }
+      }
+    }
+  }
+}
