@@ -11,9 +11,12 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.gitsync.interceptor.GitSyncConstants.DEFAULT;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.context.GlobalContext;
 import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
+import io.harness.gitsync.scm.beans.ScmGitMetaData;
+import io.harness.gitsync.scm.beans.ScmGitMetaDataContext;
 import io.harness.manage.GlobalContextManager;
 
 import lombok.experimental.UtilityClass;
@@ -68,5 +71,13 @@ public class GitContextHelper {
       return gitEntityInfo.getBaseBranch();
     }
     return gitEntityInfo.getBranch();
+  }
+
+  public void updateScmGitMetaData(ScmGitMetaData scmGitMetaData) {
+    if (!GlobalContextManager.isAvailable()) {
+      GlobalContextManager.set(new GlobalContext());
+    }
+    GlobalContextManager.upsertGlobalContextRecord(
+        ScmGitMetaDataContext.builder().scmGitMetaData(scmGitMetaData).build());
   }
 }
