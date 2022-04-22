@@ -23,6 +23,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EnvironmentType;
 import io.harness.category.element.UnitTests;
+import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigType;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.connector.ConnectorType;
@@ -83,6 +84,7 @@ public class TerraformApplyStepTest extends CategoryTest {
   @Mock private PipelineRbacHelper pipelineRbacHelper;
   @InjectMocks private TerraformApplyStep terraformApplyStep;
   @Mock private StepHelper stepHelper;
+  @Mock private CDFeatureFlagHelper cdFeatureFlagHelper;
 
   private Ambiance getAmbiance() {
     return Ambiance.newBuilder()

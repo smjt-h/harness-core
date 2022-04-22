@@ -11,6 +11,7 @@ import static io.harness.cdng.provision.terraform.TerraformPlanCommand.APPLY;
 import static io.harness.common.ParameterFieldHelper.getParameterFieldValue;
 import static io.harness.provision.TerraformConstants.TF_DESTROY_NAME_PREFIX;
 import static io.harness.provision.TerraformConstants.TF_NAME_PREFIX;
+import static io.harness.provision.TerraformConstants.USE_CONNECTOR_CREDENTIALS;
 import static io.harness.validation.Validator.notEmptyCheck;
 
 import static com.hazelcast.sql.impl.expression.predicate.TernaryLogic.isNotNull;
@@ -22,6 +23,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
 import io.harness.beans.IdentifierRef;
+import io.harness.cdng.CDStepHelper;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.cdng.fileservice.FileServiceClientFactory;
 import io.harness.cdng.k8s.K8sStepHelper;
@@ -62,6 +64,7 @@ import io.harness.delegate.task.terraform.TerraformTaskNGResponse;
 import io.harness.delegate.task.terraform.TerraformVarFileInfo;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
+import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.mappers.SecretManagerConfigMapper;
 import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.NGAccess;
@@ -304,7 +307,16 @@ public class TerraformStepHelper {
         Map<String, String> commitIdMap = terraformTaskNGResponse.getCommitIdForConfigFilesMap();
         builder.configFiles(getStoreConfigAtCommitId(
             configuration.getConfigFiles().getStore().getSpec(), commitIdMap.get(TF_CONFIG_FILES)));
-        builder.useConnectorCredentials(configuration.getConfigFiles().getModuleSource().isUseConnectorCredentials());
+        if (cdFeatureFlagHelper.isEnabled(
+                AmbianceUtils.getAccountId(ambiance), FeatureName.TF_MODULE_SOURCE_INHERIT_SSH)
+            && isNotNull(configuration.getConfigFiles().getModuleSource())) {
+          builder.useConnectorCredentials(
+              !ParameterField.isNull(configuration.getConfigFiles().getModuleSource().getUseConnectorCredentials())
+              && CDStepHelper.getParameterFieldBooleanValue(
+                  configuration.getConfigFiles().getModuleSource().getUseConnectorCredentials(),
+                  USE_CONNECTOR_CREDENTIALS, String.format("%s step", ExecutionNodeType.TERRAFORM_PLAN.getYamlType())));
+        }
+
         break;
       case ARTIFACTORY:
         builder.fileStoreConfig((FileStorageStoreConfig) configuration.getConfigFiles().getStore().getSpec());
@@ -488,8 +500,15 @@ public class TerraformStepHelper {
         if (cdFeatureFlagHelper.isEnabled(
                 AmbianceUtils.getAccountId(ambiance), FeatureName.TF_MODULE_SOURCE_INHERIT_SSH)
             && isNotNull(configuration.getSpec().getConfigFiles().getModuleSource())) {
-          builder.useConnectorCredentials(
-              configuration.getSpec().getConfigFiles().getModuleSource().isUseConnectorCredentials());
+          builder
+              .useConnectorCredentials(
+                  !ParameterField.isNull(
+                      configuration.getSpec().getConfigFiles().getModuleSource().getUseConnectorCredentials())
+                  && CDStepHelper.getParameterFieldBooleanValue(
+                      configuration.getSpec().getConfigFiles().getModuleSource().getUseConnectorCredentials(),
+                      USE_CONNECTOR_CREDENTIALS,
+                      String.format("%s step", ExecutionNodeType.TERRAFORM_APPLY.getYamlType())))
+              .workspace(ParameterFieldHelper.getParameterFieldValue(spec.getWorkspace()));
         }
 
         break;

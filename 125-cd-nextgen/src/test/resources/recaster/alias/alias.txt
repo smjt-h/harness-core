@@ -287,3 +287,4 @@ io.harness.cdng.service.beans.WinRmServiceSpec
 io.harness.cdng.service.beans.DeploymentTemplateServiceSpec
 io.harness.cdng.artifact.CustomArtifactSummary
 io.harness.cdng.artifact.bean.yaml.CustomArtifactConfig
+io.harness.cdng.manifest.yaml.storeConfig.moduleSource.ModuleSource
