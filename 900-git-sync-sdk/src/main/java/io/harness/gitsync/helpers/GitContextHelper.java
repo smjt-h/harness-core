@@ -17,6 +17,7 @@ import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.gitsync.scm.beans.ScmGitMetaData;
 import io.harness.gitsync.scm.beans.ScmGitMetaDataContext;
+import io.harness.gitsync.sdk.EntityGitDetails;
 import io.harness.manage.GlobalContextManager;
 
 import lombok.experimental.UtilityClass;
@@ -87,5 +88,17 @@ public class GitContextHelper {
       throw new UnexpectedException("No SCM Git Metadata found in context");
     }
     return gitMetaDataContext.getScmGitMetaData();
+  }
+
+  public EntityGitDetails getEntityGitDetailsFromScmGitMetadata() {
+    ScmGitMetaData scmGitMetaData = getScmGitMetaData();
+    return EntityGitDetails.builder()
+        .objectId(scmGitMetaData.getBlobId())
+        .branch(scmGitMetaData.getBranchName())
+        .repoIdentifier(scmGitMetaData.getRepoName())
+        .repoName(scmGitMetaData.getRepoName())
+        .filePath(scmGitMetaData.getFilePath())
+        .commitId(scmGitMetaData.getCommitId())
+        .build();
   }
 }

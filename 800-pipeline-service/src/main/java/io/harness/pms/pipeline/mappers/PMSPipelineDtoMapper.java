@@ -17,7 +17,7 @@ import io.harness.beans.IdentifierRef;
 import io.harness.common.NGExpressionUtils;
 import io.harness.encryption.ScopeHelper;
 import io.harness.exception.InvalidRequestException;
-import io.harness.gitsync.sdk.EntityGitDetailsMapper;
+import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.sdk.EntityValidityDetails;
 import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.mapper.TagMapper;
@@ -43,7 +43,7 @@ public class PMSPipelineDtoMapper {
         .yamlPipeline(pipelineEntity.getYaml())
         .version(pipelineEntity.getVersion())
         .modules(pipelineEntity.getFilters().keySet())
-        .gitDetails(EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity))
+        .gitDetails(GitContextHelper.getEntityGitDetailsFromScmGitMetadata())
         .entityValidityDetails(pipelineEntity.isEntityInvalid()
                 ? EntityValidityDetails.builder().valid(false).invalidYaml(pipelineEntity.getYaml()).build()
                 : EntityValidityDetails.builder().valid(true).build())
@@ -86,7 +86,7 @@ public class PMSPipelineDtoMapper {
         .modules(pipelineEntity.getFilters().keySet())
         .filters(ModuleInfoMapper.getModuleInfo(pipelineEntity.getFilters()))
         .stageNames(pipelineEntity.getStageNames())
-        .gitDetails(EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity))
+        .gitDetails(GitContextHelper.getEntityGitDetailsFromScmGitMetadata())
         .entityValidityDetails(pipelineEntity.isEntityInvalid()
                 ? EntityValidityDetails.builder().valid(false).invalidYaml(pipelineEntity.getYaml()).build()
                 : EntityValidityDetails.builder().valid(true).build())
