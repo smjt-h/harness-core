@@ -294,7 +294,7 @@ public class ShellScriptStateTest extends WingsBaseTest {
     assertThat(delegateTask.getTags()).contains("T1", "T2");
 
     verify(activityHelperService).createAndSaveActivity(any(), any(), any(), any(), any());
-    verify(stateExecutionService).appendDelegateTaskDetails(anyString(), any(DelegateTaskDetails.class));
+    verify(stateExecutionService).appendDelegateTaskDetails(any(), any(DelegateTaskDetails.class));
   }
 
   @Test
@@ -349,7 +349,7 @@ public class ShellScriptStateTest extends WingsBaseTest {
     assertThat(delegateTask.getTags()).contains("T1", "T2");
 
     verify(activityHelperService).createAndSaveActivity(any(), any(), any(), any(), any());
-    verify(stateExecutionService).appendDelegateTaskDetails(anyString(), any(DelegateTaskDetails.class));
+    verify(stateExecutionService).appendDelegateTaskDetails(any(), any(DelegateTaskDetails.class));
 
     // Test when expression could not be evaluated
 

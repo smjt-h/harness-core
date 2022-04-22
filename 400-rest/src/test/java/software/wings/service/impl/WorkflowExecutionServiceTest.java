@@ -419,7 +419,7 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
   @Owner(developers = ANSHUL)
   @Category(UnitTests.class)
   public void shouldFetchWorkflowExecution() {
-    when(query.order(Sort.descending(anyString()))).thenReturn(query);
+    when(query.order(Sort.descending(any()))).thenReturn(query);
     when(query.get(any(FindOptions.class))).thenReturn(builder().appId(APP_ID).build());
     WorkflowExecution workflowExecution =
         workflowExecutionService.fetchWorkflowExecution(APP_ID, asList(SERVICE_ID), asList(ENV_ID), WORKFLOW_ID);
@@ -442,7 +442,7 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
 
     UserThreadLocal.set(user);
     when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
-    when(userGroupService.verifyUserAuthorizedToAcceptOrRejectApproval(anyString(), anyList())).thenReturn(true);
+    when(userGroupService.verifyUserAuthorizedToAcceptOrRejectApproval(any(), any())).thenReturn(true);
 
     boolean success =
         workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails);
@@ -607,7 +607,7 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
 
     UserThreadLocal.set(user);
     String entityId = generateUuid();
-    when(userGroupService.verifyUserAuthorizedToAcceptOrRejectApproval(anyString(), anyList())).thenReturn(true);
+    when(userGroupService.verifyUserAuthorizedToAcceptOrRejectApproval(any(), any())).thenReturn(true);
 
     doNothing().when(deploymentAuthHandler).authorizeWorkflowOrPipelineForExecution(any(), anyString());
     boolean success =
@@ -650,7 +650,7 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
 
     UserThreadLocal.set(user);
     when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
-    when(userGroupService.verifyUserAuthorizedToAcceptOrRejectApproval(anyString(), anyList())).thenReturn(true);
+    when(userGroupService.verifyUserAuthorizedToAcceptOrRejectApproval(any(), any())).thenReturn(true);
 
     boolean success =
         workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails);
@@ -1550,7 +1550,7 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
     UpdateOperations updateOperations = mock(UpdateOperations.class);
     when(wingsPersistence.createQuery(eq(WorkflowExecution.class))).thenReturn(query);
     when(wingsPersistence.createUpdateOperations(eq(WorkflowExecution.class))).thenReturn(updateOperations);
-    when(updateOperations.set(anyString(), anyString())).thenReturn(updateOperations);
+    when(updateOperations.set(anyString(), any())).thenReturn(updateOperations);
     workflowExecutionService.continuePipelineStage(appID, pipelineExecutionId, pipelineStageElementId, executionArgs);
 
     List<Artifact> expectedArtifacts = JsonUtils.readResourceFile(

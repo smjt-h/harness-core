@@ -122,8 +122,8 @@ public class JiraCreateUpdateTest extends WingsBaseTest {
   public void setUpMocks() {
     when(context.getAccountId()).thenReturn(ACCOUNT_ID);
     when(context.getAppId()).thenReturn(APP_ID);
-    when(jiraHelperService.getProjects(anyString(), anyString(), anyString())).thenReturn(projects);
-    when(jiraHelperService.getStatuses(anyString(), anyString(), anyString(), anyString())).thenReturn(statuses);
+    when(jiraHelperService.getProjects(any(), any(), any())).thenReturn(projects);
+    when(jiraHelperService.getStatuses(any(), any(), any(), any())).thenReturn(statuses);
   }
 
   @Test

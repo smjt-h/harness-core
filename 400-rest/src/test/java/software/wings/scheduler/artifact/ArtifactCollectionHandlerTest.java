@@ -95,6 +95,7 @@ public class ArtifactCollectionHandlerTest extends WingsBaseTest {
     artifactCollectionHandler.handle(ARTIFACT_STREAM);
 
     ArgumentCaptor<WingsException> argumentCaptor = ArgumentCaptor.forClass(WingsException.class);
+    PowerMockito.verifyStatic(ExceptionLogger.class);
     ExceptionLogger.logProcessedMessages(argumentCaptor.capture(), any(), any());
     WingsException wingsException = argumentCaptor.getValue();
 

@@ -92,8 +92,7 @@ public class ArtifactPerpetualTaskExecutorTest extends DelegateTestBase {
     verify(artifactRepositoryService, times(1)).publishCollectedArtifacts(any(BuildSourceParameters.class), any());
 
     // Build details are published 3 time: 1 time for cleanup and then 2 times for collection because of batching.
-    verify(delegateAgentManagerClient, times(3))
-        .publishArtifactCollectionResult(anyString(), anyString(), any(RequestBody.class));
+    verify(delegateAgentManagerClient, times(3)).publishArtifactCollectionResult(any(), any(), any(RequestBody.class));
     verify(call, times(3)).execute();
   }
 
@@ -107,8 +106,7 @@ public class ArtifactPerpetualTaskExecutorTest extends DelegateTestBase {
     verify(artifactRepositoryService, times(1)).publishCollectedArtifacts(any(BuildSourceParameters.class), any());
 
     // Build details are published 1 time: 1 time for cleanup and then exit early because of exception.
-    verify(delegateAgentManagerClient, times(1))
-        .publishArtifactCollectionResult(anyString(), anyString(), any(RequestBody.class));
+    verify(delegateAgentManagerClient, times(1)).publishArtifactCollectionResult(any(), any(), any(RequestBody.class));
     verify(call, times(1)).execute();
   }
 
@@ -123,7 +121,7 @@ public class ArtifactPerpetualTaskExecutorTest extends DelegateTestBase {
                                                                     .setArtifactStreamId(ARTIFACT_STREAM_ID)
                                                                     .setBuildSourceParams(bytes)
                                                                     .build();
-    when(delegateAgentManagerClient.publishArtifactCollectionResult(anyString(), anyString(), any(RequestBody.class)))
+    when(delegateAgentManagerClient.publishArtifactCollectionResult(any(), any(), any(RequestBody.class)))
         .thenReturn(call);
 
     when(call.execute())

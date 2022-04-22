@@ -151,7 +151,7 @@ public abstract class WorkflowYamlHandlerTestBase extends YamlHandlerTestBase {
     when(serviceResourceService.getWithDetails(APP_ID, SERVICE_ID)).thenReturn(service);
 
     when(notificationSetupService.readNotificationGroupByName(anyString(), anyString())).thenReturn(notificationGroup);
-    when(notificationSetupService.readNotificationGroup(anyString(), anyString())).thenReturn(notificationGroup);
+    when(notificationSetupService.readNotificationGroup(any(), any())).thenReturn(notificationGroup);
 
     when(infrastructureMappingService.getInfraMappingByName(anyString(), anyString(), anyString()))
         .thenReturn(infrastructureMapping);

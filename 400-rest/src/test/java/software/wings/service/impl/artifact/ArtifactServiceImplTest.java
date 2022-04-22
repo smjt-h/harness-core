@@ -90,11 +90,11 @@ public class ArtifactServiceImplTest extends WingsBaseTest {
     Query mockQuery = mock(Query.class);
     doReturn(mockQuery).when(mockWingsPersistence).createQuery(any(), any());
     doReturn(mockQuery).when(mockWingsPersistence).createQuery(any());
-    doReturn(mockQuery).when(mockQuery).filter(anyString(), anyString());
-    doReturn(mockQuery).when(mockQuery).project(anyString(), anyBoolean());
+    doReturn(mockQuery).when(mockQuery).filter(any(), any());
+    doReturn(mockQuery).when(mockQuery).project(any(), anyBoolean());
     doReturn(mockQuery).when(mockQuery).disableValidation();
     FieldEnd mockFieldEnd = mock(FieldEnd.class);
-    doReturn(mockFieldEnd).when(mockQuery).field(anyString());
+    doReturn(mockFieldEnd).when(mockQuery).field(any());
     doReturn(mockQuery).when(mockFieldEnd).in(any());
     doReturn(mockQuery).when(mockFieldEnd).hasAnyOf(any());
   }

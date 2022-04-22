@@ -61,6 +61,7 @@ import static junit.framework.TestCase.assertNotSame;
 import static junit.framework.TestCase.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyList;
@@ -142,6 +143,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
@@ -199,8 +201,7 @@ public class PipelineServiceTest extends WingsBaseTest {
     when(updateOperations.unset(any())).thenReturn(updateOperations);
     when(serviceResourceService.fetchServicesByUuids(APP_ID, Arrays.asList(SERVICE_ID)))
         .thenReturn(Arrays.asList(Service.builder().name(SERVICE_NAME).uuid(SERVICE_ID).build()));
-    when(workflowService.fetchDeploymentMetadata(
-             anyString(), any(Workflow.class), anyMap(), anyList(), anyList(), anyVararg()))
+    when(workflowService.fetchDeploymentMetadata(any(), any(Workflow.class), any(), anyList(), anyList(), any()))
         .thenReturn(DeploymentMetadata.builder()
                         .artifactRequiredServiceIds(asList(SERVICE_ID))
                         .envIds(asList(ENV_ID))
@@ -217,7 +218,7 @@ public class PipelineServiceTest extends WingsBaseTest {
   @Owner(developers = UJJAWAL)
   @Category(UnitTests.class)
   public void shouldCreatePipelineFromJson() {
-    when(limitCheckerFactory.getInstance(new Action(Mockito.anyString(), ActionType.CREATE_PIPELINE)))
+    when(limitCheckerFactory.getInstance(new Action(any(), ActionType.CREATE_PIPELINE)))
         .thenReturn(new MockChecker(true, ActionType.CREATE_PIPELINE));
 
     String appId = "BB1xpV5rSmGHersn1KwCnA";
@@ -242,7 +243,7 @@ public class PipelineServiceTest extends WingsBaseTest {
   @Owner(developers = RAMA)
   @Category(UnitTests.class)
   public void shouldCreateLargePipeline() {
-    when(limitCheckerFactory.getInstance(new Action(Mockito.anyString(), ActionType.CREATE_PIPELINE)))
+    when(limitCheckerFactory.getInstance(new Action(any(), ActionType.CREATE_PIPELINE)))
         .thenReturn(new MockChecker(true, ActionType.CREATE_PIPELINE));
 
     List<String> workflowIds = new ArrayList<>();
@@ -288,7 +289,7 @@ public class PipelineServiceTest extends WingsBaseTest {
   @Owner(developers = SRINIVAS)
   @Category(UnitTests.class)
   public void shouldCreatePipeline() {
-    when(limitCheckerFactory.getInstance(new Action(Mockito.anyString(), ActionType.CREATE_PIPELINE)))
+    when(limitCheckerFactory.getInstance(new Action(any(), ActionType.CREATE_PIPELINE)))
         .thenReturn(new MockChecker(true, ActionType.CREATE_PIPELINE));
 
     PipelineStage pipelineStage = prepareStageSimple();
@@ -324,7 +325,7 @@ public class PipelineServiceTest extends WingsBaseTest {
   @Owner(developers = VIKAS_M)
   @Category(UnitTests.class)
   public void test_createPipelineWithApprovalStage() {
-    when(limitCheckerFactory.getInstance(new Action(Mockito.anyString(), ActionType.CREATE_PIPELINE)))
+    when(limitCheckerFactory.getInstance(new Action(any(), ActionType.CREATE_PIPELINE)))
         .thenReturn(new MockChecker(true, ActionType.CREATE_PIPELINE));
     Pipeline pipeline = getApprovalStagesPipeline();
     when(workflowService.stencilMap(any())).thenReturn(ImmutableMap.of("APPROVAL", APPROVAL));
@@ -856,7 +857,7 @@ public class PipelineServiceTest extends WingsBaseTest {
   @Owner(developers = SRINIVAS)
   @Category(UnitTests.class)
   public void shouldDeletePipeline() {
-    when(limitCheckerFactory.getInstance(new Action(Mockito.anyString(), ActionType.CREATE_PIPELINE)))
+    when(limitCheckerFactory.getInstance(new Action(any(), ActionType.CREATE_PIPELINE)))
         .thenReturn(new MockChecker(true, ActionType.CREATE_PIPELINE));
     mockPipeline();
     when(wingsPersistence.delete(Pipeline.class, APP_ID, PIPELINE_ID)).thenReturn(true);
@@ -869,7 +870,7 @@ public class PipelineServiceTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void test_deletePipelineWithApprovalStage() {
     Pipeline pipeline = getApprovalStagesPipeline();
-    when(limitCheckerFactory.getInstance(new Action(Mockito.anyString(), ActionType.CREATE_PIPELINE)))
+    when(limitCheckerFactory.getInstance(new Action(any(), ActionType.CREATE_PIPELINE)))
         .thenReturn(new MockChecker(true, ActionType.CREATE_PIPELINE));
     when(workflowService.stencilMap(any())).thenReturn(ImmutableMap.of("APPROVAL", APPROVAL));
     when(wingsPersistence.getWithAppId(any(), any(), any())).thenReturn(pipeline);
@@ -1287,7 +1288,7 @@ public class PipelineServiceTest extends WingsBaseTest {
   @Owner(developers = UJJAWAL)
   @Category(UnitTests.class)
   public void shouldNotCreatePipelineWhenLimitExceeds() {
-    when(limitCheckerFactory.getInstance(new Action(Mockito.anyString(), ActionType.CREATE_PIPELINE)))
+    when(limitCheckerFactory.getInstance(new Action(any(), ActionType.CREATE_PIPELINE)))
         .thenReturn(new MockChecker(false, ActionType.CREATE_PIPELINE));
 
     PipelineStage pipelineStage = prepareStageSimple();
@@ -1379,7 +1380,7 @@ public class PipelineServiceTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testCreatePipelineWithSameName() {
     try {
-      when(limitCheckerFactory.getInstance(new Action(Mockito.anyString(), ActionType.CREATE_PIPELINE)))
+      when(limitCheckerFactory.getInstance(new Action(any(), ActionType.CREATE_PIPELINE)))
           .thenReturn(new MockChecker(true, ActionType.CREATE_PIPELINE));
       when(workflowService.readWorkflow(APP_ID, WORKFLOW_ID))
           .thenReturn(aWorkflow().orchestrationWorkflow(aCanaryOrchestrationWorkflow().build()).build());
@@ -1403,7 +1404,7 @@ public class PipelineServiceTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testClonePipelineWithSameName() {
     try {
-      when(limitCheckerFactory.getInstance(new Action(Mockito.anyString(), ActionType.CREATE_PIPELINE)))
+      when(limitCheckerFactory.getInstance(new Action(any(), ActionType.CREATE_PIPELINE)))
           .thenReturn(new MockChecker(true, ActionType.CREATE_PIPELINE));
       when(workflowService.readWorkflow(APP_ID, WORKFLOW_ID))
           .thenReturn(aWorkflow().orchestrationWorkflow(aCanaryOrchestrationWorkflow().build()).build());
@@ -1427,7 +1428,7 @@ public class PipelineServiceTest extends WingsBaseTest {
   @Owner(developers = MILOS)
   @Category(UnitTests.class)
   public void testSimpleClonePipeline() {
-    when(limitCheckerFactory.getInstance(new Action(Mockito.anyString(), ActionType.CREATE_PIPELINE)))
+    when(limitCheckerFactory.getInstance(new Action(any(), ActionType.CREATE_PIPELINE)))
         .thenReturn(new MockChecker(true, ActionType.CREATE_PIPELINE));
     when(workflowService.readWorkflow(APP_ID, WORKFLOW_ID))
         .thenReturn(aWorkflow().orchestrationWorkflow(aCanaryOrchestrationWorkflow().build()).build());
@@ -1448,7 +1449,7 @@ public class PipelineServiceTest extends WingsBaseTest {
   @Owner(developers = MILOS)
   @Category(UnitTests.class)
   public void testClonePipelineWithStageInParallel() {
-    when(limitCheckerFactory.getInstance(new Action(Mockito.anyString(), ActionType.CREATE_PIPELINE)))
+    when(limitCheckerFactory.getInstance(new Action(any(), ActionType.CREATE_PIPELINE)))
         .thenReturn(new MockChecker(true, ActionType.CREATE_PIPELINE));
     when(workflowService.readWorkflow(APP_ID, WORKFLOW_ID))
         .thenReturn(aWorkflow().orchestrationWorkflow(aCanaryOrchestrationWorkflow().build()).build());
@@ -1478,7 +1479,7 @@ public class PipelineServiceTest extends WingsBaseTest {
   @Owner(developers = MILOS)
   @Category(UnitTests.class)
   public void testClonePipelineWithStageNotInParallel() {
-    when(limitCheckerFactory.getInstance(new Action(Mockito.anyString(), ActionType.CREATE_PIPELINE)))
+    when(limitCheckerFactory.getInstance(new Action(any(), ActionType.CREATE_PIPELINE)))
         .thenReturn(new MockChecker(true, ActionType.CREATE_PIPELINE));
     when(workflowService.readWorkflow(APP_ID, WORKFLOW_ID))
         .thenReturn(aWorkflow().orchestrationWorkflow(aCanaryOrchestrationWorkflow().build()).build());
@@ -1508,7 +1509,7 @@ public class PipelineServiceTest extends WingsBaseTest {
   @Owner(developers = MILOS)
   @Category(UnitTests.class)
   public void testClonePipelineWithSkippedStage() {
-    when(limitCheckerFactory.getInstance(new Action(Mockito.anyString(), ActionType.CREATE_PIPELINE)))
+    when(limitCheckerFactory.getInstance(new Action(any(), ActionType.CREATE_PIPELINE)))
         .thenReturn(new MockChecker(true, ActionType.CREATE_PIPELINE));
     when(workflowService.readWorkflow(APP_ID, WORKFLOW_ID))
         .thenReturn(aWorkflow().orchestrationWorkflow(aCanaryOrchestrationWorkflow().build()).build());
@@ -1538,7 +1539,7 @@ public class PipelineServiceTest extends WingsBaseTest {
   @Owner(developers = MILOS)
   @Category(UnitTests.class)
   public void testClonePipelineWithApprovalInParallel() {
-    when(limitCheckerFactory.getInstance(new Action(Mockito.anyString(), ActionType.CREATE_PIPELINE)))
+    when(limitCheckerFactory.getInstance(new Action(any(), ActionType.CREATE_PIPELINE)))
         .thenReturn(new MockChecker(true, ActionType.CREATE_PIPELINE));
     when(workflowService.readWorkflow(APP_ID, WORKFLOW_ID))
         .thenReturn(aWorkflow().orchestrationWorkflow(aCanaryOrchestrationWorkflow().build()).build());
@@ -1568,7 +1569,7 @@ public class PipelineServiceTest extends WingsBaseTest {
   @Owner(developers = MILOS)
   @Category(UnitTests.class)
   public void testClonePipelineWithApprovalNotInParallel() {
-    when(limitCheckerFactory.getInstance(new Action(Mockito.anyString(), ActionType.CREATE_PIPELINE)))
+    when(limitCheckerFactory.getInstance(new Action(any(), ActionType.CREATE_PIPELINE)))
         .thenReturn(new MockChecker(true, ActionType.CREATE_PIPELINE));
     when(workflowService.readWorkflow(APP_ID, WORKFLOW_ID))
         .thenReturn(aWorkflow().orchestrationWorkflow(aCanaryOrchestrationWorkflow().build()).build());
@@ -1647,7 +1648,7 @@ public class PipelineServiceTest extends WingsBaseTest {
         .thenAnswer(invocation -> workflowMap.getOrDefault((String) invocation.getArguments()[1], null));
 
     when(workflowService.fetchDeploymentMetadata(
-             any(), any(Workflow.class), anyMap(), any(), any(), anyBoolean(), any(), anyVararg()))
+             any(), any(Workflow.class), any(), any(), any(), anyBoolean(), any(), any()))
         .thenAnswer(invocation -> {
           Workflow argument = (Workflow) invocation.getArguments()[1];
           switch (argument.getName()) {

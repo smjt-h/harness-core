@@ -249,8 +249,7 @@ public class MultiArtifactCommandStateTest extends CategoryTest {
     when(executionContext.getArtifactsForService(SERVICE_ID)).thenReturn(map);
     when(executionContext.getServiceVariables()).thenReturn(emptyMap());
     when(executionContext.getSafeDisplayServiceVariables()).thenReturn(emptyMap());
-    when(executionContext.renderExpression(anyString()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
+    when(executionContext.renderExpression(any())).thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
     when(serviceResourceService.getDeploymentType(any(), any(), any())).thenReturn(DeploymentType.SSH);
     when(settingsService.getByName(ACCOUNT_ID, APP_ID, ENV_ID, CommandState.RUNTIME_PATH))
         .thenReturn(aSettingAttribute().withValue(aStringValue().withValue(RUNTIME_PATH).build()).build());
@@ -264,7 +263,7 @@ public class MultiArtifactCommandStateTest extends CategoryTest {
         .thenReturn(SettingAttribute.Builder.aSettingAttribute()
                         .withValue(HostConnectionAttributes.Builder.aHostConnectionAttributes().build())
                         .build());
-    when(secretManager.getEncryptionDetails(anyObject(), anyString(), anyString())).thenReturn(Collections.emptyList());
+    when(secretManager.getEncryptionDetails(any(), anyString(), anyString())).thenReturn(Collections.emptyList());
     when(appService.get(APP_ID)).thenReturn(anApplication().uuid(APP_ID).accountId(ACCOUNT_ID).name(APP_NAME).build());
     when(artifactStreamService.get(ARTIFACT_STREAM_ID_1)).thenReturn(artifactStream1);
     ArtifactStreamAttributes artifactStreamAttributes = ArtifactStreamAttributes.builder().metadataOnly(false).build();
@@ -279,8 +278,7 @@ public class MultiArtifactCommandStateTest extends CategoryTest {
     when(artifactStream2.getUuid()).thenReturn(ARTIFACT_STREAM_ID_2);
     when(settingsService.get(SETTING_ID_2)).thenReturn(settingAttribute);
 
-    when(activityHelperService.createAndSaveActivity(any(ExecutionContext.class), any(Activity.Type.class), anyString(),
-             anyString(), anyList(), any(Artifact.class)))
+    when(activityHelperService.createAndSaveActivity(any(), any(), any(), any(), any(), any()))
         .thenReturn(ACTIVITY_WITH_ID);
     doReturn(null).when(mockAwsCommandHelper).getAwsConfigTagsFromContext(any());
     doReturn("TASKID").when(delegateService).queueTask(any());
@@ -300,7 +298,7 @@ public class MultiArtifactCommandStateTest extends CategoryTest {
     verify(settingsService, times(4)).getByName(eq(ACCOUNT_ID), eq(APP_ID), eq(ENV_ID), anyString());
     verify(settingsService, times(4)).get(anyString());
 
-    verify(workflowExecutionService).incrementInProgressCount(eq(APP_ID), anyString(), eq(1));
+    verify(workflowExecutionService).incrementInProgressCount(eq(APP_ID), any(), eq(1));
     verify(artifactStreamService).get(ARTIFACT_STREAM_ID_1);
     verify(artifactStreamService).get(ARTIFACT_STREAM_ID_2);
   }

@@ -447,8 +447,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
 
     verify(appService, times(2)).getAccountIdByAppId(APP_ID);
     verify(yamlPushService, times(2))
-        .pushYamlChangeSet(
-            any(String.class), any(ArtifactStream.class), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
+        .pushYamlChangeSet(any(String.class), any(), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
     verify(artifactService).deleteByArtifactStreamId(APP_ID, savedJenkinsArtifactStream.getUuid());
     verify(triggerService).updateByArtifactStream(savedJenkinsArtifactStream.getUuid());
     assertThat(updatedJenkinsArtifactStream.getCollectionStatus()).isEqualTo(UNSTABLE.name());
@@ -477,8 +476,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
         updateAndValidateJenkinsArtifactStream(savedJenkinsArtifactStream, GLOBAL_APP_ID);
 
     verify(yamlPushService, times(2))
-        .pushYamlChangeSet(
-            any(String.class), any(ArtifactStream.class), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
+        .pushYamlChangeSet(any(String.class), any(), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
     verify(artifactService).deleteByArtifactStreamId(GLOBAL_APP_ID, savedArtifactSteam.getUuid());
     //    verify(triggerService).updateByApp(APP_ID);
     assertThat(updatedJenkinsArtifactStream.getCollectionStatus()).isEqualTo(UNSTABLE.name());
@@ -643,8 +641,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
 
     verify(appService, times(2)).getAccountIdByAppId(APP_ID);
     verify(yamlPushService, times(2))
-        .pushYamlChangeSet(
-            any(String.class), any(ArtifactStream.class), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
+        .pushYamlChangeSet(any(String.class), any(), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
     verify(artifactService).deleteByArtifactStreamId(APP_ID, savedArtifactSteam.getUuid());
     verify(triggerService).updateByArtifactStream(savedArtifactSteam.getUuid());
   }
@@ -667,8 +664,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
     updateAndValidateBambooArtifactStream((BambooArtifactStream) savedArtifactSteam, GLOBAL_APP_ID);
 
     verify(yamlPushService, times(2))
-        .pushYamlChangeSet(
-            any(String.class), any(ArtifactStream.class), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
+        .pushYamlChangeSet(any(String.class), any(), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
     verify(artifactService).deleteByArtifactStreamId(GLOBAL_APP_ID, savedArtifactSteam.getUuid());
   }
 
@@ -1065,8 +1061,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
     if (appId.equals(APP_ID)) {
       verify(appService, times(2)).getAccountIdByAppId(appId);
       verify(yamlPushService, times(2))
-          .pushYamlChangeSet(any(String.class), any(ArtifactStream.class), any(ArtifactStream.class), any(),
-              anyBoolean(), anyBoolean());
+          .pushYamlChangeSet(any(String.class), any(), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
     }
     if (isNotEmpty(extension)) {
       assertThat(updatedNexusArtifactStream.getExtension()).isEqualTo(extension);
@@ -1165,8 +1160,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
     updateNexusDockerArtifactStreamAndValidate(nexusDockerArtifactStream, APP_ID);
     verify(appService, times(2)).getAccountIdByAppId(APP_ID);
     verify(yamlPushService, times(2))
-        .pushYamlChangeSet(
-            any(String.class), any(ArtifactStream.class), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
+        .pushYamlChangeSet(any(String.class), any(), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
   }
 
   @Test
@@ -1187,8 +1181,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
                                                         .build();
     updateNexusDockerArtifactStreamAndValidate(nexusDockerArtifactStream, GLOBAL_APP_ID);
     verify(yamlPushService, times(2))
-        .pushYamlChangeSet(
-            any(String.class), any(ArtifactStream.class), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
+        .pushYamlChangeSet(any(String.class), any(), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
   }
 
   private void updateNexusDockerArtifactStreamAndValidate(NexusArtifactStream nexusDockerArtifactStream, String appId) {
@@ -1620,8 +1613,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
 
     verify(appService, times(2)).getAccountIdByAppId(APP_ID);
     verify(yamlPushService, times(2))
-        .pushYamlChangeSet(
-            any(String.class), any(ArtifactStream.class), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
+        .pushYamlChangeSet(any(String.class), any(), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
     verify(buildSourceService, times(2))
         .validateArtifactSource(anyString(), anyString(), any(ArtifactStreamAttributes.class));
   }
@@ -1746,8 +1738,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
 
     verify(appService, times(2)).getAccountIdByAppId(appId);
     verify(yamlPushService, times(2))
-        .pushYamlChangeSet(
-            any(String.class), any(ArtifactStream.class), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
+        .pushYamlChangeSet(any(String.class), any(), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
 
     verify(buildSourceService, times(2))
         .validateArtifactSource(anyString(), anyString(), any(ArtifactStreamAttributes.class));
@@ -1830,8 +1821,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
 
     verify(appService, times(2)).getAccountIdByAppId(APP_ID);
     verify(yamlPushService, times(2))
-        .pushYamlChangeSet(
-            any(String.class), any(ArtifactStream.class), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
+        .pushYamlChangeSet(any(String.class), any(), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
   }
 
   @Test
@@ -1853,8 +1843,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
     updateAmiArtifactStreamAndValidate(amiArtifactStream, GLOBAL_APP_ID);
 
     verify(yamlPushService, times(2))
-        .pushYamlChangeSet(
-            any(String.class), any(ArtifactStream.class), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
+        .pushYamlChangeSet(any(String.class), any(), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
   }
 
   private void updateAmiArtifactStreamAndValidate(AmiArtifactStream amiArtifactStream, String appId) {
@@ -2621,8 +2610,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
     updateAndValidateAzureArtifactsArtifactStream((AzureArtifactsArtifactStream) savedArtifactSteam, APP_ID);
     verify(appService, times(2)).getAccountIdByAppId(APP_ID);
     verify(yamlPushService, times(2))
-        .pushYamlChangeSet(
-            any(String.class), any(ArtifactStream.class), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
+        .pushYamlChangeSet(any(String.class), any(), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
     verify(artifactService).deleteByArtifactStreamId(APP_ID, savedArtifactSteam.getUuid());
     verify(triggerService).updateByArtifactStream(savedArtifactSteam.getUuid());
   }
@@ -2636,8 +2624,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
     ArtifactStream savedArtifactSteam = createAzureArtifactsArtifactStream(azureArtifactsArtifactStream, GLOBAL_APP_ID);
     updateAndValidateAzureArtifactsArtifactStream((AzureArtifactsArtifactStream) savedArtifactSteam, GLOBAL_APP_ID);
     verify(yamlPushService, times(2))
-        .pushYamlChangeSet(
-            any(String.class), any(ArtifactStream.class), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
+        .pushYamlChangeSet(any(String.class), any(), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
     verify(artifactService).deleteByArtifactStreamId(GLOBAL_APP_ID, savedArtifactSteam.getUuid());
   }
 
@@ -4107,8 +4094,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
 
     verify(appService, times(2)).getAccountIdByAppId(APP_ID);
     verify(yamlPushService, times(2))
-        .pushYamlChangeSet(
-            any(String.class), any(ArtifactStream.class), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
+        .pushYamlChangeSet(any(String.class), any(), any(ArtifactStream.class), any(), anyBoolean(), anyBoolean());
     verify(artifactService).deleteByArtifactStreamId(APP_ID, savedArtifactSteam.getUuid());
     verify(triggerService).updateByArtifactStream(savedArtifactSteam.getUuid());
   }

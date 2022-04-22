@@ -156,10 +156,10 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
     WorkflowExecution workflowExecution =
         JsonUtils.readResourceFile("execution/workflow_execution.json", WorkflowExecution.class);
 
-    when(workflowExecutionService.fetchWorkflowVariables(any(), any(), anyString(), anyString()))
+    when(workflowExecutionService.fetchWorkflowVariables(any(), any(), any(), any()))
         .thenThrow(new IllegalStateException());
 
-    when(workflowExecutionService.fetchFailureDetails(anyString(), anyString())).thenReturn("failureDetails");
+    when(workflowExecutionService.fetchFailureDetails(any(), any())).thenReturn("failureDetails");
 
     QLPipelineExecutionBuilder builder = QLPipelineExecution.builder();
     pipelineExecutionController.populatePipelineExecution(workflowExecution, builder);
@@ -178,8 +178,8 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
         JsonUtils.readResourceFile("execution/workflow_execution.json", WorkflowExecution.class);
 
     WorkflowVariablesMetadata metadata = new WorkflowVariablesMetadata(Lists.newArrayList());
-    when(workflowExecutionService.fetchWorkflowVariables(any(), any(), anyString(), anyString())).thenReturn(metadata);
-    when(workflowExecutionService.fetchFailureDetails(anyString(), anyString())).thenReturn("failureDetails");
+    when(workflowExecutionService.fetchWorkflowVariables(any(), any(), any(), any())).thenReturn(metadata);
+    when(workflowExecutionService.fetchFailureDetails(any(), any())).thenReturn("failureDetails");
 
     QLPipelineExecutionBuilder builder = QLPipelineExecution.builder();
     pipelineExecutionController.populatePipelineExecution(workflowExecution, builder);
@@ -197,8 +197,8 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
         JsonUtils.readResourceFile("execution/workflow_execution_resumed_after_approval.json", WorkflowExecution.class);
 
     WorkflowVariablesMetadata metadata = new WorkflowVariablesMetadata(Lists.newArrayList());
-    when(workflowExecutionService.fetchWorkflowVariables(any(), any(), anyString(), anyString())).thenReturn(metadata);
-    when(workflowExecutionService.fetchFailureDetails(anyString(), anyString())).thenReturn("failureDetails");
+    when(workflowExecutionService.fetchWorkflowVariables(any(), any(), any(), any())).thenReturn(metadata);
+    when(workflowExecutionService.fetchFailureDetails(any(), any())).thenReturn("failureDetails");
 
     QLPipelineExecutionBuilder builder = QLPipelineExecution.builder();
     pipelineExecutionController.populatePipelineExecution(workflowExecution, builder);
@@ -217,7 +217,7 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
         "execution/workflow_execution_without_pipeline_stage_element_id.json", WorkflowExecution.class);
 
     WorkflowVariablesMetadata metadata = new WorkflowVariablesMetadata(Lists.newArrayList());
-    when(workflowExecutionService.fetchWorkflowVariables(any(), any(), anyString(), anyString())).thenReturn(metadata);
+    when(workflowExecutionService.fetchWorkflowVariables(any(), any(), any(), any())).thenReturn(metadata);
 
     QLPipelineExecutionBuilder builder = QLPipelineExecution.builder();
     pipelineExecutionController.populatePipelineExecution(workflowExecution, builder);
@@ -264,7 +264,7 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
 
     Variable envNonRuntimeVar = buildVariable("env", ENVIRONMENT, false);
     Pipeline pipeline = buildPipeline(null, envNonRuntimeVar);
-    when(environmentService.getEnvironmentByName(anyString(), eq("env")))
+    when(environmentService.getEnvironmentByName(any(), eq("env")))
         .thenReturn(Environment.Builder.anEnvironment().build());
 
     assertThatThrownBy(
@@ -340,7 +340,7 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
   @Owner(developers = DEEPAK_PUTHRAYA)
   @Category(UnitTests.class)
   public void testInvalidEnvName() {
-    when(environmentService.getEnvironmentByName(anyString(), anyString())).thenReturn(null);
+    when(environmentService.getEnvironmentByName(any(), any())).thenReturn(null);
     Pipeline pipeline = buildPipeline(null, buildVariable("env", ENVIRONMENT, false));
     assertThatThrownBy(
         ()
@@ -393,9 +393,9 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
 
     workflowExecution.setDeploymentTriggerId("TRIGGER_ID");
 
-    when(workflowExecutionService.fetchWorkflowVariables(any(), any(), anyString(), anyString()))
+    when(workflowExecutionService.fetchWorkflowVariables(any(), any(), any(), any()))
         .thenThrow(new IllegalStateException());
-    when(workflowExecutionService.fetchFailureDetails(anyString(), anyString())).thenReturn("failureDetails");
+    when(workflowExecutionService.fetchFailureDetails(any(), any())).thenReturn("failureDetails");
 
     QLPipelineExecutionBuilder builder = QLPipelineExecution.builder();
     pipelineExecutionController.populatePipelineExecution(workflowExecution, builder);
@@ -415,9 +415,9 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
     workflowExecution.setCreatedByType(CreatedByType.API_KEY);
     workflowExecution.setCreatedBy(EmbeddedUser.builder().name("API_KEY").uuid("KEY_ID").build());
 
-    when(workflowExecutionService.fetchWorkflowVariables(any(), any(), anyString(), anyString()))
+    when(workflowExecutionService.fetchWorkflowVariables(any(), any(), any(), any()))
         .thenThrow(new IllegalStateException());
-    when(workflowExecutionService.fetchFailureDetails(anyString(), anyString())).thenReturn("failureDetails");
+    when(workflowExecutionService.fetchFailureDetails(any(), any())).thenReturn("failureDetails");
 
     QLPipelineExecutionBuilder builder = QLPipelineExecution.builder();
     pipelineExecutionController.populatePipelineExecution(workflowExecution, builder);
@@ -441,7 +441,7 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
              eq(APP_ID), eq(PIPELINE_ID), any(), eq(null), eq(null), eq(false), eq(null)))
         .thenReturn(
             DeploymentMetadata.builder().artifactRequiredServiceIds(asList(SERVICE_ID, SERVICE_ID + 2)).build());
-    when(serviceResourceService.get(eq(APP_ID), anyString()))
+    when(serviceResourceService.get(eq(APP_ID), any()))
         .thenAnswer(invocationOnMock
             -> Service.builder()
                    .appId(APP_ID)
@@ -503,7 +503,7 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
              eq(APP_ID), eq(PIPELINE_ID), any(), eq(null), eq(null), eq(false), eq(null)))
         .thenReturn(
             DeploymentMetadata.builder().artifactRequiredServiceIds(asList(SERVICE_ID + 3, SERVICE_ID + 2)).build());
-    when(serviceResourceService.get(eq(APP_ID), anyString()))
+    when(serviceResourceService.get(eq(APP_ID), any()))
         .thenAnswer(invocationOnMock
             -> Service.builder()
                    .appId(APP_ID)
@@ -532,7 +532,7 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
              eq(APP_ID), eq(PIPELINE_ID), any(), eq(null), eq(null), eq(false), eq(null)))
         .thenReturn(
             DeploymentMetadata.builder().artifactRequiredServiceIds(asList(SERVICE_ID, SERVICE_ID + 2)).build());
-    when(serviceResourceService.get(eq(APP_ID), anyString()))
+    when(serviceResourceService.get(eq(APP_ID), any()))
         .thenAnswer(invocationOnMock
             -> Service.builder()
                    .appId(APP_ID)
@@ -675,7 +675,7 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
     pipeline.getPipelineVariables().add(aVariable().name("var").allowedList(asList("1", "2")).build());
     doReturn(pipeline).when(pipelineService).readPipeline(any(), any(), eq(true));
 
-    doNothing().when(authService).checkIfUserAllowedToDeployPipelineToEnv(any(), anyString());
+    doNothing().when(authService).checkIfUserAllowedToDeployPipelineToEnv(any(), any());
 
     QLStartExecutionInput startExecutionInput =
         QLStartExecutionInput.builder()
@@ -977,7 +977,7 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
     Pipeline pipeline = Pipeline.builder().build();
     pipeline.getPipelineVariables().add(aVariable().name("var").allowedList(asList("1", "2", "3")).build());
     doReturn(pipeline).when(pipelineService).readPipeline(any(), any(), eq(true));
-    doNothing().when(authService).checkIfUserAllowedToDeployPipelineToEnv(any(), anyString());
+    doNothing().when(authService).checkIfUserAllowedToDeployPipelineToEnv(any(), any());
 
     QLStartExecutionInput startExecutionInput =
         QLStartExecutionInput.builder()
@@ -1044,7 +1044,7 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
              eq(APP_ID), eq(PIPELINE_ID), any(), eq(null), eq(null), eq(false), eq(null)))
         .thenReturn(
             DeploymentMetadata.builder().manifestRequiredServiceIds(asList(SERVICE_ID, SERVICE_ID + 2)).build());
-    when(serviceResourceService.get(eq(APP_ID), anyString()))
+    when(serviceResourceService.get(eq(APP_ID), any()))
         .thenAnswer(invocationOnMock
             -> Service.builder()
                    .appId(APP_ID)
@@ -1102,7 +1102,7 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
              eq(APP_ID), eq(PIPELINE_ID), any(), eq(null), eq(null), eq(false), eq(null)))
         .thenReturn(
             DeploymentMetadata.builder().manifestRequiredServiceIds(asList(SERVICE_ID + 3, SERVICE_ID + 2)).build());
-    when(serviceResourceService.get(eq(APP_ID), anyString()))
+    when(serviceResourceService.get(eq(APP_ID), any()))
         .thenAnswer(invocationOnMock
             -> Service.builder()
                    .appId(APP_ID)
@@ -1131,7 +1131,7 @@ public class PipelineExecutionControllerTest extends WingsBaseTest {
              eq(APP_ID), eq(PIPELINE_ID), any(), eq(null), eq(null), eq(false), eq(null)))
         .thenReturn(
             DeploymentMetadata.builder().manifestRequiredServiceIds(asList(SERVICE_ID, SERVICE_ID + 2)).build());
-    when(serviceResourceService.get(eq(APP_ID), anyString()))
+    when(serviceResourceService.get(eq(APP_ID), any()))
         .thenAnswer(invocationOnMock
             -> Service.builder()
                    .appId(APP_ID)

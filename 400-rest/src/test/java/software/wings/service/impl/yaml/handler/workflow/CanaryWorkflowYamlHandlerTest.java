@@ -18,6 +18,8 @@ import static software.wings.utils.WingsTestConstants.APP_ID;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import io.harness.category.element.UnitTests;
@@ -59,7 +61,7 @@ public class CanaryWorkflowYamlHandlerTest extends WorkflowYamlHandlerTestBase {
   @Owner(developers = RAMA)
   @Category(UnitTests.class)
   public void testCRUDAndGet() throws Exception {
-    when(limitCheckerFactory.getInstance(new Action(Mockito.anyString(), ActionType.CREATE_WORKFLOW)))
+    when(limitCheckerFactory.getInstance(new Action(any(), ActionType.CREATE_WORKFLOW)))
         .thenReturn(new MockChecker(true, ActionType.CREATE_WORKFLOW));
 
     String yamlContentFromFile = readYamlStringInFile(CANARY_VALID_YAML_CONTENT_RESOURCE_PATH);
