@@ -26,6 +26,9 @@ import io.harness.ccm.commons.entities.billing.CECloudAccount;
 import io.harness.ccm.commons.entities.billing.CECluster;
 import io.harness.ccm.commons.entities.billing.CEGcpServiceAccount;
 import io.harness.ccm.commons.entities.billing.CloudBillingTransferRun;
+import io.harness.ccm.commons.entities.ecs.ECSService;
+import io.harness.ccm.commons.entities.ecs.recommendation.ECSPartialRecommendationHistogram;
+import io.harness.ccm.commons.entities.ecs.recommendation.ECSServiceRecommendation;
 import io.harness.ccm.commons.entities.events.CeExceptionRecord;
 import io.harness.ccm.commons.entities.events.PublishedMessage;
 import io.harness.ccm.commons.entities.k8s.K8sWorkload;
@@ -73,6 +76,11 @@ public class CECommonsMorphiaRegistrar implements MorphiaRegistrar {
     set.add(K8sNodeRecommendation.class);
     set.add(K8sWorkloadRecommendation.class);
     set.add(PartialRecommendationHistogram.class);
+
+    // ecs
+    set.add(ECSService.class);
+    set.add(ECSPartialRecommendationHistogram.class);
+    set.add(ECSServiceRecommendation.class);
   }
   @Override
   public void registerImplementationClasses(MorphiaRegistrarHelperPut h, MorphiaRegistrarHelperPut w) {
