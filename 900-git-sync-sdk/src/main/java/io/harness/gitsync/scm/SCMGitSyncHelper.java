@@ -34,9 +34,11 @@ import io.harness.gitsync.exceptions.GitSyncException;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.scm.beans.SCMNoOpResponse;
+import io.harness.gitsync.scm.beans.ScmErrorDetails;
 import io.harness.gitsync.scm.beans.ScmGetFileResponse;
 import io.harness.gitsync.scm.beans.ScmGitMetaData;
 import io.harness.gitsync.scm.beans.ScmPushResponse;
+import io.harness.gitsync.scm.errorhandling.GetFileScmErrorHandler;
 import io.harness.impl.ScmResponseStatusUtils;
 import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.entitydetail.EntityDetailRestToProtoMapper;
@@ -62,6 +64,7 @@ public class SCMGitSyncHelper {
   @Inject private HarnessToGitPushInfoServiceBlockingStub harnessToGitPushInfoServiceBlockingStub;
   @Inject private EntityDetailRestToProtoMapper entityDetailRestToProtoMapper;
   @Inject GitSyncSdkService gitSyncSdkService;
+  @Inject private GetFileScmErrorHandler getFileScmErrorHandler;
 
   public ScmPushResponse pushToGit(
       GitEntityInfo gitBranchInfo, String yaml, ChangeType changeType, EntityDetail entityDetail) {
@@ -99,6 +102,9 @@ public class SCMGitSyncHelper {
             .build();
     final GetFileResponse getFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::getFile, getFileRequest);
+
+    getFileScmErrorHandler.handlerAndThrowError(
+        getFileResponse.getStatusCode(), ScmErrorDetails.builder().errorMessage(getFileResponse.getError()).build());
 
     // Add Error Handling
     return ScmGetFileResponse.builder()

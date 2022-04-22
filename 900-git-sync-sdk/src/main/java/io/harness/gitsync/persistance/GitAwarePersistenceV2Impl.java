@@ -10,6 +10,7 @@ package io.harness.gitsync.persistance;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
+import io.harness.exception.EntityNotFoundException;
 import io.harness.gitsync.entityInfo.GitSdkEntityHandlerInterface;
 import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
@@ -50,10 +51,9 @@ public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
     Query query = new Query().addCriteria(new Criteria().andOperator(criteria, gitAwareCriteria));
     final GitAware savedObject = (GitAware) mongoTemplate.findOne(query, entityClass);
     if (savedObject == null) {
-      // Check with @Naman if I should directly throw ObjectNotFound Exception here which will result into 404
-      // We have to check current behaviour in such cases and try to maintain it otherwise it will break
-      // API contract for the current consumers of the API
-      return Optional.empty();
+      throw new EntityNotFoundException(
+          String.format("No entity found for accountIdentifier : %s, orgIdentifier : %s , projectIdentifier : %s",
+              accountIdentifier, orgIdentifier, projectIdentifier));
     }
 
     if (savedObject.getStoreType() == StoreType.REMOTE) {

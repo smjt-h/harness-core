@@ -97,7 +97,7 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
       getFileResponse = harnessToGitHelperService.getFile(request);
     } catch (Exception ex) {
       final String errorMessage = ExceptionUtils.getMessage(ex);
-      getFileResponse = GetFileResponse.newBuilder().setStatus(500).setError(errorMessage).build();
+      getFileResponse = GetFileResponse.newBuilder().setStatusCode(500).setError(errorMessage).build();
     }
     responseObserver.onNext(getFileResponse);
     responseObserver.onCompleted();
