@@ -29,8 +29,11 @@ import io.harness.cdng.provision.terraform.steps.rolllback.TerraformRollbackStep
 import io.harness.cdng.serverless.ServerlessAwsLambdaDeployStepInfo;
 import io.harness.cdng.serverless.ServerlessAwsLambdaRollbackStepInfo;
 import io.harness.plancreator.steps.common.StepElementParameters.StepElementParametersBuilder;
+import io.harness.plancreator.steps.common.WithDelegateSelector;
 import io.harness.plancreator.steps.common.WithStepElementParameters;
+import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.steps.io.StepParameters;
+import io.harness.steps.StepUtils;
 import io.harness.yaml.core.StepSpecType;
 
 import io.swagger.annotations.ApiModel;
@@ -43,11 +46,12 @@ import io.swagger.annotations.ApiModel;
               ServerlessAwsLambdaDeployStepInfo.class, ServerlessAwsLambdaRollbackStepInfo.class})
 
 @OwnedBy(HarnessTeam.CDC)
-public interface CDStepInfo extends StepSpecType, WithStepElementParameters {
+public interface CDStepInfo extends StepSpecType, WithStepElementParameters, WithDelegateSelector {
   default StepParameters getStepParameters(
-      CdAbstractStepNode stepElementConfig, OnFailRollbackParameters failRollbackParameters) {
+      CdAbstractStepNode stepElementConfig, OnFailRollbackParameters failRollbackParameters, PlanCreationContext ctx) {
     StepElementParametersBuilder stepParametersBuilder =
         CdStepParametersUtils.getStepParameters(stepElementConfig, failRollbackParameters);
+    StepUtils.appendDelegateSelectorsToSpecParameters(stepElementConfig.getStepSpecType(), ctx);
     stepParametersBuilder.spec(getSpecParameters());
     return stepParametersBuilder.build();
   }

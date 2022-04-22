@@ -67,6 +67,9 @@ public class CDNGPipelineConfigurationResourceTest extends CategoryTest {
     assertThat(executionStrategyResponse.get(ServiceDefinitionType.WINRM))
         .isEqualTo(Lists.newArrayList(ExecutionStrategyType.DEFAULT));
 
+    assertThat(executionStrategyResponse.get(ServiceDefinitionType.DEPLOYMENT_TEMPLATE))
+        .isEqualTo(Lists.newArrayList(ExecutionStrategyType.DEFAULT));
+
     assertThat(executionStrategyResponse.get(ServiceDefinitionType.SERVERLESS_AWS_LAMBDA))
         .isEqualTo(Lists.newArrayList(ExecutionStrategyType.BASIC, ExecutionStrategyType.DEFAULT));
 

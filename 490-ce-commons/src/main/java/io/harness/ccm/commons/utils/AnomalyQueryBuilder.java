@@ -107,11 +107,14 @@ public class AnomalyQueryBuilder {
   @NotNull
   private Condition applyStringFilters(@NotNull List<CCMStringFilter> filters, Condition condition) {
     for (CCMStringFilter filter : filters) {
-      if (filter.getField() == ALL && filter.getOperator() == LIKE) {
-        condition = condition.and(constructSearchCondition(filter.getValues()));
-      } else {
-        condition = condition.and(
-            constructCondition(getTableField(filter.getField()), filter.getValues(), filter.getOperator()));
+      try {
+        if (filter.getField() == ALL && filter.getOperator() == LIKE) {
+          condition = condition.and(constructSearchCondition(filter.getValues()));
+        } else {
+          condition = condition.and(
+              constructCondition(getTableField(filter.getField()), filter.getValues(), filter.getOperator()));
+        }
+      } catch (Exception ignored) {
       }
     }
     return condition;
@@ -134,6 +137,10 @@ public class AnomalyQueryBuilder {
         return ANOMALIES.AWSACCOUNT;
       case AWS_SERVICE:
         return ANOMALIES.AWSSERVICE;
+      case AWS_USAGE_TYPE:
+        return ANOMALIES.AWSUSAGETYPE;
+      case AWS_INSTANCE_TYPE:
+        return ANOMALIES.AWSINSTANCETYPE;
       case GCP_PROJECT:
         return ANOMALIES.GCPPROJECT;
       case GCP_PRODUCT:
@@ -168,6 +175,10 @@ public class AnomalyQueryBuilder {
         return ANOMALIES.AWSACCOUNT;
       case AWS_SERVICE:
         return ANOMALIES.AWSSERVICE;
+      case AWS_USAGE_TYPE:
+        return ANOMALIES.AWSUSAGETYPE;
+      case AWS_INSTANCE_TYPE:
+        return ANOMALIES.AWSINSTANCETYPE;
       case GCP_PROJECT:
         return ANOMALIES.GCPPROJECT;
       case GCP_PRODUCT:

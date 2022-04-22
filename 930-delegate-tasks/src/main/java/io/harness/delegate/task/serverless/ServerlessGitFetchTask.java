@@ -55,6 +55,7 @@ import software.wings.beans.LogWeight;
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
 import com.google.inject.Inject;
+import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -118,8 +119,8 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
     }
   }
 
-  private FetchFilesResult fetchManifestFile(
-      ServerlessGitFetchFileConfig serverlessGitFetchFileConfig, LogCallback executionLogCallback, String accountId) {
+  private FetchFilesResult fetchManifestFile(ServerlessGitFetchFileConfig serverlessGitFetchFileConfig,
+      LogCallback executionLogCallback, String accountId) throws Exception {
     GitStoreDelegateConfig gitStoreDelegateConfig = serverlessGitFetchFileConfig.getGitStoreDelegateConfig();
     executionLogCallback.saveExecutionLog("Git connector Url: " + gitStoreDelegateConfig.getGitConfigDTO().getUrl());
     String fetchTypeInfo;
@@ -162,7 +163,7 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
             ERROR);
       }
       executionLogCallback.saveExecutionLog(msg, ERROR, CommandExecutionStatus.FAILURE);
-      throw ex;
+      throw sanitizedException;
     }
     return filesResult;
   }
@@ -206,7 +207,8 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
   }
 
   private FetchFilesResult fetchManifestFileFromRepo(GitStoreDelegateConfig gitStoreDelegateConfig, String folderPath,
-      String filePath, String accountId, GitConfigDTO gitConfigDTO, LogCallback executionLogCallback) {
+      String filePath, String accountId, GitConfigDTO gitConfigDTO, LogCallback executionLogCallback)
+      throws IOException {
     filePath = ServerlessGitFetchTaskHelper.getCompleteFilePath(folderPath, filePath);
     List<String> filePaths = Collections.singletonList(filePath);
     serverlessGitFetchTaskHelper.printFileNames(executionLogCallback, filePaths);

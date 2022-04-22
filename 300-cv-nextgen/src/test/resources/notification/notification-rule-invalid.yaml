@@ -1,0 +1,10 @@
+---
+name: rule
+identifier: rule
+orgIdentifier: $orgIdentifier
+projectIdentifier: $projectIdentifier
+type: slo
+notificationMethod:
+  type: Email
+  userGroups: [testUserGroup]
+  recipients: [test@harness.io]

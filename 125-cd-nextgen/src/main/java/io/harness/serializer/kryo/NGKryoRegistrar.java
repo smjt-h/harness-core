@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.advisers.RollbackCustomStepParameters;
 import io.harness.cdng.artifact.bean.artifactsource.DockerArtifactSource;
+import io.harness.cdng.artifact.bean.yaml.AcrArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.ArtifactListConfig;
 import io.harness.cdng.artifact.bean.yaml.ArtifactOverrideSetWrapper;
 import io.harness.cdng.artifact.bean.yaml.ArtifactOverrideSets;
@@ -101,6 +102,7 @@ import io.harness.cdng.serverless.ServerlessStepPassThroughData;
 import io.harness.cdng.serverless.beans.ServerlessExecutionPassThroughData;
 import io.harness.cdng.serverless.beans.ServerlessGitFetchFailurePassThroughData;
 import io.harness.cdng.serverless.beans.ServerlessStepExceptionPassThroughData;
+import io.harness.cdng.service.beans.DeploymentTemplateServiceSpec;
 import io.harness.cdng.service.beans.KubernetesServiceSpec;
 import io.harness.cdng.service.beans.NativeHelmServiceSpec;
 import io.harness.cdng.service.beans.ServerlessAwsLambdaServiceSpec;
@@ -236,6 +238,9 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(WinRmServiceSpec.class, 12562);
 
     kryo.register(CustomArtifactConfig.class, 12563);
+
+    kryo.register(AcrArtifactConfig.class, 12564);
+    kryo.register(DeploymentTemplateServiceSpec.class, 12565);
 
     kryo.register(ServerlessAwsLambdaDeployStepInfo.class, 12571);
     kryo.register(ServerlessAwsLambdaDeployStepParameters.class, 12572);

@@ -30,6 +30,7 @@ import io.harness.shell.SshSessionConfig;
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
 import com.google.inject.Inject;
+import java.io.IOException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,7 +57,7 @@ public class ServerlessGitFetchTaskHelper {
   }
 
   public FetchFilesResult fetchFileFromRepo(GitStoreDelegateConfig gitStoreDelegateConfig, List<String> filePaths,
-      String accountId, GitConfigDTO gitConfigDTO) {
+      String accountId, GitConfigDTO gitConfigDTO) throws IOException {
     if (gitStoreDelegateConfig.isOptimizedFilesFetch()) {
       return scmFetchFilesHelper.fetchFilesFromRepoWithScm(gitStoreDelegateConfig, filePaths);
     }

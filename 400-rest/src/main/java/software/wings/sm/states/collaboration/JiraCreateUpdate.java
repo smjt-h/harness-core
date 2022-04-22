@@ -187,8 +187,10 @@ public class JiraCreateUpdate extends State implements SweepingOutputStateMixin 
     JiraCreateMetaResponse createMeta = null;
     renderExpressions(context);
 
+    final long timeoutMillis = getTimeoutMillis() != null ? getTimeoutMillis() : JIRA_TASK_TIMEOUT_MILLIS;
     if (areRequiredFieldsTemplatized) {
-      createMeta = jiraHelperService.getCreateMetadata(jiraConnectorId, null, project, accountId, context.getAppId());
+      createMeta = jiraHelperService.getCreateMetadata(
+          jiraConnectorId, null, project, accountId, context.getAppId(), timeoutMillis, issueType);
       try {
         validateRequiredFields(createMeta, context);
       } catch (HarnessJiraException e) {
@@ -199,7 +201,8 @@ public class JiraCreateUpdate extends State implements SweepingOutputStateMixin 
 
     if (EmptyPredicate.isNotEmpty(customFields)) {
       JiraCreateMetaResponse createMetadata = createMeta == null
-          ? jiraHelperService.getCreateMetadata(jiraConnectorId, null, project, accountId, context.getAppId())
+          ? jiraHelperService.getCreateMetadata(
+              jiraConnectorId, null, project, accountId, context.getAppId(), timeoutMillis, issueType)
           : createMeta;
 
       Map<String, String> customFieldsIdToNameMap = mapCustomFieldsIdsToNames(createMetadata);
@@ -275,7 +278,7 @@ public class JiraCreateUpdate extends State implements SweepingOutputStateMixin 
                       .async(true)
                       .taskType(JIRA.name())
                       .parameters(new Object[] {parameters})
-                      .timeout(JIRA_TASK_TIMEOUT_MILLIS)
+                      .timeout(timeoutMillis)
                       .build())
             .tags(jiraConfig.getDelegateSelectors())
             .workflowExecutionId(context.getWorkflowExecutionId())

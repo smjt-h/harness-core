@@ -42,6 +42,7 @@ import io.harness.rule.Owner;
 import io.harness.security.encryption.SecretDecryptionService;
 
 import com.google.inject.Inject;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -140,7 +141,7 @@ public class ServerlessGitFetchTaskTest extends CategoryTest {
   @Test
   @Owner(developers = PIYUSH_BHUWALKA)
   @Category(UnitTests.class)
-  public void runTest() {
+  public void runTest() throws IOException {
     String combinedPath = path + configOverridePath;
     List<String> filePaths = Collections.singletonList(combinedPath);
     FetchFilesResult fetchFilesResult = FetchFilesResult.builder().build();

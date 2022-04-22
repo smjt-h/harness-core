@@ -17,6 +17,7 @@ import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.scm.GitAuthType;
 import io.harness.delegate.beans.connector.scm.GitConnectionType;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
+import io.harness.utils.FilePathUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -92,5 +93,14 @@ public class GithubConnectorDTO
   @JsonIgnore
   public ConnectorType getConnectorType() {
     return ConnectorType.GITHUB;
+  }
+
+  @Override
+  public String getGitConnectionUrl(String repoName) {
+    if (connectionType == GitConnectionType.REPO) {
+      // check if we need to put any validation for repoName in this case
+      return getUrl();
+    }
+    return FilePathUtils.addEndingSlashIfMissing(getUrl()) + repoName;
   }
 }

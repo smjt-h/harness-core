@@ -93,6 +93,7 @@ public enum QLTaskGroup implements QLEnum {
   CE,
   SERVICENOW_NG,
   CLOUDFORMATION_NG,
+  AZURE,
   SERVERLESS_NG;
 
   @Override
