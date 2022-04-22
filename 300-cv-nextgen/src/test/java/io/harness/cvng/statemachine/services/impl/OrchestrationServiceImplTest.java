@@ -87,7 +87,6 @@ public class OrchestrationServiceImplTest extends CvNextGenTestBase {
     builderFactory = BuilderFactory.getDefault();
     cvConfigId = generateUuid();
     accountId = generateUuid();
-    identifier = "monitoredServiceId/healthSourceId";
     CVConfig cvConfig = new AppDynamicsCVConfig();
     cvConfig.setVerificationType(VerificationType.TIME_SERIES);
     cvConfig.setUuid(cvConfigId);
