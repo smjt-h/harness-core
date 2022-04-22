@@ -14,6 +14,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.common.helper.EntityDistinctElementHelper;
 import io.harness.gitsync.persistance.GitAwarePersistence;
+import io.harness.gitsync.persistance.GitAwarePersistenceV2;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.persistance.GitSyncableHarnessRepo;
 import io.harness.outbox.OutboxEvent;
@@ -21,7 +22,6 @@ import io.harness.outbox.api.OutboxService;
 import io.harness.pms.events.PipelineCreateEvent;
 import io.harness.pms.events.PipelineDeleteEvent;
 import io.harness.pms.events.PipelineUpdateEvent;
-import io.harness.pms.gitsync.PmsGitSyncHelper;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineEntity.PipelineEntityKeys;
 import io.harness.pms.pipeline.PipelineMetadataV2;
@@ -56,10 +56,10 @@ import org.springframework.data.repository.support.PageableExecutionUtils;
 public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCustom {
   private final MongoTemplate mongoTemplate;
   private final GitAwarePersistence gitAwarePersistence;
+  private final GitAwarePersistenceV2 gitAwarePersistenceV2;
   private final GitSyncSdkService gitSyncSdkService;
   private final TransactionHelper transactionHelper;
   private final PipelineMetadataService pipelineMetadataService;
-  private final PmsGitSyncHelper pmsGitSyncHelper;
   OutboxService outboxService;
 
   @Override
@@ -128,17 +128,17 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
   @Override
   public Optional<PipelineEntity> findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
       String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier, boolean notDeleted) {
-    return gitAwarePersistence.findOne(Criteria.where(PipelineEntityKeys.deleted)
-                                           .is(!notDeleted)
-                                           .and(PipelineEntityKeys.identifier)
-                                           .is(pipelineIdentifier)
-                                           .and(PipelineEntityKeys.projectIdentifier)
-                                           .is(projectIdentifier)
-                                           .and(PipelineEntityKeys.orgIdentifier)
-                                           .is(orgIdentifier)
-                                           .and(PipelineEntityKeys.accountId)
-                                           .is(accountId),
-        projectIdentifier, orgIdentifier, accountId, PipelineEntity.class);
+    return gitAwarePersistenceV2.findOne(accountId, orgIdentifier, projectIdentifier, PipelineEntity.class,
+        Criteria.where(PipelineEntityKeys.deleted)
+            .is(!notDeleted)
+            .and(PipelineEntityKeys.identifier)
+            .is(pipelineIdentifier)
+            .and(PipelineEntityKeys.projectIdentifier)
+            .is(projectIdentifier)
+            .and(PipelineEntityKeys.orgIdentifier)
+            .is(orgIdentifier)
+            .and(PipelineEntityKeys.accountId)
+            .is(accountId));
   }
 
   @Override

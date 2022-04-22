@@ -166,6 +166,9 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     try {
       return pmsPipelineRepository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
           accountId, orgIdentifier, projectIdentifier, identifier, !deleted);
+    } catch (ScmException e) {
+      log.error(String.format("Error while retrieving pipeline [%s]", identifier), e);
+      throw e;
     } catch (Exception e) {
       log.error(String.format("Error while retrieving pipeline [%s]", identifier), e);
       throw new InvalidRequestException(

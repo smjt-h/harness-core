@@ -212,4 +212,9 @@ public class PipelineEntityGitSyncHelper extends AbstractGitSdkEntityHandler<Pip
     }
     return pipelineEntity.get().getYaml();
   }
+
+  @Override
+  public String getStoreTypeKey() {
+    return PipelineEntityKeys.storeType;
+  }
 }

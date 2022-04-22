@@ -16,6 +16,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityName;
 import io.harness.data.validator.Trimmed;
 import io.harness.gitsync.persistance.GitSyncableEntity;
+import io.harness.gitsync.v2.GitAware;
 import io.harness.gitsync.v2.StoreType;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdIndex;
@@ -68,7 +69,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @ChangeDataCapture(table = "tags_info", dataStore = "pms-harness", fields = {}, handler = "TagsInfoCD")
 @ChangeDataCapture(table = "pipelines", dataStore = "ng-harness", fields = {}, handler = "Pipelines")
 public class PipelineEntity
-    implements GitSyncableEntity, PersistentEntity, AccountAccess, UuidAware, CreatedAtAware, UpdatedAtAware {
+    implements GitAware, PersistentEntity, AccountAccess, UuidAware, CreatedAtAware, UpdatedAtAware {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -98,7 +99,7 @@ public class PipelineEntity
   @Trimmed @NotEmpty String projectIdentifier;
   @NotEmpty String identifier;
 
-  @Wither @NotEmpty String yaml;
+  @Wither @NotEmpty @NonFinal String yaml;
 
   @Setter @NonFinal @SchemaIgnore @FdIndex @CreatedDate long createdAt;
   @Setter @NonFinal @SchemaIgnore @NotNull @LastModifiedDate long lastUpdatedAt;
@@ -137,12 +138,18 @@ public class PipelineEntity
   String path;
   String connectorRef;
 
+  @Override
   public String getData() {
     if (storeType == null || storeType == StoreType.INLINE) {
       return yaml;
     }
     // TODO: add proper impl here for remote store type
     return null;
+  }
+
+  @Override
+  public void setData(String data) {
+    yaml = data;
   }
 
   @Override
