@@ -25,6 +25,7 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.opencensus.common.Duration;
 import io.opencensus.common.Scope;
+import io.opencensus.exporter.stats.prometheus.PrometheusStatsCollector;
 import io.opencensus.exporter.stats.stackdriver.StackdriverStatsConfiguration;
 import io.opencensus.exporter.stats.stackdriver.StackdriverStatsExporter;
 import io.opencensus.stats.Measure;
@@ -159,6 +160,7 @@ public class MetricServiceImpl implements MetricService {
               .setConstantLabels(Collections.emptyMap())
               .build();
       StackdriverStatsExporter.createAndRegister(configuration);
+      PrometheusStatsCollector.createAndRegister();
       log.info("StackdriverStatsExporter created");
     } catch (Exception ex) {
       log.error("Exception while trying to register stackdriver metrics exporter", ex);
