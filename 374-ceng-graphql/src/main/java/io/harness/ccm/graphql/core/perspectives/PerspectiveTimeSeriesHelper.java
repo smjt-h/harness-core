@@ -7,6 +7,7 @@
 
 package io.harness.ccm.graphql.core.perspectives;
 
+import static io.harness.ccm.commons.constants.ViewFieldConstants.AWS_ACCOUNT_FIELD;
 import static io.harness.ccm.views.utils.ClusterTableKeys.AVG_CPU_UTILIZATION_VALUE;
 import static io.harness.ccm.views.utils.ClusterTableKeys.AVG_MEMORY_UTILIZATION_VALUE;
 import static io.harness.ccm.views.utils.ClusterTableKeys.BILLING_AMOUNT;
@@ -34,8 +35,14 @@ import io.harness.ccm.graphql.dto.common.DataPoint.DataPointBuilder;
 import io.harness.ccm.graphql.dto.common.Reference;
 import io.harness.ccm.graphql.dto.common.TimeSeriesDataPoints;
 import io.harness.ccm.graphql.dto.perspectives.PerspectiveTimeSeriesData;
+import io.harness.ccm.views.businessMapping.entities.BusinessMapping;
+import io.harness.ccm.views.businessMapping.entities.UnallocatedCostStrategy;
+import io.harness.ccm.views.businessMapping.service.intf.BusinessMappingService;
 import io.harness.ccm.views.graphql.QLCEViewGroupBy;
 import io.harness.ccm.views.graphql.QLCEViewTimeTruncGroupBy;
+import io.harness.ccm.views.service.impl.ViewsBillingServiceImpl;
+import io.harness.ccm.views.utils.ViewFieldUtils;
+import io.harness.exception.InvalidRequestException;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.bigquery.Field;
@@ -60,28 +67,33 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PerspectiveTimeSeriesHelper {
   @Inject EntityMetadataService entityMetadataService;
+  @Inject BusinessMappingService businessMappingService;
   public static final String nullStringValueConstant = "Others";
   public static final String OTHERS = "Others";
   private static final long ONE_DAY_SEC = 86400;
   private static final long ONE_HOUR_SEC = 3600;
 
   public PerspectiveTimeSeriesData fetch(TableResult result, long timePeriod) {
-    return fetch(result, timePeriod, null, null);
+    return fetch(result, timePeriod, null, null, null);
   }
 
   public PerspectiveTimeSeriesData fetch(
-      TableResult result, long timePeriod, String conversionField, String accountId) {
+      TableResult result, long timePeriod, String conversionField, String businessMappingId, String accountId) {
+    BusinessMapping businessMapping = businessMappingService.get(businessMappingId);
+    UnallocatedCostStrategy strategy =
+        businessMapping != null ? businessMapping.getUnallocatedCost().getStrategy() : null;
+
     Schema schema = result.getSchema();
     FieldList fields = schema.getFields();
     Set<String> entityNames = new HashSet<>();
 
-    Map<Timestamp, List<DataPoint>> costDataPointsMap = new LinkedHashMap();
-    Map<Timestamp, List<DataPoint>> cpuLimitDataPointsMap = new LinkedHashMap();
-    Map<Timestamp, List<DataPoint>> cpuRequestDataPointsMap = new LinkedHashMap();
-    Map<Timestamp, List<DataPoint>> cpuUtilizationValueDataPointsMap = new LinkedHashMap();
-    Map<Timestamp, List<DataPoint>> memoryLimitDataPointsMap = new LinkedHashMap();
-    Map<Timestamp, List<DataPoint>> memoryRequestDataPointsMap = new LinkedHashMap();
-    Map<Timestamp, List<DataPoint>> memoryUtilizationValueDataPointsMap = new LinkedHashMap();
+    Map<Timestamp, List<DataPoint>> costDataPointsMap = new LinkedHashMap<>();
+    Map<Timestamp, List<DataPoint>> cpuLimitDataPointsMap = new LinkedHashMap<>();
+    Map<Timestamp, List<DataPoint>> cpuRequestDataPointsMap = new LinkedHashMap<>();
+    Map<Timestamp, List<DataPoint>> cpuUtilizationValueDataPointsMap = new LinkedHashMap<>();
+    Map<Timestamp, List<DataPoint>> memoryLimitDataPointsMap = new LinkedHashMap<>();
+    Map<Timestamp, List<DataPoint>> memoryRequestDataPointsMap = new LinkedHashMap<>();
+    Map<Timestamp, List<DataPoint>> memoryUtilizationValueDataPointsMap = new LinkedHashMap<>();
 
     for (FieldValueList row : result.iterateAll()) {
       Timestamp startTimeTruncatedTimestamp = null;
@@ -166,20 +178,40 @@ public class PerspectiveTimeSeriesHelper {
         }
       }
 
-      addDataPointToMap(id, stringValue, type, value, costDataPointsMap, startTimeTruncatedTimestamp);
-      addDataPointToMap(id, "LIMIT", "UTILIZATION", cpuLimit, cpuLimitDataPointsMap, startTimeTruncatedTimestamp);
-      addDataPointToMap(id, "REQUEST", "UTILIZATION", cpuRequest, cpuRequestDataPointsMap, startTimeTruncatedTimestamp);
-      addDataPointToMap(
-          id, "AVG", "UTILIZATION", cpuUtilizationValue, cpuUtilizationValueDataPointsMap, startTimeTruncatedTimestamp);
-      addDataPointToMap(id, "MAX", "UTILIZATION", maxCpuUtilizationValue, cpuUtilizationValueDataPointsMap,
-          startTimeTruncatedTimestamp);
-      addDataPointToMap(id, "LIMIT", "UTILIZATION", memoryLimit, memoryLimitDataPointsMap, startTimeTruncatedTimestamp);
-      addDataPointToMap(
-          id, "REQUEST", "UTILIZATION", memoryRequest, memoryRequestDataPointsMap, startTimeTruncatedTimestamp);
-      addDataPointToMap(id, "AVG", "UTILIZATION", memoryUtilizationValue, memoryUtilizationValueDataPointsMap,
-          startTimeTruncatedTimestamp);
-      addDataPointToMap(id, "MAX", "UTILIZATION", maxMemoryUtilizationValue, memoryUtilizationValueDataPointsMap,
-          startTimeTruncatedTimestamp);
+      boolean addDataPoint = true;
+      if (strategy != null && stringValue.equals(ViewFieldUtils.getBusinessMappingUnallocatedCostDefaultName())) {
+        switch (strategy) {
+          case HIDE:
+            addDataPoint = false;
+            break;
+          case DISPLAY_NAME:
+            stringValue = businessMapping.getUnallocatedCost().getLabel();
+            break;
+          case SHARE:
+          default:
+            throw new InvalidRequestException(
+                "Invalid Unallocated Cost Strategy / Unallocated Cost Strategy not supported");
+        }
+      }
+
+      if (addDataPoint) {
+        addDataPointToMap(id, stringValue, type, value, costDataPointsMap, startTimeTruncatedTimestamp);
+        addDataPointToMap(id, "LIMIT", "UTILIZATION", cpuLimit, cpuLimitDataPointsMap, startTimeTruncatedTimestamp);
+        addDataPointToMap(
+            id, "REQUEST", "UTILIZATION", cpuRequest, cpuRequestDataPointsMap, startTimeTruncatedTimestamp);
+        addDataPointToMap(id, "AVG", "UTILIZATION", cpuUtilizationValue, cpuUtilizationValueDataPointsMap,
+            startTimeTruncatedTimestamp);
+        addDataPointToMap(id, "MAX", "UTILIZATION", maxCpuUtilizationValue, cpuUtilizationValueDataPointsMap,
+            startTimeTruncatedTimestamp);
+        addDataPointToMap(
+            id, "LIMIT", "UTILIZATION", memoryLimit, memoryLimitDataPointsMap, startTimeTruncatedTimestamp);
+        addDataPointToMap(
+            id, "REQUEST", "UTILIZATION", memoryRequest, memoryRequestDataPointsMap, startTimeTruncatedTimestamp);
+        addDataPointToMap(id, "AVG", "UTILIZATION", memoryUtilizationValue, memoryUtilizationValueDataPointsMap,
+            startTimeTruncatedTimestamp);
+        addDataPointToMap(id, "MAX", "UTILIZATION", maxMemoryUtilizationValue, memoryUtilizationValueDataPointsMap,
+            startTimeTruncatedTimestamp);
+      }
     }
 
     if (conversionField != null) {
@@ -279,24 +311,28 @@ public class PerspectiveTimeSeriesHelper {
     if (entityIdToName != null) {
       costDataPointsMap.keySet().forEach(timestamp
           -> updatedDataPointsMap.put(
-              timestamp, getUpdatedDataPoints(costDataPointsMap.get(timestamp), entityIdToName)));
+              timestamp, getUpdatedDataPoints(costDataPointsMap.get(timestamp), entityIdToName, fieldName)));
       return updatedDataPointsMap;
     } else {
       return costDataPointsMap;
     }
   }
 
-  private List<DataPoint> getUpdatedDataPoints(List<DataPoint> dataPoints, Map<String, String> entityIdToName) {
+  private List<DataPoint> getUpdatedDataPoints(
+      List<DataPoint> dataPoints, Map<String, String> entityIdToName, String fieldName) {
     List<DataPoint> updatedDataPoints = new ArrayList<>();
 
-    dataPoints.forEach(dataPoint
-        -> updatedDataPoints.add(
-            DataPoint.builder()
-                .value(dataPoint.getValue())
-                .key(getReference(dataPoint.getKey().getId(),
-                    entityIdToName.getOrDefault(dataPoint.getKey().getName(), dataPoint.getKey().getName()),
-                    dataPoint.getKey().getType()))
-                .build()));
+    dataPoints.forEach(dataPoint -> {
+      String name = entityIdToName.getOrDefault(dataPoint.getKey().getName(), dataPoint.getKey().getName());
+      if (AWS_ACCOUNT_FIELD.equals(fieldName)) {
+        name = ViewsBillingServiceImpl.mergeAWSAccountIdAndName(
+            dataPoint.getKey().getName(), entityIdToName.get(dataPoint.getKey().getName()));
+      }
+      updatedDataPoints.add(DataPoint.builder()
+                                .value(dataPoint.getValue())
+                                .key(getReference(dataPoint.getKey().getId(), name, dataPoint.getKey().getType()))
+                                .build());
+    });
     return updatedDataPoints;
   }
 

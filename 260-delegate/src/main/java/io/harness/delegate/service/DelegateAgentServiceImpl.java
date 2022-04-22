@@ -194,7 +194,6 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.ning.http.client.AsyncHttpClient;
 import com.sun.management.OperatingSystemMXBean;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -251,6 +250,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.math3.util.Precision;
 import org.apache.http.client.utils.URIBuilder;
+import org.asynchttpclient.AsyncHttpClient;
 import org.atmosphere.wasync.Client;
 import org.atmosphere.wasync.Encoder;
 import org.atmosphere.wasync.Event;
@@ -598,7 +598,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
         RequestBuilder requestBuilder = prepareRequestBuilder();
 
-        Options clientOptions = client.newOptionsBuilder().runtime(asyncHttpClient, true).reconnect(false).build();
+        Options clientOptions = client.newOptionsBuilder().runtime(asyncHttpClient, true).reconnect(true).build();
         socket = client.create(clientOptions);
         socket
             .on(Event.MESSAGE,
@@ -622,10 +622,17 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
                     handleOpen(o);
                   }
                 })
-            .on(Event.CLOSE, new Function<Object>() { // Do not change this, wasync doesn't like lambdas
+            .on(Event.CLOSE,
+                new Function<Object>() { // Do not change this, wasync doesn't like lambdas
+                  @Override
+                  public void on(Object o) {
+                    handleClose(o);
+                  }
+                })
+            .on(new Function<IOException>() {
               @Override
-              public void on(Object o) {
-                handleClose(o);
+              public void on(IOException ioe) {
+                log.error("Error occured while starting Delegate", ioe);
               }
             });
 
@@ -650,7 +657,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         startUpgradeCheck(getVersion());
       }
 
-      log.info("Delegate started");
+      log.info("Delegate started with config {} ", getDelegateConfig());
       log.info("Manager Authority:{}, Manager Target:{}", delegateConfiguration.getManagerAuthority(),
           delegateConfiguration.getManagerTarget());
 
@@ -748,6 +755,12 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     } catch (RuntimeException | IOException e) {
       log.error("Exception while starting/running delegate", e);
     }
+  }
+
+  private String getDelegateConfig() {
+    String delegateConfig = delegateConfiguration.toString();
+    delegateConfig += ", Multiversion: " + multiVersion;
+    return delegateConfig;
   }
 
   private void maybeUpdateTaskRejectionStatus() {
@@ -921,7 +934,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     try {
       FibonacciBackOff.executeForEver(() -> {
         RequestBuilder requestBuilder = prepareRequestBuilder();
-        return socket.open(requestBuilder.build());
+        Socket skt = socket.open(requestBuilder.build());
+        log.info("Socket status: {}", socket.status().toString());
+        return skt;
       });
     } catch (IOException ex) {
       log.error("Unable to open socket", ex);
@@ -1346,6 +1361,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     if (perpetualTaskWorker != null) {
       log.info("Stopping perpetual task workers");
       perpetualTaskWorker.stop();
+      log.info("Stopped perpetual task workers");
     }
 
     if (restartableServiceManager != null) {
@@ -1353,7 +1369,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
 
     if (chronicleEventTailer != null) {
+      log.info("Stopping chronicle event trailer");
       chronicleEventTailer.stopAsync().awaitTerminated();
+      log.info("Stopped chronicle event trailer");
     }
   }
 
@@ -1401,11 +1419,10 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         log.info("[Old] Upgrade is pending...");
       } else {
         log.info("Checking for upgrade");
-        String delegateName = System.getenv().get("DELEGATE_NAME");
         try {
           RestResponse<DelegateScripts> restResponse = HTimeLimiter.callInterruptible21(delegateHealthTimeLimiter,
               Duration.ofMinutes(1),
-              () -> executeRestCall(delegateAgentManagerClient.getDelegateScripts(accountId, version, delegateName)));
+              () -> executeRestCall(delegateAgentManagerClient.getDelegateScripts(accountId, version, DELEGATE_NAME)));
           DelegateScripts delegateScripts = restResponse.getResource();
           if (delegateScripts.isDoUpgrade()) {
             upgradePending.set(true);
@@ -1747,7 +1764,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         log.error("Error sending heartbeat", e);
       }
     } else {
-      log.warn("Socket is not open");
+      log.warn("Socket is not open, status: {}", socket.status().toString());
     }
   }
 
@@ -1770,7 +1787,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         log.error("Error sending heartbeat", e);
       }
     } else {
-      log.warn("Socket is not open");
+      log.warn("Socket is not open, status: {}", socket.status().toString());
     }
   }
 
@@ -2004,7 +2021,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         injector.injectMembers(delegateValidateTask);
         currentlyValidatingTasks.put(delegateTaskPackage.getDelegateTaskId(), delegateTaskPackage);
         updateCounterIfLessThanCurrent(maxValidatingTasksCount, currentlyValidatingTasks.size());
-        delegateValidateTask.validationResults(delegateTaskPackage.isNG());
+        delegateValidateTask.validationResults();
       } else if (delegateInstanceId.equals(delegateTaskPackage.getDelegateInstanceId())) {
         applyDelegateSecretFunctor(delegateTaskPackage);
         // Whitelisted. Proceed immediately.

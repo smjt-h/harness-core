@@ -7,6 +7,8 @@
 
 package io.harness.delegate.task.executioncapability;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 import io.harness.beans.KeyValuePair;
 import io.harness.capability.CapabilityParameters;
 import io.harness.capability.CapabilitySubjectPermission;
@@ -23,11 +25,15 @@ import java.util.stream.Collectors;
 
 public class HttpConnectionExecutionCapabilityCheck implements CapabilityCheck, ProtoCapabilityCheck {
   @Override
-  public CapabilityResponse performCapabilityCheck(ExecutionCapability delegateCapability, boolean isNG) {
+  public CapabilityResponse performCapabilityCheck(ExecutionCapability delegateCapability) {
     HttpConnectionExecutionCapability httpConnectionExecutionCapability =
         (HttpConnectionExecutionCapability) delegateCapability;
     boolean valid;
-    if (!isNG) {
+    boolean isNextGen =
+        isNotBlank(System.getenv().get("NEXT_GEN")) && Boolean.parseBoolean(System.getenv().get("NEXT_GEN"));
+    if (isNextGen) {
+      valid = Http.connectableHttpUrlWithoutFollowingRedirect(httpConnectionExecutionCapability.fetchConnectableUrl());
+    } else {
       if (httpConnectionExecutionCapability.getHeaders() != null) {
         valid = Http.connectableHttpUrlWithHeaders(
             httpConnectionExecutionCapability.fetchConnectableUrl(), httpConnectionExecutionCapability.getHeaders());
@@ -39,8 +45,6 @@ public class HttpConnectionExecutionCapabilityCheck implements CapabilityCheck, 
           valid = Http.connectableHttpUrl(httpConnectionExecutionCapability.fetchConnectableUrl());
         }
       }
-    } else {
-      valid = Http.connectableHttpUrlWithoutFollowingRedirect(httpConnectionExecutionCapability.fetchConnectableUrl());
     }
     return CapabilityResponse.builder().delegateCapability(httpConnectionExecutionCapability).validated(valid).build();
   }

@@ -85,24 +85,25 @@ public class FullSyncAccumulatorServiceImpl implements FullSyncAccumulatorServic
       FullSyncServiceBlockingStub fullSyncServiceBlockingStub = fullSyncStubEntry.getValue();
       Microservice microservice = fullSyncStubEntry.getKey();
       FileChanges entitiesForFullSync = null;
-      if (isFullSyncEnabled(microservice)) {
-        try {
-          // todo(abhinav): add retryInputSetReferenceProtoDTO
-          log.info("Trying to get of the files for the message Id {} for the microservice {}", messageId, microservice);
-          entitiesForFullSync = GitSyncGrpcClientUtils.retryAndProcessException(
-              fullSyncServiceBlockingStub::getEntitiesForFullSync, scopeDetails);
-        } catch (Exception e) {
-          log.error("Error encountered while getting entities while full sync for msvc {}", microservice, e);
-          continue;
-        }
+      try {
+        // todo(abhinav): add retryInputSetReferenceProtoDTO
+        log.info("Trying to get of the files for the message Id {} for the microservice {}", messageId, microservice);
+        entitiesForFullSync = GitSyncGrpcClientUtils.retryAndProcessException(
+            fullSyncServiceBlockingStub::getEntitiesForFullSync, scopeDetails);
+      } catch (Exception e) {
+        log.error("Error encountered while getting entities while full sync for msvc {}", microservice, e);
+        continue;
       }
       if (entitiesForFullSync != null) {
         isEntitiesAvailableForFullSync =
             checkIfEntitiesAvailableForFullSync(entitiesForFullSync, microservice) || isEntitiesAvailableForFullSync;
-        emptyIfNull(entitiesForFullSync.getFileChangesList()).forEach(entityForFullSync -> {
+        int fileProcessingSequenceNumber = 0;
+        for (FileChange entityForFullSync : entitiesForFullSync.getFileChangesList()) {
           saveFullSyncEntityInfo(gitConfigScope, messageId, microservice, entityForFullSync,
-              fullSyncEventRequest.getBranch(), fullSyncEventRequest.getRootFolder(), yamlGitConfigDTO);
-        });
+              fullSyncEventRequest.getBranch(), fullSyncEventRequest.getRootFolder(), yamlGitConfigDTO,
+              fileProcessingSequenceNumber);
+          fileProcessingSequenceNumber++;
+        }
       }
     }
 
@@ -151,10 +152,6 @@ public class FullSyncAccumulatorServiceImpl implements FullSyncAccumulatorServic
     return false;
   }
 
-  private boolean isFullSyncEnabled(Microservice microservice) {
-    return microservice != Microservice.POLICYMGMT;
-  }
-
   private GitFullSyncJob saveTheFullSyncJob(FullSyncEventRequest fullSyncEventRequest, String messageId) {
     final EntityScopeInfo gitConfigScope = fullSyncEventRequest.getGitConfigScope();
     final UserPrincipal userPrincipal =
@@ -182,7 +179,8 @@ public class FullSyncAccumulatorServiceImpl implements FullSyncAccumulatorServic
   }
 
   private void saveFullSyncEntityInfo(EntityScopeInfo entityScopeInfo, String messageId, Microservice microservice,
-      FileChange entityForFullSync, String branchName, String rootFolder, YamlGitConfigDTO yamlGitConfigDTO) {
+      FileChange entityForFullSync, String branchName, String rootFolder, YamlGitConfigDTO yamlGitConfigDTO,
+      int fileProcessingSequenceNumber) {
     String projectIdentifier = getStringValueFromProtoString(entityScopeInfo.getProjectId());
     String orgIdentifier = getStringValueFromProtoString(entityScopeInfo.getOrgId());
     final GitFullSyncEntityInfo gitFullSyncEntityInfo =
@@ -201,6 +199,7 @@ public class FullSyncAccumulatorServiceImpl implements FullSyncAccumulatorServic
             .branchName(branchName)
             .rootFolder(rootFolder)
             .retryCount(0)
+            .fileProcessingSequenceNumber(fileProcessingSequenceNumber)
             .build();
     markOverriddenEntities(
         entityScopeInfo.getAccountId(), orgIdentifier, projectIdentifier, entityForFullSync.getFilePath());

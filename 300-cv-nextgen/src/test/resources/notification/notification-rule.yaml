@@ -1,0 +1,13 @@
+---
+name: rule
+identifier: rule
+orgIdentifier: $orgIdentifier
+projectIdentifier: $projectIdentifier
+type: slo
+spec:
+  type: slo
+  errorBudgetRemainingPercentageThreshold: 10
+notificationMethod:
+  type: Email
+  userGroups: [testUserGroup]
+  recipients: [test@harness.io]

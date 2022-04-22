@@ -8,8 +8,10 @@
 package io.harness.plancreator.steps;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.SwaggerConstants;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.EntityName;
 import io.harness.plancreator.execution.ExecutionWrapperConfig;
@@ -17,6 +19,7 @@ import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.validator.NGRegexValidatorConstants;
 import io.harness.when.beans.StepWhenCondition;
+import io.harness.yaml.YamlSchemaTypes;
 import io.harness.yaml.core.VariableExpression;
 import io.harness.yaml.core.failurestrategy.FailureStrategyConfig;
 
@@ -53,7 +56,7 @@ public class StepGroupElementConfig {
   @NotNull
   @EntityIdentifier
   @Pattern(regexp = NGRegexValidatorConstants.IDENTIFIER_PATTERN)
-  @VariableExpression(replaceWithUUid = false)
+  @VariableExpression
   String identifier;
   @EntityName @Pattern(regexp = NGRegexValidatorConstants.NAME_PATTERN) @VariableExpression String name;
 
@@ -62,6 +65,10 @@ public class StepGroupElementConfig {
   ParameterField<String> skipCondition;
   @VariableExpression StepWhenCondition when;
 
-  List<FailureStrategyConfig> failureStrategies;
-  @NotNull @Size(min = 1) List<ExecutionWrapperConfig> steps;
+  @VariableExpression(skipVariableExpression = true) List<FailureStrategyConfig> failureStrategies;
+  @NotNull @Size(min = 1) @VariableExpression(skipVariableExpression = true) List<ExecutionWrapperConfig> steps;
+
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
+  @YamlSchemaTypes(value = {runtime})
+  ParameterField<List<TaskSelectorYaml>> delegateSelectors;
 }
