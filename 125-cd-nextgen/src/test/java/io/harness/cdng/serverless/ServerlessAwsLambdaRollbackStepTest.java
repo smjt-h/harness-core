@@ -215,6 +215,7 @@ public class ServerlessAwsLambdaRollbackStepTest {
             .commandName(SERVERLESS_AWS_LAMBDA_ROLLBACK_COMMAND_NAME)
             .commandUnitsProgress(CommandUnitsProgress.builder().build())
             .timeoutIntervalInMin(CDStepHelper.getTimeoutInMin(stepElementParameters))
+            .manifestContent(serverlessGitFetchOutcome.getManifestFileOverrideContent())
             .build();
 
     TaskRequest expectedTaskRequest = TaskRequest.newBuilder().build();
