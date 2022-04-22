@@ -269,7 +269,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
             .build();
 
     StepInfo serverlessDeploy = StepInfo.newBuilder()
-                                    .setName("Serverless Aws Lambda Deploy")
+                                    .setName("Serverless Lambda Deploy")
                                     .setType(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_DEPLOY)
                                     .setStepMetaData(StepMetaData.newBuilder()
                                                          .addCategory("ServerlessAwsLambda")
@@ -279,7 +279,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
                                     .build();
 
     StepInfo serverlessRollback = StepInfo.newBuilder()
-                                      .setName("Serverless Aws Lambda Rollback")
+                                      .setName("Serverless Lambda Rollback")
                                       .setType(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK)
                                       .setStepMetaData(StepMetaData.newBuilder()
                                                            .addCategory("ServerlessAwsLambda")

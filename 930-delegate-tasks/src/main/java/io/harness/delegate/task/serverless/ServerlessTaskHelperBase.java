@@ -8,12 +8,15 @@
 package io.harness.delegate.task.serverless;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.BLANK_ARTIFACT_PATH;
-import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.BLANK_ARTIFACT_PATH_EXPLANATION;
-import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.BLANK_ARTIFACT_PATH_HINT;
-import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.DOWNLOAD_FROM_ARTIFACTORY_EXPLANATION;
-import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.DOWNLOAD_FROM_ARTIFACTORY_FAILED;
-import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.DOWNLOAD_FROM_ARTIFACTORY_HINT;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.BLANK_ARTIFACT_PATH;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.BLANK_ARTIFACT_PATH_EXPLANATION;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.BLANK_ARTIFACT_PATH_HINT;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.DOWNLOAD_FROM_ARTIFACTORY_EXPLANATION;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.DOWNLOAD_FROM_ARTIFACTORY_FAILED;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.DOWNLOAD_FROM_ARTIFACTORY_HINT;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.SERVERLESS_GIT_FILES_DOWNLOAD_EXPLANATION;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.SERVERLESS_GIT_FILES_DOWNLOAD_FAILED;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.SERVERLESS_GIT_FILES_DOWNLOAD_HINT;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.filesystem.FileIo.createDirectoryIfDoesNotExist;
 import static io.harness.filesystem.FileIo.waitForDirectoryToBeAccessibleOutOfProcess;
@@ -48,7 +51,6 @@ import io.harness.eraro.Level;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.FileCreationException;
 import io.harness.exception.NestedExceptionUtils;
-import io.harness.exception.YamlException;
 import io.harness.exception.runtime.serverless.ServerlessCommandExecutionException;
 import io.harness.filesystem.FileIo;
 import io.harness.logging.CommandExecutionStatus;
@@ -129,35 +131,26 @@ public class ServerlessTaskHelperBase {
             gitStoreDelegateConfig.getSshKeySpecDTO(), gitStoreDelegateConfig.getEncryptedDataDetails());
         ngGitService.downloadFiles(gitStoreDelegateConfig, workingDirectory, accountId, sshSessionConfig, gitConfigDTO);
       }
-    } catch (YamlException e) {
-      Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
-      log.error("Failure in fetching files from git", sanitizedException);
-      executionLogCallback.saveExecutionLog(
-          "Failed to download manifest files from git. " + ExceptionUtils.getMessage(sanitizedException), ERROR,
-          CommandExecutionStatus.FAILURE);
-      throw new ServerlessCommandExecutionException(
-          format("Failed while trying to fetch files from git connector: '%s' in manifest with identifier: %s",
-              gitStoreDelegateConfig.getConnectorName(), gitStoreDelegateConfig.getManifestId()),
-          e.getCause());
     } catch (Exception e) {
       Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
       log.error("Failure in fetching files from git", sanitizedException);
       executionLogCallback.saveExecutionLog(
           "Failed to download manifest files from git. " + ExceptionUtils.getMessage(sanitizedException), ERROR,
           CommandExecutionStatus.FAILURE);
-      throw new ServerlessCommandExecutionException(
-          format("Failed while trying to fetch files from git connector: '%s' in manifest with identifier: %s",
-              gitStoreDelegateConfig.getConnectorName(), gitStoreDelegateConfig.getManifestId()),
-          e);
+      throw NestedExceptionUtils.hintWithExplanationException(
+          format(SERVERLESS_GIT_FILES_DOWNLOAD_HINT, gitStoreDelegateConfig.getManifestId()),
+          format(SERVERLESS_GIT_FILES_DOWNLOAD_EXPLANATION, gitStoreDelegateConfig.getConnectorName(),
+              gitStoreDelegateConfig.getManifestId()),
+          new ServerlessCommandExecutionException(SERVERLESS_GIT_FILES_DOWNLOAD_FAILED, sanitizedException));
     }
   }
 
   private void printFilesInExecutionLogs(
       GitStoreDelegateConfig gitStoreDelegateConfig, LogCallback executionLogCallback) {
     GitConfigDTO gitConfigDTO = ScmConnectorMapper.toGitConfigDTO(gitStoreDelegateConfig.getGitConfigDTO());
-    executionLogCallback.saveExecutionLog("\n"
-        + color(format("Fetching %s files with identifier: %s", gitStoreDelegateConfig.getManifestType(),
-                    gitStoreDelegateConfig.getManifestId()),
+    executionLogCallback.saveExecutionLog(
+        color(format("Fetching %s files with identifier: %s", gitStoreDelegateConfig.getManifestType(),
+                  gitStoreDelegateConfig.getManifestId()),
             White, Bold));
     executionLogCallback.saveExecutionLog("Git connector Url: " + gitConfigDTO.getUrl());
 
@@ -168,7 +161,7 @@ public class ServerlessTaskHelperBase {
     }
 
     StringBuilder sb = new StringBuilder(1024);
-    sb.append("\nFetching files within this path: \n");
+    sb.append("%nFetching files within this path: %n");
     gitStoreDelegateConfig.getPaths().forEach(
         filePath -> sb.append(color(format("- %s", filePath), Gray)).append(System.lineSeparator()));
     executionLogCallback.saveExecutionLog(sb.toString());
@@ -276,9 +269,9 @@ public class ServerlessTaskHelperBase {
       throw new FileCreationException("Failed to create file " + artifactFile.getCanonicalPath(), null,
           ErrorCode.FILE_CREATE_ERROR, Level.ERROR, USER, null);
     }
-    executionLogCallback.saveExecutionLog("\n"
-        + color(format("Downloading %s artifact with identifier: %s",
-                    artifactoryArtifactConfig.getServerlessArtifactType(), artifactoryArtifactConfig.getIdentifier()),
+    executionLogCallback.saveExecutionLog(
+        color(format("Downloading %s artifact with identifier: %s",
+                  artifactoryArtifactConfig.getServerlessArtifactType(), artifactoryArtifactConfig.getIdentifier()),
             White, Bold));
     executionLogCallback.saveExecutionLog("Artifactory Artifact Path: " + artifactPath);
     try (InputStream artifactInputStream = artifactoryNgService.downloadArtifacts(artifactoryConfigRequest,
@@ -292,7 +285,8 @@ public class ServerlessTaskHelperBase {
         throw NestedExceptionUtils.hintWithExplanationException(DOWNLOAD_FROM_ARTIFACTORY_HINT,
             String.format(
                 DOWNLOAD_FROM_ARTIFACTORY_EXPLANATION, artifactPath, artifactoryConfigRequest.getArtifactoryUrl()),
-            new ServerlessCommandExecutionException(DOWNLOAD_FROM_ARTIFACTORY_FAILED));
+            new ServerlessCommandExecutionException(
+                format(DOWNLOAD_FROM_ARTIFACTORY_FAILED, artifactoryArtifactConfig.getIdentifier())));
       }
       IOUtils.copy(artifactInputStream, outputStream);
       executionLogCallback.saveExecutionLog(color("Successfully downloaded artifact..%n", White, Bold));
@@ -302,10 +296,11 @@ public class ServerlessTaskHelperBase {
       executionLogCallback.saveExecutionLog(
           "Failed to download artifact from artifactory. " + ExceptionUtils.getMessage(sanitizedException), ERROR,
           CommandExecutionStatus.FAILURE);
-      throw new ServerlessCommandExecutionException(
-          format("Failed while trying to download artifact from artifactory with identifier: %s",
-              artifactoryArtifactConfig.getIdentifier()),
-          e);
+      throw NestedExceptionUtils.hintWithExplanationException(DOWNLOAD_FROM_ARTIFACTORY_HINT,
+          String.format(
+              DOWNLOAD_FROM_ARTIFACTORY_EXPLANATION, artifactPath, artifactoryConfigRequest.getArtifactoryUrl()),
+          new ServerlessCommandExecutionException(
+              format(DOWNLOAD_FROM_ARTIFACTORY_FAILED, artifactoryArtifactConfig.getIdentifier()), sanitizedException));
     }
   }
 }

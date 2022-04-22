@@ -47,7 +47,6 @@ public class NGMorphiaRegistrar implements MorphiaRegistrar {
     set.add(InfraMapping.class);
     set.add(K8sDirectInfraMapping.class);
     set.add(K8sGcpInfraMapping.class);
-    set.add(ServerlessAwsLambdaInfraMapping.class);
     set.add(PdcInfraMapping.class);
     set.add(DockerArtifactSource.class);
     set.add(ArtifactSource.class);
@@ -55,6 +54,7 @@ public class NGMorphiaRegistrar implements MorphiaRegistrar {
     set.add(PollingDocument.class);
     set.add(CDAccountExecutionMetadata.class);
     set.add(EnvironmentGroupEntity.class);
+    set.add(ServerlessAwsLambdaInfraMapping.class);
   }
 
   @Override

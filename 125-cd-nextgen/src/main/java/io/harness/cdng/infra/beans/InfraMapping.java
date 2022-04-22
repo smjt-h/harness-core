@@ -23,8 +23,8 @@ import org.mongodb.morphia.annotations.Entity;
 @JsonSubTypes({
   @JsonSubTypes.Type(value = K8SDirectInfrastructure.class, name = "kubernetes-direct")
   , @JsonSubTypes.Type(value = K8sGcpInfrastructure.class, name = "kubernetes-gcp"),
-      @JsonSubTypes.Type(value = ServerlessAwsLambdaInfrastructure.class, name = "serverless-aws-lambda"),
-      @JsonSubTypes.Type(value = PdcInfrastructure.class, name = "pdc")
+      @JsonSubTypes.Type(value = PdcInfrastructure.class, name = "pdc"),
+      @JsonSubTypes.Type(value = ServerlessAwsLambdaInfrastructure.class, name = "serverless-aws-lambda")
 })
 @Entity(value = "infrastructureMapping")
 public interface InfraMapping extends PersistentEntity, UuidAware, Outcome {

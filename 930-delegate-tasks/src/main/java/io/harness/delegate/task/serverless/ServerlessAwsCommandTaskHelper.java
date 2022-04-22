@@ -8,12 +8,12 @@
 package io.harness.delegate.task.serverless;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.SERVERLESS_MANIFEST_PROCESSING_EXPLANATION;
-import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.SERVERLESS_MANIFEST_PROCESSING_FAILED;
-import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.SERVERLESS_MANIFEST_PROCESSING_HINT;
-import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.SERVERLESS_PLUGIN_INSTALL_EXPLANATION;
-import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.SERVERLESS_PLUGIN_INSTALL_FAILED;
-import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.SERVERLESS_PLUGIN_INSTALL_HINT;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.SERVERLESS_COMMAND_FAILURE;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.SERVERLESS_COMMAND_FAILURE_EXPLANATION;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.SERVERLESS_COMMAND_FAILURE_HINT;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.SERVERLESS_MANIFEST_PROCESSING_EXPLANATION;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.SERVERLESS_MANIFEST_PROCESSING_FAILED;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.SERVERLESS_MANIFEST_PROCESSING_HINT;
 import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.logging.LogLevel.INFO;
 
@@ -34,6 +34,7 @@ import io.harness.filesystem.FileIo;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.serializer.YamlUtils;
+import io.harness.serverless.AbstractExecutable;
 import io.harness.serverless.ConfigCredentialCommand;
 import io.harness.serverless.DeployCommand;
 import io.harness.serverless.DeployListCommand;
@@ -179,12 +180,9 @@ public class ServerlessAwsCommandTaskHelper {
         response = serverlessTaskPluginHelper.installServerlessPlugin(serverlessDelegateTaskParams, serverlessClient,
             plugin, executionLogCallback, timeoutInMillis, serverlessAwsLambdaManifestConfig.getConfigOverridePath());
         if (response.getCommandExecutionStatus() != CommandExecutionStatus.SUCCESS) {
-          Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(
-              new ServerlessAwsLambdaRuntimeException(SERVERLESS_PLUGIN_INSTALL_FAILED));
           executionLogCallback.saveExecutionLog(
-              "%nPlugin Installation failed.. \n", ERROR, CommandExecutionStatus.FAILURE);
-          throw NestedExceptionUtils.hintWithExplanationException(format(SERVERLESS_PLUGIN_INSTALL_HINT, plugin),
-              format(SERVERLESS_PLUGIN_INSTALL_EXPLANATION, plugin), sanitizedException);
+              format("%nPlugin Installation failed.. "), ERROR, CommandExecutionStatus.FAILURE);
+          handleCommandExecutionFailure(response, serverlessClient.plugin());
         }
       }
       executionLogCallback.saveExecutionLog(
@@ -195,6 +193,18 @@ public class ServerlessAwsCommandTaskHelper {
               format("%nSkipping plugin installation, found no plugins in config..%n"), LogColor.White, LogWeight.Bold),
           INFO);
     }
+  }
+
+  public void handleCommandExecutionFailure(ServerlessCliResponse response, AbstractExecutable command) {
+    Optional<String> commandOptional = AbstractExecutable.getPrintableCommand(command.command());
+    String printCommand = command.command();
+    if (commandOptional.isPresent()) {
+      printCommand = commandOptional.get();
+    }
+    Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(
+        new ServerlessAwsLambdaRuntimeException(format(SERVERLESS_COMMAND_FAILURE, printCommand)));
+    throw NestedExceptionUtils.hintWithExplanationException(format(SERVERLESS_COMMAND_FAILURE_HINT, printCommand),
+        format(SERVERLESS_COMMAND_FAILURE_EXPLANATION, printCommand), sanitizedException);
   }
 
   public List<ServerlessAwsLambdaFunction> fetchFunctionOutputFromCloudFormationTemplate(

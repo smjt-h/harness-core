@@ -27,15 +27,15 @@ public enum ServiceDefinitionType {
   NATIVE_HELM("NativeHelm", Lists.newArrayList(ExecutionStrategyType.ROLLING, ExecutionStrategyType.DEFAULT),
       ServiceSpecType.NATIVE_HELM),
 
-  @JsonProperty(ServiceSpecType.SERVERLESS_AWS_LAMBDA)
-  SERVERLESS_AWS_LAMBDA("Serverless Aws Lambda",
-      Lists.newArrayList(ExecutionStrategyType.BASIC, ExecutionStrategyType.DEFAULT),
-      ServiceSpecType.SERVERLESS_AWS_LAMBDA),
-
   @JsonProperty(ServiceSpecType.SSH) SSH("Ssh", Lists.newArrayList(ExecutionStrategyType.DEFAULT), ServiceSpecType.SSH),
 
   @JsonProperty(ServiceSpecType.WINRM)
-  WINRM("WinRm", Lists.newArrayList(ExecutionStrategyType.DEFAULT), ServiceSpecType.WINRM);
+  WINRM("WinRm", Lists.newArrayList(ExecutionStrategyType.DEFAULT), ServiceSpecType.WINRM),
+
+  @JsonProperty(ServiceSpecType.SERVERLESS_AWS_LAMBDA)
+  SERVERLESS_AWS_LAMBDA("Serverless Aws Lambda",
+      Lists.newArrayList(ExecutionStrategyType.BASIC, ExecutionStrategyType.DEFAULT),
+      ServiceSpecType.SERVERLESS_AWS_LAMBDA);
 
   /*
   //Unsupported for now

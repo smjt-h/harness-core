@@ -7,9 +7,9 @@
 
 package io.harness.delegate.task.serverless;
 
-import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.NO_SERVERLESS_MANIFEST_EXPLANATION;
-import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.NO_SERVERLESS_MANIFEST_FAILED;
-import static io.harness.delegate.task.serverless.exception.ServerlessAwsLambdaExceptionConstants.NO_SERVERLESS_MANIFEST_HINT;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.NO_SERVERLESS_MANIFEST_EXPLANATION;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.NO_SERVERLESS_MANIFEST_FAILED;
+import static io.harness.delegate.task.serverless.exception.ServerlessExceptionConstants.NO_SERVERLESS_MANIFEST_HINT;
 import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.logging.LogLevel.INFO;
 
@@ -112,7 +112,7 @@ public class ServerlessGitFetchTask extends AbstractDelegateRunnableTask {
 
     } catch (Exception e) {
       Exception sanitizedException = ExceptionMessageSanitizer.sanitizeException(e);
-      log.error("Exception in Git Fetch Files Task", e);
+      log.error("Exception in Git Fetch Files Task", sanitizedException);
       throw new TaskNGDataException(
           UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress), sanitizedException);
     }
