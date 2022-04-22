@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Singular;
 import lombok.Value;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.data.annotation.TypeAlias;
@@ -47,6 +48,6 @@ public class K8BuildJobEnvInfo implements BuildJobEnvInfo {
   @Builder
   public static final class ConnectorConversionInfo {
     private String connectorRef;
-    private Map<EnvVariableEnum, String> envToSecretsMap;
+    @Singular("envToSecretEntry") private Map<EnvVariableEnum, String> envToSecretsMap;
   }
 }

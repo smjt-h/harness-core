@@ -67,6 +67,7 @@ import io.harness.beans.yaml.extended.volumes.HostPathYaml;
 import io.harness.beans.yaml.extended.volumes.HostPathYaml.HostPathYamlSpec;
 import io.harness.beans.yaml.extended.volumes.PersistentVolumeClaimYaml;
 import io.harness.beans.yaml.extended.volumes.PersistentVolumeClaimYaml.PersistentVolumeClaimYamlSpec;
+import io.harness.ci.beans.entities.BuildNumberDetails;
 import io.harness.common.CIExecutionConstants;
 import io.harness.connector.ConnectorDTO;
 import io.harness.connector.ConnectorInfoDTO;
@@ -250,15 +251,11 @@ public class CIExecutionPlanTestHelper {
         .build();
   }
 
-  public InitializeStepInfo getExpectedLiteEngineTaskInfoOnFirstPod(
-      ExecutionSource executionSource, StageElementConfig stageElementConfig) {
+  public InitializeStepInfo getExpectedLiteEngineTaskInfoOnFirstPod() {
     return InitializeStepInfo.builder()
         .identifier("liteEngineTask")
         .name("liteEngineTask")
-        .executionSource(executionSource)
-        .stageIdentifier(stageElementConfig.getIdentifier())
-        .variables(stageElementConfig.getVariables())
-        .stageElementConfig((IntegrationStageConfig) stageElementConfig.getStageType())
+        .buildJobEnvInfo(getCIBuildJobEnvInfoOnFirstPod())
         .executionElementConfig(getExecutionElementConfig())
         .ciCodebase(getCICodebase())
         .infrastructure(getInfrastructureWithVolume())
@@ -290,15 +287,11 @@ public class CIExecutionPlanTestHelper {
         .build();
   }
 
-  public InitializeStepInfo getExpectedLiteEngineTaskInfoOnOtherPods(
-      ExecutionSource executionSource, StageElementConfig stageElementConfig) {
+  public InitializeStepInfo getExpectedLiteEngineTaskInfoOnOtherPods() {
     return InitializeStepInfo.builder()
         .identifier("liteEngineTask")
         .name("liteEngineTask")
-        .executionSource(executionSource)
-        .stageIdentifier(stageElementConfig.getIdentifier())
-        .variables(stageElementConfig.getVariables())
-        .stageElementConfig((IntegrationStageConfig) stageElementConfig.getStageType())
+        .buildJobEnvInfo(getCIBuildJobEnvInfoOnOtherPods())
         .executionElementConfig(getExecutionElementConfig())
         .infrastructure(getInfrastructureWithVolume())
         .timeout(600000)
@@ -323,15 +316,17 @@ public class CIExecutionPlanTestHelper {
 
   private Map<String, ConnectorConversionInfo> getStepConnectorConversionInfoMap() {
     Map<String, ConnectorConversionInfo> map = new HashMap<>();
-    Map<EnvVariableEnum, String> envToSecretEntry = new HashMap<>();
-    envToSecretEntry.put(EnvVariableEnum.GCP_KEY_AS_FILE, "PLUGIN_JSON_KEY");
     map.put("publish-1",
-        ConnectorConversionInfo.builder().connectorRef("gcr-connector").envToSecretsMap(envToSecretEntry).build());
-    envToSecretEntry.clear();
-    envToSecretEntry.put(EnvVariableEnum.AWS_ACCESS_KEY, "PLUGIN_ACCESS_KEY");
-    envToSecretEntry.put(EnvVariableEnum.AWS_ACCESS_KEY, "PLUGIN_ACCESS_KEY");
+        ConnectorConversionInfo.builder()
+            .connectorRef("gcr-connector")
+            .envToSecretEntry(EnvVariableEnum.GCP_KEY_AS_FILE, "PLUGIN_JSON_KEY")
+            .build());
     map.put("publish-2",
-        ConnectorConversionInfo.builder().connectorRef("ecr-connector").envToSecretsMap(envToSecretEntry).build());
+        ConnectorConversionInfo.builder()
+            .connectorRef("ecr-connector")
+            .envToSecretEntry(EnvVariableEnum.AWS_ACCESS_KEY, "PLUGIN_ACCESS_KEY")
+            .envToSecretEntry(EnvVariableEnum.AWS_SECRET_KEY, "PLUGIN_SECRET_KEY")
+            .build());
     return map;
   }
 
@@ -501,7 +496,6 @@ public class CIExecutionPlanTestHelper {
         .identifier(SERVICE_ID)
         .dependencySpecType(CIServiceInfo.builder()
                                 .identifier(SERVICE_ID)
-                                .grpcPort(20002)
                                 .args(createValueField(Collections.singletonList(SERVICE_ARGS)))
                                 .entrypoint(createValueField(Collections.singletonList(SERVICE_ENTRYPOINT)))
                                 .image(createValueField(SERVICE_IMAGE))
@@ -1212,6 +1206,7 @@ public class CIExecutionPlanTestHelper {
   public CIExecutionArgs getCIExecutionArgs() {
     return CIExecutionArgs.builder()
         .executionSource(ManualExecutionSource.builder().branch(REPO_BRANCH).build())
+        .buildNumberDetails(BuildNumberDetails.builder().buildNumber(BUILD_NUMBER).build())
         .build();
   }
 
@@ -1222,7 +1217,10 @@ public class CIExecutionPlanTestHelper {
 
     WebhookEvent webhookEvent = PRWebhookEvent.builder().baseAttributes(core).repository(repo).build();
     ExecutionSource prExecutionSource = WebhookExecutionSource.builder().webhookEvent(webhookEvent).build();
-    return CIExecutionArgs.builder().executionSource(prExecutionSource).build();
+    return CIExecutionArgs.builder()
+        .buildNumberDetails(BuildNumberDetails.builder().buildNumber(BUILD_NUMBER).build())
+        .executionSource(prExecutionSource)
+        .build();
   }
 
   public Map<String, String> getPRCIExecutionArgsEnvVars() {
@@ -1249,7 +1247,10 @@ public class CIExecutionPlanTestHelper {
 
     WebhookEvent webhookEvent = BranchWebhookEvent.builder().baseAttributes(core).repository(repo).build();
     ExecutionSource prExecutionSource = WebhookExecutionSource.builder().webhookEvent(webhookEvent).build();
-    return CIExecutionArgs.builder().executionSource(prExecutionSource).build();
+    return CIExecutionArgs.builder()
+        .buildNumberDetails(BuildNumberDetails.builder().buildNumber(BUILD_NUMBER).build())
+        .executionSource(prExecutionSource)
+        .build();
   }
 
   public Map<String, String> getBranchCIExecutionArgsEnvVars() {
