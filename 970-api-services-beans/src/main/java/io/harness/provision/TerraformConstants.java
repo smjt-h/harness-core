@@ -66,7 +66,7 @@ public final class TerraformConstants {
   public static final String SSH_KEY_DIR = ".ssh";
   public static final String USE_CONNECTOR_CREDENTIALS = "useConnectorCredentials";
 
-  public static final String SSH_KEY_FILENAME = "sshKey";
+  public static final String SSH_KEY_FILENAME = "ssh.key";
   public static final String SSH_COMMAND_PREFIX = "ssh";
   public static final String GIT_SSH_COMMAND = "GIT_SSH_COMMAND";
   public static final String COMMAND_UNIT = "Execute Terraform";

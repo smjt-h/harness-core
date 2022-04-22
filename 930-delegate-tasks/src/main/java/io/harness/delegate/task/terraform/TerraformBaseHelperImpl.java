@@ -23,13 +23,27 @@ import static io.harness.filesystem.FileIo.deleteDirectoryAndItsContentIfExists;
 import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.logging.LogLevel.INFO;
 import static io.harness.logging.LogLevel.WARN;
-import static io.harness.provision.TerraformConstants.*;
 import static io.harness.provision.TerraformConstants.GIT_SSH_COMMAND;
+import static io.harness.provision.TerraformConstants.SSH_COMMAND_PREFIX;
+import static io.harness.provision.TerraformConstants.SSH_KEY_DIR;
+import static io.harness.provision.TerraformConstants.SSH_KEY_FILENAME;
+import static io.harness.provision.TerraformConstants.TERRAFORM_APPLY_PLAN_FILE_VAR_NAME;
+import static io.harness.provision.TerraformConstants.TERRAFORM_DESTROY_PLAN_FILE_OUTPUT_NAME;
+import static io.harness.provision.TerraformConstants.TERRAFORM_DESTROY_PLAN_FILE_VAR_NAME;
+import static io.harness.provision.TerraformConstants.TERRAFORM_PLAN_FILE_OUTPUT_NAME;
+import static io.harness.provision.TerraformConstants.TERRAFORM_PLAN_JSON_FILE_NAME;
+import static io.harness.provision.TerraformConstants.TERRAFORM_STATE_FILE_NAME;
+import static io.harness.provision.TerraformConstants.TERRAFORM_VARIABLES_FILE_NAME;
+import static io.harness.provision.TerraformConstants.TF_BASE_DIR;
+import static io.harness.provision.TerraformConstants.TF_SCRIPT_DIR;
+import static io.harness.provision.TerraformConstants.TF_SSH_COMMAND_ARG;
+import static io.harness.provision.TerraformConstants.TF_WORKING_DIR;
+import static io.harness.provision.TerraformConstants.USER_DIR_KEY;
+import static io.harness.provision.TerraformConstants.WORKSPACE_STATE_FILE_PATH_FORMAT;
 
 import static software.wings.beans.LogColor.White;
 import static software.wings.beans.LogColor.Yellow;
 import static software.wings.beans.LogHelper.color;
-import static software.wings.beans.LogWeight.Bold;
 
 import static java.lang.String.format;
 

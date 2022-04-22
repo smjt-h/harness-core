@@ -28,6 +28,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EnvironmentType;
 import io.harness.category.element.UnitTests;
+import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.cdng.manifest.yaml.ArtifactoryStorageConfigDTO;
 import io.harness.cdng.manifest.yaml.GitStoreDTO;
 import io.harness.cdng.provision.terraform.TerraformConfig;
@@ -89,6 +90,7 @@ public class TerraformRollbackStepTest extends CategoryTest {
   @Mock private StepHelper stepHelper;
   @Mock private AccountService accountService;
   @Mock private TelemetryReporter telemetryReporter;
+  @Mock private CDFeatureFlagHelper cdFeatureFlagHelper;
 
   @InjectMocks private TerraformRollbackStep terraformRollbackStep;
 
