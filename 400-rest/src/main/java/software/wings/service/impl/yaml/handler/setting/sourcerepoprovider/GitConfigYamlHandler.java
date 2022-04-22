@@ -13,7 +13,7 @@ import static io.harness.exception.WingsException.USER;
 import static software.wings.beans.CGConstants.ENCRYPTED_VALUE_STR;
 
 import static java.util.Objects.isNull;
-import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.apache.logging.log4j.util.Strings.isBlank;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
