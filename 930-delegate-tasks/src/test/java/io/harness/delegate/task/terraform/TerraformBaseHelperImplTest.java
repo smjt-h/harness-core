@@ -448,9 +448,7 @@ public class TerraformBaseHelperImplTest extends CategoryTest {
     terraformBaseHelper.configureCredentialsForModuleSource(taskNGParameters, gitStoreDelegateConfig, logCallback);
     verify(logCallback, times(1))
         .saveExecutionLog(
-            color(
-                "\nExporting SSH Key with Passphrase for Module Source is not Supported, Skipping the Export", Yellow),
-            WARN);
+            color("\nExporting SSH Key with Passphrase for Module Source is not Supported", Yellow), WARN);
     assertThat(taskNGParameters.getEnvironmentVariables().size()).isEqualTo(0);
     FileIo.deleteFileIfExists(Paths.get(System.getProperty(USER_DIR_KEY), "ssh.key").toString());
   }
@@ -490,9 +488,7 @@ public class TerraformBaseHelperImplTest extends CategoryTest {
     terraformBaseHelper.configureCredentialsForModuleSource(taskNGParameters, gitStoreDelegateConfig, logCallback);
     verify(logCallback, times(1))
         .saveExecutionLog(
-            color("\nExporting Username and Password with SSH for Module Source is not Supported, Skipping the Export",
-                Yellow),
-            WARN);
+            color("\nExporting Username and Password with SSH for Module Source is not Supported", Yellow), WARN);
     assertThat(taskNGParameters.getEnvironmentVariables().size()).isEqualTo(0);
     FileIo.deleteFileIfExists(Paths.get(System.getProperty(USER_DIR_KEY), "ssh.key").toString());
   }
@@ -518,9 +514,7 @@ public class TerraformBaseHelperImplTest extends CategoryTest {
 
     terraformBaseHelper.configureCredentialsForModuleSource(taskNGParameters, gitStoreDelegateConfig, logCallback);
     verify(logCallback, times(1))
-        .saveExecutionLog(
-            color("\nExporting Username and Password for Module Source is not Supported, Skipping the Export", Yellow),
-            WARN);
+        .saveExecutionLog(color("\nExporting Username and Password for Module Source is not Supported", Yellow), WARN);
     assertThat(taskNGParameters.getEnvironmentVariables().size()).isEqualTo(0);
     FileIo.deleteFileIfExists(Paths.get(System.getProperty(USER_DIR_KEY), "ssh.key").toString());
   }

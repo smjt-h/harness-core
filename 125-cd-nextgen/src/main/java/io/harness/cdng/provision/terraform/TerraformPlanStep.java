@@ -128,13 +128,8 @@ public class TerraformPlanStep extends TaskExecutableWithRollbackAndRbac<Terrafo
     builder.taskType(TFTaskType.PLAN)
         .terraformCommandUnit(TerraformCommandUnit.Plan)
         .entityId(entityId)
-        .tfModuleSourceInheritSSH(cdFeatureFlagHelper.isEnabled(
-                                      AmbianceUtils.getAccountId(ambiance), FeatureName.TF_MODULE_SOURCE_INHERIT_SSH)
-            && configuration.getConfigFiles().getModuleSource() != null
-            && !ParameterField.isNull(configuration.getConfigFiles().getModuleSource().getUseConnectorCredentials())
-            && CDStepHelper.getParameterFieldBooleanValue(
-                configuration.getConfigFiles().getModuleSource().getUseConnectorCredentials(),
-                USE_CONNECTOR_CREDENTIALS, stepElementParameters))
+        .tfModuleSourceInheritSSH(
+            helper.isExportCredentialForSourceModule(ambiance, configuration.getConfigFiles(), stepElementParameters))
         .currentStateFileId(helper.getLatestFileId(entityId))
         .workspace(ParameterFieldHelper.getParameterFieldValue(configuration.getWorkspace()))
         .configFile(helper.getGitFetchFilesConfig(

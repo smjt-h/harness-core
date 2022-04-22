@@ -70,6 +70,7 @@ import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.NGAccess;
 import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
 import io.harness.persistence.HPersistence;
+import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.expression.EngineExpressionService;
@@ -610,6 +611,15 @@ public class TerraformStepHelper {
       throw new InvalidRequestException(
           format("Unable to update StateFile version for entityId: [%s], Please try re-running pipeline", entityId));
     }
+  }
+
+  public boolean isExportCredentialForSourceModule(
+      Ambiance ambiance, TerraformConfigFilesWrapper configFiles, StepElementParameters stepElementParameters) {
+    return cdFeatureFlagHelper.isEnabled(AmbianceUtils.getAccountId(ambiance), FeatureName.TF_MODULE_SOURCE_INHERIT_SSH)
+        && configFiles.getModuleSource() != null
+        && !ParameterField.isNull(configFiles.getModuleSource().getUseConnectorCredentials())
+        && CDStepHelper.getParameterFieldBooleanValue(configFiles.getModuleSource().getUseConnectorCredentials(),
+            USE_CONNECTOR_CREDENTIALS, stepElementParameters);
   }
 
   // Conversion Methods
