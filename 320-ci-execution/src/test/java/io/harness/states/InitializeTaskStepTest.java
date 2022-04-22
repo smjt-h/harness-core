@@ -22,14 +22,12 @@ import io.harness.beans.environment.pod.container.ContainerDefinitionInfo;
 import io.harness.beans.environment.pod.container.ContainerImageDetails;
 import io.harness.beans.steps.stepinfo.InitializeStepInfo;
 import io.harness.category.element.UnitTests;
-import io.harness.ci.integrationstage.BuildJobEnvInfoBuilder;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.ci.k8s.CIContainerStatus;
 import io.harness.delegate.beans.ci.k8s.CiK8sTaskResponse;
 import io.harness.delegate.beans.ci.k8s.K8sTaskExecutionResponse;
 import io.harness.delegate.beans.ci.k8s.PodStatus;
 import io.harness.delegate.beans.ci.vm.VmTaskExecutionResponse;
-import io.harness.executionplan.CIExecutionPlanTestHelper;
 import io.harness.executionplan.CIExecutionTestBase;
 import io.harness.k8s.model.ImageDetails;
 import io.harness.logging.CommandExecutionStatus;
@@ -43,7 +41,6 @@ import io.harness.rule.Owner;
 import io.harness.serializer.KryoSerializer;
 import io.harness.stateutils.buildstate.BuildSetupUtils;
 
-import com.google.inject.Inject;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -60,9 +57,8 @@ public class InitializeTaskStepTest extends CIExecutionTestBase {
   @Mock private CIDelegateTaskExecutor ciDelegateTaskExecutor;
   @Mock private ExecutionSweepingOutputService executionSweepingOutputResolver;
   @Mock private KryoSerializer kryoSerializer;
-  @Mock private BuildJobEnvInfoBuilder buildJobEnvInfoBuilder;
   @InjectMocks private InitializeTaskStep initializeTaskStep;
-  @Inject private CIExecutionPlanTestHelper ciExecutionPlanTestHelper;
+
   private Ambiance ambiance;
   private InitializeStepInfo initializeStepInfo;
   private StepElementParameters stepElementParameters;
@@ -72,11 +68,7 @@ public class InitializeTaskStepTest extends CIExecutionTestBase {
     Map<String, String> setupAbstractions = new HashMap<>();
     setupAbstractions.put("accountId", "accountId");
     ambiance = Ambiance.newBuilder().putAllSetupAbstractions(setupAbstractions).build();
-    initializeStepInfo = InitializeStepInfo.builder()
-                             .stageElementConfig(ciExecutionPlanTestHelper.getIntegrationStageConfig())
-                             .executionSource(ciExecutionPlanTestHelper.getCIExecutionArgs().getExecutionSource())
-                             .executionElementConfig(ciExecutionPlanTestHelper.getExecutionElementConfig())
-                             .build();
+    initializeStepInfo = InitializeStepInfo.builder().build();
     stepElementParameters = StepElementParameters.builder()
                                 .timeout(ParameterField.createValueField("10m"))
                                 .name("name")
