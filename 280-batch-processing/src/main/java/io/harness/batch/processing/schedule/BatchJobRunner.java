@@ -7,8 +7,9 @@
 
 package io.harness.batch.processing.schedule;
 
-import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
-
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.common.collect.ImmutableSet;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.batch.processing.ccm.BatchJobType;
@@ -21,15 +22,6 @@ import io.harness.batch.processing.service.intfc.CustomBillingMetaDataService;
 import io.harness.ccm.commons.entities.batch.BatchJobInterval;
 import io.harness.ccm.commons.entities.batch.BatchJobScheduledData;
 import io.harness.logging.AutoLogContext;
-
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.common.collect.ImmutableSet;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.BatchStatus;
@@ -43,6 +35,14 @@ import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteExcep
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 
 @Slf4j
 @Service
@@ -90,6 +90,8 @@ public class BatchJobRunner {
     if (null == startAt) {
       log.debug("Event not received for account {} ", accountId);
       return;
+    } else {
+      log.info("Last batch job time {} {}", startAt, batchJobType);
     }
     Instant endAt = Instant.now().minus(1, ChronoUnit.HOURS);
     if (batchJobType == BatchJobType.ANOMALY_DETECTION_CLOUD) {
@@ -100,8 +102,10 @@ public class BatchJobRunner {
     }
     BatchJobScheduleTimeProvider batchJobScheduleTimeProvider =
         new BatchJobScheduleTimeProvider(startAt, endAt, duration, chronoUnit);
+    log.info("params {} {} {} {}", startAt, endAt, duration, chronoUnit);
     Instant startInstant = startAt;
     Instant jobsStartTime = Instant.now();
+    log.info("Job params {} {}", startInstant, startAt);
     while (batchJobScheduleTimeProvider.hasNext()) {
       Instant endInstant = batchJobScheduleTimeProvider.next();
       if (null != endInstant && checkDependentJobFinished(accountId, endInstant, dependentBatchJobs)
@@ -187,6 +191,7 @@ public class BatchJobRunner {
     for (BatchJobType dependentBatchJob : dependentBatchJobs) {
       Instant lastDependentJobEndAt =
           batchJobScheduledDataService.fetchLastDependentBatchJobScheduledTime(accountId, dependentBatchJob);
+      log.info("dependent job {} {} {}", dependentBatchJob, lastDependentJobEndAt, endAt);
       if (lastDependentJobEndAt == null || lastDependentJobEndAt.isBefore(endAt)) {
         return false;
       }
