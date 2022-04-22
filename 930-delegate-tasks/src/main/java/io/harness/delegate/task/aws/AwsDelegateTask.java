@@ -31,6 +31,8 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import com.google.inject.Inject;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
@@ -64,7 +66,7 @@ public class AwsDelegateTask extends AbstractDelegateRunnableTask {
   }
 
   @Override
-  public DelegateResponseData run(TaskParameters parameters) {
+  public DelegateResponseData run(TaskParameters parameters) throws IOException {
     final AwsTaskParams awsTaskParams = (AwsTaskParams) parameters;
     final AwsTaskType awsTaskType = awsTaskParams.getAwsTaskType();
     if (Objects.isNull(awsTaskType)) {
