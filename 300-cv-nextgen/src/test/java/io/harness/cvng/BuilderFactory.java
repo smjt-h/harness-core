@@ -51,6 +51,7 @@ import io.harness.cvng.core.beans.CustomHealthRequestDefinition;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
 import io.harness.cvng.core.beans.RiskProfile;
+import io.harness.cvng.core.beans.Scope;
 import io.harness.cvng.core.beans.monitoredService.ChangeSourceDTO;
 import io.harness.cvng.core.beans.monitoredService.ChangeSourceDTO.ChangeSourceDTOBuilder;
 import io.harness.cvng.core.beans.monitoredService.HealthSource;
@@ -70,6 +71,9 @@ import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricRespons
 import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
+import io.harness.cvng.core.beans.template.SRMTemplateDTO;
+import io.harness.cvng.core.beans.template.SRMTemplateDTO.SRMTemplateDTOBuilder;
+import io.harness.cvng.core.beans.template.TemplateType;
 import io.harness.cvng.core.entities.AnalysisInfo;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig.AppDynamicsCVConfigBuilder;
@@ -172,6 +176,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Value;
+import org.apache.commons.lang3.StringUtils;
 
 @Data
 @Builder(buildMethodName = "unsafeBuild")
@@ -324,6 +329,20 @@ public class BuilderFactory {
                   .deploymentTag(ParameterField.createValueField("build#1"))
                   .sensitivity(ParameterField.createValueField("Low"))
                   .build());
+  }
+
+  public SRMTemplateDTOBuilder srmTemplateDTOBuilder() {
+    return SRMTemplateDTO.builder()
+        .accountId(getProjectParams().getAccountIdentifier())
+        .orgIdentifier(getProjectParams().getOrgIdentifier())
+        .projectIdentifier(getProjectParams().getProjectIdentifier())
+        .scope(Scope.PROJECT)
+        .fullyQualifiedIdentifier(StringUtils.joinWith("/", getProjectParams().getAccountIdentifier(),
+            getProjectParams().getOrgIdentifier(), getProjectParams().getProjectIdentifier(), "identifier"))
+        .identifier("identifier")
+        .yamlTemplate("yamlTemplate")
+        .templateType(TemplateType.MONITORED_SERVICE)
+        .version("version");
   }
 
   public AppDynamicsCVConfigBuilder appDynamicsCVConfigBuilder() {

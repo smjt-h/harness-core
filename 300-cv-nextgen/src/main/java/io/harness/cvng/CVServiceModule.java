@@ -124,6 +124,7 @@ import io.harness.cvng.core.services.api.OnboardingService;
 import io.harness.cvng.core.services.api.PagerDutyService;
 import io.harness.cvng.core.services.api.ParseSampleDataService;
 import io.harness.cvng.core.services.api.PrometheusService;
+import io.harness.cvng.core.services.api.SRMTemplateService;
 import io.harness.cvng.core.services.api.SetupUsageEventService;
 import io.harness.cvng.core.services.api.SideKickExecutor;
 import io.harness.cvng.core.services.api.SideKickService;
@@ -177,6 +178,7 @@ import io.harness.cvng.core.services.impl.ParseSampleDataServiceImpl;
 import io.harness.cvng.core.services.impl.PrometheusDataCollectionInfoMapper;
 import io.harness.cvng.core.services.impl.PrometheusServiceImpl;
 import io.harness.cvng.core.services.impl.SLIDataCollectionTaskServiceImpl;
+import io.harness.cvng.core.services.impl.SRMTemplateServiceImpl;
 import io.harness.cvng.core.services.impl.ServiceGuardDataCollectionTaskServiceImpl;
 import io.harness.cvng.core.services.impl.SetupUsageEventServiceImpl;
 import io.harness.cvng.core.services.impl.SideKickServiceImpl;
@@ -507,6 +509,7 @@ public class CVServiceModule extends AbstractModule {
         .to(DynatraceDataCollectionInfoMapper.class)
         .in(Scopes.SINGLETON);
 
+    bind(SRMTemplateService.class).to(SRMTemplateServiceImpl.class).in(Scopes.SINGLETON);
     bind(MetricPackService.class).to(MetricPackServiceImpl.class);
     bind(AppDynamicsService.class).to(AppDynamicsServiceImpl.class).in(Singleton.class);
     bind(VerificationJobService.class).to(VerificationJobServiceImpl.class);
