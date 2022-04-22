@@ -149,6 +149,7 @@ public class GitConfigYamlHandlerTest extends SettingValueConfigYamlHandlerTestB
                               .reference(SAMPLE_STRING)
                               .keyAuth(true)
                               .sshKeyName(SAMPLE_STRING)
+                              .password(SAMPLE_STRING)
                               .authorName(SAMPLE_STRING)
                               .authorEmailId(SAMPLE_STRING)
                               .commitMessage(SAMPLE_STRING)
