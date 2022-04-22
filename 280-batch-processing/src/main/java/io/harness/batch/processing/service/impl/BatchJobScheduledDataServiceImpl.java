@@ -7,6 +7,7 @@
 
 package io.harness.batch.processing.service.impl;
 
+import com.google.common.collect.ImmutableSet;
 import io.harness.batch.processing.ccm.BatchJobBucket;
 import io.harness.batch.processing.ccm.BatchJobType;
 import io.harness.batch.processing.dao.intfc.BatchJobScheduledDataDao;
@@ -14,16 +15,14 @@ import io.harness.batch.processing.service.intfc.BatchJobScheduledDataService;
 import io.harness.ccm.commons.entities.batch.BatchJobScheduledData;
 import io.harness.ccm.commons.entities.batch.CEDataCleanupRequest;
 import io.harness.ccm.health.LastReceivedPublishedMessageDao;
-
-import software.wings.service.intfc.instance.CloudToHarnessMappingService;
-
-import com.google.common.collect.ImmutableSet;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import software.wings.service.intfc.instance.CloudToHarnessMappingService;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -42,6 +41,7 @@ public class BatchJobScheduledDataServiceImpl implements BatchJobScheduledDataSe
   @Override
   public Instant fetchLastBatchJobScheduledTime(String accountId, BatchJobType batchJobType) {
     Instant instant = fetchLastDependentBatchJobScheduledTime(accountId, batchJobType);
+    log.info("Instance time fir {}", instant);
     if (null == instant) {
       if (ImmutableSet.of(BatchJobBucket.OUT_OF_CLUSTER, BatchJobBucket.OUT_OF_CLUSTER_ECS)
               .contains(batchJobType.getBatchJobBucket())) {
