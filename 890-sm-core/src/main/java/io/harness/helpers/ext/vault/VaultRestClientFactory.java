@@ -10,6 +10,9 @@ package io.harness.helpers.ext.vault;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
+import static com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT;
+import static com.fasterxml.jackson.core.JsonParser.Feature.AUTO_CLOSE_SOURCE;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.runtime.HashiCorpVaultRuntimeException;
 import io.harness.network.Http;
@@ -51,8 +54,8 @@ public class VaultRestClientFactory {
   private static ObjectMapper objectMapper = new ObjectMapper();
   private static HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
   static {
-    objMapper.configure(AUTO_CLOSE_SOURCE, false);
-    objMapper.configure(AUTO_CLOSE_JSON_CONTENT, false);
+    objectMapper.configure(AUTO_CLOSE_SOURCE, false);
+    objectMapper.configure(AUTO_CLOSE_JSON_CONTENT, false);
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     loggingInterceptor.setLevel(Level.NONE);
   }
