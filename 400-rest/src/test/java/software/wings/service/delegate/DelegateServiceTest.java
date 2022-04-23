@@ -3109,7 +3109,7 @@ public class DelegateServiceTest extends WingsBaseTest {
                             .build();
     persistence.save(delegate);
 
-    Set<String> tags = delegateService.retrieveDelegateSelectors(delegate);
+    Set<String> tags = delegateService.retrieveDelegateSelectors(delegate, false);
     assertThat(tags.size()).isEqualTo(3);
     assertThat(tags).containsExactlyInAnyOrder("abc", "qwe", "xde");
   }
@@ -3127,7 +3127,7 @@ public class DelegateServiceTest extends WingsBaseTest {
                             .build();
     persistence.save(delegate);
 
-    Set<String> tags = delegateService.retrieveDelegateSelectors(delegate);
+    Set<String> tags = delegateService.retrieveDelegateSelectors(delegate, false);
     assertThat(tags.size()).isEqualTo(0);
   }
 

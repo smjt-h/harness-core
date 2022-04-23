@@ -52,6 +52,7 @@ import io.harness.azure.impl.AzureNgClientImpl;
 import io.harness.azure.impl.AzureWebClientImpl;
 import io.harness.cdng.notification.task.MailSenderDelegateTask;
 import io.harness.cdng.secrets.tasks.SSHConfigValidationDelegateTask;
+import io.harness.cdng.secrets.tasks.WinRmConfigValidationDelegateTask;
 import io.harness.cistatus.service.GithubService;
 import io.harness.cistatus.service.GithubServiceImpl;
 import io.harness.cistatus.service.bitbucket.BitbucketService;
@@ -210,6 +211,7 @@ import io.harness.delegate.task.manifests.CustomManifestValuesFetchTask;
 import io.harness.delegate.task.nexus.NexusDelegateTask;
 import io.harness.delegate.task.nexus.NexusValidationHandler;
 import io.harness.delegate.task.pcf.CfCommandRequest.PcfCommandType;
+import io.harness.delegate.task.pdc.HostConnectivityValidationDelegateTask;
 import io.harness.delegate.task.scm.ScmDelegateClientImpl;
 import io.harness.delegate.task.scm.ScmGitFileTask;
 import io.harness.delegate.task.scm.ScmGitPRTask;
@@ -257,6 +259,7 @@ import io.harness.encryptors.clients.GcpSecretsManagerEncryptor;
 import io.harness.encryptors.clients.HashicorpVaultEncryptor;
 import io.harness.encryptors.clients.LocalEncryptor;
 import io.harness.exception.DelegateServiceDriverExceptionHandler;
+import io.harness.exception.ExplanationException;
 import io.harness.exception.exceptionmanager.ExceptionModule;
 import io.harness.exception.exceptionmanager.exceptionhandler.ExceptionHandler;
 import io.harness.gcp.client.GcpClient;
@@ -614,6 +617,9 @@ import software.wings.settings.SettingValue;
 import software.wings.utils.HostValidationService;
 import software.wings.utils.HostValidationServiceImpl;
 
+import com.google.api.client.auth.oauth2.StoredCredential;
+import com.google.api.client.util.store.DataStore;
+import com.google.api.client.util.store.MemoryDataStoreFactory;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -623,6 +629,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import java.io.IOException;
 import java.time.Clock;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -883,6 +890,14 @@ public class DelegateModule extends AbstractModule {
     bind(AwsClusterService.class).to(AwsClusterServiceImpl.class);
     bind(EcsContainerService.class).to(EcsContainerServiceImpl.class);
     bind(GkeClusterService.class).to(GkeClusterServiceImpl.class);
+    try {
+      bind(new TypeLiteral<DataStore<StoredCredential>>() {
+      }).toInstance(StoredCredential.getDefaultDataStore(new MemoryDataStoreFactory()));
+    } catch (IOException e) {
+      String msg =
+          "Could not initialise GKE access token memory cache. This should not never happen with memory data store.";
+      throw new ExplanationException(msg, e);
+    }
     bind(KubernetesContainerService.class).to(KubernetesContainerServiceImpl.class);
     bind(AwsCodeDeployService.class).to(AwsCodeDeployServiceImpl.class);
     bind(AwsCodeDeployService.class).to(AwsCodeDeployServiceImpl.class);
@@ -1509,6 +1524,8 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.VALIDATE_KUBERNETES_CONFIG).toInstance(KubernetesTestConnectionDelegateTask.class);
     mapBinder.addBinding(TaskType.NG_GIT_COMMAND).toInstance(NGGitCommandTask.class);
     mapBinder.addBinding(TaskType.NG_SSH_VALIDATION).toInstance(SSHConfigValidationDelegateTask.class);
+    mapBinder.addBinding(TaskType.NG_WINRM_VALIDATION).toInstance(WinRmConfigValidationDelegateTask.class);
+    mapBinder.addBinding(TaskType.NG_HOST_CONNECTIVITY_TASK).toInstance(HostConnectivityValidationDelegateTask.class);
     mapBinder.addBinding(TaskType.DOCKER_CONNECTIVITY_TEST_TASK).toInstance(DockerTestConnectionDelegateTask.class);
     mapBinder.addBinding(TaskType.NG_AWS_TASK).toInstance(AwsDelegateTask.class);
     mapBinder.addBinding(TaskType.JIRA_CONNECTIVITY_TASK_NG).toInstance(JiraTestConnectionTaskNG.class);

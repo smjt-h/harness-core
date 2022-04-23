@@ -150,7 +150,7 @@ public class PipelineResourceTest extends CategoryTest {
         TemplateMergeResponseDTO.builder().mergedPipelineYaml(yaml).build();
     doReturn(templateMergeResponseDTO).when(pipelineTemplateHelper).resolveTemplateRefsInPipeline(entity);
     ResponseDTO<String> identifier =
-        pipelineResource.createPipeline(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, null, yaml);
+        pipelineResource.createPipeline(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, null, null, null, null, yaml);
     assertThat(identifier.getData()).isNotEmpty();
     assertThat(identifier.getData()).isEqualTo(PIPELINE_IDENTIFIER);
   }
@@ -164,7 +164,7 @@ public class PipelineResourceTest extends CategoryTest {
         .when(pmsPipelineService)
         .validatePipelineYamlAndSetTemplateRefIfAny(entity, true);
     ResponseDTO<PipelineSaveResponse> responseDTO =
-        pipelineResource.createPipelineV2(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, null, yaml);
+        pipelineResource.createPipelineV2(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, null, null, null, null, yaml);
     assertThat(responseDTO.getData().getGovernanceMetadata()).isNotNull();
     assertThat(responseDTO.getData().getGovernanceMetadata().getDeny()).isTrue();
   }
@@ -176,7 +176,9 @@ public class PipelineResourceTest extends CategoryTest {
     doThrow(JsonSchemaValidationException.class)
         .when(pmsPipelineService)
         .validatePipelineYamlAndSetTemplateRefIfAny(entity, false);
-    assertThatThrownBy(() -> pipelineResource.createPipeline(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, null, yaml))
+    assertThatThrownBy(()
+                           -> pipelineResource.createPipeline(
+                               ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, null, null, null, null, yaml))
         .isInstanceOf(JsonSchemaValidationException.class);
   }
 
@@ -226,7 +228,7 @@ public class PipelineResourceTest extends CategoryTest {
         .resolveTemplateRefsInPipeline(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, yaml);
     assertThatThrownBy(()
                            -> pipelineResource.updatePipeline(null, ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER,
-                               incorrectPipelineIdentifier, null, yaml))
+                               incorrectPipelineIdentifier, null, null, null, yaml))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage("Pipeline identifier in URL does not match pipeline identifier in yaml");
   }
@@ -242,7 +244,7 @@ public class PipelineResourceTest extends CategoryTest {
         .when(pipelineTemplateHelper)
         .resolveTemplateRefsInPipeline(ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, yaml);
     ResponseDTO<String> responseDTO = pipelineResource.updatePipeline(
-        null, ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, null, yaml);
+        null, ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, null, null, null, yaml);
     assertThat(responseDTO.getData()).isEqualTo(PIPELINE_IDENTIFIER);
   }
 
@@ -255,7 +257,7 @@ public class PipelineResourceTest extends CategoryTest {
         .when(pmsPipelineService)
         .validatePipelineYamlAndSetTemplateRefIfAny(entity, true);
     ResponseDTO<PipelineSaveResponse> responseDTO = pipelineResource.updatePipelineV2(
-        null, ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, null, yaml);
+        null, ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, null, null, null, yaml);
     assertThat(responseDTO.getData().getGovernanceMetadata().getDeny()).isTrue();
   }
 
@@ -268,8 +270,8 @@ public class PipelineResourceTest extends CategoryTest {
         .when(pmsPipelineService)
         .validatePipelineYamlAndSetTemplateRefIfAny(entity, false);
     assertThatThrownBy(()
-                           -> pipelineResource.updatePipeline(
-                               null, ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER, PIPELINE_IDENTIFIER, null, yaml))
+                           -> pipelineResource.updatePipeline(null, ACCOUNT_ID, ORG_IDENTIFIER, PROJ_IDENTIFIER,
+                               PIPELINE_IDENTIFIER, null, null, null, yaml))
         .isInstanceOf(JsonSchemaValidationException.class);
   }
 
