@@ -9,11 +9,10 @@ package io.harness.ng.core.variable.dto;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
-import io.harness.annotations.dev.HarnessTeam;
-import io.harness.annotations.dev.OwnedBy;
 
+import io.harness.annotations.dev.OwnedBy;
+import javax.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.util.Date;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,7 +28,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
 public class VariableResponseDTO {
-  VariableDTO variable;
+  @NotNull VariableDTO variable;
   Long createdAt;
   Long lastModifiedAt;
 }

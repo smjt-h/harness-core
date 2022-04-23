@@ -10,12 +10,23 @@ package io.harness.ng.core.variable.services.impl;
 import static io.harness.exception.WingsException.USER_SRE;
 import static io.harness.outbox.TransactionOutboxModule.OUTBOX_TRANSACTION_TEMPLATE;
 import static io.harness.springdata.TransactionUtils.DEFAULT_TRANSACTION_RETRY_POLICY;
+import static io.harness.utils.PageUtils.getPageRequest;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 
 import io.harness.beans.Scope;
 import io.harness.beans.ScopeLevel;
+import io.harness.NGResourceFilterConstants;
+import io.harness.beans.SortOrder;
+import io.harness.connector.entities.Connector;
 import io.harness.exception.DuplicateFieldException;
+import io.harness.ng.beans.PageRequest;
+import io.harness.ng.beans.PageResponse;
+
 import io.harness.ng.core.events.VariableCreateEvent;
+import io.harness.ng.core.models.Secret;
 import io.harness.ng.core.variable.dto.VariableDTO;
+import io.harness.ng.core.variable.dto.VariableResponseDTO;
 import io.harness.ng.core.variable.entity.Variable;
 import io.harness.ng.core.variable.entity.Variable.VariableKeys;
 import io.harness.ng.core.variable.mappers.VariableMapper;
@@ -31,12 +42,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
+
+
+import io.harness.utils.PageUtils;
 import net.jodah.failsafe.Failsafe;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.transaction.support.TransactionTemplate;
 
 public class VariableServiceImpl implements VariableService {
+
   private final VariableRepository variableRepository;
   private final VariableMapper variableMapper;
   private final TransactionTemplate transactionTemplate;
@@ -138,5 +156,38 @@ public class VariableServiceImpl implements VariableService {
   public List<VariableDTO> listVariableDTOs(String accountIdentifier, String orgIdentifier, String projectIdentifier) {
     List<Variable> variableList = get(accountIdentifier, orgIdentifier, projectIdentifier);
     return variableList.stream().map(variableMapper::writeDTO).collect(Collectors.toList());
+  }
+
+  @Override
+  public PageResponse<VariableResponseDTO> list(String accountIdentifier, String orgIdentifier, String projectIdentifier, int page, int size, String searchTerm, boolean includeVariablesFromEverySubScope) {
+    Criteria criteria = Criteria.where(Variable.VariableKeys.accountIdentifier).is(accountIdentifier);
+    if (!includeVariablesFromEverySubScope) {
+      criteria.and(Variable.VariableKeys.orgIdentifier).is(orgIdentifier).and(Variable.VariableKeys.projectIdentifier).is(projectIdentifier);
+    } else {
+      if (isNotBlank(orgIdentifier)) {
+        criteria.and(Variable.VariableKeys.orgIdentifier).is(orgIdentifier);
+        if (isNotBlank(projectIdentifier)) {
+          criteria.and(Variable.VariableKeys.projectIdentifier).is(projectIdentifier);
+        }
+      }
+    }
+
+    if (!StringUtils.isEmpty(searchTerm)) {
+      criteria = criteria.orOperator(
+              Criteria.where(Variable.VariableKeys.name).regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS),
+              Criteria.where(Variable.VariableKeys.identifier)
+                      .regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS));
+    }
+    Pageable pageable = getPageRequest(
+            PageRequest.builder()
+                    .pageIndex(page)
+                    .pageSize(size)
+                    .sortOrders(Collections.singletonList(
+                            SortOrder.Builder.aSortOrder().withField(Connector.ConnectorKeys.createdAt, SortOrder.OrderType.DESC).build()))
+                    .build());
+    Page<Variable> variables = variableRepository.findAll(
+            criteria, pageable);
+    return PageUtils.getNGPageResponse(
+            variables, variables.getContent().stream().map(variableMapper::toResponseWrapper).collect(Collectors.toList()));
   }
 }
