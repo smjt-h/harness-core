@@ -7,6 +7,8 @@
 
 package io.harness.ng.core.variable.dto;
 
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
@@ -24,6 +26,7 @@ import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.regex.RegexUtil;
 
 @OwnedBy(HarnessTeam.PL)
 @Getter
@@ -62,7 +65,7 @@ public class StringVariableDTO extends VariableConfigDTO {
         validateForFixedSetValueType();
         break;
       case REGEX:
-        // No custom validation is required
+        validateForRegexValueType();
         break;
       default:
         throw new UnknownEnumTypeException("variableValueType", getVariableValueType().name());
@@ -78,10 +81,21 @@ public class StringVariableDTO extends VariableConfigDTO {
   }
 
   private void validateForFixedSetValueType() {
-    if (CollectionUtils.isEmpty(allowedValues)) {
+    if (isEmpty(allowedValues)) {
       throw new InvalidRequestException(
           String.format("Value(s) for field [%s] must be provide when validation is of type [%s]",
               StringVariableDTOKeys.allowedValues, VariableValueType.FIXED_SET));
+    }
+  }
+
+  private void validateForRegexValueType() {
+    if (isEmpty(regex)) {
+      throw new InvalidRequestException(
+          String.format("Value for field [%s] must be provide when validation is of type [%s]",
+              StringVariableDTOKeys.regex, VariableValueType.REGEX));
+    }
+    if (!RegexUtil.isRegex(regex)) {
+      throw new InvalidRequestException(String.format("[%s] is not a valid regex", regex));
     }
   }
 }
