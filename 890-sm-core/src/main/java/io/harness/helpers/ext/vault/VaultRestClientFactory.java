@@ -51,6 +51,8 @@ public class VaultRestClientFactory {
   private static ObjectMapper objectMapper = new ObjectMapper();
   private static HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
   static {
+    objMapper.configure(AUTO_CLOSE_SOURCE, false);
+    objMapper.configure(AUTO_CLOSE_JSON_CONTENT, false);
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     loggingInterceptor.setLevel(Level.NONE);
   }

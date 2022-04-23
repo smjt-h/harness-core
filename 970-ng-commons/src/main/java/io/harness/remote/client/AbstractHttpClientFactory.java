@@ -45,6 +45,7 @@ import io.github.resilience4j.retrofit.CircuitBreakerCallAdapter;
 import io.serializer.HObjectMapper;
 import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import javax.validation.constraints.NotNull;
 import okhttp3.ConnectionPool;
@@ -144,6 +145,7 @@ public abstract class AbstractHttpClientFactory {
                   serviceHttpClientConfig.getReadTimeOutSeconds())
               .connectionPool(new ConnectionPool())
               .retryOnConnectionFailure(true)
+              .pingInterval(3, TimeUnit.SECONDS)
               .addInterceptor(getAuthorizationInterceptor(clientMode))
               .addInterceptor(getCorrelationIdInterceptor())
               .addInterceptor(getGitContextInterceptor())

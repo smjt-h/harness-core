@@ -339,6 +339,7 @@ public class Http {
               .sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) getTrustManagers()[0])
               .hostnameVerifier(new NoopHostnameVerifier())
               .connectTimeout(connectTimeOutSeconds, TimeUnit.SECONDS)
+              .pingInterval(3, TimeUnit.SECONDS)
               .readTimeout(readTimeOutSeconds, TimeUnit.SECONDS);
 
       Proxy proxy = checkAndGetNonProxyIfApplicable(url);
@@ -357,6 +358,7 @@ public class Http {
     try {
       OkHttpClient.Builder builder = Http.getOkHttpClientBuilder()
                                          .hostnameVerifier(new NoopHostnameVerifier())
+                                         .pingInterval(3, TimeUnit.SECONDS)
                                          .connectTimeout(connectTimeOutSeconds, TimeUnit.SECONDS)
                                          .readTimeout(readTimeOutSeconds, TimeUnit.SECONDS);
 
