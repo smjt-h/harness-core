@@ -33,6 +33,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.microsoft.aad.msal4j.MsalServiceException;
 import java.net.UnknownHostException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -220,7 +221,12 @@ public class CEAzureConnectorValidator extends io.harness.ccm.connectors.Abstrac
 
   public Collection<ErrorDetail> validateIfFileIsPresent(
       com.azure.core.http.rest.PagedIterable<BlobItem> blobItems, String prefix) {
+    log.info("Validating available files");
     List<ErrorDetail> errorDetails = new ArrayList<>();
+    if (!configuration.getCeAzureSetupConfig().isEnableFileCheckAtSource()) {
+      log.info("File present check is disabled in config.");
+      return errorDetails;
+    }
     String latestFileName = "";
     Instant latestFileLastModifiedTime = Instant.EPOCH;
     Instant lastModifiedTime;
@@ -259,11 +265,14 @@ public class CEAzureConnectorValidator extends io.harness.ccm.connectors.Abstrac
             .build();
     BlobServiceClient blobServiceClient =
         new BlobServiceClientBuilder().endpoint(endpoint).credential(clientSecretCredential).buildClient();
+    log.info("Returning blob client");
     return blobServiceClient.getBlobContainerClient(containerName);
   }
 
   public com.azure.core.http.rest.PagedIterable<BlobItem> getBlobItems(
       BlobContainerClient blobContainerClient, String prefix) {
-    return blobContainerClient.listBlobs(new ListBlobsOptions().setPrefix(prefix), null);
+    Duration duration = Duration.ofSeconds(200);
+    log.info("Returning blob list");
+    return blobContainerClient.listBlobs(new ListBlobsOptions().setPrefix(prefix), duration);
   }
 }

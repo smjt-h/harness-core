@@ -9,6 +9,7 @@ package io.harness.core.trigger;
 
 import io.harness.beans.execution.WebhookExecutionSource;
 import io.harness.beans.executionargs.CIExecutionArgs;
+import io.harness.beans.inputset.WebhookTriggerExecutionInputSet;
 import io.harness.ci.beans.entities.BuildNumberDetails;
 
 import com.google.inject.Inject;
@@ -35,6 +36,10 @@ public class WebhookTriggerProcessor implements TriggerProcessor {
 
     WebhookExecutionSource webhookExecutionSource =
         webhookTriggerProcessorUtils.fetchWebhookExecutionSource(eventPayload, httpHeaders);
-    return CIExecutionArgs.builder().executionSource(webhookExecutionSource).build();
+    return CIExecutionArgs.builder()
+        .executionSource(webhookExecutionSource)
+        .inputSet(WebhookTriggerExecutionInputSet.builder().payload(eventPayload).build())
+        .buildNumberDetails(buildNumberDetails)
+        .build();
   }
 }

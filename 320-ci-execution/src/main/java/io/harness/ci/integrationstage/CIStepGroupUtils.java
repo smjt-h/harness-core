@@ -78,8 +78,9 @@ public class CIStepGroupUtils {
 
     List<ExecutionWrapperConfig> executionSections = integrationStageConfig.getExecution().getSteps();
 
-    log.info("Creating CI execution wrapper step info with initialize step for integration stage {} ",
-        stageElementConfig.getIdentifier());
+    log.info(
+        "Creating CI execution wrapper step info with initialize step for integration stage {} and build number {}",
+        stageElementConfig.getIdentifier(), ciExecutionArgs.getBuildNumberDetails().getBuildNumber());
 
     List<ExecutionWrapperConfig> initializeExecutionSections = new ArrayList<>();
     boolean gitClone = RunTimeInputHandler.resolveGitClone(integrationStageConfig.getCloneCodebase());
@@ -99,6 +100,9 @@ public class CIStepGroupUtils {
       // Also execute each step individually on main engine
       mainEngineExecutionSections.addAll(initializeExecutionSections);
     }
+
+    log.info("Creation execution section for BuildId {} with lite engine step",
+        ciExecutionArgs.getBuildNumberDetails().getBuildNumber());
 
     return mainEngineExecutionSections;
   }

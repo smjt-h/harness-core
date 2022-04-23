@@ -93,7 +93,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -377,7 +376,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
                 .build())
         .isHarnessManagedImage(true)
         .containerResourceParams(getStepContainerResource(stepInfo.getResources(), stepType, identifier, accountId))
-        .ports(Arrays.asList(port))
+        .ports(Collections.singletonList(port))
         .containerType(CIContainerType.PLUGIN)
         .stepIdentifier(identifier)
         .stepName(stepName)
@@ -425,7 +424,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
                                        "connectorRef", "Run", identifier, runStepInfo.getConnectorRef(), true))
                                    .build())
         .containerResourceParams(getStepContainerResource(runStepInfo.getResources(), "Run", identifier, accountId))
-        .ports(Arrays.asList(port))
+        .ports(Collections.singletonList(port))
         .containerType(CIContainerType.RUN)
         .stepName(name)
         .privileged(runStepInfo.getPrivileged().getValue())
@@ -473,7 +472,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
                                    .build())
         .containerResourceParams(
             getStepContainerResource(runTestsStepInfo.getResources(), "RunTests", identifier, accountId))
-        .ports(Arrays.asList(port))
+        .ports(Collections.singletonList(port))
         .containerType(CIContainerType.TEST_INTELLIGENCE)
         .privileged(runTestsStepInfo.getPrivileged().getValue())
         .runAsUser(runAsUser)
@@ -512,7 +511,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
         .containerResourceParams(
             getStepContainerResource(pluginStepInfo.getResources(), "Plugin", identifier, accountId))
         .isHarnessManagedImage(pluginStepInfo.isHarnessManagedImage())
-        .ports(Arrays.asList(port))
+        .ports(Collections.singletonList(port))
         .containerType(CIContainerType.PLUGIN)
         .stepName(name)
         .privileged(pluginStepInfo.getPrivileged().getValue())
