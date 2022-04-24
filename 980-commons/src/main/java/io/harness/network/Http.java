@@ -34,6 +34,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
@@ -46,6 +47,7 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.ConnectionPool;
 import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.apache.commons.lang3.StringUtils;
@@ -338,8 +340,10 @@ public class Http {
           getOkHttpClientBuilder()
               .sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) getTrustManagers()[0])
               .hostnameVerifier(new NoopHostnameVerifier())
+              .protocols(Collections.singletonList(Protocol.HTTP_1_1))
               .connectTimeout(connectTimeOutSeconds, TimeUnit.SECONDS)
               .pingInterval(3, TimeUnit.SECONDS)
+              .writeTimeout(30, TimeUnit.SECONDS)
               .readTimeout(readTimeOutSeconds, TimeUnit.SECONDS);
 
       Proxy proxy = checkAndGetNonProxyIfApplicable(url);
