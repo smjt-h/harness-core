@@ -44,6 +44,7 @@ import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.retrofit.CircuitBreakerCallAdapter;
 import io.serializer.HObjectMapper;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -52,6 +53,7 @@ import okhttp3.ConnectionPool;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.apache.commons.lang3.StringUtils;
@@ -144,6 +146,7 @@ public abstract class AbstractHttpClientFactory {
           Http.getUnsafeOkHttpClientBuilder(baseUrl, serviceHttpClientConfig.getConnectTimeOutSeconds(),
                   serviceHttpClientConfig.getReadTimeOutSeconds())
               .connectionPool(new ConnectionPool())
+              .protocols(Collections.singletonList(Protocol.HTTP_1_1))
               .retryOnConnectionFailure(true)
               .pingInterval(3, TimeUnit.SECONDS)
               .addInterceptor(getAuthorizationInterceptor(clientMode))
