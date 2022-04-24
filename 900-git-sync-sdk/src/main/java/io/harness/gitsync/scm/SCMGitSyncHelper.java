@@ -73,7 +73,6 @@ public class SCMGitSyncHelper {
     }
 
     final FileInfo fileInfo = getFileInfo(gitBranchInfo, yaml, changeType, entityDetail);
-
     final PushFileResponse pushFileResponse =
         GitSyncGrpcClientUtils.retryAndProcessException(harnessToGitPushInfoServiceBlockingStub::pushFile, fileInfo);
     try {
