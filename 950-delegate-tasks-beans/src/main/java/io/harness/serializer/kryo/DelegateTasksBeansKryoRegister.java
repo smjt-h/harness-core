@@ -502,6 +502,8 @@ import io.harness.serializer.KryoRegistrar;
 
 import software.wings.beans.AwsConfig;
 import software.wings.beans.GitConfig;
+import software.wings.beans.HostReachabilityInfo;
+import software.wings.beans.HostValidationResponse;
 import software.wings.beans.JenkinsConfig;
 import software.wings.beans.JenkinsSubTaskType;
 import software.wings.beans.LambdaTestEvent;
@@ -514,8 +516,8 @@ import software.wings.beans.s3.FetchS3FilesExecutionResponse;
 import software.wings.beans.s3.S3Bucket;
 import software.wings.beans.s3.S3FetchFileResult;
 import software.wings.beans.s3.S3File;
-import software.wings.beans.s3.S3FileRequest;
 import software.wings.beans.servicenow.ServiceNowFields;
+import software.wings.beans.settings.helm.HttpHelmRepoConfig;
 import software.wings.beans.shellscript.provisioner.ShellScriptProvisionParameters;
 import software.wings.beans.yaml.Change;
 import software.wings.beans.yaml.GitCheckoutResult;
@@ -1093,7 +1095,6 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(EcsServiceDeployResponse.class, 7149);
     kryo.register(ExistingStackInfo.class, 5479);
     kryo.register(AwsLambdaDetails.class, 5701);
-    kryo.register(S3FileRequest.class, 8067);
     kryo.register(CodeDeployParams.class, 5189);
     kryo.register(ServiceNowAction.class, 7156);
     kryo.register(ServiceNowFields.class, 7169);
@@ -1179,6 +1180,9 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(ParameterEntry.class, 7448);
     kryo.register(HostConnectivityTaskParams.class, 543503);
     kryo.register(HostConnectivityTaskResponse.class, 543504);
+    kryo.register(HostValidationResponse.class, 5167);
+    kryo.register(HostReachabilityInfo.class, 5172);
+    kryo.register(HttpHelmRepoConfig.class, 7159);
 
     // WinRm
     kryo.register(WinRmCredentialsSpecDTO.class, 600001);
