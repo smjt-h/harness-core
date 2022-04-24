@@ -342,9 +342,9 @@ public class Http {
               .hostnameVerifier(new NoopHostnameVerifier())
               .protocols(Collections.singletonList(Protocol.HTTP_1_1))
               .connectTimeout(connectTimeOutSeconds, TimeUnit.SECONDS)
-              .pingInterval(3, TimeUnit.SECONDS)
-              .writeTimeout(30, TimeUnit.SECONDS)
-              .readTimeout(readTimeOutSeconds, TimeUnit.SECONDS);
+              .readTimeout(readTimeOutSeconds, TimeUnit.SECONDS)
+              .writeTimeout(300, TimeUnit.SECONDS)
+              .pingInterval(3, TimeUnit.SECONDS);
 
       Proxy proxy = checkAndGetNonProxyIfApplicable(url);
       if (proxy != null) {

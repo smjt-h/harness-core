@@ -21,8 +21,7 @@ import lombok.experimental.FieldDefaults;
 @OwnedBy(HarnessTeam.PL)
 public class ServiceHttpClientConfig {
   String baseUrl;
-  @Builder.Default long connectTimeOutSeconds = 30;
-  @Builder.Default long readTimeOutSeconds = 30;
-  @Builder.Default long writeTimeoutSeconds = 30;
+  @Builder.Default long connectTimeOutSeconds = 300;
+  @Builder.Default long readTimeOutSeconds = 300;
   @Builder.Default Boolean enableHttpLogging = Boolean.FALSE;
 }

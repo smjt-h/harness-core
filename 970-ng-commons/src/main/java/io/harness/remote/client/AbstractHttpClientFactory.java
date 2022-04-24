@@ -146,10 +146,8 @@ public abstract class AbstractHttpClientFactory {
       OkHttpClient.Builder builder =
           Http.getUnsafeOkHttpClientBuilder(baseUrl, serviceHttpClientConfig.getConnectTimeOutSeconds(),
                   serviceHttpClientConfig.getReadTimeOutSeconds())
-              .writeTimeout(Duration.ofSeconds(serviceHttpClientConfig.getWriteTimeoutSeconds()))
               .connectionPool(new ConnectionPool())
               .retryOnConnectionFailure(true)
-              .pingInterval(3, TimeUnit.SECONDS)
               .addInterceptor(getAuthorizationInterceptor(clientMode))
               .addInterceptor(getCorrelationIdInterceptor())
               .addInterceptor(getGitContextInterceptor())
