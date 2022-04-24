@@ -17,7 +17,6 @@ import io.harness.jira.JiraAction;
 import io.harness.jira.JiraCustomFieldValue;
 import io.harness.security.encryption.EncryptedDataDetail;
 
-import software.wings.beans.JiraConfig;
 import software.wings.delegatetasks.delegatecapability.CapabilityHelper;
 
 import java.util.List;
