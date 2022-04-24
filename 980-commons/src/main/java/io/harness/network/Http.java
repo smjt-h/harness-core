@@ -340,7 +340,6 @@ public class Http {
           getOkHttpClientBuilder()
               .sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) getTrustManagers()[0])
               .hostnameVerifier(new NoopHostnameVerifier())
-              .protocols(Collections.singletonList(Protocol.HTTP_1_1))
               .connectTimeout(connectTimeOutSeconds, TimeUnit.SECONDS)
               .readTimeout(readTimeOutSeconds, TimeUnit.SECONDS)
               .writeTimeout(300, TimeUnit.SECONDS)
