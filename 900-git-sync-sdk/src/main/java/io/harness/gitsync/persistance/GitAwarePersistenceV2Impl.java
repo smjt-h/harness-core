@@ -38,9 +38,9 @@ public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
   @Inject private SCMGitSyncHelper scmGitSyncHelper;
 
   @Override
-  public Optional<GitAware> findOne(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, Class entityClass, Criteria criteria) {
-    Optional<GitAware> savedEntityOptional =
+  public <B extends GitAware> Optional<B> findOne(String accountIdentifier, String orgIdentifier,
+      String projectIdentifier, Class<B> entityClass, Criteria criteria) {
+    Optional<B> savedEntityOptional =
         gitAwarePersistence.findOne(criteria, projectIdentifier, orgIdentifier, accountIdentifier, entityClass);
     if (savedEntityOptional.isPresent()) {
       GitAware savedEntity = savedEntityOptional.get();
@@ -58,7 +58,7 @@ public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
     Criteria gitAwareCriteria = Criteria.where(getGitSdkEntityHandlerInterface(entityClass).getStoreTypeKey())
                                     .in(Arrays.asList(StoreType.values()));
     Query query = new Query().addCriteria(new Criteria().andOperator(criteria, gitAwareCriteria));
-    final GitAware savedEntity = (GitAware) mongoTemplate.findOne(query, entityClass);
+    final B savedEntity = mongoTemplate.findOne(query, entityClass);
     if (savedEntity == null) {
       return Optional.empty();
     }

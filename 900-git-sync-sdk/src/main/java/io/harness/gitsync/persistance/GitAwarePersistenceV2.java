@@ -16,6 +16,6 @@ import org.springframework.data.mongodb.core.query.Criteria;
 
 @OwnedBy(HarnessTeam.PL)
 public interface GitAwarePersistenceV2 {
-  <B extends GitAware> Optional<B> findOne(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, Class entityClass, Criteria criteria);
+  <B extends GitAware> Optional<B> findOne(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      Class<B> entityClass, Criteria criteria);
 }
