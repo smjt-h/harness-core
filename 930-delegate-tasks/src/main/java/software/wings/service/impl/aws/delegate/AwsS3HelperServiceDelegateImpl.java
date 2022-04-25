@@ -118,8 +118,9 @@ public class AwsS3HelperServiceDelegateImpl extends AwsHelperServiceDelegateBase
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception isVersioningEnabledForBucket", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception isVersioningEnabledForBucket", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return false;
   }
@@ -136,8 +137,9 @@ public class AwsS3HelperServiceDelegateImpl extends AwsHelperServiceDelegateBase
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getObjectMetadataFromS3", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getObjectMetadataFromS3", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return null;
   }
@@ -186,8 +188,9 @@ public class AwsS3HelperServiceDelegateImpl extends AwsHelperServiceDelegateBase
     } catch (AmazonClientException amazonClientException) {
       awsApiHelperService.handleAmazonClientException(amazonClientException);
     } catch (Exception e) {
-      log.error("Exception getBucketRegion", e);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
+      log.error("Exception getBucketRegion", sanitizeException);
+      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return null;
   }

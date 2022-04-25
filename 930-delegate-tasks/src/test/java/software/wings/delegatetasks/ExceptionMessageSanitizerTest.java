@@ -8,8 +8,10 @@
 package software.wings.delegatetasks;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.reflection.ReflectionUtils.getFieldByName;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessModule;
@@ -21,18 +23,29 @@ import io.harness.exception.WingsException;
 import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 import io.harness.secret.SecretSanitizerThreadLocal;
+import io.harness.security.encryption.EncryptedDataDetail;
+
+import software.wings.beans.GitConfig;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @OwnedBy(CDP)
 @TargetModule(HarnessModule._930_DELEGATE_TASKS)
+@Slf4j
 public class ExceptionMessageSanitizerTest extends CategoryTest {
+  private GitConfig gitConfig;
+  private List<EncryptedDataDetail> sourceRepoEncryptionDetails;
+
   @Test
   @Owner(developers = OwnerRule.NAMAN_TALAYCHA)
   @Category(UnitTests.class)
@@ -118,5 +131,27 @@ public class ExceptionMessageSanitizerTest extends CategoryTest {
     assertThat(ex.getMessage()).isEqualTo("************** **************");
     assertThat(ex.getClass()).isEqualTo(Exception.class);
     assertThat(ex.getCause().getClass()).isEqualTo(IOException.class);
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.PRATYUSH)
+  @Category(UnitTests.class)
+  public void testStoreAllSecretsForSanitizingWithEmptyFieldName() {
+    gitConfig = GitConfig.builder().build();
+    sourceRepoEncryptionDetails = new ArrayList<>();
+    sourceRepoEncryptionDetails.add(EncryptedDataDetail.builder().build());
+    assertDoesNotThrow(
+        () -> ExceptionMessageSanitizer.storeAllSecretsForSanitizing(gitConfig, sourceRepoEncryptionDetails));
+    assertThatThrownBy(() -> getFieldByName(gitConfig.getClass(), sourceRepoEncryptionDetails.get(0).getFieldName()))
+        .isInstanceOf(NullPointerException.class);
+  }
+
+  private void assertDoesNotThrow(Runnable runnable) {
+    try {
+      runnable.run();
+    } catch (Exception ex) {
+      log.error("ERROR: ", ex);
+      Assert.fail();
+    }
   }
 }

@@ -55,7 +55,6 @@ public class RancherResolveClustersTask extends AbstractDelegateRunnableTask {
       ILogStreamingTaskClient logStreamingTaskClient, Consumer<DelegateTaskResponse> postExecute,
       BooleanSupplier preExecute) {
     super(delegateTaskPackage, logStreamingTaskClient, postExecute, preExecute);
-    SecretSanitizerThreadLocal.addAll(delegateTaskPackage.getSecrets());
   }
 
   @Override
