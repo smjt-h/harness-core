@@ -268,25 +268,23 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
             .setFeatureFlag(FeatureName.NG_NATIVE_HELM.name())
             .build();
 
-    StepInfo serverlessDeploy = StepInfo.newBuilder()
-                                    .setName("Serverless Lambda Deploy")
-                                    .setType(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_DEPLOY)
-                                    .setStepMetaData(StepMetaData.newBuilder()
-                                                         .addCategory("ServerlessAwsLambda")
-                                                         .setFolderPath("ServerlessAwsLambda")
-                                                         .build())
-                                    .setFeatureFlag(FeatureName.SERVERLESS_SUPPORT.name())
-                                    .build();
+    StepInfo serverlessDeploy =
+        StepInfo.newBuilder()
+            .setName("Serverless Lambda Deploy")
+            .setType(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_DEPLOY)
+            .setStepMetaData(
+                StepMetaData.newBuilder().addCategory("ServerlessAwsLambda").setFolderPath("Serverless Lambda").build())
+            .setFeatureFlag(FeatureName.SERVERLESS_SUPPORT.name())
+            .build();
 
-    StepInfo serverlessRollback = StepInfo.newBuilder()
-                                      .setName("Serverless Lambda Rollback")
-                                      .setType(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK)
-                                      .setStepMetaData(StepMetaData.newBuilder()
-                                                           .addCategory("ServerlessAwsLambda")
-                                                           .setFolderPath("ServerlessAwsLambda")
-                                                           .build())
-                                      .setFeatureFlag(FeatureName.SERVERLESS_SUPPORT.name())
-                                      .build();
+    StepInfo serverlessRollback =
+        StepInfo.newBuilder()
+            .setName("Serverless Lambda Rollback")
+            .setType(StepSpecTypeConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK)
+            .setStepMetaData(
+                StepMetaData.newBuilder().addCategory("ServerlessAwsLambda").setFolderPath("Serverless Lambda").build())
+            .setFeatureFlag(FeatureName.SERVERLESS_SUPPORT.name())
+            .build();
 
     List<StepInfo> stepInfos = new ArrayList<>();
 
