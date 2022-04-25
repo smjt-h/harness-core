@@ -7,15 +7,10 @@
 
 package io.harness.cdng.provision.terraform;
 
-import static io.harness.provision.TerraformConstants.USE_CONNECTOR_CREDENTIALS;
-
 import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.FeatureName;
 import io.harness.beans.IdentifierRef;
-import io.harness.cdng.CDStepHelper;
-import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.common.ParameterFieldHelper;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.task.terraform.TFTaskType;
@@ -43,7 +38,6 @@ import io.harness.pms.rbac.PipelineRbacHelper;
 import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.pms.sdk.core.steps.io.StepResponse.StepResponseBuilder;
-import io.harness.pms.yaml.ParameterField;
 import io.harness.provision.TerraformConstants;
 import io.harness.serializer.KryoSerializer;
 import io.harness.steps.StepHelper;
@@ -71,7 +65,6 @@ public class TerraformPlanStep extends TaskExecutableWithRollbackAndRbac<Terrafo
 
   @Inject private KryoSerializer kryoSerializer;
   @Inject private TerraformStepHelper helper;
-  @Inject private CDFeatureFlagHelper cdFeatureFlagHelper;
   @Inject private PipelineRbacHelper pipelineRbacHelper;
   @Inject private StepHelper stepHelper;
 
