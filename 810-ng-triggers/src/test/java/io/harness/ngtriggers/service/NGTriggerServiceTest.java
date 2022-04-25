@@ -139,21 +139,21 @@ public class NGTriggerServiceTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testCronTriggerIntervalFailure() {
     TriggerDetails triggerDetails =
-            TriggerDetails.builder()
-                    .ngTriggerEntity(NGTriggerEntity.builder().identifier("id").name("name").build())
-                    .ngTriggerConfigV2(
-                            NGTriggerConfigV2.builder()
-                                    .source(NGTriggerSourceV2.builder()
-                                            .type(NGTriggerType.SCHEDULED)
-                                            .spec(ScheduledTriggerConfig.builder()
-                                                    .type("Cron")
-                                                    .spec(CronTriggerSpec.builder().expression("0/2 * * * *").build())
-                                                    .build())
-                                            .build())
-                                    .build())
-                    .build();
+        TriggerDetails.builder()
+            .ngTriggerEntity(NGTriggerEntity.builder().identifier("id").name("name").build())
+            .ngTriggerConfigV2(
+                NGTriggerConfigV2.builder()
+                    .source(NGTriggerSourceV2.builder()
+                                .type(NGTriggerType.SCHEDULED)
+                                .spec(ScheduledTriggerConfig.builder()
+                                          .type("Cron")
+                                          .spec(CronTriggerSpec.builder().expression("0/2 * * * *").build())
+                                          .build())
+                                .build())
+                    .build())
+            .build();
 
     assertThatThrownBy(() -> ngTriggerServiceImpl.validateTriggerConfig(triggerDetails))
-            .isInstanceOf(InvalidArgumentsException.class);
+         .isInstanceOf(InvalidArgumentsException.class);
   }
 }
