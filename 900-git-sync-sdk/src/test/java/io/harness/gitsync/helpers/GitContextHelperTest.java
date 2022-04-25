@@ -66,4 +66,18 @@ public class GitContextHelperTest extends CategoryTest {
   public void testScmGitMetaDataNotFound() {
     assertThatThrownBy(() -> GitContextHelper.getScmGitMetaData()).isInstanceOf(UnexpectedException.class);
   }
+
+  @Test
+  @Owner(developers = MOHIT_GARG)
+  @Category(UnitTests.class)
+  public void testInitScmGitMetaData() {
+    GitContextHelper.initDefaultScmGitMetaData();
+    ScmGitMetaData scmGitMetaDataFetched = GitContextHelper.getScmGitMetaData();
+    assertThat(scmGitMetaDataFetched).isNotNull();
+    assertThat(scmGitMetaDataFetched.getFilePath()).isEqualTo(null);
+    assertThat(scmGitMetaDataFetched.getCommitId()).isEqualTo(null);
+    assertThat(scmGitMetaDataFetched.getBlobId()).isEqualTo(null);
+    assertThat(scmGitMetaDataFetched.getBranchName()).isEqualTo(null);
+    assertThat(scmGitMetaDataFetched.getRepoName()).isEqualTo(null);
+  }
 }
