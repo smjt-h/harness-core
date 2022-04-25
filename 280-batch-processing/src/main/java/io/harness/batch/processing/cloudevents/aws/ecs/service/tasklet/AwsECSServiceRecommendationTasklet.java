@@ -163,13 +163,15 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
 
         // Save recommendation in mongo
         log.info("Saving ECS Recommendation: {}", recommendation);
-        final String uuid = ecsRecommendationDAO.saveRecommendation(recommendation);
+        final ECSServiceRecommendation ecsServiceRecommendation =
+            ecsRecommendationDAO.saveRecommendation(recommendation);
         final Double monthlyCost = calculateMonthlyCost(recommendation);
         final Double monthlySaving =
             ofNullable(recommendation.getEstimatedSavings()).map(BigDecimal::doubleValue).orElse(null);
         // Save recommendation in timescale
-        ecsRecommendationDAO.upsertCeRecommendation(uuid, accountId, clusterName, serviceName, monthlyCost,
-            monthlySaving, recommendation.shouldShowRecommendation(), recommendation.getLastReceivedUtilDataAt());
+        ecsRecommendationDAO.upsertCeRecommendation(ecsServiceRecommendation.getUuid(), accountId, clusterName,
+            serviceName, monthlyCost, monthlySaving, recommendation.shouldShowRecommendation(),
+            recommendation.getLastReceivedUtilDataAt());
       }
     }
 
