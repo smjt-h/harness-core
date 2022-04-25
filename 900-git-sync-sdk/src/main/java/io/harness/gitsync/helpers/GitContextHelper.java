@@ -81,6 +81,14 @@ public class GitContextHelper {
         ScmGitMetaDataContext.builder().scmGitMetaData(scmGitMetaData).build());
   }
 
+  public void initDefaultScmGitMetaData() {
+    if (!GlobalContextManager.isAvailable()) {
+      GlobalContextManager.set(new GlobalContext());
+    }
+    GlobalContextManager.upsertGlobalContextRecord(
+        ScmGitMetaDataContext.builder().scmGitMetaData(ScmGitMetaData.builder().build()).build());
+  }
+
   public ScmGitMetaData getScmGitMetaData() {
     ScmGitMetaDataContext gitMetaDataContext = GlobalContextManager.get(ScmGitMetaDataContext.NG_GIT_SYNC_CONTEXT);
     if (gitMetaDataContext == null) {

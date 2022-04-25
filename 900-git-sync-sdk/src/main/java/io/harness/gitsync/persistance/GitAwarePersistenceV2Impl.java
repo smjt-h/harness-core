@@ -40,6 +40,8 @@ public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
   @Override
   public <B extends GitAware> Optional<B> findOne(String accountIdentifier, String orgIdentifier,
       String projectIdentifier, Class<B> entityClass, Criteria criteria) {
+    GitContextHelper.initDefaultScmGitMetaData();
+
     Optional<B> savedEntityOptional =
         gitAwarePersistence.findOne(criteria, projectIdentifier, orgIdentifier, accountIdentifier, entityClass);
     if (savedEntityOptional.isPresent()) {
