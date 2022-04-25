@@ -12,8 +12,6 @@ import io.harness.annotations.dev.OwnedBy;
 
 @OwnedBy(HarnessTeam.CDP)
 public final class TerraformConstants {
-  private TerraformConstants() {}
-
   public static final String RUN_PLAN_ONLY_KEY = "runPlanOnly";
   public static final String INHERIT_APPROVED_PLAN = "inheritApprovedPlan";
 
@@ -71,4 +69,6 @@ public final class TerraformConstants {
   public static final String GIT_SSH_COMMAND = "GIT_SSH_COMMAND";
   public static final String COMMAND_UNIT = "Execute Terraform";
   public static final String DEFAULT_TIMEOUT = "10m";
+
+  private TerraformConstants() {}
 }

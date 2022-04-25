@@ -315,7 +315,7 @@ public class TerraformStepHelper {
               !ParameterField.isNull(configuration.getConfigFiles().getModuleSource().getUseConnectorCredentials())
               && CDStepHelper.getParameterFieldBooleanValue(
                   configuration.getConfigFiles().getModuleSource().getUseConnectorCredentials(),
-                  USE_CONNECTOR_CREDENTIALS, String.format("%s step", ExecutionNodeType.TERRAFORM_PLAN.getYamlType())));
+                  USE_CONNECTOR_CREDENTIALS, format("%s step", ExecutionNodeType.TERRAFORM_PLAN.getYamlType())));
         }
 
         break;
@@ -507,9 +507,8 @@ public class TerraformStepHelper {
                       configuration.getSpec().getConfigFiles().getModuleSource().getUseConnectorCredentials())
                   && CDStepHelper.getParameterFieldBooleanValue(
                       configuration.getSpec().getConfigFiles().getModuleSource().getUseConnectorCredentials(),
-                      USE_CONNECTOR_CREDENTIALS,
-                      String.format("%s step", ExecutionNodeType.TERRAFORM_APPLY.getYamlType())))
-              .workspace(ParameterFieldHelper.getParameterFieldValue(spec.getWorkspace()));
+                      USE_CONNECTOR_CREDENTIALS, format("%s step", ExecutionNodeType.TERRAFORM_APPLY.getYamlType())))
+              .workspace(getParameterFieldValue(spec.getWorkspace()));
         }
 
         break;
