@@ -154,6 +154,6 @@ public class NGTriggerServiceTest extends CategoryTest {
             .build();
 
     assertThatThrownBy(() -> ngTriggerServiceImpl.validateTriggerConfig(triggerDetails))
-         .isInstanceOf(InvalidArgumentsException.class);
+        .isInstanceOf(InvalidArgumentsException.class);
   }
 }
