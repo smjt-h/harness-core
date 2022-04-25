@@ -500,10 +500,10 @@ message ListBranchesResponse {
 
 message ListBranchesV2Response {
   repeated string branches = 1;
-  PageResponse pagination = 2;
-  int32 status = 3;
-  string error = 4;
-  string default_branch = 5;
+  string default_branch = 2;
+  PageResponse pagination = 3;
+  int32 status = 4;
+  string error = 5;
 }
 
 message CompareCommitsRequest {

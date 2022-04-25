@@ -359,7 +359,7 @@ func ListBranchesV2(ctx context.Context, request *pb.ListBranchesV2Request, log 
     	Provider : request.GetProvider(),
     }
 
-	log.Infow("ListBranchesV2 success", "slug", request.GetSlug(), "elapsed_time_ms", utils.TimeSince(start))
+	log.Infow("ListBranches API ran successfully", "slug", request.GetSlug(), "elapsed_time_ms", utils.TimeSince(start))
 	userRepoResponse, userRepoError := GetUserRepo(ctx, getUserRepoRequest, log)
 
 	if err != nil {
@@ -380,6 +380,7 @@ func ListBranchesV2(ctx context.Context, request *pb.ListBranchesV2Request, log 
 			Next: int32(response.Page.Next),
 		},
 	}
+	log.Infow("ListBranchesV2 success", "slug", request.GetSlug(), "elapsed_time_ms", utils.TimeSince(start))
 	return out, nil
 }
 
