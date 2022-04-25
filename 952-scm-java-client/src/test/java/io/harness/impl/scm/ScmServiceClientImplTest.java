@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -52,13 +53,10 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 @OwnedBy(HarnessTeam.PL)
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({SCMGrpc.SCMBlockingStub.class, Provider.class, ScmGitWebhookHelper.class})
 public class ScmServiceClientImplTest extends CategoryTest {
   @InjectMocks ScmServiceClientImpl scmServiceClient;
   @Mock ScmGitProviderHelper scmGitProviderHelper;
@@ -194,7 +192,7 @@ public class ScmServiceClientImplTest extends CategoryTest {
   @Owner(developers = OwnerRule.MOHIT_GARG)
   @Category(UnitTests.class)
   public void testErrorForCreateWebhookAPI() {
-    PowerMockito.mockStatic(ScmGitWebhookHelper.class);
+    mockStatic(ScmGitWebhookHelper.class);
     ScmServiceClientImpl scmService = spy(scmServiceClient);
 
     when(scmGitProviderHelper.getSlug(any())).thenReturn(slug);
