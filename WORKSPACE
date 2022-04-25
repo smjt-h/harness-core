@@ -4688,6 +4688,7 @@ plain_artifacts = [
     "io.prometheus:simpleclient_common:0.5.0",
     "io.prometheus:simpleclient_dropwizard:0.5.0",
     "io.prometheus:simpleclient_servlet:0.3.0",
+    "io.prometheus:simpleclient_httpserver:0.4.0",
     "io.reactivex.rxjava2:rxjava:2.2.19",
     "io.reactivex:rxjava:1.3.8",
     "io.rest-assured:rest-assured:3.2.0",

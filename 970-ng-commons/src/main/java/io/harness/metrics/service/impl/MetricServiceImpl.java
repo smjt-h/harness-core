@@ -68,6 +68,7 @@ public class MetricServiceImpl implements MetricService {
   private static final Map<String, MetricGroup> METRIC_GROUP_MAP = new HashMap<>();
 
   static {
+    PrometheusStatsCollector.createAndRegister();
     METRICS_COLLECTION_IS_ENABLED = isMetricPublicationEnabled();
     if (METRICS_COLLECTION_IS_ENABLED) {
       initializeFromYAML();
@@ -160,7 +161,7 @@ public class MetricServiceImpl implements MetricService {
               .setConstantLabels(Collections.emptyMap())
               .build();
       StackdriverStatsExporter.createAndRegister(configuration);
-      PrometheusStatsCollector.createAndRegister();
+
       log.info("StackdriverStatsExporter created");
     } catch (Exception ex) {
       log.error("Exception while trying to register stackdriver metrics exporter", ex);

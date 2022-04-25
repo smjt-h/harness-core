@@ -187,7 +187,9 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import io.prometheus.client.exporter.HTTPServer;
 import io.serializer.HObjectMapper;
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
@@ -439,7 +441,11 @@ public class VerificationApplication extends Application<VerificationConfigurati
     MaintenanceController.forceMaintenance(false);
     registerUpdateProgressScheduler(injector);
     runMigrations(injector);
-
+    try {
+      HTTPServer server = new HTTPServer("localhost", 8888, true);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
     log.info("Starting app done");
   }
 
