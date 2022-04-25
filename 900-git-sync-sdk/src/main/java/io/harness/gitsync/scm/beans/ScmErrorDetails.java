@@ -16,8 +16,8 @@ import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 
 @OwnedBy(HarnessTeam.PL)
-@Builder
 @Getter
+@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ScmErrorDetails {
   String errorMessage;
