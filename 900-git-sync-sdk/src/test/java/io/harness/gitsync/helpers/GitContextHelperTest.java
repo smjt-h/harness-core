@@ -9,14 +9,18 @@ package io.harness.gitsync.helpers;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.rule.OwnerRule.BHAVYA;
+import static io.harness.rule.OwnerRule.MOHIT_GARG;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
+import io.harness.gitsync.scm.beans.ScmGitMetaData;
 import io.harness.manage.GlobalContextManager;
 import io.harness.rule.Owner;
 
@@ -27,6 +31,8 @@ import org.junit.experimental.categories.Category;
 public class GitContextHelperTest extends CategoryTest {
   private static final String Branch = "branch";
   private static final String BaseBranch = "baseBranch";
+  private static final String CommitId = "commitId";
+  private static final String FilePath = "filePath";
 
   @Test
   @Owner(developers = BHAVYA)
@@ -40,5 +46,24 @@ public class GitContextHelperTest extends CategoryTest {
       String branch = GitContextHelper.getBranchForRefEntityValidations();
       assertThat(branch).isEqualTo(BaseBranch);
     }
+  }
+
+  @Test
+  @Owner(developers = MOHIT_GARG)
+  @Category(UnitTests.class)
+  public void testScmGitMetaDataUpdate() {
+    ScmGitMetaData scmGitMetaData = ScmGitMetaData.builder().commitId(CommitId).filePath(FilePath).build();
+    GitContextHelper.updateScmGitMetaData(scmGitMetaData);
+    ScmGitMetaData scmGitMetaDataFetched = GitContextHelper.getScmGitMetaData();
+    assertThat(scmGitMetaDataFetched).isNotNull();
+    assertThat(scmGitMetaDataFetched.getFilePath()).isEqualTo(FilePath);
+    assertThat(scmGitMetaDataFetched.getCommitId()).isEqualTo(CommitId);
+  }
+
+  @Test
+  @Owner(developers = MOHIT_GARG)
+  @Category(UnitTests.class)
+  public void testScmGitMetaDataNotFound() {
+    assertThatThrownBy(() -> GitContextHelper.getScmGitMetaData()).isInstanceOf(UnexpectedException.class);
   }
 }
