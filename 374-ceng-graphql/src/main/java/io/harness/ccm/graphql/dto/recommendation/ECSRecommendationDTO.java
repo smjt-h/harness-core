@@ -27,14 +27,14 @@ public class ECSRecommendationDTO implements RecommendationDetailsDTO {
   ContainerHistogramDTO.HistogramExp cpuHistogram;
   ContainerHistogramDTO.HistogramExp memoryHistogram;
 
-//  @Value
-//  @Builder
-//  public static class HistogramExp {
-//    int numBuckets;
-//    int minBucket;
-//    int maxBucket;
-//    double[] bucketWeights;
-//    double totalWeight;
-//    double[] precomputed;
-//  }
+  //  @Value
+  //  @Builder
+  //  public static class HistogramExp {
+  //    int numBuckets;
+  //    int minBucket;
+  //    int maxBucket;
+  //    double[] bucketWeights;
+  //    double totalWeight;
+  //    double[] precomputed;
+  //  }
 }
