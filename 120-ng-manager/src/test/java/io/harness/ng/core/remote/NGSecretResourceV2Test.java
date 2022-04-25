@@ -11,6 +11,9 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.rule.OwnerRule.PIYUSH;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -39,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mockito.Mockito;
 
 @OwnedBy(PL)
 public class NGSecretResourceV2Test extends CategoryTest {
@@ -69,11 +71,11 @@ public class NGSecretResourceV2Test extends CategoryTest {
 
     doNothing()
         .when(secretPermissionValidator)
-        .checkForAccessOrThrow(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        .checkForAccessOrThrow(any(), any(), any(), any());
     doReturn(pageResponse)
         .when(ngSecretService)
-        .list(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyList(), Mockito.anyList(), Mockito.anyBoolean(),
-            Mockito.any(), Mockito.anyInt(), Mockito.anyInt(), Mockito.any());
+        .list(any(), any(), any(), any(), any(), anyBoolean(),
+            any(), anyInt(), anyInt(), any());
     ResponseDTO<PageResponse<SecretResponseWrapper>> list = ngSecretResourceV2.listSecrets(
         "Test", "TestOrg", "TestProj", SecretResourceFilterDTO.builder().identifiers(null).build(), 1, 10);
     assertThat(list.getData().getContent().size()).isEqualTo(1);
