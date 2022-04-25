@@ -111,8 +111,9 @@ message CommitFileRequest {
   string branchName = 2;
   string filePath = 3;
   string connectorRef = 4;
-  ScopeIdentifiers scopeIdentifiers = 5;
-  map<string, string> contextMap = 6;
+  io.harness.gitsync.ChangeType change_type = 5;
+  ScopeIdentifiers scopeIdentifiers = 6;
+  map<string, string> contextMap = 7;
 }
 
 message CommitFileResponse {

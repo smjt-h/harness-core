@@ -109,12 +109,15 @@ public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
     }
 
     if (objectToSave.getStoreType() == StoreType.INLINE) {
+      // How does changeType=DELETE handled using mongo.save() call?
       return saveEntity(objectToSave, functor);
     }
 
     // TODO put proper context map in request
-    scmGitSyncHelper.commitFile(Scope.builder().build(), objectToSave.getRepo(), branchName, objectToSave.getFilePath(),
-        objectToSave.getConnectorRef(), Collections.emptyMap());
+    if (changeType == ChangeType.MODIFY || changeType == ChangeType.ADD) {
+      scmGitSyncHelper.commitFile(Scope.builder().build(), objectToSave.getRepo(), branchName,
+          objectToSave.getFilePath(), objectToSave.getConnectorRef(), changeType, Collections.emptyMap());
+    }
     return saveEntity(objectToSave, functor);
   }
 

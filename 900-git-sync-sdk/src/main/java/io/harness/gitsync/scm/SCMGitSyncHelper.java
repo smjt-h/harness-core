@@ -113,13 +113,14 @@ public class SCMGitSyncHelper {
   }
 
   public ScmCommitFileResponse commitFile(Scope scope, String repoName, String branchName, String filePath,
-      String connectorRef, Map<String, String> contextMap) {
+      String connectorRef, ChangeType changeType, Map<String, String> contextMap) {
     final CommitFileRequest commitFileRequest = CommitFileRequest.newBuilder()
                                                     .setRepoName(repoName)
                                                     .setFilePath(filePath)
                                                     .setBranchName(branchName)
                                                     .setConnectorRef(connectorRef)
                                                     .setScopeIdentifiers(getScopeFromScopeIdentifiers(scope))
+                                                    .setChangeType(ChangeTypeMapper.toProto(changeType))
                                                     .putAllContextMap(contextMap)
                                                     .build();
 
