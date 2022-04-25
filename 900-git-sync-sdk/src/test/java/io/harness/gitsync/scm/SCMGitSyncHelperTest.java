@@ -20,6 +20,7 @@ import io.harness.GitSdkTestBase;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
+import io.harness.beans.Scope;
 import io.harness.category.element.UnitTests;
 import io.harness.common.EntityReference;
 import io.harness.eraro.ErrorCode;
@@ -29,17 +30,23 @@ import io.harness.exception.HintException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.SCMExceptionHints;
 import io.harness.exception.ScmException;
+import io.harness.exception.ScmInternalServerErrorException;
 import io.harness.exception.WingsException;
 import io.harness.exception.ngexception.beans.ScmErrorMetadataDTO;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.FileInfo;
+import io.harness.gitsync.GetFileRequest;
+import io.harness.gitsync.GetFileResponse;
+import io.harness.gitsync.GitMetaData;
 import io.harness.gitsync.HarnessToGitPushInfoServiceGrpc;
 import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.common.helper.GitSyncGrpcClientUtils;
 import io.harness.gitsync.exceptions.GitSyncException;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.persistance.GitSyncSdkService;
+import io.harness.gitsync.scm.beans.ScmGetFileResponse;
 import io.harness.gitsync.scm.beans.ScmPushResponse;
+import io.harness.gitsync.scm.errorhandling.GetFileScmErrorHandler;
 import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.entitydetail.EntityDetailRestToProtoMapper;
 import io.harness.rule.Owner;
@@ -47,9 +54,11 @@ import io.harness.security.SourcePrincipalContextBuilder;
 import io.harness.security.dto.Principal;
 import io.harness.security.dto.UserPrincipal;
 
+import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import org.joor.Reflect;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -72,6 +81,7 @@ public class SCMGitSyncHelperTest extends GitSdkTestBase {
   private final String commitId = "commitId";
   private final String commitMessage = "message";
   private final String branch = "branch";
+  private final String repo = "repo";
   private final String baseBranch = "baseBranch";
   private final String filePath = "filePath";
   private final String folderPath = "folderPath";
@@ -80,6 +90,8 @@ public class SCMGitSyncHelperTest extends GitSdkTestBase {
   private final String error = "Error";
   private final String name = "name";
   private final String yaml = "yaml";
+  private final String fileContent = "fileContent";
+  private final String connectorRef = "connectorRef";
   private final Map<String, String> contextMap = new HashMap<>();
 
   @InjectMocks SCMGitSyncHelper scmGitSyncHelper;
@@ -87,6 +99,7 @@ public class SCMGitSyncHelperTest extends GitSdkTestBase {
   @Mock GitSyncSdkService gitSyncSdkService;
   @Mock EntityDetailProtoDTO entityDetailProtoDTO;
   @Mock HarnessToGitPushInfoServiceGrpc.HarnessToGitPushInfoServiceBlockingStub harnessToGitPushInfoServiceBlockingStub;
+  @Inject private GetFileScmErrorHandler getFileScmErrorHandler;
 
   EntityReference entityReference;
   GitEntityInfo gitEntityInfo1;
@@ -100,6 +113,8 @@ public class SCMGitSyncHelperTest extends GitSdkTestBase {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
+    Reflect.on(scmGitSyncHelper).set("getFileScmErrorHandler", getFileScmErrorHandler);
+
     gitEntityInfo1 = buildGitEntityInfo(branch, baseBranch, commitId, commitMessage, filePath, folderPath, false, false,
         true, true, lastObjectId, yamlGitConfigId);
     gitEntityInfo2 = buildGitEntityInfo(branch, baseBranch, commitId, commitMessage, filePath, folderPath, false, false,
@@ -207,6 +222,44 @@ public class SCMGitSyncHelperTest extends GitSdkTestBase {
         .isInstanceOf(InvalidRequestException.class);
   }
 
+  @Test
+  @Owner(developers = MEET)
+  @Category(UnitTests.class)
+  public void testGetFile() {
+    GetFileResponse successfulGetFileResponse = GetFileResponse.newBuilder()
+                                                    .setStatusCode(200)
+                                                    .setFileContent(fileContent)
+                                                    .setGitMetaData(getDefaultGitMetaData())
+                                                    .build();
+    when(GitSyncGrpcClientUtils.retryAndProcessException(
+             harnessToGitPushInfoServiceBlockingStub::getFile, any(GetFileRequest.class)))
+        .thenReturn(successfulGetFileResponse);
+
+    ScmGetFileResponse scmGetFileResponse =
+        scmGitSyncHelper.getFile(getDefaultScope(), repo, branch, filePath, commitId, connectorRef, contextMap);
+    assertThat(scmGetFileResponse).isNotNull();
+    assertThat(scmGetFileResponse.getFileContent()).isEqualTo(fileContent);
+    assertThat(scmGetFileResponse.getGitMetaData().getRepoName()).isEqualTo(repo);
+    assertThat(scmGetFileResponse.getGitMetaData().getBranchName()).isEqualTo(branch);
+    assertThat(scmGetFileResponse.getGitMetaData().getFilePath()).isEqualTo(filePath);
+    assertThat(scmGetFileResponse.getGitMetaData().getCommitId()).isEqualTo(commitId);
+  }
+
+  @Test
+  @Owner(developers = MEET)
+  @Category(UnitTests.class)
+  public void testGetFileInCaseOfError() {
+    GetFileResponse successfulGetFileResponse = GetFileResponse.newBuilder().setStatusCode(500).setError(error).build();
+    when(GitSyncGrpcClientUtils.retryAndProcessException(
+             harnessToGitPushInfoServiceBlockingStub::getFile, any(GetFileRequest.class)))
+        .thenReturn(successfulGetFileResponse);
+
+    assertThatThrownBy(
+        () -> scmGitSyncHelper.getFile(getDefaultScope(), repo, branch, filePath, commitId, connectorRef, contextMap))
+        .isInstanceOf(ScmInternalServerErrorException.class)
+        .hasMessage(error);
+  }
+
   private GitEntityInfo buildGitEntityInfo(String branch, String baseBranch, String commitId, String commitMsg,
       String filePath, String folderPath, Boolean isFullSyncFlow, boolean findDefaultFromOtherRepos,
       Boolean isNewBranch, Boolean isSyncFromGit, String lastObjectId, String yamlGitConfigId) {
@@ -233,5 +286,19 @@ public class SCMGitSyncHelperTest extends GitSdkTestBase {
         .setError(errorMsg)
         .setCommitId(commitId)
         .build();
+  }
+
+  private GitMetaData getDefaultGitMetaData() {
+    return GitMetaData.newBuilder()
+        .setCommitId(commitId)
+        .setBlobId(lastObjectId)
+        .setBranchName(branch)
+        .setRepoName(repo)
+        .setFilePath(filePath)
+        .build();
+  }
+
+  private Scope getDefaultScope() {
+    return Scope.builder().accountIdentifier(accountId).orgIdentifier(orgId).projectIdentifier(projectId).build();
   }
 }
