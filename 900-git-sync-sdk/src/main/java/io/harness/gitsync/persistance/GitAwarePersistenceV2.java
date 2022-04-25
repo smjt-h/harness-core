@@ -9,13 +9,18 @@ package io.harness.gitsync.persistance;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.git.model.ChangeType;
 import io.harness.gitsync.v2.GitAware;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.springframework.data.mongodb.core.query.Criteria;
 
 @OwnedBy(HarnessTeam.PL)
 public interface GitAwarePersistenceV2 {
   <B extends GitAware> Optional<B> findOne(String accountIdentifier, String orgIdentifier, String projectIdentifier,
       Class<B> entityClass, Criteria criteria);
+
+  <B extends GitAware> B save(
+      B objectToSave, String yaml, ChangeType changeType, Class<B> entityClass, Supplier functor, String branchName);
 }

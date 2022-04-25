@@ -10,6 +10,7 @@ package io.harness.gitsync.persistance;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
+import io.harness.git.model.ChangeType;
 import io.harness.gitsync.entityInfo.GitSdkEntityHandlerInterface;
 import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
@@ -18,24 +19,38 @@ import io.harness.gitsync.scm.beans.ScmGetFileResponse;
 import io.harness.gitsync.scm.beans.ScmGitMetaData;
 import io.harness.gitsync.v2.GitAware;
 import io.harness.gitsync.v2.StoreType;
+import io.harness.utils.RetryUtils;
 
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
+import lombok.extern.slf4j.Slf4j;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.transaction.TransactionException;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Singleton
 @OwnedBy(HarnessTeam.PL)
+@Slf4j
 public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
   @Inject private Map<String, GitSdkEntityHandlerInterface> gitPersistenceHelperServiceMap;
   @Inject private GitAwarePersistence gitAwarePersistence;
   @Inject private MongoTemplate mongoTemplate;
   @Inject private SCMGitSyncHelper scmGitSyncHelper;
+  @Inject private TransactionTemplate transactionTemplate;
+
+  private final RetryPolicy<Object> transactionRetryPolicy = RetryUtils.getRetryPolicy("[Retrying] attempt: {}",
+      "[Failed] attempt: {}", ImmutableList.of(TransactionException.class), Duration.ofSeconds(1), 3, log);
 
   @Override
   public <B extends GitAware> Optional<B> findOne(String accountIdentifier, String orgIdentifier,
@@ -69,6 +84,7 @@ public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
     if (savedEntity.getStoreType() == StoreType.REMOTE) {
       // fetch yaml from git
       GitEntityInfo gitEntityInfo = GitContextHelper.getGitEntityInfoV2();
+      // TODO put proper context map in request
       ScmGetFileResponse scmGetFileResponse = scmGitSyncHelper.getFile(Scope.builder()
                                                                            .accountIdentifier(accountIdentifier)
                                                                            .orgIdentifier(orgIdentifier)
@@ -83,7 +99,36 @@ public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
     return Optional.of(savedEntity);
   }
 
+  @Override
+  public <B extends GitAware> B save(
+      B objectToSave, String yaml, ChangeType changeType, Class<B> entityClass, Supplier functor, String branchName) {
+    GitContextHelper.initDefaultScmGitMetaData();
+
+    if (objectToSave.getStoreType() == null) {
+      return gitAwarePersistence.save(objectToSave, yaml, changeType, entityClass, functor);
+    }
+
+    if (objectToSave.getStoreType() == StoreType.INLINE) {
+      return saveEntity(objectToSave, functor);
+    }
+
+    // TODO put proper context map in request
+    scmGitSyncHelper.commitFile(Scope.builder().build(), objectToSave.getRepo(), branchName, objectToSave.getFilePath(),
+        objectToSave.getConnectorRef(), Collections.emptyMap());
+    return saveEntity(objectToSave, functor);
+  }
+
   private GitSdkEntityHandlerInterface getGitSdkEntityHandlerInterface(Class entityClass) {
     return gitPersistenceHelperServiceMap.get(entityClass.getCanonicalName());
+  }
+
+  private <B extends GitAware> B saveEntity(B objectToSave, Supplier functor) {
+    return Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
+      final B mongoSavedObject = mongoTemplate.save(objectToSave);
+      if (functor != null) {
+        functor.get();
+      }
+      return mongoSavedObject;
+    }));
   }
 }
