@@ -71,7 +71,7 @@ public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
                                                                            .orgIdentifier(orgIdentifier)
                                                                            .projectIdentifier(projectIdentifier)
                                                                            .build(),
-          savedEntity.getRepo(), gitEntityInfo.getBranch(), gitEntityInfo.getFilePath(), gitEntityInfo.getCommitId(),
+          savedEntity.getRepo(), gitEntityInfo.getBranch(), savedEntity.getFilePath(), gitEntityInfo.getCommitId(),
           savedEntity.getConnectorRef(), Collections.emptyMap());
       savedEntity.setData(scmGetFileResponse.getFileContent());
       GitContextHelper.updateScmGitMetaData(scmGetFileResponse.getGitMetaData());

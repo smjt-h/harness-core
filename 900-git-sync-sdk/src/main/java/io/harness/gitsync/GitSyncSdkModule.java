@@ -28,6 +28,8 @@ import io.harness.gitsync.persistance.EntityKeySource;
 import io.harness.gitsync.persistance.EntityLookupHelper;
 import io.harness.gitsync.persistance.GitAwarePersistence;
 import io.harness.gitsync.persistance.GitAwarePersistenceNewImpl;
+import io.harness.gitsync.persistance.GitAwarePersistenceV2;
+import io.harness.gitsync.persistance.GitAwarePersistenceV2Impl;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.persistance.GitSyncSdkServiceImpl;
 import io.harness.gitsync.sdk.GitSyncGrpcClientModule;
@@ -63,6 +65,7 @@ public class GitSyncSdkModule extends AbstractModule {
         .annotatedWith(Names.named(GIT_CONFIG_STREAM + GIT_SYNC_SDK))
         .to(GitSyncConfigEventMessageListener.class);
     bind(GitAwarePersistence.class).to(GitAwarePersistenceNewImpl.class);
+    bind(GitAwarePersistenceV2.class).to(GitAwarePersistenceV2Impl.class);
     bind(GitSyncSdkService.class).to(GitSyncSdkServiceImpl.class);
     bind(GitProcessingRequestService.class).to(GitProcessingRequestServiceImpl.class);
     bind(FullSyncSdkService.class).to(FullSyncSdkServiceImpl.class);

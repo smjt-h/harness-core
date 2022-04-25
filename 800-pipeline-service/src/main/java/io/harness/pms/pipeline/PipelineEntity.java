@@ -13,7 +13,6 @@ import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.StoreIn;
 import io.harness.annotations.ChangeDataCapture;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.validator.EntityName;
 import io.harness.data.validator.Trimmed;
 import io.harness.gitsync.v2.GitAware;
@@ -53,7 +52,6 @@ import org.mongodb.morphia.annotations.Entity;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.annotation.Transient;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -103,7 +101,7 @@ public class PipelineEntity
   @NotEmpty String identifier;
 
   @Wither @NotEmpty @NonFinal String yaml;
-  @Transient @NonFinal String yamlFromRemote;
+  //  @Transient String yamlFromRemote;
 
   @Setter @NonFinal @SchemaIgnore @FdIndex @CreatedDate long createdAt;
   @Setter @NonFinal @SchemaIgnore @NotNull @LastModifiedDate long lastUpdatedAt;
@@ -139,7 +137,8 @@ public class PipelineEntity
   // git experience parameters after simplification
   StoreType storeType;
   String repo;
-  String path;
+  // Don' need this, we alraedy have filepath field
+  //  String path;
   String connectorRef;
 
   public String getYaml() {
@@ -151,19 +150,17 @@ public class PipelineEntity
     if (storeType == null || storeType == StoreType.INLINE) {
       return yaml;
     }
-    if (EmptyPredicate.isEmpty(yamlFromRemote)) {
-      log.warn(String.format("YAML for Remote Pipeline [%s] has not been set, but is being fetched.", identifier));
-    }
-    return yamlFromRemote;
+    return yaml;
   }
 
   @Override
   public void setData(String data) {
-    if (storeType == null || storeType == StoreType.INLINE) {
-      yaml = data;
-    } else {
-      yamlFromRemote = data;
-    }
+    //    if (storeType == null || storeType == StoreType.INLINE) {
+    //      yaml = data;
+    //    } else {
+    //      yamlFromRemote = data;
+    //    }
+    yaml = data;
   }
 
   @Override

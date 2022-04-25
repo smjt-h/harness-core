@@ -85,13 +85,19 @@ public class GitContextHelper {
   public ScmGitMetaData getScmGitMetaData() {
     ScmGitMetaDataContext gitMetaDataContext = GlobalContextManager.get(ScmGitMetaDataContext.NG_GIT_SYNC_CONTEXT);
     if (gitMetaDataContext == null) {
-      throw new UnexpectedException("No SCM Git Metadata found in context");
+      // log warning, but don't throw exception for now as there might be some find() methods that don't support it as
+      // of now.
+      //      throw new UnexpectedException("No SCM Git Metadata found in context");
+      return null;
     }
     return gitMetaDataContext.getScmGitMetaData();
   }
 
   public EntityGitDetails getEntityGitDetailsFromScmGitMetadata() {
     ScmGitMetaData scmGitMetaData = getScmGitMetaData();
+    if (scmGitMetaData == null) {
+      return EntityGitDetails.builder().build();
+    }
     return EntityGitDetails.builder()
         .objectId(scmGitMetaData.getBlobId())
         .branch(scmGitMetaData.getBranchName())
