@@ -7,6 +7,7 @@
 
 package software.wings.service.impl.compliance;
 
+import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
@@ -20,7 +21,6 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.EmbeddedUser;
 import io.harness.beans.EnvironmentType;
 import io.harness.beans.FeatureName;
-import io.harness.data.structure.CollectionUtils;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.event.handler.impl.segment.SegmentHelper;
 import io.harness.event.model.EventType;
@@ -31,6 +31,7 @@ import io.harness.governance.ApplicationFilter;
 import io.harness.governance.BlackoutWindowFilterType;
 import io.harness.governance.CustomAppFilter;
 import io.harness.governance.CustomEnvFilter;
+import io.harness.governance.CustomUserGroupFilter;
 import io.harness.governance.DeploymentFreezeInfo;
 import io.harness.governance.EnvironmentFilter.EnvironmentFilterType;
 import io.harness.governance.GovernanceFreezeConfig;
@@ -162,6 +163,7 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
         resetReadOnlyProperties(governanceConfig.getTimeRangeBasedFreezeConfigs(), accountId, oldSetting);
         checkForWindowActivationAndSendNotification(
             governanceConfig.getTimeRangeBasedFreezeConfigs(), oldSetting.getTimeRangeBasedFreezeConfigs(), accountId);
+        checkIfOnlyOneTypeOfUserGroupIsSet(governanceConfig.getTimeRangeBasedFreezeConfigs(), accountId);
       }
 
       Query<GovernanceConfig> query =
@@ -217,6 +219,16 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
       populateWindowsStatus(updatedSetting, accountId);
       return updatedSetting;
     }
+  }
+
+  private void checkIfOnlyOneTypeOfUserGroupIsSet(
+      List<TimeRangeBasedFreezeConfig> timeRangeBasedFreezeConfigs, String accountId) {
+    emptyIfNull(timeRangeBasedFreezeConfigs).forEach(timeRangeBasedFreezeConfig -> {
+      if (isNotEmpty(timeRangeBasedFreezeConfig.getUserGroups())
+          && timeRangeBasedFreezeConfig.getUserGroupSelection() != null) {
+        throw new InvalidRequestException("Only one of user group list or UserGroupSelection can be set");
+      }
+    });
   }
 
   private void checkForWindowActivationAndSendNotification(
@@ -377,7 +389,7 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
       if (appSelection.getFilterType() == BlackoutWindowFilterType.CUSTOM) {
         allEnvFrozenApps.addAll(((CustomAppFilter) appSelection).getApps());
       } else {
-        allEnvFrozenApps.addAll(CollectionUtils.emptyIfNull(appService.getAppIdsByAccountId(accountId)));
+        allEnvFrozenApps.addAll(emptyIfNull(appService.getAppIdsByAccountId(accountId)));
       }
     }
   }
@@ -498,7 +510,11 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
             throw new InvalidRequestException("Cannot update expired freeze window: " + entry.getName());
           }
         }
-        validateUserGroups(entry.getUserGroups(), accountId);
+        if (entry.getUserGroupSelection() != null) {
+          validateUserGroups(entry.getUserGroups(), accountId);
+        } else if (entry.getUserGroupSelection() instanceof CustomUserGroupFilter) {
+          validateUserGroups(((CustomUserGroupFilter) entry.getUserGroupSelection()).getUserGroups(), accountId);
+        }
       }
     }
   }

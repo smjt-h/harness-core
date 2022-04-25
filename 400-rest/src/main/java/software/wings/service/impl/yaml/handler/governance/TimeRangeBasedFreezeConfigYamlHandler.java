@@ -13,12 +13,17 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
+import io.harness.governance.AllUserGroupFilter;
 import io.harness.governance.ApplicationFilter;
 import io.harness.governance.ApplicationFilterYaml;
+import io.harness.governance.BlackoutWindowFilterType;
+import io.harness.governance.CustomUserGroupFilter;
 import io.harness.governance.TimeRangeBasedFreezeConfig;
 import io.harness.governance.TimeRangeBasedFreezeConfig.TimeRangeBasedFreezeConfigBuilder;
 import io.harness.governance.TimeRangeBasedFreezeConfig.Yaml;
 import io.harness.governance.TimeRangeOccurrence;
+import io.harness.governance.UserGroupFilter;
+import io.harness.governance.UserGroupFilterYaml;
 import io.harness.validation.Validator;
 
 import software.wings.beans.security.UserGroup;
@@ -58,6 +63,8 @@ public class TimeRangeBasedFreezeConfigYamlHandler
     }
 
     TimeRange.Yaml timeRangeYaml = bean.getTimeRange().toYaml();
+    final UserGroupFilterYaml userGroupFilterYaml =
+        buildUserGroupSelectionYaml(bean.getUserGroupSelection(), accountId);
 
     return Yaml.builder()
         .name(bean.getName())
@@ -66,8 +73,23 @@ public class TimeRangeBasedFreezeConfigYamlHandler
         .applicable(bean.isApplicable())
         .appSelections(appFiltersYaml)
         .userGroups(getUserGroupNames(bean.getUserGroups(), accountId))
+        .userGroupSelection(userGroupFilterYaml)
         .timeRange(timeRangeYaml)
         .build();
+  }
+
+  private UserGroupFilterYaml buildUserGroupSelectionYaml(UserGroupFilter userGroupSelection, String accountId) {
+    if (userGroupSelection == null) {
+      return null;
+    }
+    if (BlackoutWindowFilterType.ALL.equals(userGroupSelection.getFilterType())) {
+      return AllUserGroupFilter.Yaml.builder().filterType(BlackoutWindowFilterType.ALL).build();
+    } else {
+      return CustomUserGroupFilter.Yaml.builder()
+          .userGroupNames(getUserGroupNames(((CustomUserGroupFilter) userGroupSelection).getUserGroups(), accountId))
+          .filterType(BlackoutWindowFilterType.CUSTOM)
+          .build();
+    }
   }
 
   @Override
@@ -123,6 +145,7 @@ public class TimeRangeBasedFreezeConfigYamlHandler
     bean.applicable(yaml.isApplicable());
     bean.description(yaml.getDescription());
     bean.userGroups(getUserGroupIds(yaml.getUserGroups(), accountId));
+    bean.userGroupSelection(convertSelectionToBean(yaml.getUserGroupSelection(), accountId));
 
     ApplicationFilterYamlHandler applicationFilterYamlHandler;
 
@@ -135,6 +158,20 @@ public class TimeRangeBasedFreezeConfigYamlHandler
     }
 
     bean.appSelections(applicationFilters);
+  }
+
+  private UserGroupFilter convertSelectionToBean(UserGroupFilterYaml userGroupSelection, String accountId) {
+    if (userGroupSelection == null) {
+      return null;
+    }
+    if (BlackoutWindowFilterType.ALL.equals(userGroupSelection.getFilterType())) {
+      return AllUserGroupFilter.builder().userGroupFilterType(BlackoutWindowFilterType.ALL).build();
+    } else {
+      return CustomUserGroupFilter.builder()
+          .userGroupFilterType(BlackoutWindowFilterType.CUSTOM)
+          .userGroups(getUserGroupIds(((CustomUserGroupFilter.Yaml) userGroupSelection).getUserGroupNames(), accountId))
+          .build();
+    }
   }
 
   private TimeRange validateTimeRangeYaml(TimeRange.Yaml timeRangeYaml) {
