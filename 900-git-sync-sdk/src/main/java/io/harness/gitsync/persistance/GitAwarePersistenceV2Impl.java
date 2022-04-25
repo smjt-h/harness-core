@@ -46,6 +46,7 @@ public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
         gitAwarePersistence.findOne(criteria, projectIdentifier, orgIdentifier, accountIdentifier, entityClass);
     if (savedEntityOptional.isPresent()) {
       GitAware savedEntity = savedEntityOptional.get();
+      // if storeType != null, then it is a v2 entity and we shouldn't rely on old logic to fetch v2 entity
       if (savedEntity.getStoreType() == null) {
         GitContextHelper.updateScmGitMetaData(ScmGitMetaData.builder()
                                                   .repoName(savedEntity.getRepo())
