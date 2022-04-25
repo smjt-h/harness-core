@@ -142,6 +142,8 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
         recommendation.setCurrentResourceRequirements(
             convertToReadableForm(makeResourceMap(cpuMilliUnits, memoryBytes)));
         recommendation.setLastComputedRecommendationAt(startTime);
+        recommendation.setLastUpdateTime(startTime);
+        recommendation.setVersion(1);
 
         // Estimate savings
         Cost lastDayCost = billingDataService.getECSServiceLastAvailableDayCost(accountId, clusterId, serviceName,
