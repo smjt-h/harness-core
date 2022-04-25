@@ -27,8 +27,8 @@ import org.springframework.data.annotation.TypeAlias;
 
 @OwnedBy(HarnessTeam.CDP)
 @Data
-@Builder
 @Getter
+@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @TypeAlias("moduleSource")
 @RecasterAlias("io.harness.cdng.manifest.yaml.storeConfig.moduleSource.ModuleSource")
