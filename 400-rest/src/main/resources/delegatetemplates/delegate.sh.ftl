@@ -149,9 +149,9 @@ elif [[ "$(grep cvNextGenUrl config-delegate.yml | cut -d ' ' -f 2)" != "${manag
   sed -i.bak "s|^cvNextGenUrl:.*$|cvNextGenUrl: ${managerHostAndPort}/cv/api/|" config-delegate.yml
 fi
 if ! `grep watcherCheckLocation config-delegate.yml > /dev/null`; then
-  echo "watcherCheckLocation: ${watcherStorageUrl}/${watcherCheckLocation}" >> config-delegate.yml
-elif [[ "$(grep watcherCheckLocation config-delegate.yml | cut -d ' ' -f 2)" != "${watcherStorageUrl}/${watcherCheckLocation}" ]]; then
-  sed -i.bak "s|^watcherCheckLocation:.*$|watcherCheckLocation: ${watcherStorageUrl}/${watcherCheckLocation}|" config-delegate.yml
+  echo "watcherCheckLocation: ${watcherCheckLocation}" >> config-delegate.yml
+elif [[ "$(grep watcherCheckLocation config-delegate.yml | cut -d ' ' -f 2)" != "${watcherCheckLocation}" ]]; then
+  sed -i.bak "s|^watcherCheckLocation:.*$|watcherCheckLocation: ${watcherCheckLocation}|" config-delegate.yml
 fi
 if ! `grep heartbeatIntervalMs config-delegate.yml > /dev/null`; then
   echo "heartbeatIntervalMs: 60000" >> config-delegate.yml

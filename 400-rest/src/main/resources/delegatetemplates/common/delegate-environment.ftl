@@ -55,6 +55,10 @@
           value: "${grpcServiceEnabled}"
         - name: GRPC_SERVICE_CONNECTOR_PORT
           value: "${grpcServiceConnectorPort}"
+        <#if watcherVersionFromManager == "true">
+        - name: WATCHER_VERSION_FROM_MANAGER
+          value: "${watcherVersionFromManager}"
+        </#if>
 </#macro>
 <#macro immutable>
         - name: CLIENT_TOOLS_DOWNLOAD_DISABLED

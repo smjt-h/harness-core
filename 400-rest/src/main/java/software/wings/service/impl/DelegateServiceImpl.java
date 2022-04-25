@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.DEL;
 import static io.harness.beans.FeatureName.DELEGATE_ENABLE_DYNAMIC_HANDLING_OF_REQUEST;
 import static io.harness.beans.FeatureName.REDUCE_DELEGATE_MEMORY_SIZE;
 import static io.harness.beans.FeatureName.USE_IMMUTABLE_DELEGATE;
+import static io.harness.beans.FeatureName.WATCHER_VERSION_FROM_RING;
 import static io.harness.configuration.DeployVariant.DEPLOY_VERSION;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -1245,7 +1246,8 @@ public class DelegateServiceImpl implements DelegateService {
             templateParameters.getManagerHost(), mainConfiguration.getDeployMode().name());
       }
       final String watcherStorageUrl = watcherMetadataUrl.substring(0, watcherMetadataUrl.lastIndexOf('/'));
-      final String watcherCheckLocation = watcherMetadataUrl.substring(watcherMetadataUrl.lastIndexOf('/') + 1);
+      String watcherCheckLocation = watcherMetadataUrl;
+
       final String hexkey = format("%040x",
           new BigInteger(1, templateParameters.getAccountId().substring(0, 6).getBytes(StandardCharsets.UTF_8)))
                                 .replaceFirst("^0+(?!$)", "");
@@ -1269,7 +1271,6 @@ public class DelegateServiceImpl implements DelegateService {
               .put("managerHostAndPort", templateParameters.getManagerHost())
               .put("verificationHostAndPort", templateParameters.getVerificationHost())
               .put("watcherStorageUrl", watcherStorageUrl)
-              .put("watcherCheckLocation", watcherCheckLocation)
               .put("delegateStorageUrl", delegateStorageUrl)
               .put("delegateCheckLocation", delegateCheckLocation)
               .put("deployMode", mainConfiguration.getDeployMode().name())
@@ -1281,6 +1282,13 @@ public class DelegateServiceImpl implements DelegateService {
                   String.valueOf(featureFlagService.isEnabled(
                       DELEGATE_ENABLE_DYNAMIC_HANDLING_OF_REQUEST, templateParameters.getAccountId())));
 
+      if (featureFlagService.isEnabled(WATCHER_VERSION_FROM_RING, templateParameters.getAccountId())) {
+        watcherCheckLocation =
+            mainConfiguration.getApiUrl() + "/api/version/watcher?accountId=" + templateParameters.getAccountId();
+        params.put("watcherVersionFromManager", true);
+      }
+
+      params.put("watcherCheckLocation", watcherCheckLocation)
       if (mainConfiguration.getDeployMode() == DeployMode.KUBERNETES_ONPREM) {
         params.put("managerTarget", mainConfiguration.getGrpcOnpremDelegateClientConfig().getTarget());
         params.put("managerAuthority", mainConfiguration.getGrpcOnpremDelegateClientConfig().getAuthority());

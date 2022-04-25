@@ -170,14 +170,25 @@ if [[ $DESIRED_VERSION != "" ]]; then
   helm init --client-only
 fi
 
-echo "Checking Watcher latest version..."
-REMOTE_WATCHER_LATEST=$(curl $MANAGER_PROXY_CURL -ks $WATCHER_STORAGE_URL/$WATCHER_CHECK_LOCATION)
-if [[ $DEPLOY_MODE != "KUBERNETES" ]]; then
-  REMOTE_WATCHER_URL=$WATCHER_STORAGE_URL/$(echo $REMOTE_WATCHER_LATEST | cut -d " " -f2)
-else
-  REMOTE_WATCHER_URL=$REMOTE_WATCHER_URL_CDN/$(echo $REMOTE_WATCHER_LATEST | cut -d " " -f2)
-fi
-REMOTE_WATCHER_VERSION=$(echo $REMOTE_WATCHER_LATEST | cut -d " " -f1)
+ if [[ $WATCHER_VERSION_FROM_MANAGER == "true" ]]; then
+   echo "Checking Watcher latest version from manager..."
+   REMOTE_WATCHER_LATEST=$(curl $MANAGER_PROXY_CURL -ks $WATCHER_CHECK_LOCATION)
+   if [[ $DEPLOY_MODE != "KUBERNETES" ]]; then
+     REMOTE_WATCHER_URL=$WATCHER_STORAGE_URL/$REMOTE_WATCHER_LATEST/watcher.jar
+   else
+     REMOTE_WATCHER_URL=$REMOTE_WATCHER_URL_CDN/$REMOTE_WATCHER_LATEST/watcher.jar
+   fi
+   REMOTE_WATCHER_VERSION=$REMOTE_WATCHER_LATEST
+ else
+   echo "Checking Watcher latest version..."
+   REMOTE_WATCHER_LATEST=$(curl $MANAGER_PROXY_CURL -ks $WATCHER_STORAGE_URL/$WATCHER_CHECK_LOCATION)
+   if [[ $DEPLOY_MODE != "KUBERNETES" ]]; then
+     REMOTE_WATCHER_URL=$WATCHER_STORAGE_URL/$(echo $REMOTE_WATCHER_LATEST | cut -d " " -f2)
+   else
+     REMOTE_WATCHER_URL=$REMOTE_WATCHER_URL_CDN/$(echo $REMOTE_WATCHER_LATEST | cut -d " " -f2)
+   fi
+   REMOTE_WATCHER_VERSION=$(echo $REMOTE_WATCHER_LATEST | cut -d " " -f1)
+ fi
 
 if [ ! -e watcher.jar ]; then
   echo "Downloading Watcher $REMOTE_WATCHER_VERSION ..."

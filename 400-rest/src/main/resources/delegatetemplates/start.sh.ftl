@@ -137,17 +137,17 @@ fi
 
 export DEPLOY_MODE=${deployMode}
 
-echo "Checking Watcher latest version..."
+echo "Checking Watcher latest version from manager..."
 WATCHER_STORAGE_URL=${watcherStorageUrl}
-REMOTE_WATCHER_LATEST=$(curl $MANAGER_PROXY_CURL -ks $WATCHER_STORAGE_URL/${watcherCheckLocation})
+REMOTE_WATCHER_LATEST=$(curl $MANAGER_PROXY_CURL -ks ${watcherCheckLocation})
 if [[ $DEPLOY_MODE != "KUBERNETES" ]]; then
-REMOTE_WATCHER_URL=$WATCHER_STORAGE_URL/$(echo $REMOTE_WATCHER_LATEST | cut -d " " -f2)
+REMOTE_WATCHER_URL=$WATCHER_STORAGE_URL/$REMOTE_WATCHER_LATEST/watcher.jar
 <#if useCdn == "true">
 else
-REMOTE_WATCHER_URL=${remoteWatcherUrlCdn}/$(echo $REMOTE_WATCHER_LATEST | cut -d " " -f2)
+REMOTE_WATCHER_URL=${remoteWatcherUrlCdn}/$REMOTE_WATCHER_LATEST/watcher.jar
 </#if>
 fi
-REMOTE_WATCHER_VERSION=$(echo $REMOTE_WATCHER_LATEST | cut -d " " -f1)
+REMOTE_WATCHER_VERSION=$REMOTE_WATCHER_LATEST
 
 if [ ! -e watcher.jar ]; then
   echo "Downloading Watcher $REMOTE_WATCHER_VERSION ..."
@@ -201,9 +201,9 @@ if ! `grep doUpgrade config-watcher.yml > /dev/null`; then
   echo "doUpgrade: true" >> config-watcher.yml
 fi
 if ! `grep upgradeCheckLocation config-watcher.yml > /dev/null`; then
-  echo "upgradeCheckLocation: ${watcherStorageUrl}/${watcherCheckLocation}" >> config-watcher.yml
-elif [[ "$(grep upgradeCheckLocation config-watcher.yml | cut -d ' ' -f 2)" != "${watcherStorageUrl}/${watcherCheckLocation}" ]]; then
-  sed -i.bak "s|^upgradeCheckLocation:.*$|upgradeCheckLocation: ${watcherStorageUrl}/${watcherCheckLocation}|" config-watcher.yml
+  echo "upgradeCheckLocation: ${watcherCheckLocation}" >> config-watcher.yml
+elif [[ "$(grep upgradeCheckLocation config-watcher.yml | cut -d ' ' -f 2)" != "${watcherCheckLocation}" ]]; then
+  sed -i.bak "s|^upgradeCheckLocation:.*$|upgradeCheckLocation: ${watcherCheckLocation}|" config-watcher.yml
 fi
 if ! `grep upgradeCheckIntervalSeconds config-watcher.yml > /dev/null`; then
   echo "upgradeCheckIntervalSeconds: 1200" >> config-watcher.yml
