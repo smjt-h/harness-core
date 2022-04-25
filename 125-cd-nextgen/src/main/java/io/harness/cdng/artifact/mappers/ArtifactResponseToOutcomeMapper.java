@@ -40,6 +40,7 @@ import io.harness.delegate.task.artifacts.gcr.GcrArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.nexus.NexusArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.response.ArtifactDelegateResponse;
 
+import io.harness.pms.yaml.ParameterField;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -191,9 +192,9 @@ public class ArtifactResponseToOutcomeMapper {
         .repositoryFormat(artifactConfig.getRepositoryFormat().getValue())
         .artifactPath(useDelegateResponse
                 ? artifactDelegateResponse.getArtifactPath()
-                : (artifactConfig.getArtifactPath() != null ? artifactConfig.getArtifactPath().getValue() : null))
+                : (ParameterField.isNull(artifactConfig.getArtifactPath()) ? null : artifactConfig.getArtifactPath().getValue() ))
         .artifactPathFilter(
-            artifactConfig.getArtifactPathFilter() != null ? artifactConfig.getArtifactPathFilter().getValue() : null)
+            ParameterField.isNull(artifactConfig.getArtifactPathFilter()) ? null : artifactConfig.getArtifactPathFilter().getValue())
         .identifier(artifactConfig.getIdentifier())
         .type(ArtifactSourceType.ARTIFACTORY_REGISTRY.getDisplayName())
         .primaryArtifact(artifactConfig.isPrimaryArtifact())

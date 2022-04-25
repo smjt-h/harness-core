@@ -369,6 +369,6 @@ public class ArtifactoryResourceServiceImpl implements ArtifactoryResourceServic
             .stream()
             .map(delegateResponse -> (ArtifactoryDockerArtifactDelegateResponse) delegateResponse)
             .collect(Collectors.toList());
-    return ArtifactoryResourceMapper.toArtifactoryResponse(artifactoryArtifactDelegateResponses);
+    return ArtifactoryResourceMapper.toArtifactoryDockerResponse(artifactoryArtifactDelegateResponses);
   }
 }

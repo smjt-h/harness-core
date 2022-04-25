@@ -38,14 +38,14 @@ public class ArtifactoryResourceMapperTest extends CategoryTest {
   @Test
   @Owner(developers = MLUKIC)
   @Category(UnitTests.class)
-  public void testToArtifactoryResponse() {
+  public void testToArtifactoryDockerResponse() {
     List<ArtifactoryDockerArtifactDelegateResponse> artifactoryArtifactDelegateResponses =
         Lists.newArrayList(ArtifactoryDockerArtifactDelegateResponse.builder()
                                .buildDetails(ArtifactBuildDetailsNG.builder().build())
                                .artifactPath("/")
                                .build());
     ArtifactoryResponseDTO nexusResponseDTO =
-        ArtifactoryResourceMapper.toArtifactoryResponse(artifactoryArtifactDelegateResponses);
+        ArtifactoryResourceMapper.toArtifactoryDockerResponse(artifactoryArtifactDelegateResponses);
     assertThat(nexusResponseDTO).isNotNull();
     assertThat(nexusResponseDTO.getBuildDetailsList()).isNotEmpty();
     assertThat(nexusResponseDTO.getBuildDetailsList().get(0))
