@@ -10,6 +10,8 @@ package io.harness.ccm.commons.dao.recommendation;
 import static io.harness.annotations.dev.HarnessTeam.CE;
 import static io.harness.ccm.commons.utils.TimeUtils.offsetDateTimeNow;
 import static io.harness.ccm.commons.utils.TimeUtils.toOffsetDateTime;
+import static io.harness.persistence.HPersistence.upsertReturnNewOptions;
+import static io.harness.persistence.HQuery.excludeValidate;
 import static io.harness.timescaledb.Tables.CE_RECOMMENDATIONS;
 
 import static software.wings.graphql.datafetcher.ce.recommendation.entity.RecommenderUtils.newCpuHistogramV2;
@@ -18,6 +20,8 @@ import static software.wings.graphql.datafetcher.ce.recommendation.entity.Recomm
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.retry.RetryOnException;
 import io.harness.ccm.commons.beans.recommendation.ResourceType;
+import io.harness.ccm.commons.entities.batch.CEDataCleanupRequest;
+import io.harness.ccm.commons.entities.batch.LastReceivedPublishedMessage;
 import io.harness.ccm.commons.entities.ecs.recommendation.ECSPartialRecommendationHistogram;
 import io.harness.ccm.commons.entities.ecs.recommendation.ECSPartialRecommendationHistogram.ECSPartialRecommendationHistogramKeys;
 import io.harness.ccm.commons.entities.ecs.recommendation.ECSServiceRecommendation;
@@ -33,6 +37,9 @@ import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
+import org.mongodb.morphia.FindAndModifyOptions;
+import org.mongodb.morphia.query.Query;
+import org.mongodb.morphia.query.UpdateOperations;
 
 @Slf4j
 @Singleton
@@ -45,8 +52,33 @@ public class ECSRecommendationDAO {
   @Inject private DSLContext dslContext;
 
   @NonNull
-  public String savePartialRecommendation(ECSPartialRecommendationHistogram partialRecommendationHistogram) {
-    return hPersistence.save(partialRecommendationHistogram);
+  public ECSPartialRecommendationHistogram savePartialRecommendation(ECSPartialRecommendationHistogram partialRecommendationHistogram) {
+    return hPersistence.upsert(hPersistence.createQuery(ECSPartialRecommendationHistogram.class)
+            .field(ECSPartialRecommendationHistogramKeys.accountId)
+            .equal(partialRecommendationHistogram.getAccountId())
+            .field(ECSPartialRecommendationHistogramKeys.clusterId)
+            .equal(partialRecommendationHistogram.getClusterId())
+            .field(ECSPartialRecommendationHistogramKeys.serviceArn)
+            .equal(partialRecommendationHistogram.getServiceArn())
+            .field(ECSPartialRecommendationHistogramKeys.date)
+            .equal(partialRecommendationHistogram.getDate()),
+        hPersistence.createUpdateOperations(ECSPartialRecommendationHistogram.class)
+            .set(ECSPartialRecommendationHistogramKeys.accountId, partialRecommendationHistogram.getAccountId())
+            .set(ECSPartialRecommendationHistogramKeys.clusterId, partialRecommendationHistogram.getClusterId())
+            .set(ECSPartialRecommendationHistogramKeys.clusterName, partialRecommendationHistogram.getClusterName())
+            .set(ECSPartialRecommendationHistogramKeys.serviceArn, partialRecommendationHistogram.getServiceArn())
+            .set(ECSPartialRecommendationHistogramKeys.serviceName, partialRecommendationHistogram.getServiceName())
+            .set(ECSPartialRecommendationHistogramKeys.date, partialRecommendationHistogram.getDate())
+            .set(ECSPartialRecommendationHistogramKeys.lastUpdateTime, partialRecommendationHistogram.getLastUpdateTime())
+            .set(ECSPartialRecommendationHistogramKeys.cpuHistogram, partialRecommendationHistogram.getCpuHistogram())
+            .set(ECSPartialRecommendationHistogramKeys.memoryHistogram, partialRecommendationHistogram.getMemoryHistogram())
+            .set(ECSPartialRecommendationHistogramKeys.firstSampleStart, partialRecommendationHistogram.getFirstSampleStart())
+            .set(ECSPartialRecommendationHistogramKeys.lastSampleStart, partialRecommendationHistogram.getLastSampleStart())
+            .set(ECSPartialRecommendationHistogramKeys.totalSamplesCount, partialRecommendationHistogram.getLastSampleStart())
+            .set(ECSPartialRecommendationHistogramKeys.memoryPeak, partialRecommendationHistogram.getMemoryPeak())
+            .set(ECSPartialRecommendationHistogramKeys.windowEnd, partialRecommendationHistogram.getWindowEnd())
+            .set(ECSPartialRecommendationHistogramKeys.version, partialRecommendationHistogram.getVersion()),
+        upsertReturnNewOptions);
   }
 
   @NonNull
