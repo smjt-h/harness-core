@@ -36,7 +36,6 @@ import io.harness.k8s.K8sGlobalConfigService;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
-import io.harness.secret.SecretSanitizerThreadLocal;
 
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 

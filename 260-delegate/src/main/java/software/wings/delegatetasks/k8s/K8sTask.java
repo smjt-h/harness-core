@@ -28,7 +28,6 @@ import io.harness.k8s.K8sConstants;
 import io.harness.k8s.K8sGlobalConfigService;
 import io.harness.k8s.model.K8sDelegateTaskParams;
 import io.harness.logging.CommandExecutionStatus;
-import io.harness.secret.SecretSanitizerThreadLocal;
 
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.delegatetasks.k8s.taskhandler.K8sTaskHandler;

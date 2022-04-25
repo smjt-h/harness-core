@@ -25,7 +25,6 @@ import io.harness.exception.ExceptionUtils;
 import io.harness.exception.ExplanationException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
-import io.harness.secret.SecretSanitizerThreadLocal;
 
 import software.wings.api.TerraformExecutionData;
 import software.wings.beans.GitConfig;

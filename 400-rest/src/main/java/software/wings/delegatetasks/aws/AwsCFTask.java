@@ -20,7 +20,6 @@ import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
-import io.harness.secret.SecretSanitizerThreadLocal;
 
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.service.impl.aws.model.AwsCFGetTemplateParamsRequest;

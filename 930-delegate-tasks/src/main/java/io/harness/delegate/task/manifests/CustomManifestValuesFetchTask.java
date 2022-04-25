@@ -32,7 +32,6 @@ import io.harness.logging.LogLevel;
 import io.harness.manifest.CustomManifestService;
 import io.harness.manifest.CustomManifestSource;
 import io.harness.manifest.CustomSourceFile;
-import io.harness.secret.SecretSanitizerThreadLocal;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;

@@ -24,7 +24,6 @@ import io.harness.delegate.task.TaskParameters;
 import io.harness.exception.HelmClientException;
 import io.harness.exception.HelmClientRuntimeException;
 import io.harness.exception.NestedExceptionUtils;
-import io.harness.secret.SecretSanitizerThreadLocal;
 
 import com.google.inject.Inject;
 import java.util.function.BooleanSupplier;

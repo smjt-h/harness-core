@@ -26,7 +26,6 @@ import io.harness.k8s.model.KubernetesConfig;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogLevel;
 import io.harness.logging.Misc;
-import io.harness.secret.SecretSanitizerThreadLocal;
 
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.beans.container.KubernetesSteadyStateCheckParams;

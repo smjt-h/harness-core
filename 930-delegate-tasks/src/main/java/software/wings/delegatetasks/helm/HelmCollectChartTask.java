@@ -24,7 +24,6 @@ import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.perpetualtask.manifest.ManifestRepositoryService;
-import io.harness.secret.SecretSanitizerThreadLocal;
 
 import software.wings.beans.appmanifest.HelmChart;
 import software.wings.delegatetasks.DelegateLogService;

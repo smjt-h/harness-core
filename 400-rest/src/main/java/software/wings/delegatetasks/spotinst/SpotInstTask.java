@@ -22,7 +22,6 @@ import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.spotinst.request.SpotInstTaskParameters;
 import io.harness.delegate.task.spotinst.response.SpotInstTaskExecutionResponse;
-import io.harness.secret.SecretSanitizerThreadLocal;
 
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.delegatetasks.spotinst.taskhandler.SpotInstDeployTaskHandler;

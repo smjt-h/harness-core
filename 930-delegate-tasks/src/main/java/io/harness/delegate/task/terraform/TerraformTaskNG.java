@@ -23,7 +23,6 @@ import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.terraform.handlers.TerraformAbstractTaskHandler;
 import io.harness.exception.UnexpectedTypeException;
 import io.harness.logging.LogCallback;
-import io.harness.secret.SecretSanitizerThreadLocal;
 
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
