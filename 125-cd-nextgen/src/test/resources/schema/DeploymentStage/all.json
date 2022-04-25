@@ -537,12 +537,12 @@
           "oneOf": [
             {
               "required": [
-                "folderPath"
+                "commitId"
               ]
             },
             {
               "required": [
-                "paths"
+                "branch"
               ]
             }
           ]
@@ -551,12 +551,12 @@
           "oneOf": [
             {
               "required": [
-                "commitId"
+                "folderPath"
               ]
             },
             {
               "required": [
-                "branch"
+                "paths"
               ]
             }
           ]
@@ -1459,12 +1459,12 @@
           "oneOf": [
             {
               "required": [
-                "folderPath"
+                "commitId"
               ]
             },
             {
               "required": [
-                "paths"
+                "branch"
               ]
             }
           ]
@@ -1473,12 +1473,12 @@
           "oneOf": [
             {
               "required": [
-                "commitId"
+                "folderPath"
               ]
             },
             {
               "required": [
-                "branch"
+                "paths"
               ]
             }
           ]
@@ -1544,12 +1544,12 @@
           "oneOf": [
             {
               "required": [
-                "folderPath"
+                "commitId"
               ]
             },
             {
               "required": [
-                "paths"
+                "branch"
               ]
             }
           ]
@@ -1558,12 +1558,12 @@
           "oneOf": [
             {
               "required": [
-                "commitId"
+                "folderPath"
               ]
             },
             {
               "required": [
-                "branch"
+                "paths"
               ]
             }
           ]
@@ -1629,12 +1629,12 @@
           "oneOf": [
             {
               "required": [
-                "folderPath"
+                "commitId"
               ]
             },
             {
               "required": [
-                "paths"
+                "branch"
               ]
             }
           ]
@@ -1643,12 +1643,12 @@
           "oneOf": [
             {
               "required": [
-                "commitId"
+                "folderPath"
               ]
             },
             {
               "required": [
-                "branch"
+                "paths"
               ]
             }
           ]
@@ -3297,12 +3297,12 @@
           "oneOf": [
             {
               "required": [
-                "tagRegex"
+                "repositoryPort"
               ]
             },
             {
               "required": [
-                "tag"
+                "repositoryUrl"
               ]
             }
           ]
@@ -3311,12 +3311,12 @@
           "oneOf": [
             {
               "required": [
-                "repositoryPort"
+                "tagRegex"
               ]
             },
             {
               "required": [
-                "repositoryUrl"
+                "tag"
               ]
             }
           ]
@@ -3892,12 +3892,12 @@
           "oneOf": [
             {
               "required": [
-                "useFromStage"
+                "environment"
               ]
             },
             {
               "required": [
-                "infrastructureDefinition"
+                "environmentRef"
               ]
             }
           ]
@@ -3906,12 +3906,12 @@
           "oneOf": [
             {
               "required": [
-                "environment"
+                "useFromStage"
               ]
             },
             {
               "required": [
-                "environmentRef"
+                "infrastructureDefinition"
               ]
             }
           ]
@@ -4412,7 +4412,12 @@
             },
             {
               "required": [
-                "serviceDefinition"
+                "service"
+              ]
+            },
+            {
+              "required": [
+                "serviceRef"
               ]
             }
           ]
@@ -4426,12 +4431,7 @@
             },
             {
               "required": [
-                "service"
-              ]
-            },
-            {
-              "required": [
-                "serviceRef"
+                "serviceDefinition"
               ]
             }
           ]
