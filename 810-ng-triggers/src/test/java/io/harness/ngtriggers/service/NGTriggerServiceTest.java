@@ -10,6 +10,7 @@ package io.harness.ngtriggers.service;
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.rule.OwnerRule.ADWAIT;
 import static io.harness.rule.OwnerRule.MATT;
+import static io.harness.rule.OwnerRule.RAGHAV_GUPTA;
 
 import static junit.framework.TestCase.fail;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -131,5 +132,28 @@ public class NGTriggerServiceTest extends CategoryTest {
             .build();
 
     ngTriggerServiceImpl.validateTriggerConfig(triggerDetails);
+  }
+
+  @Test
+  @Owner(developers = RAGHAV_GUPTA)
+  @Category(UnitTests.class)
+  public void testCronTriggerIntervalFailure() {
+    TriggerDetails triggerDetails =
+            TriggerDetails.builder()
+                    .ngTriggerEntity(NGTriggerEntity.builder().identifier("id").name("name").build())
+                    .ngTriggerConfigV2(
+                            NGTriggerConfigV2.builder()
+                                    .source(NGTriggerSourceV2.builder()
+                                            .type(NGTriggerType.SCHEDULED)
+                                            .spec(ScheduledTriggerConfig.builder()
+                                                    .type("Cron")
+                                                    .spec(CronTriggerSpec.builder().expression("0/2 * * * *").build())
+                                                    .build())
+                                            .build())
+                                    .build())
+                    .build();
+
+    assertThatThrownBy(() -> ngTriggerServiceImpl.validateTriggerConfig(triggerDetails))
+            .isInstanceOf(InvalidArgumentsException.class);
   }
 }

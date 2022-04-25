@@ -90,6 +90,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.mongodb.client.result.UpdateResult;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -133,6 +134,7 @@ public class NGTriggerServiceImpl implements NGTriggerService {
   private static final String PIPELINE = "pipeline";
   private static final String TRIGGER = "trigger";
   private static final String INPUT_YAML = "inputYaml";
+  private static final long MIN_INTERVAL_MINUTES = 5;
 
   private static final String DUP_KEY_EXP_FORMAT_STRING = "Trigger [%s] already exists or is soft deleted";
 
@@ -569,9 +571,18 @@ public class NGTriggerServiceImpl implements NGTriggerService {
         CronParser cronParser = new CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX));
         Cron cron = cronParser.parse(cronTriggerSpec.getExpression());
         ExecutionTime executionTime = ExecutionTime.forCron(cron);
-        Optional<ZonedDateTime> nextTime = executionTime.nextExecution(ZonedDateTime.now());
-        if (!nextTime.isPresent()) {
+        Optional<ZonedDateTime> firstExecutionTimeOptional = executionTime.nextExecution(ZonedDateTime.now());
+        if (!firstExecutionTimeOptional.isPresent()) {
           throw new InvalidArgumentsException("cannot find iteration time!");
+        }
+        ZonedDateTime firstExecutionTime = firstExecutionTimeOptional.get();
+        Optional<ZonedDateTime> secondExecutionTimeOptional = executionTime.nextExecution(firstExecutionTime);
+        if (secondExecutionTimeOptional.isPresent()) {
+          ZonedDateTime secondExecutionTime = secondExecutionTimeOptional.get();
+          if (Duration.between(firstExecutionTime, secondExecutionTime).getSeconds() < MIN_INTERVAL_MINUTES * 60) {
+            throw new InvalidArgumentsException("Cron interval must be greater than or equal to " +
+                    MIN_INTERVAL_MINUTES +  " minutes.");
+          }
         }
         return;
       case MANIFEST:
