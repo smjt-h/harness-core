@@ -13,6 +13,7 @@ import static java.lang.String.format;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.service.scm.ScmDelegateClient;
+import io.harness.exception.ConnectException;
 import io.harness.exception.InvalidRequestException;
 
 import com.google.inject.Singleton;
@@ -55,6 +56,11 @@ public class ScmDelegateClientImpl implements ScmDelegateClient {
             shutdownChannel(channel);
             throw e;
           }
+        } catch (ConnectException ex) {
+          if (++retryCount > 20) {
+            throw new InvalidRequestException("Cannot start Scm Unix Manager", ex);
+          }
+          Thread.sleep(100);
         }
       }
     } finally {
