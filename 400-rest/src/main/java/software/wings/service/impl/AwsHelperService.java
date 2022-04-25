@@ -168,11 +168,6 @@ import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroup;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
-import com.amazonaws.services.s3.model.ListObjectsV2Request;
-import com.amazonaws.services.s3.model.ListObjectsV2Result;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient;
 import com.amazonaws.waiters.FixedDelayStrategy;
 import com.amazonaws.waiters.MaxAttemptsRetryStrategy;
@@ -462,63 +457,6 @@ public class AwsHelperService {
       throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return Collections.emptyList();
-  }
-
-  public S3Object getObjectFromS3(
-      AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String bucketName, String key) {
-    try {
-      encryptionService.decrypt(awsConfig, encryptionDetails, false);
-      ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
-      tracker.trackS3Call("Get Object");
-      return getAmazonS3Client(getBucketRegion(awsConfig, encryptionDetails, bucketName), awsConfig)
-          .getObject(bucketName, key);
-    } catch (AmazonServiceException amazonServiceException) {
-      awsApiHelperService.handleAmazonServiceException(amazonServiceException);
-    } catch (AmazonClientException amazonClientException) {
-      awsApiHelperService.handleAmazonClientException(amazonClientException);
-    }
-    return null;
-  }
-
-  public ObjectMetadata getObjectMetadataFromS3(
-      AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String bucketName, String key) {
-    encryptionService.decrypt(awsConfig, encryptionDetails, false);
-    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
-    try (CloseableAmazonWebServiceClient<AmazonS3Client> closeableAmazonS3Client = new CloseableAmazonWebServiceClient(
-             getAmazonS3Client(getBucketRegion(awsConfig, encryptionDetails, bucketName), awsConfig))) {
-      tracker.trackS3Call("Get Object Metadata");
-      return closeableAmazonS3Client.getClient().getObjectMetadata(bucketName, key);
-    } catch (AmazonServiceException amazonServiceException) {
-      awsApiHelperService.handleAmazonServiceException(amazonServiceException);
-    } catch (AmazonClientException amazonClientException) {
-      awsApiHelperService.handleAmazonClientException(amazonClientException);
-    } catch (Exception e) {
-      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
-      log.error("Exception getObjectMetadataFromS3", sanitizeException);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
-    }
-    return null;
-  }
-
-  public ListObjectsV2Result listObjectsInS3(
-      AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, ListObjectsV2Request listObjectsV2Request) {
-    encryptionService.decrypt(awsConfig, encryptionDetails, false);
-    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
-    try (CloseableAmazonWebServiceClient<AmazonS3Client> closeableAmazonS3Client =
-             new CloseableAmazonWebServiceClient(getAmazonS3Client(
-                 getBucketRegion(awsConfig, encryptionDetails, listObjectsV2Request.getBucketName()), awsConfig))) {
-      tracker.trackS3Call("Get Bucket Region");
-      return closeableAmazonS3Client.getClient().listObjectsV2(listObjectsV2Request);
-    } catch (AmazonServiceException amazonServiceException) {
-      awsApiHelperService.handleAmazonServiceException(amazonServiceException);
-    } catch (AmazonClientException amazonClientException) {
-      awsApiHelperService.handleAmazonClientException(amazonClientException);
-    } catch (Exception e) {
-      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
-      log.error("Exception listObjectsInS3", sanitizeException);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
-    }
-    return new ListObjectsV2Result();
   }
 
   public AwsConfig validateAndGetAwsConfig(
@@ -1555,28 +1493,6 @@ public class AwsHelperService {
     } catch (Exception e) {
       Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
       log.error("Exception deregisterInstancesFromLoadBalancer", sanitizeException);
-      throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
-    }
-    return false;
-  }
-
-  public boolean isVersioningEnabledForBucket(
-      AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String bucketName) {
-    encryptionService.decrypt(awsConfig, encryptionDetails, false);
-    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(awsConfig, encryptionDetails);
-    try (CloseableAmazonWebServiceClient<AmazonS3Client> closeableAmazonS3Client = new CloseableAmazonWebServiceClient(
-             getAmazonS3Client(getBucketRegion(awsConfig, encryptionDetails, bucketName), awsConfig))) {
-      tracker.trackS3Call("Get Bucket Versioning Configuration");
-      BucketVersioningConfiguration bucketVersioningConfiguration =
-          closeableAmazonS3Client.getClient().getBucketVersioningConfiguration(bucketName);
-      return "ENABLED".equals(bucketVersioningConfiguration.getStatus());
-    } catch (AmazonServiceException amazonServiceException) {
-      awsApiHelperService.handleAmazonServiceException(amazonServiceException);
-    } catch (AmazonClientException amazonClientException) {
-      awsApiHelperService.handleAmazonClientException(amazonClientException);
-    } catch (Exception e) {
-      Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(e);
-      log.error("Exception isVersioningEnabledForBucket", sanitizeException);
       throw new InvalidRequestException(ExceptionUtils.getMessage(sanitizeException), sanitizeException);
     }
     return false;

@@ -66,7 +66,6 @@ public class CDNGPipelineConfigurationResourceTest extends CategoryTest {
 
     assertThat(executionStrategyResponse.get(ServiceDefinitionType.WINRM))
         .isEqualTo(Lists.newArrayList(ExecutionStrategyType.DEFAULT));
-
     /*
     Assertions commented as these service definitions are currently not supported
     assertThat(executionStrategyResponse.get(ServiceDefinitionType.PCF))

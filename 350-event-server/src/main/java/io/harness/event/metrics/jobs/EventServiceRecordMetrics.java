@@ -1,3 +1,10 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.event.metrics.jobs;
 
 import io.harness.event.metrics.EventServiceMetricsPublisher;
@@ -15,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class EventServiceRecordMetrics {
-  public static final int METRICS_RECORD_PERIOD_SECONDS = 60;
+  public static final int METRICS_RECORD_PERIOD_SECONDS = 300;
 
   @Inject private Injector injector;
   @Inject @Named("metricsPublisherExecutor") protected ScheduledExecutorService executorService;
