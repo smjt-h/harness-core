@@ -137,7 +137,7 @@ public class PipelineEntity
   // git experience parameters after simplification
   StoreType storeType;
   String repo;
-  // Don' need this, we alraedy have filepath field
+  // Don't need this, we already have filepath field
   //  String path;
   String connectorRef;
 
