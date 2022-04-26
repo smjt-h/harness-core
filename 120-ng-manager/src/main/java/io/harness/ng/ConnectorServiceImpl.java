@@ -208,7 +208,9 @@ public class ConnectorServiceImpl implements ConnectorService {
           }
         }
         instrumentationHelper.sendConnectorCreateEvent(connectorDTO.getConnectorInfo(), accountIdentifier);
-        connectorResponse.setGovernanceMetadata(governanceMetadata);
+        if (connectorResponse != null) {
+          connectorResponse.setGovernanceMetadata(governanceMetadata);
+        }
         return connectorResponse;
       } else {
         throw new InvalidRequestException("Connector could not be created because we could not create the heartbeat");
@@ -260,9 +262,15 @@ public class ConnectorServiceImpl implements ConnectorService {
              connectorDTO.getConnectorInfo().getOrgIdentifier(), accountIdentifier, OVERRIDE_ERROR);
          AutoLogContext ignore2 =
              new ConnectorLogContext(connectorDTO.getConnectorInfo().getIdentifier(), OVERRIDE_ERROR)) {
-      opaConnectorService.evaluatePoliciesWithEntity(accountIdentifier, connectorDTO,
-          connectorDTO.getConnectorInfo().getOrgIdentifier(), connectorDTO.getConnectorInfo().getProjectIdentifier(),
-          OpaConstants.OPA_EVALUATION_ACTION_CONNECTOR_SAVE, connectorDTO.getConnectorInfo().getIdentifier());
+      ConnectorResponseDTO connectorResponse = new ConnectorResponseDTO();
+      GovernanceMetadata governanceMetadata = opaConnectorService.evaluatePoliciesWithEntity(accountIdentifier,
+          connectorDTO, connectorDTO.getConnectorInfo().getOrgIdentifier(),
+          connectorDTO.getConnectorInfo().getProjectIdentifier(), OpaConstants.OPA_EVALUATION_ACTION_CONNECTOR_SAVE,
+          connectorDTO.getConnectorInfo().getIdentifier());
+      connectorResponse.setGovernanceMetadata(governanceMetadata);
+      if (governanceMetadata != null && "error".equals(governanceMetadata.getStatus())) {
+        return connectorResponse;
+      }
       boolean isDefaultBranchConnector = gitSyncSdkService.isDefaultBranch(accountIdentifier,
           connectorDTO.getConnectorInfo().getOrgIdentifier(), connectorDTO.getConnectorInfo().getProjectIdentifier());
       ConnectorInfoDTO connectorInfo = connectorDTO.getConnectorInfo();
@@ -273,7 +281,7 @@ public class ConnectorServiceImpl implements ConnectorService {
         return create(connectorDTO, accountIdentifier, ChangeType.MODIFY);
       }
 
-      ConnectorResponseDTO connectorResponse =
+      connectorResponse =
           getConnectorService(connectorInfo.getConnectorType()).update(connectorDTO, accountIdentifier, gitChangeType);
       if (isDefaultBranchConnector) {
         ConnectorInfoDTO savedConnector = connectorResponse.getConnector();
@@ -281,6 +289,9 @@ public class ConnectorServiceImpl implements ConnectorService {
         publishEvent(accountIdentifier, savedConnector.getOrgIdentifier(), savedConnector.getProjectIdentifier(),
             savedConnector.getIdentifier(), savedConnector.getConnectorType(),
             EventsFrameworkMetadataConstants.UPDATE_ACTION);
+      }
+      if (connectorResponse != null) {
+        connectorResponse.setGovernanceMetadata(governanceMetadata);
       }
       return connectorResponse;
     }
