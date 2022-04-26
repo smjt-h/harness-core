@@ -111,9 +111,15 @@ message CommitFileRequest {
   string branchName = 2;
   string filePath = 3;
   string connectorRef = 4;
-  io.harness.gitsync.ChangeType change_type = 5;
-  ScopeIdentifiers scopeIdentifiers = 6;
-  map<string, string> contextMap = 7;
+  string fileContent = 5;
+  bool isCommitToNewBranch = 6;
+  string newBranchName = 7;
+  string commitMessage = 8;
+  string oldFileSha = 9;
+  string oldCommitId = 10;
+  io.harness.gitsync.ChangeType change_type = 11;
+  ScopeIdentifiers scopeIdentifiers = 12;
+  map<string, string> contextMap = 13;
 }
 
 message CommitFileResponse {

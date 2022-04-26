@@ -28,6 +28,8 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.ChangeType;
+import io.harness.gitsync.CommitFileRequest;
+import io.harness.gitsync.CommitFileResponse;
 import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.GetFileRequest;
 import io.harness.gitsync.GetFileResponse;
@@ -40,12 +42,16 @@ import io.harness.gitsync.common.beans.GitBranch;
 import io.harness.gitsync.common.beans.GitSyncDirection;
 import io.harness.gitsync.common.beans.InfoForGitPush;
 import io.harness.gitsync.common.dtos.GitSyncEntityDTO;
+import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
+import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
+import io.harness.gitsync.common.dtos.ScmUpdateFileRequestDTO;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.helper.UserProfileHelper;
 import io.harness.gitsync.common.service.GitBranchService;
 import io.harness.gitsync.common.service.GitBranchSyncService;
 import io.harness.gitsync.common.service.GitEntityService;
 import io.harness.gitsync.common.service.HarnessToGitHelperService;
+import io.harness.gitsync.common.service.ScmFacilitatorService;
 import io.harness.gitsync.common.service.ScmOrchestratorService;
 import io.harness.gitsync.common.service.YamlGitConfigService;
 import io.harness.gitsync.common.utils.GitSyncFilePathUtils;
@@ -99,6 +105,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
   private final GitSyncErrorService gitSyncErrorService;
   private final GitSyncConnectorHelper gitSyncConnectorHelper;
   private final FullSyncJobService fullSyncJobService;
+  private final ScmFacilitatorService scmFacilitatorService;
 
   @Inject
   public HarnessToGitHelperServiceImpl(@Named("connectorDecoratorService") ConnectorService connectorService,
@@ -107,7 +114,8 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
       ExecutorService executorService, GitBranchService gitBranchService, EncryptionHelper encryptionHelper,
       ScmOrchestratorService scmOrchestratorService, GitBranchSyncService gitBranchSyncService,
       GitCommitService gitCommitService, UserProfileHelper userProfileHelper, GitSyncErrorService gitSyncErrorService,
-      GitSyncConnectorHelper gitSyncConnectorHelper, FullSyncJobService fullSyncJobService) {
+      GitSyncConnectorHelper gitSyncConnectorHelper, FullSyncJobService fullSyncJobService,
+      ScmFacilitatorService scmFacilitatorService) {
     this.connectorService = connectorService;
     this.decryptScmApiAccess = decryptScmApiAccess;
     this.gitEntityService = gitEntityService;
@@ -123,6 +131,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     this.gitSyncErrorService = gitSyncErrorService;
     this.gitSyncConnectorHelper = gitSyncConnectorHelper;
     this.fullSyncJobService = fullSyncJobService;
+    this.scmFacilitatorService = scmFacilitatorService;
   }
 
   private Optional<ConnectorResponseDTO> getConnector(
@@ -335,6 +344,47 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     return prepareGetFileResponse(getFileRequest, fileContent);
   }
 
+  @Override
+  public CommitFileResponse commitFile(CommitFileRequest commitFileRequest) {
+    final ChangeType changeType = commitFileRequest.getChangeType();
+    ScmCommitFileResponseDTO scmCommitFileResponseDTO = null;
+    switch (changeType) {
+      case ADD:
+        scmCommitFileResponseDTO =
+            scmFacilitatorService.createFile(ScmCreateFileRequestDTO.builder()
+                                                 .repoName(commitFileRequest.getRepoName())
+                                                 .branchName(commitFileRequest.getBranchName())
+                                                 .connectorRef(commitFileRequest.getConnectorRef())
+                                                 .fileContent(commitFileRequest.getFileContent())
+                                                 .filePath(commitFileRequest.getFilePath())
+                                                 .commitMessage(commitFileRequest.getCommitMessage())
+                                                 .isCommitToNewBranch(commitFileRequest.getIsCommitToNewBranch())
+                                                 .newBranch(commitFileRequest.getNewBranchName())
+                                                 .scopeIdentifiers(commitFileRequest.getScopeIdentifiers())
+                                                 .build());
+        return prepareCommitFileResponse(commitFileRequest, scmCommitFileResponseDTO);
+      case MODIFY:
+        scmCommitFileResponseDTO =
+            scmFacilitatorService.updateFile(ScmUpdateFileRequestDTO.builder()
+                                                 .repoName(commitFileRequest.getRepoName())
+                                                 .branchName(commitFileRequest.getBranchName())
+                                                 .connectorRef(commitFileRequest.getConnectorRef())
+                                                 .fileContent(commitFileRequest.getFileContent())
+                                                 .filePath(commitFileRequest.getFilePath())
+                                                 .commitMessage(commitFileRequest.getCommitMessage())
+                                                 .isCommitToNewBranch(commitFileRequest.getIsCommitToNewBranch())
+                                                 .newBranch(commitFileRequest.getNewBranchName())
+                                                 .oldCommitId(commitFileRequest.getOldCommitId())
+                                                 .oldFileSha(commitFileRequest.getOldFileSha())
+                                                 .scopeIdentifiers(commitFileRequest.getScopeIdentifiers())
+                                                 .build());
+        return prepareCommitFileResponse(commitFileRequest, scmCommitFileResponseDTO);
+      default:
+        throw new InvalidRequestException(
+            String.format("Change Type : %s not supported for Commit File Operation", changeType));
+    }
+  }
+
   private InfoForGitPush getInfoForGitPush(
       FileInfo request, EntityDetail entityDetailDTO, String accountId, YamlGitConfigDTO yamlGitConfig) {
     Principal principal = request.getPrincipal();
@@ -401,6 +451,20 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
                             .setCommitId(fileContent.getCommitId())
                             .setBlobId(fileContent.getBlobId())
                             .setFilePath(fileContent.getPath())
+                            .build())
+        .build();
+  }
+
+  private CommitFileResponse prepareCommitFileResponse(
+      CommitFileRequest commitFileRequest, ScmCommitFileResponseDTO scmCommitFileResponseDTO) {
+    return CommitFileResponse.newBuilder()
+        .setStatusCode(200)
+        .setGitMetaData(GitMetaData.newBuilder()
+                            .setFilePath(commitFileRequest.getFilePath())
+                            .setRepoName(commitFileRequest.getRepoName())
+                            .setBranchName(commitFileRequest.getBranchName())
+                            .setCommitId(scmCommitFileResponseDTO.getCommitId())
+                            .setBlobId(scmCommitFileResponseDTO.getBlobId())
                             .build())
         .build();
   }

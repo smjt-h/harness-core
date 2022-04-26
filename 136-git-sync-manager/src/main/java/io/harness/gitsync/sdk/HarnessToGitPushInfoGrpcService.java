@@ -16,6 +16,9 @@ import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.exceptionmanager.ExceptionManager;
 import io.harness.gitsync.BranchDetails;
+import io.harness.gitsync.CommitFileRequest;
+import io.harness.gitsync.CommitFileResponse;
+import io.harness.gitsync.ErrorDetails;
 import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.GetFileRequest;
 import io.harness.gitsync.GetFileResponse;
@@ -96,10 +99,29 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
          MdcContextSetter ignore1 = new MdcContextSetter(request.getContextMapMap())) {
       getFileResponse = harnessToGitHelperService.getFile(request);
     } catch (Exception ex) {
+      log.error("Faced exception during getFile GIT call", ex);
       final String errorMessage = ExceptionUtils.getMessage(ex);
       getFileResponse = GetFileResponse.newBuilder().setStatusCode(500).setError(errorMessage).build();
     }
     responseObserver.onNext(getFileResponse);
+    responseObserver.onCompleted();
+  }
+
+  @Override
+  public void commitFile(CommitFileRequest request, StreamObserver<CommitFileResponse> responseObserver) {
+    CommitFileResponse commitFileResponse;
+    try (GlobalContextManager.GlobalContextGuard guard = GlobalContextManager.ensureGlobalContextGuard();
+         MdcContextSetter ignore1 = new MdcContextSetter(request.getContextMapMap())) {
+      commitFileResponse = harnessToGitHelperService.commitFile(request);
+    } catch (Exception ex) {
+      log.error("Faced exception during commitFile GIT call", ex);
+      final String errorMessage = ExceptionUtils.getMessage(ex);
+      commitFileResponse = CommitFileResponse.newBuilder()
+                               .setStatusCode(500)
+                               .setError(ErrorDetails.newBuilder().setErrorMessage(errorMessage).build())
+                               .build();
+    }
+    responseObserver.onNext(commitFileResponse);
     responseObserver.onCompleted();
   }
 

@@ -12,7 +12,6 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
 import static io.harness.gitsync.interceptor.GitSyncConstants.DEFAULT;
 
-import io.harness.ScopeIdentifiers;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.eraro.ErrorCode;
@@ -31,6 +30,7 @@ import io.harness.gitsync.HarnessToGitPushInfoServiceGrpc.HarnessToGitPushInfoSe
 import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.common.helper.ChangeTypeMapper;
 import io.harness.gitsync.common.helper.GitSyncGrpcClientUtils;
+import io.harness.gitsync.common.helper.ScopeIdentifierMapper;
 import io.harness.gitsync.common.helper.UserPrincipalMapper;
 import io.harness.gitsync.exceptions.GitSyncException;
 import io.harness.gitsync.interceptor.GitEntityInfo;
@@ -90,15 +90,16 @@ public class SCMGitSyncHelper {
 
   public ScmGetFileResponse getFile(Scope scope, String repoName, String branchName, String filePath, String commitId,
       String connectorRef, Map<String, String> contextMap) {
-    final GetFileRequest getFileRequest = GetFileRequest.newBuilder()
-                                              .setRepoName(repoName)
-                                              .setConnectorRef(connectorRef)
-                                              .setCommitId(Strings.nullToEmpty(commitId))
-                                              .setBranchName(Strings.nullToEmpty(branchName))
-                                              .setFilePath(filePath)
-                                              .putAllContextMap(contextMap)
-                                              .setScopeIdentifiers(getScopeFromScopeIdentifiers(scope))
-                                              .build();
+    final GetFileRequest getFileRequest =
+        GetFileRequest.newBuilder()
+            .setRepoName(repoName)
+            .setConnectorRef(connectorRef)
+            .setCommitId(Strings.nullToEmpty(commitId))
+            .setBranchName(Strings.nullToEmpty(branchName))
+            .setFilePath(filePath)
+            .putAllContextMap(contextMap)
+            .setScopeIdentifiers(ScopeIdentifierMapper.getScopeIdentifiersFromScope(scope))
+            .build();
     final GetFileResponse getFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::getFile, getFileRequest);
 
@@ -114,15 +115,16 @@ public class SCMGitSyncHelper {
 
   public ScmCommitFileResponse commitFile(Scope scope, String repoName, String branchName, String filePath,
       String connectorRef, ChangeType changeType, Map<String, String> contextMap) {
-    final CommitFileRequest commitFileRequest = CommitFileRequest.newBuilder()
-                                                    .setRepoName(repoName)
-                                                    .setFilePath(filePath)
-                                                    .setBranchName(branchName)
-                                                    .setConnectorRef(connectorRef)
-                                                    .setScopeIdentifiers(getScopeFromScopeIdentifiers(scope))
-                                                    .setChangeType(ChangeTypeMapper.toProto(changeType))
-                                                    .putAllContextMap(contextMap)
-                                                    .build();
+    final CommitFileRequest commitFileRequest =
+        CommitFileRequest.newBuilder()
+            .setRepoName(repoName)
+            .setFilePath(filePath)
+            .setBranchName(branchName)
+            .setConnectorRef(connectorRef)
+            .setScopeIdentifiers(ScopeIdentifierMapper.getScopeIdentifiersFromScope(scope))
+            .setChangeType(ChangeTypeMapper.toProto(changeType))
+            .putAllContextMap(contextMap)
+            .build();
 
     final CommitFileResponse commitFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::commitFile, commitFileRequest);
@@ -250,14 +252,6 @@ public class SCMGitSyncHelper {
         .repoName(gitMetaData.getRepoName())
         .filePath(gitMetaData.getFilePath())
         .commitId(gitMetaData.getCommitId())
-        .build();
-  }
-
-  private ScopeIdentifiers getScopeFromScopeIdentifiers(Scope scope) {
-    return ScopeIdentifiers.newBuilder()
-        .setAccountIdentifier(scope.getAccountIdentifier())
-        .setOrgIdentifier(Strings.nullToEmpty(scope.getOrgIdentifier()))
-        .setProjectIdentifier(Strings.nullToEmpty(scope.getProjectIdentifier()))
         .build();
   }
 }

@@ -136,6 +136,10 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
 
       PipelineEntity entityWithUpdatedInfo = pmsPipelineServiceHelper.updatePipelineInfo(pipelineEntity);
       PipelineEntity createdEntity = pmsPipelineRepository.save(entityWithUpdatedInfo);
+
+      if () {
+      }
+
       sendPipelineSaveTelemetryEvent(createdEntity, CREATING_PIPELINE);
       return createdEntity;
     } catch (DuplicateKeyException ex) {
@@ -166,6 +170,12 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     try {
       return pmsPipelineRepository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
           accountId, orgIdentifier, projectIdentifier, identifier, !deleted);
+
+      if (FF enabled) {
+        if (entity == null) {
+        }
+      }
+
     } catch (Exception e) {
       log.error(String.format("Error while retrieving pipeline [%s]", identifier), e);
       throw new InvalidRequestException(
@@ -179,6 +189,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     try {
       return pmsPipelineRepository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifier(
           accountId, orgIdentifier, projectIdentifier, identifier);
+
     } catch (Exception e) {
       log.error(String.format("Error while retrieving pipeline [%s]", identifier), e);
       throw new InvalidRequestException(

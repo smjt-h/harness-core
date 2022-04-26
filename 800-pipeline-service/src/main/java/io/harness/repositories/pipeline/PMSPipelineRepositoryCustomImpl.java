@@ -139,6 +139,8 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
                                            .and(PipelineEntityKeys.accountId)
                                            .is(accountId),
         projectIdentifier, orgIdentifier, accountId, PipelineEntity.class);
+
+    if ()
   }
 
   @Override
