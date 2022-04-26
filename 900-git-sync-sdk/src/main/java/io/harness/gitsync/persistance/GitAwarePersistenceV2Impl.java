@@ -11,6 +11,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.git.model.ChangeType;
+import io.harness.gitsync.beans.GitContextRequestParams;
 import io.harness.gitsync.entityInfo.GitSdkEntityHandlerInterface;
 import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
@@ -100,24 +101,33 @@ public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
   }
 
   @Override
-  public <B extends GitAware> B save(
-      B objectToSave, String yaml, ChangeType changeType, Class<B> entityClass, Supplier functor, String branchName) {
+  public <B extends GitAware> B save(B objectToSave, String yaml, ChangeType changeType, Class<B> entityClass,
+      Supplier functor, StoreType storeType, GitContextRequestParams gitContextRequestParams) {
     GitContextHelper.initDefaultScmGitMetaData();
+    objectToSave.setStoreType(storeType);
 
-    if (objectToSave.getStoreType() == null) {
+    if (storeType == null) {
       return gitAwarePersistence.save(objectToSave, yaml, changeType, entityClass, functor);
     }
 
-    if (objectToSave.getStoreType() == StoreType.INLINE) {
+    if (storeType == StoreType.INLINE) {
       // How does changeType=DELETE handled using mongo.save() call?
       return saveEntity(objectToSave, functor);
     }
 
     // TODO put proper context map in request
+    // Change signature of commitFile to incorporate newBranch options as well
     if (changeType == ChangeType.MODIFY || changeType == ChangeType.ADD) {
-      scmGitSyncHelper.commitFile(Scope.builder().build(), objectToSave.getRepo(), branchName,
-          objectToSave.getFilePath(), objectToSave.getConnectorRef(), changeType, Collections.emptyMap());
+      scmGitSyncHelper.commitFile(Scope.builder().build(), gitContextRequestParams.getRepoName(),
+          gitContextRequestParams.getBranchName(), gitContextRequestParams.getFilePath(),
+          gitContextRequestParams.getConnectorRef(), changeType, Collections.emptyMap());
     }
+
+    objectToSave.setBranch(gitContextRequestParams.getBranchName());
+    objectToSave.setRepo(gitContextRequestParams.getRepoName());
+    objectToSave.setFilePath(gitContextRequestParams.getFilePath());
+    objectToSave.setConnectorRef(gitContextRequestParams.getConnectorRef());
+
     return saveEntity(objectToSave, functor);
   }
 

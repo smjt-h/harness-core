@@ -19,6 +19,8 @@ public interface GitAware extends GitSyncableEntity, PersistentEntity, WithIdent
   // Defines where this entity is stored
   StoreType getStoreType();
 
+  void setStoreType(StoreType storeType);
+
   // TODO : As this will be a blob does it make sense for this to be a byte[]
   // The String representation of the resource mostly yaml string
   String getData();
@@ -28,9 +30,15 @@ public interface GitAware extends GitSyncableEntity, PersistentEntity, WithIdent
   // Repo in which the entity will be saved
   String getRepo();
 
+  void setRepo(String repoName);
+
   // The path of the file in the repo
   String getPath();
 
+  void setPath(String path);
+
   // Connector Identifier which will be used connect to the repo
   String getConnectorRef();
+
+  void setConnectorRef(String connectorRef);
 }
