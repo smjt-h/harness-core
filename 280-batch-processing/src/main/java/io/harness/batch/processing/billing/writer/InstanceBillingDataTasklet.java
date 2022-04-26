@@ -42,6 +42,7 @@ import io.harness.batch.processing.tasklet.util.InstanceMetaDataUtils;
 import io.harness.batch.processing.writer.constants.K8sCCMConstants;
 import io.harness.ccm.HarnessServiceInfoNG;
 import io.harness.ccm.commons.beans.HarnessServiceInfo;
+import io.harness.ccm.commons.beans.InstanceState;
 import io.harness.ccm.commons.beans.InstanceType;
 import io.harness.ccm.commons.beans.JobConstants;
 import io.harness.ccm.commons.beans.Resource;
@@ -176,6 +177,12 @@ public class InstanceBillingDataTasklet implements Tasklet {
       if (null == instanceData.getActiveInstanceIterator() && null == instanceData.getUsageStopTime()) {
         instanceDataDao.updateInstanceActiveIterationTime(instanceData);
       }
+
+      if (null != instanceData.getUsageStopTime() && instanceData.getInstanceState() == InstanceState.RUNNING) {
+        log.info("correcting instance state {} {} {} {}", instanceData.getInstanceId(),
+            instanceData.getActiveInstanceIterator(), instanceData.getUsageStopTime(), instanceData.getInstanceState());
+        instanceDataDao.correctInstanceStateActiveIterationTime(instanceData);
+      }
     });
 
     Map<String, List<InstanceData>> instanceDataGroupedCluster =
@@ -183,7 +190,7 @@ public class InstanceBillingDataTasklet implements Tasklet {
             .filter(this::validInstanceForBilling)
             .collect(Collectors.groupingBy(InstanceData::getClusterId));
     String awsDataSetId = customBillingMetaDataService.getAwsDataSetId(accountId);
-    log.info("AWS data set {}", awsDataSetId);
+    log.debug("AWS data set {}", awsDataSetId);
     if (awsDataSetId != null) {
       Set<String> resourceIds = new HashSet<>();
       Set<String> eksFargateResourceIds = new HashSet<>();
@@ -219,7 +226,7 @@ public class InstanceBillingDataTasklet implements Tasklet {
     }
 
     String azureDataSetId = customBillingMetaDataService.getAzureDataSetId(accountId);
-    log.info("Azure data set {}", azureDataSetId);
+    log.debug("Azure data set {}", azureDataSetId);
     if (azureDataSetId != null) {
       Set<String> resourceIds = new HashSet<>();
       instanceDataLists.forEach(instanceData -> {
@@ -468,7 +475,7 @@ public class InstanceBillingDataTasklet implements Tasklet {
                 .divide(capacityFromInstanceData, MathContext.DECIMAL128);
       }
       if (storageUnallocatedFraction.compareTo(BigDecimal.ZERO) < 0) {
-        log.warn("-ve storageUnallocatedCost, Request:{}/Capacity:{} {}", utilizationData.getAvgStorageRequestValue(),
+        log.debug("-ve storageUnallocatedCost, Request:{}/Capacity:{} {}", utilizationData.getAvgStorageRequestValue(),
             utilizationData.getAvgStorageCapacityValue(), instanceData.toString());
         return BigDecimal.ZERO;
       }

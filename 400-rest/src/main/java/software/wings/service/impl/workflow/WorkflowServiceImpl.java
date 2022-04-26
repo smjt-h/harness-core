@@ -205,7 +205,7 @@ import software.wings.beans.appmanifest.LastDeployedHelmChartInformation;
 import software.wings.beans.appmanifest.LastDeployedHelmChartInformation.LastDeployedHelmChartInformationBuilder;
 import software.wings.beans.appmanifest.ManifestSummary;
 import software.wings.beans.artifact.Artifact;
-import software.wings.beans.artifact.Artifact.ArtifactMetadataKeys;
+import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.artifact.ArtifactStreamSummary;
 import software.wings.beans.artifact.ArtifactStreamSummary.ArtifactStreamSummaryBuilder;
@@ -4561,6 +4561,17 @@ public class WorkflowServiceImpl implements WorkflowService {
           }
         }
       });
+    }
+
+    // Add userGroups from Notification Rules
+    if (isNotEmpty(canaryOrchestrationWorkflow.getNotificationRules())) {
+      for (NotificationRule notificationRule : canaryOrchestrationWorkflow.getNotificationRules()) {
+        if (!notificationRule.isUserGroupAsExpression()) {
+          if (isNotEmpty(notificationRule.getUserGroupIds())) {
+            userGroupIds.addAll(notificationRule.getUserGroupIds());
+          }
+        }
+      }
     }
     return userGroupIds;
   }
