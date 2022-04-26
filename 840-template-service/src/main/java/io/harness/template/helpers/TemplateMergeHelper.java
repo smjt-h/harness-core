@@ -657,26 +657,173 @@ public class TemplateMergeHelper {
   private Map<String, Object> validate(String accountId, String orgId, String projectId, YamlNode yamlNode,
       Map<String, TemplateInputsErrorDTO> templateInputsErrorMap, Map<String, TemplateEntity> templateCacheMap) {
     Map<String, Object> resMap = new LinkedHashMap<>();
+
     for (YamlField childYamlField : yamlNode.fields()) {
       String fieldName = childYamlField.getName();
       JsonNode value = childYamlField.getNode().getCurrJsonNode();
+
       if (isTemplatePresent(fieldName, value)) {
         resMap.put(fieldName,
-            validateTemplateInputs(accountId, orgId, projectId, value, templateInputsErrorMap, templateCacheMap));
+            checkForTemplateInputs(accountId, orgId, projectId, value, templateInputsErrorMap, templateCacheMap));
         continue;
       }
       if (value.isValueNode() || YamlUtils.checkIfNodeIsArrayWithPrimitiveTypes(value)) {
         resMap.put(fieldName, value);
       } else if (value.isArray()) {
         resMap.put(fieldName,
-            validateTemplateInputsInArray(
+            checkForTemplateInputsInArray(
                 accountId, orgId, projectId, childYamlField.getNode(), templateInputsErrorMap, templateCacheMap));
       } else {
         resMap.put(fieldName,
-            validateTemplateInputsInObject(
+            checkForTemplateInputsInObject(
                 accountId, orgId, projectId, childYamlField.getNode(), templateInputsErrorMap, templateCacheMap));
       }
     }
     return resMap;
+  }
+
+  private Map<String, Object> checkForTemplateInputsInObject(String accountId, String orgId, String projectId,
+      YamlNode node, Map<String, TemplateInputsErrorDTO> templateInputsErrorMap,
+      Map<String, TemplateEntity> templateCacheMap) {
+    Map<String, Object> resMap = new LinkedHashMap<>();
+    for (YamlField childYamlField : node.fields()) {
+      String fieldName = childYamlField.getName();
+      JsonNode value = childYamlField.getNode().getCurrJsonNode();
+      if (isTemplatePresent(fieldName, value)) {
+        resMap.put(fieldName,
+            checkForTemplateInputs(accountId, orgId, projectId, value, templateInputsErrorMap, templateCacheMap));
+        continue;
+      }
+      if (value.isValueNode() || YamlUtils.checkIfNodeIsArrayWithPrimitiveTypes(value)) {
+        resMap.put(fieldName, value);
+      } else if (value.isArray()) {
+        resMap.put(fieldName,
+            checkForTemplateInputsInArray(
+                accountId, orgId, projectId, childYamlField.getNode(), templateInputsErrorMap, templateCacheMap));
+      } else {
+        resMap.put(fieldName,
+            checkForTemplateInputsInObject(
+                accountId, orgId, projectId, childYamlField.getNode(), templateInputsErrorMap, templateCacheMap));
+      }
+    }
+    return resMap;
+  }
+
+  private Object checkForTemplateInputsInArray(String accountId, String orgId, String projectId, YamlNode node,
+      Map<String, TemplateInputsErrorDTO> templateInputsErrorMap, Map<String, TemplateEntity> templateCacheMap) {
+    List<Object> arrayList = new ArrayList<>();
+    for (YamlNode arrayElement : node.asArray()) {
+      if (node.getCurrJsonNode().isValueNode()) {
+        arrayList.add(arrayElement);
+      } else if (arrayElement.isObject()) {
+        arrayList.add(checkForTemplateInputsInObject(
+            accountId, orgId, projectId, arrayElement, templateInputsErrorMap, templateCacheMap));
+      } else {
+        arrayList.add(checkForTemplateInputsInArray(
+            accountId, orgId, projectId, arrayElement, templateInputsErrorMap, templateCacheMap));
+      }
+    }
+    return arrayList;
+  }
+
+  private JsonNode checkForTemplateInputs(String accountId, String orgId, String projectId, JsonNode linkedTemplate,
+      Map<String, TemplateInputsErrorDTO> errorMap, Map<String, TemplateEntity> templateCacheMap) {
+    String identifier = linkedTemplate.get(TEMPLATE_REF).asText();
+    TemplateEntity templateEntity =
+        getLinkedTemplateEntity(accountId, orgId, projectId, linkedTemplate, templateCacheMap);
+    JsonNode linkedTemplateInputs = linkedTemplate.get(TEMPLATE_INPUTS);
+    if (linkedTemplateInputs == null) {
+      return linkedTemplate;
+    }
+
+    String templateYaml = templateEntity.getYaml();
+    String templateSpecInputSetFormatYaml = createTemplateInputsFromTemplate(templateYaml);
+
+    try {
+      Map<String, JsonNode> dummyLinkedTemplateInputsMap = new LinkedHashMap<>();
+      dummyLinkedTemplateInputsMap.put(DUMMY_NODE, linkedTemplateInputs);
+      String dummyLinkedTemplateInputsYaml = convertToYaml(dummyLinkedTemplateInputsMap);
+
+      Map<String, TemplateInputsErrorDTO> uuidToErrorMessageMap = new LinkedHashMap<>();
+      String invalidLinkedTemplateInputsYaml;
+      if (isNotEmpty(templateSpecInputSetFormatYaml)) {
+        JsonNode templateSpecInputSetFormatNode =
+            YamlUtils.readTree(templateSpecInputSetFormatYaml).getNode().getCurrJsonNode();
+        Map<String, JsonNode> dummyTemplateSpecMap = new LinkedHashMap<>();
+        dummyTemplateSpecMap.put(DUMMY_NODE, templateSpecInputSetFormatNode);
+        invalidLinkedTemplateInputsYaml = getInvalidInputValues(
+            convertToYaml(dummyTemplateSpecMap), dummyLinkedTemplateInputsYaml, uuidToErrorMessageMap, identifier);
+      } else {
+        invalidLinkedTemplateInputsYaml = getInvalidInputValues(
+            templateSpecInputSetFormatYaml, dummyLinkedTemplateInputsYaml, uuidToErrorMessageMap, identifier);
+      }
+
+      if (isEmpty(uuidToErrorMessageMap)) {
+        return linkedTemplate;
+      }
+      errorMap.putAll(uuidToErrorMessageMap);
+      JsonNode invalidLinkedTemplateInputsNode =
+          YamlUtils.readTree(invalidLinkedTemplateInputsYaml).getNode().getCurrJsonNode().get(DUMMY_NODE);
+
+      Map<String, Object> originalTemplateMap = JsonUtils.jsonNodeToMap(linkedTemplate);
+      originalTemplateMap.put(TEMPLATE_INPUTS, invalidLinkedTemplateInputsNode);
+      return YamlUtils.readTree(convertToYaml(originalTemplateMap)).getNode().getCurrJsonNode();
+    } catch (IOException e) {
+      log.error("Error while validating template inputs yaml ", e);
+      throw new NGTemplateException("Error while validating template inputs yaml: " + e.getMessage());
+    }
+  }
+
+  private String getInvalidInputValues(String templateSpecInputSetFormatYaml, String linkedTemplateInputsYaml,
+      Map<String, TemplateInputsErrorDTO> uuidToErrorMessageMap, String templateRef) {
+    YamlConfig linkedTemplateInputsConfig = new YamlConfig(linkedTemplateInputsYaml);
+    Set<FQN> linkedTemplateInputsFQNs = new LinkedHashSet<>(linkedTemplateInputsConfig.getFqnToValueMap().keySet());
+    if (isEmpty(templateSpecInputSetFormatYaml)) {
+      return markAllRuntimeInputsInvalid(uuidToErrorMessageMap, templateRef, linkedTemplateInputsConfig,
+          linkedTemplateInputsFQNs, "Template no longer contains any runtime input");
+    }
+
+    YamlConfig templateSpecInputSetFormatConfig = new YamlConfig(templateSpecInputSetFormatYaml);
+
+    templateSpecInputSetFormatConfig.getFqnToValueMap().keySet().forEach(key -> {
+      if (linkedTemplateInputsFQNs.contains(key)) {
+        Object templateValue = templateSpecInputSetFormatConfig.getFqnToValueMap().get(key);
+        Object linkedTemplateInputValue = linkedTemplateInputsConfig.getFqnToValueMap().get(key);
+        if (key.isType() || key.isIdentifierOrVariableName()) {
+          if (!linkedTemplateInputValue.toString().equals(templateValue.toString())) {
+            String randomUuid = UUID.randomUUID().toString();
+            linkedTemplateInputsConfig.getFqnToValueMap().put(key, randomUuid);
+            TemplateInputsErrorDTO errorDTO = TemplateInputsErrorDTO.builder()
+                                                  .fieldName(randomUuid)
+                                                  .message("The value for is " + templateValue.toString()
+                                                      + " in the template yaml, but the linked template has it as "
+                                                      + linkedTemplateInputValue.toString())
+                                                  .identifierOfErrorSource(templateRef)
+                                                  .build();
+            uuidToErrorMessageMap.put(randomUuid, errorDTO);
+          }
+        } else {
+          String error = validateStaticValues(templateValue, linkedTemplateInputValue);
+          if (isNotEmpty(error)) {
+            String randomUuid = UUID.randomUUID().toString();
+            linkedTemplateInputsConfig.getFqnToValueMap().put(key, randomUuid);
+            TemplateInputsErrorDTO errorDTO = TemplateInputsErrorDTO.builder()
+                                                  .fieldName(randomUuid)
+                                                  .message(error)
+                                                  .identifierOfErrorSource(templateRef)
+                                                  .build();
+            uuidToErrorMessageMap.put(randomUuid, errorDTO);
+          }
+        }
+
+        linkedTemplateInputsFQNs.remove(key);
+      } else {
+        Map<FQN, Object> subMap =
+            YamlSubMapExtractor.getFQNToObjectSubMap(linkedTemplateInputsConfig.getFqnToValueMap(), key);
+        subMap.keySet().forEach(linkedTemplateInputsFQNs::remove);
+      }
+    });
+    return markAllRuntimeInputsInvalid(uuidToErrorMessageMap, templateRef, linkedTemplateInputsConfig,
+        linkedTemplateInputsFQNs, "Field either not present in template or not a runtime input");
   }
 }

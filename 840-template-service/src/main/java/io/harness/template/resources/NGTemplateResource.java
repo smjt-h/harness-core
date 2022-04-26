@@ -630,6 +630,6 @@ public class NGTemplateResource {
           NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectId,
       @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo,
       @Parameter(description = "Payload for RefreshTemplates API") ValidateRequestDTO validateRequestDTO) {
-    return templateMergeHelper.validateTemplates(accountId, orgId, projectId, String yaml);
+    return templateMergeHelper.validateTemplates(accountId, orgId, projectId, validateRequestDTO.getYaml());
   }
 }
