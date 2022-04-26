@@ -37,7 +37,7 @@ import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.ChecksumType;
 import io.harness.delegate.beans.FileBucket;
 import io.harness.delegate.beans.FileUploadLimit;
-import io.harness.exception.DuplicateEntityException;
+import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.file.beans.NGBaseFile;
@@ -47,8 +47,10 @@ import io.harness.ng.core.dto.filestore.node.FileNodeDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 import io.harness.ng.core.entities.NGFile;
 import io.harness.ng.core.filestore.NGFileType;
+import io.harness.ng.core.filestore.api.FileFailsafeService;
 import io.harness.ng.core.filestore.dto.FileDTO;
 import io.harness.ng.core.filestore.dto.FileFilterDTO;
+import io.harness.ng.core.mapper.FileDTOMapper;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
 import io.harness.rule.Owner;
 
@@ -93,6 +95,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
   @Mock private FileService fileService;
   @Mock private MainConfiguration configuration;
   @Mock private FileReferenceServiceImpl fileReferenceService;
+  @Mock private FileFailsafeService fileFailsafeService;
 
   @InjectMocks private FileStoreServiceImpl fileStoreService;
 
@@ -111,11 +114,14 @@ public class FileStoreServiceImplTest extends CategoryTest {
   @Owner(developers = BOJAN)
   @Category(UnitTests.class)
   public void testUpdate() {
+    NGFile ngFile = createNgFile();
+    FileDTO fileDto = createFileDto();
     when(fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
              any(), any(), any(), any()))
-        .thenReturn(Optional.of(createNgFile()));
+        .thenReturn(Optional.of(ngFile));
+    when(fileFailsafeService.updateAndPublish(ngFile, FileDTOMapper.updateNGFile(fileDto, ngFile))).thenReturn(fileDto);
 
-    FileDTO result = fileStoreService.update(createFileDto(), null, "identifier1");
+    FileDTO result = fileStoreService.update(fileDto, null, "identifier1");
 
     assertThat(result).isNotNull();
     assertThat(result.getName()).isEqualTo("updatedName");
@@ -221,7 +227,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
                           .parentIdentifier(fileDto.getParentIdentifier())
                           .build();
 
-    verify(fileStoreRepository).save(expected);
+    verify(fileFailsafeService).saveAndPublish(expected);
   }
 
   @Test
@@ -296,7 +302,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
                           .parentIdentifier(fileDto.getParentIdentifier())
                           .build();
 
-    verify(fileStoreRepository).save(expected);
+    verify(fileFailsafeService).saveAndPublish(expected);
   }
 
   @Test
@@ -308,7 +314,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
     FileDTO folderDto = aFolderDto();
 
     assertThatThrownBy(() -> fileStoreService.create(folderDto, null, false))
-        .isInstanceOf(DuplicateEntityException.class)
+        .isInstanceOf(DuplicateFieldException.class)
         .hasMessageContaining("Try creating another folder, folder with identifier [identifier] already exists.",
             folderDto.getIdentifier());
   }
@@ -323,7 +329,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
     FileDTO fileDTO = aFileDto();
 
     assertThatThrownBy(() -> fileStoreService.create(fileDTO, getStreamWithDummyContent(), false))
-        .isInstanceOf(DuplicateEntityException.class)
+        .isInstanceOf(DuplicateFieldException.class)
         .hasMessageContaining("Try creating another file, file with identifier [identifier] already exists.");
   }
 
@@ -340,7 +346,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
     FileDTO fileDTO = aFileDto();
 
     assertThatThrownBy(() -> fileStoreService.create(fileDTO, getStreamWithDummyContent(), false))
-        .isInstanceOf(DuplicateEntityException.class)
+        .isInstanceOf(DuplicateFieldException.class)
         .hasMessageContaining(
             "Try creating another file, file with name [file-name] already exists in the parent folder [parent-identifier].",
             fileDTO.getIdentifier());
@@ -372,9 +378,10 @@ public class FileStoreServiceImplTest extends CategoryTest {
     when(fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
              ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, IDENTIFIER))
         .thenReturn(Optional.of(file));
+    when(fileFailsafeService.deleteAndPublish(any())).thenReturn(true);
     boolean result = fileStoreService.delete(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, IDENTIFIER);
     assertThat(result).isTrue();
-    verify(fileStoreRepository).delete(file);
+    verify(fileFailsafeService).deleteAndPublish(file);
     verify(fileService).deleteFile(fileUuid, FileBucket.FILE_STORE);
   }
 
@@ -402,10 +409,11 @@ public class FileStoreServiceImplTest extends CategoryTest {
     when(fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndParentIdentifier(
              ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, folder1))
         .thenReturn(Arrays.asList(file));
+    when(fileFailsafeService.deleteAndPublish(any())).thenReturn(true);
     boolean result = fileStoreService.delete(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, folder1);
     assertThat(result).isTrue();
-    verify(fileStoreRepository).delete(file);
-    verify(fileStoreRepository).delete(parentFolder);
+    verify(fileFailsafeService).deleteAndPublish(file);
+    verify(fileFailsafeService).deleteAndPublish(parentFolder);
     verify(fileService).deleteFile(fileUuid, FileBucket.FILE_STORE);
   }
 
@@ -454,12 +462,13 @@ public class FileStoreServiceImplTest extends CategoryTest {
     when(fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndParentIdentifier(
              ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, folder2))
         .thenReturn(Arrays.asList(childFile));
+    when(fileFailsafeService.deleteAndPublish(any())).thenReturn(true);
     boolean result = fileStoreService.delete(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, folder1);
     assertThat(result).isTrue();
-    verify(fileStoreRepository).delete(file);
-    verify(fileStoreRepository).delete(parentFolder);
-    verify(fileStoreRepository).delete(childFile);
-    verify(fileStoreRepository).delete(childFolder);
+    verify(fileFailsafeService).deleteAndPublish(file);
+    verify(fileFailsafeService).deleteAndPublish(parentFolder);
+    verify(fileFailsafeService).deleteAndPublish(childFile);
+    verify(fileFailsafeService).deleteAndPublish(childFolder);
     verify(fileService).deleteFile(fileUuid1, FileBucket.FILE_STORE);
     verify(fileService).deleteFile(fileUuid2, FileBucket.FILE_STORE);
   }

@@ -14,6 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import io.harness.CategoryTest;
 import io.harness.EntityType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
@@ -34,7 +35,7 @@ import org.springframework.data.domain.Sort;
 
 @OwnedBy(CDP)
 @RunWith(MockitoJUnitRunner.class)
-public class FileReferenceServiceTest {
+public class FileReferenceServiceTest extends CategoryTest {
   private static final String ACCOUNT_IDENTIFIER = "accountIdentifier";
 
   @Mock private EntitySetupUsageService entitySetupUsageService;
