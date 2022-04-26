@@ -41,7 +41,6 @@ import software.wings.graphql.datafetcher.ce.recommendation.entity.Cost;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.inject.Singleton;
-import com.sun.istack.internal.Nullable;
 import io.kubernetes.client.custom.Quantity;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -61,6 +60,8 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Nullable;
 
 @Slf4j
 @Singleton
