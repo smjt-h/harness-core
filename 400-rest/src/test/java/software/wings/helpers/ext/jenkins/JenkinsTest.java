@@ -12,6 +12,7 @@ import static io.harness.rule.OwnerRule.AADITI;
 import static io.harness.rule.OwnerRule.BRETT;
 import static io.harness.rule.OwnerRule.DEEPAK_PUTHRAYA;
 import static io.harness.rule.OwnerRule.GARVIT;
+import static io.harness.rule.OwnerRule.LUCAS_SALES;
 import static io.harness.rule.OwnerRule.MILOS;
 import static io.harness.rule.OwnerRule.RAMA;
 import static io.harness.rule.OwnerRule.RUSHABH;
@@ -533,7 +534,7 @@ public class JenkinsTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = DEEPAK_PUTHRAYA)
+  @Owner(developers = LUCAS_SALES)
   @Category(UnitTests.class)
   public void shouldGetAllJobsFromJenkinsWithOrganizationFolder() throws IOException {
     wireMockRule.stubFor(
