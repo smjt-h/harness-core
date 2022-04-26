@@ -80,7 +80,7 @@ public class InstallUtilsTest {
     assertThat(useCdn).isFalse();
 
     assertThat(InstallUtils.getScmDownloadUrl(delegateConfiguration))
-        .isEqualTo("https://app.harness.io/storage/harness-download/harness-scm/release/98fc345b/bin/" + osPath
+        .isEqualTo("https://app.harness.io/storage/harness-download/harness-scm/release/ac57c25/bin/" + osPath
             + "/amd64/scm");
   }
 
@@ -231,6 +231,6 @@ public class InstallUtilsTest {
     assertThat(getOcPath()).isEqualTo(pwd + "/client-tools/oc/v4.2.16/oc");
     assertThat(getKustomizePath(true)).isEqualTo(pwd + "/client-tools/kustomize/v4.0.0/kustomize");
     assertThat(getKustomizePath(false)).isEqualTo(pwd + "/client-tools/kustomize/v3.5.4/kustomize");
-    assertThat(getScmPath()).isEqualTo(pwd + "/client-tools/scm/98fc345b/" + osPath + "/amd64/scm");
+    assertThat(getScmPath()).isEqualTo(pwd + "/client-tools/scm/ac57c25/" + osPath + "/amd64/scm");
   }
 }
