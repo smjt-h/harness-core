@@ -97,7 +97,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
-import org.jooq.True;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
