@@ -59,14 +59,7 @@ public final class TerraformConstants {
   public static final String TF_WORKING_DIR = "./terraform-working-dir/";
   public static final String TF_VAR_FILES_DIR = "tf-var-files";
   public static final String TF_SCRIPT_DIR = "script-repository";
-  public static final String TF_SSH_COMMAND_ARG =
-      " -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no -i ";
-  public static final String SSH_KEY_DIR = ".ssh";
-  public static final String USE_CONNECTOR_CREDENTIALS = "useConnectorCredentials";
 
-  public static final String SSH_KEY_FILENAME = "ssh.key";
-  public static final String SSH_COMMAND_PREFIX = "ssh";
-  public static final String GIT_SSH_COMMAND = "GIT_SSH_COMMAND";
   public static final String COMMAND_UNIT = "Execute Terraform";
   public static final String DEFAULT_TIMEOUT = "10m";
 

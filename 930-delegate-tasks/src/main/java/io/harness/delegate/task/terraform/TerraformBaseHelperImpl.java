@@ -23,10 +23,6 @@ import static io.harness.filesystem.FileIo.deleteDirectoryAndItsContentIfExists;
 import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.logging.LogLevel.INFO;
 import static io.harness.logging.LogLevel.WARN;
-import static io.harness.provision.TerraformConstants.GIT_SSH_COMMAND;
-import static io.harness.provision.TerraformConstants.SSH_COMMAND_PREFIX;
-import static io.harness.provision.TerraformConstants.SSH_KEY_DIR;
-import static io.harness.provision.TerraformConstants.SSH_KEY_FILENAME;
 import static io.harness.provision.TerraformConstants.TERRAFORM_APPLY_PLAN_FILE_VAR_NAME;
 import static io.harness.provision.TerraformConstants.TERRAFORM_DESTROY_PLAN_FILE_OUTPUT_NAME;
 import static io.harness.provision.TerraformConstants.TERRAFORM_DESTROY_PLAN_FILE_VAR_NAME;
@@ -36,7 +32,6 @@ import static io.harness.provision.TerraformConstants.TERRAFORM_STATE_FILE_NAME;
 import static io.harness.provision.TerraformConstants.TERRAFORM_VARIABLES_FILE_NAME;
 import static io.harness.provision.TerraformConstants.TF_BASE_DIR;
 import static io.harness.provision.TerraformConstants.TF_SCRIPT_DIR;
-import static io.harness.provision.TerraformConstants.TF_SSH_COMMAND_ARG;
 import static io.harness.provision.TerraformConstants.TF_WORKING_DIR;
 import static io.harness.provision.TerraformConstants.USER_DIR_KEY;
 import static io.harness.provision.TerraformConstants.WORKSPACE_STATE_FILE_PATH_FORMAT;
@@ -130,6 +125,12 @@ import org.jetbrains.annotations.NotNull;
 public class TerraformBaseHelperImpl implements TerraformBaseHelper {
   private static final String ARTIFACT_PATH_METADATA_KEY = "artifactPath";
   private static final String ARTIFACT_NAME_METADATA_KEY = "artifactName";
+  public static final String SSH_KEY_DIR = ".ssh";
+  public static final String SSH_KEY_FILENAME = "ssh.key";
+  public static final String SSH_COMMAND_PREFIX = "ssh";
+  public static final String GIT_SSH_COMMAND = "GIT_SSH_COMMAND";
+  public static final String TF_SSH_COMMAND_ARG =
+      " -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no -i ";
 
   @Inject DelegateFileManagerBase delegateFileManagerBase;
   @Inject TerraformClient terraformClient;
@@ -838,13 +839,12 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
       if (!sshSessionConfig.isKeyLess() && isNotEmpty(sshSessionConfig.getKey())) {
         String sshKey = String.valueOf(sshSessionConfig.getKey());
         String workingDir = getBaseDir(taskParameters.getEntityId());
-        String baseDir = Paths.get(Paths.get(System.getProperty(USER_DIR_KEY)).toString(), workingDir).toString();
-        Files.createDirectories(Paths.get(baseDir, SSH_KEY_DIR));
-        sshKeyPath = Paths.get(baseDir, SSH_KEY_DIR, SSH_KEY_FILENAME).toString();
+        Files.createDirectories(Paths.get(workingDir, SSH_KEY_DIR));
+        sshKeyPath = Paths.get(workingDir, SSH_KEY_DIR, SSH_KEY_FILENAME).toAbsolutePath().toString();
         FileIo.writeUtf8StringToFile(sshKeyPath, sshKey);
 
       } else if (sshSessionConfig.isKeyLess() && isNotEmpty(sshSessionConfig.getKeyPath())) {
-        sshKeyPath = Paths.get(System.getProperty(USER_DIR_KEY), sshSessionConfig.getKeyPath()).toString();
+        sshKeyPath = sshSessionConfig.getKeyPath();
 
       } else {
         logCallback.saveExecutionLog(

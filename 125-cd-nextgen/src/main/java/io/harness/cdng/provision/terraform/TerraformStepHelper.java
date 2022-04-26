@@ -11,7 +11,6 @@ import static io.harness.cdng.provision.terraform.TerraformPlanCommand.APPLY;
 import static io.harness.common.ParameterFieldHelper.getParameterFieldValue;
 import static io.harness.provision.TerraformConstants.TF_DESTROY_NAME_PREFIX;
 import static io.harness.provision.TerraformConstants.TF_NAME_PREFIX;
-import static io.harness.provision.TerraformConstants.USE_CONNECTOR_CREDENTIALS;
 import static io.harness.validation.Validator.notEmptyCheck;
 
 import static com.hazelcast.sql.impl.expression.predicate.TernaryLogic.isNotNull;
@@ -114,6 +113,7 @@ public class TerraformStepHelper {
   private static final String TF_INHERIT_OUTPUT_FORMAT = "tfInheritOutput_%s_%s";
   public static final String TF_CONFIG_FILES = "TF_CONFIG_FILES";
   public static final String TF_VAR_FILES = "TF_VAR_FILES_%d";
+  public static final String USE_CONNECTOR_CREDENTIALS = "useConnectorCredentials";
 
   @Inject private HPersistence persistence;
   @Inject private K8sStepHelper k8sStepHelper;
