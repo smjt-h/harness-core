@@ -90,6 +90,7 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
     }
     Instant startTime = Instant.ofEpochMilli(jobConstants.getJobStartTime());
     Instant endTime = Instant.ofEpochMilli(jobConstants.getJobEndTime());
+    startTime = startTime.minus(Duration.ofDays(1));
     // Get all clusters for current account
     Map<String, String> ceClusters = ceClusterDao.getClusterIdNameMapping(accountId);
     if (CollectionUtils.isEmpty(ceClusters)) {
