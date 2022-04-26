@@ -26,13 +26,13 @@ public class OpaConnectorServiceImpl implements OpaConnectorService {
 
   public GovernanceMetadata evaluatePoliciesWithEntity(String accountId, ConnectorDTO connectorDTO,
       String orgIdentifier, String projectIdentifier, String action, String identifier) {
-    if (!featureFlagService.isEnabled(FeatureName.OPA_CONNECTOR_GOVERNANCE, accountId)) {
+    /*if (!featureFlagService.isEnabled(FeatureName.OPA_CONNECTOR_GOVERNANCE, accountId)) {
       return GovernanceMetadata.newBuilder()
           .setDeny(false)
           .setMessage(
               String.format("FF: [%s] is disabled for account: [%s]", FeatureName.OPA_CONNECTOR_GOVERNANCE, accountId))
           .build();
-    }
+    }*/
 
     OpaEvaluationContext context;
 

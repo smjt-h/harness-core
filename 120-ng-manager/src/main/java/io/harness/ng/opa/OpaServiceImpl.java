@@ -120,11 +120,15 @@ public class OpaServiceImpl implements OpaService {
       String identifier, String name) throws UnsupportedEncodingException {
     Map<String, String> metadataMap = ImmutableMap.<String, String>builder()
                                           .put("accountIdentifier", accountId)
-                                          .put("orgIdentifier", orgIdentifier)
-                                          .put("projectIdentifier", projectIdentifier)
                                           .put("identifier", identifier)
                                           .put("name", name)
                                           .build();
+    if (orgIdentifier != null && !orgIdentifier.isEmpty()) {
+      metadataMap.put("orgIdentifier", orgIdentifier);
+    }
+    if (projectIdentifier != null && !projectIdentifier.isEmpty()) {
+      metadataMap.put("projectIdentifier", projectIdentifier);
+    }
     return URLEncoder.encode(JsonUtils.asJson(metadataMap), StandardCharsets.UTF_8.toString());
   }
 
