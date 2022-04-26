@@ -14,6 +14,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.pms.yaml.YamlNode;
 import io.harness.validation.Validator;
 import io.harness.yaml.YamlSchemaTypes;
 import io.harness.yaml.core.variables.NGVariable;
@@ -25,6 +26,7 @@ import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 
 @Data
@@ -33,6 +35,10 @@ import lombok.experimental.FieldDefaults;
 @OwnedBy(HarnessTeam.CDP)
 @RecasterAlias("io.harness.cdng.provision.cloudformation.CloudformationCreateStackStepConfiguration")
 public class CloudformationCreateStackStepConfiguration {
+  @JsonProperty(YamlNode.UUID_FIELD_NAME)
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
+  @ApiModelProperty(hidden = true)
+  String uuid;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> stackName;
   @NotNull CloudformationTemplateFile templateFile;
   @JsonProperty("parameters") List<CloudformationParametersFileSpec> parametersFilesSpecs;

@@ -685,6 +685,7 @@
       "required": [
         "connectorRef",
         "region",
+        "stackName",
         "templateFile"
       ],
       "properties": {
@@ -2047,9 +2048,6 @@
                 "Branch",
                 "Commit"
               ]
-            },
-            "metadata": {
-              "type": "string"
             },
             "paths": {
               "oneOf": [
