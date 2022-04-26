@@ -205,7 +205,6 @@ import software.wings.beans.HelmCommandFlagConfig;
 import software.wings.beans.HelmCommandFlagConstants.HelmSubCommand;
 import software.wings.beans.InfraMappingSweepingOutput;
 import software.wings.beans.InstanceUnitType;
-import software.wings.beans.NameValuePair;
 import software.wings.beans.PcfInfrastructureMapping;
 import software.wings.beans.Permission;
 import software.wings.beans.PerpetualTaskBroadcastEvent;
@@ -281,7 +280,6 @@ import software.wings.beans.command.EcsResizeParams;
 import software.wings.beans.command.EcsSetupCommandUnit;
 import software.wings.beans.command.EcsSetupParams;
 import software.wings.beans.command.ExecCommandUnit;
-import software.wings.beans.command.GcbTaskParams;
 import software.wings.beans.command.InitPowerShellCommandUnit;
 import software.wings.beans.command.InitSshCommandUnit;
 import software.wings.beans.command.InitSshCommandUnitV2;
@@ -368,8 +366,6 @@ import software.wings.delegatetasks.buildsource.BuildSourceResponse;
 import software.wings.delegatetasks.event.EventsDeliveryCallback;
 import software.wings.delegatetasks.manifest.ManifestCollectionExecutionResponse;
 import software.wings.delegatetasks.manifest.ManifestCollectionResponse;
-import software.wings.delegatetasks.rancher.RancherResolveClustersResponse;
-import software.wings.delegatetasks.rancher.RancherResolveClustersTaskParameters;
 import software.wings.delegatetasks.validation.capabilities.HelmCommandCapability;
 import software.wings.delegatetasks.validation.capabilities.SSHHostValidationCapability;
 import software.wings.delegatetasks.validation.capabilities.ShellConnectionCapability;
@@ -405,9 +401,6 @@ import software.wings.helpers.ext.ecs.response.EcsServiceSetupResponse;
 import software.wings.helpers.ext.external.comm.CollaborationProviderRequest;
 import software.wings.helpers.ext.external.comm.CollaborationProviderResponse;
 import software.wings.helpers.ext.external.comm.EmailRequest;
-import software.wings.helpers.ext.gcb.models.BuildStep;
-import software.wings.helpers.ext.gcb.models.GcbBuildDetails;
-import software.wings.helpers.ext.gcb.models.GcbBuildStatus;
 import software.wings.helpers.ext.helm.HelmCommandExecutionResponse;
 import software.wings.helpers.ext.helm.request.HelmCommandRequest;
 import software.wings.helpers.ext.helm.request.HelmInstallCommandRequest;
@@ -596,9 +589,7 @@ import software.wings.service.impl.aws.model.response.AwsCloudWatchMetricDataRes
 import software.wings.service.impl.aws.model.response.AwsCloudWatchStatisticsResponse;
 import software.wings.service.impl.aws.model.response.AwsLambdaDetailsMetricsResponse;
 import software.wings.service.impl.aws.model.response.AwsLambdaDetailsResponse;
-import software.wings.service.impl.azure.manager.AzureTaskExecutionRequest;
 import software.wings.service.impl.azure.manager.AzureVMSSAllPhaseRollbackData;
-import software.wings.service.impl.azure.manager.AzureVMSSCommandRequest;
 import software.wings.service.impl.bugsnag.BugsnagApplication;
 import software.wings.service.impl.bugsnag.BugsnagSetupTestData;
 import software.wings.service.impl.cloudwatch.AwsNameSpace;
@@ -686,9 +677,6 @@ import software.wings.sm.states.azure.appservices.AzureAppServiceSlotShiftTraffi
 import software.wings.sm.states.azure.appservices.AzureAppServiceSlotShiftTrafficExecutionSummary;
 import software.wings.sm.states.azure.appservices.AzureAppServiceSlotSwapExecutionData;
 import software.wings.sm.states.azure.appservices.AzureAppServiceSlotSwapExecutionSummary;
-import software.wings.sm.states.gcbconfigs.GcbOptions;
-import software.wings.sm.states.gcbconfigs.GcbRemoteBuildSpec;
-import software.wings.sm.states.gcbconfigs.GcbTriggerBuildSpec;
 import software.wings.sm.states.k8s.K8sResourcesSweepingOutput;
 import software.wings.sm.states.rancher.RancherStateExecutionData;
 import software.wings.sm.states.spotinst.SpotInstDeployStateExecutionData;
@@ -893,7 +881,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(KubernetesContainerInfo.class, 5165);
     kryo.register(InstanceUnitType.class, 5221);
     kryo.register(JiraTaskParameters.class, 5579);
-    kryo.register(NameValuePair.class, 5226);
     kryo.register(Permission.class, 5310);
     kryo.register(PrometheusConfig.class, 5314);
     kryo.register(Role.class, 5194);
@@ -1315,13 +1302,8 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(ApiKeyEntry.class, 7406);
     kryo.register(AppPermissionSummary.ExecutableElementInfo.class, 7407);
 
-    kryo.register(GcbTaskParams.class, 7408);
     kryo.register(GcbState.GcbDelegateResponse.class, 7409);
     kryo.register(GcbExecutionData.class, 7410);
-    kryo.register(GcbBuildDetails.class, 7411);
-    kryo.register(GcbBuildStatus.class, 7412);
-    kryo.register(BuildStep.class, 7423);
-    kryo.register(GcbTaskParams.GcbTaskType.class, 7427);
     kryo.register(DelegateTaskBroadcast.class, 7428);
     kryo.register(Event.class, 7429);
     kryo.register(Event.Type.class, 7430);
@@ -1331,12 +1313,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(AwsAmiServiceTrafficShiftAlbDeployRequest.class, 7434);
     kryo.register(AwsAmiTrafficShiftAlbSwitchRouteRequest.class, 7435);
     kryo.register(AwsAmiTrafficShiftAlbStateExecutionData.class, 7436);
-    kryo.register(GcbOptions.class, 7439);
-    kryo.register(GcbTriggerBuildSpec.class, 7440);
-    kryo.register(GcbRemoteBuildSpec.class, 7441);
-    kryo.register(GcbOptions.GcbSpecSource.class, 7442);
-    kryo.register(GcbTriggerBuildSpec.GcbTriggerSource.class, 7443);
-    kryo.register(GcbRemoteBuildSpec.RemoteFileSource.class, 7444);
     kryo.register(AccountEvent.class, 7445);
     kryo.register(AccountEventType.class, 7446);
     kryo.register(TechStack.class, 7447);
@@ -1345,7 +1321,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(io.harness.dashboard.Action.class, 7453);
 
     kryo.register(TemplatizedSecretManagerStateExecutionData.class, 7457);
-    kryo.register(AzureVMSSCommandRequest.class, 8035);
     kryo.register(CeLicenseInfo.class, 7465);
     kryo.register(CeLicenseType.class, 7466);
     kryo.register(AzureVMSSSetupContextElement.class, 7467);
@@ -1372,7 +1347,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(AzureVMSSAllPhaseRollbackData.class, 8092);
     kryo.register(TrialSignupOptions.class, 8093);
     kryo.register(TrialSignupOptions.Products.class, 8094);
-    kryo.register(AzureTaskExecutionRequest.class, 8095);
 
     kryo.register(TfVarGitSource.class, 8097);
     kryo.register(HelmSubCommand.class, 8076);
@@ -1514,10 +1488,7 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(RancherK8sClusterProcessor.RancherClusterElementList.class, 50001);
     kryo.register(RancherClusterElement.class, 50002);
     kryo.register(RancherKubernetesInfrastructureMapping.class, 50003);
-    kryo.register(RancherResolveClustersTaskParameters.class, 50004);
-    kryo.register(RancherResolveClustersResponse.class, 50005);
     kryo.register(RancherKubernetesInfrastructure.class, 50007);
-    kryo.register(RancherKubernetesInfrastructure.ClusterSelectionCriteriaEntry.class, 50008);
     kryo.register(RancherStateExecutionData.class, 50009);
     kryo.register(UserGroupEntityReference.class, 50010);
     kryo.register(K8sRollingDeployRollbackResponse.class, 50011);
