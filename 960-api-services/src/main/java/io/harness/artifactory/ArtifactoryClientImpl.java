@@ -296,11 +296,13 @@ public class ArtifactoryClientImpl {
 
   public List<BuildDetails> getArtifactList(
       ArtifactoryConfigRequest artifactoryConfig, String repositoryName, String artifactPath, int maxVersions) {
-
-    return getBuildDetails(artifactoryConfig, repositoryName, artifactPath, maxVersions).stream().map(buildDetail -> {
-            buildDetail.setArtifactPath(buildDetail.getArtifactPath().replaceFirst(repositoryName, "").substring(1));
-            return buildDetail;
-    }).collect(toList());
+    return getBuildDetails(artifactoryConfig, repositoryName, artifactPath, maxVersions)
+        .stream()
+        .map(buildDetail -> {
+          buildDetail.setArtifactPath(buildDetail.getArtifactPath().replaceFirst(repositoryName, "").substring(1));
+          return buildDetail;
+        })
+        .collect(toList());
   }
 
   public List<BuildDetails> getBuildDetails(

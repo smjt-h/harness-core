@@ -39,10 +39,11 @@ import io.harness.delegate.task.artifacts.ecr.EcrArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.nexus.NexusArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.response.ArtifactDelegateResponse;
-
 import io.harness.pms.yaml.ParameterField;
-import lombok.experimental.UtilityClass;
+
 import software.wings.utils.RepositoryFormat;
+
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 @OwnedBy(CDC)
@@ -74,23 +75,24 @@ public class ArtifactResponseToOutcomeMapper {
         ArtifactOutcome artifactOutcome = null;
         ArtifactoryRegistryArtifactConfig artifactoryRegistryArtifactConfig =
             (ArtifactoryRegistryArtifactConfig) artifactConfig;
-        RepositoryFormat repositoryType = RepositoryFormat.valueOf(artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue());
-        switch(repositoryType) {
+        RepositoryFormat repositoryType =
+            RepositoryFormat.valueOf(artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue());
+        switch (repositoryType) {
           case docker:
             ArtifactoryDockerArtifactDelegateResponse artifactoryDelegateResponse =
-                    (ArtifactoryDockerArtifactDelegateResponse) artifactDelegateResponse;
+                (ArtifactoryDockerArtifactDelegateResponse) artifactDelegateResponse;
             artifactOutcome = getArtifactoryArtifactOutcome(
-                    artifactoryRegistryArtifactConfig, artifactoryDelegateResponse, useDelegateResponse);
+                artifactoryRegistryArtifactConfig, artifactoryDelegateResponse, useDelegateResponse);
             return artifactOutcome;
           case generic:
             ArtifactoryGenericArtifactDelegateResponse artifactoryGenericDelegateResponse =
-                    (ArtifactoryGenericArtifactDelegateResponse) artifactDelegateResponse;
+                (ArtifactoryGenericArtifactDelegateResponse) artifactDelegateResponse;
             artifactOutcome = getArtifactoryGenericArtifactOutcome(
-                    artifactoryRegistryArtifactConfig, artifactoryGenericDelegateResponse, useDelegateResponse);
+                artifactoryRegistryArtifactConfig, artifactoryGenericDelegateResponse, useDelegateResponse);
             return artifactOutcome;
           default:
             throw new UnsupportedOperationException(
-                    String.format("Repository Format [%s] for Artifactory Not Supported", repositoryType));
+                String.format("Repository Format [%s] for Artifactory Not Supported", repositoryType));
         }
       case CUSTOM_ARTIFACT:
         CustomArtifactConfig customArtifactConfig = (CustomArtifactConfig) artifactConfig;
@@ -197,11 +199,13 @@ public class ArtifactResponseToOutcomeMapper {
         .connectorRef(artifactConfig.getConnectorRef().getValue())
         .artifactDirectory(artifactConfig.getArtifactDirectory().getValue())
         .repositoryFormat(artifactConfig.getRepositoryFormat().getValue())
-        .artifactPath(useDelegateResponse
-                ? artifactDelegateResponse.getArtifactPath()
-                : (ParameterField.isNull(artifactConfig.getArtifactPath()) ? null : artifactConfig.getArtifactPath().getValue() ))
-        .artifactPathFilter(
-            ParameterField.isNull(artifactConfig.getArtifactPathFilter()) ? null : artifactConfig.getArtifactPathFilter().getValue())
+        .artifactPath(useDelegateResponse ? artifactDelegateResponse.getArtifactPath()
+                                          : (ParameterField.isNull(artifactConfig.getArtifactPath())
+                                                  ? null
+                                                  : artifactConfig.getArtifactPath().getValue()))
+        .artifactPathFilter(ParameterField.isNull(artifactConfig.getArtifactPathFilter())
+                ? null
+                : artifactConfig.getArtifactPathFilter().getValue())
         .identifier(artifactConfig.getIdentifier())
         .type(ArtifactSourceType.ARTIFACTORY_REGISTRY.getDisplayName())
         .primaryArtifact(artifactConfig.isPrimaryArtifact())

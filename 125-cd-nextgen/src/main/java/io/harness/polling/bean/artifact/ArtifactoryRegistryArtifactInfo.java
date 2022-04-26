@@ -44,6 +44,6 @@ public class ArtifactoryRegistryArtifactInfo implements ArtifactInfo {
   }
 
   private ParameterField returnParameterFieldOnlyIfNotNull(Object obj) {
-    return ((obj == null) ? null : ParameterField.builder().value(obj).build());
+    return (obj == null) ? null : ParameterField.builder().value(obj).build();
   }
 }

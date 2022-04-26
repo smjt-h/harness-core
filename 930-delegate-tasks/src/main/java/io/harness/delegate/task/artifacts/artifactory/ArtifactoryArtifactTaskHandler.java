@@ -10,7 +10,6 @@ package io.harness.delegate.task.artifacts.artifactory;
 import static io.harness.artifactory.service.ArtifactoryRegistryService.DEFAULT_ARTIFACT_DIRECTORY;
 import static io.harness.artifactory.service.ArtifactoryRegistryService.DEFAULT_ARTIFACT_FILTER;
 import static io.harness.artifactory.service.ArtifactoryRegistryService.MAX_NO_OF_BUILDS_PER_ARTIFACT;
-import static io.harness.artifactory.service.ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -76,7 +75,8 @@ public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<
   @Override
   public ArtifactTaskExecutionResponse getBuilds(ArtifactSourceDelegateRequest artifactSourceDelegateRequest) {
     if (artifactSourceDelegateRequest instanceof ArtifactoryGenericArtifactDelegateRequest) {
-      return fetchBuildsForArtifactoryGeneric((ArtifactoryGenericArtifactDelegateRequest) artifactSourceDelegateRequest, null);
+      return fetchBuildsForArtifactoryGeneric(
+          (ArtifactoryGenericArtifactDelegateRequest) artifactSourceDelegateRequest, null);
     } else {
       return fetchBuildsForArtifactoryDocker((ArtifactoryDockerArtifactDelegateRequest) artifactSourceDelegateRequest);
     }
@@ -135,16 +135,16 @@ public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<
   }
 
   private ArtifactTaskExecutionResponse fetchBuildsForArtifactoryDocker(
-    ArtifactoryDockerArtifactDelegateRequest attributesRequest) {
+      ArtifactoryDockerArtifactDelegateRequest attributesRequest) {
     List<BuildDetailsInternal> builds = artifactoryRegistryService.getBuilds(
-            ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest),
-            attributesRequest.getRepositoryName(), attributesRequest.getArtifactPath(),
-            attributesRequest.getRepositoryFormat(), ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT);
+        ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest),
+        attributesRequest.getRepositoryName(), attributesRequest.getArtifactPath(),
+        attributesRequest.getRepositoryFormat(), ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT);
     List<ArtifactoryDockerArtifactDelegateResponse> artifactoryDockerArtifactDelegateResponseList =
-            builds.stream()
-                    .sorted(new BuildDetailsInternalComparatorDescending())
-                    .map(build -> ArtifactoryRequestResponseMapper.toArtifactoryDockerResponse(build, attributesRequest))
-                    .collect(Collectors.toList());
+        builds.stream()
+            .sorted(new BuildDetailsInternalComparatorDescending())
+            .map(build -> ArtifactoryRequestResponseMapper.toArtifactoryDockerResponse(build, attributesRequest))
+            .collect(Collectors.toList());
     return getSuccessTaskExecutionResponse(artifactoryDockerArtifactDelegateResponseList);
   }
 
