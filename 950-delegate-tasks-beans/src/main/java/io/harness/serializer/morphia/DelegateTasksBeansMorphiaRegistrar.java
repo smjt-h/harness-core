@@ -52,10 +52,12 @@ import io.harness.morphia.MorphiaRegistrarHelperPut;
 import io.harness.ng.core.models.Secret;
 
 import software.wings.beans.AwsConfig;
+import software.wings.beans.GcpConfig;
 import software.wings.beans.GitConfig;
 import software.wings.beans.JenkinsConfig;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.config.ArtifactSourceable;
+import software.wings.beans.settings.helm.HttpHelmRepoConfig;
 import software.wings.beans.yaml.GitCommandExecutionResponse;
 import software.wings.beans.yaml.GitCommitAndPushResult;
 import software.wings.beans.yaml.GitCommitRequest;
@@ -133,6 +135,8 @@ public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
     w.put("beans.yaml.GitDiffResult", GitDiffResult.class);
     w.put("beans.JenkinsConfig", JenkinsConfig.class);
     w.put("sm.states.JenkinsExecutionResponse", JenkinsExecutionResponse.class);
+    w.put("beans.settings.helm.HttpHelmRepoConfig", HttpHelmRepoConfig.class);
+    w.put("beans.GcpConfig", GcpConfig.class);
     h.put("waiter.ListNotifyResponseData", ListNotifyResponseData.class);
   }
 }

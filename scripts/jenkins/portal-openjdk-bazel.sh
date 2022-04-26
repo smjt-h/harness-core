@@ -128,13 +128,25 @@ else
 fi
 
 cp 260-delegate/config-delegate.yml dist/delegate/config-delegate.yml
-jarsigner -storetype pkcs12 -keystore ${KEY_STORE} -storepass ${KEY_STORE_PASSWORD} dist/delegate/delegate-capsule.jar ${KEY_STORE_ALIAS}
+
+if [ "$BUILD_PURPOSE" == 'RELEASE' ]; then
+  echo "INFO: Signing Delegate..."
+  jarsigner -storetype pkcs12 -keystore ${KEY_STORE} -storepass ${KEY_STORE_PASSWORD} dist/delegate/delegate-capsule.jar ${KEY_STORE_ALIAS}
+else
+  echo "INFO: BUILD_PURPOSE = $BUILD_PURPOSE. Skipping Signing...."
+fi
 cp dist/delegate/delegate-capsule.jar delegate-${VERSION}.jar
 cp protocol.info dist/delegate/.
 
 mkdir -p dist/watcher
 cp ${HOME}/.bazel-dirs/bin/960-watcher/module_deploy.jar dist/watcher/watcher-capsule.jar
-jarsigner -storetype pkcs12 -keystore ${KEY_STORE} -storepass ${KEY_STORE_PASSWORD} dist/watcher/watcher-capsule.jar ${KEY_STORE_ALIAS}
+
+if [ "$BUILD_PURPOSE" == 'RELEASE' ]; then
+  echo "INFO: Signing Watcher..."
+  jarsigner -storetype pkcs12 -keystore ${KEY_STORE} -storepass ${KEY_STORE_PASSWORD} dist/watcher/watcher-capsule.jar ${KEY_STORE_ALIAS}
+else
+  echo "INFO: BUILD_PURPOSE = $BUILD_PURPOSE. Skipping Signing...."
+fi
 cp dist/watcher/watcher-capsule.jar watcher-${VERSION}.jar
 cp protocol.info dist/watcher/.
 
@@ -200,11 +212,11 @@ cd ../..
 mkdir -p dist/platform-service
 cd dist/platform-service
 
-cp ${HOME}/.bazel-dirs/bin/820-platform-service/module_deploy.jar platform-service-capsule.jar
-cp ../../820-platform-service/config.yml .
-cp ../../820-platform-service/keystore.jks .
-cp ../../820-platform-service/key.pem .
-cp ../../820-platform-service/cert.pem .
+cp ${HOME}/.bazel-dirs/bin/platform-service/service/module_deploy.jar platform-service-capsule.jar
+cp ../../platform-service/config/config.yml .
+cp ../../platform-service/config/keystore.jks .
+cp ../../platform-service/config/key.pem .
+cp ../../platform-service/config/cert.pem .
 cp ../../dockerization/platform-service/Dockerfile-platform-service-jenkins-k8-openjdk ./Dockerfile
 cp ../../dockerization/platform-service/Dockerfile-platform-service-jenkins-k8-gcr-openjdk ./Dockerfile-gcr
 cp -r ../../dockerization/platform-service/scripts .

@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.ExecutionInterruptType;
 import io.harness.beans.ExecutionStatus;
+import io.harness.beans.OrchestrationWorkflowType;
 import io.harness.beans.SweepingOutput;
 import io.harness.beans.terraform.TerraformPlanParam;
 import io.harness.context.ContextElementType;
@@ -38,6 +39,9 @@ import software.wings.beans.VariableType;
 import software.wings.beans.artifact.ArtifactStreamSummary;
 import software.wings.beans.artifact.ArtifactSummary;
 import software.wings.beans.trigger.WebhookSource;
+import software.wings.helpers.ext.gcb.models.BuildStep;
+import software.wings.helpers.ext.gcb.models.GcbBuildDetails;
+import software.wings.helpers.ext.gcb.models.GcbBuildStatus;
 import software.wings.metrics.MetricType;
 import software.wings.service.impl.ThirdPartyApiCallLog;
 import software.wings.sm.ExecutionInterruptEffect;
@@ -86,5 +90,9 @@ public class CgOrchestrationBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(AmiDeploymentType.class, 400125);
     kryo.register(CloudProviderType.class, 400126);
     kryo.register(TerraformPlanParam.class, 7458);
+    kryo.register(OrchestrationWorkflowType.class, 5148);
+    kryo.register(GcbBuildDetails.class, 7411);
+    kryo.register(GcbBuildStatus.class, 7412);
+    kryo.register(BuildStep.class, 7423);
   }
 }

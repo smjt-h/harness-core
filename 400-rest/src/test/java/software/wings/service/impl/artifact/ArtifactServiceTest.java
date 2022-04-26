@@ -49,6 +49,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.ArtifactMetadata;
 import io.harness.beans.EmbeddedUser;
 import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.FileBucket;
@@ -60,7 +61,6 @@ import io.harness.rule.Owner;
 
 import software.wings.WingsBaseTest;
 import software.wings.beans.Application;
-import software.wings.beans.BaseFile;
 import software.wings.beans.Service;
 import software.wings.beans.artifact.AmazonS3ArtifactStream;
 import software.wings.beans.artifact.AmiArtifactStream;
@@ -130,7 +130,7 @@ public class ArtifactServiceTest extends WingsBaseTest {
   private Builder artifactBuilder = anArtifact()
                                         .withAccountId(ACCOUNT_ID)
                                         .withAppId(APP_ID)
-                                        .withMetadata(ImmutableMap.of("buildNo", "200"))
+                                        .withMetadata(new ArtifactMetadata(ImmutableMap.of("buildNo", "200")))
                                         .withArtifactStreamId(ARTIFACT_STREAM_ID)
                                         .withRevision("1.0")
                                         .withDisplayName("DISPLAY_NAME")
@@ -139,7 +139,7 @@ public class ArtifactServiceTest extends WingsBaseTest {
   private Builder artifactLatestBuilder = anArtifact()
                                               .withAccountId(ACCOUNT_ID)
                                               .withAppId(APP_ID)
-                                              .withMetadata(ImmutableMap.of("buildNo", "220"))
+                                              .withMetadata(new ArtifactMetadata(ImmutableMap.of("buildNo", "220")))
                                               .withArtifactStreamId(ARTIFACT_STREAM_ID)
                                               .withRevision("1.1")
                                               .withDisplayName("LATEST_DISPLAY_NAME")
@@ -230,8 +230,10 @@ public class ArtifactServiceTest extends WingsBaseTest {
     when(artifactCollectionUtils.getArtifactStreamAttributes(eq(artifactStream), anyBoolean()))
         .thenReturn(ArtifactStreamAttributes.builder().build());
     Map<String, String> metadata = ImmutableMap.of("artifactPath", "path");
-    Artifact oldArtifact = artifactService.create(artifactBuilder.but().withMetadata(metadata).build());
-    Artifact newArtifact = artifactService.create(artifactBuilder.but().withMetadata(metadata).build());
+    Artifact oldArtifact =
+        artifactService.create(artifactBuilder.but().withMetadata(new ArtifactMetadata(metadata)).build());
+    Artifact newArtifact =
+        artifactService.create(artifactBuilder.but().withMetadata(new ArtifactMetadata(metadata)).build());
     assertThat(newArtifact.getUuid()).isEqualTo(oldArtifact.getUuid());
     assertThat(oldArtifact.getBuildIdentity()).contains("path");
   }
@@ -514,15 +516,27 @@ public class ArtifactServiceTest extends WingsBaseTest {
 
   private void constructArtifacts() {
     artifactService.create(
-        artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-1.x86_64.rpm")).but().build(), true);
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-1.x86_64.rpm")))
+            .but()
+            .build(),
+        true);
 
     artifactService.create(
-        artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-10.x86_64.rpm")).but().build(), true);
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-10.x86_64.rpm")))
+            .but()
+            .build(),
+        true);
     artifactService.create(
-        artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-5.x86_64.rpm")).but().build(), true);
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-5.x86_64.rpm")))
+            .but()
+            .build(),
+        true);
 
     artifactService.create(
-        artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-15.x86_64.rpm")).but().build(), true);
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-15.x86_64.rpm")))
+            .but()
+            .build(),
+        true);
   }
 
   private void constructArtifactsAtConnectorLevel() {
@@ -537,15 +551,27 @@ public class ArtifactServiceTest extends WingsBaseTest {
                                   .withCreatedBy(EmbeddedUser.builder().uuid("USER_ID").build());
 
     artifactService.create(
-        artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-1.x86_64.rpm")).but().build(), true);
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-1.x86_64.rpm")))
+            .but()
+            .build(),
+        true);
 
     artifactService.create(
-        artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-10.x86_64.rpm")).but().build(), true);
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-10.x86_64.rpm")))
+            .but()
+            .build(),
+        true);
     artifactService.create(
-        artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-5.x86_64.rpm")).but().build(), true);
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-5.x86_64.rpm")))
+            .but()
+            .build(),
+        true);
 
     artifactService.create(
-        artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-15.x86_64.rpm")).but().build(), true);
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-15.x86_64.rpm")))
+            .but()
+            .build(),
+        true);
   }
 
   @Test
@@ -1002,7 +1028,7 @@ public class ArtifactServiceTest extends WingsBaseTest {
     return anArtifact()
         .withAppId(APP_ID)
         .withArtifactStreamId(dockerArtifactStreamId)
-        .withMetadata(ImmutableMap.of("buildNo", "200"))
+        .withMetadata(new ArtifactMetadata(ImmutableMap.of("buildNo", "200")))
         .withRevision("1.0")
         .withDisplayName("DISPLAY_NAME")
         .build();
@@ -1025,7 +1051,7 @@ public class ArtifactServiceTest extends WingsBaseTest {
     Artifact jenkinsArtifact = anArtifact()
                                    .withAppId(APP_ID)
                                    .withArtifactStreamId(jenkinsArtifactStreamId)
-                                   .withMetadata(ImmutableMap.of("buildNo", "200"))
+                                   .withMetadata(new ArtifactMetadata(ImmutableMap.of("buildNo", "200")))
                                    .withRevision("1.0")
                                    .withDisplayName("DISPLAY_NAME")
                                    .withStatus(APPROVED)
@@ -1093,7 +1119,7 @@ public class ArtifactServiceTest extends WingsBaseTest {
     Artifact jenkinsArtifact = anArtifact()
                                    .withAppId(APP_ID)
                                    .withArtifactStreamId(jenkinsArtifactStreamId)
-                                   .withMetadata(ImmutableMap.of("buildNo", "200"))
+                                   .withMetadata(new ArtifactMetadata(ImmutableMap.of("buildNo", "200")))
                                    .withRevision("1.0")
                                    .withDisplayName("DISPLAY_NAME")
                                    .withStatus(APPROVED)
@@ -1126,7 +1152,7 @@ public class ArtifactServiceTest extends WingsBaseTest {
     Artifact jenkinsArtifact = anArtifact()
                                    .withAppId(APP_ID)
                                    .withArtifactStreamId(jenkinsArtifactStreamId)
-                                   .withMetadata(ImmutableMap.of("buildNo", "200"))
+                                   .withMetadata(new ArtifactMetadata(ImmutableMap.of("buildNo", "200")))
                                    .withRevision("1.0")
                                    .withDisplayName("DISPLAY_NAME")
                                    .withStatus(APPROVED)
@@ -1168,7 +1194,7 @@ public class ArtifactServiceTest extends WingsBaseTest {
     artifactService.addArtifactFile(savedArtifact.getUuid(), savedArtifact.getAccountId(), asList(artifactFile));
     List<ArtifactFile> artifactFiles = artifactService.fetchArtifactFiles(savedArtifact.getUuid());
     assertThat(artifactFiles.size()).isEqualTo(1);
-    assertThat(artifactFiles).extracting(BaseFile::getName).contains("test-artifact.war");
+    assertThat(artifactFiles).extracting(ArtifactFile::getName).contains("test-artifact.war");
   }
 
   @Test
@@ -1186,7 +1212,10 @@ public class ArtifactServiceTest extends WingsBaseTest {
                                   .withCreatedBy(EmbeddedUser.builder().uuid("USER_ID").build());
 
     Artifact artifact = artifactService.create(
-        artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-1.x86_64.rpm")).but().build(), true);
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0-1.x86_64.rpm")))
+            .but()
+            .build(),
+        true);
     assertThat(artifact).isNotNull();
   }
 
@@ -1212,7 +1241,8 @@ public class ArtifactServiceTest extends WingsBaseTest {
                                                   .build();
     when(artifactStreamService.get(artifact.getArtifactStreamId())).thenReturn(nexusArtifactStream);
     Artifact artifact = artifactService.create(
-        artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "1.0.0.18279")).but().build(), true);
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "1.0.0.18279"))).but().build(),
+        true);
     assertThat(artifact).isNotNull();
     assertThat(artifact.getBuildNo()).isEqualTo("1.0.0.18279");
     assertThat(artifact.getContentStatus()).isEqualTo(NOT_DOWNLOADED);
@@ -1238,8 +1268,8 @@ public class ArtifactServiceTest extends WingsBaseTest {
                                                               .autoPopulate(true)
                                                               .build();
     when(artifactStreamService.get(artifact.getArtifactStreamId())).thenReturn(artifactoryArtifactStream);
-    Artifact artifact =
-        artifactService.create(artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "latest")).but().build(), true);
+    Artifact artifact = artifactService.create(
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "latest"))).but().build(), true);
     assertThat(artifact).isNotNull();
     assertThat(artifact.getBuildNo()).isEqualTo("latest");
     assertThat(artifact.getContentStatus()).isEqualTo(METADATA_ONLY);
@@ -1268,7 +1298,8 @@ public class ArtifactServiceTest extends WingsBaseTest {
             .build();
     when(artifactStreamService.get(artifact.getArtifactStreamId())).thenReturn(artifactoryArtifactStream);
     Artifact artifact = artifactService.create(
-        artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0.war")).but().build(), true);
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0.war"))).but().build(),
+        true);
     assertThat(artifact).isNotNull();
     assertThat(artifact.getBuildNo()).isEqualTo("todolist-1.0.war");
     assertThat(artifact.getStatus()).isEqualTo(QUEUED);
@@ -1290,27 +1321,27 @@ public class ArtifactServiceTest extends WingsBaseTest {
                                   .withCreatedAt(System.currentTimeMillis())
                                   .withCreatedBy(EmbeddedUser.builder().uuid("USER_ID").build());
 
-    Artifact artifact1 =
-        artifactService.create(artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0.war"))
-                                   .withArtifactStreamId(ARTIFACT_STREAM_ID)
-                                   .withStatus(RUNNING)
-                                   .but()
-                                   .build(),
-            true);
-    Artifact artifact2 =
-        artifactService.create(artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.1.war"))
-                                   .withArtifactStreamId(ARTIFACT_STREAM_ID)
-                                   .withStatus(READY)
-                                   .but()
-                                   .build(),
-            true);
-    Artifact artifact3 =
-        artifactService.create(artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.2.war"))
-                                   .withArtifactStreamId(ARTIFACT_STREAM_ID)
-                                   .withStatus(Status.FAILED)
-                                   .but()
-                                   .build(),
-            true);
+    Artifact artifact1 = artifactService.create(
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0.war")))
+            .withArtifactStreamId(ARTIFACT_STREAM_ID)
+            .withStatus(RUNNING)
+            .but()
+            .build(),
+        true);
+    Artifact artifact2 = artifactService.create(
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.1.war")))
+            .withArtifactStreamId(ARTIFACT_STREAM_ID)
+            .withStatus(READY)
+            .but()
+            .build(),
+        true);
+    Artifact artifact3 = artifactService.create(
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.2.war")))
+            .withArtifactStreamId(ARTIFACT_STREAM_ID)
+            .withStatus(Status.FAILED)
+            .but()
+            .build(),
+        true);
     artifactService.updateArtifactSourceName(customArtifactStream);
     Artifact updatedArtifact1 = artifactService.get(artifact1.getUuid());
     assertThat(updatedArtifact1).isNotNull();
@@ -1327,14 +1358,14 @@ public class ArtifactServiceTest extends WingsBaseTest {
   @Owner(developers = AADITI)
   @Category(UnitTests.class)
   public void testGetArtifactWithServices() {
-    Artifact artifact1 =
-        artifactService.create(artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0.war"))
-                                   .withArtifactStreamId(ARTIFACT_STREAM_ID)
-                                   .withAppId(APP_ID)
-                                   .withStatus(RUNNING)
-                                   .but()
-                                   .build(),
-            true);
+    Artifact artifact1 = artifactService.create(
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0.war")))
+            .withArtifactStreamId(ARTIFACT_STREAM_ID)
+            .withAppId(APP_ID)
+            .withStatus(RUNNING)
+            .but()
+            .build(),
+        true);
     when(artifactStreamServiceBindingService.listServices(APP_ID, ARTIFACT_STREAM_ID))
         .thenReturn(asList(Service.builder().name("Service1").build()));
     Artifact artifact = artifactService.getWithServices(artifact1.getUuid(), APP_ID);
@@ -1346,15 +1377,15 @@ public class ArtifactServiceTest extends WingsBaseTest {
   @Owner(developers = AADITI)
   @Category(UnitTests.class)
   public void testGetArtifactWithSource() {
-    Artifact artifact1 =
-        artifactService.create(artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0.war"))
-                                   .withArtifactStreamId(ARTIFACT_STREAM_ID)
-                                   .withAccountId(ACCOUNT_ID)
-                                   .withAppId(APP_ID)
-                                   .withStatus(RUNNING)
-                                   .but()
-                                   .build(),
-            true);
+    Artifact artifact1 = artifactService.create(
+        artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, "todolist-1.0.war")))
+            .withArtifactStreamId(ARTIFACT_STREAM_ID)
+            .withAccountId(ACCOUNT_ID)
+            .withAppId(APP_ID)
+            .withStatus(RUNNING)
+            .but()
+            .build(),
+        true);
     Map<String, String> sourceProperties = new HashMap<>();
     sourceProperties.put("k1", "v1");
     sourceProperties.put("k2", "v2");

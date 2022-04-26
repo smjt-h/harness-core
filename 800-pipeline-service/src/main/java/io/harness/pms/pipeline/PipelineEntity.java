@@ -16,6 +16,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityName;
 import io.harness.data.validator.Trimmed;
 import io.harness.gitsync.persistance.GitSyncableEntity;
+import io.harness.gitsync.v2.StoreType;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.MongoIndex;
@@ -121,6 +122,7 @@ public class PipelineEntity
 
   @Wither @Setter @NonFinal @Default Boolean templateReference = false;
 
+  // git experience parameters before simplification
   @Wither @Setter @NonFinal String objectIdOfYaml;
   @Setter @NonFinal Boolean isFromDefaultBranch;
   @Setter @NonFinal String branch;
@@ -128,6 +130,20 @@ public class PipelineEntity
   @Setter @NonFinal String filePath;
   @Setter @NonFinal String rootFolder;
   @Getter(AccessLevel.NONE) @Wither @NonFinal Boolean isEntityInvalid;
+
+  // git experience parameters after simplification
+  StoreType storeType;
+  String repo;
+  String path;
+  String connectorRef;
+
+  public String getData() {
+    if (storeType == null || storeType == StoreType.INLINE) {
+      return yaml;
+    }
+    // TODO: add proper impl here for remote store type
+    return null;
+  }
 
   @Override
   public String getAccountIdentifier() {
