@@ -14,34 +14,28 @@ import io.harness.delegate.task.artifacts.ArtifactSourceType;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import java.util.List;
-import lombok.EqualsAndHashCode;
+import lombok.Builder;
 import lombok.Value;
-import lombok.experimental.SuperBuilder;
 
 /**
  * DTO object to be passed to delegate tasks.
  */
 @Value
-@SuperBuilder
-@EqualsAndHashCode(callSuper = true)
+@Builder
 @OwnedBy(HarnessTeam.CDP)
-public class ArtifactoryGenericArtifactDelegateRequest extends ArtifactoryBaseArtifactDelegateRequest {
+public class ArtifactoryGenericArtifactDelegateRequest implements ArtifactoryBaseArtifactDelegateRequest {
   /** Images in repos need to be referenced via a path. */
   String artifactDirectory;
   String artifactPathFilter;
+  String repositoryName;
+  String artifactPath;
+  /** Repository format - package type */
+  String repositoryFormat;
+  String connectorRef;
+  /** Encrypted details for decrypting.*/
+  List<EncryptedDataDetail> encryptedDataDetails;
+  /** Artifactory Connector*/
+  ArtifactoryConnectorDTO artifactoryConnectorDTO;
+  /** Artifact Source type.*/
   ArtifactSourceType sourceType;
-
-  public ArtifactoryGenericArtifactDelegateRequest(ArtifactoryBaseArtifactDelegateRequestBuilder<?, ?> b, String artifactDirectory, String artifactPathFilter, ArtifactSourceType sourceType) {
-    super(b);
-    this.artifactDirectory = artifactDirectory;
-    this.artifactPathFilter = artifactPathFilter;
-    this.sourceType = sourceType;
-  }
-
-  public ArtifactoryGenericArtifactDelegateRequest(String repositoryName, String artifactPath, String repositoryFormat, String connectorRef, List<EncryptedDataDetail> encryptedDataDetails, ArtifactoryConnectorDTO artifactoryConnectorDTO, ArtifactSourceType sourceType, String artifactDirectory, String artifactPathFilter, ArtifactSourceType sourceType1) {
-    super(repositoryName, artifactPath, repositoryFormat, connectorRef, encryptedDataDetails, artifactoryConnectorDTO, sourceType);
-    this.artifactDirectory = artifactDirectory;
-    this.artifactPathFilter = artifactPathFilter;
-    this.sourceType = sourceType1;
-  }
 }

@@ -14,22 +14,30 @@ import io.harness.delegate.task.artifacts.ArtifactSourceType;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import java.util.List;
-import lombok.EqualsAndHashCode;
+import lombok.Builder;
 import lombok.Value;
-import lombok.experimental.SuperBuilder;
 
 /**
  * DTO object to be passed to delegate tasks.
  */
 @Value
-@SuperBuilder
-@EqualsAndHashCode(callSuper = true)
+@Builder
 @OwnedBy(HarnessTeam.CDP)
-public class ArtifactoryDockerArtifactDelegateRequest extends ArtifactoryBaseArtifactDelegateRequest {
+public class ArtifactoryDockerArtifactDelegateRequest implements ArtifactoryBaseArtifactDelegateRequest {
   /** Host from where to pull the images */
   String artifactRepositoryUrl;
   /** Tag refers to exact tag number. */
   String tag;
-  /** Tag regex is used to get latest build from builds matching regex. */
   String tagRegex;
+  String repositoryName;
+  String artifactPath;
+  /** Repository format - package type */
+  String repositoryFormat;
+  String connectorRef;
+  /** Encrypted details for decrypting.*/
+  List<EncryptedDataDetail> encryptedDataDetails;
+  /** Artifactory Connector*/
+  ArtifactoryConnectorDTO artifactoryConnectorDTO;
+  /** Artifact Source type.*/
+  ArtifactSourceType sourceType;
 }
