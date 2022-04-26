@@ -125,7 +125,7 @@ public abstract class CVConfig
       if (!Objects.isNull(identifier) && identifier.contains("/")) {
         return HealthSourceService.getNameSpaceAndIdentifier(identifier).getValue();
       }
-      return "HealthSourceId";
+      throw new IllegalArgumentException();
     }
     return this.healthSourceIdentifier;
   }
