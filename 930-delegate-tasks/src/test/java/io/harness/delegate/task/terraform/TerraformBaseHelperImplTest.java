@@ -375,131 +375,108 @@ public class TerraformBaseHelperImplTest extends CategoryTest {
   @Owner(developers = NAMAN_TALAYCHA)
   @Category(UnitTests.class)
   public void testConfigureCredentialsForModuleSourceSSHKeyPath() throws IOException {
-    try {
-      TerraformTaskNGParameters taskNGParameters = TerraformTaskNGParameters.builder()
-                                                       .entityId("entityId")
-                                                       .accountId("account_id")
-                                                       .taskType(TFTaskType.APPLY)
-                                                       .environmentVariables(new HashMap<>())
-                                                       .build();
+    TerraformTaskNGParameters taskNGParameters = TerraformTaskNGParameters.builder()
+                                                     .entityId("entityId")
+                                                     .accountId("account_id")
+                                                     .taskType(TFTaskType.APPLY)
+                                                     .environmentVariables(new HashMap<>())
+                                                     .build();
 
-      GitStoreDelegateConfig gitStoreDelegateConfig =
-          GitStoreDelegateConfig.builder()
-              .gitConfigDTO(GitConfigDTO.builder().gitAuthType(GitAuthType.SSH).url("repourl").build())
-              .connectorName("connectorId")
-              .paths(Arrays.asList("filepath1", "filepath2"))
-              .branch("master")
-              .sshKeySpecDTO(SSHKeySpecDTO.builder().build())
-              .build();
+    GitStoreDelegateConfig gitStoreDelegateConfig =
+        GitStoreDelegateConfig.builder()
+            .gitConfigDTO(GitConfigDTO.builder().gitAuthType(GitAuthType.SSH).url("repourl").build())
+            .connectorName("connectorId")
+            .paths(Arrays.asList("filepath1", "filepath2"))
+            .branch("master")
+            .sshKeySpecDTO(SSHKeySpecDTO.builder().build())
+            .build();
 
-      String sshKey = "secret key";
+    SshSessionConfig sshSessionConfig = SshSessionConfig.Builder.aSshSessionConfig()
+                                            .withKeyLess(true)
+                                            .withKeyPassphrase(null)
+                                            .withKeyPath("/home/user/.ssh/id.key")
+                                            .build();
 
-      FileIo.writeUtf8StringToFile(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString(), sshKey);
+    when(sshSessionConfigMapper.getSSHSessionConfig(any(), any())).thenReturn(sshSessionConfig);
 
-      SshSessionConfig sshSessionConfig = SshSessionConfig.Builder.aSshSessionConfig()
-                                              .withKeyLess(true)
-                                              .withKeyPassphrase(null)
-                                              .withKeyPath(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString())
-                                              .build();
-
-      when(sshSessionConfigMapper.getSSHSessionConfig(any(), any())).thenReturn(sshSessionConfig);
-
-      terraformBaseHelper.configureCredentialsForModuleSource(taskNGParameters, gitStoreDelegateConfig, logCallback);
-      assertThat(taskNGParameters.getEnvironmentVariables().size()).isEqualTo(1);
-      assertThat(taskNGParameters.getEnvironmentVariables().get(TerraformBaseHelperImpl.GIT_SSH_COMMAND))
-          .contains("ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no -i");
-      assertThat(taskNGParameters.getEnvironmentVariables().get(TerraformBaseHelperImpl.GIT_SSH_COMMAND))
-          .contains(SSH_KEY_FILENAME);
-    } finally {
-      FileIo.deleteFileIfExists(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString());
-    }
+    terraformBaseHelper.configureCredentialsForModuleSource(taskNGParameters, gitStoreDelegateConfig, logCallback);
+    assertThat(taskNGParameters.getEnvironmentVariables().size()).isEqualTo(1);
+    assertThat(taskNGParameters.getEnvironmentVariables().get(TerraformBaseHelperImpl.GIT_SSH_COMMAND))
+        .contains("ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no -i");
+    assertThat(taskNGParameters.getEnvironmentVariables().get(TerraformBaseHelperImpl.GIT_SSH_COMMAND))
+        .contains("/home/user/.ssh/id.key");
   }
 
   @Test
   @Owner(developers = NAMAN_TALAYCHA)
   @Category(UnitTests.class)
   public void testConfigureCredentialsForModuleSourcePassPhrase() throws IOException {
-    try {
-      TerraformTaskNGParameters taskNGParameters = TerraformTaskNGParameters.builder()
-                                                       .entityId("entityId")
-                                                       .accountId("account_id")
-                                                       .taskType(TFTaskType.APPLY)
-                                                       .environmentVariables(new HashMap<>())
-                                                       .build();
+    TerraformTaskNGParameters taskNGParameters = TerraformTaskNGParameters.builder()
+                                                     .entityId("entityId")
+                                                     .accountId("account_id")
+                                                     .taskType(TFTaskType.APPLY)
+                                                     .environmentVariables(new HashMap<>())
+                                                     .build();
 
-      GitStoreDelegateConfig gitStoreDelegateConfig =
-          GitStoreDelegateConfig.builder()
-              .gitConfigDTO(GitConfigDTO.builder().gitAuthType(GitAuthType.SSH).url("repourl").build())
-              .connectorName("connectorId")
-              .paths(Arrays.asList("filepath1", "filepath2"))
-              .branch("master")
-              .sshKeySpecDTO(SSHKeySpecDTO.builder().build())
-              .build();
+    GitStoreDelegateConfig gitStoreDelegateConfig =
+        GitStoreDelegateConfig.builder()
+            .gitConfigDTO(GitConfigDTO.builder().gitAuthType(GitAuthType.SSH).url("repourl").build())
+            .connectorName("connectorId")
+            .paths(Arrays.asList("filepath1", "filepath2"))
+            .branch("master")
+            .sshKeySpecDTO(SSHKeySpecDTO.builder().build())
+            .build();
 
-      String sshKey = "secret key";
+    SshSessionConfig sshSessionConfig = SshSessionConfig.Builder.aSshSessionConfig()
+                                            .withKeyLess(true)
+                                            .withKeyPassphrase(new char[] {'a', 'b'})
+                                            .withKeyPath("/home/user/.ssh/id.key")
+                                            .build();
 
-      FileIo.writeUtf8StringToFile(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString(), sshKey);
+    when(sshSessionConfigMapper.getSSHSessionConfig(any(), any())).thenReturn(sshSessionConfig);
 
-      SshSessionConfig sshSessionConfig = SshSessionConfig.Builder.aSshSessionConfig()
-                                              .withKeyLess(true)
-                                              .withKeyPassphrase(new char[] {'a', 'b'})
-                                              .withKeyPath(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString())
-                                              .build();
-
-      when(sshSessionConfigMapper.getSSHSessionConfig(any(), any())).thenReturn(sshSessionConfig);
-
-      terraformBaseHelper.configureCredentialsForModuleSource(taskNGParameters, gitStoreDelegateConfig, logCallback);
-      verify(logCallback, times(1))
-          .saveExecutionLog(
-              color("\nExporting SSH Key with Passphrase for Module Source is not Supported", Yellow), WARN);
-      assertThat(taskNGParameters.getEnvironmentVariables().size()).isEqualTo(0);
-    } finally {
-      FileIo.deleteFileIfExists(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString());
-    }
+    terraformBaseHelper.configureCredentialsForModuleSource(taskNGParameters, gitStoreDelegateConfig, logCallback);
+    verify(logCallback, times(1))
+        .saveExecutionLog(
+            color("\nExporting SSH Key with Passphrase for Module Source is not Supported", Yellow), WARN);
+    assertThat(taskNGParameters.getEnvironmentVariables().size()).isEqualTo(0);
   }
 
   @Test
   @Owner(developers = NAMAN_TALAYCHA)
   @Category(UnitTests.class)
   public void testConfigureCredentialsForModuleSourceSSHUsername() throws IOException {
-    try {
-      TerraformTaskNGParameters taskNGParameters = TerraformTaskNGParameters.builder()
-                                                       .entityId("entityId")
-                                                       .accountId("account_id")
-                                                       .taskType(TFTaskType.APPLY)
-                                                       .environmentVariables(new HashMap<>())
-                                                       .build();
+    TerraformTaskNGParameters taskNGParameters = TerraformTaskNGParameters.builder()
+                                                     .entityId("entityId")
+                                                     .accountId("account_id")
+                                                     .taskType(TFTaskType.APPLY)
+                                                     .environmentVariables(new HashMap<>())
+                                                     .build();
 
-      GitStoreDelegateConfig gitStoreDelegateConfig =
-          GitStoreDelegateConfig.builder()
-              .gitConfigDTO(GitConfigDTO.builder().gitAuthType(GitAuthType.SSH).url("repourl").build())
-              .connectorName("connectorId")
-              .paths(Arrays.asList("filepath1", "filepath2"))
-              .branch("master")
-              .sshKeySpecDTO(SSHKeySpecDTO.builder().build())
-              .build();
+    GitStoreDelegateConfig gitStoreDelegateConfig =
+        GitStoreDelegateConfig.builder()
+            .gitConfigDTO(GitConfigDTO.builder().gitAuthType(GitAuthType.SSH).url("repourl").build())
+            .connectorName("connectorId")
+            .paths(Arrays.asList("filepath1", "filepath2"))
+            .branch("master")
+            .sshKeySpecDTO(SSHKeySpecDTO.builder().build())
+            .build();
 
-      String sshKey = "secret key";
+    SshSessionConfig sshSessionConfig = SshSessionConfig.Builder.aSshSessionConfig()
+                                            .withKeyLess(false)
+                                            .withUserName("username")
+                                            .withPassword(new char[] {'p', 'w'})
+                                            .build();
 
-      FileIo.writeUtf8StringToFile(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString(), sshKey);
+    when(sshSessionConfigMapper.getSSHSessionConfig(any(), any())).thenReturn(sshSessionConfig);
 
-      SshSessionConfig sshSessionConfig = SshSessionConfig.Builder.aSshSessionConfig()
-                                              .withKeyLess(false)
-                                              .withUserName("username")
-                                              .withPassword(new char[] {'p', 'w'})
-                                              .build();
-
-      when(sshSessionConfigMapper.getSSHSessionConfig(any(), any())).thenReturn(sshSessionConfig);
-
-      terraformBaseHelper.configureCredentialsForModuleSource(taskNGParameters, gitStoreDelegateConfig, logCallback);
-      verify(logCallback, times(1))
-          .saveExecutionLog(
-              color("\nExporting Username and Password with SSH for Module Source is not Supported", Yellow), WARN);
-      assertThat(taskNGParameters.getEnvironmentVariables().size()).isEqualTo(0);
-    } finally {
-      FileIo.deleteFileIfExists(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString());
-    }
+    terraformBaseHelper.configureCredentialsForModuleSource(taskNGParameters, gitStoreDelegateConfig, logCallback);
+    verify(logCallback, times(1))
+        .saveExecutionLog(
+            color("\nExporting Username and Password with SSH for Module Source is not Supported", Yellow), WARN);
+    assertThat(taskNGParameters.getEnvironmentVariables().size()).isEqualTo(0);
   }
+
   @Test
   @Owner(developers = NAMAN_TALAYCHA)
   @Category(UnitTests.class)
