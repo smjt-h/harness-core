@@ -9,15 +9,10 @@ package io.harness.gitsync.persistance;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.Scope;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.beans.GitContextRequestParams;
 import io.harness.gitsync.entityInfo.GitSdkEntityHandlerInterface;
-import io.harness.gitsync.helpers.GitContextHelper;
-import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.scm.SCMGitSyncHelper;
-import io.harness.gitsync.scm.beans.ScmGetFileResponse;
-import io.harness.gitsync.scm.beans.ScmGitMetaData;
 import io.harness.gitsync.v2.GitAware;
 import io.harness.gitsync.v2.StoreType;
 import io.harness.utils.RetryUtils;
@@ -26,8 +21,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -36,7 +29,6 @@ import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -56,79 +48,81 @@ public class GitAwarePersistenceV2Impl implements GitAwarePersistenceV2 {
   @Override
   public <B extends GitAware> Optional<B> findOne(String accountIdentifier, String orgIdentifier,
       String projectIdentifier, Class<B> entityClass, Criteria criteria) {
-    GitContextHelper.initDefaultScmGitMetaData();
+    //    GitContextHelper.initDefaultScmGitMetaData();
+    //
+    //    Optional<B> savedEntityOptional =
+    //        gitAwarePersistence.findOne(criteria, projectIdentifier, orgIdentifier, accountIdentifier, entityClass);
+    //    if (savedEntityOptional.isPresent()) {
+    //      GitAware savedEntity = savedEntityOptional.get();
+    //      // if storeType != null, then it is a v2 entity and we shouldn't rely on old logic to fetch v2 entity
+    //      if (savedEntity.getStoreType() == null) {
+    //        GitContextHelper.updateScmGitMetaData(ScmGitMetaData.builder()
+    //                                                  .repoName(savedEntity.getRepo())
+    //                                                  .branchName(savedEntity.getBranch())
+    //                                                  .blobId(savedEntity.getObjectIdOfYaml())
+    //                                                  .filePath(savedEntity.getFilePath())
+    //                                                  .build());
+    //        return savedEntityOptional;
+    //      }
+    //    }
+    //
+    //    Criteria gitAwareCriteria = Criteria.where(getGitSdkEntityHandlerInterface(entityClass).getStoreTypeKey())
+    //                                    .in(Arrays.asList(StoreType.values()));
+    //    Query query = new Query().addCriteria(new Criteria().andOperator(criteria, gitAwareCriteria));
+    //    final B savedEntity = mongoTemplate.findOne(query, entityClass);
+    //    if (savedEntity == null) {
+    //      return Optional.empty();
+    //    }
+    //
+    //    if (savedEntity.getStoreType() == StoreType.REMOTE) {
+    //      // fetch yaml from git
+    //      GitEntityInfo gitEntityInfo = GitContextHelper.getGitEntityInfoV2();
+    //      // TODO put proper context map in request
+    //      ScmGetFileResponse scmGetFileResponse = scmGitSyncHelper.getFile(Scope.builder()
+    //                                                                           .accountIdentifier(accountIdentifier)
+    //                                                                           .orgIdentifier(orgIdentifier)
+    //                                                                           .projectIdentifier(projectIdentifier)
+    //                                                                           .build(),
+    //          savedEntity.getRepo(), gitEntityInfo.getBranch(), savedEntity.getFilePath(),
+    //          gitEntityInfo.getCommitId(), savedEntity.getConnectorRef(), Collections.emptyMap());
+    //      savedEntity.setData(scmGetFileResponse.getFileContent());
+    //      GitContextHelper.updateScmGitMetaData(scmGetFileResponse.getGitMetaData());
+    //    }
 
-    Optional<B> savedEntityOptional =
-        gitAwarePersistence.findOne(criteria, projectIdentifier, orgIdentifier, accountIdentifier, entityClass);
-    if (savedEntityOptional.isPresent()) {
-      GitAware savedEntity = savedEntityOptional.get();
-      // if storeType != null, then it is a v2 entity and we shouldn't rely on old logic to fetch v2 entity
-      if (savedEntity.getStoreType() == null) {
-        GitContextHelper.updateScmGitMetaData(ScmGitMetaData.builder()
-                                                  .repoName(savedEntity.getRepo())
-                                                  .branchName(savedEntity.getBranch())
-                                                  .blobId(savedEntity.getObjectIdOfYaml())
-                                                  .filePath(savedEntity.getFilePath())
-                                                  .build());
-        return savedEntityOptional;
-      }
-    }
-
-    Criteria gitAwareCriteria = Criteria.where(getGitSdkEntityHandlerInterface(entityClass).getStoreTypeKey())
-                                    .in(Arrays.asList(StoreType.values()));
-    Query query = new Query().addCriteria(new Criteria().andOperator(criteria, gitAwareCriteria));
-    final B savedEntity = mongoTemplate.findOne(query, entityClass);
-    if (savedEntity == null) {
-      return Optional.empty();
-    }
-
-    if (savedEntity.getStoreType() == StoreType.REMOTE) {
-      // fetch yaml from git
-      GitEntityInfo gitEntityInfo = GitContextHelper.getGitEntityInfoV2();
-      // TODO put proper context map in request
-      ScmGetFileResponse scmGetFileResponse = scmGitSyncHelper.getFile(Scope.builder()
-                                                                           .accountIdentifier(accountIdentifier)
-                                                                           .orgIdentifier(orgIdentifier)
-                                                                           .projectIdentifier(projectIdentifier)
-                                                                           .build(),
-          savedEntity.getRepo(), gitEntityInfo.getBranch(), savedEntity.getFilePath(), gitEntityInfo.getCommitId(),
-          savedEntity.getConnectorRef(), Collections.emptyMap());
-      savedEntity.setData(scmGetFileResponse.getFileContent());
-      GitContextHelper.updateScmGitMetaData(scmGetFileResponse.getGitMetaData());
-    }
-
-    return Optional.of(savedEntity);
+    //    return Optional.of(savedEntity);
+    return null;
   }
 
   @Override
   public <B extends GitAware> B save(B objectToSave, String yaml, ChangeType changeType, Class<B> entityClass,
       Supplier functor, StoreType storeType, GitContextRequestParams gitContextRequestParams) {
-    GitContextHelper.initDefaultScmGitMetaData();
-    objectToSave.setStoreType(storeType);
-
-    if (storeType == null) {
-      return gitAwarePersistence.save(objectToSave, yaml, changeType, entityClass, functor);
-    }
-
-    if (storeType == StoreType.INLINE) {
-      // How does changeType=DELETE handled using mongo.save() call?
-      return saveEntity(objectToSave, functor);
-    }
-
-    // TODO put proper context map in request
-    // Change signature of commitFile to incorporate newBranch options as well
-    if (changeType == ChangeType.MODIFY || changeType == ChangeType.ADD) {
-      scmGitSyncHelper.commitFile(Scope.builder().build(), gitContextRequestParams.getRepoName(),
-          gitContextRequestParams.getBranchName(), gitContextRequestParams.getFilePath(),
-          gitContextRequestParams.getConnectorRef(), changeType, Collections.emptyMap());
-    }
-
-    objectToSave.setBranch(gitContextRequestParams.getBranchName());
-    objectToSave.setRepo(gitContextRequestParams.getRepoName());
-    objectToSave.setFilePath(gitContextRequestParams.getFilePath());
-    objectToSave.setConnectorRef(gitContextRequestParams.getConnectorRef());
-
-    return saveEntity(objectToSave, functor);
+    //    GitContextHelper.initDefaultScmGitMetaData();
+    //    objectToSave.setStoreType(storeType);
+    //
+    //    if (storeType == null) {
+    //      return gitAwarePersistence.save(objectToSave, yaml, changeType, entityClass, functor);
+    //    }
+    //
+    //    if (storeType == StoreType.INLINE) {
+    //      // How does changeType=DELETE handled using mongo.save() call?
+    //      return saveEntity(objectToSave, functor);
+    //    }
+    //
+    //    // TODO put proper context map in request
+    //    // Change signature of commitFile to incorporate newBranch options as well
+    //    if (changeType == ChangeType.MODIFY || changeType == ChangeType.ADD) {
+    //      scmGitSyncHelper.commitFile(Scope.builder().build(), gitContextRequestParams.getRepoName(),
+    //          gitContextRequestParams.getBranchName(), gitContextRequestParams.getFilePath(),
+    //          gitContextRequestParams.getConnectorRef(), changeType, Collections.emptyMap());
+    //    }
+    //
+    //    objectToSave.setBranch(gitContextRequestParams.getBranchName());
+    //    objectToSave.setRepo(gitContextRequestParams.getRepoName());
+    //    objectToSave.setFilePath(gitContextRequestParams.getFilePath());
+    //    objectToSave.setConnectorRef(gitContextRequestParams.getConnectorRef());
+    //
+    //    return saveEntity(objectToSave, functor);
+    return null;
   }
 
   private GitSdkEntityHandlerInterface getGitSdkEntityHandlerInterface(Class entityClass) {

@@ -106,7 +106,6 @@ public class SCMGitSyncHelper {
     getFileScmErrorHandler.handlerAndThrowError(
         getFileResponse.getStatusCode(), ScmErrorDetails.builder().errorMessage(getFileResponse.getError()).build());
 
-    // Add Error Handling
     return ScmGetFileResponse.builder()
         .fileContent(getFileResponse.getFileContent())
         .gitMetaData(getGitMetaData(getFileResponse.getGitMetaData()))

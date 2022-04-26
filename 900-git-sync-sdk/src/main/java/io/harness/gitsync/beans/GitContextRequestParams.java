@@ -23,8 +23,8 @@ public class GitContextRequestParams {
   String repoName;
   String branchName;
   String filePath;
-  String resolvedCommitId;
+  String commitId;
   String connectorRef;
-  String isNewBranch;
+  boolean isNewBranch;
   String newBranchName;
 }

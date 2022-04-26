@@ -8,6 +8,7 @@
 package io.harness.pms.pipeline.service;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+import static io.harness.beans.FeatureName.GIT_SIMPLIFICATION;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.exception.WingsException.USER_SRE;
 import static io.harness.ng.core.common.beans.NGTag.NGTagKeys;
@@ -20,6 +21,7 @@ import static org.springframework.data.mongodb.core.query.Criteria.where;
 import io.harness.NGResourceFilterConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
+import io.harness.beans.Scope;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.HarnessStringUtils;
 import io.harness.engine.GovernanceService;
@@ -42,6 +44,8 @@ import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.scm.EntityObjectIdUtils;
+import io.harness.gitsync.scm.beans.ScmGetFileResponse;
+import io.harness.gitsync.v2.StoreType;
 import io.harness.grpc.utils.StringValueUtils;
 import io.harness.ng.core.template.TemplateMergeResponseDTO;
 import io.harness.opaclient.model.OpaConstants;
@@ -79,6 +83,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -93,6 +98,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
 @Singleton
@@ -136,10 +142,6 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
 
       PipelineEntity entityWithUpdatedInfo = pmsPipelineServiceHelper.updatePipelineInfo(pipelineEntity);
       PipelineEntity createdEntity = pmsPipelineRepository.save(entityWithUpdatedInfo);
-
-      if () {
-      }
-
       sendPipelineSaveTelemetryEvent(createdEntity, CREATING_PIPELINE);
       return createdEntity;
     } catch (DuplicateKeyException ex) {
@@ -168,12 +170,44 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
   public Optional<PipelineEntity> get(
       String accountId, String orgIdentifier, String projectIdentifier, String identifier, boolean deleted) {
     try {
-      return pmsPipelineRepository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
-          accountId, orgIdentifier, projectIdentifier, identifier, !deleted);
+      Optional<PipelineEntity> optionalPipelineEntity =
+          pmsPipelineRepository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
+              accountId, orgIdentifier, projectIdentifier, identifier, !deleted);
 
-      if (FF enabled) {
-        if (entity == null) {
+      if (pmsFeatureFlagService.isEnabled(accountId, GIT_SIMPLIFICATION)) {
+        Criteria gitAwareCriteria = Criteria.where(PipelineEntityKeys.storeType).in(Arrays.asList(StoreType.values()));
+        Criteria criteria = Criteria.where(PipelineEntityKeys.deleted)
+                                .is(!deleted)
+                                .and(PipelineEntityKeys.identifier)
+                                .is(identifier)
+                                .and(PipelineEntityKeys.projectIdentifier)
+                                .is(projectIdentifier)
+                                .and(PipelineEntityKeys.orgIdentifier)
+                                .is(orgIdentifier)
+                                .and(PipelineEntityKeys.accountId)
+                                .is(accountId);
+        Query query = new Query().addCriteria(new Criteria().andOperator(criteria, gitAwareCriteria));
+        final B savedEntity = mongoTemplate.findOne(query, PipelineEntity.class);
+        if (savedEntity == null) {
+          return Optional.empty();
         }
+
+        if (savedEntity.getStoreType() == StoreType.REMOTE) {
+          // fetch yaml from git
+          GitEntityInfo gitEntityInfo = GitContextHelper.getGitEntityInfoV2();
+          // TODO put proper context map in request
+          ScmGetFileResponse scmGetFileResponse = scmGitSyncHelper.getFile(Scope.builder()
+                                                                               .accountIdentifier(accountIdentifier)
+                                                                               .orgIdentifier(orgIdentifier)
+                                                                               .projectIdentifier(projectIdentifier)
+                                                                               .build(),
+              savedEntity.getRepo(), gitEntityInfo.getBranch(), savedEntity.getFilePath(), gitEntityInfo.getCommitId(),
+              savedEntity.getConnectorRef(), Collections.emptyMap());
+          savedEntity.setData(scmGetFileResponse.getFileContent());
+          GitContextHelper.updateScmGitMetaData(scmGetFileResponse.getGitMetaData());
+        }
+      } else {
+        return optionalPipelineEntity;
       }
 
     } catch (Exception e) {

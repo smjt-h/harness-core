@@ -8,16 +8,25 @@
 package io.harness.repositories.pipeline;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+import static io.harness.beans.FeatureName.GIT_SIMPLIFICATION;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.Scope;
 import io.harness.exception.InvalidRequestException;
 import io.harness.git.model.ChangeType;
+import io.harness.gitsync.beans.GitContextRequestParams;
 import io.harness.gitsync.common.helper.EntityDistinctElementHelper;
+import io.harness.gitsync.helpers.GitAwareEntityHelper;
+import io.harness.gitsync.helpers.GitContextHelper;
+import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.persistance.GitAwarePersistence;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.persistance.GitSyncableHarnessRepo;
+import io.harness.gitsync.scm.beans.ScmGitMetaData;
+import io.harness.gitsync.v2.StoreType;
 import io.harness.outbox.OutboxEvent;
 import io.harness.outbox.api.OutboxService;
+import io.harness.pms.PmsFeatureFlagService;
 import io.harness.pms.events.PipelineCreateEvent;
 import io.harness.pms.events.PipelineDeleteEvent;
 import io.harness.pms.events.PipelineUpdateEvent;
@@ -30,6 +39,8 @@ import io.harness.springdata.TransactionHelper;
 
 import com.google.inject.Inject;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -60,6 +71,8 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
   private final TransactionHelper transactionHelper;
   private final PipelineMetadataService pipelineMetadataService;
   private final PmsGitSyncHelper pmsGitSyncHelper;
+  private PmsFeatureFlagService pmsFeatureFlagService;
+  private GitAwareEntityHelper gitAwareEntityHelper;
   OutboxService outboxService;
 
   @Override
@@ -128,33 +141,36 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
   @Override
   public Optional<PipelineEntity> findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
       String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier, boolean notDeleted) {
-    return gitAwarePersistence.findOne(Criteria.where(PipelineEntityKeys.deleted)
-                                           .is(!notDeleted)
-                                           .and(PipelineEntityKeys.identifier)
-                                           .is(pipelineIdentifier)
-                                           .and(PipelineEntityKeys.projectIdentifier)
-                                           .is(projectIdentifier)
-                                           .and(PipelineEntityKeys.orgIdentifier)
-                                           .is(orgIdentifier)
-                                           .and(PipelineEntityKeys.accountId)
-                                           .is(accountId),
-        projectIdentifier, orgIdentifier, accountId, PipelineEntity.class);
+    Criteria criteria = Criteria.where(PipelineEntityKeys.deleted)
+                            .is(!notDeleted)
+                            .and(PipelineEntityKeys.identifier)
+                            .is(pipelineIdentifier)
+                            .and(PipelineEntityKeys.projectIdentifier)
+                            .is(projectIdentifier)
+                            .and(PipelineEntityKeys.orgIdentifier)
+                            .is(orgIdentifier)
+                            .and(PipelineEntityKeys.accountId)
+                            .is(accountId);
+    Optional<PipelineEntity> optionalPipelineEntity =
+        gitAwarePersistence.findOne(criteria, projectIdentifier, orgIdentifier, accountId, PipelineEntity.class);
 
-    if ()
+    return findV2(accountId, orgIdentifier, projectIdentifier, criteria, optionalPipelineEntity);
   }
 
   @Override
   public Optional<PipelineEntity> findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifier(
       String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier) {
-    return gitAwarePersistence.findOne(Criteria.where(PipelineEntityKeys.identifier)
-                                           .is(pipelineIdentifier)
-                                           .and(PipelineEntityKeys.projectIdentifier)
-                                           .is(projectIdentifier)
-                                           .and(PipelineEntityKeys.orgIdentifier)
-                                           .is(orgIdentifier)
-                                           .and(PipelineEntityKeys.accountId)
-                                           .is(accountId),
-        projectIdentifier, orgIdentifier, accountId, PipelineEntity.class);
+    Criteria criteria = Criteria.where(PipelineEntityKeys.identifier)
+                            .is(pipelineIdentifier)
+                            .and(PipelineEntityKeys.projectIdentifier)
+                            .is(projectIdentifier)
+                            .and(PipelineEntityKeys.orgIdentifier)
+                            .is(orgIdentifier)
+                            .and(PipelineEntityKeys.accountId)
+                            .is(accountId);
+    Optional<PipelineEntity> optionalPipelineEntity =
+        gitAwarePersistence.findOne(criteria, projectIdentifier, orgIdentifier, accountId, PipelineEntity.class);
+    return findV2(accountId, orgIdentifier, projectIdentifier, criteria, optionalPipelineEntity);
   }
 
   @Override
@@ -238,5 +254,52 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
         .onFailure(event
             -> log.error(
                 "[Failed]: Failed updating Pipeline; attempt: {}", event.getAttemptCount(), event.getFailure()));
+  }
+
+  private Optional<PipelineEntity> findV2(String accountId, String orgIdentifier, String projectIdentifier,
+      Criteria criteria, Optional<PipelineEntity> entityV1) {
+    if (pmsFeatureFlagService.isEnabled(accountId, GIT_SIMPLIFICATION)) {
+      if (entityV1.isPresent()) {
+        PipelineEntity entity = entityV1.get();
+        if (entity.getStoreType() == null) {
+          GitContextHelper.updateScmGitMetaData(ScmGitMetaData.builder()
+                                                    .repoName(entity.getRepo())
+                                                    .branchName(entity.getBranch())
+                                                    .blobId(entity.getObjectIdOfYaml())
+                                                    .filePath(entity.getFilePath())
+                                                    .build());
+          return entityV1;
+        }
+      }
+      Criteria gitAwareCriteria = Criteria.where(PipelineEntityKeys.storeType).in(Arrays.asList(StoreType.values()));
+      Query query = new Query().addCriteria(new Criteria().andOperator(criteria, gitAwareCriteria));
+      PipelineEntity savedEntity = mongoTemplate.findOne(query, PipelineEntity.class);
+      if (savedEntity == null) {
+        return Optional.empty();
+      }
+
+      if (savedEntity.getStoreType() == StoreType.REMOTE) {
+        // fetch yaml from git
+        GitEntityInfo gitEntityInfo = GitContextHelper.getGitEntityInfoV2();
+        savedEntity = (PipelineEntity) gitAwareEntityHelper.fetchEntityFromRemote(savedEntity,
+            Scope.builder()
+                .accountIdentifier(accountId)
+                .orgIdentifier(orgIdentifier)
+                .projectIdentifier(projectIdentifier)
+                .build(),
+            GitContextRequestParams.builder()
+                .branchName(gitEntityInfo.getBaseBranch())
+                .commitId(gitEntityInfo.getCommitId())
+                .connectorRef(savedEntity.getConnectorRef())
+                .filePath(savedEntity.getFilePath())
+                .repoName(savedEntity.getRepo())
+                .build(),
+            Collections.emptyMap());
+      }
+
+      return Optional.of(savedEntity);
+    } else {
+      return entityV1;
+    }
   }
 }
