@@ -1410,7 +1410,7 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(ClusterRecord.class, 40054);
     kryo.register(io.harness.ccm.cluster.entities.AzureKubernetesCluster.class, 40055);
     kryo.register(ApplicationManifest.class, 40056);
-    kryo.register(HelmChartConfig.class, 40057);
+    kryo.register(HelmChartConfig.class, 40057);F
     kryo.register(AuditYamlHelperForFailedChanges.ArtifactStreamWithOnlyAuditNeededData.class, 40058);
     kryo.register(NexusArtifactStream.class, 40079);
     kryo.register(AzureMachineImageArtifactStream.class, 40059);
