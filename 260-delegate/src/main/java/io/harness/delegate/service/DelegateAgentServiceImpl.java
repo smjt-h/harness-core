@@ -599,7 +599,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
         RequestBuilder requestBuilder = prepareRequestBuilder();
 
-        Options clientOptions = client.newOptionsBuilder().runtime(asyncHttpClient, true).reconnect(true).build();
+        Options clientOptions = client.newOptionsBuilder().runtime(asyncHttpClient, true).reconnect(true).
+            reconnectAttempts(10).pauseBeforeReconnectInSeconds(5).build();
         socket = client.create(clientOptions);
         log.info("reconnect  {}", clientOptions.reconnect());
         log.info("reconnect seconds {}", clientOptions.reconnectTimeoutInMilliseconds());
