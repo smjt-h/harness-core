@@ -42,6 +42,7 @@ import io.harness.delegate.task.artifacts.response.ArtifactDelegateResponse;
 
 import io.harness.pms.yaml.ParameterField;
 import lombok.experimental.UtilityClass;
+import software.wings.utils.RepositoryFormat;
 
 @UtilityClass
 @OwnedBy(CDC)
@@ -73,18 +74,24 @@ public class ArtifactResponseToOutcomeMapper {
         ArtifactOutcome artifactOutcome = null;
         ArtifactoryRegistryArtifactConfig artifactoryRegistryArtifactConfig =
             (ArtifactoryRegistryArtifactConfig) artifactConfig;
-        if (artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue().equals(docker.name())) {
-          ArtifactoryDockerArtifactDelegateResponse artifactoryDelegateResponse =
-              (ArtifactoryDockerArtifactDelegateResponse) artifactDelegateResponse;
-          artifactOutcome = getArtifactoryArtifactOutcome(
-              artifactoryRegistryArtifactConfig, artifactoryDelegateResponse, useDelegateResponse);
-        } else if (artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue().equals(generic.name())) {
-          ArtifactoryGenericArtifactDelegateResponse artifactoryGenericDelegateResponse =
-              (ArtifactoryGenericArtifactDelegateResponse) artifactDelegateResponse;
-          artifactOutcome = getArtifactoryGenericArtifactOutcome(
-              artifactoryRegistryArtifactConfig, artifactoryGenericDelegateResponse, useDelegateResponse);
+        RepositoryFormat repositoryType = RepositoryFormat.valueOf(artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue());
+        switch(repositoryType) {
+          case docker:
+            ArtifactoryDockerArtifactDelegateResponse artifactoryDelegateResponse =
+                    (ArtifactoryDockerArtifactDelegateResponse) artifactDelegateResponse;
+            artifactOutcome = getArtifactoryArtifactOutcome(
+                    artifactoryRegistryArtifactConfig, artifactoryDelegateResponse, useDelegateResponse);
+            return artifactOutcome;
+          case generic:
+            ArtifactoryGenericArtifactDelegateResponse artifactoryGenericDelegateResponse =
+                    (ArtifactoryGenericArtifactDelegateResponse) artifactDelegateResponse;
+            artifactOutcome = getArtifactoryGenericArtifactOutcome(
+                    artifactoryRegistryArtifactConfig, artifactoryGenericDelegateResponse, useDelegateResponse);
+            return artifactOutcome;
+          default:
+            throw new UnsupportedOperationException(
+                    String.format("Repository Format [%s] for Artifactory Not Supported", repositoryType));
         }
-        return artifactOutcome;
       case CUSTOM_ARTIFACT:
         CustomArtifactConfig customArtifactConfig = (CustomArtifactConfig) artifactConfig;
         return getCustomArtifactOutcome(customArtifactConfig);
