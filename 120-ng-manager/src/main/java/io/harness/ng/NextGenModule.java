@@ -174,6 +174,10 @@ import io.harness.ng.core.user.service.impl.UserEntityCrudStreamListener;
 import io.harness.ng.eventsframework.EventsFrameworkModule;
 import io.harness.ng.feedback.services.FeedbackService;
 import io.harness.ng.feedback.services.impls.FeedbackServiceImpl;
+import io.harness.ng.opa.OpaService;
+import io.harness.ng.opa.OpaServiceImpl;
+import io.harness.ng.opa.entities.connector.OpaConnectorService;
+import io.harness.ng.opa.entities.connector.OpaConnectorServiceImpl;
 import io.harness.ng.overview.service.CDLandingDashboardService;
 import io.harness.ng.overview.service.CDLandingDashboardServiceImpl;
 import io.harness.ng.overview.service.CDOverviewDashboardService;
@@ -803,6 +807,8 @@ public class NextGenModule extends AbstractModule {
         .annotatedWith(Names.named(EventsFrameworkConstants.GIT_SYNC_ENTITY_STREAM + ENTITY_CRUD))
         .to(GitSyncProjectCleanup.class);
     bind(ServiceAccountService.class).to(ServiceAccountServiceImpl.class);
+    bind(OpaService.class).to(OpaServiceImpl.class);
+    bind(OpaConnectorService.class).to(OpaConnectorServiceImpl.class);
   }
 
   private OrchestrationModuleConfig getOrchestrationConfig() {

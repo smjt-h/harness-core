@@ -68,6 +68,7 @@ import io.harness.ng.core.dto.ErrorDetail;
 import io.harness.ng.opa.entities.connector.OpaConnectorService;
 import io.harness.opaclient.model.OpaConstants;
 import io.harness.perpetualtask.PerpetualTaskId;
+import io.harness.pms.contracts.governance.GovernanceMetadata;
 import io.harness.repositories.ConnectorRepository;
 import io.harness.telemetry.helpers.ConnectorInstrumentationHelper;
 import io.harness.utils.FullyQualifiedIdentifierHelper;
@@ -111,7 +112,8 @@ public class ConnectorServiceImpl implements ConnectorService {
       ConnectorRepository connectorRepository, @Named(EventsFrameworkConstants.ENTITY_CRUD) Producer eventProducer,
       ExecutorService executorService, ConnectorErrorMessagesHelper connectorErrorMessagesHelper,
       HarnessManagedConnectorHelper harnessManagedConnectorHelper, NGErrorHelper ngErrorHelper,
-      GitSyncSdkService gitSyncSdkService, ConnectorInstrumentationHelper instrumentationHelper, OpaConnectorService opaConnectorService) {
+      GitSyncSdkService gitSyncSdkService, ConnectorInstrumentationHelper instrumentationHelper,
+      OpaConnectorService opaConnectorService) {
     this.defaultConnectorService = defaultConnectorService;
     this.secretManagerConnectorService = secretManagerConnectorService;
     this.connectorActivityService = connectorActivityService;
@@ -163,7 +165,15 @@ public class ConnectorServiceImpl implements ConnectorService {
              connectorDTO.getConnectorInfo().getOrgIdentifier(), accountIdentifier, OVERRIDE_ERROR);
          AutoLogContext ignore2 =
              new ConnectorLogContext(connectorDTO.getConnectorInfo().getIdentifier(), OVERRIDE_ERROR)) {
-        opaConnectorService.evaluatePoliciesWithEntity(accountIdentifier, connectorDTO, connectorDTO.getConnectorInfo().getOrgIdentifier(), connectorDTO.getConnectorInfo().getProjectIdentifier(), OpaConstants.OPA_EVALUATION_ACTION_CONNECTOR_SAVE, connectorDTO.getConnectorInfo().getIdentifier());
+      ConnectorResponseDTO connectorResponse = new ConnectorResponseDTO();
+      GovernanceMetadata governanceMetadata = opaConnectorService.evaluatePoliciesWithEntity(accountIdentifier,
+          connectorDTO, connectorDTO.getConnectorInfo().getOrgIdentifier(),
+          connectorDTO.getConnectorInfo().getProjectIdentifier(), OpaConstants.OPA_EVALUATION_ACTION_CONNECTOR_SAVE,
+          connectorDTO.getConnectorInfo().getIdentifier());
+      connectorResponse.setGovernanceMetadata(governanceMetadata);
+      if (governanceMetadata != null && "error".equals(governanceMetadata.getStatus())) {
+        return connectorResponse;
+      }
       ConnectorInfoDTO connectorInfo = connectorDTO.getConnectorInfo();
       connectorInfo.getConnectorConfig().validate();
       final boolean executeOnDelegate = defaultConnectorService.checkConnectorExecutableOnDelegate(connectorInfo);
@@ -177,10 +187,9 @@ public class ConnectorServiceImpl implements ConnectorService {
       }
       if (connectorHeartbeatTaskId != null || isHarnessManagedSecretManager || !isDefaultBranchConnector
           || !executeOnDelegate) {
-        ConnectorResponseDTO connectorResponse;
         if (gitChangeType != null) {
-          connectorResponse =
-              getConnectorService(connectorInfo.getConnectorType()).create(connectorDTO, accountIdentifier, gitChangeType);
+          connectorResponse = getConnectorService(connectorInfo.getConnectorType())
+                                  .create(connectorDTO, accountIdentifier, gitChangeType);
         } else {
           connectorResponse =
               getConnectorService(connectorInfo.getConnectorType()).create(connectorDTO, accountIdentifier);
@@ -199,6 +208,7 @@ public class ConnectorServiceImpl implements ConnectorService {
           }
         }
         instrumentationHelper.sendConnectorCreateEvent(connectorDTO.getConnectorInfo(), accountIdentifier);
+        connectorResponse.setGovernanceMetadata(governanceMetadata);
         return connectorResponse;
       } else {
         throw new InvalidRequestException("Connector could not be created because we could not create the heartbeat");
@@ -250,7 +260,9 @@ public class ConnectorServiceImpl implements ConnectorService {
              connectorDTO.getConnectorInfo().getOrgIdentifier(), accountIdentifier, OVERRIDE_ERROR);
          AutoLogContext ignore2 =
              new ConnectorLogContext(connectorDTO.getConnectorInfo().getIdentifier(), OVERRIDE_ERROR)) {
-      opaConnectorService.evaluatePoliciesWithEntity(accountIdentifier, connectorDTO, connectorDTO.getConnectorInfo().getOrgIdentifier(), connectorDTO.getConnectorInfo().getProjectIdentifier(), OpaConstants.OPA_EVALUATION_ACTION_CONNECTOR_SAVE, connectorDTO.getConnectorInfo().getIdentifier());
+      opaConnectorService.evaluatePoliciesWithEntity(accountIdentifier, connectorDTO,
+          connectorDTO.getConnectorInfo().getOrgIdentifier(), connectorDTO.getConnectorInfo().getProjectIdentifier(),
+          OpaConstants.OPA_EVALUATION_ACTION_CONNECTOR_SAVE, connectorDTO.getConnectorInfo().getIdentifier());
       boolean isDefaultBranchConnector = gitSyncSdkService.isDefaultBranch(accountIdentifier,
           connectorDTO.getConnectorInfo().getOrgIdentifier(), connectorDTO.getConnectorInfo().getProjectIdentifier());
       ConnectorInfoDTO connectorInfo = connectorDTO.getConnectorInfo();
