@@ -41,6 +41,19 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @StoreIn(DbAliases.NG_MANAGER)
 @OwnedBy(HarnessTeam.CDP)
 public class TerraformConfig implements PersistentEntity, CreatedAtAware {
+  public static List<MongoIndex> mongoIndexes() {
+    return ImmutableList.<MongoIndex>builder()
+        .add(SortCompoundMongoIndex.builder()
+                 .name("accountId_orgId_projectId_entityId_createdAt")
+                 .field(TerraformConfigKeys.accountId)
+                 .field(TerraformConfigKeys.orgId)
+                 .field(TerraformConfigKeys.projectId)
+                 .field(TerraformConfigKeys.entityId)
+                 .descSortField(TerraformConfigKeys.createdAt)
+                 .build())
+        .build();
+  }
+
   @Id @org.mongodb.morphia.annotations.Id private String uuid;
   @NotNull String accountId;
   @NotNull String orgId;
@@ -57,17 +70,4 @@ public class TerraformConfig implements PersistentEntity, CreatedAtAware {
   String workspace;
   List<String> targets;
   boolean useConnectorCredentials;
-
-  public static List<MongoIndex> mongoIndexes() {
-    return ImmutableList.<MongoIndex>builder()
-        .add(SortCompoundMongoIndex.builder()
-                 .name("accountId_orgId_projectId_entityId_createdAt")
-                 .field(TerraformConfigKeys.accountId)
-                 .field(TerraformConfigKeys.orgId)
-                 .field(TerraformConfigKeys.projectId)
-                 .field(TerraformConfigKeys.entityId)
-                 .descSortField(TerraformConfigKeys.createdAt)
-                 .build())
-        .build();
-  }
 }
