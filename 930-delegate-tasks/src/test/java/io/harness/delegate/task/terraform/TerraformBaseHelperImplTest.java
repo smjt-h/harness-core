@@ -8,11 +8,10 @@
 package io.harness.delegate.task.terraform;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.delegate.task.terraform.TerraformBaseHelperImpl.SSH_KEY_FILENAME;
 import static io.harness.logging.LogLevel.WARN;
-import static io.harness.provision.TerraformConstants.GIT_SSH_COMMAND;
 import static io.harness.provision.TerraformConstants.TERRAFORM_PLAN_FILE_OUTPUT_NAME;
 import static io.harness.provision.TerraformConstants.TERRAFORM_PLAN_JSON_FILE_NAME;
-import static io.harness.provision.TerraformConstants.USER_DIR_KEY;
 import static io.harness.rule.OwnerRule.ABOSII;
 import static io.harness.rule.OwnerRule.NAMAN_TALAYCHA;
 import static io.harness.rule.OwnerRule.ROHITKARELIA;
@@ -366,9 +365,9 @@ public class TerraformBaseHelperImplTest extends CategoryTest {
 
     terraformBaseHelper.configureCredentialsForModuleSource(taskNGParameters, gitStoreDelegateConfig, logCallback);
     assertThat(taskNGParameters.getEnvironmentVariables().size()).isEqualTo(1);
-    assertThat(taskNGParameters.getEnvironmentVariables().get(GIT_SSH_COMMAND))
+    assertThat(taskNGParameters.getEnvironmentVariables().get(TerraformBaseHelperImpl.GIT_SSH_COMMAND))
         .contains("ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no -i");
-    assertThat(taskNGParameters.getEnvironmentVariables().get(GIT_SSH_COMMAND))
+    assertThat(taskNGParameters.getEnvironmentVariables().get(TerraformBaseHelperImpl.GIT_SSH_COMMAND))
         .contains("./terraform-working-dir/entityId/.ssh/ssh.key");
   }
 
@@ -395,23 +394,24 @@ public class TerraformBaseHelperImplTest extends CategoryTest {
 
       String sshKey = "secret key";
 
-      FileIo.writeUtf8StringToFile(Paths.get(System.getProperty(USER_DIR_KEY), "ssh.key").toString(), sshKey);
+      FileIo.writeUtf8StringToFile(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString(), sshKey);
 
       SshSessionConfig sshSessionConfig = SshSessionConfig.Builder.aSshSessionConfig()
                                               .withKeyLess(true)
                                               .withKeyPassphrase(null)
-                                              .withKeyPath("ssh.key")
+                                              .withKeyPath(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString())
                                               .build();
 
       when(sshSessionConfigMapper.getSSHSessionConfig(any(), any())).thenReturn(sshSessionConfig);
 
       terraformBaseHelper.configureCredentialsForModuleSource(taskNGParameters, gitStoreDelegateConfig, logCallback);
       assertThat(taskNGParameters.getEnvironmentVariables().size()).isEqualTo(1);
-      assertThat(taskNGParameters.getEnvironmentVariables().get(GIT_SSH_COMMAND))
+      assertThat(taskNGParameters.getEnvironmentVariables().get(TerraformBaseHelperImpl.GIT_SSH_COMMAND))
           .contains("ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no -i");
-      assertThat(taskNGParameters.getEnvironmentVariables().get(GIT_SSH_COMMAND)).contains("ssh.key");
+      assertThat(taskNGParameters.getEnvironmentVariables().get(TerraformBaseHelperImpl.GIT_SSH_COMMAND))
+          .contains(SSH_KEY_FILENAME);
     } finally {
-      FileIo.deleteFileIfExists(Paths.get(System.getProperty(USER_DIR_KEY), "ssh.key").toString());
+      FileIo.deleteFileIfExists(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString());
     }
   }
 
@@ -438,12 +438,12 @@ public class TerraformBaseHelperImplTest extends CategoryTest {
 
       String sshKey = "secret key";
 
-      FileIo.writeUtf8StringToFile(Paths.get(System.getProperty(USER_DIR_KEY), "ssh.key").toString(), sshKey);
+      FileIo.writeUtf8StringToFile(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString(), sshKey);
 
       SshSessionConfig sshSessionConfig = SshSessionConfig.Builder.aSshSessionConfig()
                                               .withKeyLess(true)
                                               .withKeyPassphrase(new char[] {'a', 'b'})
-                                              .withKeyPath("ssh.key")
+                                              .withKeyPath(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString())
                                               .build();
 
       when(sshSessionConfigMapper.getSSHSessionConfig(any(), any())).thenReturn(sshSessionConfig);
@@ -454,7 +454,7 @@ public class TerraformBaseHelperImplTest extends CategoryTest {
               color("\nExporting SSH Key with Passphrase for Module Source is not Supported", Yellow), WARN);
       assertThat(taskNGParameters.getEnvironmentVariables().size()).isEqualTo(0);
     } finally {
-      FileIo.deleteFileIfExists(Paths.get(System.getProperty(USER_DIR_KEY), "ssh.key").toString());
+      FileIo.deleteFileIfExists(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString());
     }
   }
 
@@ -481,7 +481,7 @@ public class TerraformBaseHelperImplTest extends CategoryTest {
 
       String sshKey = "secret key";
 
-      FileIo.writeUtf8StringToFile(Paths.get(System.getProperty(USER_DIR_KEY), "ssh.key").toString(), sshKey);
+      FileIo.writeUtf8StringToFile(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString(), sshKey);
 
       SshSessionConfig sshSessionConfig = SshSessionConfig.Builder.aSshSessionConfig()
                                               .withKeyLess(false)
@@ -497,7 +497,7 @@ public class TerraformBaseHelperImplTest extends CategoryTest {
               color("\nExporting Username and Password with SSH for Module Source is not Supported", Yellow), WARN);
       assertThat(taskNGParameters.getEnvironmentVariables().size()).isEqualTo(0);
     } finally {
-      FileIo.deleteFileIfExists(Paths.get(System.getProperty(USER_DIR_KEY), "ssh.key").toString());
+      FileIo.deleteFileIfExists(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString());
     }
   }
   @Test
@@ -527,7 +527,7 @@ public class TerraformBaseHelperImplTest extends CategoryTest {
               color("\nExporting Username and Password for Module Source is not Supported", Yellow), WARN);
       assertThat(taskNGParameters.getEnvironmentVariables().size()).isEqualTo(0);
     } finally {
-      FileIo.deleteFileIfExists(Paths.get(System.getProperty(USER_DIR_KEY), "ssh.key").toString());
+      FileIo.deleteFileIfExists(Paths.get(SSH_KEY_FILENAME).toAbsolutePath().toString());
     }
   }
 
