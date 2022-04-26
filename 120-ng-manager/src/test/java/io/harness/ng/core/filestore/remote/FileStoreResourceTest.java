@@ -33,7 +33,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageRequest;
-import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.beans.SearchPageParams;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
@@ -194,8 +193,7 @@ public class FileStoreResourceTest extends CategoryTest {
     doNothing().when(accessControlClient).checkForAccessOrThrow(any(), any(), eq(FILE_ACCESS_PERMISSION));
     when(fileStoreService.listReferencedBy(pageParams, ACCOUNT, ORG, PROJECT, IDENTIFIER, EntityType.PIPELINES))
         .thenReturn(entityServiceUsageList);
-
-    ResponseDTO<PageResponse<EntitySetupUsageDTO>> response =
+    ResponseDTO<Page<EntitySetupUsageDTO>> response =
         fileStoreResource.getReferencedBy(page, size, ACCOUNT, ORG, PROJECT, IDENTIFIER, EntityType.PIPELINES, null);
 
     verify(fileStoreService).listReferencedBy(pageParams, ACCOUNT, ORG, PROJECT, IDENTIFIER, EntityType.PIPELINES);
