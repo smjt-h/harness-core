@@ -35,11 +35,7 @@ import io.harness.gitsync.interceptor.GitEntityUpdateInfoDTO;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
-import io.harness.ng.core.template.TemplateApplyRequestDTO;
-import io.harness.ng.core.template.TemplateListType;
-import io.harness.ng.core.template.TemplateMergeResponseDTO;
-import io.harness.ng.core.template.TemplateReferenceSummary;
-import io.harness.ng.core.template.TemplateSummaryResponseDTO;
+import io.harness.ng.core.template.*;
 import io.harness.pms.contracts.service.VariableMergeResponseProto;
 import io.harness.pms.contracts.service.VariablesServiceGrpc.VariablesServiceBlockingStub;
 import io.harness.pms.contracts.service.VariablesServiceRequest;
@@ -619,5 +615,21 @@ public class NGTemplateResource {
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectId, @NotNull String yaml) {
     return ResponseDTO.newResponse(
         templateReferenceHelper.getNestedTemplateReferences(accountId, orgId, projectId, yaml, false));
+  }
+
+  @POST
+  @Path("/validateTemplates")
+  @ApiOperation(value = "", nickname = "validateTemplates")
+  @Hidden
+  public ValidateResponseDTO validateTemplates(
+      @Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
+          NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountId,
+      @Parameter(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgId,
+      @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectId,
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo,
+      @Parameter(description = "Payload for RefreshTemplates API") ValidateRequestDTO validateRequestDTO) {
+    return templateMergeHelper.validateTemplates(accountId, orgId, projectId, String yaml);
   }
 }

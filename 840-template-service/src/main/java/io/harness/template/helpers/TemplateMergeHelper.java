@@ -31,6 +31,7 @@ import io.harness.exception.ngexception.beans.templateservice.TemplateInputsErro
 import io.harness.exception.ngexception.beans.templateservice.TemplateInputsErrorMetadataDTO;
 import io.harness.ng.core.template.TemplateMergeResponseDTO;
 import io.harness.ng.core.template.TemplateReferenceSummary;
+import io.harness.ng.core.template.ValidateResponseDTO;
 import io.harness.ng.core.template.exception.NGTemplateResolveException;
 import io.harness.pms.merger.YamlConfig;
 import io.harness.pms.merger.fqn.FQN;
@@ -619,5 +620,63 @@ public class TemplateMergeHelper {
     fqnList.add(versionLabel);
 
     return EntityReferenceHelper.createFQN(fqnList);
+  }
+
+  public ValidateResponseDTO validateTemplates(String accountId, String orgId, String projectId, String yaml) {
+    if (isEmpty(yaml)) {
+      throw new NGTemplateException("Yaml to validateTemplates cannot be empty.");
+    }
+    YamlNode yamlNode;
+    try {
+      yamlNode = YamlUtils.readTree(yaml).getNode();
+    } catch (IOException e) {
+      log.error("Could not convert yaml to JsonNode. Yaml:\n" + yaml, e);
+      throw new NGTemplateException("Could not convert yaml to JsonNode: " + e.getMessage());
+    }
+
+    Map<String, TemplateEntity> templateCacheMap = new HashMap<>();
+    Map<String, TemplateInputsErrorDTO> templateInputsErrorMap = new LinkedHashMap<>();
+
+    Map<String, Object> errorYamlMap =
+        validate(accountId, orgId, projectId, yamlNode, templateInputsErrorMap, templateCacheMap);
+
+    if (isEmpty(templateInputsErrorMap)) {
+      return null;
+    }
+
+    String errorYaml = convertToYaml(errorYamlMap);
+    String errorTemplateYaml = convertUuidErrorMapToFqnErrorMap(errorYaml, templateInputsErrorMap);
+
+    return ValidateResponseDTO.builder()
+        .errorMap(templateInputsErrorMap)
+        .errorYaml(errorTemplateYaml)
+        .doRefresh(true)
+        .build();
+  }
+
+  private Map<String, Object> validate(String accountId, String orgId, String projectId, YamlNode yamlNode,
+      Map<String, TemplateInputsErrorDTO> templateInputsErrorMap, Map<String, TemplateEntity> templateCacheMap) {
+    Map<String, Object> resMap = new LinkedHashMap<>();
+    for (YamlField childYamlField : yamlNode.fields()) {
+      String fieldName = childYamlField.getName();
+      JsonNode value = childYamlField.getNode().getCurrJsonNode();
+      if (isTemplatePresent(fieldName, value)) {
+        resMap.put(fieldName,
+            validateTemplateInputs(accountId, orgId, projectId, value, templateInputsErrorMap, templateCacheMap));
+        continue;
+      }
+      if (value.isValueNode() || YamlUtils.checkIfNodeIsArrayWithPrimitiveTypes(value)) {
+        resMap.put(fieldName, value);
+      } else if (value.isArray()) {
+        resMap.put(fieldName,
+            validateTemplateInputsInArray(
+                accountId, orgId, projectId, childYamlField.getNode(), templateInputsErrorMap, templateCacheMap));
+      } else {
+        resMap.put(fieldName,
+            validateTemplateInputsInObject(
+                accountId, orgId, projectId, childYamlField.getNode(), templateInputsErrorMap, templateCacheMap));
+      }
+    }
+    return resMap;
   }
 }
