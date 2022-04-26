@@ -131,13 +131,25 @@ else
 fi
 
 cp 260-delegate/config-delegate.yml dist/delegate/config-delegate.yml
-jarsigner -tsa http://timestamp.digicert.com -storetype pkcs12 -keystore ${KEY_STORE} -storepass ${KEY_STORE_PASSWORD} dist/delegate/delegate-capsule.jar ${KEY_STORE_ALIAS}
+
+if [ "$BUILD_PURPOSE" == 'RELEASE' ]; then
+  echo "INFO: Signing Delegate..."
+  jarsigner -tsa http://timestamp.digicert.com -storetype pkcs12 -keystore ${KEY_STORE} -storepass ${KEY_STORE_PASSWORD} dist/delegate/delegate-capsule.jar ${KEY_STORE_ALIAS}
+else
+  echo "INFO: BUILD_PURPOSE = $BUILD_PURPOSE. Skipping Signing...."
+fi
 cp dist/delegate/delegate-capsule.jar delegate-${VERSION}.jar
 cp protocol.info dist/delegate/.
 
 mkdir -p dist/watcher
 cp ${HOME}/.bazel-dirs/bin/960-watcher/module_deploy.jar dist/watcher/watcher-capsule.jar
-jarsigner -tsa http://timestamp.digicert.com -storetype pkcs12 -keystore ${KEY_STORE} -storepass ${KEY_STORE_PASSWORD} dist/watcher/watcher-capsule.jar ${KEY_STORE_ALIAS}
+
+if [ "$BUILD_PURPOSE" == 'RELEASE' ]; then
+  echo "INFO: Signing Watcher..."
+  jarsigner -tsa http://timestamp.digicert.com -storetype pkcs12 -keystore ${KEY_STORE} -storepass ${KEY_STORE_PASSWORD} dist/watcher/watcher-capsule.jar ${KEY_STORE_ALIAS}
+else
+  echo "INFO: BUILD_PURPOSE = $BUILD_PURPOSE. Skipping Signing...."
+fi
 cp dist/watcher/watcher-capsule.jar watcher-${VERSION}.jar
 cp protocol.info dist/watcher/.
 
@@ -205,10 +217,10 @@ mkdir -p dist/platform-service
 cd dist/platform-service
 
 cp ${HOME}/.bazel-dirs/bin/platform-service/service/module_deploy.jar platform-service-capsule.jar
-cp ../../platform-service/config.yml .
-cp ../../platform-service/keystore.jks .
-cp ../../platform-service/key.pem .
-cp ../../platform-service/cert.pem .
+cp ../../platform-service/config/config.yml .
+cp ../../platform-service/config/keystore.jks .
+cp ../../platform-service/config/key.pem .
+cp ../../platform-service/config/cert.pem .
 cp ../../alpn-boot-8.1.13.v20181017.jar .
 cp ../../dockerization/platform-service/Dockerfile-platform-service-jenkins-k8-openjdk ./Dockerfile
 cp ../../dockerization/platform-service/Dockerfile-platform-service-jenkins-k8-gcr-openjdk ./Dockerfile-gcr
