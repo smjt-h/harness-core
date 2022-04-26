@@ -501,6 +501,8 @@ import io.harness.secretmanagerclient.WinRmAuthScheme;
 import io.harness.serializer.KryoRegistrar;
 
 import software.wings.beans.AwsConfig;
+import software.wings.beans.AzureContainerRegistry;
+import software.wings.beans.AzureResourceGroup;
 import software.wings.beans.GcpConfig;
 import software.wings.beans.GitConfig;
 import software.wings.beans.HostReachabilityInfo;
@@ -1197,6 +1199,8 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(GcbOptions.GcbSpecSource.class, 7442);
     kryo.register(GcbTriggerBuildSpec.GcbTriggerSource.class, 7443);
     kryo.register(GcbRemoteBuildSpec.RemoteFileSource.class, 7444);
+    kryo.register(AzureResourceGroup.class, 40016);
+    kryo.register(AzureContainerRegistry.class, 40013);
 
     // WinRm
     kryo.register(WinRmCredentialsSpecDTO.class, 600001);

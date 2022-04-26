@@ -1231,7 +1231,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(DeploySweepingOutputPcf.class, 7281);
     kryo.register(InfraMappingSweepingOutput.class, 7282);
     kryo.register(ElkDataCollectionInfoV2.class, 7283);
-    kryo.register(AzureResourceGroup.class, 40016);
     kryo.register(UtmInfo.class, 7291);
 
     kryo.register(TerraformApplyMarkerParam.class, 7292);
@@ -1398,7 +1397,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(BuildSourceCallback.class, 40010);
     kryo.register(ArtifactCollectionCallback.class, 40011);
     kryo.register(ExecutionWaitCallback.class, 40012);
-    kryo.register(AzureContainerRegistry.class, 40013);
     kryo.register(StackStatus.class, 40113);
     kryo.register(EventsDeliveryCallback.class, 40014);
     kryo.register(PerpetualTaskBroadcastEvent.class, 40015);
