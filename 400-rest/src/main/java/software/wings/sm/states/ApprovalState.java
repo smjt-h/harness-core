@@ -343,12 +343,12 @@ public class ApprovalState extends State implements SweepingOutputStateMixin {
 
     if (isEmpty(renderedExpression)) {
       log.error("[EMPTY_EXPRESSION] Rendered expression is: [{}]. Original Expression: [{}], Context: [{}]",
-              renderedExpression, expression, context.asMap());
+          renderedExpression, expression, context.asMap());
       throw new InvalidRequestException("User group expression is invalid", USER);
     }
 
     List<String> userGroupNames =
-            Arrays.stream(renderedExpression.split(",")).map(String::trim).collect(Collectors.toList());
+        Arrays.stream(renderedExpression.split(",")).map(String::trim).collect(Collectors.toList());
 
     userGroups = resolveUserGroup(userGroupNames, context.getAccountId());
   }
@@ -363,7 +363,7 @@ public class ApprovalState extends State implements SweepingOutputStateMixin {
       }
       if (userGroup == null) {
         throw new ApprovalStateException("User Group provided in Approval Step not found for " + singleUserGroup,
-                ErrorCode.USER_GROUP_ERROR, Level.ERROR, WingsException.USER);
+            ErrorCode.USER_GROUP_ERROR, Level.ERROR, WingsException.USER);
       }
       resolvedUserGroup.add(userGroup.getUuid());
     }
