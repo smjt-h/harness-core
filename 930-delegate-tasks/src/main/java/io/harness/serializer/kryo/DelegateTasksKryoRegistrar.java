@@ -217,7 +217,6 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(ArtifactoryConfig.class, 5018);
     kryo.register(SSHExecutionCredential.class, 5022);
     kryo.register(ExecutionLogCallback.class, 5044);
-    kryo.register(ArtifactFile.class, 5066);
     kryo.register(HostConnectionAttributes.class, 5070);
     kryo.register(HostConnectionAttributes.ConnectionType.class, 5071);
     kryo.register(BastionConnectionAttributes.class, 5073);
@@ -374,7 +373,6 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(BaseVaultConfig.class, 15014);
     kryo.register(BuildCollectParameters.class, 8602);
     kryo.register(RancherConfig.class, 50006);
-    kryo.register(HelmChart.class, 71106);
     kryo.register(SecretChangeLog.class, 5598);
     kryo.register(VaultConfig.class, 5214);
     kryo.register(WinrmHostValidationCapability.class, 7327);

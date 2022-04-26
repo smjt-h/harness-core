@@ -85,7 +85,6 @@ public class DelegateTasksMorphiaRegistrar implements MorphiaRegistrar {
     set.add(LocalEncryptionConfig.class);
     set.add(VaultConfig.class);
     set.add(SecretManagerRuntimeParameters.class);
-    set.add(HelmChart.class);
     set.add(BaseVaultConfig.class);
     set.add(SecretManagerConfig.class);
     set.add(SSHVaultConfig.class);
@@ -126,7 +125,6 @@ public class DelegateTasksMorphiaRegistrar implements MorphiaRegistrar {
     w.put("delegatetasks.validation.capabilities.GitConnectionCapability", GitConnectionCapability.class);
     w.put("beans.SSHVaultConfig", SSHVaultConfig.class);
     w.put("beans.BaseVaultConfig", BaseVaultConfig.class);
-    w.put("beans.artifact.ArtifactFile", ArtifactFile.class);
     w.put("beans.ServiceNowConfig", ServiceNowConfig.class);
     w.put("beans.DockerConfig", DockerConfig.class);
     w.put("beans.config.NexusConfig", NexusConfig.class);
