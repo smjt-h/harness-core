@@ -284,6 +284,7 @@ import software.wings.beans.artifact.AcrArtifactStream;
 import software.wings.beans.artifact.AmazonS3ArtifactStream;
 import software.wings.beans.artifact.AmiArtifactStream;
 import software.wings.beans.artifact.ArtifactStream;
+import software.wings.beans.artifact.ArtifactView;
 import software.wings.beans.artifact.ArtifactoryArtifactStream;
 import software.wings.beans.artifact.AzureArtifactsArtifactStream;
 import software.wings.beans.artifact.AzureMachineImageArtifactStream;
@@ -780,7 +781,6 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     set.add(BambooArtifactStream.class);
     set.add(BarrierInstance.class);
     set.add(Base.class);
-    set.add(BaseFile.class);
     set.add(BugsnagCVConfiguration.class);
     set.add(CECloudAccountOld.class);
     set.add(CECommunications.class);
@@ -987,6 +987,7 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     set.add(DeletedEntity.class);
     set.add(ARMInfrastructureProvisioner.class);
     set.add(AccessRequest.class);
+    set.add(ArtifactView.class);
   }
 
   @Override

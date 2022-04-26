@@ -306,7 +306,8 @@ public class ArtifactServiceTest extends WingsBaseTest {
     Artifact savedArtifact = artifactService.create(artifactBuilder.but().build(), true);
 
     savedArtifact.setDisplayName("ARTIFACT_DISPLAY_NAME");
-    assertThat(artifactService.update(savedArtifact)).isEqualTo(savedArtifact);
+    Artifact updatedArtifact = artifactService.update(savedArtifact);
+    assertThat(updatedArtifact).isEqualTo(savedArtifact);
   }
 
   @Test

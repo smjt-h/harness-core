@@ -14,6 +14,7 @@ import io.harness.beans.MigratedEntityMapping;
 import io.harness.beans.SweepingOutput;
 import io.harness.beans.terraform.TerraformPlanParam;
 
+import software.wings.beans.BaseFile;
 import software.wings.beans.Log;
 import software.wings.beans.TerraGroupProvisioners;
 import software.wings.beans.appmanifest.HelmChart;
@@ -45,6 +46,7 @@ public class CgOrchestrationBeansMorphiaRegistrar implements MorphiaRegistrar {
     set.add(CVActivityLog.class);
     set.add(Artifact.class);
     set.add(HelmChart.class);
+    set.add(BaseFile.class);
   }
 
   @Override

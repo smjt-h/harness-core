@@ -61,18 +61,18 @@ public class BaseFile implements HarnessFile, PersistentEntity, UuidAware, Creat
   @FormDataParam("md5") private String checksum;
   @NotEmpty protected String accountId;
 
-  @Deprecated public static final String ID_KEY2 = "_id";
-  @Deprecated public static final String APP_ID_KEY2 = "appId";
-  @Deprecated public static final String ACCOUNT_ID_KEY2 = "accountId";
-  @Deprecated public static final String LAST_UPDATED_AT_KEY2 = "lastUpdatedAt";
+  @EqualsAndHashCode.Exclude @Deprecated public static final String ID_KEY2 = "_id";
+  @EqualsAndHashCode.Exclude @Deprecated public static final String APP_ID_KEY2 = "appId";
+  @EqualsAndHashCode.Exclude @Deprecated public static final String ACCOUNT_ID_KEY2 = "accountId";
+  @EqualsAndHashCode.Exclude @Deprecated public static final String LAST_UPDATED_AT_KEY2 = "lastUpdatedAt";
 
   @Id @NotNull(groups = {Update.class}) @SchemaIgnore private String uuid;
   @FdIndex @NotNull @SchemaIgnore protected String appId;
-  @SchemaIgnore private EmbeddedUser createdBy;
-  @SchemaIgnore @FdIndex private long createdAt;
+  @EqualsAndHashCode.Exclude @SchemaIgnore private EmbeddedUser createdBy;
+  @EqualsAndHashCode.Exclude @SchemaIgnore @FdIndex private long createdAt;
 
-  @SchemaIgnore private EmbeddedUser lastUpdatedBy;
-  @SchemaIgnore @NotNull private long lastUpdatedAt;
+  @EqualsAndHashCode.Exclude @SchemaIgnore private EmbeddedUser lastUpdatedBy;
+  @EqualsAndHashCode.Exclude @SchemaIgnore @NotNull private long lastUpdatedAt;
 
   /**
    * TODO: Add isDeleted boolean field to enable soft delete. @swagat
@@ -98,30 +98,6 @@ public class BaseFile implements HarnessFile, PersistentEntity, UuidAware, Creat
   }
 
   @Override
-  public int hashCode() {
-    return 31 * super.hashCode()
-        + Objects.hash(fileUuid, name, fileName, mimeType, size, checksumType, checksum, accountId);
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null || getClass() != obj.getClass()) {
-      return false;
-    }
-    if (!super.equals(obj)) {
-      return false;
-    }
-    final BaseFile other = (BaseFile) obj;
-    return Objects.equals(this.fileUuid, other.fileUuid) && Objects.equals(this.name, other.name)
-        && Objects.equals(this.fileName, other.fileName) && Objects.equals(this.mimeType, other.mimeType)
-        && Objects.equals(this.size, other.size) && this.checksumType == other.checksumType
-        && Objects.equals(this.checksum, other.checksum) && Objects.equals(this.accountId, other.accountId);
-  }
-
-  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("fileUuid", fileUuid)
@@ -132,6 +108,8 @@ public class BaseFile implements HarnessFile, PersistentEntity, UuidAware, Creat
         .add("checksumType", checksumType)
         .add("checksum", checksum)
         .add("accountId", accountId)
+        .add("uuid", uuid)
+        .add("appId", appId)
         .toString();
   }
 }
