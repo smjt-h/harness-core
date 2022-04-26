@@ -94,6 +94,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNoneBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.substringBefore;
+import static org.atmosphere.wasync.Event.REOPENED;
 
 import io.harness.annotations.dev.BreakDependencyOn;
 import io.harness.annotations.dev.HarnessModule;
@@ -600,6 +601,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
         Options clientOptions = client.newOptionsBuilder().runtime(asyncHttpClient, true).reconnect(true).build();
         socket = client.create(clientOptions);
+        log.info("reconnect  {}", clientOptions.reconnect());
+        log.info("reconnect seconds {}", clientOptions.reconnectTimeoutInMilliseconds());
+        log.info("reconnect attepmpts {}", clientOptions.reconnectAttempts());
         socket
             .on(Event.MESSAGE,
                 new Function<String>() { // Do not change this, wasync doesn't like lambdas
@@ -612,7 +616,14 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
                 new Function<Exception>() { // Do not change this, wasync doesn't like lambdas
                   @Override
                   public void on(Exception e) {
-                    handleError(e);
+                    log.info("Event:{}, message:[{}]", Event.ERROR.name(), e.getMessage());
+                  }
+                })
+            .on(Event.REOPENED,
+                new Function<Object>() { // Do not change this, wasync doesn't like lambdas
+                  @Override
+                  public void on(Object o) {
+                    log.info("Event:{}, message:[{}]", Event.REOPENED.name(), o.toString());
                   }
                 })
             .on(Event.OPEN,
@@ -888,13 +899,13 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     log.info("Event:{}, message:[{}]", Event.CLOSE.name(), o.toString());
     // TODO(brett): Disabling the fallback to poll for tasks as it can cause too much traffic to ingress controller
     // pollingForTasks.set(true);
-    if (!closingSocket.get() && reconnectingSocket.compareAndSet(false, true)) {
-      try {
-        trySocketReconnect();
-      } finally {
-        reconnectingSocket.set(false);
-      }
-    }
+//    if (!closingSocket.get() && reconnectingSocket.compareAndSet(false, true)) {
+//      try {
+//        trySocketReconnect();
+//      } finally {
+//        reconnectingSocket.set(false);
+//      }
+//    }
   }
 
   private void handleError(final Exception e) {
