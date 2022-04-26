@@ -13,6 +13,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.pipeline.CDStepInfo;
 import io.harness.executions.steps.StepSpecTypeConstants;
 import io.harness.filters.WithConnectorRef;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
@@ -48,9 +49,9 @@ public class CloudformationDeleteStackStepInfo
   @NotNull @JsonProperty("configuration") CloudformationDeleteStackStepConfiguration cloudformationStepConfiguration;
 
   @Builder(builderMethodName = "infoBuilder")
-  public CloudformationDeleteStackStepInfo(ParameterField<List<String>> delegateSelector,
-      CloudformationDeleteStackStepConfiguration cloudformationStepConfiguration) {
-    super(delegateSelector);
+  public CloudformationDeleteStackStepInfo(ParameterField<List<TaskSelectorYaml>> delegateSelector,
+      CloudformationDeleteStackStepConfiguration cloudformationStepConfiguration, String uuid) {
+    super(delegateSelector, uuid);
     this.cloudformationStepConfiguration = cloudformationStepConfiguration;
   }
 

@@ -15,6 +15,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.pipeline.CDStepInfo;
 import io.harness.executions.steps.StepSpecTypeConstants;
 import io.harness.filters.WithConnectorRef;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
@@ -51,9 +52,9 @@ public class CloudformationCreateStackStepInfo
 
   @Builder(builderMethodName = "infoBuilder")
   public CloudformationCreateStackStepInfo(ParameterField<String> provisionerIdentifier,
-      ParameterField<List<String>> delegateSelector,
-      CloudformationCreateStackStepConfiguration cloudformationStepConfiguration) {
-    super(provisionerIdentifier, delegateSelector);
+      ParameterField<List<TaskSelectorYaml>> delegateSelector,
+      CloudformationCreateStackStepConfiguration cloudformationStepConfiguration, String uuid) {
+    super(provisionerIdentifier, delegateSelector, uuid);
     this.cloudformationStepConfiguration = cloudformationStepConfiguration;
   }
 

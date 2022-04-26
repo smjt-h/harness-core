@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.yaml.ParameterField;
 
@@ -31,9 +32,9 @@ public class CloudformationCreateStackStepParameters
   @NonNull CloudformationCreateStackStepConfiguration configuration;
   @Builder(builderMethodName = "infoBuilder")
   public CloudformationCreateStackStepParameters(ParameterField<String> provisionerIdentifier,
-      ParameterField<List<String>> delegateSelectors,
+      ParameterField<List<TaskSelectorYaml>> delegateSelectors, String uuid,
       @NonNull CloudformationCreateStackStepConfiguration configuration) {
-    super(provisionerIdentifier, delegateSelectors);
+    super(provisionerIdentifier, delegateSelectors, uuid);
     this.configuration = configuration;
   }
 }

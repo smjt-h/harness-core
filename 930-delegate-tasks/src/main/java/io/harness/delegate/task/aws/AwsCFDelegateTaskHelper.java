@@ -35,8 +35,6 @@ import software.wings.service.impl.aws.model.AwsCFTemplateParamsData;
 import com.amazonaws.services.cloudformation.model.ParameterDeclaration;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
-import java.io.IOException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
@@ -54,31 +52,31 @@ public class AwsCFDelegateTaskHelper {
    * Retrieve the parameters from a cloudformation template. The template can be stored in a git repository,
    * s3 bucket or be passed as a raw string.
    */
-  public DelegateResponseData getCFParamsList(AwsCFTaskParamsRequest awsTaskParams) throws IOException {
+  public DelegateResponseData getCFParamsList(AwsCFTaskParamsRequest awsTaskParams) {
     // If the template is stored in a git repository, retrieve the template
-    String templateValue = "";
-    if (awsTaskParams.getGitStoreDelegateConfig() != null) {
-      GitStoreDelegateConfig gitStoreDelegateConfig = awsTaskParams.getGitStoreDelegateConfig();
-      GitConfigDTO gitConfigDTO = ScmConnectorMapper.toGitConfigDTO(gitStoreDelegateConfig.getGitConfigDTO());
-      gitDecryptionHelper.decryptGitConfig(gitConfigDTO, gitStoreDelegateConfig.getEncryptedDataDetails());
-      SshSessionConfig sshSessionConfig = gitDecryptionHelper.getSSHSessionConfig(
-          gitStoreDelegateConfig.getSshKeySpecDTO(), gitStoreDelegateConfig.getEncryptedDataDetails());
-      FetchFilesResult gitFetchFilesResult = ngGitService.fetchFilesByPath(
-          gitStoreDelegateConfig, awsTaskParams.getAccountId(), sshSessionConfig, gitConfigDTO);
-      if (gitFetchFilesResult.getFiles().size() > 1) {
-        log.error("more than 1 file found in git repository");
-        return AwsCFTaskResponse.builder().commandExecutionStatus(CommandExecutionStatus.FAILURE).build();
-      }
-      templateValue = gitFetchFilesResult.getFiles().get(0).getFileContent();
-    } else {
-      templateValue = awsTaskParams.getData();
-    }
-    // Retrieve the AWS credentials
-    decryptRequestDTOs(awsTaskParams);
-    AwsInternalConfig awsInternalConfig = getAwsInternalConfig(awsTaskParams);
-
-    // Retrieve the parameters from the cloudformation template
     try {
+      String templateValue = "";
+      if (awsTaskParams.getGitStoreDelegateConfig() != null) {
+        GitStoreDelegateConfig gitStoreDelegateConfig = awsTaskParams.getGitStoreDelegateConfig();
+        GitConfigDTO gitConfigDTO = ScmConnectorMapper.toGitConfigDTO(gitStoreDelegateConfig.getGitConfigDTO());
+        gitDecryptionHelper.decryptGitConfig(gitConfigDTO, gitStoreDelegateConfig.getEncryptedDataDetails());
+        SshSessionConfig sshSessionConfig = gitDecryptionHelper.getSSHSessionConfig(
+            gitStoreDelegateConfig.getSshKeySpecDTO(), gitStoreDelegateConfig.getEncryptedDataDetails());
+        FetchFilesResult gitFetchFilesResult = ngGitService.fetchFilesByPath(
+            gitStoreDelegateConfig, awsTaskParams.getAccountId(), sshSessionConfig, gitConfigDTO);
+        if (gitFetchFilesResult.getFiles().size() > 1) {
+          log.error("more than 1 file found in git repository");
+          return AwsCFTaskResponse.builder().commandExecutionStatus(CommandExecutionStatus.FAILURE).build();
+        }
+        templateValue = gitFetchFilesResult.getFiles().get(0).getFileContent();
+      } else {
+        templateValue = awsTaskParams.getData();
+      }
+      // Retrieve the AWS credentials
+      decryptRequestDTOs(awsTaskParams);
+      AwsInternalConfig awsInternalConfig = getAwsInternalConfig(awsTaskParams);
+
+      // Retrieve the parameters from the cloudformation template
       List<ParameterDeclaration> parameterDeclarationList = awsApiHelperService.getParamsData(
           awsInternalConfig, awsTaskParams.getRegion(), templateValue, awsTaskParams.getFileStoreType());
       List<AwsCFTemplateParamsData> listOfParameters = parameterDeclarationList.stream()

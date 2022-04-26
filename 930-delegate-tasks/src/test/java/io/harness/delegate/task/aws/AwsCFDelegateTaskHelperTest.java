@@ -44,6 +44,7 @@ import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.shell.SshSessionConfig;
 
 import com.amazonaws.services.cloudformation.model.ParameterDeclaration;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Before;
@@ -71,7 +72,7 @@ public class AwsCFDelegateTaskHelperTest extends CategoryTest {
   @Test
   @Owner(developers = NGONZALEZ)
   @Category(UnitTests.class)
-  public void getCFParamsList() {
+  public void getCFParamsList() throws IOException {
     AwsCFTaskParamsRequest awsCFTaskParamsRequest = generateParameters();
     doNothing().when(gitDecryptionHelper).decryptGitConfig(any(), any());
     SshSessionConfig sshSessionConfig = SshSessionConfig.Builder.aSshSessionConfig().build();
@@ -90,10 +91,11 @@ public class AwsCFDelegateTaskHelperTest extends CategoryTest {
     AwsCFTaskResponse response = (AwsCFTaskResponse) awsCFDelegateTaskHelper.getCFParamsList(awsCFTaskParamsRequest);
     assertThat(response.getListOfParams().size()).isEqualTo(1);
   }
+
   @Test
   @Owner(developers = NGONZALEZ)
   @Category(UnitTests.class)
-  public void getCFParamsListFailToRetrieveTemplateParams() {
+  public void getCFParamsListFailToRetrieveTemplateParams() throws IOException {
     AwsCFTaskParamsRequest awsCFTaskParamsRequest = generateParameters();
     doNothing().when(gitDecryptionHelper).decryptGitConfig(any(), any());
     SshSessionConfig sshSessionConfig = SshSessionConfig.Builder.aSshSessionConfig().build();
@@ -106,6 +108,21 @@ public class AwsCFDelegateTaskHelperTest extends CategoryTest {
     AwsInternalConfig awsInternalConfig = AwsInternalConfig.builder().build();
     doReturn(awsInternalConfig).when(awsNgConfigMapper).createAwsInternalConfig(any());
     doThrow(Exception.class).when(awsCloudformationClient).getParamsData(any(), any(), any(), any());
+    AwsCFTaskResponse response = (AwsCFTaskResponse) awsCFDelegateTaskHelper.getCFParamsList(awsCFTaskParamsRequest);
+    assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.FAILURE);
+  }
+
+  @Test
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void getCFParamsListThrowsException() throws IOException {
+    AwsCFTaskParamsRequest awsCFTaskParamsRequest = generateParameters();
+    doNothing().when(gitDecryptionHelper).decryptGitConfig(any(), any());
+    SshSessionConfig sshSessionConfig = SshSessionConfig.Builder.aSshSessionConfig().build();
+    doReturn(sshSessionConfig).when(gitDecryptionHelper).getSSHSessionConfig(any(), any());
+    List<GitFile> gitFiles = new ArrayList<>();
+    gitFiles.add(GitFile.builder().fileContent("content").build());
+    doThrow(IOException.class).when(gitService).fetchFilesByPath(any(), any(), any(), any());
     AwsCFTaskResponse response = (AwsCFTaskResponse) awsCFDelegateTaskHelper.getCFParamsList(awsCFTaskParamsRequest);
     assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.FAILURE);
   }

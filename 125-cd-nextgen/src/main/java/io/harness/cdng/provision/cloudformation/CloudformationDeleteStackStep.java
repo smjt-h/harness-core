@@ -8,6 +8,7 @@
 package io.harness.cdng.provision.cloudformation;
 
 import static io.harness.common.ParameterFieldHelper.getParameterFieldValue;
+import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import static java.lang.String.format;
@@ -37,6 +38,7 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.UnitProgress;
 import io.harness.ng.core.BaseNGAccess;
 import io.harness.ng.core.EntityDetail;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.rollback.TaskExecutableWithRollbackAndRbac;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -191,7 +193,8 @@ public class CloudformationDeleteStackStep extends TaskExecutableWithRollbackAnd
 
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         Collections.singletonList(CloudformationCommandUnit.DeleteStack.name()),
-        TaskType.CLOUDFORMATION_TASK_NG.getDisplayName(), StepUtils.getTaskSelectors(parameters.getDelegateSelectors()),
+        TaskType.CLOUDFORMATION_TASK_NG.getDisplayName(),
+        TaskSelectorYaml.toTaskSelector(emptyIfNull(getParameterFieldValue(parameters.getDelegateSelectors()))),
         stepHelper.getEnvironmentType(ambiance));
   }
 
