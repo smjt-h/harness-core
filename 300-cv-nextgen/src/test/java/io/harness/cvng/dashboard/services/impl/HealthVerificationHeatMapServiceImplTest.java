@@ -7,6 +7,7 @@
 
 package io.harness.cvng.dashboard.services.impl;
 
+import static io.harness.cvng.CVNGTestConstants.TIME_FOR_TESTS;
 import static io.harness.cvng.beans.DataSourceType.APP_DYNAMICS;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.persistence.HQuery.excludeAuthority;
@@ -115,7 +116,7 @@ public class HealthVerificationHeatMapServiceImplTest extends CvNextGenTestBase 
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testUpdateRiskScore_create() {
-    Instant endTime = Instant.now();
+    Instant endTime = TIME_FOR_TESTS;
     heatMapService.updateRisk(verificationTaskId, 1.0, endTime, HealthVerificationPeriod.PRE_ACTIVITY);
 
     List<HealthVerificationHeatMap> heatMaps = hPersistence.createQuery(HealthVerificationHeatMap.class).asList();
@@ -134,7 +135,7 @@ public class HealthVerificationHeatMapServiceImplTest extends CvNextGenTestBase 
   @Owner(developers = RAGHU)
   @Category(UnitTests.class)
   public void testUpsertAddsAllFields() {
-    Instant endTime = Instant.now();
+    Instant endTime = TIME_FOR_TESTS;
     heatMapService.updateRisk(verificationTaskId, 1.0, endTime, HealthVerificationPeriod.PRE_ACTIVITY);
 
     List<HealthVerificationHeatMap> heatMaps =
@@ -157,7 +158,7 @@ public class HealthVerificationHeatMapServiceImplTest extends CvNextGenTestBase 
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testUpdateRiskScore_createAndUpdate() {
-    Instant endTime = Instant.now();
+    Instant endTime = TIME_FOR_TESTS;
     heatMapService.updateRisk(
         verificationTaskId, 1.0, endTime.minus(Duration.ofMinutes(5)), HealthVerificationPeriod.PRE_ACTIVITY);
     heatMapService.updateRisk(verificationTaskId, 0.0, endTime, HealthVerificationPeriod.PRE_ACTIVITY);
@@ -178,7 +179,7 @@ public class HealthVerificationHeatMapServiceImplTest extends CvNextGenTestBase 
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testUpdateRiskScore_createPreAndPostActivity() {
-    Instant endTime = Instant.now();
+    Instant endTime = TIME_FOR_TESTS;
     heatMapService.updateRisk(verificationTaskId, 1.0, endTime, HealthVerificationPeriod.PRE_ACTIVITY);
     heatMapService.updateRisk(
         verificationTaskId, 0.0, endTime.plus(Duration.ofMinutes(15)), HealthVerificationPeriod.POST_ACTIVITY);
@@ -208,7 +209,7 @@ public class HealthVerificationHeatMapServiceImplTest extends CvNextGenTestBase 
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testUpdateRiskScore_createMultipleCategory() {
-    Instant endTime = Instant.now();
+    Instant endTime = TIME_FOR_TESTS;
     heatMapService.updateRisk(verificationTaskId, 1.0, endTime, HealthVerificationPeriod.PRE_ACTIVITY);
 
     CVConfig cvConfig = getAppDCVConfig();
@@ -250,7 +251,7 @@ public class HealthVerificationHeatMapServiceImplTest extends CvNextGenTestBase 
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testUpdateRiskScore_createMultipleConfigsSameCategory() {
-    Instant endTime = Instant.now();
+    Instant endTime = TIME_FOR_TESTS;
     heatMapService.updateRisk(verificationTaskId, 0.0, endTime, HealthVerificationPeriod.PRE_ACTIVITY);
 
     CVConfig cvConfig = getSplunkConfig();

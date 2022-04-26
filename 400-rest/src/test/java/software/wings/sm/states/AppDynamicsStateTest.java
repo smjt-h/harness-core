@@ -161,7 +161,7 @@ public class AppDynamicsStateTest extends APMStateVerificationTestBase {
     FieldUtils.writeField(appDynamicsState, "cvActivityLogService", cvActivityLogService, true);
     FieldUtils.writeField(
         appDynamicsState, "workflowVerificationResultService", workflowVerificationResultService, true);
-    when(cvActivityLogService.getLoggerByStateExecutionId(anyString(), anyString())).thenReturn(mock(Logger.class));
+    when(cvActivityLogService.getLoggerByStateExecutionId(any(), any())).thenReturn(mock(Logger.class));
 
     when(executionContext.getContextElement(ContextElementType.PARAM, AbstractAnalysisStateTestBase.PHASE_PARAM))
         .thenReturn(phaseElement);

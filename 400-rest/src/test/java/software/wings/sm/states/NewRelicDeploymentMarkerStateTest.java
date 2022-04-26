@@ -114,11 +114,11 @@ public class NewRelicDeploymentMarkerStateTest extends APMStateVerificationTestB
   public void shouldTestTriggered() {
     doThrow(new WingsException("Can not find application by id"))
         .when(newRelicService)
-        .resolveApplicationId(anyString(), anyString(), anyString(), anyString());
+        .resolveApplicationId(any(), any(), any(), any());
 
     doThrow(new WingsException("Can not find application by name"))
         .when(newRelicService)
-        .resolveApplicationName(anyString(), anyString(), anyString(), anyString());
+        .resolveApplicationName(any(), any(), any(), any());
 
     when(executionContext.renderExpression("${workflow.variables.NewRelic_Server}")).thenReturn(settingId);
 
@@ -146,7 +146,7 @@ public class NewRelicDeploymentMarkerStateTest extends APMStateVerificationTestB
 
     doReturn(NewRelicApplication.builder().id(30444).build())
         .when(newRelicService)
-        .resolveApplicationName(anyString(), anyString(), anyString(), anyString());
+        .resolveApplicationName(any(), any(), any(), any());
     ExecutionResponse executionResponse = spyRelicDeploymentMarkerState.execute(executionContext);
     assertThat(executionResponse.getExecutionStatus()).isEqualTo(ExecutionStatus.RUNNING);
   }
