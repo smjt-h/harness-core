@@ -124,22 +124,24 @@ public class ECSRecommendationDAO {
 
   @NonNull
   public ECSServiceRecommendation saveRecommendation(ECSServiceRecommendation ecsServiceRecommendation) {
-    return hPersistence.upsert(hPersistence.createQuery(ECSServiceRecommendation.class)
-            .field(ECSServiceRecommendationKeys.accountId)
-            .equal(ecsServiceRecommendation.getAccountId())
-            .field(ECSServiceRecommendationKeys.clusterId)
-            .equal(ecsServiceRecommendation.getClusterId())
-            .field(ECSServiceRecommendationKeys.serviceArn)
-            .equal(ecsServiceRecommendation.getServiceArn()),
+    Query<ECSServiceRecommendation> query = hPersistence.createQuery(ECSServiceRecommendation.class)
+        .field(ECSServiceRecommendationKeys.accountId)
+        .equal(ecsServiceRecommendation.getAccountId())
+        .field(ECSServiceRecommendationKeys.clusterId)
+        .equal(ecsServiceRecommendation.getClusterId())
+        .field(ECSServiceRecommendationKeys.serviceArn)
+        .equal(ecsServiceRecommendation.getServiceArn());
+    UpdateOperations<ECSServiceRecommendation> updateOperations =
         hPersistence.createUpdateOperations(ECSServiceRecommendation.class)
             .set(ECSServiceRecommendationKeys.accountId, ecsServiceRecommendation.getAccountId())
             .set(ECSServiceRecommendationKeys.clusterId, ecsServiceRecommendation.getClusterId())
             .set(ECSServiceRecommendationKeys.clusterName, ecsServiceRecommendation.getClusterName())
             .set(ECSServiceRecommendationKeys.serviceArn, ecsServiceRecommendation.getServiceArn())
             .set(ECSServiceRecommendationKeys.serviceName, ecsServiceRecommendation.getServiceName())
-            .set(ECSServiceRecommendationKeys.currentResourceRequirements, ecsServiceRecommendation.getCurrentResourceRequirements())
-            .set(ECSServiceRecommendationKeys.percentileBasedResourceRecommendation, ecsServiceRecommendation.getPercentileBasedResourceRecommendation())
-            .set(ECSServiceRecommendationKeys.lastDayCost, ecsServiceRecommendation.getLastDayCost())
+            .set(ECSServiceRecommendationKeys.currentResourceRequirements,
+                ecsServiceRecommendation.getCurrentResourceRequirements())
+            .set(ECSServiceRecommendationKeys.percentileBasedResourceRecommendation,
+                ecsServiceRecommendation.getPercentileBasedResourceRecommendation())
             .set(ECSServiceRecommendationKeys.totalSamplesCount, ecsServiceRecommendation.getTotalSamplesCount())
             .set(ECSServiceRecommendationKeys.lastUpdateTime, ecsServiceRecommendation.getLastUpdateTime())
             .set(ECSServiceRecommendationKeys.cpuHistogram, ecsServiceRecommendation.getCpuHistogram())
@@ -149,15 +151,21 @@ public class ECSRecommendationDAO {
             .set(ECSServiceRecommendationKeys.memoryPeak, ecsServiceRecommendation.getMemoryPeak())
             .set(ECSServiceRecommendationKeys.windowEnd, ecsServiceRecommendation.getWindowEnd())
             .set(ECSServiceRecommendationKeys.version, ecsServiceRecommendation.getVersion())
-            .set(ECSServiceRecommendationKeys.estimatedSavings, ecsServiceRecommendation.getEstimatedSavings())
             .set(ECSServiceRecommendationKeys.ttl, ecsServiceRecommendation.getTtl())
-            .set(ECSServiceRecommendationKeys.lastReceivedUtilDataAt, ecsServiceRecommendation.getLastReceivedUtilDataAt())
-            .set(ECSServiceRecommendationKeys.lastComputedRecommendationAt, ecsServiceRecommendation.getLastComputedRecommendationAt())
+            .set(ECSServiceRecommendationKeys.lastReceivedUtilDataAt,
+                ecsServiceRecommendation.getLastReceivedUtilDataAt())
+            .set(ECSServiceRecommendationKeys.lastComputedRecommendationAt,
+                ecsServiceRecommendation.getLastComputedRecommendationAt())
             .set(ECSServiceRecommendationKeys.dirty, ecsServiceRecommendation.isDirty())
             .set(ECSServiceRecommendationKeys.validRecommendation, ecsServiceRecommendation.isValidRecommendation())
             .set(ECSServiceRecommendationKeys.lastDayCostAvailable, ecsServiceRecommendation.isLastDayCostAvailable())
-            .set(ECSServiceRecommendationKeys.numDays, ecsServiceRecommendation.getNumDays()),
-        upsertReturnNewOptions);
+            .set(ECSServiceRecommendationKeys.numDays, ecsServiceRecommendation.getNumDays());
+    if (ecsServiceRecommendation.isValidRecommendation()) {
+      updateOperations =
+          updateOperations.set(ECSServiceRecommendationKeys.lastDayCost, ecsServiceRecommendation.getLastDayCost())
+              .set(ECSServiceRecommendationKeys.estimatedSavings, ecsServiceRecommendation.getEstimatedSavings());
+    }
+    return hPersistence.upsert(query, updateOperations, upsertReturnNewOptions);
   }
 
   @RetryOnException(retryCount = RETRY_COUNT, sleepDurationInMilliseconds = SLEEP_DURATION)
