@@ -28,7 +28,7 @@ import software.wings.helpers.ext.azure.devops.AzureArtifactsPackage;
 import software.wings.helpers.ext.azure.devops.AzureDevopsProject;
 import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.helpers.ext.jenkins.JobDetails;
-import software.wings.service.impl.artifact.ArtifactCollectionTaskUtils;
+import software.wings.service.impl.artifact.ArtifactCollectionBaseUtils;
 import software.wings.utils.ArtifactType;
 import software.wings.utils.RepositoryFormat;
 import software.wings.utils.RepositoryType;
@@ -328,7 +328,7 @@ public interface BuildService<T> {
       List<BuildDetails> buildDetails, ArtifactStreamAttributes artifactStreamAttributes, T config) {
     // NOTE: config and encryptionDetails are used only for fetching labels.
     // Filter out new build details that are not saved already in our DB.
-    buildDetails = ArtifactCollectionTaskUtils.getNewBuildDetails(artifactStreamAttributes.getSavedBuildDetailsKeys(),
+    buildDetails = ArtifactCollectionBaseUtils.getNewBuildDetails(artifactStreamAttributes.getSavedBuildDetailsKeys(),
         buildDetails, artifactStreamAttributes.getArtifactStreamType(), artifactStreamAttributes);
 
     // Disable fetching labels for now as it has many issues.

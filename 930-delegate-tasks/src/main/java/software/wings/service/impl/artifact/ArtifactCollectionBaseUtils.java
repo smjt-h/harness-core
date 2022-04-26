@@ -1,13 +1,23 @@
 package software.wings.service.impl.artifact;
 
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+
+import static software.wings.beans.artifact.ArtifactStreamType.AMAZON_S3;
+import static software.wings.beans.artifact.ArtifactStreamType.AMI;
+import static software.wings.beans.artifact.ArtifactStreamType.ARTIFACTORY;
+
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.helpers.ext.jenkins.BuildDetails;
+import software.wings.utils.ArtifactType;
+import software.wings.utils.RepositoryType;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
-public class ArtifactCollectionTaskUtils {
+public class ArtifactCollectionBaseUtils {
   /**
    * getNewBuildDetails returns new BuildDetails after removing Artifact already present in DB.
    *
@@ -19,8 +29,17 @@ public class ArtifactCollectionTaskUtils {
    */
   public static List<BuildDetails> getNewBuildDetails(Set<String> savedBuildDetailsKeys,
       List<BuildDetails> buildDetails, String artifactStreamType, ArtifactStreamAttributes artifactStreamAttributes) {
-    return ArtifactCollectionTaskUtils.getNewBuildDetails(
-        savedBuildDetailsKeys, buildDetails, artifactStreamType, artifactStreamAttributes);
+    if (isEmpty(buildDetails)) {
+      return Collections.emptyList();
+    }
+    if (isEmpty(savedBuildDetailsKeys)) {
+      return buildDetails;
+    }
+
+    Function<BuildDetails, String> keyFn = getBuildDetailsKeyFn(artifactStreamType, artifactStreamAttributes);
+    return buildDetails.stream()
+        .filter(singleBuildDetails -> !savedBuildDetailsKeys.contains(keyFn.apply(singleBuildDetails)))
+        .collect(Collectors.toList());
   }
 
   /**
@@ -33,7 +52,13 @@ public class ArtifactCollectionTaskUtils {
    */
   public static Function<BuildDetails, String> getBuildDetailsKeyFn(
       String artifactStreamType, ArtifactStreamAttributes artifactStreamAttributes) {
-    return ArtifactCollectionTaskUtils.getBuildDetailsKeyFn(artifactStreamType, artifactStreamAttributes);
+    if (AMI.name().equals(artifactStreamType)) {
+      return BuildDetails::getRevision;
+    } else if (isGenericArtifactStream(artifactStreamType, artifactStreamAttributes)) {
+      return BuildDetails::getArtifactPath;
+    } else {
+      return BuildDetails::getNumber;
+    }
   }
 
   /**
@@ -45,6 +70,17 @@ public class ArtifactCollectionTaskUtils {
    * @return true, if generic artifact stream - uses artifact path as key
    */
   static boolean isGenericArtifactStream(String artifactStreamType, ArtifactStreamAttributes artifactStreamAttributes) {
-    return ArtifactCollectionTaskUtils.isGenericArtifactStream(artifactStreamType, artifactStreamAttributes);
+    if (AMAZON_S3.name().equals(artifactStreamType)) {
+      return true;
+    }
+    if (ARTIFACTORY.name().equals(artifactStreamType)) {
+      if (artifactStreamAttributes.getArtifactType() != null
+          && artifactStreamAttributes.getArtifactType() == ArtifactType.DOCKER) {
+        return false;
+      }
+      return artifactStreamAttributes.getRepositoryType() == null
+          || !artifactStreamAttributes.getRepositoryType().equals(RepositoryType.docker.name());
+    }
+    return false;
   }
 }
