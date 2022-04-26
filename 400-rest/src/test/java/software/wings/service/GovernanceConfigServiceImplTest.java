@@ -111,7 +111,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
     governanceConfig.getTimeRangeBasedFreezeConfigs().get(0).setApplicable(true);
     JsonNode actual = JsonUtils.toJsonNode(savedGovernanceConfig);
     JsonNode expected = JsonUtils.readResourceFile("governance/governance_config_expected.json", JsonNode.class);
-    assertThat(actual).hasToString(expected.toString());
+    assertThat(actual.equals(expected)).isEqualTo(true);
   }
 
   @Test

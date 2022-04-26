@@ -90,6 +90,9 @@ public class DeploymentFreezeWindowController {
   }
 
   private UserGroupFilter populateUserGroupSelection(QLUserGroupFilterInput userGroupsToNotify) {
+    if (userGroupsToNotify == null) {
+      return null;
+    }
     final BlackoutWindowFilterType userGroupFilterType = userGroupsToNotify.getUserGroupFilterType();
     if (ALL.equals(userGroupFilterType)) {
       return AllUserGroupFilter.builder().userGroupFilterType(ALL).build();
