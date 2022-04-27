@@ -133,7 +133,7 @@ public class ArtifactUtils {
       case ARTIFACTORY_REGISTRY:
         ArtifactoryRegistryArtifactConfig artifactoryRegistryArtifactConfig =
             (ArtifactoryRegistryArtifactConfig) artifactConfig;
-        if (artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue().equals(generic.name())) {
+        if (generic.name().equals(artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue())) {
           return String.format(GENERIC_PLACEHOLDER, sourceType,
               artifactoryRegistryArtifactConfig.getArtifactDirectory().getValue(),
               ParameterField.isNull(artifactoryRegistryArtifactConfig.getArtifactPath())

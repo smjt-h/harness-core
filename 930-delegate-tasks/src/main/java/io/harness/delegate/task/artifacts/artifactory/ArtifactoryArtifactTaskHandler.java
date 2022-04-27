@@ -9,7 +9,7 @@ package io.harness.delegate.task.artifacts.artifactory;
 
 import static io.harness.artifactory.service.ArtifactoryRegistryService.DEFAULT_ARTIFACT_DIRECTORY;
 import static io.harness.artifactory.service.ArtifactoryRegistryService.DEFAULT_ARTIFACT_FILTER;
-import static io.harness.artifactory.service.ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT;
+import static io.harness.artifactory.service.ArtifactoryRegistryService.MAX_NO_OF_BUILDS_PER_ARTIFACT;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -75,20 +75,10 @@ public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<
   @Override
   public ArtifactTaskExecutionResponse getBuilds(ArtifactSourceDelegateRequest artifactSourceDelegateRequest) {
     if (artifactSourceDelegateRequest instanceof ArtifactoryGenericArtifactDelegateRequest) {
-      return fetchFileBuilds((ArtifactoryGenericArtifactDelegateRequest) artifactSourceDelegateRequest, null);
+      return fetchBuildsForArtifactoryGeneric(
+          (ArtifactoryGenericArtifactDelegateRequest) artifactSourceDelegateRequest, null);
     } else {
-      ArtifactoryDockerArtifactDelegateRequest attributesRequest =
-          (ArtifactoryDockerArtifactDelegateRequest) artifactSourceDelegateRequest;
-      List<BuildDetailsInternal> builds = artifactoryRegistryService.getBuilds(
-          ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest),
-          attributesRequest.getRepositoryName(), attributesRequest.getArtifactPath(),
-          attributesRequest.getRepositoryFormat(), ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT);
-      List<ArtifactoryDockerArtifactDelegateResponse> artifactoryDockerArtifactDelegateResponseList =
-          builds.stream()
-              .sorted(new BuildDetailsInternalComparatorDescending())
-              .map(build -> ArtifactoryRequestResponseMapper.toArtifactoryDockerResponse(build, attributesRequest))
-              .collect(Collectors.toList());
-      return getSuccessTaskExecutionResponse(artifactoryDockerArtifactDelegateResponseList);
+      return fetchBuildsForArtifactoryDocker((ArtifactoryDockerArtifactDelegateRequest) artifactSourceDelegateRequest);
     }
   }
 
@@ -144,14 +134,28 @@ public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<
     }
   }
 
-  private ArtifactTaskExecutionResponse fetchFileBuilds(
+  private ArtifactTaskExecutionResponse fetchBuildsForArtifactoryDocker(
+      ArtifactoryDockerArtifactDelegateRequest attributesRequest) {
+    List<BuildDetailsInternal> builds = artifactoryRegistryService.getBuilds(
+        ArtifactoryRequestResponseMapper.toArtifactoryInternalConfig(attributesRequest),
+        attributesRequest.getRepositoryName(), attributesRequest.getArtifactPath(),
+        attributesRequest.getRepositoryFormat(), ArtifactoryRegistryService.MAX_NO_OF_TAGS_PER_ARTIFACT);
+    List<ArtifactoryDockerArtifactDelegateResponse> artifactoryDockerArtifactDelegateResponseList =
+        builds.stream()
+            .sorted(new BuildDetailsInternalComparatorDescending())
+            .map(build -> ArtifactoryRequestResponseMapper.toArtifactoryDockerResponse(build, attributesRequest))
+            .collect(Collectors.toList());
+    return getSuccessTaskExecutionResponse(artifactoryDockerArtifactDelegateResponseList);
+  }
+
+  private ArtifactTaskExecutionResponse fetchBuildsForArtifactoryGeneric(
       ArtifactoryGenericArtifactDelegateRequest artifactoryGenericArtifactDelegateRequest,
       LogCallback executionLogCallback) {
     decryptRequestDTOs(artifactoryGenericArtifactDelegateRequest);
     ArtifactoryConfigRequest artifactoryConfigRequest = artifactoryRequestMapper.toArtifactoryRequest(
         artifactoryGenericArtifactDelegateRequest.getArtifactoryConnectorDTO());
     String artifactDirectory = artifactoryGenericArtifactDelegateRequest.getArtifactDirectory();
-    if (artifactDirectory.isEmpty()) {
+    if (EmptyPredicate.isEmpty(artifactDirectory)) {
       saveLogs(executionLogCallback,
           "Artifact Directory is Empty, assuming Artifacts are present in root of the repository");
       artifactDirectory = DEFAULT_ARTIFACT_DIRECTORY;
@@ -159,8 +163,19 @@ public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<
     String filePath = Paths.get(artifactDirectory, DEFAULT_ARTIFACT_FILTER).toString();
 
     List<BuildDetails> buildDetails = artifactoryNgService.getArtifactList(artifactoryConfigRequest,
-        artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, MAX_NO_OF_TAGS_PER_ARTIFACT);
-
+        artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, MAX_NO_OF_BUILDS_PER_ARTIFACT);
+    String finalArtifactDirectory = artifactDirectory;
+    buildDetails = buildDetails.stream()
+                       .map(buildDetail -> {
+                         String artifactoryPath =
+                             buildDetail.getArtifactPath().replaceFirst(finalArtifactDirectory, "");
+                         if (!artifactoryPath.isEmpty() && artifactoryPath.charAt(0) == '/') {
+                           artifactoryPath = artifactoryPath.substring(1);
+                         }
+                         buildDetail.setArtifactPath(artifactoryPath);
+                         return buildDetail;
+                       })
+                       .collect(Collectors.toList());
     return ArtifactTaskExecutionResponse.builder().buildDetails(buildDetails).build();
   }
 

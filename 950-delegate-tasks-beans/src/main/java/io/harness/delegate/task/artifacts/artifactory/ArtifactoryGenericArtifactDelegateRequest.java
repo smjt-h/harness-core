@@ -7,23 +7,14 @@
 
 package io.harness.delegate.task.artifacts.artifactory;
 
-import static io.harness.delegate.beans.connector.ConnectorCapabilityBaseHelper.populateDelegateSelectorCapability;
-
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
-import io.harness.delegate.beans.executioncapability.ExecutionCapability;
-import io.harness.delegate.capability.EncryptedDataDetailsCapabilityHelper;
-import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
-import io.harness.delegate.task.mixin.HttpConnectionExecutionCapabilityGenerator;
-import io.harness.expression.ExpressionEvaluator;
 import io.harness.security.encryption.EncryptedDataDetail;
 
-import java.util.ArrayList;
 import java.util.List;
 import lombok.Builder;
-import lombok.EqualsAndHashCode;
 import lombok.Value;
 
 /**
@@ -31,36 +22,20 @@ import lombok.Value;
  */
 @Value
 @Builder
-@EqualsAndHashCode(callSuper = false)
 @OwnedBy(HarnessTeam.CDP)
-public class ArtifactoryGenericArtifactDelegateRequest implements ArtifactSourceDelegateRequest {
-  /** Repository name */
-  String repositoryName;
+public class ArtifactoryGenericArtifactDelegateRequest implements ArtifactoryBaseArtifactDelegateRequest {
   /** Images in repos need to be referenced via a path. */
   String artifactDirectory;
-
-  String artifactPath;
-
   String artifactPathFilter;
+  String repositoryName;
+  String artifactPath;
   /** Repository format - package type */
   String repositoryFormat;
-
   String connectorRef;
-  /** Artifactory Connector*/
-  ArtifactoryConnectorDTO artifactoryConnectorDTO;
   /** Encrypted details for decrypting.*/
   List<EncryptedDataDetail> encryptedDataDetails;
+  /** Artifactory Connector*/
+  ArtifactoryConnectorDTO artifactoryConnectorDTO;
   /** Artifact Source type.*/
   ArtifactSourceType sourceType;
-
-  @Override
-  public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
-    List<ExecutionCapability> capabilities =
-        new ArrayList<>(EncryptedDataDetailsCapabilityHelper.fetchExecutionCapabilitiesForEncryptedDataDetails(
-            encryptedDataDetails, maskingEvaluator));
-    populateDelegateSelectorCapability(capabilities, artifactoryConnectorDTO.getDelegateSelectors());
-    capabilities.add(HttpConnectionExecutionCapabilityGenerator.buildHttpConnectionExecutionCapability(
-        artifactoryConnectorDTO.getArtifactoryServerUrl(), maskingEvaluator));
-    return capabilities;
-  }
 }
