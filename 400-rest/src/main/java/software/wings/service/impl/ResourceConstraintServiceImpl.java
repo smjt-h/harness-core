@@ -221,6 +221,7 @@ public class ResourceConstraintServiceImpl implements ResourceConstraintService,
     final HoldingScope holdingScope = HoldingScope.valueOf(instance.getReleaseEntityType());
     boolean finished = false;
     switch (holdingScope) {
+      case PIPELINE:
       case WORKFLOW:
         finished = workflowExecutionService.checkWorkflowExecutionInFinalStatus(
             instance.getAppId(), instance.getReleaseEntityId());

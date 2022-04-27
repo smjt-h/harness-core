@@ -162,8 +162,13 @@ public class ResourceConstraintState extends State {
       permits -= acquiredPermits;
     }
 
+    WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
+
     String releaseEntityId = null;
     switch (HoldingScope.valueOf(holdingScope)) {
+      case PIPELINE:
+        releaseEntityId = ResourceConstraintService.releaseEntityId(workflowStandardParams.getWorkflowElement().getPipelineDeploymentUuid());
+        break;
       case WORKFLOW:
         releaseEntityId = ResourceConstraintService.releaseEntityId(context.getWorkflowExecutionId());
         break;
@@ -317,6 +322,7 @@ public class ResourceConstraintState extends State {
     String parentReleaseEntityId;
     String appId = executionContext.fetchRequiredApp().getUuid();
     switch (HoldingScope.valueOf(holdingScope)) {
+
       case WORKFLOW:
         releaseEntityId = ResourceConstraintService.releaseEntityId(executionContext.getWorkflowExecutionId());
         currentlyAcquiredPermits +=
