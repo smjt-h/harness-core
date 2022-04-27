@@ -148,6 +148,7 @@ public class SCMGitSyncHelper {
             .setScopeIdentifiers(ScopeIdentifierMapper.getScopeIdentifiersFromScope(scope))
             .setSourceBranch(sourceBranch)
             .setTargetBranch(targetBranch)
+            .setTitle(title)
             .putAllContextMap(contextMap)
             .build();
 
