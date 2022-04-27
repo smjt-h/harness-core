@@ -501,6 +501,8 @@ import io.harness.secretmanagerclient.WinRmAuthScheme;
 import io.harness.serializer.KryoRegistrar;
 
 import software.wings.beans.AwsConfig;
+import software.wings.beans.EcrConfig;
+import software.wings.beans.GcpConfig;
 import software.wings.beans.GitConfig;
 import software.wings.beans.HostReachabilityInfo;
 import software.wings.beans.HostValidationResponse;
@@ -508,8 +510,10 @@ import software.wings.beans.JenkinsConfig;
 import software.wings.beans.JenkinsSubTaskType;
 import software.wings.beans.LambdaTestEvent;
 import software.wings.beans.SettingAttribute;
+import software.wings.beans.SpotInstConfig;
 import software.wings.beans.TaskType;
 import software.wings.beans.command.CodeDeployParams;
+import software.wings.beans.command.GcbTaskParams;
 import software.wings.beans.command.JenkinsTaskParams;
 import software.wings.beans.s3.FetchS3FilesCommandParams;
 import software.wings.beans.s3.FetchS3FilesExecutionResponse;
@@ -536,6 +540,8 @@ import software.wings.beans.yaml.GitFilesBetweenCommitsRequest;
 import software.wings.beans.yaml.GitPushResult;
 import software.wings.delegatetasks.servicenow.ServiceNowAction;
 import software.wings.helpers.ext.cloudformation.response.ExistingStackInfo;
+import software.wings.helpers.ext.ecs.request.EcsCommandRequest;
+import software.wings.helpers.ext.ecs.response.EcsCommandExecutionResponse;
 import software.wings.helpers.ext.ecs.response.EcsCommandResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceDeployResponse;
 import software.wings.helpers.ext.helm.response.HelmInstallCommandResponse;
@@ -553,6 +559,7 @@ import software.wings.service.impl.aws.model.AwsAmiPreDeploymentData;
 import software.wings.service.impl.aws.model.AwsAsgGetRunningCountData;
 import software.wings.service.impl.aws.model.AwsCFTemplateParamsData;
 import software.wings.service.impl.aws.model.AwsLambdaVpcConfig;
+import software.wings.service.impl.aws.model.AwsSecurityGroup;
 import software.wings.service.impl.aws.model.AwsSubnet;
 import software.wings.service.impl.aws.model.AwsVPC;
 import software.wings.service.impl.aws.model.embed.AwsLambdaDetails;
@@ -567,6 +574,9 @@ import software.wings.service.impl.newrelic.NewRelicMetricData.NewRelicMetricTim
 import software.wings.settings.validation.ConnectivityValidationAttributes;
 import software.wings.sm.states.JenkinsExecutionResponse;
 import software.wings.sm.states.ParameterEntry;
+import software.wings.sm.states.gcbconfigs.GcbOptions;
+import software.wings.sm.states.gcbconfigs.GcbRemoteBuildSpec;
+import software.wings.sm.states.gcbconfigs.GcbTriggerBuildSpec;
 import software.wings.yaml.gitSync.YamlGitConfig;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -1089,6 +1099,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(AwsAsgGetRunningCountData.class, 7190);
     kryo.register(AwsVPC.class, 7319);
     kryo.register(AwsSubnet.class, 7320);
+    kryo.register(AwsSecurityGroup.class, 7321);
     kryo.register(HelmCommandResponse.class, 5261);
     kryo.register(AwsAmiPreDeploymentData.class, 5519);
     kryo.register(EcsCommandResponse.class, 5608);
@@ -1183,6 +1194,20 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(HostValidationResponse.class, 5167);
     kryo.register(HostReachabilityInfo.class, 5172);
     kryo.register(HttpHelmRepoConfig.class, 7159);
+    kryo.register(GcpConfig.class, 5014);
+    kryo.register(GcbTaskParams.class, 7408);
+    kryo.register(GcbTaskParams.GcbTaskType.class, 7427);
+    kryo.register(GcbOptions.class, 7439);
+    kryo.register(GcbTriggerBuildSpec.class, 7440);
+    kryo.register(GcbRemoteBuildSpec.class, 7441);
+    kryo.register(GcbOptions.GcbSpecSource.class, 7442);
+    kryo.register(GcbTriggerBuildSpec.GcbTriggerSource.class, 7443);
+    kryo.register(GcbRemoteBuildSpec.RemoteFileSource.class, 7444);
+    kryo.register(EcsCommandExecutionResponse.class, 5609);
+    kryo.register(EcsCommandRequest.EcsCommandType.class, 5607);
+    kryo.register(EcsCommandRequest.class, 5606);
+    kryo.register(EcrConfig.class, 5011);
+    kryo.register(SpotInstConfig.class, 7221);
 
     // WinRm
     kryo.register(WinRmCredentialsSpecDTO.class, 600001);

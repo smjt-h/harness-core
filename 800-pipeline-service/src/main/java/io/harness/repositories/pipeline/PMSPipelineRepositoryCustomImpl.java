@@ -92,12 +92,6 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
   }
 
   @Override
-  public PipelineEntity findFirstPipeline(Criteria criteria) {
-    Query query = new Query().addCriteria(criteria);
-    return mongoTemplate.findOne(query, PipelineEntity.class);
-  }
-
-  @Override
   public Long countAllPipelines(Criteria criteria) {
     Query query = new Query().addCriteria(criteria);
     return mongoTemplate.count(query, PipelineEntity.class);
@@ -154,22 +148,6 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
     Optional<PipelineEntity> optionalPipelineEntity =
         gitAwarePersistence.findOne(criteria, projectIdentifier, orgIdentifier, accountId, PipelineEntity.class);
 
-    return findV2(accountId, orgIdentifier, projectIdentifier, criteria, optionalPipelineEntity);
-  }
-
-  @Override
-  public Optional<PipelineEntity> findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifier(
-      String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier) {
-    Criteria criteria = Criteria.where(PipelineEntityKeys.identifier)
-                            .is(pipelineIdentifier)
-                            .and(PipelineEntityKeys.projectIdentifier)
-                            .is(projectIdentifier)
-                            .and(PipelineEntityKeys.orgIdentifier)
-                            .is(orgIdentifier)
-                            .and(PipelineEntityKeys.accountId)
-                            .is(accountId);
-    Optional<PipelineEntity> optionalPipelineEntity =
-        gitAwarePersistence.findOne(criteria, projectIdentifier, orgIdentifier, accountId, PipelineEntity.class);
     return findV2(accountId, orgIdentifier, projectIdentifier, criteria, optionalPipelineEntity);
   }
 
