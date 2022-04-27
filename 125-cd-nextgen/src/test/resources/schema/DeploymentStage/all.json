@@ -1092,22 +1092,6 @@
         }
       ]
     },
-    "DeploymentTemplateServiceSpec": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/ServiceSpec"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "metadata": {
-              "type": "string"
-            }
-          }
-        }
-      ],
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
     "Distribution": {
       "type": "object",
       "required": [
@@ -4713,29 +4697,12 @@
             "NativeHelm",
             "Ssh",
             "WinRm",
-            "DeploymentTemplate",
             "ServerlessAwsLambda"
           ]
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#",
       "allOf": [
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "DeploymentTemplate"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "spec": {
-                "$ref": "#/definitions/DeploymentTemplateServiceSpec"
-              }
-            }
-          }
-        },
         {
           "if": {
             "properties": {

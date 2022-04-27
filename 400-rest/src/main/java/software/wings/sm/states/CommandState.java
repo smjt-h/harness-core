@@ -79,7 +79,7 @@ import software.wings.beans.Variable;
 import software.wings.beans.VariableType;
 import software.wings.beans.WinRmConnectionAttributes;
 import software.wings.beans.artifact.Artifact;
-import software.wings.beans.artifact.Artifact.ArtifactMetadataKeys;
+import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.artifact.ArtifactStreamType;
@@ -129,6 +129,7 @@ import software.wings.sm.StateExecutionContext;
 import software.wings.sm.StateExecutionContext.StateExecutionContextBuilder;
 import software.wings.sm.WorkflowStandardParams;
 import software.wings.stencils.Expand;
+import software.wings.utils.MappingUtils;
 
 import com.github.reinert.jjschema.Attributes;
 import com.github.reinert.jjschema.SchemaIgnore;
@@ -740,7 +741,7 @@ public class CommandState extends State {
       Service service, String accountId, Artifact artifact, CommandParametersBuilder commandParametersBuilder) {
     log.info("Artifact being used: {} for stateExecutionInstanceId: {}", artifact.getUuid(),
         context.getStateExecutionInstanceId());
-    commandParametersBuilder.metadata(artifact.getMetadata());
+    commandParametersBuilder.metadata(MappingUtils.safeCopy(artifact.getMetadata()));
     // Observed NPE in alerts
     ArtifactStream artifactStream = artifactStreamService.get(artifact.getArtifactStreamId());
     if (artifactStream == null) {
