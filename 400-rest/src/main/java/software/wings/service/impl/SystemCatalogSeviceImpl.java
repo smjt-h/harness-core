@@ -18,7 +18,6 @@ import io.harness.delegate.beans.FileBucket;
 import io.harness.logging.Misc;
 import io.harness.stream.BoundedInputStream;
 
-import software.wings.beans.AppContainer;
 import software.wings.beans.SystemCatalog;
 import software.wings.dl.WingsPersistence;
 import software.wings.service.intfc.FileService;

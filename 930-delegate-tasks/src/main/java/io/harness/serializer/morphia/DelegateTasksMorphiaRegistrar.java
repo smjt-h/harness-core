@@ -42,8 +42,6 @@ import software.wings.beans.SmbConfig;
 import software.wings.beans.SplunkConfig;
 import software.wings.beans.SumoConfig;
 import software.wings.beans.VaultConfig;
-import software.wings.beans.appmanifest.HelmChart;
-import software.wings.beans.artifact.ArtifactFile;
 import software.wings.beans.config.ArtifactoryConfig;
 import software.wings.beans.config.LogzConfig;
 import software.wings.beans.config.NexusConfig;

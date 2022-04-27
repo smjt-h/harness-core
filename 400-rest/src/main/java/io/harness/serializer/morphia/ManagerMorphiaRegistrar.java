@@ -174,7 +174,6 @@ import software.wings.beans.AzureVMSSInfrastructureMapping;
 import software.wings.beans.AzureWebAppInfrastructureMapping;
 import software.wings.beans.BarrierInstance;
 import software.wings.beans.Base;
-import software.wings.beans.BaseFile;
 import software.wings.beans.BasicOrchestrationWorkflow;
 import software.wings.beans.BlueGreenOrchestrationWorkflow;
 import software.wings.beans.BugsnagConfig;

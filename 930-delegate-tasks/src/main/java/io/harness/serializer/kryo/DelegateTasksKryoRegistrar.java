@@ -62,8 +62,6 @@ import software.wings.beans.VaultConfig;
 import software.wings.beans.WinRmConnectionAttributes;
 import software.wings.beans.apm.Method;
 import software.wings.beans.appmanifest.AppManifestKind;
-import software.wings.beans.appmanifest.HelmChart;
-import software.wings.beans.artifact.ArtifactFile;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.artifact.ArtifactoryCollectionTaskParameters;
 import software.wings.beans.command.ExecutionLogCallback;
