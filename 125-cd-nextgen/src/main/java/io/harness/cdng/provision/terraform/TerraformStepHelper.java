@@ -13,7 +13,6 @@ import static io.harness.provision.TerraformConstants.TF_DESTROY_NAME_PREFIX;
 import static io.harness.provision.TerraformConstants.TF_NAME_PREFIX;
 import static io.harness.validation.Validator.notEmptyCheck;
 
-import static com.hazelcast.sql.impl.expression.predicate.TernaryLogic.isNotNull;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
@@ -69,7 +68,6 @@ import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.NGAccess;
 import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
 import io.harness.persistence.HPersistence;
-import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.expression.EngineExpressionService;
