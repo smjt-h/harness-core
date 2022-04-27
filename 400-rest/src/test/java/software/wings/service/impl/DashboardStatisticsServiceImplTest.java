@@ -149,7 +149,6 @@ import io.harness.event.usagemetrics.UsageMetricsHelper;
 import io.harness.ff.FeatureFlagService;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
-import io.harness.testlib.RealMongo;
 
 import software.wings.WingsBaseTest;
 import software.wings.beans.Account;
@@ -469,7 +468,6 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
   @Test
   @Owner(developers = ABHINAV)
   @Category(UnitTests.class)
-  @RealMongo
   public void testUsageMetrics() {
     Map<String, Integer> instanceCountMap = usageMetricsHelper.getAllValidInstanceCounts();
     boolean account1Validation = false;
@@ -493,7 +491,6 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
   @Test
   @Owner(developers = ABHINAV)
   @Category(UnitTests.class)
-  @RealMongo
   public void shallTestInstanceStats() {
     try {
       List<String> appIdList = asList(APP_1_ID, APP_2_ID, APP_3_ID, APP_4_ID, APP_5_ID);
@@ -554,7 +551,6 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
   @Test
   @Owner(developers = ABHINAV)
   @Category(UnitTests.class)
-  @RealMongo
   public void shallGetAppInstanceSummaryStatsByService() {
     try {
       List<String> appIdList = asList(APP_1_ID, APP_2_ID, APP_3_ID, APP_4_ID, APP_5_ID);
@@ -595,7 +591,6 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
   @Test
   @Owner(developers = ABHINAV)
   @Category(UnitTests.class)
-  @RealMongo
   public void shallGetServiceInstanceStats() {
     try {
       List<InstanceStatsByEnvironment> serviceInstances;
@@ -619,7 +614,6 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
   @Test
   @Owner(developers = RAMA)
   @Category(UnitTests.class)
-  @RealMongo
   public void shallGetServiceInstanceDashboard() {
     try {
       user.setUserRequestContext(UserRequestContext.builder()
@@ -678,7 +672,7 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
       List<Environment> envList = Lists.newArrayList();
       envList.add(Environment.Builder.anEnvironment().uuid(ENV_1_ID).name(ENV_NAME).appId(APP_1_ID).build());
       PageResponse<Environment> envsPageResponse = aPageResponse().withResponse(envList).build();
-      when(environmentService.list(any(PageRequest.class), anyBoolean(), anyString())).thenReturn(envsPageResponse);
+      when(environmentService.list(any(PageRequest.class), anyBoolean(), any())).thenReturn(envsPageResponse);
 
       List<InfrastructureMapping> infraList = Lists.newArrayList();
       InfrastructureMapping infra1 = new GcpKubernetesInfrastructureMapping();
@@ -759,7 +753,6 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
   @Test
   @Owner(developers = PRABU)
   @Category(UnitTests.class)
-  @RealMongo
   public void shouldGetActiveInstancesWithManifest() {
     DashboardStatisticsServiceImpl dashboardStatisticsService = (DashboardStatisticsServiceImpl) dashboardService;
     List<CurrentActiveInstances> activeInstances =
@@ -774,7 +767,6 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
   @Test
   @Owner(developers = PRABU)
   @Category(UnitTests.class)
-  @RealMongo
   public void shouldUpdateLastWorkflowExecutionAndManifestInActiveInstance() {
     Long startTS = 1630969310005L;
     WorkflowExecution workflowExecution = WorkflowExecution.builder()
@@ -813,7 +805,6 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
   @Test
   @Owner(developers = {PRABU, DEEPAK_PUTHRAYA})
   @Category(UnitTests.class)
-  @RealMongo
   public void shallGetDeploymentHistoryWithManifest() {
     ExecutionArgs executionArgs = new ExecutionArgs();
     executionArgs.setArtifacts(asList(Artifact.Builder.anArtifact()
@@ -977,7 +968,6 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
   @Test
   @Owner(developers = ALEXANDRU_CIOFU)
   @Category(UnitTests.class)
-  @RealMongo
   public void testLastWorkflowExecutionDate() {
     Long startTS = 1630969310005L;
     Long deployedAt = 1630969317105L;

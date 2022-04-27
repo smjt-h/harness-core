@@ -29,15 +29,12 @@ import io.dropwizard.setup.Environment;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
-@RunWith(PowerMockRunner.class)
 public class AuditServiceSetupTest extends CategoryTest {
   @Mock Environment environment;
   @Mock JerseyEnvironment jerseyEnvironment;
