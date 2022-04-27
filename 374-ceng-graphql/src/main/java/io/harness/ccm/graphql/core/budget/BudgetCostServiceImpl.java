@@ -77,7 +77,7 @@ public class BudgetCostServiceImpl implements BudgetCostService {
   public double getForecastCost(String accountId, String perspectiveId, long startOfPeriod, BudgetPeriod period) {
     String cloudProviderTableName = bigQueryHelper.getCloudProviderTableName(accountId, UNIFIED_TABLE);
     List<QLCEViewFilterWrapper> filters = new ArrayList<>();
-    long startTime = BudgetUtils.getStartTimeForForecasting(startOfPeriod);
+    long startTime = BudgetUtils.getStartTimeForForecasting();
     long endTime = BudgetUtils.getEndTimeForBudget(startOfPeriod, period) - BudgetUtils.ONE_DAY_MILLIS;
     filters.add(viewsQueryHelper.getViewMetadataFilter(perspectiveId));
     filters.add(viewsQueryHelper.getPerspectiveTimeFilter(startTime, AFTER));
@@ -93,9 +93,8 @@ public class BudgetCostServiceImpl implements BudgetCostService {
             .maxStartTime(1000 * BudgetUtils.getStartOfCurrentDay() - BudgetUtils.ONE_DAY_MILLIS)
             .build();
     double costTillNow = getActualCost(accountId, perspectiveId, startOfPeriod, period);
-    return costTillNow
-        + viewsQueryHelper.getRoundedDoubleValue(
-            costTillNow + viewsQueryHelper.getForecastCost(costDataForForecast, Instant.ofEpochMilli(endTime)));
+    return viewsQueryHelper.getRoundedDoubleValue(
+        costTillNow + viewsQueryHelper.getForecastCost(costDataForForecast, Instant.ofEpochMilli(endTime)));
   }
 
   @Override
