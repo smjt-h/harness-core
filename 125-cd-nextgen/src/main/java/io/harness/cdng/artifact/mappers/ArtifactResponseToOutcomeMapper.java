@@ -9,9 +9,6 @@ package io.harness.cdng.artifact.mappers;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
-import static software.wings.utils.RepositoryFormat.docker;
-import static software.wings.utils.RepositoryFormat.generic;
-
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifact.ArtifactMetadataKeys;
 import io.harness.cdng.artifact.bean.ArtifactConfig;
@@ -39,7 +36,11 @@ import io.harness.delegate.task.artifacts.ecr.EcrArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.nexus.NexusArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.response.ArtifactDelegateResponse;
+import io.harness.pms.yaml.ParameterField;
 
+import software.wings.utils.RepositoryFormat;
+
+import java.nio.file.Paths;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -72,18 +73,25 @@ public class ArtifactResponseToOutcomeMapper {
         ArtifactOutcome artifactOutcome = null;
         ArtifactoryRegistryArtifactConfig artifactoryRegistryArtifactConfig =
             (ArtifactoryRegistryArtifactConfig) artifactConfig;
-        if (artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue().equals(docker.name())) {
-          ArtifactoryDockerArtifactDelegateResponse artifactoryDelegateResponse =
-              (ArtifactoryDockerArtifactDelegateResponse) artifactDelegateResponse;
-          artifactOutcome = getArtifactoryArtifactOutcome(
-              artifactoryRegistryArtifactConfig, artifactoryDelegateResponse, useDelegateResponse);
-        } else if (artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue().equals(generic.name())) {
-          ArtifactoryGenericArtifactDelegateResponse artifactoryGenericDelegateResponse =
-              (ArtifactoryGenericArtifactDelegateResponse) artifactDelegateResponse;
-          artifactOutcome = getArtifactoryGenericArtifactOutcome(
-              artifactoryRegistryArtifactConfig, artifactoryGenericDelegateResponse, useDelegateResponse);
+        RepositoryFormat repositoryType =
+            RepositoryFormat.valueOf(artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue());
+        switch (repositoryType) {
+          case docker:
+            ArtifactoryDockerArtifactDelegateResponse artifactoryDelegateResponse =
+                (ArtifactoryDockerArtifactDelegateResponse) artifactDelegateResponse;
+            artifactOutcome = getArtifactoryArtifactOutcome(
+                artifactoryRegistryArtifactConfig, artifactoryDelegateResponse, useDelegateResponse);
+            return artifactOutcome;
+          case generic:
+            ArtifactoryGenericArtifactDelegateResponse artifactoryGenericDelegateResponse =
+                (ArtifactoryGenericArtifactDelegateResponse) artifactDelegateResponse;
+            artifactOutcome = getArtifactoryGenericArtifactOutcome(
+                artifactoryRegistryArtifactConfig, artifactoryGenericDelegateResponse, useDelegateResponse);
+            return artifactOutcome;
+          default:
+            throw new UnsupportedOperationException(
+                String.format("Repository Format [%s] for Artifactory Not Supported", repositoryType));
         }
-        return artifactOutcome;
       case CUSTOM_ARTIFACT:
         CustomArtifactConfig customArtifactConfig = (CustomArtifactConfig) artifactConfig;
         return getCustomArtifactOutcome(customArtifactConfig);
@@ -189,11 +197,22 @@ public class ArtifactResponseToOutcomeMapper {
         .connectorRef(artifactConfig.getConnectorRef().getValue())
         .artifactDirectory(artifactConfig.getArtifactDirectory().getValue())
         .repositoryFormat(artifactConfig.getRepositoryFormat().getValue())
-        .artifactPath(useDelegateResponse
-                ? artifactDelegateResponse.getArtifactPath()
-                : (artifactConfig.getArtifactPath() != null ? artifactConfig.getArtifactPath().getValue() : null))
-        .artifactPathFilter(
-            artifactConfig.getArtifactPathFilter() != null ? artifactConfig.getArtifactPathFilter().getValue() : null)
+        .artifactPath(useDelegateResponse ? ParameterField.isBlank(artifactConfig.getArtifactPathFilter())
+                    ? Paths
+                          .get(artifactConfig.getArtifactDirectory().getValue(),
+                              artifactDelegateResponse.getArtifactPath())
+                          .toString()
+                    : artifactDelegateResponse.getArtifactPath()
+                                          : (ParameterField.isNull(artifactConfig.getArtifactPath()) ? null
+                                                  : ParameterField.isBlank(artifactConfig.getArtifactPathFilter())
+                                                  ? Paths
+                                                        .get(artifactConfig.getArtifactDirectory().getValue(),
+                                                            artifactConfig.getArtifactPath().getValue())
+                                                        .toString()
+                                                  : artifactConfig.getArtifactPath().getValue()))
+        .artifactPathFilter(ParameterField.isNull(artifactConfig.getArtifactPathFilter())
+                ? null
+                : artifactConfig.getArtifactPathFilter().getValue())
         .identifier(artifactConfig.getIdentifier())
         .type(ArtifactSourceType.ARTIFACTORY_REGISTRY.getDisplayName())
         .primaryArtifact(artifactConfig.isPrimaryArtifact())

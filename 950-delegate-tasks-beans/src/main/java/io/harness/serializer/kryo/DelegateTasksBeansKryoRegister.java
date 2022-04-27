@@ -249,6 +249,7 @@ import io.harness.delegate.exception.TaskNGDataException;
 import io.harness.delegate.task.ListNotifyResponseData;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
 import io.harness.delegate.task.artifacts.ArtifactTaskType;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryBaseArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateRequest;
@@ -1285,5 +1286,6 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(ServerlessRollbackResult.class, 563528);
     kryo.register(ServerlessAwsLambdaRollbackResult.class, 563529);
     kryo.register(ServerlessInstallationCapability.class, 563530);
+    kryo.register(ArtifactoryBaseArtifactDelegateRequest.class, 563531);
   }
 }

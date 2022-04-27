@@ -31,6 +31,7 @@ import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.ecr.EcrArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.nexus.NexusArtifactDelegateRequest;
+import io.harness.pms.yaml.ParameterField;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import java.util.List;
@@ -131,12 +132,15 @@ public class ArtifactConfigToDelegateReqMapper {
       ArtifactoryRegistryArtifactConfig artifactConfig, ArtifactoryConnectorDTO artifactoryConnectorDTO,
       List<EncryptedDataDetail> encryptedDataDetails, String connectorRef) {
     // If both are empty, artifactPathFilter is latest among all artifacts.
-    String artifactPathFilter =
-        artifactConfig.getArtifactPathFilter() != null ? artifactConfig.getArtifactPathFilter().getValue() : "";
-    String artifactPath = artifactConfig.getArtifactPath() != null ? artifactConfig.getArtifactPath().getValue() : "";
+    String artifactPathFilter = ParameterField.isNull(artifactConfig.getArtifactPathFilter())
+        ? ""
+        : artifactConfig.getArtifactPathFilter().getValue();
+    String artifactPath =
+        ParameterField.isNull(artifactConfig.getArtifactPath()) ? "" : artifactConfig.getArtifactPath().getValue();
 
-    String artifactDirectory =
-        artifactConfig.getArtifactDirectory() != null ? artifactConfig.getArtifactDirectory().getValue() : null;
+    String artifactDirectory = ParameterField.isNull(artifactConfig.getArtifactDirectory())
+        ? null
+        : artifactConfig.getArtifactDirectory().getValue();
 
     return ArtifactDelegateRequestUtils.getArtifactoryGenericArtifactDelegateRequest(
         artifactConfig.getRepository().getValue(), artifactConfig.getRepositoryFormat().getValue(), artifactDirectory,

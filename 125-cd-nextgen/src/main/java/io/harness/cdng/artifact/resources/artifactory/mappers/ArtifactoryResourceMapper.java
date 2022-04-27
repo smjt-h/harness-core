@@ -59,7 +59,7 @@ public class ArtifactoryResourceMapper {
             .stream()
             .map(delegateResponse -> (ArtifactoryDockerArtifactDelegateResponse) delegateResponse)
             .collect(Collectors.toList());
-    return ArtifactoryResourceMapper.toArtifactoryResponse(artifactoryArtifactDelegateResponses);
+    return ArtifactoryResourceMapper.toArtifactoryDockerResponse(artifactoryArtifactDelegateResponses);
   }
 
   public ArtifactoryResponseDTO toArtifactoryGenericResponse(
@@ -71,7 +71,7 @@ public class ArtifactoryResourceMapper {
     return ArtifactoryResponseDTO.builder().buildDetailsList(detailsDTOList).build();
   }
 
-  public ArtifactoryResponseDTO toArtifactoryResponse(
+  public ArtifactoryResponseDTO toArtifactoryDockerResponse(
       List<ArtifactoryDockerArtifactDelegateResponse> artifactoryArtifactDelegateResponseList) {
     List<ArtifactoryBuildDetailsDTO> detailsDTOList =
         artifactoryArtifactDelegateResponseList.stream()
