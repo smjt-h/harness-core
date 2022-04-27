@@ -15,6 +15,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.DecryptableEntity;
 import io.harness.beans.DelegateTaskRequest;
 import io.harness.beans.IdentifierRef;
+import io.harness.beans.Scope;
 import io.harness.beans.gitsync.GitFileDetails.GitFileDetailsBuilder;
 import io.harness.beans.gitsync.GitFilePathDetails;
 import io.harness.beans.gitsync.GitPRCreateRequest;
@@ -185,6 +186,48 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
       log.error("Error while getFile SCM Ops", e);
       throw new UnexpectedException("Unexpected error occurred while doing scm operation", e);
     }
+  }
+
+  @Override
+  public CreatePRDTO createPullRequest(
+      Scope scope, String connectorRef, String repoName, String sourceBranch, String targetBranch, String title) {
+    final ScmConnector decryptedConnector = getScmConnector(
+        scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier(), connectorRef, repoName);
+    final List<EncryptedDataDetail> encryptionDetails = getEncryptedDataDetails(
+        scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier(), decryptedConnector);
+    ScmPRTaskParams scmPRTaskParams = ScmPRTaskParams.builder()
+                                          .scmConnector(decryptedConnector)
+                                          .gitPRCreateRequest(GitPRCreateRequest.builder()
+                                                                  .accountIdentifier(scope.getAccountIdentifier())
+                                                                  .orgIdentifier(scope.getOrgIdentifier())
+                                                                  .projectIdentifier(scope.getProjectIdentifier())
+                                                                  .sourceBranch(sourceBranch)
+                                                                  .targetBranch(targetBranch)
+                                                                  .title(title)
+                                                                  .build())
+                                          .gitPRTaskType(GitPRTaskType.CREATE_PR)
+                                          .encryptedDataDetails(encryptionDetails)
+                                          .build();
+    final Map<String, String> ngTaskSetupAbstractionsWithOwner = getNGTaskSetupAbstractionsWithOwner(
+        scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier());
+    DelegateTaskRequest delegateTaskRequest = DelegateTaskRequest.builder()
+                                                  .accountId(scope.getAccountIdentifier())
+                                                  .taskSetupAbstractions(ngTaskSetupAbstractionsWithOwner)
+                                                  .taskType(TaskType.SCM_PULL_REQUEST_TASK.name())
+                                                  .taskParameters(scmPRTaskParams)
+                                                  .executionTimeout(Duration.ofMinutes(2))
+                                                  .build();
+    final DelegateResponseData delegateResponseData = executeDelegateSyncTask(delegateTaskRequest);
+    ScmPRTaskResponseData scmCreatePRResponse = (ScmPRTaskResponseData) delegateResponseData;
+    final CreatePRResponse createPRResponse = scmCreatePRResponse.getCreatePRResponse();
+    try {
+      ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
+          createPRResponse.getStatus(), createPRResponse.getError());
+    } catch (WingsException e) {
+      throw new ExplanationException(
+          String.format("Could not create the pull request from %s to %s", sourceBranch, targetBranch), e);
+    }
+    return CreatePRDTO.builder().prNumber(createPRResponse.getNumber()).build();
   }
 
   @Override
@@ -419,7 +462,7 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
     GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(),
         infoForPush.getFilePath(), infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch(),
         SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()), infoForPush.getCommitId(),
-        infoForPush.getFilePathV2());
+        infoForPush.getCompleteFilePath());
     final List<EncryptedDataDetail> encryptionDetails = getEncryptedDataDetails(infoForPush.getAccountId(),
         infoForPush.getOrgIdentifier(), infoForPush.getProjectIdentifier(), infoForPush.getScmConnector());
     ScmPushTaskParams scmPushTaskParams = ScmPushTaskParams.builder()
@@ -448,7 +491,7 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
     GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(),
         infoForPush.getFilePath(), infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch(),
         SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()), infoForPush.getCommitId(),
-        infoForPush.getFilePathV2());
+        infoForPush.getCompleteFilePath());
     gitFileDetails.oldFileSha(infoForPush.getOldFileSha());
     final List<EncryptedDataDetail> encryptionDetails = getEncryptedDataDetails(infoForPush.getAccountId(),
         infoForPush.getOrgIdentifier(), infoForPush.getProjectIdentifier(), infoForPush.getScmConnector());
@@ -478,7 +521,7 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
     GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(),
         infoForPush.getFilePath(), infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch(),
         SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()), infoForPush.getCommitId(),
-        infoForPush.getFilePathV2());
+        infoForPush.getCompleteFilePath());
     gitFileDetails.oldFileSha(infoForPush.getOldFileSha());
     final List<EncryptedDataDetail> encryptionDetails = getEncryptedDataDetails(infoForPush.getAccountId(),
         infoForPush.getOrgIdentifier(), infoForPush.getProjectIdentifier(), infoForPush.getScmConnector());

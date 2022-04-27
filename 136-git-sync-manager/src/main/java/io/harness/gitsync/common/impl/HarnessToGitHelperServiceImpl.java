@@ -30,6 +30,8 @@ import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.ChangeType;
 import io.harness.gitsync.CommitFileRequest;
 import io.harness.gitsync.CommitFileResponse;
+import io.harness.gitsync.CreatePRRequest;
+import io.harness.gitsync.CreatePRResponse;
 import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.GetFileRequest;
 import io.harness.gitsync.GetFileResponse;
@@ -44,8 +46,11 @@ import io.harness.gitsync.common.beans.InfoForGitPush;
 import io.harness.gitsync.common.dtos.GitSyncEntityDTO;
 import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
 import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
+import io.harness.gitsync.common.dtos.ScmCreatePRRequestDTO;
+import io.harness.gitsync.common.dtos.ScmCreatePRResponseDTO;
 import io.harness.gitsync.common.dtos.ScmUpdateFileRequestDTO;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
+import io.harness.gitsync.common.helper.ScopeIdentifierMapper;
 import io.harness.gitsync.common.helper.UserProfileHelper;
 import io.harness.gitsync.common.service.GitBranchService;
 import io.harness.gitsync.common.service.GitBranchSyncService;
@@ -350,39 +355,54 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     ScmCommitFileResponseDTO scmCommitFileResponseDTO = null;
     switch (changeType) {
       case ADD:
-        scmCommitFileResponseDTO =
-            scmFacilitatorService.createFile(ScmCreateFileRequestDTO.builder()
-                                                 .repoName(commitFileRequest.getRepoName())
-                                                 .branchName(commitFileRequest.getBranchName())
-                                                 .connectorRef(commitFileRequest.getConnectorRef())
-                                                 .fileContent(commitFileRequest.getFileContent())
-                                                 .filePath(commitFileRequest.getFilePath())
-                                                 .commitMessage(commitFileRequest.getCommitMessage())
-                                                 .isCommitToNewBranch(commitFileRequest.getIsCommitToNewBranch())
-                                                 .newBranch(commitFileRequest.getNewBranchName())
-                                                 .scopeIdentifiers(commitFileRequest.getScopeIdentifiers())
-                                                 .build());
+        scmCommitFileResponseDTO = scmFacilitatorService.createFile(
+            ScmCreateFileRequestDTO.builder()
+                .repoName(commitFileRequest.getRepoName())
+                .branchName(commitFileRequest.getBranchName())
+                .connectorRef(commitFileRequest.getConnectorRef())
+                .fileContent(commitFileRequest.getFileContent())
+                .filePath(commitFileRequest.getFilePath())
+                .commitMessage(commitFileRequest.getCommitMessage())
+                .isCommitToNewBranch(commitFileRequest.getIsCommitToNewBranch())
+                .newBranch(commitFileRequest.getNewBranchName())
+                .scope(ScopeIdentifierMapper.getScopeFromScopeIdentifiers(commitFileRequest.getScopeIdentifiers()))
+                .build());
         return prepareCommitFileResponse(commitFileRequest, scmCommitFileResponseDTO);
       case MODIFY:
-        scmCommitFileResponseDTO =
-            scmFacilitatorService.updateFile(ScmUpdateFileRequestDTO.builder()
-                                                 .repoName(commitFileRequest.getRepoName())
-                                                 .branchName(commitFileRequest.getBranchName())
-                                                 .connectorRef(commitFileRequest.getConnectorRef())
-                                                 .fileContent(commitFileRequest.getFileContent())
-                                                 .filePath(commitFileRequest.getFilePath())
-                                                 .commitMessage(commitFileRequest.getCommitMessage())
-                                                 .isCommitToNewBranch(commitFileRequest.getIsCommitToNewBranch())
-                                                 .newBranch(commitFileRequest.getNewBranchName())
-                                                 .oldCommitId(commitFileRequest.getOldCommitId())
-                                                 .oldFileSha(commitFileRequest.getOldFileSha())
-                                                 .scopeIdentifiers(commitFileRequest.getScopeIdentifiers())
-                                                 .build());
+        scmCommitFileResponseDTO = scmFacilitatorService.updateFile(
+            ScmUpdateFileRequestDTO.builder()
+                .repoName(commitFileRequest.getRepoName())
+                .branchName(commitFileRequest.getBranchName())
+                .connectorRef(commitFileRequest.getConnectorRef())
+                .fileContent(commitFileRequest.getFileContent())
+                .filePath(commitFileRequest.getFilePath())
+                .commitMessage(commitFileRequest.getCommitMessage())
+                .isCommitToNewBranch(commitFileRequest.getIsCommitToNewBranch())
+                .newBranch(commitFileRequest.getNewBranchName())
+                .oldCommitId(commitFileRequest.getOldCommitId())
+                .oldFileSha(commitFileRequest.getOldFileSha())
+                .scope(ScopeIdentifierMapper.getScopeFromScopeIdentifiers(commitFileRequest.getScopeIdentifiers()))
+                .build());
         return prepareCommitFileResponse(commitFileRequest, scmCommitFileResponseDTO);
       default:
         throw new InvalidRequestException(
             String.format("Change Type : %s not supported for Commit File Operation", changeType));
     }
+  }
+
+  @Override
+  public CreatePRResponse createPullRequest(CreatePRRequest createPRRequest) {
+    ScmCreatePRResponseDTO scmCreatePRResponseDTO = scmFacilitatorService.createPR(
+        ScmCreatePRRequestDTO.builder()
+            .sourceBranch(createPRRequest.getSourceBranch())
+            .targetBranch(createPRRequest.getTargetBranch())
+            .scope(ScopeIdentifierMapper.getScopeFromScopeIdentifiers(createPRRequest.getScopeIdentifiers()))
+            .repoName(createPRRequest.getRepoName())
+            .connectorRef(createPRRequest.getConnectorRef())
+            .title(createPRRequest.getTitle())
+            .build());
+
+    return CreatePRResponse.newBuilder().setStatusCode(200).setPrNumber(scmCreatePRResponseDTO.getPrNumber()).build();
   }
 
   private InfoForGitPush getInfoForGitPush(

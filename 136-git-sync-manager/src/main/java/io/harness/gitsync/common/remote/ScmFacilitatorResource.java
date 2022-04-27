@@ -23,6 +23,7 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 import io.harness.NGCommonEntityConstants;
 import io.harness.ScopeIdentifiers;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.Scope;
 import io.harness.beans.gitsync.GitPRCreateRequest;
 import io.harness.gitsync.GetFileRequest;
 import io.harness.gitsync.GetFileResponse;
@@ -30,6 +31,8 @@ import io.harness.gitsync.common.YamlConstants;
 import io.harness.gitsync.common.dtos.CreatePRDTO;
 import io.harness.gitsync.common.dtos.GitFileContent;
 import io.harness.gitsync.common.dtos.SaasGitDTO;
+import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
+import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
 import io.harness.gitsync.common.impl.GitUtils;
 import io.harness.gitsync.common.service.HarnessToGitHelperService;
 import io.harness.gitsync.common.service.ScmFacilitatorService;
@@ -263,5 +266,48 @@ public class ScmFacilitatorResource {
                                               .setCommitId(commitId)
                                               .setConnectorRef(connectorRef)
                                               .build()));
+  }
+
+  // API just for testing purpose, not exposed to customer
+  // TODO should be removed after testing @Mohit
+  @GET
+  @Path("create-file")
+  @ApiOperation(value = "get file", nickname = "getFile")
+  @Hidden
+  @Operation(operationId = "getFile", summary = "get file",
+      responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Successfully created a PR") },
+      hidden = true)
+  public ResponseDTO<ScmCommitFileResponseDTO>
+  createFile(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotBlank @NotNull @QueryParam(
+                 NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectIdentifier,
+      @Parameter(description = "Repo Name") @QueryParam("RepoName") @NotBlank @NotNull String repoName,
+      @Parameter(description = GitSyncApiConstants.BRANCH_PARAM_MESSAGE) @QueryParam(
+          YamlConstants.BRANCH) String branch,
+      @Parameter(description = "File Path") @QueryParam(YamlConstants.FILE_PATH) @NotBlank @NotNull String filePath,
+      @Parameter(description = "Connector Ref") @QueryParam("ConnectorRef") String connectorRef,
+      @Parameter(description = "File content") @QueryParam("fileContent") String fileContent,
+      @Parameter(description = "create PR") @QueryParam("createPr") boolean createPR,
+      @Parameter(description = "isCommitToNewBranch") @QueryParam("isCommitToNewBranch") boolean isCommitToNewBranch,
+      @Parameter(description = "new branch") @QueryParam("newBranch") String newBranch,
+      @Parameter(description = "commit message") @QueryParam("commitMessage") String commitMessage) {
+    return ResponseDTO.newResponse(scmFacilitatorService.createFile(ScmCreateFileRequestDTO.builder()
+                                                                        .newBranch(newBranch)
+                                                                        .isCommitToNewBranch(isCommitToNewBranch)
+                                                                        .commitMessage(commitMessage)
+                                                                        .filePath(filePath)
+                                                                        .fileContent(fileContent)
+                                                                        .connectorRef(connectorRef)
+                                                                        .scope(Scope.builder()
+                                                                                   .accountIdentifier(accountIdentifier)
+                                                                                   .orgIdentifier(orgIdentifier)
+                                                                                   .projectIdentifier(projectIdentifier)
+                                                                                   .build())
+                                                                        .branchName(branch)
+                                                                        .repoName(repoName)
+                                                                        .build()));
   }
 }

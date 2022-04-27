@@ -20,16 +20,11 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
-public class ScmUpdateFileRequestDTO {
+public class ScmCreatePRRequestDTO {
   Scope scope;
-  String repoName;
-  String branchName;
+  String sourceBranch;
+  String targetBranch;
+  String title;
   String connectorRef;
-  String fileContent;
-  String filePath;
-  boolean isCommitToNewBranch;
-  String newBranch;
-  String commitMessage;
-  String oldCommitId;
-  String oldFileSha;
+  String repoName;
 }

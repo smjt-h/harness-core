@@ -14,6 +14,8 @@ import io.harness.eventsframework.schemas.entity.EntityScopeInfo;
 import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.CommitFileRequest;
 import io.harness.gitsync.CommitFileResponse;
+import io.harness.gitsync.CreatePRRequest;
+import io.harness.gitsync.CreatePRResponse;
 import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.GetFileRequest;
 import io.harness.gitsync.GetFileResponse;
@@ -37,4 +39,6 @@ public interface HarnessToGitHelperService {
   GetFileResponse getFile(GetFileRequest getFileRequest);
 
   CommitFileResponse commitFile(CommitFileRequest commitFileRequest);
+
+  CreatePRResponse createPullRequest(CreatePRRequest createPRRequest);
 }

@@ -10,6 +10,7 @@ package io.harness.gitsync.common.service;
 import static io.harness.annotations.dev.HarnessTeam.DX;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.Scope;
 import io.harness.beans.gitsync.GitPRCreateRequest;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
 import io.harness.delegate.task.scm.GitWebhookTaskType;
@@ -45,6 +46,9 @@ public interface ScmClientFacilitatorService {
 
   FileContent getFile(String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef,
       String repoName, String branchName, String filePath, String commitId);
+
+  CreatePRDTO createPullRequest(
+      Scope scope, String connectorRef, String repoName, String sourceBranch, String targetBranch, String title);
 
   CreatePRDTO createPullRequest(GitPRCreateRequest gitCreatePRRequest);
 

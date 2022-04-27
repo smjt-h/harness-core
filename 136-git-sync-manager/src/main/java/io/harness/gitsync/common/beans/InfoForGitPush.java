@@ -32,5 +32,5 @@ public class InfoForGitPush {
   String oldFileSha;
   String yaml;
   String commitId;
-  String filePathV2;
+  String completeFilePath;
 }

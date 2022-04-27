@@ -7,9 +7,9 @@
 
 package io.harness.gitsync.common.dtos;
 
-import io.harness.ScopeIdentifiers;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.Scope;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -21,7 +21,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
 public class ScmCreateFileRequestDTO {
-  ScopeIdentifiers scopeIdentifiers;
+  Scope scope;
   String repoName;
   String branchName;
   String connectorRef;

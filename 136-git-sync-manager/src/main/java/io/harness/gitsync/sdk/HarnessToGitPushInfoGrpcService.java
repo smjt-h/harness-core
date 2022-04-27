@@ -18,6 +18,8 @@ import io.harness.exception.exceptionmanager.ExceptionManager;
 import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.CommitFileRequest;
 import io.harness.gitsync.CommitFileResponse;
+import io.harness.gitsync.CreatePRRequest;
+import io.harness.gitsync.CreatePRResponse;
 import io.harness.gitsync.ErrorDetails;
 import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.GetFileRequest;
@@ -122,6 +124,23 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
                                .build();
     }
     responseObserver.onNext(commitFileResponse);
+    responseObserver.onCompleted();
+  }
+
+  @Override
+  public void createPullRequest(CreatePRRequest createPRRequest, StreamObserver<CreatePRResponse> responseObserver) {
+    CreatePRResponse createPRResponse;
+    try (GlobalContextManager.GlobalContextGuard guard = GlobalContextManager.ensureGlobalContextGuard();
+         MdcContextSetter ignore1 = new MdcContextSetter(request.getContextMapMap())) {
+      createPRResponse = harnessToGitHelperService.createPullRequest(createPRRequest);
+    } catch (Exception ex) {
+      log.error("Faced exception during createPullRequest GIT call", ex);
+      final String errorMessage = ExceptionUtils.getMessage(ex);
+      createPRResponse = CreatePRResponse.newBuilder()
+                             .setError(ErrorDetails.newBuilder().setErrorMessage(errorMessage).build())
+                             .build();
+    }
+    responseObserver.onNext(createPRResponse);
     responseObserver.onCompleted();
   }
 

@@ -13,6 +13,7 @@ import static io.harness.eraro.ErrorCode.PR_CREATION_ERROR;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FileContentBatchResponse;
 import io.harness.beans.IdentifierRef;
+import io.harness.beans.Scope;
 import io.harness.beans.gitsync.GitFileDetails.GitFileDetailsBuilder;
 import io.harness.beans.gitsync.GitFilePathDetails;
 import io.harness.beans.gitsync.GitPRCreateRequest;
@@ -110,6 +111,35 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
         getScmConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName);
     final GitFilePathDetails gitFilePathDetails = getGitFilePathDetails(filePath, branchName, commitId);
     return scmClient.getFileContent(connector, gitFilePathDetails);
+  }
+
+  @Override
+  public CreatePRDTO createPullRequest(
+      Scope scope, String connectorRef, String repoName, String sourceBranch, String targetBranch, String title) {
+    ScmConnector decryptedConnector = getScmConnector(
+        scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier(), connectorRef, repoName);
+    CreatePRResponse createPRResponse;
+    try {
+      createPRResponse = scmClient.createPullRequest(decryptedConnector,
+          GitPRCreateRequest.builder()
+              .accountIdentifier(scope.getAccountIdentifier())
+              .orgIdentifier(scope.getOrgIdentifier())
+              .projectIdentifier(scope.getProjectIdentifier())
+              .sourceBranch(sourceBranch)
+              .targetBranch(targetBranch)
+              .title(title)
+              .build());
+      try {
+        ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
+            createPRResponse.getStatus(), createPRResponse.getError());
+      } catch (WingsException e) {
+        throw new ExplanationException(
+            String.format("Could not create the pull request from %s to %s", sourceBranch, targetBranch), e);
+      }
+    } catch (Exception ex) {
+      throw new ScmException(PR_CREATION_ERROR);
+    }
+    return CreatePRDTO.builder().prNumber(createPRResponse.getNumber()).build();
   }
 
   @Override
@@ -211,7 +241,7 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
     final GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(),
         infoForPush.getFilePath(), infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch(),
         SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()), infoForPush.getCommitId(),
-        infoForPush.getFilePathV2());
+        infoForPush.getCompleteFilePath());
     return scmClient.createFile(decryptedConnector, gitFileDetails.build());
   }
 
@@ -225,7 +255,7 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
     final GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(),
         infoForPush.getFilePath(), infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch(),
         SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()), infoForPush.getCommitId(),
-        infoForPush.getFilePathV2());
+        infoForPush.getCompleteFilePath());
     gitFileDetails.oldFileSha(infoForPush.getOldFileSha());
     return scmClient.updateFile(decryptedConnector, gitFileDetails.build());
   }
@@ -240,7 +270,7 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
     final GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(),
         infoForPush.getFilePath(), infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch(),
         SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()), infoForPush.getCommitId(),
-        infoForPush.getFilePathV2());
+        infoForPush.getCompleteFilePath());
     gitFileDetails.oldFileSha(infoForPush.getOldFileSha());
     return scmClient.deleteFile(decryptedConnector, gitFileDetails.build());
   }
