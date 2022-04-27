@@ -144,7 +144,7 @@ public class TerraformApplyStep extends TaskExecutableWithRollbackAndRbac<Terraf
         .terraformCommandUnit(TerraformCommandUnit.Apply)
         .entityId(entityId)
         .tfModuleSourceInheritSSH(helper.isExportCredentialForSourceModule(
-            ambiance, configuration.getSpec().getConfigFiles(), stepElementParameters))
+            ambiance, configuration.getSpec().getConfigFiles(), stepElementParameters.getType()))
         .workspace(ParameterFieldHelper.getParameterFieldValue(spec.getWorkspace()))
         .configFile(helper.getGitFetchFilesConfig(
             spec.getConfigFiles().getStore().getSpec(), ambiance, TerraformStepHelper.TF_CONFIG_FILES))

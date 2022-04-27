@@ -308,15 +308,8 @@ public class TerraformStepHelper {
         Map<String, String> commitIdMap = terraformTaskNGResponse.getCommitIdForConfigFilesMap();
         builder.configFiles(getStoreConfigAtCommitId(
             configuration.getConfigFiles().getStore().getSpec(), commitIdMap.get(TF_CONFIG_FILES)));
-        if (cdFeatureFlagHelper.isEnabled(
-                AmbianceUtils.getAccountId(ambiance), FeatureName.TF_MODULE_SOURCE_INHERIT_SSH)
-            && isNotNull(configuration.getConfigFiles().getModuleSource())) {
-          builder.useConnectorCredentials(
-              !ParameterField.isNull(configuration.getConfigFiles().getModuleSource().getUseConnectorCredentials())
-              && CDStepHelper.getParameterFieldBooleanValue(
-                  configuration.getConfigFiles().getModuleSource().getUseConnectorCredentials(),
-                  USE_CONNECTOR_CREDENTIALS, format("%s step", ExecutionNodeType.TERRAFORM_PLAN.getYamlType())));
-        }
+        builder.useConnectorCredentials(isExportCredentialForSourceModule(
+            ambiance, configuration.getConfigFiles(), ExecutionNodeType.TERRAFORM_PLAN.getYamlType()));
 
         break;
       case ARTIFACTORY:
@@ -498,18 +491,8 @@ public class TerraformStepHelper {
             getStoreConfigAtCommitId(spec.getConfigFiles().getStore().getSpec(), commitIdMap.get(TF_CONFIG_FILES))
                 .toGitStoreConfigDTO());
 
-        if (cdFeatureFlagHelper.isEnabled(
-                AmbianceUtils.getAccountId(ambiance), FeatureName.TF_MODULE_SOURCE_INHERIT_SSH)
-            && isNotNull(configuration.getSpec().getConfigFiles().getModuleSource())) {
-          builder
-              .useConnectorCredentials(
-                  !ParameterField.isNull(
-                      configuration.getSpec().getConfigFiles().getModuleSource().getUseConnectorCredentials())
-                  && CDStepHelper.getParameterFieldBooleanValue(
-                      configuration.getSpec().getConfigFiles().getModuleSource().getUseConnectorCredentials(),
-                      USE_CONNECTOR_CREDENTIALS, format("%s step", ExecutionNodeType.TERRAFORM_APPLY.getYamlType())))
-              .workspace(getParameterFieldValue(spec.getWorkspace()));
-        }
+        builder.useConnectorCredentials(isExportCredentialForSourceModule(
+            ambiance, configuration.getSpec().getConfigFiles(), ExecutionNodeType.TERRAFORM_APPLY.getYamlType()));
 
         break;
       case ARTIFACTORY:
@@ -613,12 +596,13 @@ public class TerraformStepHelper {
   }
 
   public boolean isExportCredentialForSourceModule(
-      Ambiance ambiance, TerraformConfigFilesWrapper configFiles, StepElementParameters stepElementParameters) {
+      Ambiance ambiance, TerraformConfigFilesWrapper configFiles, String type) {
+    String description = String.format("%s step", type);
     return cdFeatureFlagHelper.isEnabled(AmbianceUtils.getAccountId(ambiance), FeatureName.TF_MODULE_SOURCE_INHERIT_SSH)
         && configFiles.getModuleSource() != null
         && !ParameterField.isNull(configFiles.getModuleSource().getUseConnectorCredentials())
-        && CDStepHelper.getParameterFieldBooleanValue(configFiles.getModuleSource().getUseConnectorCredentials(),
-            USE_CONNECTOR_CREDENTIALS, stepElementParameters);
+        && CDStepHelper.getParameterFieldBooleanValue(
+            configFiles.getModuleSource().getUseConnectorCredentials(), USE_CONNECTOR_CREDENTIALS, description);
   }
 
   // Conversion Methods
