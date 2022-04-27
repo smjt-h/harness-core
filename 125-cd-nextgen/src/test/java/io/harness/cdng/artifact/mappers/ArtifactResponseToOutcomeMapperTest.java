@@ -132,7 +132,8 @@ public class ArtifactResponseToOutcomeMapperTest extends CategoryTest {
             .artifactDirectory(ParameterField.createValueField("IMAGE1"))
             .repositoryFormat(ParameterField.createValueField(RepositoryFormat.generic.name()))
             .build();
-    ArtifactDelegateResponse artifactDelegateResponse = ArtifactoryGenericArtifactDelegateResponse.builder().build();
+    ArtifactDelegateResponse artifactDelegateResponse =
+        ArtifactoryGenericArtifactDelegateResponse.builder().artifactPath("IMAGE").build();
 
     ArtifactOutcome artifactOutcome =
         ArtifactResponseToOutcomeMapper.toArtifactOutcome(artifactConfig, artifactDelegateResponse, true);
