@@ -22,6 +22,8 @@ import io.harness.exception.ngexception.beans.ScmErrorMetadataDTO;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.CommitFileRequest;
 import io.harness.gitsync.CommitFileResponse;
+import io.harness.gitsync.CreatePRRequest;
+import io.harness.gitsync.CreatePRResponse;
 import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.GetFileRequest;
 import io.harness.gitsync.GetFileResponse;
@@ -37,11 +39,13 @@ import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.scm.beans.SCMNoOpResponse;
 import io.harness.gitsync.scm.beans.ScmCommitFileResponse;
+import io.harness.gitsync.scm.beans.ScmCreatePRResponse;
 import io.harness.gitsync.scm.beans.ScmErrorDetails;
 import io.harness.gitsync.scm.beans.ScmGetFileResponse;
 import io.harness.gitsync.scm.beans.ScmGitMetaData;
 import io.harness.gitsync.scm.beans.ScmPushResponse;
 import io.harness.gitsync.scm.errorhandling.CommitFileScmErrorHandler;
+import io.harness.gitsync.scm.errorhandling.CreatePullRequestScmErrorHandler;
 import io.harness.gitsync.scm.errorhandling.GetFileScmErrorHandler;
 import io.harness.impl.ScmResponseStatusUtils;
 import io.harness.ng.core.EntityDetail;
@@ -70,6 +74,7 @@ public class SCMGitSyncHelper {
   @Inject GitSyncSdkService gitSyncSdkService;
   @Inject private GetFileScmErrorHandler getFileScmErrorHandler;
   @Inject private CommitFileScmErrorHandler commitFileScmErrorHandler;
+  @Inject private CreatePullRequestScmErrorHandler createPullRequestScmErrorHandler;
 
   public ScmPushResponse pushToGit(
       GitEntityInfo gitBranchInfo, String yaml, ChangeType changeType, EntityDetail entityDetail) {
@@ -132,6 +137,27 @@ public class SCMGitSyncHelper {
         ScmErrorDetails.builder().errorMessage(commitFileResponse.getError().getErrorMessage()).build());
 
     return ScmCommitFileResponse.builder().gitMetaData(getGitMetaData(commitFileResponse.getGitMetaData())).build();
+  }
+
+  public ScmCreatePRResponse createPullRequest(Scope scope, String repoName, String connectorRef, String sourceBranch,
+      String targetBranch, String title, Map<String, String> contextMap) {
+    final CreatePRRequest createPRRequest =
+        CreatePRRequest.newBuilder()
+            .setRepoName(repoName)
+            .setConnectorRef(connectorRef)
+            .setScopeIdentifiers(ScopeIdentifierMapper.getScopeIdentifiersFromScope(scope))
+            .setSourceBranch(sourceBranch)
+            .setTargetBranch(targetBranch)
+            .putAllContextMap(contextMap)
+            .build();
+
+    final CreatePRResponse createPRResponse = GitSyncGrpcClientUtils.retryAndProcessException(
+        harnessToGitPushInfoServiceBlockingStub::createPullRequest, createPRRequest);
+
+    createPullRequestScmErrorHandler.handlerAndThrowError(createPRResponse.getStatusCode(),
+        ScmErrorDetails.builder().errorMessage(createPRResponse.getError().getErrorMessage()).build());
+
+    return ScmCreatePRResponse.builder().prNumber(createPRResponse.getPrNumber()).build();
   }
 
   @VisibleForTesting
