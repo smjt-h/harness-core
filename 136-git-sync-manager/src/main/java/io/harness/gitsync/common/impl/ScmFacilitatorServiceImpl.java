@@ -114,16 +114,6 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
 
     // Put Error Handling
 
-    if (scmUpdateFileRequestDTO.isCreatePR()) {
-      createPR(ScmCreatePRRequestDTO.builder()
-                   .connectorRef(scmUpdateFileRequestDTO.getConnectorRef())
-                   .repoName(scmUpdateFileRequestDTO.getRepoName())
-                   .scope(scmUpdateFileRequestDTO.getScope())
-                   .sourceBranch(scmUpdateFileRequestDTO.getBranchName())
-                   .targetBranch(scmUpdateFileRequestDTO.getNewBranch())
-                   .build());
-    }
-
     return ScmCommitFileResponseDTO.builder()
         .commitId(updateFileResponse.getCommitId())
         .blobId(updateFileResponse.getBlobId())
