@@ -17,12 +17,15 @@ import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
 import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
 import io.harness.gitsync.common.dtos.ScmCreatePRRequestDTO;
 import io.harness.gitsync.common.dtos.ScmCreatePRResponseDTO;
+import io.harness.gitsync.common.dtos.ScmGetFileRequestDTO;
+import io.harness.gitsync.common.dtos.ScmGetFileResponseDTO;
 import io.harness.gitsync.common.dtos.ScmUpdateFileRequestDTO;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.service.ScmFacilitatorService;
 import io.harness.gitsync.common.service.ScmOrchestratorService;
 import io.harness.ng.beans.PageRequest;
 import io.harness.product.ci.scm.proto.CreateFileResponse;
+import io.harness.product.ci.scm.proto.FileContent;
 import io.harness.product.ci.scm.proto.UpdateFileResponse;
 
 import com.google.inject.Inject;
@@ -130,5 +133,22 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
         scope.getProjectIdentifier(), scope.getOrgIdentifier(), scope.getAccountIdentifier(),
         scmCreatePRRequestDTO.getConnectorRef());
     return ScmCreatePRResponseDTO.builder().prNumber(createPRDTO.getPrNumber()).build();
+  }
+
+  @Override
+  public ScmGetFileResponseDTO getFile(ScmGetFileRequestDTO scmGetFileRequestDTO) {
+    Scope scope = scmGetFileRequestDTO.getScope();
+    FileContent fileContent = scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
+        -> scmClientFacilitatorService.getFile(scope.getAccountIdentifier(), scope.getOrgIdentifier(),
+            scope.getProjectIdentifier(), scmGetFileRequestDTO.getConnectorRef(), scmGetFileRequestDTO.getRepoName(),
+            scmGetFileRequestDTO.getBranchName(), scmGetFileRequestDTO.getFilePath(),
+            scmGetFileRequestDTO.getCommitId()),
+        scope.getProjectIdentifier(), scope.getOrgIdentifier(), scope.getAccountIdentifier(),
+        scmGetFileRequestDTO.getConnectorRef());
+    return ScmGetFileResponseDTO.builder()
+        .fileContent(fileContent.getContent())
+        .blobId(fileContent.getBlobId())
+        .commitId(fileContent.getCommitId())
+        .build();
   }
 }
