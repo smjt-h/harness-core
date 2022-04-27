@@ -51,6 +51,7 @@ public class BusinessMappingServiceImpl implements BusinessMappingService {
 
   @Override
   public BusinessMapping update(BusinessMapping businessMapping) {
+    updateBusinessMapping(businessMapping);
     return businessMappingDao.update(businessMapping);
   }
 
