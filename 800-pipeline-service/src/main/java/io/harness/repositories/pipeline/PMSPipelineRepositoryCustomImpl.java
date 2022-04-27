@@ -243,8 +243,10 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
   @Override
   public PipelineEntity updatePipelineMetadata(
       String accountId, String orgIdentifier, String projectIdentifier, Criteria criteria, Update update) {
-    criteria = gitAwarePersistence.makeCriteriaGitAware(
-        accountId, orgIdentifier, projectIdentifier, PipelineEntity.class, criteria);
+    if (GitContextHelper.isOldFlow()) {
+      criteria = gitAwarePersistence.makeCriteriaGitAware(
+          accountId, orgIdentifier, projectIdentifier, PipelineEntity.class, criteria);
+    }
     Query query = new Query(criteria);
     RetryPolicy<Object> retryPolicy = getRetryPolicyForPipelineUpdate();
     return Failsafe.with(retryPolicy)
