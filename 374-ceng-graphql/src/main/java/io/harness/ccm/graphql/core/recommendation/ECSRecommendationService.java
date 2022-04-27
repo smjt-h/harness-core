@@ -31,7 +31,9 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Singleton
 public class ECSRecommendationService {
   private static final int NUMBER_OF_BUCKETS = 1000;
@@ -40,14 +42,19 @@ public class ECSRecommendationService {
   @Nullable
   public ECSRecommendationDTO getECSRecommendationById(@NonNull final String accountIdentifier, String id,
       @NonNull OffsetDateTime startTime, @NonNull OffsetDateTime endTime) {
+    log.info("getting ecs recommendation by id");
     final Optional<ECSServiceRecommendation> ecsRecommendation =
         ecsRecommendationDAO.fetchECSRecommendationById(accountIdentifier, id);
+
+    log.info("ECS Recommendation: {}", ecsRecommendation);
 
     if (!ecsRecommendation.isPresent()) {
       return ECSRecommendationDTO.builder().build();
     }
 
     ECSServiceRecommendation recommendation = ecsRecommendation.get();
+
+    log.info("Getting partial Histograms");
 
     final List<ECSPartialRecommendationHistogram> histogramList =
         ecsRecommendationDAO.fetchPartialRecommendationHistograms(accountIdentifier, recommendation.getClusterId(),
@@ -76,6 +83,8 @@ public class ECSRecommendationService {
     HistogramCheckpoint cpuHistogramCp = cpuHistogram.saveToCheckpoint();
     StrippedHistogram memStripped = StrippedHistogram.fromCheckpoint(memoryHistogramCp, NUMBER_OF_BUCKETS);
     StrippedHistogram cpuStripped = StrippedHistogram.fromCheckpoint(cpuHistogramCp, NUMBER_OF_BUCKETS);
+
+    log.info("Merged partial Histograms");
 
     return ECSRecommendationDTO.builder()
         .id(recommendation.getUuid())
