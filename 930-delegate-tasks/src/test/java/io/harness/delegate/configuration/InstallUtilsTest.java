@@ -80,8 +80,8 @@ public class InstallUtilsTest {
     assertThat(useCdn).isFalse();
 
     assertThat(InstallUtils.getScmDownloadUrl(delegateConfiguration))
-        .isEqualTo("https://app.harness.io/storage/harness-download/harness-scm/release/ac57c25/bin/" + osPath
-            + "/amd64/scm");
+        .isEqualTo(
+            "https://app.harness.io/storage/harness-download/harness-scm/release/ac57c25/bin/" + osPath + "/amd64/scm");
   }
 
   @Test
