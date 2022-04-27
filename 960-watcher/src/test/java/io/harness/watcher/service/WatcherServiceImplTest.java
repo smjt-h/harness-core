@@ -61,7 +61,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 @OwnedBy(HarnessTeam.DEL)
 public class WatcherServiceImplTest extends CategoryTest {
   @Mock private TimeLimiter timeLimiter;
-  @Mock private MessageService messageService;
   @Mock private WatcherConfiguration watcherConfiguration;
   @InjectMocks @Spy private WatcherServiceImpl watcherService;
 
