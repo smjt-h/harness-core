@@ -90,6 +90,7 @@ public class UpdateNameInAwsInfrastructureMappingMigration implements Migration 
               .region(infrastructureMapping.getRegion())
               .awsInstanceFilter(infrastructureMapping.getAwsInstanceFilter())
               .autoScalingGroupName(infrastructureMapping.getAutoScalingGroupName())
+              .provisionInstances(infrastructureMapping.isProvisionInstances())
               .build();
 
       String newName = infrastructureDefinitionHelper.getNameFromInfraDefinition(
