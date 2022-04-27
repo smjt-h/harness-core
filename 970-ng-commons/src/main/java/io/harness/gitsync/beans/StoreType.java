@@ -5,7 +5,7 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.gitsync.v2;
+package io.harness.gitsync.beans;
 
 public enum StoreType {
   // Will be used when entity is not persisted on git but rather live in DATABASE

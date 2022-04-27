@@ -8,6 +8,7 @@
 package io.harness.gitsync.v2;
 
 import io.harness.beans.WithIdentifier;
+import io.harness.gitsync.beans.StoreType;
 import io.harness.persistence.PersistentEntity;
 
 /**

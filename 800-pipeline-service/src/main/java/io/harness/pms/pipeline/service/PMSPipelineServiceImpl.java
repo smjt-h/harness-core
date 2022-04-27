@@ -177,6 +177,9 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
   public PipelineEntity updatePipelineYaml(PipelineEntity pipelineEntity, ChangeType changeType) {
     PMSPipelineServiceHelper.validatePresenceOfRequiredFields(pipelineEntity.getAccountId(),
         pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getIdentifier());
+    if (!GitContextHelper.isOldFlow()) {
+      return makePipelineUpdateCall(pipelineEntity, null, changeType);
+    }
 
     if (GitContextHelper.getGitEntityInfo() != null && GitContextHelper.getGitEntityInfo().isNewBranch()) {
       // sending old entity as null here because a new mongo entity will be created. If audit trail needs to be added

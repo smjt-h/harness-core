@@ -17,7 +17,7 @@ import io.harness.data.validator.EntityName;
 import io.harness.data.validator.Trimmed;
 import io.harness.gitsync.persistance.GitSyncableEntity;
 import io.harness.gitsync.v2.GitAware;
-import io.harness.gitsync.v2.StoreType;
+import io.harness.gitsync.beans.StoreType;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.MongoIndex;
@@ -99,7 +99,7 @@ public class PipelineEntity
   @Trimmed @NotEmpty String projectIdentifier;
   @NotEmpty String identifier;
 
-  @Wither @NotEmpty String yaml;
+  @Wither @NotEmpty @NonFinal @Setter String yaml;
 
   @Setter @NonFinal @SchemaIgnore @FdIndex @CreatedDate long createdAt;
   @Setter @NonFinal @SchemaIgnore @NotNull @LastModifiedDate long lastUpdatedAt;

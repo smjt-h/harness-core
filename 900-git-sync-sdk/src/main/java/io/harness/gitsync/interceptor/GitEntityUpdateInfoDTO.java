@@ -11,7 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.gitsync.sdk.GitSyncApiConstants;
-import io.harness.gitsync.v2.StoreType;
+import io.harness.gitsync.beans.StoreType;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;

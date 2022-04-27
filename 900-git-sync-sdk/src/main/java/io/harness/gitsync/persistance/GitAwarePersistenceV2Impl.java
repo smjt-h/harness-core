@@ -14,7 +14,7 @@ import io.harness.gitsync.beans.GitContextRequestParams;
 import io.harness.gitsync.entityInfo.GitSdkEntityHandlerInterface;
 import io.harness.gitsync.scm.SCMGitSyncHelper;
 import io.harness.gitsync.v2.GitAware;
-import io.harness.gitsync.v2.StoreType;
+import io.harness.gitsync.beans.StoreType;
 import io.harness.utils.RetryUtils;
 
 import com.google.common.collect.ImmutableList;

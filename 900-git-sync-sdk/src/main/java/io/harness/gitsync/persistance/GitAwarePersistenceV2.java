@@ -12,7 +12,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.beans.GitContextRequestParams;
 import io.harness.gitsync.v2.GitAware;
-import io.harness.gitsync.v2.StoreType;
+import io.harness.gitsync.beans.StoreType;
 
 import java.util.Optional;
 import java.util.function.Supplier;

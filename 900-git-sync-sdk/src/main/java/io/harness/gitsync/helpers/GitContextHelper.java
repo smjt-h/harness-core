@@ -96,4 +96,9 @@ public class GitContextHelper {
     }
     return gitMetaDataContext.getScmGitMetaData();
   }
+
+  public boolean isOldFlow() {
+    GitEntityInfo gitEntityInfo = getGitEntityInfo();
+    return gitEntityInfo == null || gitEntityInfo.getStoreType() == null;
+  }
 }

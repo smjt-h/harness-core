@@ -12,6 +12,7 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
+import io.harness.gitsync.beans.StoreType;
 import io.harness.gitsync.sdk.EntityGitDetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -40,6 +41,8 @@ public class GitEntityInfo {
   String commitId; // used for passing commitId in case of g2h.
   Boolean isFullSyncFlow;
   String resolvedConflictCommitId;
+  StoreType storeType;
+  String connectorRef;
 
   public boolean isNull() {
     // todo @Abhinav Maybe we should use null in place of default

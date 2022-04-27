@@ -33,6 +33,15 @@ public class PMSPipelineFilterHelper {
     return update;
   }
 
+  public Update getUpdateOperationsForSimplifiedGitExperience(PipelineEntity pipelineEntity) {
+    Update update = getUpdateOperations(pipelineEntity);
+    update.set(PipelineEntityKeys.repo, pipelineEntity.getRepo());
+    update.set(PipelineEntityKeys.connectorRef, pipelineEntity.getConnectorRef());
+    update.set(PipelineEntityKeys.storeType, pipelineEntity.getStoreType());
+    update.set(PipelineEntityKeys.filePath, pipelineEntity.getFilePath());
+    return update;
+  }
+
   public Update getUpdateOperationsForDelete() {
     Update update = new Update();
     update.set(PipelineEntityKeys.deleted, true);
