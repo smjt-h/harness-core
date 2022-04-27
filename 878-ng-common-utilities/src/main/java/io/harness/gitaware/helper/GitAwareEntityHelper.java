@@ -41,4 +41,6 @@ public class GitAwareEntityHelper {
     GitContextHelper.updateScmGitMetaData(scmGetFileResponse.getGitMetaData());
     return entity;
   }
+
+  public void pushEntityToRemoteAndCreatePR() {}
 }
