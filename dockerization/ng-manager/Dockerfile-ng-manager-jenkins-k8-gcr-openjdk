@@ -11,7 +11,7 @@ COPY scripts /opt/harness
 
 RUN chmod +x /opt/harness/*.sh
 RUN mkdir /opt/harness/plugins
-
+EXPOSE 5005
 WORKDIR /opt/harness
 
 CMD [ "./run.sh" ]
