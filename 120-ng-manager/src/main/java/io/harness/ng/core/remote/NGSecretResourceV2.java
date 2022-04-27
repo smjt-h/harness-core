@@ -561,5 +561,4 @@ public class NGSecretResourceV2 {
     return ResponseDTO.newResponse(encryptedDataService.getEncryptionDetails(
         ngAccessWithEncryptionConsumer.getNgAccess(), ngAccessWithEncryptionConsumer.getDecryptableEntity()));
   }
-
 }
