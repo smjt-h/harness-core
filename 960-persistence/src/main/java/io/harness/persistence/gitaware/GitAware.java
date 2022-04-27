@@ -5,7 +5,7 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.gitsync.v2;
+package io.harness.persistence.gitaware;
 
 import io.harness.beans.WithIdentifier;
 import io.harness.gitsync.beans.StoreType;

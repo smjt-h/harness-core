@@ -10,11 +10,11 @@ package io.harness.gitsync.persistance;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.git.model.ChangeType;
-import io.harness.gitsync.beans.GitContextRequestParams;
+import io.harness.gitaware.dto.GitContextRequestParams;
+import io.harness.gitsync.beans.StoreType;
 import io.harness.gitsync.entityInfo.GitSdkEntityHandlerInterface;
 import io.harness.gitsync.scm.SCMGitSyncHelper;
-import io.harness.gitsync.v2.GitAware;
-import io.harness.gitsync.beans.StoreType;
+import io.harness.persistence.gitaware.GitAware;
 import io.harness.utils.RetryUtils;
 
 import com.google.common.collect.ImmutableList;

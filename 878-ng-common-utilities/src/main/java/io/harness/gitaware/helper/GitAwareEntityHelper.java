@@ -5,15 +5,16 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.gitsync.helpers;
+package io.harness.gitaware.helper;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
-import io.harness.gitsync.beans.GitContextRequestParams;
+import io.harness.gitaware.dto.GitContextRequestParams;
+import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.scm.SCMGitSyncHelper;
 import io.harness.gitsync.scm.beans.ScmGetFileResponse;
-import io.harness.gitsync.v2.GitAware;
+import io.harness.persistence.gitaware.GitAware;
 
 import com.google.inject.Inject;
 import groovy.lang.Singleton;
