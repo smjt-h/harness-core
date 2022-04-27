@@ -16,7 +16,6 @@ import static software.wings.beans.AwsInfrastructureMapping.Builder.anAwsInfrast
 import static software.wings.beans.InfrastructureType.AWS_INSTANCE;
 
 import static java.lang.String.format;
-import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toList;
 
 import io.harness.annotations.dev.HarnessModule;
@@ -39,8 +38,6 @@ import software.wings.service.impl.yaml.handler.InfraDefinition.CloudProviderInf
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -73,10 +70,6 @@ public class AwsInstanceInfrastructure
   private boolean provisionInstances;
   private Map<String, String> expressions;
 
-  private boolean createAwsInstanceFilter() {
-    return !provisionInstances && awsInstanceFilter == null;
-  }
-
   @Override
   public InfrastructureMapping getInfraMapping() {
     AwsInfrastructureMapping infrastructureMapping = anAwsInfrastructureMapping()
@@ -94,7 +87,7 @@ public class AwsInstanceInfrastructure
                                                          .withAwsInstanceFilter(awsInstanceFilter)
                                                          .withInfraMappingType(InfrastructureMappingType.AWS_SSH.name())
                                                          .build();
-    if (createAwsInstanceFilter()) {
+    if (!provisionInstances && awsInstanceFilter == null) {
       infrastructureMapping.setAwsInstanceFilter(AwsInstanceFilter.builder().build());
     }
     return infrastructureMapping;
@@ -119,19 +112,6 @@ public class AwsInstanceInfrastructure
   public Set<String> getSupportedExpressions() {
     return ImmutableSet.of(AwsInstanceInfrastructureKeys.autoScalingGroupName, AwsInstanceInfrastructureKeys.region,
         AwsInstanceFilterKeys.vpcIds, AwsInstanceFilterKeys.tags, AwsInstanceInfrastructureKeys.loadBalancerId);
-  }
-
-  @Override
-  public Set<String> getUserDefinedUniqueInfraFields() {
-    Set<String> fields = new HashSet<>(Collections.singletonList(AwsInstanceInfrastructureKeys.awsInstanceFilter));
-    if (null != awsInstanceFilter) {
-      return fields;
-    } else if (createAwsInstanceFilter()) {
-      awsInstanceFilter = AwsInstanceFilter.builder().build();
-      return fields;
-    }
-
-    return emptySet();
   }
 
   @Override
