@@ -51,9 +51,10 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
   public ScmCommitFileResponseDTO createFile(ScmCreateFileRequestDTO scmCreateFileRequestDTO) {
     ScopeIdentifiers scopeIdentifiers = scmCreateFileRequestDTO.getScopeIdentifiers();
     // TODO Check connector fetch logic
-    ScmConnector scmConnector = gitSyncConnectorHelper.getScmConnector(scopeIdentifiers.getAccountIdentifier(),
-        scopeIdentifiers.getOrgIdentifier(), scopeIdentifiers.getProjectIdentifier(),
-        scmCreateFileRequestDTO.getConnectorRef());
+    ScmConnector scmConnector =
+        gitSyncConnectorHelper.getScmConnectorForGivenRepo(scopeIdentifiers.getAccountIdentifier(),
+            scopeIdentifiers.getOrgIdentifier(), scopeIdentifiers.getProjectIdentifier(),
+            scmCreateFileRequestDTO.getConnectorRef(), scmCreateFileRequestDTO.getRepoName());
     CreateFileResponse createFileResponse =
         scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
             -> scmClientFacilitatorService.createFile(InfoForGitPush.builder()
@@ -82,9 +83,10 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
   @Override
   public ScmCommitFileResponseDTO updateFile(ScmUpdateFileRequestDTO scmUpdateFileRequestDTO) {
     ScopeIdentifiers scopeIdentifiers = scmUpdateFileRequestDTO.getScopeIdentifiers();
-    ScmConnector scmConnector = gitSyncConnectorHelper.getScmConnector(scopeIdentifiers.getAccountIdentifier(),
-        scopeIdentifiers.getOrgIdentifier(), scopeIdentifiers.getProjectIdentifier(),
-        scmUpdateFileRequestDTO.getConnectorRef());
+    ScmConnector scmConnector =
+        gitSyncConnectorHelper.getScmConnectorForGivenRepo(scopeIdentifiers.getAccountIdentifier(),
+            scopeIdentifiers.getOrgIdentifier(), scopeIdentifiers.getProjectIdentifier(),
+            scmUpdateFileRequestDTO.getConnectorRef(), scmUpdateFileRequestDTO.getRepoName());
     UpdateFileResponse updateFileResponse =
         scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
             -> scmClientFacilitatorService.updateFile(InfoForGitPush.builder()

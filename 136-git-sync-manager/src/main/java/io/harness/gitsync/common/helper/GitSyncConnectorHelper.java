@@ -213,6 +213,13 @@ public class GitSyncConnectorHelper {
         USER);
   }
 
+  public ScmConnector getScmConnectorForGivenRepo(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef, String repoName) {
+    ScmConnector scmConnector = getScmConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
+    scmConnector.setUrl(scmConnector.getGitConnectionUrl(repoName));
+    return scmConnector;
+  }
+
   public ScmConnector getDecryptedConnector(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef, String repoUrl) {
     YamlGitConfigDTO yamlGitConfigDTO =
