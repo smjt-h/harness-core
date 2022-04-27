@@ -128,11 +128,11 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
   }
 
   @Override
-  public void createPullRequest(CreatePRRequest createPRRequest, StreamObserver<CreatePRResponse> responseObserver) {
+  public void createPullRequest(CreatePRRequest request, StreamObserver<CreatePRResponse> responseObserver) {
     CreatePRResponse createPRResponse;
     try (GlobalContextManager.GlobalContextGuard guard = GlobalContextManager.ensureGlobalContextGuard();
          MdcContextSetter ignore1 = new MdcContextSetter(request.getContextMapMap())) {
-      createPRResponse = harnessToGitHelperService.createPullRequest(createPRRequest);
+      createPRResponse = harnessToGitHelperService.createPullRequest(request);
     } catch (Exception ex) {
       log.error("Faced exception during createPullRequest GIT call", ex);
       final String errorMessage = ExceptionUtils.getMessage(ex);
