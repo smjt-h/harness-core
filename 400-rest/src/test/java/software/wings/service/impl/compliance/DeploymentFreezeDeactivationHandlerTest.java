@@ -11,9 +11,10 @@ import static io.harness.rule.OwnerRule.PRABU;
 
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 import io.harness.annotations.dev.HarnessModule;
@@ -34,38 +35,33 @@ import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 @TargetModule(HarnessModule._953_EVENTS_API)
-@RunWith(PowerMockRunner.class)
 @OwnedBy(HarnessTeam.CDC)
 @PrepareForTest({System.class, DeploymentFreezeDeactivationHandler.class})
 @PowerMockIgnore({"javax.security.*", "javax.net.*"})
 public class DeploymentFreezeDeactivationHandlerTest extends WingsBaseTest {
   @Mock DeploymentFreezeUtils deploymentFreezeUtils;
   @Inject @InjectMocks DeploymentFreezeDeactivationHandler deploymentFreezeDeactivationHandler;
-
   private long mockCurrentTime = 1000000L;
 
   @Before
   public void setup() {
-    initMocks(this);
-    mockStatic(System.class);
+    spy(System.class);
     when(System.currentTimeMillis()).thenReturn(mockCurrentTime);
   }
+
   @Test
   @Owner(developers = PRABU)
   @Category(UnitTests.class)
   public void shouldDoNothingForNoFreezeWindows() {
     deploymentFreezeDeactivationHandler.handle(GovernanceConfig.builder().build());
-    Mockito.verify(deploymentFreezeUtils, Mockito.never()).handleDeActivationEvent(any(), Matchers.anyString());
+    Mockito.verify(deploymentFreezeUtils, Mockito.never()).handleDeActivationEvent(any(), anyString());
   }
 
   @Test
@@ -80,7 +76,7 @@ public class DeploymentFreezeDeactivationHandlerTest extends WingsBaseTest {
                                   .build()))
             .build();
     deploymentFreezeDeactivationHandler.handle(governanceConfig);
-    Mockito.verify(deploymentFreezeUtils, Mockito.never()).handleDeActivationEvent(any(), Matchers.anyString());
+    Mockito.verify(deploymentFreezeUtils, Mockito.never()).handleDeActivationEvent(any(), anyString());
   }
 
   @Test
@@ -105,6 +101,6 @@ public class DeploymentFreezeDeactivationHandlerTest extends WingsBaseTest {
                                             .build();
 
     deploymentFreezeDeactivationHandler.handle(governanceConfig);
-    Mockito.verify(deploymentFreezeUtils, Mockito.times(2)).handleDeActivationEvent(any(), Matchers.eq(ACCOUNT_ID));
+    Mockito.verify(deploymentFreezeUtils, Mockito.times(2)).handleDeActivationEvent(any(), eq(ACCOUNT_ID));
   }
 }

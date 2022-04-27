@@ -110,12 +110,8 @@ public class HelmTaskHelperBaseTest extends CategoryTest {
     doReturn("v2/helm").when(k8sGlobalConfigService).getHelmPath(HelmVersion.V2);
     doReturn("v3/helm").when(k8sGlobalConfigService).getHelmPath(V3);
 
-    doReturn(processExecutor)
-        .when(helmTaskHelperBase)
-        .createProcessExecutor(anyString(), anyString(), anyLong(), anyMap());
-    doReturn(processExecutor)
-        .when(helmTaskHelperBase)
-        .createProcessExecutor(anyString(), anyString(), anyLong(), anyMap());
+    doReturn(processExecutor).when(helmTaskHelperBase).createProcessExecutor(any(), any(), anyLong(), anyMap());
+    doReturn(processExecutor).when(helmTaskHelperBase).createProcessExecutor(any(), any(), anyLong(), anyMap());
   }
 
   @Test
@@ -915,6 +911,7 @@ public class HelmTaskHelperBaseTest extends CategoryTest {
         .startChartMuseumServer(helmChartManifestDelegateConfig.getStoreDelegateConfig(), RESOURCE_DIR_BASE);
     doAnswer(new Answer() {
       private int count = 0;
+
       public Object answer(InvocationOnMock invocation) throws TimeoutException {
         if (count++ == 0) {
           return new ProcessResult(0, null);
