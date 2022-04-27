@@ -349,6 +349,7 @@ public class ResourceConstraintServiceImpl implements ResourceConstraintService,
 
         HoldingScope scope = HoldingScope.valueOf(instance.getReleaseEntityType());
         switch (scope) {
+          case PIPELINE:
           case WORKFLOW: {
             final WorkflowExecution workflowExecution = workflowExecutionService.fetchWorkflowExecution(
                 instance.getAppId(), instance.getReleaseEntityId(), WorkflowExecutionKeys.name);

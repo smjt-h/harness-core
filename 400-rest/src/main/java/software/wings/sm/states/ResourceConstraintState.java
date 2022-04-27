@@ -162,12 +162,17 @@ public class ResourceConstraintState extends State {
       permits -= acquiredPermits;
     }
 
-    WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
-
     String releaseEntityId = null;
     switch (HoldingScope.valueOf(holdingScope)) {
       case PIPELINE:
-        releaseEntityId = ResourceConstraintService.releaseEntityId(workflowStandardParams.getWorkflowElement().getPipelineDeploymentUuid());
+        WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
+        String pipelineDeploymentUuid = workflowStandardParams.getWorkflowElement().getPipelineDeploymentUuid();
+        if (pipelineDeploymentUuid == null) {
+          throw new InvalidRequestException(
+            "Resource constraint with holding scope 'Pipeline' cannot be used outside a pipeline");
+        }
+        releaseEntityId = ResourceConstraintService.releaseEntityId(pipelineDeploymentUuid);
+
         break;
       case WORKFLOW:
         releaseEntityId = ResourceConstraintService.releaseEntityId(context.getWorkflowExecutionId());
@@ -322,7 +327,12 @@ public class ResourceConstraintState extends State {
     String parentReleaseEntityId;
     String appId = executionContext.fetchRequiredApp().getUuid();
     switch (HoldingScope.valueOf(holdingScope)) {
-
+      case PIPELINE:
+        WorkflowStandardParams workflowStandardParams = executionContext.getContextElement(ContextElementType.STANDARD);
+        String pipelineDeploymentUuid = workflowStandardParams.getWorkflowElement().getPipelineDeploymentUuid();
+        releaseEntityId = ResourceConstraintService.releaseEntityId(pipelineDeploymentUuid);
+        currentlyAcquiredPermits +=
+            resourceConstraintService.getAllCurrentlyAcquiredPermits(holdingScope, releaseEntityId, appId);
       case WORKFLOW:
         releaseEntityId = ResourceConstraintService.releaseEntityId(executionContext.getWorkflowExecutionId());
         currentlyAcquiredPermits +=
@@ -334,6 +344,7 @@ public class ResourceConstraintState extends State {
         parentReleaseEntityId = ResourceConstraintService.releaseEntityId(executionContext.getWorkflowExecutionId());
         releaseEntityId = ResourceConstraintService.releaseEntityId(
             executionContext.getWorkflowExecutionId(), phaseElement.getPhaseName());
+            // should add pipeline permits?
         return resourceConstraintService.getAllCurrentlyAcquiredPermits(PHASE.name(), releaseEntityId, appId)
             + resourceConstraintService.getAllCurrentlyAcquiredPermits(WORKFLOW.name(), parentReleaseEntityId, appId);
       default:
