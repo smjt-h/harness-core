@@ -27,6 +27,9 @@ public interface GitAware extends PersistentEntity, WithIdentifier {
   // Repo in which the entity will be saved
   String getRepo();
 
+  // File path of the yaml of the entity
+  String getFilePath();
+
   // Connector Identifier which will be used connect to the repo
   String getConnectorRef();
 }
