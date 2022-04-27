@@ -70,7 +70,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.Optional;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Test;
