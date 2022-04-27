@@ -176,7 +176,7 @@ public class FileStoreResource {
   }
 
   @GET
-  @Path("file/{fileIdentifier}/download")
+  @Path("files/{identifier}/download")
   @ApiOperation(value = "Download file", nickname = "downloadFile")
   @Operation(operationId = "downloadFile", summary = "Download File",
       responses =
@@ -190,7 +190,7 @@ public class FileStoreResource {
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
       @Parameter(description = FILE_PARAM_MESSAGE) @PathParam(
-          NGCommonEntityConstants.FILE_IDENTIFIER_KEY) @NotBlank @EntityIdentifier String fileIdentifier) {
+          NGCommonEntityConstants.IDENTIFIER_KEY) @NotBlank @EntityIdentifier String fileIdentifier) {
     accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
         Resource.of(FILE, fileIdentifier), FILE_VIEW_PERMISSION);
 
@@ -271,7 +271,7 @@ public class FileStoreResource {
   }
 
   @POST
-  @Path("/yaml")
+  @Path("yaml")
   @Consumes({APPLICATION_YAML_MEDIA_TYPE})
   @ApiOperation(value = "Create file or folder via YAML", nickname = "createViaYAML")
   @Operation(operationId = "createViaYAML", summary = "Creates file or folder via YAML",
@@ -322,7 +322,7 @@ public class FileStoreResource {
 
   @GET
   @Consumes({"application/json"})
-  @Path("{identifier}/referenced-by")
+  @Path("files/{identifier}/referenced-by")
   @ApiOperation(value = "Get referenced by entities", nickname = "getReferencedBy")
   @Operation(operationId = "getReferencedBy", summary = "Get Referenced by Entities.",
       responses =
@@ -351,7 +351,7 @@ public class FileStoreResource {
 
   @POST
   @Consumes({"application/json"})
-  @Path("filter")
+  @Path("files/filter")
   @ApiOperation(value = "Gets the filtered list of files", nickname = "listFilesWithFilter")
   @Operation(operationId = "listFilesWithFilter", summary = "Get filtered list of files.",
       responses =
@@ -375,7 +375,7 @@ public class FileStoreResource {
 
   @GET
   @Consumes({"application/json"})
-  @Path("createdBy")
+  @Path("files/createdBy")
   @ApiOperation(value = "Get list of created by usernames", nickname = "getCreatedByList")
   @Operation(operationId = "getCreatedByList", summary = "Get list of created by usernames.",
       responses =

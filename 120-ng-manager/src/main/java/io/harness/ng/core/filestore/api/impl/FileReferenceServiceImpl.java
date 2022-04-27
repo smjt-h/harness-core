@@ -25,22 +25,20 @@ import io.harness.utils.IdentifierRefHelper;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 
 @OwnedBy(CDP)
-@Slf4j
 @Singleton
+@AllArgsConstructor(onConstructor = @__({ @Inject }))
+@Slf4j
 public class FileReferenceServiceImpl implements FileReferenceService {
   public static final String REFERRED_BY_IDENTIFIER_KEY =
       EntitySetupUsageKeys.referredByEntity + "." + EntityDetailKeys.entityRef + "." + ResourceKeys.identifier;
-  private final EntitySetupUsageService entitySetupUsageService;
 
-  @Inject
-  public FileReferenceServiceImpl(EntitySetupUsageService entitySetupUsageService) {
-    this.entitySetupUsageService = entitySetupUsageService;
-  }
+  private final EntitySetupUsageService entitySetupUsageService;
 
   @Override
   public boolean isFileReferencedByOtherEntities(NGFile file) {

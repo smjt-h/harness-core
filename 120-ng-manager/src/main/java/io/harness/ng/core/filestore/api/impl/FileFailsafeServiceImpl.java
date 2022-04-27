@@ -18,16 +18,17 @@ import io.harness.ng.core.entities.NGFile;
 import io.harness.ng.core.events.filestore.FileCreateEvent;
 import io.harness.ng.core.events.filestore.FileDeleteEvent;
 import io.harness.ng.core.events.filestore.FileUpdateEvent;
+import io.harness.ng.core.filestore.api.FileActivityService;
 import io.harness.ng.core.filestore.api.FileFailsafeService;
 import io.harness.ng.core.filestore.dto.FileDTO;
 import io.harness.ng.core.mapper.FileDTOMapper;
 import io.harness.outbox.api.OutboxService;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
+import io.harness.utils.FullyQualifiedIdentifierHelper;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -43,14 +44,16 @@ public class FileFailsafeServiceImpl implements FileFailsafeService {
   private final OutboxService outboxService;
   private final TransactionTemplate transactionTemplate;
   private final FileStoreRepository fileStoreRepository;
+  private final FileActivityService fileActivityService;
 
   @Inject
   public FileFailsafeServiceImpl(OutboxService outboxService,
       @Named(OUTBOX_TRANSACTION_TEMPLATE) TransactionTemplate transactionTemplate,
-      FileStoreRepository fileStoreRepository) {
+      FileStoreRepository fileStoreRepository, FileActivityService fileActivityService) {
     this.outboxService = outboxService;
     this.transactionTemplate = transactionTemplate;
     this.fileStoreRepository = fileStoreRepository;
+    this.fileActivityService = fileActivityService;
   }
 
   @Override
@@ -59,7 +62,9 @@ public class FileFailsafeServiceImpl implements FileFailsafeService {
       return Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
         NGFile savedNgFile = fileStoreRepository.save(ngFile);
         FileDTO fileDTOFromSavedNGFile = FileDTOMapper.getFileDTOFromNGFile(savedNgFile);
-        outboxService.save(new FileCreateEvent(ngFile.getAccountIdentifier(), fileDTOFromSavedNGFile));
+
+        createFileCreationActivity(fileDTOFromSavedNGFile);
+        outboxService.save(new FileCreateEvent(fileDTOFromSavedNGFile.getAccountIdentifier(), fileDTOFromSavedNGFile));
         return fileDTOFromSavedNGFile;
       }));
     } catch (DuplicateKeyException ex) {
@@ -70,13 +75,21 @@ public class FileFailsafeServiceImpl implements FileFailsafeService {
 
   @Override
   public FileDTO updateAndPublish(NGFile oldNGFile, NGFile newNGFile) {
-    FileDTO oldFileDTOClone = (FileDTO) HObjectMapper.clone(FileDTOMapper.getFileDTOFromNGFile(oldNGFile));
-    return Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
-      NGFile newNgFile = fileStoreRepository.save(newNGFile);
-      FileDTO newFileDTO = FileDTOMapper.getFileDTOFromNGFile(newNgFile);
-      outboxService.save(new FileUpdateEvent(newFileDTO.getAccountIdentifier(), newFileDTO, oldFileDTOClone));
-      return newFileDTO;
-    }));
+    try {
+      return Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
+        NGFile newNgFile = fileStoreRepository.save(newNGFile);
+        FileDTO newFileDTO = FileDTOMapper.getFileDTOFromNGFile(newNgFile);
+        FileDTO oldFileDTO = FileDTOMapper.getFileDTOFromNGFile(oldNGFile);
+
+        createFileUpdateActivity(newFileDTO);
+        outboxService.save(new FileUpdateEvent(newFileDTO.getAccountIdentifier(), newFileDTO, oldFileDTO));
+        return newFileDTO;
+      }));
+    } catch (DuplicateKeyException ex) {
+      throw new DuplicateFieldException(String.format("Try using another name, [%s] already exists with root [%s]",
+                                            newNGFile.getName(), newNGFile.getParentIdentifier()),
+          USER, ex);
+    }
   }
 
   @Override
@@ -84,6 +97,9 @@ public class FileFailsafeServiceImpl implements FileFailsafeService {
     try {
       return Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
         fileStoreRepository.delete(ngFile);
+
+        deleteActivities(ngFile.getAccountIdentifier(), ngFile.getOrgIdentifier(), ngFile.getProjectIdentifier(),
+            ngFile.getIdentifier());
         outboxService.save(
             new FileDeleteEvent(ngFile.getAccountIdentifier(), FileDTOMapper.getFileDTOFromNGFile(ngFile)));
         log.info("{} [{}] deleted.", ngFile.isFile() ? "File" : "Folder", ngFile.getName());
@@ -92,6 +108,35 @@ public class FileFailsafeServiceImpl implements FileFailsafeService {
     } catch (Exception ex) {
       log.error("Failed to delete {} [{}].", ngFile.isFile() ? "file" : "folder", ngFile.getName(), ex);
       return false;
+    }
+  }
+
+  private void createFileCreationActivity(FileDTO fileDTO) {
+    try {
+      fileActivityService.createFileCreationActivity(fileDTO.getAccountIdentifier(), fileDTO);
+    } catch (Exception ex) {
+      log.error("Error while creating file creation activity, name: {}, identifier: {}", fileDTO.getName(),
+          fileDTO.getIdentifier(), ex);
+    }
+  }
+
+  private void createFileUpdateActivity(FileDTO fileDTO) {
+    try {
+      fileActivityService.createFileUpdateActivity(fileDTO.getAccountIdentifier(), fileDTO);
+    } catch (Exception ex) {
+      log.error("Error while creating file update activity, name: {}, identifier: {}", fileDTO.getName(),
+          fileDTO.getIdentifier(), ex);
+    }
+  }
+
+  private void deleteActivities(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier) {
+    try {
+      String fullyQualifiedIdentifier = FullyQualifiedIdentifierHelper.getFullyQualifiedIdentifier(
+          accountIdentifier, orgIdentifier, projectIdentifier, identifier);
+      fileActivityService.deleteAllActivities(accountIdentifier, fullyQualifiedIdentifier);
+    } catch (Exception ex) {
+      log.error("Error while deleting file activity identifier: {}", identifier, ex);
     }
   }
 }

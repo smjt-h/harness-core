@@ -57,6 +57,7 @@ import software.wings.service.intfc.FileService;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.serializer.HObjectMapper;
 import java.io.File;
 import java.io.InputStream;
 import java.util.List;
@@ -64,6 +65,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -75,6 +77,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 
 @OwnedBy(CDP)
 @Singleton
+@AllArgsConstructor(onConstructor = @__({ @Inject }))
 @Slf4j
 public class FileStoreServiceImpl implements FileStoreService {
   private final FileService fileService;
@@ -83,18 +86,6 @@ public class FileStoreServiceImpl implements FileStoreService {
   private final FileReferenceServiceImpl fileReferenceService;
   private final FilterService filterService;
   private final FileFailsafeService fileFailsafeService;
-
-  @Inject
-  public FileStoreServiceImpl(FileService fileService, FileStoreRepository fileStoreRepository,
-      MainConfiguration configuration, FileReferenceServiceImpl fileReferenceService, FilterService filterService,
-      FileFailsafeService fileFailsafeService) {
-    this.fileService = fileService;
-    this.fileStoreRepository = fileStoreRepository;
-    this.configuration = configuration;
-    this.fileReferenceService = fileReferenceService;
-    this.filterService = filterService;
-    this.fileFailsafeService = fileFailsafeService;
-  }
 
   @Override
   public FileDTO create(@NotNull FileDTO fileDto, InputStream content, Boolean draft) {
@@ -126,6 +117,7 @@ public class FileStoreServiceImpl implements FileStoreService {
 
     NGFile oldNGFile = fetchFileOrThrow(
         fileDto.getAccountIdentifier(), fileDto.getOrgIdentifier(), fileDto.getProjectIdentifier(), identifier);
+    NGFile oldNGFileClone = (NGFile) HObjectMapper.clone(oldNGFile);
 
     NGFile updatedNGFile = FileDTOMapper.updateNGFile(fileDto, oldNGFile);
     if (shouldStoreFileContent(content, updatedNGFile)) {
@@ -133,7 +125,7 @@ public class FileStoreServiceImpl implements FileStoreService {
       saveFile(fileDto, updatedNGFile, content);
     }
 
-    return fileFailsafeService.updateAndPublish(oldNGFile, updatedNGFile);
+    return fileFailsafeService.updateAndPublish(oldNGFileClone, updatedNGFile);
   }
 
   @Override

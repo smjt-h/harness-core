@@ -25,8 +25,6 @@ import io.harness.ng.core.entities.NGFile;
 import io.harness.ng.core.filestore.NGFileType;
 import io.harness.ng.core.filestore.dto.FileDTO;
 import io.harness.ng.core.mapper.FileDTOMapper;
-import io.harness.outbox.api.OutboxService;
-import io.harness.repositories.filestore.spring.FileStoreRepository;
 import io.harness.rule.Owner;
 
 import org.junit.Test;
@@ -41,9 +39,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @OwnedBy(CDP)
 @RunWith(MockitoJUnitRunner.class)
 public class FileFailsafeServiceImplTest extends CategoryTest {
-  @Mock private OutboxService outboxService;
   @Mock private TransactionTemplate transactionTemplate;
-  @Mock private FileStoreRepository fileStoreRepository;
 
   @InjectMocks private FileFailsafeServiceImpl fileFailsafeService;
 

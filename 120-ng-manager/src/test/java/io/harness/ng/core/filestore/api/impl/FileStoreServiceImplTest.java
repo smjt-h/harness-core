@@ -682,21 +682,21 @@ public class FileStoreServiceImplTest extends CategoryTest {
                              .type(NGFileType.FOLDER)
                              .name("folderName1")
                              .identifier("folderIdentifier1")
-                             .parentId(FILE_IDENTIFIER)
+                             .parentIdentifier(FILE_IDENTIFIER)
                              .createdBy("testuser1")
                              .build(),
         builder()
             .type(NGFileType.FOLDER)
             .name("folderName2")
             .identifier("folderIdentifier2")
-            .parentId(FILE_IDENTIFIER)
+            .parentIdentifier(FILE_IDENTIFIER)
             .createdBy("testuser1")
             .build(),
         builder()
             .type(NGFileType.FILE)
             .name("fileName")
             .identifier("fileIdentifier")
-            .parentId(FILE_IDENTIFIER)
+            .parentIdentifier(FILE_IDENTIFIER)
             .createdBy("testuser2")
             .build());
   }

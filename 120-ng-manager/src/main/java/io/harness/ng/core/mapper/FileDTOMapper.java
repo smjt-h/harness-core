@@ -31,6 +31,7 @@ public class FileDTOMapper {
           .parentIdentifier(fileDto.getParentIdentifier())
           .name(fileDto.getName())
           .type(fileDto.getType())
+          .createdBy(fileDto.getCreatedBy())
           .build();
     }
 
@@ -61,6 +62,7 @@ public class FileDTOMapper {
           .name(ngFile.getName())
           .type(ngFile.getType())
           .parentIdentifier(ngFile.getParentIdentifier())
+          .createdBy(ngFile.getCreatedBy())
           .build();
     }
 
@@ -86,6 +88,7 @@ public class FileDTOMapper {
       file.setType(fileDto.getType());
       file.setParentIdentifier(fileDto.getParentIdentifier());
       file.setName(fileDto.getName());
+      file.setCreatedBy(fileDto.getCreatedBy());
       return file;
     }
 

@@ -26,7 +26,9 @@ import com.google.inject.name.Names;
 
 @OwnedBy(CDP)
 public class FileStoreClientModule extends AbstractModule {
+  private static final Object LOCK = new Object();
   private static FileStoreClientModule instance;
+
   private final ServiceHttpClientConfig fileStoreClientConfig;
   private final String serviceSecret;
   private final String clientId;
@@ -39,8 +41,10 @@ public class FileStoreClientModule extends AbstractModule {
 
   public static FileStoreClientModule getInstance(
       ServiceHttpClientConfig fileStoreClientConfig, String serviceSecret, String clientId) {
-    if (instance == null) {
-      instance = new FileStoreClientModule(fileStoreClientConfig, serviceSecret, clientId);
+    synchronized (LOCK) {
+      if (instance == null) {
+        instance = new FileStoreClientModule(fileStoreClientConfig, serviceSecret, clientId);
+      }
     }
 
     return instance;
