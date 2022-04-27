@@ -69,10 +69,10 @@ public class ResourceGroupServiceImplTest extends ResourceGroupTestBase {
     resourceGroupV1ServiceMock = mock(io.harness.resourcegroup.framework.v1.service.ResourceGroupService.class);
     outboxService = mock(OutboxService.class);
     transactionTemplate = mock(TransactionTemplate.class);
-    resourceGroupService = spy(new ResourceGroupServiceImpl(
-        resourceGroupV1ServiceMock, resourceGroupV2Repository, outboxService, transactionTemplate));
-    resourceGroupServiceMockRepo = spy(new ResourceGroupServiceImpl(
-        resourceGroupV1ServiceMock, resourceGroupV2RepositoryMock, outboxService, transactionTemplate));
+    resourceGroupService =
+        spy(new ResourceGroupServiceImpl(resourceGroupV2Repository, outboxService, transactionTemplate));
+    resourceGroupServiceMockRepo =
+        spy(new ResourceGroupServiceImpl(resourceGroupV2RepositoryMock, outboxService, transactionTemplate));
 
     pageRequest = PageRequest.builder().pageIndex(0).pageSize(50).build();
   }

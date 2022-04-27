@@ -74,8 +74,8 @@ public class ResourceGroupValidatorImpl implements ResourceGroupValidator {
         }
       });
     } else if (ScopeUtils.isProjectScope(scopeOfResourceGroup)) {
+      includeStaticResources.set(true);
       resourceGroupDTO.getIncludedScopes().forEach(scope -> {
-        includeStaticResources.set(true);
         if (!scopeOfResourceGroup.equals(
                 Scope.of(scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier()))) {
           throw new InvalidRequestException("Scope of included scopes does not match with the scope of resource group");
