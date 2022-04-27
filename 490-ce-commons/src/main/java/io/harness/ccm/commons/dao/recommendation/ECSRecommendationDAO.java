@@ -36,6 +36,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.types.ObjectId;
 import org.jooq.DSLContext;
 import org.mongodb.morphia.FindAndModifyOptions;
 import org.mongodb.morphia.query.Query;
@@ -86,7 +87,7 @@ public class ECSRecommendationDAO {
       @NonNull String accountIdentifier, @NonNull String id) {
     return Optional.ofNullable(hPersistence.createQuery(ECSServiceRecommendation.class)
                                    .filter(ECSServiceRecommendationKeys.accountId, accountIdentifier)
-                                   .filter(ECSServiceRecommendationKeys.uuid, id)
+                                   .filter(ECSServiceRecommendationKeys.uuid, new ObjectId(id))
                                    .get());
   }
 
