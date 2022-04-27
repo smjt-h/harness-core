@@ -164,7 +164,18 @@ public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<
 
     List<BuildDetails> buildDetails = artifactoryNgService.getArtifactList(artifactoryConfigRequest,
         artifactoryGenericArtifactDelegateRequest.getRepositoryName(), filePath, MAX_NO_OF_BUILDS_PER_ARTIFACT);
-
+    String finalArtifactDirectory = artifactDirectory;
+    buildDetails = buildDetails.stream()
+                       .map(buildDetail -> {
+                         String artifactoryPath =
+                             buildDetail.getArtifactPath().replaceFirst(finalArtifactDirectory, "");
+                         if (!artifactoryPath.isEmpty() && artifactoryPath.charAt(0) == '/') {
+                           artifactoryPath = artifactoryPath.substring(1);
+                         }
+                         buildDetail.setArtifactPath(artifactoryPath);
+                         return buildDetail;
+                       })
+                       .collect(Collectors.toList());
     return ArtifactTaskExecutionResponse.builder().buildDetails(buildDetails).build();
   }
 

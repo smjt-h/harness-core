@@ -9,9 +9,6 @@ package io.harness.cdng.artifact.mappers;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
-import static software.wings.utils.RepositoryFormat.docker;
-import static software.wings.utils.RepositoryFormat.generic;
-
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifact.ArtifactMetadataKeys;
 import io.harness.cdng.artifact.bean.ArtifactConfig;
@@ -43,6 +40,7 @@ import io.harness.pms.yaml.ParameterField;
 
 import software.wings.utils.RepositoryFormat;
 
+import java.nio.file.Paths;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -199,9 +197,18 @@ public class ArtifactResponseToOutcomeMapper {
         .connectorRef(artifactConfig.getConnectorRef().getValue())
         .artifactDirectory(artifactConfig.getArtifactDirectory().getValue())
         .repositoryFormat(artifactConfig.getRepositoryFormat().getValue())
-        .artifactPath(useDelegateResponse ? artifactDelegateResponse.getArtifactPath()
-                                          : (ParameterField.isNull(artifactConfig.getArtifactPath())
-                                                  ? null
+        .artifactPath(useDelegateResponse ? ParameterField.isBlank(artifactConfig.getArtifactPathFilter())
+                    ? Paths
+                          .get(artifactConfig.getArtifactDirectory().getValue(),
+                              artifactDelegateResponse.getArtifactPath())
+                          .toString()
+                    : artifactDelegateResponse.getArtifactPath()
+                                          : (ParameterField.isNull(artifactConfig.getArtifactPath()) ? null
+                                                  : ParameterField.isBlank(artifactConfig.getArtifactPathFilter())
+                                                  ? Paths
+                                                        .get(artifactConfig.getArtifactDirectory().getValue(),
+                                                            artifactConfig.getArtifactPath().getValue())
+                                                        .toString()
                                                   : artifactConfig.getArtifactPath().getValue()))
         .artifactPathFilter(ParameterField.isNull(artifactConfig.getArtifactPathFilter())
                 ? null
