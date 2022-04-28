@@ -7,6 +7,8 @@
 
 package io.harness.plancreator.pipeline;
 
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
@@ -15,9 +17,12 @@ import io.harness.data.validator.EntityName;
 import io.harness.notification.bean.NotificationRules;
 import io.harness.plancreator.flowcontrol.FlowControlConfig;
 import io.harness.plancreator.stages.StageElementWrapperConfig;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
+import io.harness.template.yaml.TemplateLinkConfig;
 import io.harness.validator.NGRegexValidatorConstants;
+import io.harness.yaml.YamlSchemaTypes;
 import io.harness.yaml.core.VariableExpression;
 import io.harness.yaml.core.properties.NGProperties;
 import io.harness.yaml.core.timeout.Timeout;
@@ -65,19 +70,13 @@ public class PipelineInfoConfig {
 
   @VariableExpression(skipVariableExpression = true) FlowControlConfig flowControl;
 
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
-  @VariableExpression
-  ParameterField<String> description;
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> description;
   @VariableExpression Map<String, String> tags;
 
   @VariableExpression List<NGVariable> variables;
   @VariableExpression NGProperties properties;
 
-  @NotNull
-  @Singular
-  @Size(min = 1)
-  @VariableExpression(skipVariableExpression = true)
-  List<StageElementWrapperConfig> stages;
+  @Singular @Size(min = 1) @VariableExpression(skipVariableExpression = true) List<StageElementWrapperConfig> stages;
   @VariableExpression(skipVariableExpression = true) List<NotificationRules> notificationRules;
 
   @VariableExpression(skipVariableExpression = true) String orgIdentifier;
@@ -88,5 +87,11 @@ public class PipelineInfoConfig {
   @VariableExpression(skipVariableExpression = true)
   ParameterField<Timeout> timeout;
 
+  @VariableExpression(skipVariableExpression = true) TemplateLinkConfig template;
+
   @VariableExpression(skipVariableExpression = true) boolean allowStageExecutions;
+
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
+  @YamlSchemaTypes(value = {runtime})
+  ParameterField<List<TaskSelectorYaml>> delegateSelectors;
 }

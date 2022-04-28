@@ -44,7 +44,7 @@ if [ -e proxy.config ]; then
       if [[ "$PROXY_PASSWORD_ENC" != "" ]]; then
         export PROXY_PASSWORD=$(echo $PROXY_PASSWORD_ENC | openssl enc -d -a -des-ecb -K ${hexkey})
       fi
-      export PROXY_CURL="-x "$PROXY_SCHEME"://"$PROXY_USER:$PROXY_PASSWORD@$PROXY_HOST:$PROXY_PORT
+      export PROXY_CURL="-x "$PROXY_SCHEME"://"$PROXY_USER:$(url_encode "$PROXY_PASSWORD")@$PROXY_HOST:$PROXY_PORT
     else
       export PROXY_CURL="-x "$PROXY_SCHEME"://"$PROXY_HOST:$PROXY_PORT
       export http_proxy=$PROXY_SCHEME://$PROXY_HOST:$PROXY_PORT
@@ -121,13 +121,17 @@ fi
 
 if [ ! -e config-delegate.yml ]; then
   echo "accountId: ${accountId}" > config-delegate.yml
-  <#if delegateToken??>
-  echo "delegateToken: ${delegateToken}" >> config-delegate.yml
-  <#else>
-  echo "delegateToken: ${accountSecret}" >> config-delegate.yml
-  </#if>
 fi
 test "$(tail -c 1 config-delegate.yml)" && `echo "" >> config-delegate.yml`
+<#if delegateToken??>
+if ! `grep delegateToken config-delegate.yml > /dev/null`; then
+  echo "delegateToken: ${delegateToken}" >> config-delegate.yml
+fi
+<#else>
+if ! `grep delegateToken config-delegate.yml > /dev/null`; then
+  echo "delegateToken: ${accountSecret}" >> config-delegate.yml
+fi
+</#if>
 if ! `grep dynamicHandlingOfRequestEnabled config-delegate.yml > /dev/null`; then
   echo "dynamicHandlingOfRequestEnabled: ${dynamicHandlingOfRequestEnabled}" >> config-delegate.yml
 fi

@@ -80,6 +80,8 @@ import io.harness.entitysetupusageclient.EntitySetupUsageClientModule;
 import io.harness.eventsframework.EventsFrameworkConstants;
 import io.harness.eventsframework.EventsFrameworkMetadataConstants;
 import io.harness.exception.exceptionmanager.ExceptionModule;
+import io.harness.exception.exceptionmanager.exceptionhandler.CCMConnectorExceptionHandler;
+import io.harness.exception.exceptionmanager.exceptionhandler.ExceptionHandler;
 import io.harness.file.NGFileServiceModule;
 import io.harness.gitsync.GitSyncConfigClientModule;
 import io.harness.gitsync.GitSyncModule;
@@ -182,7 +184,7 @@ import io.harness.ng.serviceaccounts.service.api.ServiceAccountService;
 import io.harness.ng.serviceaccounts.service.impl.ServiceAccountServiceImpl;
 import io.harness.ng.userprofile.commons.SCMType;
 import io.harness.ng.userprofile.entities.AwsCodeCommitSCM.AwsCodeCommitSCMMapper;
-import io.harness.ng.userprofile.entities.AzureDevOpsSCM.AzureDevOpsSCMMapper;
+import io.harness.ng.userprofile.entities.AzureRepoSCM.AzureRepoSCMMapper;
 import io.harness.ng.userprofile.entities.BitbucketSCM.BitbucketSCMMapper;
 import io.harness.ng.userprofile.entities.GithubSCM.GithubSCMMapper;
 import io.harness.ng.userprofile.entities.GitlabSCM.GitlabSCMMapper;
@@ -260,6 +262,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -683,12 +686,20 @@ public class NextGenModule extends AbstractModule {
     sourceCodeManagerMapBinder.addBinding(SCMType.GITHUB).to(GithubSCMMapper.class);
     sourceCodeManagerMapBinder.addBinding(SCMType.GITLAB).to(GitlabSCMMapper.class);
     sourceCodeManagerMapBinder.addBinding(SCMType.AWS_CODE_COMMIT).to(AwsCodeCommitSCMMapper.class);
-    sourceCodeManagerMapBinder.addBinding(SCMType.AZURE_DEV_OPS).to(AzureDevOpsSCMMapper.class);
+    sourceCodeManagerMapBinder.addBinding(SCMType.AZURE_REPO).to(AzureRepoSCMMapper.class);
 
     registerEventsFrameworkMessageListeners();
     registerEncryptors();
 
     bind(FeatureFlagHelperService.class).to(NGFeatureFlagHelperServiceImpl.class);
+    bindExceptionHandlers();
+  }
+
+  private void bindExceptionHandlers() {
+    MapBinder<Class<? extends Exception>, ExceptionHandler> exceptionHandlerMapBinder = MapBinder.newMapBinder(
+        binder(), new TypeLiteral<Class<? extends Exception>>() {}, new TypeLiteral<ExceptionHandler>() {});
+    CCMConnectorExceptionHandler.exceptions().forEach(
+        exception -> exceptionHandlerMapBinder.addBinding(exception).to(CCMConnectorExceptionHandler.class));
   }
 
   void registerEncryptors() {

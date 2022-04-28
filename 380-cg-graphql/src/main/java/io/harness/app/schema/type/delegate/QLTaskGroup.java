@@ -92,7 +92,9 @@ public enum QLTaskGroup implements QLEnum {
   TERRAFORM_NG,
   CE,
   SERVICENOW_NG,
-  CLOUDFORMATION_NG;
+  CLOUDFORMATION_NG,
+  AZURE,
+  SERVERLESS_NG;
 
   @Override
   public String getStringValue() {

@@ -11,6 +11,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.artifact.bean.artifactsource.ArtifactSource;
 import io.harness.cdng.artifact.bean.artifactsource.DockerArtifactSource;
+import io.harness.cdng.artifact.bean.yaml.AcrArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.ArtifactListConfig;
 import io.harness.cdng.artifact.bean.yaml.CustomArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.DockerHubArtifactConfig;
@@ -23,6 +24,7 @@ import io.harness.cdng.infra.beans.InfraUseFromStage;
 import io.harness.cdng.infra.beans.K8sDirectInfraMapping;
 import io.harness.cdng.infra.beans.K8sGcpInfraMapping;
 import io.harness.cdng.infra.beans.PdcInfraMapping;
+import io.harness.cdng.infra.beans.ServerlessAwsLambdaInfraMapping;
 import io.harness.cdng.infra.steps.InfraStepParameters;
 import io.harness.cdng.manifest.yaml.ManifestsOutcome;
 import io.harness.cdng.pipeline.executions.CDAccountExecutionMetadata;
@@ -53,6 +55,7 @@ public class NGMorphiaRegistrar implements MorphiaRegistrar {
     set.add(PollingDocument.class);
     set.add(CDAccountExecutionMetadata.class);
     set.add(EnvironmentGroupEntity.class);
+    set.add(ServerlessAwsLambdaInfraMapping.class);
   }
 
   @Override
@@ -63,6 +66,7 @@ public class NGMorphiaRegistrar implements MorphiaRegistrar {
     h.put("cdng.artifact.bean.yaml.ArtifactListConfig", ArtifactListConfig.class);
     h.put("cdng.artifact.bean.yaml.DockerHubArtifactConfig", DockerHubArtifactConfig.class);
     h.put("cdng.artifact.bean.yaml.GcrArtifactConfig", GcrArtifactConfig.class);
+    h.put("cdng.artifact.bean.yaml.AcrArtifactConfig", AcrArtifactConfig.class);
     h.put("cdng.artifact.bean.yaml.SidecarArtifact", SidecarArtifact.class);
     h.put("cdng.service.beans.ServiceConfigOutcome", ServiceConfigOutcome.class);
     h.put("cdng.manifest.yaml.ManifestsOutcome", ManifestsOutcome.class);

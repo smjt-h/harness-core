@@ -16,8 +16,13 @@ import io.harness.exception.ArtifactoryRegistryException;
 import io.harness.exception.ArtifactoryServerException;
 import io.harness.exception.AuthenticationException;
 import io.harness.exception.AuthorizationException;
+import io.harness.exception.AzureAuthenticationException;
+import io.harness.exception.AzureConfigException;
+import io.harness.exception.AzureContainerRegistryException;
+import io.harness.exception.AzureServerException;
 import io.harness.exception.ConnectException;
 import io.harness.exception.ContextException;
+import io.harness.exception.DataProcessingException;
 import io.harness.exception.DelegateErrorHandlerException;
 import io.harness.exception.DelegateNotAvailableException;
 import io.harness.exception.EngineExpressionEvaluationException;
@@ -48,6 +53,8 @@ import io.harness.exception.ShellExecutionException;
 import io.harness.exception.TerraformCommandExecutionException;
 import io.harness.exception.UnresolvedExpressionsException;
 import io.harness.exception.VerificationOperationException;
+import io.harness.exception.runtime.serverless.ServerlessAwsLambdaRuntimeException;
+import io.harness.exception.runtime.serverless.ServerlessCommandExecutionException;
 import io.harness.logging.LogLevel;
 import io.harness.security.PrincipalContextData;
 import io.harness.security.SimpleEncryption;
@@ -59,6 +66,7 @@ import io.harness.serializer.KryoRegistrar;
 import io.harness.tasks.BinaryResponseData;
 import io.harness.tasks.FailureResponseData;
 
+import software.wings.beans.NameValuePair;
 import software.wings.beans.appmanifest.StoreType;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -124,5 +132,14 @@ public class CommonsKryoRegistrar implements KryoRegistrar {
     kryo.register(TerraformCommandExecutionException.class, 980018);
     kryo.register(SimpleEncryption.class, 980019);
     kryo.register(KubernetesCliTaskRuntimeException.class, 980020);
+
+    kryo.register(AzureServerException.class, 980021);
+    kryo.register(AzureAuthenticationException.class, 980022);
+    kryo.register(AzureConfigException.class, 980023);
+    kryo.register(AzureContainerRegistryException.class, 980024);
+    kryo.register(DataProcessingException.class, 980025);
+    kryo.register(NameValuePair.class, 5226);
+    kryo.register(ServerlessAwsLambdaRuntimeException.class, 980026);
+    kryo.register(ServerlessCommandExecutionException.class, 980027);
   }
 }

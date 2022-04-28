@@ -15,8 +15,10 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.delegate.beans.DelegateProfile.DelegateProfileBuilder;
 import static io.harness.delegate.beans.DelegateProfile.builder;
 import static io.harness.delegate.beans.DelegateRegisterResponse.Action;
+import static io.harness.delegate.beans.DelegateType.CE_KUBERNETES;
 import static io.harness.delegate.beans.DelegateType.DOCKER;
 import static io.harness.delegate.beans.DelegateType.ECS;
+import static io.harness.delegate.beans.DelegateType.HELM_DELEGATE;
 import static io.harness.delegate.beans.DelegateType.KUBERNETES;
 import static io.harness.delegate.beans.DelegateType.SHELL_SCRIPT;
 import static io.harness.delegate.beans.K8sPermissionType.CLUSTER_ADMIN;
@@ -33,7 +35,6 @@ import static io.harness.rule.OwnerRule.DESCRIPTION;
 import static io.harness.rule.OwnerRule.GEORGE;
 import static io.harness.rule.OwnerRule.LUCAS;
 import static io.harness.rule.OwnerRule.MARKO;
-import static io.harness.rule.OwnerRule.MARKOM;
 import static io.harness.rule.OwnerRule.MEHUL;
 import static io.harness.rule.OwnerRule.NIKOLA;
 import static io.harness.rule.OwnerRule.PUNEET;
@@ -104,6 +105,7 @@ import io.harness.delegate.beans.Delegate.DelegateKeys;
 import io.harness.delegate.beans.DelegateApproval;
 import io.harness.delegate.beans.DelegateConfiguration;
 import io.harness.delegate.beans.DelegateConnectionHeartbeat;
+import io.harness.delegate.beans.DelegateDTO;
 import io.harness.delegate.beans.DelegateEntityOwner;
 import io.harness.delegate.beans.DelegateGroup;
 import io.harness.delegate.beans.DelegateGroupStatus;
@@ -117,6 +119,7 @@ import io.harness.delegate.beans.DelegateScripts;
 import io.harness.delegate.beans.DelegateSetupDetails;
 import io.harness.delegate.beans.DelegateSize;
 import io.harness.delegate.beans.DelegateSizeDetails;
+import io.harness.delegate.beans.DelegateTags;
 import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
 import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.DelegateTokenDetails;
@@ -133,8 +136,8 @@ import io.harness.delegate.beans.TaskGroup;
 import io.harness.delegate.beans.executioncapability.CapabilityType;
 import io.harness.delegate.beans.executioncapability.HttpConnectionExecutionCapability;
 import io.harness.delegate.beans.executioncapability.SelectorCapability;
+import io.harness.delegate.service.DelegateVersionService;
 import io.harness.delegate.service.intfc.DelegateNgTokenService;
-import io.harness.delegate.service.intfc.DelegateRingService;
 import io.harness.delegate.task.http.HttpTaskParameters;
 import io.harness.delegate.utils.DelegateEntityOwnerHelper;
 import io.harness.eventsframework.api.Producer;
@@ -187,7 +190,6 @@ import software.wings.service.impl.EventEmitter;
 import software.wings.service.impl.EventEmitter.Channel;
 import software.wings.service.impl.infra.InfraDownloadService;
 import software.wings.service.intfc.AccountService;
-import software.wings.service.intfc.AssignDelegateService;
 import software.wings.service.intfc.DelegateProfileService;
 import software.wings.service.intfc.FileService;
 import software.wings.service.intfc.security.ManagerDecryptionService;
@@ -200,6 +202,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.CharStreams;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
+import io.fabric8.utils.Lists;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -274,7 +277,7 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Mock private MainConfiguration mainConfiguration;
   @Mock private BroadcasterFactory broadcasterFactory;
   @Mock private Broadcaster broadcaster;
-  @Mock private AssignDelegateService assignDelegateService;
+  @Mock private DelegateVersionService delegateVersionService;
   @Mock private DelegateProfileService delegateProfileService;
   @Mock private InfraDownloadService infraDownloadService;
   @Mock private SecretManager secretManager;
@@ -286,7 +289,6 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Mock private AuditServiceHelper auditServiceHelper;
   @Mock private DelegateGrpcConfig delegateGrpcConfig;
   @Mock private CapabilityService capabilityService;
-  @Mock private DelegateRingService delegateRingService;
   @Mock private DelegateTokenService delegateTokenService;
   @Mock private DelegateNgTokenService delegateNgTokenService;
   @Mock private Producer eventProducer;
@@ -1733,9 +1735,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Owner(developers = BRETT)
   @Category(UnitTests.class)
   public void shouldDownloadScripts() throws IOException {
-    when(accountService.get(ACCOUNT_ID))
-        .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
-    // when(delegateTokenService.getTokenValue(ACCOUNT_ID, TOKEN_NAME)).thenReturn("ACCOUNT_KEY");
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, SHELL_SCRIPT)).thenReturn("harness/delegate:latest");
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, SHELL_SCRIPT)).thenReturn("harness/upgrader:latest");
     when(delegateProfileService.get(ACCOUNT_ID, DELEGATE_PROFILE_ID))
         .thenReturn(createDelegateProfileBuilder().build());
     File gzipFile = delegateService.downloadScripts(
@@ -1747,9 +1748,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Owner(developers = LUCAS)
   @Category(UnitTests.class)
   public void shouldDownloadCeKubernetesYaml() throws IOException {
-    when(accountService.get(ACCOUNT_ID))
-        .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
-    // when(delegateTokenService.getTokenValue(ACCOUNT_ID, TOKEN_NAME)).thenReturn("ACCOUNT_KEY");
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, CE_KUBERNETES)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, CE_KUBERNETES)).thenReturn(UPGRADER_IMAGE_TAG);
     when(delegateProfileService.get(ACCOUNT_ID, DELEGATE_PROFILE_ID))
         .thenReturn(createDelegateProfileBuilder().build());
 
@@ -1765,9 +1765,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Owner(developers = LUCAS)
   @Category(UnitTests.class)
   public void shouldDownloadDelegateValuesYamlFile() throws IOException {
-    when(accountService.get(ACCOUNT_ID))
-        .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
-    // when(delegateTokenService.getTokenValue(ACCOUNT_ID, TOKEN_NAME)).thenReturn("ACCOUNT_KEY");
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, HELM_DELEGATE)).thenReturn("harness/delegate:latest");
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, HELM_DELEGATE)).thenReturn("harness/upgrader:latest");
     when(delegateProfileService.get(ACCOUNT_ID, DELEGATE_PROFILE_ID))
         .thenReturn(createDelegateProfileBuilder().build());
 
@@ -1783,9 +1782,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Owner(developers = LUCAS)
   @Category(UnitTests.class)
   public void shouldDownloadECSDelegate() throws IOException {
-    when(accountService.get(ACCOUNT_ID))
-        .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
-    //  when(delegateTokenService.getTokenValue(ACCOUNT_ID, TOKEN_NAME)).thenReturn("ACCOUNT_KEY");
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, ECS)).thenReturn("harness/delegate:latest");
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, ECS)).thenReturn("harness/upgrader:latest");
     when(delegateProfileService.get(ACCOUNT_ID, DELEGATE_PROFILE_ID))
         .thenReturn(createDelegateProfileBuilder().build());
 
@@ -1830,6 +1828,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   public void shouldDownloadScriptsWithPrimaryProfile() throws IOException {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, SHELL_SCRIPT)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, SHELL_SCRIPT)).thenReturn(UPGRADER_IMAGE_TAG);
     when(delegateProfileService.fetchCgPrimaryProfile(ACCOUNT_ID))
         .thenReturn(createDelegateProfileBuilder().uuid(DELEGATE_PROFILE_ID).build());
     File gzipFile = delegateService.downloadScripts(
@@ -1850,6 +1850,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   public void shouldDownloadScriptsWithoutDelegateName() throws IOException {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, SHELL_SCRIPT)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, SHELL_SCRIPT)).thenReturn(UPGRADER_IMAGE_TAG);
     when(delegateProfileService.get(ACCOUNT_ID, DELEGATE_PROFILE_ID))
         .thenReturn(createDelegateProfileBuilder().build());
     File gzipFile = delegateService.downloadScripts(
@@ -1870,17 +1872,6 @@ public class DelegateServiceTest extends WingsBaseTest {
       assertThat(file).extracting(TarArchiveEntry::getMode).isEqualTo(0755);
 
       byte[] buffer = new byte[(int) file.getSize()];
-      IOUtils.read(tarArchiveInputStream, buffer);
-      String expected =
-          CharStreams.toString(new InputStreamReader(getClass().getResourceAsStream(expectedStartFilepath)))
-              .replaceAll("8888", "" + port);
-      String actual = new String(buffer);
-      assertThat(actual.equals(expected));
-      file = (TarArchiveEntry) tarArchiveInputStream.getNextEntry();
-      assertThat(file).extracting(TarArchiveEntry::getName).isEqualTo(DELEGATE_DIR + "/delegate.sh");
-      assertThat(file).extracting(TarArchiveEntry::getMode).isEqualTo(0755);
-
-      buffer = new byte[(int) file.getSize()];
       IOUtils.read(tarArchiveInputStream, buffer);
       String expectedD =
           CharStreams.toString(new InputStreamReader(getClass().getResourceAsStream(expectedDelegateFilepath)))
@@ -1930,6 +1921,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   public void shouldDownloadScriptsForOpenJdk() throws IOException {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, SHELL_SCRIPT)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, SHELL_SCRIPT)).thenReturn(UPGRADER_IMAGE_TAG);
     when(delegateProfileService.fetchCgPrimaryProfile(ACCOUNT_ID))
         .thenReturn(createDelegateProfileBuilder().uuid(DELEGATE_PROFILE_ID).build());
     File gzipFile = delegateService.downloadScripts(
@@ -1948,17 +1941,6 @@ public class DelegateServiceTest extends WingsBaseTest {
       assertThat(new String(buffer))
           .isEqualTo(
               CharStreams.toString(new InputStreamReader(getClass().getResourceAsStream("/expectedStartOpenJdk.sh")))
-                  .replaceAll("8888", "" + port));
-
-      file = (TarArchiveEntry) tarArchiveInputStream.getNextEntry();
-      assertThat(file).extracting(TarArchiveEntry::getName).isEqualTo(DELEGATE_DIR + "/delegate.sh");
-      assertThat(file).extracting(TarArchiveEntry::getMode).isEqualTo(0755);
-
-      buffer = new byte[(int) file.getSize()];
-      IOUtils.read(tarArchiveInputStream, buffer);
-      assertThat(new String(buffer))
-          .isEqualTo(
-              CharStreams.toString(new InputStreamReader(getClass().getResourceAsStream("/expectedDelegateOpenJdk.sh")))
                   .replaceAll("8888", "" + port));
 
       file = (TarArchiveEntry) tarArchiveInputStream.getNextEntry();
@@ -1993,9 +1975,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Owner(developers = BRETT)
   @Category(UnitTests.class)
   public void shouldDownloadDocker() throws IOException, TemplateException {
-    when(accountService.get(ACCOUNT_ID))
-        .thenReturn(anAccount().withAccountKey(TOKEN_VALUE).withUuid(ACCOUNT_ID).build());
-    // when(delegateTokenService.getTokenValue(ACCOUNT_ID, TOKEN_NAME)).thenReturn(TOKEN_VALUE);
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, DOCKER)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, DOCKER)).thenReturn(UPGRADER_IMAGE_TAG);
     when(delegateProfileService.get(ACCOUNT_ID, DELEGATE_PROFILE_ID))
         .thenReturn(createDelegateProfileBuilder().build());
     File gzipFile = delegateService.downloadDocker(
@@ -2009,6 +1990,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   public void shouldDownloadDockerWithoutDelegateName() throws IOException, TemplateException {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, DOCKER)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, DOCKER)).thenReturn(UPGRADER_IMAGE_TAG);
     when(delegateProfileService.get(ACCOUNT_ID, DELEGATE_PROFILE_ID))
         .thenReturn(createDelegateProfileBuilder().build());
     File gzipFile = delegateService.downloadDocker(
@@ -2023,9 +2006,11 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Test
   @Owner(developers = MARKO)
   @Category(UnitTests.class)
-  public void shouldDownloadDockerWithPrimaryProfile() throws IOException, TemplateException {
+  public void shouldDownloadDockerWithPrimaryProfile() throws IOException {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, DOCKER)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, DOCKER)).thenReturn(UPGRADER_IMAGE_TAG);
     when(delegateProfileService.fetchCgPrimaryProfile(ACCOUNT_ID))
         .thenReturn(createDelegateProfileBuilder().uuid(DELEGATE_PROFILE_ID).build());
     File gzipFile = delegateService.downloadDocker(
@@ -2077,10 +2062,9 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Test
   @Owner(developers = BRETT)
   @Category(UnitTests.class)
-  public void shouldDownloadKubernetes() throws IOException, TemplateException {
-    when(accountService.get(ACCOUNT_ID))
-        .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
-    // when(delegateTokenService.getTokenValue(ACCOUNT_ID, TOKEN_NAME)).thenReturn("ACCOUNT_KEY");
+  public void shouldDownloadKubernetes() throws IOException {
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn("harness/delegate:latest");
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn("harness/upgrader:latest");
     File gzipFile = delegateService.downloadKubernetes(
         "https://localhost:9090", "https://localhost:7070", ACCOUNT_ID, "harness-delegate", "", TOKEN_NAME);
     File tarFile = File.createTempFile(DELEGATE_DIR, ".tar");
@@ -2107,11 +2091,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Owner(developers = BRETT)
   @Category(UnitTests.class)
   public void shouldDownloadKubernetesImmutable() throws IOException {
-    when(accountService.get(ACCOUNT_ID))
-        .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
-    // when(delegateTokenService.getTokenValue(ACCOUNT_ID, TOKEN_NAME)).thenReturn("ACCOUNT_KEY");
-    when(delegateRingService.getDelegateImageTag(ACCOUNT_ID)).thenReturn(DELEGATE_IMAGE_TAG);
-    when(delegateRingService.getUpgraderImageTag(ACCOUNT_ID)).thenReturn(UPGRADER_IMAGE_TAG);
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(UPGRADER_IMAGE_TAG);
     featureTestHelper.enableFeatureFlag(USE_IMMUTABLE_DELEGATE);
     File gzipFile = delegateService.downloadKubernetes(
         "https://localhost:9090", "https://localhost:7070", ACCOUNT_ID, "harness-delegate", "", TOKEN_NAME);
@@ -2141,6 +2122,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   public void shouldDownloadKubernetesWithCiEnabled() throws IOException {
     Account account = anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).withNextGenEnabled(true).build();
     when(accountService.get(ACCOUNT_ID)).thenReturn(account);
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(UPGRADER_IMAGE_TAG);
     when(accountService.isNextGenEnabled(ACCOUNT_ID)).thenReturn(true);
     File gzipFile = delegateService.downloadKubernetes(
         "https://localhost:9090", "https://localhost:7070", ACCOUNT_ID, "harness-delegate", "", null);
@@ -2165,11 +2148,45 @@ public class DelegateServiceTest extends WingsBaseTest {
   }
 
   @Test
+  @Owner(developers = MARKO)
+  @Category(UnitTests.class)
+  public void shouldDownloadKubernetesImmutableWithCiEnabled() throws IOException {
+    Account account = anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).withNextGenEnabled(true).build();
+    featureTestHelper.enableFeatureFlag(USE_IMMUTABLE_DELEGATE);
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(UPGRADER_IMAGE_TAG);
+    when(accountService.get(ACCOUNT_ID)).thenReturn(account);
+    when(accountService.isNextGenEnabled(ACCOUNT_ID)).thenReturn(true);
+    File gzipFile = delegateService.downloadKubernetes(
+        "https://localhost:9090", "https://localhost:7070", ACCOUNT_ID, "harness-delegate", "", null);
+    File tarFile = File.createTempFile(DELEGATE_DIR, ".tar");
+    uncompressGzipFile(gzipFile, tarFile);
+    try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(new FileInputStream(tarFile))) {
+      assertThat(tarArchiveInputStream.getNextEntry().getName()).isEqualTo(KUBERNETES_DELEGATE + "/");
+
+      TarArchiveEntry file = (TarArchiveEntry) tarArchiveInputStream.getNextEntry();
+      assertThat(file).extracting(ArchiveEntry::getName).isEqualTo(KUBERNETES_DELEGATE + "/harness-delegate.yaml");
+      byte[] buffer = new byte[(int) file.getSize()];
+      IOUtils.read(tarArchiveInputStream, buffer);
+      assertThat(new String(buffer))
+          .isEqualTo(CharStreams
+                         .toString(new InputStreamReader(
+                             getClass().getResourceAsStream("/expectedHarnessDelegateImmutableWithCiEnabled.yaml")))
+                         .replaceAll("8888", "" + port));
+
+      file = (TarArchiveEntry) tarArchiveInputStream.getNextEntry();
+      assertThat(file).extracting(TarArchiveEntry::getName).isEqualTo(KUBERNETES_DELEGATE + "/README.txt");
+    }
+  }
+
+  @Test
   @Owner(developers = BRETT)
   @Category(UnitTests.class)
   public void shouldSignalForDelegateUpgradeWhenUpdateIsPresent() throws IOException {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, null)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, null)).thenReturn(UPGRADER_IMAGE_TAG);
     Delegate delegate = createDelegateBuilder().build();
     delegate.setUuid(DELEGATE_ID);
     persistence.save(delegate);
@@ -2181,7 +2198,9 @@ public class DelegateServiceTest extends WingsBaseTest {
   @Test
   @Owner(developers = BRETT)
   @Category(UnitTests.class)
-  public void shouldNotSignalForDelegateUpgradeWhenDelegateIsLatest() throws IOException, TemplateException {
+  public void shouldNotSignalForDelegateUpgradeWhenDelegateIsLatest() throws IOException {
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, null)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, null)).thenReturn(UPGRADER_IMAGE_TAG);
     when(mainConfiguration.getDeployMode()).thenReturn(DeployMode.AWS);
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
@@ -2285,6 +2304,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   public void shouldGenerateKubernetesClusterAdminYaml() throws IOException {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(UPGRADER_IMAGE_TAG);
     DelegateSetupDetails setupDetails =
         DelegateSetupDetails.builder()
             .orgIdentifier("9S5HMP0xROugl3_QgO62rQO")
@@ -2329,6 +2350,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   public void shouldGenerateKubernetesClusterViewerYaml() throws IOException {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(UPGRADER_IMAGE_TAG);
     when(delegateProfileService.get(ACCOUNT_ID, "delConfigId")).thenReturn(DelegateProfile.builder().build());
     DelegateSetupDetails setupDetails =
         DelegateSetupDetails.builder()
@@ -2373,6 +2396,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   public void shouldGenerateKubernetesNamespaceAdminYaml() throws IOException {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(UPGRADER_IMAGE_TAG);
     when(delegateProfileService.get(ACCOUNT_ID, "delConfigId")).thenReturn(DelegateProfile.builder().build());
     DelegateSetupDetails setupDetails = DelegateSetupDetails.builder()
                                             .orgIdentifier("9S5HMP0xROugl3_QgO62rQO")
@@ -2419,6 +2444,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   public void shouldGenerateKubernetesYamlWithoutDescProjectAndOrg() throws IOException {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(UPGRADER_IMAGE_TAG);
     DelegateSetupDetails setupDetails =
         DelegateSetupDetails.builder()
             .delegateConfigurationId("delConfigId")
@@ -2460,6 +2487,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   public void shouldGenerateKubernetesClusterAdminImmutableYaml() throws IOException {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(UPGRADER_IMAGE_TAG);
     DelegateSetupDetails setupDetails =
         DelegateSetupDetails.builder()
             .orgIdentifier("9S5HMP0xROugl3_QgO62rQO")
@@ -2474,8 +2503,6 @@ public class DelegateServiceTest extends WingsBaseTest {
             .tokenName(TOKEN_NAME)
             .build();
     when(delegateProfileService.get(ACCOUNT_ID, "delConfigId")).thenReturn(DelegateProfile.builder().build());
-    when(delegateRingService.getDelegateImageTag(ACCOUNT_ID)).thenReturn(DELEGATE_IMAGE_TAG);
-    when(delegateRingService.getUpgraderImageTag(ACCOUNT_ID)).thenReturn(UPGRADER_IMAGE_TAG);
     featureTestHelper.enableFeatureFlag(USE_IMMUTABLE_DELEGATE);
 
     File gzipFile = delegateService.generateKubernetesYaml(ACCOUNT_ID, setupDetails, "https://localhost:9090",
@@ -2507,9 +2534,9 @@ public class DelegateServiceTest extends WingsBaseTest {
   public void shouldGenerateKubernetesClusterViewerImmutableYaml() throws IOException {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(UPGRADER_IMAGE_TAG);
     when(delegateProfileService.get(ACCOUNT_ID, "delConfigId")).thenReturn(DelegateProfile.builder().build());
-    when(delegateRingService.getDelegateImageTag(ACCOUNT_ID)).thenReturn(DELEGATE_IMAGE_TAG);
-    when(delegateRingService.getUpgraderImageTag(ACCOUNT_ID)).thenReturn(UPGRADER_IMAGE_TAG);
     featureTestHelper.enableFeatureFlag(USE_IMMUTABLE_DELEGATE);
     DelegateSetupDetails setupDetails =
         DelegateSetupDetails.builder()
@@ -2554,9 +2581,9 @@ public class DelegateServiceTest extends WingsBaseTest {
   public void shouldGenerateKubernetesNamespaceAdminImmutable() throws IOException {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey("ACCOUNT_KEY").withUuid(ACCOUNT_ID).build());
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, KUBERNETES)).thenReturn(UPGRADER_IMAGE_TAG);
     when(delegateProfileService.get(ACCOUNT_ID, "delConfigId")).thenReturn(DelegateProfile.builder().build());
-    when(delegateRingService.getDelegateImageTag(ACCOUNT_ID)).thenReturn(DELEGATE_IMAGE_TAG);
-    when(delegateRingService.getUpgraderImageTag(ACCOUNT_ID)).thenReturn(UPGRADER_IMAGE_TAG);
     featureTestHelper.enableFeatureFlag(USE_IMMUTABLE_DELEGATE);
     DelegateSetupDetails setupDetails = DelegateSetupDetails.builder()
                                             .orgIdentifier("9S5HMP0xROugl3_QgO62rQO")
@@ -2862,7 +2889,7 @@ public class DelegateServiceTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void shouldGetAllDelegateSelectorsUpTheHierarchyAcct() {
     String accountId = generateUuid();
@@ -2890,7 +2917,7 @@ public class DelegateServiceTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void shouldGetAllDelegateSelectorsUpTheHierarchyOrg() {
     String accountId = generateUuid();
@@ -2918,7 +2945,7 @@ public class DelegateServiceTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void shouldGetAllDelegateSelectorsUpTheHierarchyProj() {
     final String accountId = generateUuid();
@@ -3085,7 +3112,7 @@ public class DelegateServiceTest extends WingsBaseTest {
                             .build();
     persistence.save(delegate);
 
-    Set<String> tags = delegateService.retrieveDelegateSelectors(delegate);
+    Set<String> tags = delegateService.retrieveDelegateSelectors(delegate, false);
     assertThat(tags.size()).isEqualTo(3);
     assertThat(tags).containsExactlyInAnyOrder("abc", "qwe", "xde");
   }
@@ -3103,7 +3130,7 @@ public class DelegateServiceTest extends WingsBaseTest {
                             .build();
     persistence.save(delegate);
 
-    Set<String> tags = delegateService.retrieveDelegateSelectors(delegate);
+    Set<String> tags = delegateService.retrieveDelegateSelectors(delegate, false);
     assertThat(tags.size()).isEqualTo(0);
   }
 
@@ -3451,7 +3478,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   public void testDownloadNgDockerDelegateShouldReturnComposeFile() throws IOException {
     when(accountService.get(ACCOUNT_ID))
         .thenReturn(anAccount().withAccountKey(TOKEN_VALUE).withUuid(ACCOUNT_ID).build());
-
+    when(delegateVersionService.getDelegateImageTag(ACCOUNT_ID, DOCKER)).thenReturn(DELEGATE_IMAGE_TAG);
+    when(delegateVersionService.getUpgraderImageTag(ACCOUNT_ID, DOCKER)).thenReturn(UPGRADER_IMAGE_TAG);
     when(mainConfiguration.getDeployMode()).thenReturn(DeployMode.KUBERNETES);
 
     DelegateSetupDetails setupDetails = DelegateSetupDetails.builder()
@@ -3807,6 +3835,110 @@ public class DelegateServiceTest extends WingsBaseTest {
     assertThatThrownBy(() -> delegateService.validateDelegateSetupDetails(accountId, setupDetails, DOCKER))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage(DELEGATE_TOKEN_ERROR_MESSAGE);
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldListDelegateTags() {
+    Delegate delegate = createDelegateBuilder()
+                            .uuid("delegateId1")
+                            .accountId(ACCOUNT_ID)
+                            .ng(false)
+                            .tags(Lists.newArrayList("tag123", "tag456"))
+                            .delegateType(KUBERNETES)
+                            .delegateName("delegate1")
+                            .description("description1")
+                            .hostName("kube-0")
+                            .delegateProfileId("delegateProfileId1")
+                            .build();
+
+    persistence.save(delegate);
+
+    DelegateDTO delegateFromDB = delegateService.listDelegateTags(ACCOUNT_ID, "delegateId1");
+
+    assertThat(delegateFromDB).isNotNull();
+    assertThat(delegateFromDB.getDelegateId()).isEqualTo("delegateId1");
+    assertThat(delegateFromDB.getTags()).containsExactly("tag123", "tag456");
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldAddDelegateTags() {
+    Delegate delegate = createDelegateBuilder()
+                            .uuid("delegateId1")
+                            .accountId(ACCOUNT_ID)
+                            .ng(false)
+                            .tags(Lists.newArrayList("tag123", "tag456"))
+                            .delegateType(KUBERNETES)
+                            .delegateName("delegate1")
+                            .description("description1")
+                            .hostName("kube-0")
+                            .delegateProfileId("delegateProfileId1")
+                            .build();
+
+    persistence.save(delegate);
+
+    DelegateTags delegateTags = new DelegateTags(Arrays.asList("  tag1  ", "  tag2", "tag123"));
+
+    DelegateDTO updatedDelegate = delegateService.addDelegateTags(ACCOUNT_ID, "delegateId1", delegateTags);
+
+    assertThat(updatedDelegate).isNotNull();
+    assertThat(updatedDelegate.getDelegateId()).isEqualTo("delegateId1");
+    assertThat(updatedDelegate.getTags()).containsExactlyInAnyOrder("tag123", "tag456", "tag1", "tag2");
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldUpdateDelegateTags() {
+    Delegate delegate = createDelegateBuilder()
+                            .uuid("delegateId1")
+                            .accountId(ACCOUNT_ID)
+                            .ng(false)
+                            .tags(Lists.newArrayList("tag123", "tag456"))
+                            .delegateType(KUBERNETES)
+                            .delegateName("delegate1")
+                            .description("description1")
+                            .hostName("kube-0")
+                            .delegateProfileId("delegateProfileId1")
+                            .build();
+
+    persistence.save(delegate);
+
+    DelegateTags delegateTags = new DelegateTags(Arrays.asList("  tag1  ", "  tag2", "tag123"));
+
+    DelegateDTO updatedDelegate = delegateService.updateDelegateTags(ACCOUNT_ID, "delegateId1", delegateTags);
+
+    assertThat(updatedDelegate).isNotNull();
+    assertThat(updatedDelegate.getDelegateId()).isEqualTo("delegateId1");
+    assertThat(updatedDelegate.getTags()).containsExactlyInAnyOrder("tag123", "tag1", "tag2");
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldDeleteDelegateTags() {
+    Delegate delegate = createDelegateBuilder()
+                            .uuid("delegateId1")
+                            .accountId(ACCOUNT_ID)
+                            .ng(false)
+                            .tags(Lists.newArrayList("tag123", "tag456"))
+                            .delegateType(KUBERNETES)
+                            .delegateName("delegate1")
+                            .description("description1")
+                            .hostName("kube-0")
+                            .delegateProfileId("delegateProfileId1")
+                            .build();
+
+    persistence.save(delegate);
+
+    DelegateDTO updatedDelegate = delegateService.deleteDelegateTags(ACCOUNT_ID, "delegateId1");
+
+    assertThat(updatedDelegate).isNotNull();
+    assertThat(updatedDelegate.getDelegateId()).isEqualTo("delegateId1");
+    assertThat(updatedDelegate.getTags()).isEmpty();
   }
 
   private CapabilityRequirement buildCapabilityRequirement() {

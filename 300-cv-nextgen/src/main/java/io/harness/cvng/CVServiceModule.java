@@ -203,6 +203,7 @@ import io.harness.cvng.core.services.impl.monitoredService.MonitoredServiceServi
 import io.harness.cvng.core.services.impl.monitoredService.ServiceDependencyServiceImpl;
 import io.harness.cvng.core.services.impl.sidekickexecutors.DemoActivitySideKickExecutor;
 import io.harness.cvng.core.services.impl.sidekickexecutors.RetryChangeSourceHandleDeleteSideKickExecutor;
+import io.harness.cvng.core.services.impl.sidekickexecutors.VerificationTaskCleanupSideKickExecutor;
 import io.harness.cvng.core.transformer.changeEvent.ChangeEventEntityAndDTOTransformer;
 import io.harness.cvng.core.transformer.changeEvent.ChangeEventMetaDataTransformer;
 import io.harness.cvng.core.transformer.changeEvent.HarnessCDChangeEventTransformer;
@@ -242,6 +243,13 @@ import io.harness.cvng.dashboard.services.impl.ServiceDependencyGraphServiceImpl
 import io.harness.cvng.dashboard.services.impl.TimeSeriesDashboardServiceImpl;
 import io.harness.cvng.migration.impl.CVNGMigrationServiceImpl;
 import io.harness.cvng.migration.service.CVNGMigrationService;
+import io.harness.cvng.notification.beans.NotificationRuleType;
+import io.harness.cvng.notification.entities.NotificationRule.NotificationRuleUpdatableEntity;
+import io.harness.cvng.notification.entities.SLONotificationRule.SLONotificationRuleUpdatableEntity;
+import io.harness.cvng.notification.services.api.NotificationRuleService;
+import io.harness.cvng.notification.services.impl.NotificationRuleServiceImpl;
+import io.harness.cvng.notification.transformer.NotificationRuleConditionTransformer;
+import io.harness.cvng.notification.transformer.SLONotificationRuleConditionTransformer;
 import io.harness.cvng.servicelevelobjective.beans.SLIMetricType;
 import io.harness.cvng.servicelevelobjective.beans.SLOTargetType;
 import io.harness.cvng.servicelevelobjective.entities.RatioServiceLevelIndicator.RatioServiceLevelIndicatorUpdatableEntity;
@@ -757,6 +765,23 @@ public class CVServiceModule extends AbstractModule {
         .in(Scopes.SINGLETON);
     sideKickExecutorMapBinder.addBinding(SideKick.Type.RETRY_CHANGE_SOURCE_HANDLE_DELETE)
         .to(RetryChangeSourceHandleDeleteSideKickExecutor.class)
+        .in(Scopes.SINGLETON);
+    sideKickExecutorMapBinder.addBinding(SideKick.Type.VERIFICATION_TASK_CLEANUP)
+        .to(VerificationTaskCleanupSideKickExecutor.class)
+        .in(Scopes.SINGLETON);
+
+    bind(NotificationRuleService.class).to(NotificationRuleServiceImpl.class);
+    MapBinder<NotificationRuleType, NotificationRuleConditionTransformer>
+        notificationRuleTypeNotificationRuleConditionTransformerMapBinder =
+            MapBinder.newMapBinder(binder(), NotificationRuleType.class, NotificationRuleConditionTransformer.class);
+    notificationRuleTypeNotificationRuleConditionTransformerMapBinder.addBinding(NotificationRuleType.SLO)
+        .to(SLONotificationRuleConditionTransformer.class)
+        .in(Scopes.SINGLETON);
+
+    MapBinder<NotificationRuleType, NotificationRuleUpdatableEntity> notificationRuleMapBinder =
+        MapBinder.newMapBinder(binder(), NotificationRuleType.class, NotificationRuleUpdatableEntity.class);
+    notificationRuleMapBinder.addBinding(NotificationRuleType.SLO)
+        .to(SLONotificationRuleUpdatableEntity.class)
         .in(Scopes.SINGLETON);
     bindRetryOnExceptionInterceptor();
   }

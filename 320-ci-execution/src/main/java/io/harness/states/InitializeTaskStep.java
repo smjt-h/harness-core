@@ -129,7 +129,9 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
     }
     InitializeStepInfo initializeStepInfo = (InitializeStepInfo) stepElementParameters.getSpec();
 
-    initializeStepInfo.setBuildJobEnvInfo(fetchBuildJobEnvInfo(initializeStepInfo, ambiance));
+    if (initializeStepInfo.getBuildJobEnvInfo() == null) {
+      initializeStepInfo.setBuildJobEnvInfo(fetchBuildJobEnvInfo(initializeStepInfo, ambiance));
+    }
 
     List<EntityDetail> connectorsEntityDetails =
         getConnectorIdentifiers(initializeStepInfo, accountIdentifier, projectIdentifier, orgIdentifier);
@@ -144,7 +146,9 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
       Ambiance ambiance, StepElementParameters stepElementParameters, StepInputPackage inputPackage) {
     InitializeStepInfo initializeStepInfo = (InitializeStepInfo) stepElementParameters.getSpec();
 
-    initializeStepInfo.setBuildJobEnvInfo(fetchBuildJobEnvInfo(initializeStepInfo, ambiance));
+    if (initializeStepInfo.getBuildJobEnvInfo() == null) {
+      initializeStepInfo.setBuildJobEnvInfo(fetchBuildJobEnvInfo(initializeStepInfo, ambiance));
+    }
 
     Map<String, String> taskIds = new HashMap<>();
     String logPrefix = getLogPrefix(ambiance);
@@ -212,7 +216,9 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
     K8sTaskExecutionResponse k8sTaskExecutionResponse = (K8sTaskExecutionResponse) ciTaskExecutionResponse;
     InitializeStepInfo initializeStepInfo = (InitializeStepInfo) stepElementParameters.getSpec();
 
-    initializeStepInfo.setBuildJobEnvInfo(fetchBuildJobEnvInfo(initializeStepInfo, ambiance));
+    if (initializeStepInfo.getBuildJobEnvInfo() == null) {
+      initializeStepInfo.setBuildJobEnvInfo(fetchBuildJobEnvInfo(initializeStepInfo, ambiance));
+    }
 
     DependencyOutcome dependencyOutcome =
         getK8DependencyOutcome(ambiance, initializeStepInfo, k8sTaskExecutionResponse.getK8sTaskResponse());

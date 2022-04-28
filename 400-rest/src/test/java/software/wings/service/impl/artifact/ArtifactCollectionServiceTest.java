@@ -45,6 +45,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.ArtifactMetadata;
 import io.harness.beans.EmbeddedUser;
 import io.harness.beans.FeatureName;
 import io.harness.category.element.UnitTests;
@@ -69,7 +70,7 @@ import software.wings.beans.artifact.AcrArtifactStream;
 import software.wings.beans.artifact.AmazonS3ArtifactStream;
 import software.wings.beans.artifact.AmiArtifactStream;
 import software.wings.beans.artifact.Artifact;
-import software.wings.beans.artifact.Artifact.ArtifactMetadataKeys;
+import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.artifact.ArtifactoryArtifactStream;
 import software.wings.beans.artifact.BambooArtifactStream;
@@ -97,6 +98,7 @@ import software.wings.service.intfc.aws.manager.AwsEcrHelperServiceManager;
 import software.wings.service.intfc.security.ManagerDecryptionService;
 import software.wings.service.intfc.security.SecretManager;
 import software.wings.utils.ArtifactType;
+import software.wings.utils.DelegateArtifactCollectionUtils;
 import software.wings.utils.WingsTestConstants;
 
 import com.google.inject.Inject;
@@ -124,6 +126,7 @@ public class ArtifactCollectionServiceTest extends WingsBaseTest {
   @Inject @Spy private HPersistence persistence;
   @InjectMocks @Inject @Named("ArtifactCollectionService") private ArtifactCollectionService artifactCollectionService;
   @InjectMocks @Inject private ArtifactCollectionUtils artifactCollectionUtils;
+  @InjectMocks @Inject private DelegateArtifactCollectionUtils delegateArtifactCollectionUtils;
 
   @Mock ArtifactStreamService artifactStreamService;
   @Mock private ArtifactService artifactService;
@@ -548,7 +551,7 @@ public class ArtifactCollectionServiceTest extends WingsBaseTest {
                             .withSettingId(SETTING_ID)
                             .withArtifactSourceName(ARTIFACT_SOURCE_NAME)
                             .withRevision("1.0")
-                            .withMetadata(metadata)
+                            .withMetadata(new ArtifactMetadata(metadata))
                             .build();
     DockerArtifactStream dockerArtifactStream = DockerArtifactStream.builder()
                                                     .uuid(ARTIFACT_STREAM_ID)
@@ -891,7 +894,7 @@ public class ArtifactCollectionServiceTest extends WingsBaseTest {
     when(artifactIterator.hasNext()).thenReturn(true).thenReturn(false);
     Map<String, String> map = new HashMap<>();
     map.put("buildNo", "10");
-    when(artifactIterator.next()).thenReturn(anArtifact().withMetadata(map).build());
+    when(artifactIterator.next()).thenReturn(anArtifact().withMetadata(new ArtifactMetadata(map)).build());
     BuildSourceParameters buildSourceParameters =
         artifactCollectionUtils.getBuildSourceParameters(jenkinsArtifactStream, settingAttribute, true, true);
     assertThat(buildSourceParameters).isNotNull();
@@ -906,7 +909,7 @@ public class ArtifactCollectionServiceTest extends WingsBaseTest {
     when(artifactService.prepareArtifactWithMetadataQuery(any())).thenReturn(query);
     when(query.fetch()).thenReturn(artifactIterator);
     when(artifactIterator.hasNext()).thenReturn(true).thenReturn(false);
-    when(artifactIterator.next()).thenReturn(anArtifact().withMetadata(map).build());
+    when(artifactIterator.next()).thenReturn(anArtifact().withMetadata(new ArtifactMetadata(map)).build());
     buildSourceParameters =
         artifactCollectionUtils.getBuildSourceParameters(jenkinsArtifactStream, settingAttribute, true, true);
     assertThat(buildSourceParameters).isNotNull();
@@ -966,7 +969,7 @@ public class ArtifactCollectionServiceTest extends WingsBaseTest {
     when(artifactIterator.hasNext()).thenReturn(true).thenReturn(false);
     Map<String, String> map = new HashMap<>();
     map.put("artifactPath", "myfolder/todolist.war");
-    when(artifactIterator.next()).thenReturn(anArtifact().withMetadata(map).build());
+    when(artifactIterator.next()).thenReturn(anArtifact().withMetadata(new ArtifactMetadata(map)).build());
     BuildSourceParameters buildSourceParameters =
         artifactCollectionUtils.getBuildSourceParameters(jenkinsArtifactStream, settingAttribute, true, true);
     assertThat(buildSourceParameters).isNotNull();
@@ -995,12 +998,12 @@ public class ArtifactCollectionServiceTest extends WingsBaseTest {
                                                             .savedBuildDetailsKeys(savedBuildDetailsKeys)
                                                             .artifactStreamType(AMAZON_S3.name())
                                                             .build();
-    List<BuildDetails> buildDetails1 = artifactCollectionUtils.getNewBuildDetails(
+    List<BuildDetails> buildDetails1 = delegateArtifactCollectionUtils.getNewBuildDetails(
         savedBuildDetailsKeys, buildDetails, AMAZON_S3.name(), artifactStreamAttributes);
     assertThat(buildDetails1).isEmpty();
 
     buildDetails.add(aBuildDetails().withArtifactPath("new path").build());
-    buildDetails1 = artifactCollectionUtils.getNewBuildDetails(
+    buildDetails1 = delegateArtifactCollectionUtils.getNewBuildDetails(
         savedBuildDetailsKeys, buildDetails, AMAZON_S3.name(), artifactStreamAttributes);
     assertThat(buildDetails1.size()).isEqualTo(1);
     assertThat(buildDetails1).extracting(BuildDetails::getArtifactPath).containsExactly("new path");
@@ -1013,7 +1016,7 @@ public class ArtifactCollectionServiceTest extends WingsBaseTest {
     Set<String> set = new HashSet<>();
     set.add("10");
     set.add("11");
-    assertThat(artifactCollectionUtils.getNewBuildDetails(
+    assertThat(delegateArtifactCollectionUtils.getNewBuildDetails(
                    set, asList(), AMAZON_S3.name(), ArtifactStreamAttributes.builder().build()))
         .isEmpty();
   }
@@ -1022,7 +1025,7 @@ public class ArtifactCollectionServiceTest extends WingsBaseTest {
   @Owner(developers = AADITI)
   @Category(UnitTests.class)
   public void testGetNewBuildDetailsNoSavedArtifacts() {
-    List<BuildDetails> buildDetails = artifactCollectionUtils.getNewBuildDetails(Collections.emptySet(),
+    List<BuildDetails> buildDetails = delegateArtifactCollectionUtils.getNewBuildDetails(Collections.emptySet(),
         asList(aBuildDetails().withArtifactPath("todolist copy.war").build()), AMAZON_S3.name(),
         ArtifactStreamAttributes.builder().build());
     assertThat(buildDetails).isNotEmpty();

@@ -76,6 +76,7 @@ import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.sm.ExecutionInterrupt;
 import software.wings.sm.RollbackConfirmation;
 import software.wings.sm.StateExecutionData;
+import software.wings.sm.states.ApprovalState.ApprovalStateType;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
@@ -247,7 +248,8 @@ public class ExecutionResource {
     if (executionArgs != null) {
       if (isNotEmpty(executionArgs.getArtifactVariables())) {
         for (ArtifactVariable artifactVariable : executionArgs.getArtifactVariables()) {
-          if (isEmpty(artifactVariable.getValue()) && artifactVariable.getArtifactStreamMetadata() == null) {
+          if (isEmpty(artifactVariable.getValue()) && artifactVariable.getArtifactStreamMetadata() == null
+              && artifactVariable.getArtifactInput() == null) {
             throw new InvalidRequestException(
                 format("No value provided for artifact variable: [%s] ", artifactVariable.getName()), USER);
           }
@@ -274,7 +276,8 @@ public class ExecutionResource {
     // add auth
     if (executionArgs != null && isNotEmpty(executionArgs.getArtifactVariables())) {
       for (ArtifactVariable artifactVariable : executionArgs.getArtifactVariables()) {
-        if (isEmpty(artifactVariable.getValue()) && artifactVariable.getArtifactStreamMetadata() == null) {
+        if (isEmpty(artifactVariable.getValue()) && artifactVariable.getArtifactStreamMetadata() == null
+            && artifactVariable.getArtifactInput() == null) {
           throw new InvalidRequestException(
               format("No value provided for artifact variable: [%s] ", artifactVariable.getName()), USER);
         }
@@ -295,8 +298,12 @@ public class ExecutionResource {
       @QueryParam("parallelIndexToResume") int parallelIndexToResume,
       @QueryParam("workflowExecutionId") String workflowExecutionId) {
     WorkflowExecution workflowExecution = workflowExecutionService.getWorkflowExecution(appId, workflowExecutionId);
+
     notNullCheck(EXECUTION_DOES_NOT_EXIST + workflowExecutionId, workflowExecution);
     deploymentAuthHandler.authorize(appId, workflowExecution);
+    if (workflowExecution.getExecutionArgs() != null) {
+      workflowExecution.getExecutionArgs().setCreatedByType(CreatedByType.USER);
+    }
     WorkflowExecution resumedExecution =
         workflowExecutionService.triggerPipelineResumeExecution(appId, parallelIndexToResume, workflowExecution);
     resumedExecution.setStateMachine(null);
@@ -425,6 +432,11 @@ public class ExecutionResource {
     ApprovalStateExecutionData approvalStateExecutionData =
         workflowExecutionService.fetchApprovalStateExecutionDataFromWorkflowExecution(
             appId, workflowExecutionId, stateExecutionId, approvalDetails);
+
+    if (!ApprovalStateType.USER_GROUP.equals(approvalStateExecutionData.getApprovalStateType())) {
+      throw new InvalidRequestException(
+          approvalStateExecutionData.getApprovalStateType() + " Approval Type not supported", USER);
+    }
 
     if (isEmpty(approvalStateExecutionData.getUserGroups())) {
       deploymentAuthHandler.authorize(appId, workflowExecutionId);

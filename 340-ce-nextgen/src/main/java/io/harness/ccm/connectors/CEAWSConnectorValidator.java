@@ -81,38 +81,67 @@ public class CEAWSConnectorValidator extends io.harness.ccm.connectors.AbstractC
     try {
       final AWSCredentialsProvider credentialsProvider = getCredentialProvider(crossAccountAccessDTO);
 
-      if (featuresEnabled.contains(CEFeatures.VISIBILITY)) {
-        final Policy eventsPolicy = getRequiredEventsPolicy();
-        validateIfPolicyIsCorrect(credentialsProvider, crossAccountAccessDTO.getCrossAccountRoleArn(),
-            CEFeatures.VISIBILITY, errorList, eventsPolicy);
-      }
-
-      if (featuresEnabled.contains(CEFeatures.OPTIMIZATION)) {
-        final Policy optimizationPolicy = getRequiredOptimizationPolicy();
-        validateIfPolicyIsCorrect(credentialsProvider, crossAccountAccessDTO.getCrossAccountRoleArn(),
-            CEFeatures.OPTIMIZATION, errorList, optimizationPolicy);
-      }
-
       if (featuresEnabled.contains(CEFeatures.BILLING)) {
-        log.info("Getting required CUR policy for destination bucket: {}",
-            configuration.getAwsConfig().getDestinationBucket());
-        final Policy curPolicy = getRequiredCurPolicy(
-            awsCurAttributesDTO.getS3BucketName(), configuration.getAwsConfig().getDestinationBucket());
-        validateIfPolicyIsCorrect(credentialsProvider, crossAccountAccessDTO.getCrossAccountRoleArn(),
-            CEFeatures.BILLING, errorList, curPolicy);
+        Optional<ReportDefinition> report =
+            validateReportResourceExists(credentialsProvider, awsCurAttributesDTO, errorList);
+        if (report == null || !report.isPresent() || !errorList.isEmpty()) {
+          return ConnectorValidationResult.builder()
+              .status(ConnectivityStatus.FAILURE)
+              .errors(errorList)
+              .errorSummary("CUR report setting is not found")
+              .testedAt(Instant.now().toEpochMilli())
+              .build();
+        } else {
+          validateReport(report.get(), awsCurAttributesDTO.getS3BucketName(), errorList);
+          if (!errorList.isEmpty()) {
+            ErrorDetail errorDetail = errorList.get(errorList.size() - 1);
+            errorDetail.setMessage(errorDetail.getMessage() + " For more information, refer to the documentation.");
+            return ConnectorValidationResult.builder()
+                .status(ConnectivityStatus.FAILURE)
+                .errors(errorList)
+                .errorSummary("CUR report settings validation failed")
+                .testedAt(Instant.now().toEpochMilli())
+                .build();
+          }
+        }
 
-        validateResourceExists(credentialsProvider, awsCurAttributesDTO, errorList);
+        String s3PathPrefix = report.get().getS3Prefix() + "/" + awsCurAttributesDTO.getReportName() + "/"
+            + ceConnectorsHelper.getReportMonth();
+        validateIfBucketAndFilesPresent(
+            credentialsProvider, awsCurAttributesDTO.getS3BucketName(), s3PathPrefix, errorList);
+        if (!errorList.isEmpty()) {
+          return ConnectorValidationResult.builder()
+              .status(ConnectivityStatus.FAILURE)
+              .errors(errorList)
+              .errorSummary("CUR report file presence check failed")
+              .testedAt(Instant.now().toEpochMilli())
+              .build();
+        }
       }
+
+      verifyPoliciesPerFeature(
+          featuresEnabled, credentialsProvider, awsCurAttributesDTO, crossAccountAccessDTO, errorList);
+      if (!errorList.isEmpty()) {
+        return ConnectorValidationResult.builder()
+            .status(ConnectivityStatus.FAILURE)
+            .errors(errorList)
+            .errorSummary("Missing AWS access permissions")
+            .testedAt(Instant.now().toEpochMilli())
+            .build();
+      }
+
     } catch (AWSSecurityTokenServiceException ex) {
       return ConnectorValidationResult.builder()
           .status(ConnectivityStatus.FAILURE)
-          .errors(ImmutableList.of(ErrorDetail.builder()
-                                       .code(ex.getStatusCode())
-                                       .reason(ex.getErrorCode())
-                                       .message(ex.getErrorMessage())
-                                       .build()))
-          .errorSummary("Either the " + crossAccountAccessDTO.getCrossAccountRoleArn()
-              + " doesn't exist or Harness isn't a trusted entity on it or wrong externalId.")
+          .errors(ImmutableList.of(
+              ErrorDetail.builder()
+                  .code(ex.getStatusCode())
+                  .reason("Either the " + crossAccountAccessDTO.getCrossAccountRoleArn()
+                      + " doesn't exist or Harness isn't a trusted entity on it or wrong externalId.")
+                  .message(
+                      "Verify if the roleArn and externalId are entered correctly. For more information, refer to the documentation.")
+                  .build()))
+          .errorSummary(ex.getErrorMessage())
           .testedAt(Instant.now().toEpochMilli())
           .build();
     } catch (AmazonIdentityManagementException ex) {
@@ -120,16 +149,17 @@ public class CEAWSConnectorValidator extends io.harness.ccm.connectors.AbstractC
       return ConnectorValidationResult.builder()
           .errors(Collections.singletonList(ErrorDetail.builder()
                                                 .code(ex.getStatusCode())
-                                                .message(ex.getErrorCode())
+                                                .message("Please allow crossAccountAccessDTO.getCrossAccountRoleArn()"
+                                                    + " to perform 'iam:SimulatePrincipalPolicy' on itself")
                                                 .reason(ex.getErrorMessage())
                                                 .build()))
-          .errorSummary("Please allow " + crossAccountAccessDTO.getCrossAccountRoleArn()
-              + " to perform 'iam:SimulatePrincipalPolicy' on itself")
+          .errorSummary(ex.getErrorMessage())
           .status(ConnectivityStatus.FAILURE)
           .build();
     } catch (InvalidArgumentsException ex) {
       return ConnectorValidationResult.builder()
           .status(ConnectivityStatus.FAILURE)
+          .errors(ImmutableList.of(ErrorDetail.builder().reason(ex.getMessage()).message("").build()))
           .errorSummary(ex.getMessage())
           .testedAt(Instant.now().toEpochMilli())
           .build();
@@ -138,27 +168,27 @@ public class CEAWSConnectorValidator extends io.harness.ccm.connectors.AbstractC
       log.error(GENERIC_LOGGING_ERROR, accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifier, ex);
       return ConnectorValidationResult.builder()
           .status(ConnectivityStatus.FAILURE)
-          .errorSummary(ex.getMessage())
+          .errors(ImmutableList.of(ErrorDetail.builder().reason("Unknown error occurred").message("").build()))
+          .errorSummary("Unknown error occurred")
           .testedAt(Instant.now().toEpochMilli())
           .build();
     }
 
-    if (!errorList.isEmpty()) {
-      return ConnectorValidationResult.builder()
-          .status(ConnectivityStatus.FAILURE)
-          .errors(errorList)
-          .errorSummary(errorList.get(errorList.size() - 1).getReason())
-          .testedAt(Instant.now().toEpochMilli())
-          .build();
-    }
     // Check for data at destination only when 24 hrs have elapsed since connector last modified at
     long now = Instant.now().toEpochMilli() - 24 * 60 * 60 * 1000;
     if (featuresEnabled.contains(CEFeatures.BILLING) && connectorResponseDTO.getCreatedAt() < now) {
       if (!ceConnectorsHelper.isDataSyncCheck(accountIdentifier, connectorIdentifier, ConnectorType.CE_AWS,
               ceConnectorsHelper.JOB_TYPE_CLOUDFUNCTION)) {
-        // Issue with CFs
+        // Issue with CFs or Batch
+        log.error("Error with processing data"); // Used for log based metrics
         return ConnectorValidationResult.builder()
-            .errorSummary("Error with processing data. Please contact Harness support")
+            .errors(ImmutableList.of(
+                ErrorDetail.builder()
+                    .reason("Error with processing data")
+                    .message("") // UI adds "Contact Harness Support or Harness Community Forum." in this case
+                    .code(500)
+                    .build()))
+            .errorSummary("Error with processing data")
             .status(ConnectivityStatus.FAILURE)
             .build();
       }
@@ -168,6 +198,31 @@ public class CEAWSConnectorValidator extends io.harness.ccm.connectors.AbstractC
         .status(ConnectivityStatus.SUCCESS)
         .testedAt(Instant.now().toEpochMilli())
         .build();
+  }
+
+  private void verifyPoliciesPerFeature(List<CEFeatures> featuresEnabled, AWSCredentialsProvider credentialsProvider,
+      AwsCurAttributesDTO awsCurAttributesDTO, CrossAccountAccessDTO crossAccountAccessDTO,
+      List<ErrorDetail> errorList) {
+    if (featuresEnabled.contains(CEFeatures.VISIBILITY)) {
+      final Policy eventsPolicy = getRequiredEventsPolicy();
+      validateIfPolicyIsCorrect(credentialsProvider, crossAccountAccessDTO.getCrossAccountRoleArn(),
+          CEFeatures.VISIBILITY, errorList, eventsPolicy);
+    }
+
+    if (featuresEnabled.contains(CEFeatures.OPTIMIZATION)) {
+      final Policy optimizationPolicy = getRequiredOptimizationPolicy();
+      validateIfPolicyIsCorrect(credentialsProvider, crossAccountAccessDTO.getCrossAccountRoleArn(),
+          CEFeatures.OPTIMIZATION, errorList, optimizationPolicy);
+    }
+
+    if (featuresEnabled.contains(CEFeatures.BILLING)) {
+      log.info("Getting required CUR policy for destination bucket: {}",
+          configuration.getAwsConfig().getDestinationBucket());
+      final Policy curPolicy = getRequiredCurPolicy(
+          awsCurAttributesDTO.getS3BucketName(), configuration.getAwsConfig().getDestinationBucket());
+      validateIfPolicyIsCorrect(credentialsProvider, crossAccountAccessDTO.getCrossAccountRoleArn(), CEFeatures.BILLING,
+          errorList, curPolicy);
+    }
   }
 
   private void validateIfPolicyIsCorrect(AWSCredentialsProvider credentialsProvider, String crossAccountRoleArn,
@@ -186,8 +241,8 @@ public class CEAWSConnectorValidator extends io.harness.ccm.connectors.AbstractC
 
       for (EvaluationResult result : evaluationResults) {
         errorList.add(ErrorDetail.builder()
-                          .reason(result.getEvalDecision())
-                          .message("Action: " + result.getEvalActionName()
+                          .message("Review AWS access permissions as per the documentation.")
+                          .reason("Action: " + result.getEvalActionName()
                               + " not allowed on Resource: " + result.getEvalResourceName())
                           .code(403)
                           .build());
@@ -208,69 +263,71 @@ public class CEAWSConnectorValidator extends io.harness.ccm.connectors.AbstractC
     return credentialsProvider;
   }
 
-  private void validateResourceExists(AWSCredentialsProvider credentialsProvider,
+  private Optional<ReportDefinition> validateReportResourceExists(AWSCredentialsProvider credentialsProvider,
       AwsCurAttributesDTO awsCurAttributesDTO, List<ErrorDetail> errorList) {
     Optional<ReportDefinition> report =
         awsClient.getReportDefinition(credentialsProvider, awsCurAttributesDTO.getReportName());
-    if (!report.isPresent()) {
+    if (report == null || !report.isPresent()) {
       errorList.add(
           ErrorDetail.builder()
-              .message(String.format("Can't access cost and usage report: %s", awsCurAttributesDTO.getReportName()))
-              .reason("Report Not Present")
+              .reason(String.format("Can't access cost and usage report: %s", awsCurAttributesDTO.getReportName()))
+              .message(
+                  "Review the Cost and Usage report settings in your AWS account. For more information, refer to the documentation.")
               .build());
-    } else {
-      validateReport(report.get(), awsCurAttributesDTO.getS3BucketName(), errorList);
-      String s3PathPrefix = report.get().getS3Prefix() + "/" + awsCurAttributesDTO.getReportName() + "/"
-          + ceConnectorsHelper.getReportMonth();
-      validateIfBucketIsPresent(credentialsProvider, awsCurAttributesDTO.getS3BucketName(), s3PathPrefix, errorList);
     }
+    return report;
   }
 
   private void validateReport(
       @NotNull ReportDefinition report, @NotNull String s3BucketName, final List<ErrorDetail> errorList) {
-    log.info("Validating S3 report definition at source");
+    log.info("Validating cur report setting at source");
+
     if (!report.getS3Bucket().equals(s3BucketName)) {
-      String reason = String.format("Provided s3Bucket Name: %s, Actual s3bucket associated with the report: %s",
+      String reason = String.format("Provided s3 bucket name: %s,\n Current s3 bucket associated with the report: %s",
           s3BucketName, report.getS3Bucket());
-      errorList.add(ErrorDetail.builder().reason(reason).message("Wrong s3Bucket Name").build());
+      errorList.add(ErrorDetail.builder()
+                        .reason(reason)
+                        .message("Provide the same s3 bucket name as associated with the report.")
+                        .build());
     }
     if (!report.getCompression().equals(COMPRESSION)) {
-      errorList.add(ErrorDetail.builder()
-                        .reason(String.format("Required: %s, Actual: %s", COMPRESSION, report.getCompression()))
-                        .message("Wrong Compression")
-                        .build());
+      errorList.add(
+          ErrorDetail.builder()
+              .reason(String.format("Required: %s, Current: %s", COMPRESSION, report.getCompression()))
+              .message("Select GZIP for 'Compression Type' for the chosen cost and usage report in your AWS account.")
+              .build());
     }
     if (!report.getTimeUnit().equals(TIME_GRANULARITY)) {
-      errorList.add(ErrorDetail.builder()
-                        .reason(String.format("Required: %s, Actual: %s", TIME_GRANULARITY, report.getTimeUnit()))
-                        .message("Wrong Time Granularity")
-                        .build());
+      errorList.add(
+          ErrorDetail.builder()
+              .reason(String.format("Required: %s, Current: %s", TIME_GRANULARITY, report.getTimeUnit()))
+              .message("Select Hourly for 'Time granularity' for the chosen cost and usage report in your AWS account.")
+              .build());
     }
     if (!report.getReportVersioning().equals(REPORT_VERSIONING)) {
       errorList.add(
           ErrorDetail.builder()
-              .reason(String.format("Required: %s, Actual: %s", REPORT_VERSIONING, report.getReportVersioning()))
-              .message("Wrong Report versioning")
+              .reason(String.format("Required: %s, Current: %s", REPORT_VERSIONING, report.getReportVersioning()))
+              .message("Select Overwrite existing report for 'Report versioning'.")
               .build());
     }
     if (!report.isRefreshClosedReports()) {
       errorList.add(
           ErrorDetail.builder()
-              .reason(
-                  "Required: Automatically refresh your Cost & Usage Report when charges are detected for previous months with closed bills.")
-              .message("Wrong Data refresh settings")
+              .reason("'Data refresh settings' is not enabled for the chosen cost and usage report")
+              .message("Enable the 'Data refresh settings' for the chosen cost and usage report in your AWS account.")
               .build());
     }
     if (!report.getAdditionalSchemaElements().contains(RESOURCES)) {
       errorList.add(ErrorDetail.builder()
-                        .reason("Required: Include resource IDs")
-                        .message("Wrong Additional report details")
+                        .reason("'Include resource IDs' is not enabled in CUR report")
+                        .message("Select 'Include resource IDs' in additional report details.")
                         .build());
     }
   }
 
   @VisibleForTesting
-  public void validateIfBucketIsPresent(AWSCredentialsProvider credentialsProvider, String s3BucketName,
+  public void validateIfBucketAndFilesPresent(AWSCredentialsProvider credentialsProvider, String s3BucketName,
       String s3PathPrefix, List<ErrorDetail> errorList) {
     Date latestFileLastmodifiedTime = Date.from(Instant.EPOCH);
     String latestFileName = "";
@@ -289,17 +346,24 @@ public class CEAWSConnectorValidator extends io.harness.ccm.connectors.AbstractC
           s3PathPrefix, latestFileName, latestFileLastmodifiedTime);
       long now = Instant.now().toEpochMilli() - 24 * 60 * 60 * 1000;
       if (!latestFileName.isEmpty() && latestFileLastmodifiedTime.getTime() < now) {
-        String reason = String.format("No CUR file is found in last 24 hrs at %s/%s. "
-                + "Please verify your billing export config in your AWS account and CCM connector. "
-                + "Follow CCM documentation for more information",
-            s3BucketName, s3PathPrefix);
-        errorList.add(ErrorDetail.builder().message("No CUR file is found in last 24 hrs").reason(reason).build());
+        String reason = String.format("No CUR file is found in last 24 hrs at %s/%s. ", s3BucketName, s3PathPrefix);
+        errorList.add(
+            ErrorDetail.builder()
+                .message("Please verify your billing export config in your AWS account and in CCM connector. \n"
+                    + "For more information, refer to the documentation.\n")
+                .reason(reason)
+                .build());
       }
     } catch (AmazonS3Exception ex) {
       String reason = String.format(
           "Either bucket '%s' doesn't exist or there is a mismatch between bucketName entered in connector and the name present in the role policy.",
           s3BucketName);
-      errorList.add(ErrorDetail.builder().message(ex.getMessage()).reason(reason).build());
+      errorList.add(
+          ErrorDetail.builder()
+              .message(
+                  "Verify if the bucket exists and name matches in connector and in role policy. For more information, refer to the documentation.\n")
+              .reason(reason)
+              .build());
     }
   }
 

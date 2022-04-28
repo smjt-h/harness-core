@@ -1752,12 +1752,26 @@
       "type": "object",
       "required": [
         "identifier",
-        "name",
-        "stages"
+        "name"
       ],
       "properties": {
         "allowStageExecutions": {
           "type": "boolean"
+        },
+        "delegateSelectors": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
         },
         "description": {
           "type": "string"
@@ -1801,6 +1815,9 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "template": {
+          "$ref": "#/definitions/TemplateLinkConfig"
         },
         "timeout": {
           "type": "string",
@@ -2747,6 +2764,21 @@
             "type"
           ],
           "properties": {
+            "delegateSelectors": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
+            },
             "description": {
               "type": "string"
             },
@@ -3135,6 +3167,21 @@
         "steps"
       ],
       "properties": {
+        "delegateSelectors": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
         "failureStrategies": {
           "type": "array",
           "items": {
