@@ -235,8 +235,7 @@ public class SdkNodeExecutionServiceImplTest extends PmsSdkCoreTestBase {
                 .setSdkResponseEventType(SdkResponseEventType.HANDLE_PROGRESS)
                 .setProgressRequest(
                     HandleProgressRequest.newBuilder()
-                        .setProgressJson(
-                            "{\"__recast\":\"io.harness.delegate.beans.logstreaming.UnitProgressData\",\"unitProgresses\":null}")
+                        .setProgressJson("{\"__recast\":\"io.harness.delegate.beans.logstreaming.UnitProgressData\"}")
                         .build())
                 .setAmbiance(ambiance)
                 .build());
