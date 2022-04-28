@@ -15,8 +15,10 @@ import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
 import io.harness.cdng.manifest.yaml.storeConfig.moduleSource.ModuleSource;
 import io.harness.validation.Validator;
 
+import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Data
@@ -24,6 +26,7 @@ import lombok.NoArgsConstructor;
 @OwnedBy(CDP)
 @RecasterAlias("io.harness.cdng.provision.terraform.TerraformConfigFilesWrapper")
 public class TerraformConfigFilesWrapper {
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) private String uuid;
   @NotNull StoreConfigWrapper store;
   ModuleSource moduleSource;
 
