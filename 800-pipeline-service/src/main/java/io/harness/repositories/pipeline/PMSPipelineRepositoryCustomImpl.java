@@ -134,8 +134,13 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
       }
       return savedPipelineEntity;
     }
+    Scope scope = Scope.builder()
+                      .accountIdentifier(pipelineToSave.getAccountIdentifier())
+                      .orgIdentifier(pipelineToSave.getOrgIdentifier())
+                      .projectIdentifier(pipelineToSave.getProjectIdentifier())
+                      .build();
     String yamlToPush = pipelineToSave.getYaml();
-    // push yamlToPush to git and create PR if needed
+    gitAwareEntityHelper.pushEntityToRemote(yamlToPush, scope, ChangeType.ADD);
     pipelineToSave.setYaml("");
     pipelineToSave.setStoreType(StoreType.REMOTE);
     pipelineToSave.setConnectorRef(gitEntityInfo.getConnectorRef());
@@ -227,8 +232,13 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
       return mongoTemplate.findAndModify(
           query, updateOperations, new FindAndModifyOptions().returnNew(true), PipelineEntity.class);
     }
+    Scope scope = Scope.builder()
+                      .accountIdentifier(pipelineToUpdate.getAccountIdentifier())
+                      .orgIdentifier(pipelineToUpdate.getOrgIdentifier())
+                      .projectIdentifier(pipelineToUpdate.getProjectIdentifier())
+                      .build();
     String yamlToPush = pipelineToUpdate.getYaml();
-    // push yamlToPush to git and create PR if needed
+    gitAwareEntityHelper.pushEntityToRemote(yamlToPush, scope, ChangeType.MODIFY);
     pipelineToUpdate.setYaml("");
     pipelineToUpdate.setStoreType(StoreType.REMOTE);
     pipelineToUpdate.setConnectorRef(gitEntityInfo.getConnectorRef());
@@ -309,11 +319,11 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
         PipelineEntity entity = entityV1.get();
         if (entity.getStoreType() == null) {
           GitAwareContextHelper.updateScmGitMetaData(ScmGitMetaData.builder()
-                                                    .repoName(entity.getRepo())
-                                                    .branchName(entity.getBranch())
-                                                    .blobId(entity.getObjectIdOfYaml())
-                                                    .filePath(entity.getFilePath())
-                                                    .build());
+                                                         .repoName(entity.getRepo())
+                                                         .branchName(entity.getBranch())
+                                                         .blobId(entity.getObjectIdOfYaml())
+                                                         .filePath(entity.getFilePath())
+                                                         .build());
           return entityV1;
         }
       }

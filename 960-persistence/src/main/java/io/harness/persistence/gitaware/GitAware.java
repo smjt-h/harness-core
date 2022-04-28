@@ -23,7 +23,7 @@ public interface GitAware extends PersistentEntity, WithIdentifier {
   // The String representation of the resource mostly yaml string
   String getData();
 
-  String setData(String data);
+  void setData(String data);
 
   // Repo in which the entity will be saved
   String getRepo();

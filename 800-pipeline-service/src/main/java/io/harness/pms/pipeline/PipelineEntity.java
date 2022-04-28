@@ -146,8 +146,8 @@ public class PipelineEntity
   }
 
   @Override
-  public String setData(String data) {
-    return null;
+  public void setData(String data) {
+    yaml = data;
   }
 
   @Override
