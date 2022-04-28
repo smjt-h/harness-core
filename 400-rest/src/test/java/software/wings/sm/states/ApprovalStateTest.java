@@ -8,22 +8,10 @@
 package software.wings.sm.states;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
-import static io.harness.beans.ExecutionStatus.ABORTED;
-import static io.harness.beans.ExecutionStatus.FAILED;
-import static io.harness.beans.ExecutionStatus.PAUSED;
-import static io.harness.beans.ExecutionStatus.REJECTED;
-import static io.harness.beans.ExecutionStatus.SKIPPED;
-import static io.harness.beans.ExecutionStatus.SUCCESS;
+import static io.harness.beans.ExecutionStatus.*;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
-import static io.harness.rule.OwnerRule.AGORODETKI;
-import static io.harness.rule.OwnerRule.ANSHUL;
-import static io.harness.rule.OwnerRule.DHRUV;
-import static io.harness.rule.OwnerRule.FERNANDOD;
-import static io.harness.rule.OwnerRule.HINGER;
-import static io.harness.rule.OwnerRule.PRABU;
-import static io.harness.rule.OwnerRule.ROHIT_KUMAR;
-import static io.harness.rule.OwnerRule.SRINIVAS;
-import static io.harness.rule.OwnerRule.YOGESH;
+import static io.harness.exception.WingsException.USER;
+import static io.harness.rule.OwnerRule.*;
 
 import static software.wings.beans.Application.Builder.anApplication;
 import static software.wings.beans.ElementExecutionSummary.ElementExecutionSummaryBuilder.anElementExecutionSummary;
@@ -32,67 +20,29 @@ import static software.wings.beans.NotificationGroup.NotificationGroupBuilder.aN
 import static software.wings.beans.WorkflowExecution.WorkflowExecutionKeys;
 import static software.wings.beans.WorkflowExecution.builder;
 import static software.wings.beans.artifact.Artifact.Builder.anArtifact;
-import static software.wings.common.NotificationMessageResolver.NotificationMessageType.APPROVAL_EXPIRED_WORKFLOW_NOTIFICATION;
-import static software.wings.common.NotificationMessageResolver.NotificationMessageType.WORKFLOW_ABORT_NOTIFICATION;
-import static software.wings.common.NotificationMessageResolver.NotificationMessageType.WORKFLOW_PAUSE_NOTIFICATION;
-import static software.wings.common.NotificationMessageResolver.NotificationMessageType.WORKFLOW_RESUME_NOTIFICATION;
+import static software.wings.common.NotificationMessageResolver.NotificationMessageType.*;
 import static software.wings.security.JWT_CATEGORY.EXTERNAL_SERVICE_SECRET;
 import static software.wings.service.impl.slack.SlackApprovalUtils.createSlackApprovalMessage;
 import static software.wings.sm.StateExecutionInstance.Builder.aStateExecutionInstance;
 import static software.wings.sm.WorkflowStandardParams.Builder.aWorkflowStandardParams;
-import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
-import static software.wings.utils.WingsTestConstants.APPROVAL_EXECUTION_ID;
-import static software.wings.utils.WingsTestConstants.APP_ID;
-import static software.wings.utils.WingsTestConstants.APP_NAME;
-import static software.wings.utils.WingsTestConstants.ARTIFACT_ID;
-import static software.wings.utils.WingsTestConstants.ARTIFACT_SOURCE_NAME;
-import static software.wings.utils.WingsTestConstants.ARTIFACT_STREAM_ID;
-import static software.wings.utils.WingsTestConstants.BUILD_JOB_NAME;
-import static software.wings.utils.WingsTestConstants.ENV_ID;
-import static software.wings.utils.WingsTestConstants.ENV_NAME;
-import static software.wings.utils.WingsTestConstants.INFRA_DEFINITION_ID;
-import static software.wings.utils.WingsTestConstants.JIRA_ISSUE_ID;
-import static software.wings.utils.WingsTestConstants.NOTIFICATION_GROUP_ID;
-import static software.wings.utils.WingsTestConstants.PIPELINE_EXECUTION_ID;
-import static software.wings.utils.WingsTestConstants.PIPELINE_WORKFLOW_EXECUTION_ID;
-import static software.wings.utils.WingsTestConstants.SERVICE_ID;
-import static software.wings.utils.WingsTestConstants.SERVICE_NAME;
-import static software.wings.utils.WingsTestConstants.STATE_EXECUTION_ID;
-import static software.wings.utils.WingsTestConstants.STATE_NAME;
-import static software.wings.utils.WingsTestConstants.USER_EMAIL;
-import static software.wings.utils.WingsTestConstants.USER_NAME;
-import static software.wings.utils.WingsTestConstants.UUID;
-import static software.wings.utils.WingsTestConstants.WORKFLOW_EXECUTION_ID;
-import static software.wings.utils.WingsTestConstants.WORKFLOW_ID;
-import static software.wings.utils.WingsTestConstants.WORKFLOW_NAME;
-import static software.wings.utils.WingsTestConstants.WORKFLOW_URL;
+import static software.wings.utils.WingsTestConstants.*;
 
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang3.reflect.FieldUtils.writeField;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.joor.Reflect.on;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
-import io.harness.beans.ArtifactMetadata;
-import io.harness.beans.EmbeddedUser;
-import io.harness.beans.ExecutionStatus;
-import io.harness.beans.PageResponse;
-import io.harness.beans.SweepingOutputInstance;
-import io.harness.beans.WorkflowType;
+import io.harness.beans.*;
 import io.harness.category.element.UnitTests;
 import io.harness.context.ContextElementType;
 import io.harness.exception.InvalidArgumentsException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.rule.Owner;
 import io.harness.serializer.KryoSerializer;
@@ -106,31 +56,15 @@ import software.wings.api.ApprovalStateExecutionData.ApprovalStateExecutionDataK
 import software.wings.api.ServiceNowExecutionData;
 import software.wings.api.WorkflowElement;
 import software.wings.api.jira.JiraExecutionData;
-import software.wings.beans.Activity;
-import software.wings.beans.ElementExecutionSummary;
-import software.wings.beans.EnvSummary;
-import software.wings.beans.ExecutionArgs;
-import software.wings.beans.ExecutionScope;
-import software.wings.beans.NameValuePair;
+import software.wings.beans.*;
 import software.wings.beans.NameValuePair.NameValuePairKeys;
-import software.wings.beans.Pipeline;
-import software.wings.beans.PipelineStage;
 import software.wings.beans.PipelineStage.PipelineStageElement;
-import software.wings.beans.TemplateExpression;
-import software.wings.beans.User;
 import software.wings.beans.User.Builder;
-import software.wings.beans.WorkflowExecution;
 import software.wings.beans.alert.AlertType;
 import software.wings.beans.alert.ApprovalNeededAlert;
-import software.wings.beans.approval.ApprovalStateParams;
+import software.wings.beans.approval.*;
 import software.wings.beans.approval.ApprovalStateParams.ApprovalStateParamsKeys;
-import software.wings.beans.approval.ConditionalOperator;
-import software.wings.beans.approval.Criteria;
-import software.wings.beans.approval.JiraApprovalParams;
-import software.wings.beans.approval.ServiceNowApprovalParams;
-import software.wings.beans.approval.ShellScriptApprovalParams;
 import software.wings.beans.approval.ShellScriptApprovalParams.ShellScriptApprovalParamsKeys;
-import software.wings.beans.approval.SlackApprovalParams;
 import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.security.UserGroup;
@@ -142,26 +76,10 @@ import software.wings.service.impl.JiraHelperService;
 import software.wings.service.impl.notifications.SlackApprovalMessageKeys;
 import software.wings.service.impl.workflow.WorkflowNotificationDetails;
 import software.wings.service.impl.workflow.WorkflowNotificationHelper;
-import software.wings.service.intfc.ActivityService;
-import software.wings.service.intfc.AlertService;
-import software.wings.service.intfc.ApprovalPolingService;
-import software.wings.service.intfc.NotificationService;
-import software.wings.service.intfc.NotificationSetupService;
-import software.wings.service.intfc.PipelineService;
-import software.wings.service.intfc.ServiceResourceService;
-import software.wings.service.intfc.StateExecutionService;
-import software.wings.service.intfc.UserGroupService;
-import software.wings.service.intfc.WorkflowExecutionService;
+import software.wings.service.intfc.*;
 import software.wings.service.intfc.servicenow.ServiceNowService;
 import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
-import software.wings.sm.ExecutionContext;
-import software.wings.sm.ExecutionContextImpl;
-import software.wings.sm.ExecutionResponse;
-import software.wings.sm.State;
-import software.wings.sm.StateExecutionContext;
-import software.wings.sm.StateExecutionData;
-import software.wings.sm.StateExecutionInstance;
-import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.*;
 import software.wings.sm.states.ApprovalState.ApprovalStateKeys;
 import software.wings.sm.states.ApprovalState.ApprovalStateType;
 import software.wings.sm.states.EnvState.EnvStateKeys;
@@ -173,14 +91,7 @@ import com.google.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import net.sf.json.JSONArray;
@@ -2184,5 +2095,66 @@ public class ApprovalStateTest extends WingsBaseTest {
     assertThat(approvalState.approvalStateParams.getServiceNowApprovalParams().getApproval().fetchConditions())
         .containsKeys("approval", "state");
     assertThat(approvalState.getApprovalStateType()).isEqualTo(ApprovalStateType.SERVICENOW);
+  }
+
+  @Test
+  @Owner(developers = FERNANDOD)
+  @Category(UnitTests.class)
+  public void shouldResolveUserGroupExpression() {
+    String expression = "${userGroupExpression}";
+    approvalState.setUserGroupAsExpression(true);
+    approvalState.setUserGroupExpression(expression);
+
+    when(context.renderExpression(expression)).thenReturn("group1, group2");
+    when(context.getAccountId()).thenReturn(ACCOUNT_ID);
+    when(userGroupService.get(ACCOUNT_ID, "group1")).thenReturn(UserGroup.builder().uuid("A1").build());
+    when(userGroupService.get(ACCOUNT_ID, "group2")).thenReturn(UserGroup.builder().uuid("B2").build());
+
+    approvalState.resolveUserGroupFromExpression(context);
+
+    assertThat(approvalState.getUserGroups()).containsOnly("A1", "B2");
+  }
+
+  @Test
+  @Owner(developers = FERNANDOD)
+  @Category(UnitTests.class)
+  public void shouldThrowInvalidRequestWhenUserGroupExpressionNull() {
+    assertThatThrownBy(() -> {
+      approvalState.setUserGroupExpression(null);
+      approvalState.resolveUserGroupFromExpression(context);
+    })
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("User group expression is set but value is not provided")
+        .hasFieldOrPropertyWithValue("reportTargets", USER);
+  }
+
+  @Test
+  @Owner(developers = FERNANDOD)
+  @Category(UnitTests.class)
+  public void shouldThrowInvalidRequestWhenUserGroupExpressionEmpty() {
+    assertThatThrownBy(() -> {
+      approvalState.setUserGroupExpression("");
+      approvalState.resolveUserGroupFromExpression(context);
+    })
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("User group expression is set but value is not provided")
+        .hasFieldOrPropertyWithValue("reportTargets", USER);
+  }
+
+  @Test
+  @Owner(developers = FERNANDOD)
+  @Category(UnitTests.class)
+  public void shouldThrowInvalidRequestWhenRenderedExpressionEmpty() {
+    String expression = "${userGroupExpression}";
+    approvalState.setUserGroupAsExpression(true);
+    approvalState.setUserGroupExpression(expression);
+
+    assertThatThrownBy(() -> {
+      when(context.renderExpression(expression)).thenReturn("");
+      approvalState.resolveUserGroupFromExpression(context);
+    })
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("User group expression is invalid")
+        .hasFieldOrPropertyWithValue("reportTargets", USER);
   }
 }

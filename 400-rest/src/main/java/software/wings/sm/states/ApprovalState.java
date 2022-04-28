@@ -333,7 +333,8 @@ public class ApprovalState extends State implements SweepingOutputStateMixin {
     userGroups = resolveUserGroup(userGroups, executionContext.getApp().getAccountId());
   }
 
-  private void resolveUserGroupFromExpression(ExecutionContext context) {
+  @VisibleForTesting
+  void resolveUserGroupFromExpression(ExecutionContext context) {
     if (isEmpty(getUserGroupExpression())) {
       throw new InvalidRequestException("User group expression is set but value is not provided", USER);
     }
