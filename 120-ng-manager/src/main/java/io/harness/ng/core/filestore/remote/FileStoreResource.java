@@ -321,7 +321,7 @@ public class FileStoreResource {
 
   @GET
   @Consumes({"application/json"})
-  @Path("files/{identifier}/referenced-by")
+  @Path("{identifier}/referenced-by")
   @ApiOperation(value = "Get referenced by entities", nickname = "getReferencedBy")
   @Operation(operationId = "getReferencedBy", summary = "Get Referenced by Entities.",
       responses =

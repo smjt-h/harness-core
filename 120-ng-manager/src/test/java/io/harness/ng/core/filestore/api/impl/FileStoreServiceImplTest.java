@@ -668,6 +668,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
         .description("updatedDescription")
         .build();
   }
+
   private NGFile createNgFile() {
     return builder()
         .type(NGFileType.FILE)
