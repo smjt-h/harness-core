@@ -12,11 +12,9 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.git.model.ChangeType;
 import io.harness.gitaware.dto.GitContextRequestParams;
-import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.scm.SCMGitSyncHelper;
 import io.harness.gitsync.scm.beans.ScmCommitFileGitRequestParams;
-import io.harness.gitsync.scm.beans.ScmCommitFileResponse;
 import io.harness.gitsync.scm.beans.ScmGetFileResponse;
 import io.harness.persistence.gitaware.GitAware;
 
@@ -50,7 +48,7 @@ public class GitAwareEntityHelper {
   public void pushEntityToRemote(String yaml, Scope scope, ChangeType changeType) {
     GitEntityInfo gitEntityInfo = GitAwareContextHelper.getGitEntityInfo();
     ScmCommitFileGitRequestParams scmCommitFileGitRequestParams = ScmCommitFileGitRequestParams.builder()
-                                                                      .repoName(gitEntityInfo.getYamlGitConfigId())
+                                                                      .repoName(gitEntityInfo.getRepoName())
                                                                       .branchName(gitEntityInfo.getBranch())
                                                                       .fileContent(yaml)
                                                                       .filePath(gitEntityInfo.getFilePath())
@@ -60,6 +58,25 @@ public class GitAwareEntityHelper {
                                                                       .oldCommitId(gitEntityInfo.getCommitId())
                                                                       .baseBranch(gitEntityInfo.getBaseBranch())
                                                                       .build();
+
+    scmGitSyncHelper.commitFile(scope, scmCommitFileGitRequestParams, changeType, Collections.emptyMap());
+  }
+
+  public void pushEntityToRemote(GitAware gitAwareEntity, String yaml, Scope scope, ChangeType changeType) {
+    GitEntityInfo gitEntityInfo = GitAwareContextHelper.getGitEntityInfo();
+    ScmCommitFileGitRequestParams scmCommitFileGitRequestParams =
+        ScmCommitFileGitRequestParams.builder()
+            .repoName(gitAwareEntity.getRepo() != null ? gitAwareEntity.getRepo() : gitEntityInfo.getRepoName())
+            .branchName(gitEntityInfo.getBranch())
+            .fileContent(yaml)
+            .filePath(gitAwareEntity.getFilePath() != null ? gitAwareEntity.getFilePath() : gitEntityInfo.getFilePath())
+            .connectorRef(gitAwareEntity.getConnectorRef() != null ? gitAwareEntity.getConnectorRef()
+                                                                   : gitEntityInfo.getConnectorRef())
+            .isCommitToNewBranch(gitEntityInfo.isNewBranch())
+            .commitMessage(gitEntityInfo.getCommitMsg())
+            .oldCommitId(gitEntityInfo.getCommitId())
+            .baseBranch(gitEntityInfo.getBaseBranch())
+            .build();
 
     scmGitSyncHelper.commitFile(scope, scmCommitFileGitRequestParams, changeType, Collections.emptyMap());
   }

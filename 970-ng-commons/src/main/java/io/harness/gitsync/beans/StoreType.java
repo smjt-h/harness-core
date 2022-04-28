@@ -7,8 +7,6 @@
 
 package io.harness.gitsync.beans;
 
-import io.harness.gitsync.sdk.GitSyncApiConstants;
-
 public enum StoreType {
   // Will be used when entity is not persisted on git but rather live in DATABASE
   INLINE,

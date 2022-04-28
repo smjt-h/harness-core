@@ -43,6 +43,7 @@ public class GitEntityInfo {
   String resolvedConflictCommitId;
   StoreType storeType;
   String connectorRef;
+  String repoName;
 
   public boolean isNull() {
     // todo @Abhinav Maybe we should use null in place of default

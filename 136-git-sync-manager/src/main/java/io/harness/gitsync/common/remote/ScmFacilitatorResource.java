@@ -29,10 +29,14 @@ import io.harness.gitsync.GetFileRequest;
 import io.harness.gitsync.GetFileResponse;
 import io.harness.gitsync.common.YamlConstants;
 import io.harness.gitsync.common.dtos.CreatePRDTO;
+import io.harness.gitsync.common.dtos.CreatePRRequest;
+import io.harness.gitsync.common.dtos.CreatePRResponse;
 import io.harness.gitsync.common.dtos.GitFileContent;
 import io.harness.gitsync.common.dtos.SaasGitDTO;
 import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
 import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
+import io.harness.gitsync.common.dtos.ScmCreatePRRequestDTO;
+import io.harness.gitsync.common.dtos.ScmCreatePRResponseDTO;
 import io.harness.gitsync.common.dtos.ScmUpdateFileRequestDTO;
 import io.harness.gitsync.common.impl.GitUtils;
 import io.harness.gitsync.common.service.HarnessToGitHelperService;
@@ -230,6 +234,31 @@ public class ScmFacilitatorResource {
         -> scmClientFacilitatorService.createPullRequest(gitCreatePRRequest),
         gitCreatePRRequest.getProjectIdentifier(), gitCreatePRRequest.getOrgIdentifier(),
         gitCreatePRRequest.getAccountIdentifier()));
+  }
+
+  @POST
+  @Hidden
+  @Path("create-pull-request")
+  @ApiOperation(value = "creates a pull request", nickname = "createPR")
+  @Operation(operationId = "createPR", summary = "creates a Pull Request",
+      responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Successfully created a PR") })
+  public ResponseDTO<CreatePRResponse>
+  createPRV2(@RequestBody(
+      description = "Details to create a PR", required = true) @Valid @NotNull CreatePRRequest createPRRequest) {
+    ScmCreatePRResponseDTO scmCreatePRResponseDTO =
+        scmFacilitatorService.createPR(ScmCreatePRRequestDTO.builder()
+                                           .title(createPRRequest.getTitle())
+                                           .scope(Scope.builder()
+                                                      .accountIdentifier(createPRRequest.getAccountIdentifier())
+                                                      .orgIdentifier(createPRRequest.getOrgIdentifier())
+                                                      .projectIdentifier(createPRRequest.getProjectIdentifier())
+                                                      .build())
+                                           .connectorRef(createPRRequest.getConnectorRef())
+                                           .repoName(createPRRequest.getRepoName())
+                                           .targetBranch(createPRRequest.getTargetBranchName())
+                                           .sourceBranch(createPRRequest.getSourceBranchName())
+                                           .build());
+    return ResponseDTO.newResponse(CreatePRResponse.builder().prNumber(scmCreatePRResponseDTO.getPrNumber()).build());
   }
 
   // API just for testing purpose, not exposed to customer

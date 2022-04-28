@@ -25,6 +25,7 @@ import lombok.AllArgsConstructor;
 public class InstanceSyncHandlerFactoryServiceImpl implements InstanceSyncHandlerFactoryService {
   private final K8sInstanceSyncHandler k8sInstanceSyncHandler;
   private final NativeHelmInstanceSyncHandler nativeHelmInstanceSyncHandler;
+
   @Override
   public AbstractInstanceSyncHandler getInstanceSyncHandler(final String deploymentType) {
     switch (deploymentType) {

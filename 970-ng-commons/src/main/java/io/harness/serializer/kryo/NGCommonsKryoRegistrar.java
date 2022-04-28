@@ -22,6 +22,7 @@ import io.harness.encryption.SecretRefData;
 import io.harness.exception.FilterCreatorException;
 import io.harness.exception.JsonSchemaValidationException;
 import io.harness.exception.PlanCreatorException;
+import io.harness.gitsync.beans.StoreType;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.http.HttpHeaderConfig;
@@ -94,5 +95,6 @@ public class NGCommonsKryoRegistrar implements KryoRegistrar {
     kryo.register(AppDynamicsTier.class, 9021);
 
     kryo.register(CDLicenseType.class, 930010);
+    kryo.register(StoreType.class, 930011);
   }
 }
