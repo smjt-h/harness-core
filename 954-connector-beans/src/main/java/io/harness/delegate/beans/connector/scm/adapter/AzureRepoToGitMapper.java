@@ -30,7 +30,7 @@ public class AzureRepoToGitMapper {
     final String url = azureRepoConnectorDTO.getUrl();
     final String validationRepo = azureRepoConnectorDTO.getValidationRepo();
     if (authType == null) {
-      throw new InvalidRequestException("Unknown auth type: " + authType);
+      throw new InvalidRequestException("Azure Repo DTO Auth Type value is null");
     }
     switch (authType) {
       case HTTP:

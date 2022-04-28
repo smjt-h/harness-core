@@ -12,6 +12,7 @@ import static io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoApiAcce
 import static io.harness.rule.OwnerRule.MANKRIT;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
@@ -33,6 +34,7 @@ import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoSshCredentials
 import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoTokenSpecDTO;
 import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoUsernameTokenDTO;
 import io.harness.encryption.SecretRefHelper;
+import io.harness.exception.InvalidRequestException;
 import io.harness.rule.Owner;
 
 import org.junit.Before;
@@ -52,7 +54,7 @@ public class AzureRepoDTOToEntityTest extends CategoryTest {
   @Test
   @Owner(developers = MANKRIT)
   @Category(UnitTests.class)
-  public void testToConnectorEntity_0() {
+  public void testToConnectorEntityHTTPAccount() {
     final String url = "url";
     final String tokenRef = "tokenRef";
     final String validationRepo = "validationRepo";
@@ -100,7 +102,7 @@ public class AzureRepoDTOToEntityTest extends CategoryTest {
   @Test
   @Owner(developers = MANKRIT)
   @Category(UnitTests.class)
-  public void testToConnectorEntity_1() {
+  public void testToConnectorEntitySSHAccount() {
     final String url = "url";
     final String sshKeyRef = "sshKeyRef";
     final AzureRepoAuthenticationDTO azureRepoAuthenticationDTO =
@@ -128,18 +130,20 @@ public class AzureRepoDTOToEntityTest extends CategoryTest {
   @Test
   @Owner(developers = MANKRIT)
   @Category(UnitTests.class)
-  public void testToConnectorEntity_2() {
+  public void testToConnectorEntityHTTPRepo() {
     final String url = "url";
     final String tokenRef = "tokenRef";
+    final String usernameRef = "usernameRef";
     final AzureRepoAuthenticationDTO azureRepoAuthenticationDTO =
         AzureRepoAuthenticationDTO.builder()
             .authType(HTTP)
-            .credentials(
-                AzureRepoHttpCredentialsDTO.builder()
-                    .type(AzureRepoHttpAuthenticationType.USERNAME_AND_TOKEN)
-                    .httpCredentialsSpec(
-                        AzureRepoUsernameTokenDTO.builder().tokenRef(SecretRefHelper.createSecretRef(tokenRef)).build())
-                    .build())
+            .credentials(AzureRepoHttpCredentialsDTO.builder()
+                             .type(AzureRepoHttpAuthenticationType.USERNAME_AND_TOKEN)
+                             .httpCredentialsSpec(AzureRepoUsernameTokenDTO.builder()
+                                                      .tokenRef(SecretRefHelper.createSecretRef(tokenRef))
+                                                      .usernameRef(SecretRefHelper.createSecretRef(usernameRef))
+                                                      .build())
+                             .build())
             .build();
 
     final AzureRepoApiAccessDTO azureRepoApiAccessDTO =
@@ -163,7 +167,7 @@ public class AzureRepoDTOToEntityTest extends CategoryTest {
     assertThat(azureRepoConnector.getAuthenticationDetails())
         .isEqualTo(AzureRepoHttpAuthentication.builder()
                        .type(AzureRepoHttpAuthenticationType.USERNAME_AND_TOKEN)
-                       .auth(AzureRepoUsernameToken.builder().tokenRef(tokenRef).build())
+                       .auth(AzureRepoUsernameToken.builder().tokenRef(tokenRef).usernameRef(usernameRef).build())
                        .build());
     assertThat(azureRepoConnector.getAzureRepoApiAccess())
         .isEqualTo(AzureRepoTokenApiAccess.builder().tokenRef(tokenRef).build());
@@ -172,7 +176,7 @@ public class AzureRepoDTOToEntityTest extends CategoryTest {
   @Test
   @Owner(developers = MANKRIT)
   @Category(UnitTests.class)
-  public void testToConnectorEntity_3() {
+  public void testToConnectorEntitySSHRepo() {
     final String url = "url";
     final String sshKeyRef = "sshKeyRef";
     final AzureRepoAuthenticationDTO azureRepoAuthenticationDTO =
@@ -195,5 +199,26 @@ public class AzureRepoDTOToEntityTest extends CategoryTest {
     assertThat(azureRepoConnector.getAuthenticationDetails())
         .isEqualTo(AzureRepoSshAuthentication.builder().sshKeyRef(sshKeyRef).build());
     assertThat(azureRepoConnector.getAzureRepoApiAccess()).isNull();
+  }
+
+  @Test
+  @Owner(developers = MANKRIT)
+  @Category(UnitTests.class)
+  public void testToConnectorEntityInvalidCase() {
+    final AzureRepoConnectorDTO azureRepoConnectorDTO = null;
+    assertThatThrownBy(() -> azureRepoDTOToEntity.toConnectorEntity(azureRepoConnectorDTO))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("AzureRepo Config DTO is not found");
+
+    final String url = "url";
+    final AzureRepoAuthenticationDTO azureRepoAuthenticationDTO = null;
+    AzureRepoConnectorDTO azureRepoConnectorDTO1 = AzureRepoConnectorDTO.builder()
+                                                       .url(url)
+                                                       .connectionType(GitConnectionType.REPO)
+                                                       .authentication(azureRepoAuthenticationDTO)
+                                                       .build();
+    assertThatThrownBy(() -> azureRepoDTOToEntity.toConnectorEntity(azureRepoConnectorDTO1))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("No Authentication Details Found in the connector");
   }
 }
