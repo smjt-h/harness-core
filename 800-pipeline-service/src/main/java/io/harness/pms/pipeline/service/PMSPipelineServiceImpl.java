@@ -19,11 +19,14 @@ import static org.springframework.data.mongodb.core.query.Criteria.where;
 
 import io.harness.NGResourceFilterConstants;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.FeatureName;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.engine.governance.PolicyEvaluationFailureException;
 import io.harness.eventsframework.api.EventsFrameworkDownException;
 import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
 import io.harness.eventsframework.schemas.entity.IdentifierRefProtoDTO;
 import io.harness.exception.DuplicateFieldException;
+import io.harness.exception.EntityNotFoundException;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.ExplanationException;
 import io.harness.exception.InvalidRequestException;
@@ -37,6 +40,9 @@ import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.scm.EntityObjectIdUtils;
 import io.harness.grpc.utils.StringValueUtils;
+import io.harness.pms.PmsFeatureFlagService;
+import io.harness.pms.contracts.governance.GovernanceMetadata;
+import io.harness.pms.contracts.governance.PolicySetMetadata;
 import io.harness.pms.contracts.steps.StepInfo;
 import io.harness.pms.gitsync.PmsGitSyncBranchContextGuard;
 import io.harness.pms.instrumentaion.PipelineInstrumentationConstants;
@@ -66,6 +72,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.dao.DuplicateKeyException;
@@ -89,6 +96,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
   @Inject private CommonStepInfo commonStepInfo;
   @Inject private TelemetryReporter telemetryReporter;
   @Inject private PipelineMetadataService pipelineMetadataService;
+  @Inject private PmsFeatureFlagService pmsFeatureFlagService;
   public static String PIPELINE_SAVE = "pipeline_save";
   public static String PIPELINE_SAVE_ACTION_TYPE = "action";
   public static String CREATING_PIPELINE = "creating new pipeline";
@@ -137,14 +145,40 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
   @Override
   public Optional<PipelineEntity> get(
       String accountId, String orgIdentifier, String projectIdentifier, String identifier, boolean deleted) {
+    Optional<PipelineEntity> optionalPipelineEntity;
     try {
-      return pmsPipelineRepository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
-          accountId, orgIdentifier, projectIdentifier, identifier, !deleted);
+      optionalPipelineEntity =
+          pmsPipelineRepository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
+              accountId, orgIdentifier, projectIdentifier, identifier, !deleted);
+    } catch (ScmException e) {
+      log.error(String.format("Error while retrieving pipeline [%s]", identifier), e);
+      throw e;
     } catch (Exception e) {
       log.error(String.format("Error while retrieving pipeline [%s]", identifier), e);
       throw new InvalidRequestException(
           String.format("Error while retrieving pipeline [%s]: %s", identifier, ExceptionUtils.getMessage(e)));
     }
+    if (!optionalPipelineEntity.isPresent()) {
+      throw new EntityNotFoundException(
+          PipelineCRUDErrorResponse.errorMessageForPipelineNotFound(orgIdentifier, projectIdentifier, identifier));
+    }
+    if (GitAwareContextHelper.isOldFlow()) {
+      return optionalPipelineEntity;
+    }
+    PipelineEntity pipelineEntity = optionalPipelineEntity.get();
+    GovernanceMetadata governanceMetadata = pmsPipelineServiceHelper.validatePipelineYamlAndSetTemplateRefIfAny(
+        pipelineEntity, pmsFeatureFlagService.isEnabled(accountId, FeatureName.OPA_PIPELINE_GOVERNANCE));
+    if (governanceMetadata.getDeny()) {
+      List<String> denyingPolicySetIds = governanceMetadata.getDetailsList()
+                                             .stream()
+                                             .filter(PolicySetMetadata::getDeny)
+                                             .map(PolicySetMetadata::getIdentifier)
+                                             .collect(Collectors.toList());
+      throw new PolicyEvaluationFailureException(
+          "Pipeline does not follow the Policies in these Policy Sets: " + denyingPolicySetIds.toString(),
+          governanceMetadata);
+    }
+    return optionalPipelineEntity;
   }
 
   @Override
