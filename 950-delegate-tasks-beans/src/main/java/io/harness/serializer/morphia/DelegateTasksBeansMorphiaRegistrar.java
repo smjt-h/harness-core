@@ -70,6 +70,8 @@ import software.wings.helpers.ext.ecs.response.EcsCommandExecutionResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceDeployResponse;
 import software.wings.helpers.ext.helm.response.HelmInstallCommandResponse;
 import software.wings.sm.states.JenkinsExecutionResponse;
+import software.wings.sm.states.KubernetesSteadyStateCheckResponse;
+import software.wings.sm.states.KubernetesSwapServiceSelectorsResponse;
 import software.wings.yaml.gitSync.YamlGitConfig;
 
 import java.util.Set;
@@ -146,6 +148,8 @@ public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
     w.put("helpers.ext.ecs.response.EcsCommandExecutionResponse", EcsCommandExecutionResponse.class);
     w.put("beans.EcrConfig", EcrConfig.class);
     w.put("beans.SpotInstConfig", SpotInstConfig.class);
+    w.put("sm.states.KubernetesSteadyStateCheckResponse", KubernetesSteadyStateCheckResponse.class);
+    w.put("sm.states.KubernetesSwapServiceSelectorsResponse", KubernetesSwapServiceSelectorsResponse.class);
     h.put("waiter.ListNotifyResponseData", ListNotifyResponseData.class);
   }
 }
