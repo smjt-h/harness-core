@@ -7,10 +7,20 @@
 
 package io.harness.gitsync.beans;
 
+import io.harness.gitsync.sdk.GitSyncApiConstants;
+
 public enum StoreType {
   // Will be used when entity is not persisted on git but rather live in DATABASE
   INLINE,
 
   // Will be used when entity is in git repo
-  REMOTE
+  REMOTE;
+
+  public static StoreType getFromStringOrNull(String value) {
+    try {
+      return StoreType.valueOf(value);
+    } catch (Exception e) {
+      return null;
+    }
+  }
 }
