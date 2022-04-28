@@ -81,24 +81,4 @@ public class GitContextHelper {
         ScmGitMetaDataContext.builder().scmGitMetaData(scmGitMetaData).build());
   }
 
-  public void initDefaultScmGitMetaData() {
-    if (!GlobalContextManager.isAvailable()) {
-      GlobalContextManager.set(new GlobalContext());
-    }
-    GlobalContextManager.upsertGlobalContextRecord(
-        ScmGitMetaDataContext.builder().scmGitMetaData(ScmGitMetaData.builder().build()).build());
-  }
-
-  public ScmGitMetaData getScmGitMetaData() {
-    ScmGitMetaDataContext gitMetaDataContext = GlobalContextManager.get(ScmGitMetaDataContext.NG_GIT_SYNC_CONTEXT);
-    if (gitMetaDataContext == null) {
-      throw new UnexpectedException("No SCM Git Metadata found in context");
-    }
-    return gitMetaDataContext.getScmGitMetaData();
-  }
-
-  public boolean isOldFlow() {
-    GitEntityInfo gitEntityInfo = getGitEntityInfo();
-    return gitEntityInfo == null || gitEntityInfo.getStoreType() == null;
-  }
 }
