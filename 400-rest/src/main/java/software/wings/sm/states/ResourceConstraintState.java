@@ -18,6 +18,7 @@ import static software.wings.beans.NotificationRule.NotificationRuleBuilder.aNot
 import static software.wings.common.NotificationMessageResolver.NotificationMessageType.RESOURCE_CONSTRAINT_BLOCKED_NOTIFICATION;
 import static software.wings.common.NotificationMessageResolver.NotificationMessageType.RESOURCE_CONSTRAINT_UNBLOCKED_NOTIFICATION;
 import static software.wings.sm.states.HoldingScope.PHASE;
+import static software.wings.sm.states.HoldingScope.PIPELINE;
 import static software.wings.sm.states.HoldingScope.WORKFLOW;
 import static software.wings.sm.states.ResourceConstraintState.AcquireMode.ENSURE;
 
@@ -169,7 +170,7 @@ public class ResourceConstraintState extends State {
         String pipelineDeploymentUuid = workflowStandardParams.getWorkflowElement().getPipelineDeploymentUuid();
         if (pipelineDeploymentUuid == null) {
           throw new InvalidRequestException(
-            "Resource constraint with holding scope 'Pipeline' cannot be used outside a pipeline");
+              "Resource constraint with holding scope 'Pipeline' cannot be used outside a pipeline");
         }
         releaseEntityId = ResourceConstraintService.releaseEntityId(pipelineDeploymentUuid);
 
@@ -326,10 +327,11 @@ public class ResourceConstraintState extends State {
     String releaseEntityId;
     String parentReleaseEntityId;
     String appId = executionContext.fetchRequiredApp().getUuid();
+    WorkflowStandardParams workflowStandardParams = executionContext.getContextElement(ContextElementType.STANDARD);
+    final String pipelineDeploymentUuid = workflowStandardParams.getWorkflowElement().getPipelineDeploymentUuid();
+
     switch (HoldingScope.valueOf(holdingScope)) {
       case PIPELINE:
-        WorkflowStandardParams workflowStandardParams = executionContext.getContextElement(ContextElementType.STANDARD);
-        String pipelineDeploymentUuid = workflowStandardParams.getWorkflowElement().getPipelineDeploymentUuid();
         releaseEntityId = ResourceConstraintService.releaseEntityId(pipelineDeploymentUuid);
         currentlyAcquiredPermits +=
             resourceConstraintService.getAllCurrentlyAcquiredPermits(holdingScope, releaseEntityId, appId);
@@ -339,14 +341,19 @@ public class ResourceConstraintState extends State {
             resourceConstraintService.getAllCurrentlyAcquiredPermits(holdingScope, releaseEntityId, appId);
         return currentlyAcquiredPermits;
       case PHASE:
+        int pipelineCurrentlyAcquiredPermits = 0;
         PhaseElement phaseElement =
             executionContext.getContextElement(ContextElementType.PARAM, PhaseElement.PHASE_PARAM);
         parentReleaseEntityId = ResourceConstraintService.releaseEntityId(executionContext.getWorkflowExecutionId());
         releaseEntityId = ResourceConstraintService.releaseEntityId(
             executionContext.getWorkflowExecutionId(), phaseElement.getPhaseName());
-            // should add pipeline permits?
+        if (pipelineDeploymentUuid != null) {
+          pipelineCurrentlyAcquiredPermits =
+              resourceConstraintService.getAllCurrentlyAcquiredPermits(PIPELINE.name(), pipelineDeploymentUuid, appId);
+        }
         return resourceConstraintService.getAllCurrentlyAcquiredPermits(PHASE.name(), releaseEntityId, appId)
-            + resourceConstraintService.getAllCurrentlyAcquiredPermits(WORKFLOW.name(), parentReleaseEntityId, appId);
+            + resourceConstraintService.getAllCurrentlyAcquiredPermits(WORKFLOW.name(), parentReleaseEntityId, appId)
+            + pipelineCurrentlyAcquiredPermits;
       default:
         throw new InvalidRequestException(String.format("Unhandled holding scope %s", holdingScope));
     }
