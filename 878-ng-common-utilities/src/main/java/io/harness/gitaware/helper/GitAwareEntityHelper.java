@@ -10,9 +10,12 @@ package io.harness.gitaware.helper;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
+import io.harness.git.model.ChangeType;
 import io.harness.gitaware.dto.GitContextRequestParams;
 import io.harness.gitsync.helpers.GitContextHelper;
+import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.scm.SCMGitSyncHelper;
+import io.harness.gitsync.scm.beans.ScmCommitFileGitRequestParams;
 import io.harness.gitsync.scm.beans.ScmGetFileResponse;
 import io.harness.persistence.gitaware.GitAware;
 
@@ -38,9 +41,23 @@ public class GitAwareEntityHelper {
             gitContextRequestParams.getConnectorRef(), contextMap);
     entity.setData(scmGetFileResponse.getFileContent());
     // Check if this looks good to all
-    GitContextHelper.updateScmGitMetaData(scmGetFileResponse.getGitMetaData());
+    GitAwareContextHelper.updateScmGitMetaData(scmGetFileResponse.getGitMetaData());
     return entity;
   }
 
-  public void pushEntityToRemoteAndCreatePR() {}
+  public void pushEntityToRemoteAndCreatePR(String yaml, Scope scope, ChangeType changeType) {
+    GitEntityInfo gitEntityInfo = GitAwareContextHelper.getGitEntityInfo();
+    ScmCommitFileGitRequestParams.builder()
+        .repoName(gitEntityInfo.getYamlGitConfigId())
+        .branchName(gitEntityInfo.getBranch())
+        .fileContent(yaml)
+        .filePath(gitEntityInfo.getFilePath())
+        .connectorRef(gitEntityInfo.getConnectorRef())
+        .isCommitToNewBranch(gitEntityInfo.isNewBranch())
+        .commitMessage(gitEntityInfo.getCommitMsg())
+        .oldCommitId(gitEntityInfo.getCommitId())
+        .baseBranch(gitEntityInfo.getBaseBranch())
+        .build();
+
+  }
 }

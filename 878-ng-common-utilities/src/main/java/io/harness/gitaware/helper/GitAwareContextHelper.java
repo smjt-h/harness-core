@@ -7,6 +7,7 @@ import io.harness.context.GlobalContext;
 import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
+import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.gitsync.scm.beans.ScmGitMetaData;
 import io.harness.gitsync.scm.beans.ScmGitMetaDataContext;
 import io.harness.manage.GlobalContextManager;
@@ -16,6 +17,15 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 @OwnedBy(DX)
 public class GitAwareContextHelper {
+  public GitEntityInfo getGitEntityInfo() {
+    final GitSyncBranchContext gitSyncBranchContext =
+        GlobalContextManager.get(GitSyncBranchContext.NG_GIT_SYNC_CONTEXT);
+    if (gitSyncBranchContext == null) {
+      throw new UnexpectedException("Git Details not found in context");
+    }
+    return gitSyncBranchContext.getGitBranchInfo();
+  }
+
   public void initDefaultScmGitMetaData() {
     if (!GlobalContextManager.isAvailable()) {
       GlobalContextManager.set(new GlobalContext());
@@ -30,6 +40,14 @@ public class GitAwareContextHelper {
       throw new UnexpectedException("No SCM Git Metadata found in context");
     }
     return gitMetaDataContext.getScmGitMetaData();
+  }
+
+  public void updateScmGitMetaData(ScmGitMetaData scmGitMetaData) {
+    if (!GlobalContextManager.isAvailable()) {
+      GlobalContextManager.set(new GlobalContext());
+    }
+    GlobalContextManager.upsertGlobalContextRecord(
+            ScmGitMetaDataContext.builder().scmGitMetaData(scmGitMetaData).build());
   }
 
   public boolean isOldFlow() {
