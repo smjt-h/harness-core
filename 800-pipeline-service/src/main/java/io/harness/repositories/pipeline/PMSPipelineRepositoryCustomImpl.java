@@ -140,7 +140,7 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
                       .projectIdentifier(pipelineToSave.getProjectIdentifier())
                       .build();
     String yamlToPush = pipelineToSave.getYaml();
-    gitAwareEntityHelper.pushEntityToRemoteAndCreatePR(yamlToPush, scope, ChangeType.ADD);
+    gitAwareEntityHelper.pushEntityToRemote(yamlToPush, scope, ChangeType.ADD);
     pipelineToSave.setYaml("");
     pipelineToSave.setStoreType(StoreType.REMOTE);
     pipelineToSave.setConnectorRef(gitEntityInfo.getConnectorRef());
@@ -238,7 +238,7 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
                       .projectIdentifier(pipelineToUpdate.getProjectIdentifier())
                       .build();
     String yamlToPush = pipelineToUpdate.getYaml();
-    gitAwareEntityHelper.pushEntityToRemoteAndCreatePR(yamlToPush, scope, ChangeType.MODIFY);
+    gitAwareEntityHelper.pushEntityToRemote(yamlToPush, scope, ChangeType.MODIFY);
     pipelineToUpdate.setYaml("");
     pipelineToUpdate.setStoreType(StoreType.REMOTE);
     pipelineToUpdate.setConnectorRef(gitEntityInfo.getConnectorRef());

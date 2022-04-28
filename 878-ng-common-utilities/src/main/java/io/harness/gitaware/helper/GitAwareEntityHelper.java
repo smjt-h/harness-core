@@ -47,7 +47,7 @@ public class GitAwareEntityHelper {
     return entity;
   }
 
-  public void pushEntityToRemoteAndCreatePR(String yaml, Scope scope, ChangeType changeType) {
+  public void pushEntityToRemote(String yaml, Scope scope, ChangeType changeType) {
     GitEntityInfo gitEntityInfo = GitAwareContextHelper.getGitEntityInfo();
     ScmCommitFileGitRequestParams scmCommitFileGitRequestParams = ScmCommitFileGitRequestParams.builder()
                                                                       .repoName(gitEntityInfo.getYamlGitConfigId())
@@ -62,7 +62,5 @@ public class GitAwareEntityHelper {
                                                                       .build();
 
     scmGitSyncHelper.commitFile(scope, scmCommitFileGitRequestParams, changeType, Collections.emptyMap());
-
-    // TODO: create PR
   }
 }
