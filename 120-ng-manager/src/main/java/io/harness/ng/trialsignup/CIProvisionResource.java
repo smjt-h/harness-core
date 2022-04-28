@@ -22,10 +22,12 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 
@@ -46,9 +48,17 @@ public class CIProvisionResource {
   @PUT
   @Path("provision")
   @ApiOperation(value = "Provision resources for signup", nickname = "provisionResourcesForCI")
-  public ResponseDTO<ProvisionResponse.Status> provisionCIResources(
+  public ResponseDTO<ProvisionResponse.SetupStatus> provisionCIResources(
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId) {
     provisionService.provisionCIResources(accountId);
     return null;
+  }
+
+  @GET
+  @Path("delegate-install-status")
+  @ApiOperation(value = "Provision resources for signup", nickname = "provisionResourcesForCI")
+  public ResponseDTO<ProvisionResponse.DelegateStatus> getDelegateInstallStatus(
+          @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId) {
+    return ResponseDTO.newResponse(provisionService.getDelegateInstallStatus(accountId));
   }
 }

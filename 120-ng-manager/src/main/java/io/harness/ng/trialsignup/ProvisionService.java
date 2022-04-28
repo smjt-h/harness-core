@@ -29,6 +29,7 @@ import io.harness.delegate.beans.connector.k8Connector.KubernetesCredentialDTO;
 import io.harness.delegate.beans.connector.k8Connector.KubernetesCredentialType;
 import io.harness.ng.NextGenConfiguration;
 import io.harness.ng.core.delegate.client.DelegateNgManagerCgManagerClient;
+import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.rest.RestResponse;
 
 import com.google.inject.Inject;
@@ -51,6 +52,7 @@ public class ProvisionService {
   @Inject NextGenConfiguration configuration;
   @Inject @Named(DEFAULT_CONNECTOR_SERVICE) private ConnectorService connectorService;
 
+  private static Integer COUNT = 0;
   private static final String K8S_CONNECTOR_NAME = "Harness Kubernetes Cluster";
   private static final String K8S_CONNECTOR_DESC =
       "Kubernetes Cluster Connector created by Harness for connecting to Harness Builds environment";
@@ -69,25 +71,25 @@ public class ProvisionService {
       + "\"parameters\":{\"Environment\":\"%s\",\"delegate\":\"delegate-ci\","
       + "\"account_id\":\"%s\",\"account_id_short\":\"%s\",\"account_secret\":\"%s\"}}'";
 
-  public ProvisionResponse.Status provisionCIResources(String accountId) {
+  public ProvisionResponse.SetupStatus provisionCIResources(String accountId) {
     Boolean delegateUpsertStatus = updateDelegateGroup(accountId);
 
     if (!delegateUpsertStatus) {
-      return ProvisionResponse.Status.DELEGATE_PROVISION_FAILURE;
+      return ProvisionResponse.SetupStatus.DELEGATE_PROVISION_FAILURE;
     }
 
     Boolean installConnector = installConnector(accountId);
 
     if (!installConnector) {
-      return ProvisionResponse.Status.DELEGATE_PROVISION_FAILURE;
+      return ProvisionResponse.SetupStatus.DELEGATE_PROVISION_FAILURE;
     }
     Boolean delegateInstallStatus = installDelegate(accountId);
 
-    if (delegateInstallStatus) {
-      return ProvisionResponse.Status.DELEGATE_PROVISION_FAILURE;
-    }
+//    if (delegateInstallStatus) {
+//      return ProvisionResponse.SetupStatus.DELEGATE_PROVISION_FAILURE;
+//    }
 
-    return ProvisionResponse.Status.SUCCESS;
+    return ProvisionResponse.SetupStatus.SUCCESS;
   }
 
   private Boolean installDelegate(String accountId) {
@@ -200,5 +202,15 @@ public class ProvisionService {
     }
 
     return TRUE;
+  }
+
+  public ProvisionResponse.DelegateStatus getDelegateInstallStatus(String accountId) {
+    COUNT = COUNT + 1;
+   if (COUNT < 5) {
+     return ProvisionResponse.DelegateStatus.IN_PROGRESS;
+   }
+   else{
+     return ProvisionResponse.DelegateStatus.SUCCESS;
+   }
   }
 }
