@@ -10,6 +10,7 @@ import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.gitsync.scm.beans.ScmGitMetaData;
 import io.harness.gitsync.scm.beans.ScmGitMetaDataContext;
+import io.harness.gitsync.sdk.EntityGitDetails;
 import io.harness.manage.GlobalContextManager;
 
 import lombok.experimental.UtilityClass;
@@ -47,11 +48,25 @@ public class GitAwareContextHelper {
       GlobalContextManager.set(new GlobalContext());
     }
     GlobalContextManager.upsertGlobalContextRecord(
-            ScmGitMetaDataContext.builder().scmGitMetaData(scmGitMetaData).build());
+        ScmGitMetaDataContext.builder().scmGitMetaData(scmGitMetaData).build());
   }
 
   public boolean isOldFlow() {
     GitEntityInfo gitEntityInfo = GitContextHelper.getGitEntityInfo();
     return gitEntityInfo == null || gitEntityInfo.getStoreType() == null;
+  }
+  public EntityGitDetails getEntityGitDetailsFromScmGitMetadata() {
+    ScmGitMetaData scmGitMetaData = getScmGitMetaData();
+    if (scmGitMetaData == null) {
+      return EntityGitDetails.builder().build();
+    }
+    return EntityGitDetails.builder()
+        .objectId(scmGitMetaData.getBlobId())
+        .branch(scmGitMetaData.getBranchName())
+        .repoIdentifier(scmGitMetaData.getRepoName())
+        .repoName(scmGitMetaData.getRepoName())
+        .filePath(scmGitMetaData.getFilePath())
+        .commitId(scmGitMetaData.getCommitId())
+        .build();
   }
 }
