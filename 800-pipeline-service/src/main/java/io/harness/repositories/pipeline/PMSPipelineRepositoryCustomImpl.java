@@ -308,7 +308,7 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
       if (entityV1.isPresent()) {
         PipelineEntity entity = entityV1.get();
         if (entity.getStoreType() == null) {
-          GitContextHelper.updateScmGitMetaData(ScmGitMetaData.builder()
+          GitAwareContextHelper.updateScmGitMetaData(ScmGitMetaData.builder()
                                                     .repoName(entity.getRepo())
                                                     .branchName(entity.getBranch())
                                                     .blobId(entity.getObjectIdOfYaml())
@@ -326,7 +326,7 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
 
       if (savedEntity.getStoreType() == StoreType.REMOTE) {
         // fetch yaml from git
-        GitEntityInfo gitEntityInfo = GitContextHelper.getGitEntityInfoV2();
+        GitEntityInfo gitEntityInfo = GitAwareContextHelper.getGitEntityInfo();
         savedEntity = (PipelineEntity) gitAwareEntityHelper.fetchEntityFromRemote(savedEntity,
             Scope.builder()
                 .accountIdentifier(accountId)
