@@ -364,8 +364,8 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
                 .fileContent(commitFileRequest.getFileContent())
                 .filePath(commitFileRequest.getFilePath())
                 .commitMessage(commitFileRequest.getCommitMessage())
+                .baseBranch(commitFileRequest.getBaseBranchName())
                 .isCommitToNewBranch(commitFileRequest.getIsCommitToNewBranch())
-                .newBranch(commitFileRequest.getNewBranchName())
                 .scope(ScopeIdentifierMapper.getScopeFromScopeIdentifiers(commitFileRequest.getScopeIdentifiers()))
                 .build());
         break;
@@ -379,8 +379,8 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
                 .filePath(commitFileRequest.getFilePath())
                 .commitMessage(commitFileRequest.getCommitMessage())
                 .isCommitToNewBranch(commitFileRequest.getIsCommitToNewBranch())
-                .newBranch(commitFileRequest.getNewBranchName())
                 .oldCommitId(commitFileRequest.getOldCommitId())
+                .baseBranch(commitFileRequest.getBaseBranchName())
                 .oldFileSha(commitFileRequest.getOldFileSha())
                 .scope(ScopeIdentifierMapper.getScopeFromScopeIdentifiers(commitFileRequest.getScopeIdentifiers()))
                 .build());

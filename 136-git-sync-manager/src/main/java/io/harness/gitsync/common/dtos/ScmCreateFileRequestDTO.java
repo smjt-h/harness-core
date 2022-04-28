@@ -28,6 +28,6 @@ public class ScmCreateFileRequestDTO {
   String fileContent;
   String filePath;
   boolean isCommitToNewBranch;
-  String newBranch;
+  String baseBranch;
   String commitMessage;
 }

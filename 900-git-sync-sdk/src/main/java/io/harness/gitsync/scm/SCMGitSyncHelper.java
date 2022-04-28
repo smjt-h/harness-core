@@ -128,7 +128,6 @@ public class SCMGitSyncHelper {
             .setConnectorRef(gitRequestParams.getConnectorRef())
             .setFileContent(gitRequestParams.getFileContent())
             .setIsCommitToNewBranch(gitRequestParams.isCommitToNewBranch())
-            .setNewBranchName(gitRequestParams.getNewBranchName())
             .setOldFileSha(gitRequestParams.getOldFileSha())
             .setOldCommitId(gitRequestParams.getOldCommitId())
             .setCommitMessage(gitRequestParams.getCommitMessage())

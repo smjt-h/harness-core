@@ -114,7 +114,7 @@ message CommitFileRequest {
   string connectorRef = 4;
   string fileContent = 5;
   bool isCommitToNewBranch = 6;
-  string newBranchName = 7;
+  string baseBranchName = 7;
   string commitMessage = 8;
   string oldFileSha = 9;
   string oldCommitId = 10;

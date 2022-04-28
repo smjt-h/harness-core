@@ -26,7 +26,6 @@ public class ScmCommitFileGitRequestParams {
   String filePath;
   String connectorRef;
   boolean isCommitToNewBranch;
-  String newBranchName;
   String commitMessage;
   String oldFileSha;
   String oldCommitId;

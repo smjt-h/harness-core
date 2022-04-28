@@ -296,7 +296,7 @@ public class ScmFacilitatorResource {
       @Parameter(description = "new branch") @QueryParam("newBranch") String newBranch,
       @Parameter(description = "commit message") @QueryParam("commitMessage") String commitMessage) {
     return ResponseDTO.newResponse(scmFacilitatorService.createFile(ScmCreateFileRequestDTO.builder()
-                                                                        .newBranch(newBranch)
+                                                                        .baseBranch(newBranch)
                                                                         .isCommitToNewBranch(isCommitToNewBranch)
                                                                         .commitMessage(commitMessage)
                                                                         .filePath(filePath)
@@ -334,10 +334,11 @@ public class ScmFacilitatorResource {
       @Parameter(description = "File content") @QueryParam("fileContent") String fileContent,
       @Parameter(description = "create PR") @QueryParam("createPr") boolean createPR,
       @Parameter(description = "isCommitToNewBranch") @QueryParam("isCommitToNewBranch") boolean isCommitToNewBranch,
-      @Parameter(description = "new branch") @QueryParam("newBranch") String newBranch,
-      @Parameter(description = "commit message") @QueryParam("commitMessage") String commitMessage) {
+      @Parameter(description = "new branch") @QueryParam("baseBranch") String baseBranch,
+      @Parameter(description = "commit message") @QueryParam("commitMessage") String commitMessage,
+      @Parameter(description = "old file sha") @QueryParam("oldFileSha") String oldFileSha) {
     return ResponseDTO.newResponse(scmFacilitatorService.updateFile(ScmUpdateFileRequestDTO.builder()
-                                                                        .newBranch(newBranch)
+                                                                        .baseBranch(baseBranch)
                                                                         .isCommitToNewBranch(isCommitToNewBranch)
                                                                         .commitMessage(commitMessage)
                                                                         .filePath(filePath)
@@ -350,6 +351,7 @@ public class ScmFacilitatorResource {
                                                                                    .build())
                                                                         .branchName(branch)
                                                                         .repoName(repoName)
+                                                                        .oldFileSha(oldFileSha)
                                                                         .build()));
   }
 }

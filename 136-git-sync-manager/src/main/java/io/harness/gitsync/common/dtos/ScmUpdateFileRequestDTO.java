@@ -28,7 +28,7 @@ public class ScmUpdateFileRequestDTO {
   String fileContent;
   String filePath;
   boolean isCommitToNewBranch;
-  String newBranch;
+  String baseBranch;
   String commitMessage;
   String oldCommitId;
   String oldFileSha;
