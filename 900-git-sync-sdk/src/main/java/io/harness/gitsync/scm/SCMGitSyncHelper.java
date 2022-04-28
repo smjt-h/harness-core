@@ -38,6 +38,7 @@ import io.harness.gitsync.exceptions.GitSyncException;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.scm.beans.SCMNoOpResponse;
+import io.harness.gitsync.scm.beans.ScmCommitFileGitRequestParams;
 import io.harness.gitsync.scm.beans.ScmCommitFileResponse;
 import io.harness.gitsync.scm.beans.ScmCreatePRResponse;
 import io.harness.gitsync.scm.beans.ScmErrorDetails;
@@ -117,14 +118,19 @@ public class SCMGitSyncHelper {
         .build();
   }
 
-  public ScmCommitFileResponse commitFile(Scope scope, String repoName, String branchName, String filePath,
-      String connectorRef, ChangeType changeType, Map<String, String> contextMap) {
+  public ScmCommitFileResponse commitFile(Scope scope, ScmCommitFileGitRequestParams gitRequestParams,
+      ChangeType changeType, Map<String, String> contextMap) {
     final CommitFileRequest commitFileRequest =
         CommitFileRequest.newBuilder()
-            .setRepoName(repoName)
-            .setFilePath(filePath)
-            .setBranchName(branchName)
-            .setConnectorRef(connectorRef)
+            .setRepoName(gitRequestParams.getRepoName())
+            .setFilePath(gitRequestParams.getFilePath())
+            .setBranchName(gitRequestParams.getBranchName())
+            .setConnectorRef(gitRequestParams.getConnectorRef())
+            .setFileContent(gitRequestParams.getFileContent())
+            .setIsCommitToNewBranch(gitRequestParams.isCommitToNewBranch())
+            .setNewBranchName(gitRequestParams.getNewBranchName())
+            .setOldFileSha(gitRequestParams.getOldFileSha())
+            .setOldCommitId(gitRequestParams.getOldCommitId())
             .setScopeIdentifiers(ScopeIdentifierMapper.getScopeIdentifiersFromScope(scope))
             .setChangeType(ChangeTypeMapper.toProto(changeType))
             .putAllContextMap(contextMap)
