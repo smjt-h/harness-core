@@ -52,6 +52,7 @@ import io.harness.morphia.MorphiaRegistrar;
 import io.harness.morphia.MorphiaRegistrarHelperPut;
 import io.harness.ng.core.models.Secret;
 
+import software.wings.api.TerraformExecutionData;
 import software.wings.beans.AwsConfig;
 import software.wings.beans.EcrConfig;
 import software.wings.beans.GcpConfig;
@@ -151,5 +152,6 @@ public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
     w.put("sm.states.KubernetesSteadyStateCheckResponse", KubernetesSteadyStateCheckResponse.class);
     w.put("sm.states.KubernetesSwapServiceSelectorsResponse", KubernetesSwapServiceSelectorsResponse.class);
     h.put("waiter.ListNotifyResponseData", ListNotifyResponseData.class);
+    w.put("api.TerraformExecutionData", TerraformExecutionData.class);
   }
 }

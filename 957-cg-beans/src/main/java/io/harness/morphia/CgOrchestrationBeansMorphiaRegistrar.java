@@ -22,6 +22,7 @@ import software.wings.metrics.TimeSeriesMetricDefinition;
 import software.wings.ngmigration.NGMigrationEntity;
 import software.wings.service.impl.ThirdPartyApiCallLog;
 import software.wings.service.intfc.customdeployment.CustomDeploymentTypeAware;
+import software.wings.sm.StateExecutionData;
 import software.wings.verification.CVActivityLog;
 
 import java.util.Set;
@@ -46,5 +47,6 @@ public class CgOrchestrationBeansMorphiaRegistrar implements MorphiaRegistrar {
   public void registerImplementationClasses(MorphiaRegistrarHelperPut h, MorphiaRegistrarHelperPut w) {
     w.put("metrics.TimeSeriesMetricDefinition", TimeSeriesMetricDefinition.class);
     w.put("api.TerraformPlanParam", TerraformPlanParam.class);
+    w.put("sm.StateExecutionData", StateExecutionData.class);
   }
 }

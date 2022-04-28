@@ -47,6 +47,7 @@ import software.wings.metrics.MetricType;
 import software.wings.service.impl.ThirdPartyApiCallLog;
 import software.wings.sm.ExecutionInterruptEffect;
 import software.wings.sm.PipelineSummary;
+import software.wings.sm.StateExecutionData;
 import software.wings.sm.StateTypeScope;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -69,6 +70,7 @@ public class CgOrchestrationBeansKryoRegistrar implements KryoRegistrar {
     // Put promoted classes here and do not change the id
     kryo.register(SweepingOutput.class, 3101);
     kryo.register(ExecutionInterruptType.class, 4000);
+    kryo.register(StateExecutionData.class, 5143);
     kryo.register(ContainerServiceData.class, 5157);
     kryo.register(ExecutionDataValue.class, 5368);
     kryo.register(CountsByStatuses.class, 4008);

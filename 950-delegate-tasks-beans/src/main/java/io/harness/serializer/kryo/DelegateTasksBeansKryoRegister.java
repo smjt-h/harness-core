@@ -534,6 +534,8 @@ import io.harness.secretmanagerclient.ValueType;
 import io.harness.secretmanagerclient.WinRmAuthScheme;
 import io.harness.serializer.KryoRegistrar;
 
+import software.wings.api.TerraformExecutionData;
+import software.wings.api.terraform.TfVarGitSource;
 import software.wings.beans.AwsConfig;
 import software.wings.beans.EcrConfig;
 import software.wings.beans.GcpConfig;
@@ -549,6 +551,7 @@ import software.wings.beans.TaskType;
 import software.wings.beans.command.CodeDeployParams;
 import software.wings.beans.command.GcbTaskParams;
 import software.wings.beans.command.JenkinsTaskParams;
+import software.wings.beans.delegation.TerraformProvisionParameters;
 import software.wings.beans.s3.FetchS3FilesCommandParams;
 import software.wings.beans.s3.FetchS3FilesExecutionResponse;
 import software.wings.beans.s3.S3Bucket;
@@ -652,6 +655,8 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(GitPushResult.class, 5210);
     kryo.register(GitPushResult.RefUpdate.class, 5215);
     kryo.register(JenkinsTaskParams.class, 5234);
+    kryo.register(TerraformProvisionParameters.class, 5342);
+    kryo.register(TerraformExecutionData.class, 5343);
     kryo.register(GitFetchFilesRequest.class, 5470);
     kryo.register(GitFetchFilesResult.class, 5471);
     kryo.register(JenkinsSubTaskType.class, 5515);
@@ -667,6 +672,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(FetchS3FilesExecutionResponse.class, 8068);
     kryo.register(FetchS3FilesCommandParams.class, 8069);
     kryo.register(FetchS3FilesExecutionResponse.FetchS3FilesCommandStatus.class, 8070);
+    kryo.register(TfVarGitSource.class, 8097);
     kryo.register(GitConfig.ProviderType.class, 40022);
     kryo.register(AlwaysFalseValidationCapability.class, 19036);
     kryo.register(AppDynamicsConnectionTaskParams.class, 19107);

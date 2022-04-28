@@ -101,7 +101,6 @@ import software.wings.api.SkipStateExecutionData;
 import software.wings.api.SplunkStateExecutionData;
 import software.wings.api.TemplatizedSecretManagerStateExecutionData;
 import software.wings.api.TerraformApplyMarkerParam;
-import software.wings.api.TerraformExecutionData;
 import software.wings.api.TerraformOutputInfoElement;
 import software.wings.api.WaitStateExecutionData;
 import software.wings.api.WingsTimestamp;
@@ -148,7 +147,6 @@ import software.wings.api.pcf.SwapRouteRollbackSweepingOutputPcf;
 import software.wings.api.shellscript.provision.ShellScriptProvisionExecutionData;
 import software.wings.api.terraform.TerraformOutputVariables;
 import software.wings.api.terraform.TerraformProvisionInheritPlanElement;
-import software.wings.api.terraform.TfVarGitSource;
 import software.wings.api.terragrunt.TerragruntApplyMarkerParam;
 import software.wings.api.terragrunt.TerragruntExecutionData;
 import software.wings.api.terragrunt.TerragruntOutputVariables;
@@ -312,7 +310,6 @@ import software.wings.beans.container.LogConfiguration;
 import software.wings.beans.container.PortMapping;
 import software.wings.beans.container.StorageConfiguration;
 import software.wings.beans.delegation.CommandParameters;
-import software.wings.beans.delegation.TerraformProvisionParameters;
 import software.wings.beans.delegation.TerragruntProvisionParameters;
 import software.wings.beans.infrastructure.Host;
 import software.wings.beans.infrastructure.instance.info.EcsContainerInfo;
@@ -577,7 +574,6 @@ import software.wings.sm.PhaseExecutionSummary;
 import software.wings.sm.PhaseStepExecutionSummary;
 import software.wings.sm.PipelineContinueWithInputsCallback;
 import software.wings.sm.ResourceConstraintStatusData;
-import software.wings.sm.StateExecutionData;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.StateMachineResumeCallback;
 import software.wings.sm.StateType;
@@ -724,7 +720,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(ServiceTemplateElement.class, 5084);
     kryo.register(SimpleWorkflowParam.class, 5114);
     kryo.register(SplunkStateExecutionData.class, 5115);
-    kryo.register(TerraformExecutionData.class, 5343);
     kryo.register(TerraformOutputInfoElement.class, 5523);
     kryo.register(WaitStateExecutionData.class, 5116);
     kryo.register(WingsTimestamp.class, 5085);
@@ -792,7 +787,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(StorageConfiguration.class, 5164);
     kryo.register(DatadogYaml.class, 5468);
     kryo.register(DatadogConfig.class, 5467);
-    kryo.register(TerraformProvisionParameters.class, 5342);
     kryo.register(ElasticLoadBalancerConfig.class, 5020);
     kryo.register(ElementExecutionSummary.class, 5027);
     kryo.register(Graph.class, 5060);
@@ -940,7 +934,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(InstanceStatusSummary.class, 5139);
     kryo.register(PhaseExecutionSummary.class, 5140);
     kryo.register(PhaseStepExecutionSummary.class, 5141);
-    kryo.register(StateExecutionData.class, 5143);
     kryo.register(StateExecutionInstance.class, 5134);
     kryo.register(APMVerificationState.Method.class, 5481);
     kryo.register(ApprovalStateType.class, 5617);
@@ -1204,7 +1197,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(TrialSignupOptions.class, 8093);
     kryo.register(TrialSignupOptions.Products.class, 8094);
 
-    kryo.register(TfVarGitSource.class, 8097);
     kryo.register(HelmSubCommand.class, 8076);
     kryo.register(HelmCommandFlagConfig.class, 8077);
 
