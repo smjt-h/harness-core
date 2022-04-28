@@ -131,6 +131,7 @@ public class SCMGitSyncHelper {
             .setNewBranchName(gitRequestParams.getNewBranchName())
             .setOldFileSha(gitRequestParams.getOldFileSha())
             .setOldCommitId(gitRequestParams.getOldCommitId())
+            .setCommitMessage(gitRequestParams.getCommitMessage())
             .setScopeIdentifiers(ScopeIdentifierMapper.getScopeIdentifiersFromScope(scope))
             .setChangeType(ChangeTypeMapper.toProto(changeType))
             .putAllContextMap(contextMap)
