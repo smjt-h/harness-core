@@ -16,11 +16,13 @@ import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.scm.SCMGitSyncHelper;
 import io.harness.gitsync.scm.beans.ScmCommitFileGitRequestParams;
+import io.harness.gitsync.scm.beans.ScmCommitFileResponse;
 import io.harness.gitsync.scm.beans.ScmGetFileResponse;
 import io.harness.persistence.gitaware.GitAware;
 
 import com.google.inject.Inject;
 import groovy.lang.Singleton;
+import java.util.Collections;
 import java.util.Map;
 
 @OwnedBy(HarnessTeam.PL)
@@ -47,17 +49,20 @@ public class GitAwareEntityHelper {
 
   public void pushEntityToRemoteAndCreatePR(String yaml, Scope scope, ChangeType changeType) {
     GitEntityInfo gitEntityInfo = GitAwareContextHelper.getGitEntityInfo();
-    ScmCommitFileGitRequestParams.builder()
-        .repoName(gitEntityInfo.getYamlGitConfigId())
-        .branchName(gitEntityInfo.getBranch())
-        .fileContent(yaml)
-        .filePath(gitEntityInfo.getFilePath())
-        .connectorRef(gitEntityInfo.getConnectorRef())
-        .isCommitToNewBranch(gitEntityInfo.isNewBranch())
-        .commitMessage(gitEntityInfo.getCommitMsg())
-        .oldCommitId(gitEntityInfo.getCommitId())
-        .baseBranch(gitEntityInfo.getBaseBranch())
-        .build();
+    ScmCommitFileGitRequestParams scmCommitFileGitRequestParams = ScmCommitFileGitRequestParams.builder()
+                                                                      .repoName(gitEntityInfo.getYamlGitConfigId())
+                                                                      .branchName(gitEntityInfo.getBranch())
+                                                                      .fileContent(yaml)
+                                                                      .filePath(gitEntityInfo.getFilePath())
+                                                                      .connectorRef(gitEntityInfo.getConnectorRef())
+                                                                      .isCommitToNewBranch(gitEntityInfo.isNewBranch())
+                                                                      .commitMessage(gitEntityInfo.getCommitMsg())
+                                                                      .oldCommitId(gitEntityInfo.getCommitId())
+                                                                      .baseBranch(gitEntityInfo.getBaseBranch())
+                                                                      .build();
 
+    scmGitSyncHelper.commitFile(scope, scmCommitFileGitRequestParams, changeType, Collections.emptyMap());
+
+    // TODO: create PR
   }
 }
