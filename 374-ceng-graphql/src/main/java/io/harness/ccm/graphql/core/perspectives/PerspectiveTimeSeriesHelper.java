@@ -7,7 +7,6 @@
 
 package io.harness.ccm.graphql.core.perspectives;
 
-import static io.harness.ccm.commons.constants.ViewFieldConstants.AWS_ACCOUNT_FIELD;
 import static io.harness.ccm.views.utils.ClusterTableKeys.AVG_CPU_UTILIZATION_VALUE;
 import static io.harness.ccm.views.utils.ClusterTableKeys.AVG_MEMORY_UTILIZATION_VALUE;
 import static io.harness.ccm.views.utils.ClusterTableKeys.BILLING_AMOUNT;
@@ -40,7 +39,6 @@ import io.harness.ccm.views.businessMapping.entities.UnallocatedCostStrategy;
 import io.harness.ccm.views.businessMapping.service.intf.BusinessMappingService;
 import io.harness.ccm.views.graphql.QLCEViewGroupBy;
 import io.harness.ccm.views.graphql.QLCEViewTimeTruncGroupBy;
-import io.harness.ccm.views.utils.AwsAccountFieldUtils;
 import io.harness.ccm.views.utils.ViewFieldUtils;
 import io.harness.exception.InvalidRequestException;
 
@@ -87,13 +85,13 @@ public class PerspectiveTimeSeriesHelper {
     FieldList fields = schema.getFields();
     Set<String> entityNames = new HashSet<>();
 
-    Map<Timestamp, List<DataPoint>> costDataPointsMap = new LinkedHashMap<>();
-    Map<Timestamp, List<DataPoint>> cpuLimitDataPointsMap = new LinkedHashMap<>();
-    Map<Timestamp, List<DataPoint>> cpuRequestDataPointsMap = new LinkedHashMap<>();
-    Map<Timestamp, List<DataPoint>> cpuUtilizationValueDataPointsMap = new LinkedHashMap<>();
-    Map<Timestamp, List<DataPoint>> memoryLimitDataPointsMap = new LinkedHashMap<>();
-    Map<Timestamp, List<DataPoint>> memoryRequestDataPointsMap = new LinkedHashMap<>();
-    Map<Timestamp, List<DataPoint>> memoryUtilizationValueDataPointsMap = new LinkedHashMap<>();
+    Map<Timestamp, List<DataPoint>> costDataPointsMap = new LinkedHashMap();
+    Map<Timestamp, List<DataPoint>> cpuLimitDataPointsMap = new LinkedHashMap();
+    Map<Timestamp, List<DataPoint>> cpuRequestDataPointsMap = new LinkedHashMap();
+    Map<Timestamp, List<DataPoint>> cpuUtilizationValueDataPointsMap = new LinkedHashMap();
+    Map<Timestamp, List<DataPoint>> memoryLimitDataPointsMap = new LinkedHashMap();
+    Map<Timestamp, List<DataPoint>> memoryRequestDataPointsMap = new LinkedHashMap();
+    Map<Timestamp, List<DataPoint>> memoryUtilizationValueDataPointsMap = new LinkedHashMap();
 
     for (FieldValueList row : result.iterateAll()) {
       Timestamp startTimeTruncatedTimestamp = null;
@@ -311,28 +309,24 @@ public class PerspectiveTimeSeriesHelper {
     if (entityIdToName != null) {
       costDataPointsMap.keySet().forEach(timestamp
           -> updatedDataPointsMap.put(
-              timestamp, getUpdatedDataPoints(costDataPointsMap.get(timestamp), entityIdToName, fieldName)));
+              timestamp, getUpdatedDataPoints(costDataPointsMap.get(timestamp), entityIdToName)));
       return updatedDataPointsMap;
     } else {
       return costDataPointsMap;
     }
   }
 
-  private List<DataPoint> getUpdatedDataPoints(
-      List<DataPoint> dataPoints, Map<String, String> entityIdToName, String fieldName) {
+  private List<DataPoint> getUpdatedDataPoints(List<DataPoint> dataPoints, Map<String, String> entityIdToName) {
     List<DataPoint> updatedDataPoints = new ArrayList<>();
 
-    dataPoints.forEach(dataPoint -> {
-      String name = entityIdToName.getOrDefault(dataPoint.getKey().getName(), dataPoint.getKey().getName());
-      if (AWS_ACCOUNT_FIELD.equals(fieldName)) {
-        name = AwsAccountFieldUtils.mergeAwsAccountIdAndName(
-            dataPoint.getKey().getName(), entityIdToName.get(dataPoint.getKey().getName()));
-      }
-      updatedDataPoints.add(DataPoint.builder()
-                                .value(dataPoint.getValue())
-                                .key(getReference(dataPoint.getKey().getId(), name, dataPoint.getKey().getType()))
-                                .build());
-    });
+    dataPoints.forEach(dataPoint
+        -> updatedDataPoints.add(
+            DataPoint.builder()
+                .value(dataPoint.getValue())
+                .key(getReference(dataPoint.getKey().getId(),
+                    entityIdToName.getOrDefault(dataPoint.getKey().getName(), dataPoint.getKey().getName()),
+                    dataPoint.getKey().getType()))
+                .build()));
     return updatedDataPoints;
   }
 

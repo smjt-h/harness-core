@@ -137,7 +137,6 @@ import io.harness.ccm.views.graphql.ViewsQueryMetadata;
 import io.harness.ccm.views.helper.InstanceDetailsHelper;
 import io.harness.ccm.views.service.CEViewService;
 import io.harness.ccm.views.service.ViewsBillingService;
-import io.harness.ccm.views.utils.AwsAccountFieldUtils;
 import io.harness.ccm.views.utils.ViewFieldUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ff.FeatureFlagService;
@@ -265,28 +264,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
       return null;
     }
     return costCategoriesPostFetchResponseUpdate(
-        getFilterValuesData(queryParams.getAccountId(), viewsQueryMetadata, result, idFilters), businessMappingId);
-  }
-
-  private List<String> getFilterValuesData(final String harnessAccountId, final ViewsQueryMetadata viewsQueryMetadata,
-      final TableResult result, final List<QLCEViewFilter> idFilters) {
-    List<String> filterValuesData = convertToFilterValuesData(result, viewsQueryMetadata.getFields());
-    if (isDataFilteredByAwsAccount(idFilters)) {
-      final List<String> updatedFilterValuesData = new ArrayList<>();
-      final Map<String, String> entityIdToName =
-          entityMetadataService.getEntityIdToNameMapping(filterValuesData, harnessAccountId, AWS_ACCOUNT_FIELD);
-      filterValuesData.forEach(filterValueData
-          -> updatedFilterValuesData.add(
-              AwsAccountFieldUtils.mergeAwsAccountIdAndName(filterValueData, entityIdToName.get(filterValueData))));
-      filterValuesData = updatedFilterValuesData;
-    }
-    return filterValuesData;
-  }
-
-  private boolean isDataFilteredByAwsAccount(final List<QLCEViewFilter> idFilters) {
-    return idFilters.stream()
-        .filter(idFilter -> Objects.nonNull(idFilter) && Objects.nonNull(idFilter.getField()))
-        .anyMatch(idFilter -> AWS_ACCOUNT_FIELD.equals(idFilter.getField().getFieldName()));
+        convertToFilterValuesData(result, viewsQueryMetadata.getFields()), businessMappingId);
   }
 
   @Override
@@ -395,7 +373,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
       List<QLCEViewAggregation> aggregateFunction, String cloudProviderTableName, ViewQueryParams queryParams) {
     boolean isClusterTableQuery = isClusterTableQuery(filters, queryParams);
     List<ViewRule> viewRuleList = new ArrayList<>();
-    List<QLCEViewFilter> idFilters = removeAccountNameFromAWSAccountIdFilter(getIdFilters(filters));
+    List<QLCEViewFilter> idFilters = getIdFilters(filters);
     List<QLCEViewTimeFilter> timeFilters = getTimeFilters(filters);
     SelectQuery query = getTrendStatsQuery(
         filters, idFilters, timeFilters, aggregateFunction, viewRuleList, cloudProviderTableName, queryParams);
@@ -809,7 +787,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
     List<QLCEViewGroupBy> modifiedGroupBy = groupBy != null ? new ArrayList<>(groupBy) : new ArrayList<>();
     Optional<QLCEViewFilterWrapper> viewMetadataFilter = getViewMetadataFilter(filters);
 
-    List<QLCEViewRule> rules = removeAccountNameFromAWSAccountRuleFilter(getRuleFilters(filters));
+    List<QLCEViewRule> rules = getRuleFilters(filters);
     if (!rules.isEmpty()) {
       for (QLCEViewRule rule : rules) {
         viewRuleList.add(convertQLCEViewRuleToViewRule(rule));
@@ -834,7 +812,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
         }
       }
     }
-    List<QLCEViewFilter> idFilters = removeAccountNameFromAWSAccountIdFilter(getIdFilters(filters));
+    List<QLCEViewFilter> idFilters = getIdFilters(filters);
     List<QLCEViewTimeFilter> timeFilters = getTimeFilters(filters);
 
     // account id is not passed in current gen queries
@@ -862,54 +840,6 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
 
     return viewsQueryBuilder.getQuery(viewRuleList, idFilters, timeFilters, modifiedGroupBy, aggregateFunction, sort,
         cloudProviderTableName, queryParams.getTimeOffsetInDays());
-  }
-
-  private static List<QLCEViewRule> removeAccountNameFromAWSAccountRuleFilter(final List<QLCEViewRule> ruleFilters) {
-    final List<QLCEViewRule> updatedRuleFilters = new ArrayList<>();
-    ruleFilters.forEach(ruleFilter -> {
-      if (Objects.nonNull(ruleFilter.getConditions())) {
-        final List<QLCEViewFilter> updatedConditions = new ArrayList<>();
-        ruleFilter.getConditions().forEach(condition -> {
-          if (Objects.nonNull(condition.getField()) && AWS_ACCOUNT_FIELD.equals(condition.getField().getFieldName())
-              && Objects.nonNull(condition.getValues())) {
-            final String[] updatedValues = Arrays.stream(condition.getValues())
-                                               .map(AwsAccountFieldUtils::removeAwsAccountNameFromValue)
-                                               .toArray(String[] ::new);
-            updatedConditions.add(QLCEViewFilter.builder()
-                                      .field(condition.getField())
-                                      .operator(condition.getOperator())
-                                      .values(updatedValues)
-                                      .build());
-          } else {
-            updatedConditions.add(condition);
-          }
-        });
-        updatedRuleFilters.add(QLCEViewRule.builder().conditions(updatedConditions).build());
-      } else {
-        updatedRuleFilters.add(ruleFilter);
-      }
-    });
-    return updatedRuleFilters;
-  }
-
-  private static List<QLCEViewFilter> removeAccountNameFromAWSAccountIdFilter(final List<QLCEViewFilter> idFilters) {
-    final List<QLCEViewFilter> updatedIdFilters = new ArrayList<>();
-    idFilters.forEach(idFilter -> {
-      if (Objects.nonNull(idFilter.getField()) && AWS_ACCOUNT_FIELD.equals(idFilter.getField().getFieldName())
-          && Objects.nonNull(idFilter.getValues())) {
-        final String[] updatedValues = Arrays.stream(idFilter.getValues())
-                                           .map(AwsAccountFieldUtils::removeAwsAccountNameFromValue)
-                                           .toArray(String[] ::new);
-        updatedIdFilters.add(QLCEViewFilter.builder()
-                                 .field(idFilter.getField())
-                                 .operator(idFilter.getOperator())
-                                 .values(updatedValues)
-                                 .build());
-      } else {
-        updatedIdFilters.add(idFilter);
-      }
-    });
-    return updatedIdFilters;
   }
 
   public static List<ViewRule> convertQLCEViewRuleToViewRule(@NotNull List<QLCEViewRule> ruleList) {
@@ -1829,19 +1759,13 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
     Map<String, String> entityIdToName =
         entityMetadataService.getEntityIdToNameMapping(entityIds, harnessAccountId, fieldName);
     List<QLCEViewEntityStatsDataPoint> updatedDataPoints = new ArrayList<>();
-    entityStatsDataPoints.forEach(dataPoint -> {
-      final QLCEViewEntityStatsDataPointBuilder qlceViewEntityStatsDataPointBuilder =
-          QLCEViewEntityStatsDataPoint.builder();
-      qlceViewEntityStatsDataPointBuilder.id(dataPoint.getId())
-          .name(entityIdToName.getOrDefault(dataPoint.getName(), dataPoint.getName()))
-          .cost(dataPoint.getCost())
-          .costTrend(dataPoint.getCostTrend());
-      if (AWS_ACCOUNT_FIELD.equals(fieldName)) {
-        qlceViewEntityStatsDataPointBuilder.name(AwsAccountFieldUtils.mergeAwsAccountIdAndName(
-            dataPoint.getName(), entityIdToName.get(dataPoint.getName())));
-      }
-      updatedDataPoints.add(qlceViewEntityStatsDataPointBuilder.build());
-    });
+    entityStatsDataPoints.forEach(dataPoint
+        -> updatedDataPoints.add(QLCEViewEntityStatsDataPoint.builder()
+                                     .id(dataPoint.getId())
+                                     .name(entityIdToName.getOrDefault(dataPoint.getName(), dataPoint.getName()))
+                                     .cost(dataPoint.getCost())
+                                     .costTrend(dataPoint.getCostTrend())
+                                     .build()));
     return updatedDataPoints;
   }
 }
