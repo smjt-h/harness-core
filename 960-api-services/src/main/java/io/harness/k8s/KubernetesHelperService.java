@@ -556,7 +556,7 @@ public class KubernetesHelperService {
             .clientCert(getCharArray(config.getClientCertData()))
             .clientKey(getCharArray(config.getClientKeyData()))
             .clientKeyPassphrase(getCharArray(config.getClientKeyPassphrase()))
-            .serviceAccountTokenSupplier(config::getOauthToken)
+            .serviceAccountTokenSupplier(config.getOauthToken() != null ? config::getOauthToken : null)
             .clientKeyAlgo(config.getClientKeyAlgo())
             .build();
       } catch (IOException e) {
