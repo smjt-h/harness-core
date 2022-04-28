@@ -16,6 +16,7 @@ import io.harness.gitsync.sdk.EntityValidityDetails;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.harness.pms.contracts.governance.GovernanceMetadata;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Set;
 import lombok.Builder;
@@ -34,4 +35,5 @@ public class PMSPipelineResponseDTO {
   EntityGitDetails gitDetails;
   EntityValidityDetails entityValidityDetails;
   Set<String> modules;
+  GovernanceMetadata governanceMetadata;
 }
