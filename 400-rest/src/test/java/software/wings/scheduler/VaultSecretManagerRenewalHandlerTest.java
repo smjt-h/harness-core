@@ -151,14 +151,12 @@ public class VaultSecretManagerRenewalHandlerTest extends WingsBaseTest {
   }
 
   private void verifySuccessAlertInteraction(String accountId) {
-    verify(alertService, times(1))
-        .closeAlert(eq(accountId), eq(GLOBAL_APP_ID), eq(InvalidKMS), any());
+    verify(alertService, times(1)).closeAlert(eq(accountId), eq(GLOBAL_APP_ID), eq(InvalidKMS), any());
     verify(alertService, times(0)).openAlert(any(), any(), any(), any());
   }
 
   private void verifyFailureAlertInteraction(String accountId) {
-    verify(alertService, times(1))
-        .openAlert(eq(accountId), eq(GLOBAL_APP_ID), eq(InvalidKMS), any());
+    verify(alertService, times(1)).openAlert(eq(accountId), eq(GLOBAL_APP_ID), eq(InvalidKMS), any());
     verify(alertService, times(0)).closeAlert(any(), any(), any(), any());
   }
 }

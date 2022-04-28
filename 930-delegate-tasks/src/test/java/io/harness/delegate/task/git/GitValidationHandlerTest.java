@@ -64,12 +64,8 @@ public class GitValidationHandlerTest extends CategoryTest {
   @Before
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
-    doNothing()
-        .when(gitDecryptionHelper)
-        .decryptGitConfig(any(GitConfigDTO.class), any());
-    doReturn(sshSessionConfig)
-        .when(gitDecryptionHelper)
-        .getSSHSessionConfig(any(), any());
+    doNothing().when(gitDecryptionHelper).decryptGitConfig(any(GitConfigDTO.class), any());
+    doReturn(sshSessionConfig).when(gitDecryptionHelper).getSSHSessionConfig(any(), any());
     doReturn(decryptableEntity)
         .when(decryptionHelper)
         .decrypt(any(DecryptableEntity.class), anyListOf(EncryptedDataDetail.class));
@@ -82,8 +78,7 @@ public class GitValidationHandlerTest extends CategoryTest {
     ConnectorValidationResult result = ConnectorValidationResult.builder().status(ConnectivityStatus.SUCCESS).build();
     doReturn(result)
         .when(gitCommandTaskHandler)
-        .validateGitCredentials(
-            any(GitConfigDTO.class), any(ScmConnector.class), any(String.class), any());
+        .validateGitCredentials(any(GitConfigDTO.class), any(ScmConnector.class), any(String.class), any());
 
     GitConfigDTO gitconfigDTO = GitConfigDTO.builder()
                                     .gitConnectionType(GitConnectionType.ACCOUNT)
@@ -99,8 +94,7 @@ public class GitValidationHandlerTest extends CategoryTest {
         gitValidationHandler.validate(gitValidationParameters, "accountIdentifier");
     assertThat(validationResult.getStatus()).isEqualTo(ConnectivityStatus.SUCCESS);
     verify(decryptionHelper, times(0)).decrypt(any(DecryptableEntity.class), anyListOf(EncryptedDataDetail.class));
-    verify(gitDecryptionHelper, times(1))
-        .decryptGitConfig(any(GitConfigDTO.class), any());
+    verify(gitDecryptionHelper, times(1)).decryptGitConfig(any(GitConfigDTO.class), any());
   }
 
   @Test
@@ -110,8 +104,7 @@ public class GitValidationHandlerTest extends CategoryTest {
     ConnectorValidationResult result = ConnectorValidationResult.builder().status(ConnectivityStatus.SUCCESS).build();
     doReturn(result)
         .when(gitCommandTaskHandler)
-        .validateGitCredentials(
-            any(GitConfigDTO.class), any(ScmConnector.class), any(String.class), any());
+        .validateGitCredentials(any(GitConfigDTO.class), any(ScmConnector.class), any(String.class), any());
 
     ScmValidationParams gitValidationParameters =
         ScmValidationParams.builder()

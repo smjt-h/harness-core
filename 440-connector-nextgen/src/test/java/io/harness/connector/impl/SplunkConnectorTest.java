@@ -141,8 +141,7 @@ public class SplunkConnectorTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testGetSplunkConnector() {
     createConnector();
-    when(connectorRepository.findByFullyQualifiedIdentifierAndDeletedNot(
-             any(), any(), any(), any(), anyBoolean()))
+    when(connectorRepository.findByFullyQualifiedIdentifierAndDeletedNot(any(), any(), any(), any(), anyBoolean()))
         .thenReturn(Optional.of(connector));
     ConnectorResponseDTO connectorDTO = connectorService.get(accountIdentifier, null, null, identifier).get();
     ensureSplunkConnectorFieldsAreCorrect(connectorDTO);
