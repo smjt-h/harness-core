@@ -6,6 +6,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class SlackMessageJSON {
-	private String outgoingWebhookUrl;
-	private String message;
+  private String outgoingWebhookUrl;
+  private String message;
 }
