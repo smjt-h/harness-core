@@ -140,7 +140,7 @@ public class NGHostValidationServiceImplTest extends CategoryTest {
                            -> hostValidationService.validateSSHHost(HOST_NULL, ACCOUNT_IDENTIFIER, ORG_IDENTIFIER,
                                PROJECT_IDENTIFIER, SECRET_IDENTIFIER, Collections.emptySet()))
         .isInstanceOf(InvalidArgumentsException.class)
-        .hasMessage("SSH host cannot be null or empty");
+        .hasMessage("Host cannot be null or empty");
   }
 
   @Test
@@ -167,7 +167,7 @@ public class NGHostValidationServiceImplTest extends CategoryTest {
                            -> hostValidationService.validateSSHHost(HOST, ACCOUNT_IDENTIFIER, ORG_IDENTIFIER,
                                PROJECT_IDENTIFIER, SECRET_IDENTIFIER, Collections.emptySet()))
         .isInstanceOf(InvalidArgumentsException.class)
-        .hasMessage(String.format("Secret is not SSH type, secret identifier: %s", SECRET_IDENTIFIER));
+        .hasMessage(String.format("Invalid secret type, secret identifier: %s", SECRET_IDENTIFIER));
   }
 
   @Test

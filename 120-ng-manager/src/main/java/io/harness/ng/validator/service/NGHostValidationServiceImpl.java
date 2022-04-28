@@ -231,14 +231,11 @@ public class NGHostValidationServiceImpl implements NGHostValidationService {
     // host is host name and port number
     portFromHost.ifPresent(populate);
 
-    String hostName = portFromHost.isPresent()
-        ? extractHostnameFromHost(host).orElseThrow(
-            ()
-                -> new InvalidArgumentsException(
-                    format("Not found hostName, host: %s, extracted port: %s", host, portFromHost.get()), USER_SRE))
-        : host;
-
-    return hostName;
+    return portFromHost.isPresent() ? extractHostnameFromHost(host).orElseThrow(
+               ()
+                   -> new InvalidArgumentsException(
+                       format("Not found hostName, host: %s, extracted port: %s", host, portFromHost.get()), USER_SRE))
+                                    : host;
   }
 
   private DelegateTaskRequest generateSshDelegateTaskRequest(
