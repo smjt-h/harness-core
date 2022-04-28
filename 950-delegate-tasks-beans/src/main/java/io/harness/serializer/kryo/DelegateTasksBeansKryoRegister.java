@@ -551,7 +551,6 @@ import software.wings.beans.TaskType;
 import software.wings.beans.command.CodeDeployParams;
 import software.wings.beans.command.GcbTaskParams;
 import software.wings.beans.command.JenkinsTaskParams;
-import software.wings.beans.delegation.TerraformProvisionParameters;
 import software.wings.beans.s3.FetchS3FilesCommandParams;
 import software.wings.beans.s3.FetchS3FilesExecutionResponse;
 import software.wings.beans.s3.S3Bucket;
@@ -655,7 +654,6 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(GitPushResult.class, 5210);
     kryo.register(GitPushResult.RefUpdate.class, 5215);
     kryo.register(JenkinsTaskParams.class, 5234);
-    kryo.register(TerraformProvisionParameters.class, 5342);
     kryo.register(TerraformExecutionData.class, 5343);
     kryo.register(GitFetchFilesRequest.class, 5470);
     kryo.register(GitFetchFilesResult.class, 5471);

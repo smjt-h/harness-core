@@ -577,7 +577,6 @@ import software.wings.sm.ResourceConstraintStatusData;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.StateMachineResumeCallback;
 import software.wings.sm.StateType;
-import software.wings.sm.StepExecutionSummary;
 import software.wings.sm.WorkflowStandardParams;
 import software.wings.sm.states.APMVerificationState;
 import software.wings.sm.states.ApprovalState;
@@ -941,7 +940,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(ForkStateExecutionData.class, 4006);
     kryo.register(RepeatStateExecutionData.class, 4003);
     kryo.register(StateType.class, 4001);
-    kryo.register(StepExecutionSummary.class, 5145);
     kryo.register(WorkflowStandardParams.class, 5227);
     kryo.register(ContainerFamily.class, 5118);
     kryo.register(VerificationStateAnalysisExecutionData.class, 5552);

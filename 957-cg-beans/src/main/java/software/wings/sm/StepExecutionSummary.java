@@ -21,7 +21,7 @@ public class StepExecutionSummary {
   private ExecutionStatus status;
   private String errorCode;
   private String message;
-  private ContextElement element;
+  private ContextElementInfo elementInfo;
 
   public ExecutionStatus getStatus() {
     return status;
@@ -47,12 +47,12 @@ public class StepExecutionSummary {
     this.message = message;
   }
 
-  public ContextElement getElement() {
-    return element;
+  public ContextElementInfo getElementInfo() {
+    return elementInfo;
   }
 
-  public void setElement(ContextElement element) {
-    this.element = element;
+  public void setElementInfo(ContextElementInfo elementInfo) {
+    this.elementInfo = elementInfo;
   }
 
   public String getStepName() {
@@ -68,7 +68,7 @@ public class StepExecutionSummary {
     private ExecutionStatus status;
     private String errorCode;
     private String message;
-    private ContextElement element;
+    private ContextElementInfo elementInfo;
 
     private StepExecutionSummaryBuilder() {}
 
@@ -96,8 +96,8 @@ public class StepExecutionSummary {
       return this;
     }
 
-    public StepExecutionSummaryBuilder withElement(ContextElement element) {
-      this.element = element;
+    public StepExecutionSummaryBuilder withElementInfo(ContextElementInfo elementInfo) {
+      this.elementInfo = elementInfo;
       return this;
     }
 
@@ -107,7 +107,7 @@ public class StepExecutionSummary {
       stepExecutionSummary.setStatus(status);
       stepExecutionSummary.setErrorCode(errorCode);
       stepExecutionSummary.setMessage(message);
-      stepExecutionSummary.setElement(element);
+      stepExecutionSummary.setElementInfo(elementInfo);
       return stepExecutionSummary;
     }
   }

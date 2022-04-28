@@ -19,7 +19,7 @@ import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
 import io.harness.serializer.JsonUtils;
 import io.harness.serializer.XmlUtils;
 
-import software.wings.sm.ContextElement;
+import software.wings.sm.ContextElementInfo;
 import software.wings.sm.StateExecutionData;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -65,12 +65,12 @@ public class HttpStateExecutionData extends StateExecutionData implements Delega
 
   @Builder
   public HttpStateExecutionData(String stateName, String stateType, Long startTs, Long endTs, ExecutionStatus status,
-      String errorMsg, Integer waitInterval, ContextElement element, Map<String, Object> stateParams,
+      String errorMsg, Integer waitInterval, ContextElementInfo elementInfo, Map<String, Object> stateParams,
       Map<String, Object> templateVariables, String httpUrl, String httpMethod, int httpResponseCode,
       String httpResponseBody, String assertionStatement, String assertionStatus, Document document, String header,
       List<KeyValuePair> headers, boolean useProxy, String warningMessage) {
-    super(
-        stateName, stateType, startTs, endTs, status, errorMsg, waitInterval, element, stateParams, templateVariables);
+    super(stateName, stateType, startTs, endTs, status, errorMsg, waitInterval, elementInfo, stateParams,
+        templateVariables);
     this.httpUrl = httpUrl;
     this.httpMethod = httpMethod;
     this.httpResponseCode = httpResponseCode;

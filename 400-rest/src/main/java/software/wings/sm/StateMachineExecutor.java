@@ -1881,8 +1881,12 @@ public class StateMachineExecutor implements StateInspectionListener {
       stateExecutionInstance.getNotifyElements().addAll(notifyElements);
       ops.set("notifyElements", stateExecutionInstance.getNotifyElements());
     }
-
-    stateExecutionData.setElement(stateExecutionInstance.getContextElement());
+    ContextElement element = stateExecutionInstance.getContextElement();
+    stateExecutionData.setElementInfo(ContextElementInfo.builder()
+                                          .uuid(element.getUuid())
+                                          .name(element.getName())
+                                          .type(element.getElementType())
+                                          .build());
     stateExecutionData.setStartTs(stateExecutionInstance.getStartTs());
     if (stateExecutionInstance.getEndTs() != null) {
       stateExecutionData.setEndTs(stateExecutionInstance.getEndTs());

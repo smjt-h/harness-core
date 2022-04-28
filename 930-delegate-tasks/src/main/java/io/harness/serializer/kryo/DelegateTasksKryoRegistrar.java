@@ -72,6 +72,7 @@ import software.wings.beans.container.EcsSteadyStateCheckResponse;
 import software.wings.beans.container.KubernetesSteadyStateCheckParams;
 import software.wings.beans.container.KubernetesSwapServiceSelectorsParams;
 import software.wings.beans.delegation.ShellScriptParameters;
+import software.wings.beans.delegation.TerraformProvisionParameters;
 import software.wings.beans.settings.azureartifacts.AzureArtifactsPATConfig;
 import software.wings.beans.trigger.WebHookTriggerResponseData;
 import software.wings.beans.trigger.WebhookTriggerParameters;
@@ -231,6 +232,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(ElkQueryType.class, 5275);
     kryo.register(PcfConfig.class, 5296);
     kryo.register(SmtpConfig.class, 5304);
+    kryo.register(TerraformProvisionParameters.class, 5342);
     kryo.register(TimeSeriesMlAnalysisType.class, 5347);
     kryo.register(HttpStateExecutionResponse.class, 5375);
     kryo.register(ElkLogFetchRequest.class, 5376);

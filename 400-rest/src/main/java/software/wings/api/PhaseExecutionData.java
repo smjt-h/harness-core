@@ -16,7 +16,7 @@ import io.harness.beans.ExecutionStatus;
 import io.harness.beans.SweepingOutput;
 
 import software.wings.beans.ElementExecutionSummary;
-import software.wings.sm.ContextElement;
+import software.wings.sm.ContextElementInfo;
 import software.wings.sm.states.ElementStateExecutionData;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -201,7 +201,7 @@ public class PhaseExecutionData extends ElementStateExecutionData implements Swe
     private List<String> instanceIds;
     private String errorMsg;
     private Integer waitInterval;
-    private ContextElement element;
+    private ContextElementInfo elementInfo;
 
     private PhaseExecutionDataBuilder() {}
 
@@ -309,8 +309,8 @@ public class PhaseExecutionData extends ElementStateExecutionData implements Swe
       return this;
     }
 
-    public PhaseExecutionDataBuilder withElement(ContextElement element) {
-      this.element = element;
+    public PhaseExecutionDataBuilder withElementInfo(ContextElementInfo elementInfo) {
+      this.elementInfo = elementInfo;
       return this;
     }
 
@@ -335,7 +335,7 @@ public class PhaseExecutionData extends ElementStateExecutionData implements Swe
       phaseExecutionData.setInstanceIds(instanceIds);
       phaseExecutionData.setErrorMsg(errorMsg);
       phaseExecutionData.setWaitInterval(waitInterval);
-      phaseExecutionData.setElement(element);
+      phaseExecutionData.setElementInfo(elementInfo);
       phaseExecutionData.setInfraDefinitionId(infraDefinitionId);
       return phaseExecutionData;
     }

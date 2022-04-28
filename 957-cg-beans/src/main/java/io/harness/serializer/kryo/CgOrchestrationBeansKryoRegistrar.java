@@ -49,6 +49,7 @@ import software.wings.sm.ExecutionInterruptEffect;
 import software.wings.sm.PipelineSummary;
 import software.wings.sm.StateExecutionData;
 import software.wings.sm.StateTypeScope;
+import software.wings.sm.StepExecutionSummary;
 
 import com.esotericsoftware.kryo.Kryo;
 
@@ -83,6 +84,7 @@ public class CgOrchestrationBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(ExecutionInterruptEffect.class, 5236);
     kryo.register(PipelineSummary.class, 5142);
     kryo.register(StateTypeScope.class, 5144);
+    kryo.register(StepExecutionSummary.class, 5145);
     kryo.register(WebhookSource.class, 8551);
     kryo.register(ApiCallLogDTO.class, 9048);
     kryo.register(ApiCallLogDTOField.class, 9049);

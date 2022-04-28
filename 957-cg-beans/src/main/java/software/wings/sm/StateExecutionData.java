@@ -49,7 +49,7 @@ public class StateExecutionData {
   private ExecutionStatus status;
   private String errorMsg;
   private Integer waitInterval;
-  private ContextElement element;
+  private ContextElementInfo elementInfo;
   private Map<String, Object> stateParams;
   private DelegateMetaInfo delegateMetaInfo;
   private Map<String, Object> templateVariable;
@@ -57,7 +57,7 @@ public class StateExecutionData {
   public StateExecutionData() {}
 
   public StateExecutionData(String stateName, String stateType, Long startTs, Long endTs, ExecutionStatus status,
-      String errorMsg, Integer waitInterval, ContextElement element, Map<String, Object> stateParams,
+      String errorMsg, Integer waitInterval, ContextElementInfo elementInfo, Map<String, Object> stateParams,
       Map<String, Object> templateVariable) {
     this.stateName = stateName;
     this.stateType = stateType;
@@ -66,7 +66,7 @@ public class StateExecutionData {
     this.status = status;
     this.errorMsg = errorMsg;
     this.waitInterval = waitInterval;
-    this.element = element;
+    this.elementInfo = elementInfo;
     this.stateParams = stateParams;
     this.templateVariable = templateVariable;
   }
@@ -199,12 +199,12 @@ public class StateExecutionData {
     this.waitInterval = waitInterval;
   }
 
-  public ContextElement getElement() {
-    return element;
+  public ContextElementInfo getElementInfo() {
+    return elementInfo;
   }
 
-  public void setElement(ContextElement element) {
-    this.element = element;
+  public void setElementInfo(ContextElementInfo elementInfo) {
+    this.elementInfo = elementInfo;
   }
 
   public Map<String, Object> getStateParams() {
@@ -354,8 +354,12 @@ public class StateExecutionData {
   }
 
   protected void populateStepExecutionSummary(StepExecutionSummary stepExecutionSummary) {
-    if (element != null) {
-      stepExecutionSummary.setElement(element.cloneMin());
+    if (elementInfo != null) {
+      stepExecutionSummary.setElementInfo(ContextElementInfo.builder()
+                                              .uuid(this.elementInfo.getUuid())
+                                              .name(this.elementInfo.getName())
+                                              .type(this.elementInfo.getType())
+                                              .build());
     }
     stepExecutionSummary.setStepName(stateName);
     stepExecutionSummary.setStatus(status);
@@ -369,7 +373,7 @@ public class StateExecutionData {
     private ExecutionStatus status;
     private String errorMsg;
     private Integer waitInterval;
-    private ContextElement element;
+    private ContextElementInfo elementInfo;
 
     private StateExecutionDataBuilder() {}
 
@@ -407,8 +411,8 @@ public class StateExecutionData {
       return this;
     }
 
-    public StateExecutionDataBuilder withElement(ContextElement element) {
-      this.element = element;
+    public StateExecutionDataBuilder withElementInfo(ContextElementInfo elementInfo) {
+      this.elementInfo = elementInfo;
       return this;
     }
 
@@ -420,7 +424,7 @@ public class StateExecutionData {
       stateExecutionData.setStatus(status);
       stateExecutionData.setErrorMsg(errorMsg);
       stateExecutionData.setWaitInterval(waitInterval);
-      stateExecutionData.setElement(element);
+      stateExecutionData.setElementInfo(elementInfo);
       return stateExecutionData;
     }
   }

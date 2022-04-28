@@ -33,7 +33,6 @@ import io.harness.serializer.KryoSerializer;
 import io.harness.serializer.MapperUtils;
 import io.harness.tasks.ResponseData;
 
-import software.wings.api.ContainerServiceElement;
 import software.wings.api.DeploymentType;
 import software.wings.api.PhaseElement;
 import software.wings.api.PhaseElement.PhaseElementBuilder;
@@ -64,6 +63,7 @@ import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
 import software.wings.settings.SettingVariableTypes;
 import software.wings.sm.ContextElement;
+import software.wings.sm.ContextElementInfo;
 import software.wings.sm.ElementNotifyResponseData;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionContextImpl;
@@ -203,11 +203,10 @@ public class PhaseSubWorkflow extends SubWorkflowState {
 
       StateExecutionData stateExecutionData = context.getStateExecutionData();
       if (stateExecutionData != null) {
-        ContextElement element = stateExecutionData.getElement();
+        ContextElementInfo element = stateExecutionData.getElementInfo();
         if (element != null) {
-          if (ContextElementType.CONTAINER_SERVICE == element.getElementType()) {
-            ContainerServiceElement containerElement = (ContainerServiceElement) element;
-            phaseExecutionData.setContainerServiceName(containerElement.getName());
+          if (ContextElementType.CONTAINER_SERVICE == element.getType()) {
+            phaseExecutionData.setContainerServiceName(element.getName());
           }
         }
       }

@@ -30,7 +30,7 @@ import software.wings.beans.command.EcsSetupParams;
 import software.wings.beans.command.KubernetesSetupParams;
 import software.wings.beans.container.AwsAutoScalarConfig;
 import software.wings.service.intfc.ActivityService;
-import software.wings.sm.ContextElement;
+import software.wings.sm.ContextElementInfo;
 import software.wings.sm.InstanceStatusSummary;
 import software.wings.sm.StateExecutionData;
 import software.wings.sm.StepExecutionSummary;
@@ -214,7 +214,7 @@ public class CommandStateExecutionData extends StateExecutionData {
     private ExecutionStatus status;
     private String errorMsg;
     private Integer waitInterval;
-    private ContextElement element;
+    private ContextElementInfo elementInfo;
     private Map<String, Object> stateParams;
     private String appId;
     private String delegateTaskId;
@@ -285,8 +285,8 @@ public class CommandStateExecutionData extends StateExecutionData {
       return this;
     }
 
-    public Builder withElement(ContextElement element) {
-      this.element = element;
+    public Builder withElementInfo(ContextElementInfo elementInfo) {
+      this.elementInfo = elementInfo;
       return this;
     }
 
@@ -439,7 +439,7 @@ public class CommandStateExecutionData extends StateExecutionData {
           .withStatus(status)
           .withErrorMsg(errorMsg)
           .withWaitInterval(waitInterval)
-          .withElement(element)
+          .withElementInfo(elementInfo)
           .withStateParams(stateParams)
           .withAppId(appId)
           .withDelegateTaskId(delegateTaskId)
@@ -478,7 +478,7 @@ public class CommandStateExecutionData extends StateExecutionData {
       commandStateExecutionData.setStatus(status);
       commandStateExecutionData.setErrorMsg(errorMsg);
       commandStateExecutionData.setWaitInterval(waitInterval);
-      commandStateExecutionData.setElement(element);
+      commandStateExecutionData.setElementInfo(elementInfo);
       commandStateExecutionData.setStateParams(stateParams);
       commandStateExecutionData.setAppId(appId);
       commandStateExecutionData.setDelegateTaskId(delegateTaskId);

@@ -273,8 +273,8 @@ public class PhaseStepSubWorkflow extends SubWorkflowState {
         // Needs service instance id param
         List<String> serviceInstanceIds = phaseStepExecutionSummary.getStepExecutionSummaryList()
                                               .stream()
-                                              .filter(s -> s.getElement() != null)
-                                              .map(s -> s.getElement().getUuid())
+                                              .filter(s -> s.getElementInfo() != null)
+                                              .map(s -> s.getElementInfo().getUuid())
                                               .distinct()
                                               .collect(toList());
 

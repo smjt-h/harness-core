@@ -14,7 +14,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.ExecutionStatus;
 
-import software.wings.sm.ContextElement;
+import software.wings.sm.ContextElementInfo;
 import software.wings.sm.StateExecutionData;
 
 import java.util.Map;
@@ -28,9 +28,10 @@ public class SkipStateExecutionData extends StateExecutionData {
 
   @Builder
   public SkipStateExecutionData(String stateName, String stateType, Long startTs, Long endTs, ExecutionStatus status,
-      String errorMsg, Integer waitInterval, ContextElement element, Map<String, Object> stateParams,
+      String errorMsg, Integer waitInterval, ContextElementInfo elementInfo, Map<String, Object> stateParams,
       Map<String, Object> templateVariable, String skipAssertionExpression, String workflowId) {
-    super(stateName, stateType, startTs, endTs, status, errorMsg, waitInterval, element, stateParams, templateVariable);
+    super(stateName, stateType, startTs, endTs, status, errorMsg, waitInterval, elementInfo, stateParams,
+        templateVariable);
     this.skipAssertionExpression = skipAssertionExpression;
     this.workflowId = workflowId;
   }

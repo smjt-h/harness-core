@@ -30,6 +30,7 @@ import software.wings.service.impl.analysis.DataCollectionInfo;
 import software.wings.service.impl.analysis.LogDataCollectionInfoV2;
 import software.wings.settings.SettingValue;
 import software.wings.sm.ContextElement;
+import software.wings.sm.ContextElementInfo;
 import software.wings.sm.State;
 import software.wings.sm.StateMachineExecutionCallback;
 import software.wings.sm.StateMachineExecutionCallbackMock;
@@ -69,6 +70,7 @@ public class ManagerMorphiaRegistrarTest extends WingsBaseTest {
     final Set<Class> unwanted = checkRegisteredClasses(ImmutableSet.<Class>builder()
                                                            .add(CommandUnit.class)
                                                            .add(ContextElement.class)
+                                                           .add(ContextElementInfo.class)
                                                            .add(DataCollectionInfo.class)
                                                            .add(SecretManagerConfig.class)
                                                            .add(SettingValue.class)
