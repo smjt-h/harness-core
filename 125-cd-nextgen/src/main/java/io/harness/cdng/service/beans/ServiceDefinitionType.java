@@ -8,6 +8,7 @@
 package io.harness.cdng.service.beans;
 
 import io.harness.beans.ExecutionStrategyType;
+import io.harness.ng.core.k8s.ServiceSpecType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -30,11 +31,7 @@ public enum ServiceDefinitionType {
   @JsonProperty(ServiceSpecType.SSH) SSH("Ssh", Lists.newArrayList(ExecutionStrategyType.DEFAULT), ServiceSpecType.SSH),
 
   @JsonProperty(ServiceSpecType.WINRM)
-  WINRM("WinRm", Lists.newArrayList(ExecutionStrategyType.DEFAULT), ServiceSpecType.WINRM),
-
-  @JsonProperty(ServiceSpecType.DEPLOYMENT_TEMPLATE)
-  DEPLOYMENT_TEMPLATE(ServiceSpecType.DEPLOYMENT_TEMPLATE, Lists.newArrayList(ExecutionStrategyType.DEFAULT),
-      ServiceSpecType.DEPLOYMENT_TEMPLATE);
+  WINRM("WinRm", Lists.newArrayList(ExecutionStrategyType.DEFAULT), ServiceSpecType.WINRM);
 
   /*
   //Unsupported for now

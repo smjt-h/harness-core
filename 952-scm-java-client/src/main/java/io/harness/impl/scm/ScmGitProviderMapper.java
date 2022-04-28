@@ -14,6 +14,9 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cistatus.service.GithubAppConfig;
 import io.harness.cistatus.service.GithubService;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoApiAccessDTO;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoConnectorDTO;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoTokenSpecDTO;
 import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketApiAccessDTO;
 import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketConnectorDTO;
 import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketUsernameTokenApiAccessDTO;
@@ -26,6 +29,7 @@ import io.harness.delegate.beans.connector.scm.gitlab.GitlabConnectorDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabTokenSpecDTO;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.git.GitClientHelper;
+import io.harness.product.ci.scm.proto.AzureProvider;
 import io.harness.product.ci.scm.proto.BitbucketCloudProvider;
 import io.harness.product.ci.scm.proto.BitbucketServerProvider;
 import io.harness.product.ci.scm.proto.GithubProvider;
@@ -44,6 +48,9 @@ public class ScmGitProviderMapper {
   @Inject(optional = true) GithubService githubService;
   private static final String SCM_SKIP_SSL = "SCM_SKIP_SSL";
   private static final String ADDITIONAL_CERTS_PATH = "ADDITIONAL_CERTS_PATH";
+  private static final String azure_repo_name_separator = "/_git/";
+  private static final String azure_repo_url_prefix = "dev.azure.com/";
+  private static final String azure_repo_org_separator = "/";
 
   public Provider mapToSCMGitProvider(ScmConnector scmConnector) {
     return mapToSCMGitProvider(scmConnector, false);
@@ -56,6 +63,8 @@ public class ScmGitProviderMapper {
       return mapToGitLabProvider((GitlabConnectorDTO) scmConnector, debug);
     } else if (scmConnector instanceof BitbucketConnectorDTO) {
       return mapToBitbucketProvider((BitbucketConnectorDTO) scmConnector, debug);
+    } else if (scmConnector instanceof AzureRepoConnectorDTO) {
+      return mapToAzureRepoProvider((AzureRepoConnectorDTO) scmConnector, debug);
     } else {
       throw new NotImplementedException(
           String.format("The scm apis for the provider type %s is not supported", scmConnector.getClass()));
@@ -71,6 +80,21 @@ public class ScmGitProviderMapper {
     } else {
       builder.setBitbucketServer(createBitbucketServerProvider(bitbucketConnector));
     }
+    return builder.setSkipVerify(skipVerify).setAdditionalCertsPath(getAdditionalCertsPath()).build();
+  }
+
+  private Provider mapToAzureRepoProvider(AzureRepoConnectorDTO azureRepoConnector, boolean debug) {
+    boolean skipVerify = checkScmSkipVerify();
+    String orgAndProject = GitClientHelper.getAzureRepoOrgAndProject(azureRepoConnector.getUrl());
+    String org = GitClientHelper.getAzureRepoOrg(orgAndProject);
+    String project = GitClientHelper.getAzureRepoProject(orgAndProject);
+
+    AzureRepoApiAccessDTO apiAccess = azureRepoConnector.getApiAccess();
+    AzureRepoTokenSpecDTO azureRepoUsernameTokenApiAccessDTO = (AzureRepoTokenSpecDTO) apiAccess.getSpec();
+    String personalAccessToken = String.valueOf(azureRepoUsernameTokenApiAccessDTO.getTokenRef().getDecryptedValue());
+    AzureProvider.Builder azureProvider =
+        AzureProvider.newBuilder().setOrganization(org).setProject(project).setPersonalAccessToken(personalAccessToken);
+    Provider.Builder builder = Provider.newBuilder().setDebug(debug).setAzure(azureProvider);
     return builder.setSkipVerify(skipVerify).setAdditionalCertsPath(getAdditionalCertsPath()).build();
   }
 

@@ -520,7 +520,7 @@ public class DelegateServiceImpl implements DelegateService {
         Set<String> selectors = new HashSet<>();
 
         for (Delegate delegate : delegates) {
-          selectors.addAll(retrieveDelegateSelectors(delegate));
+          selectors.addAll(retrieveDelegateSelectors(delegate, false));
         }
         return selectors;
       }
@@ -559,16 +559,17 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   @Override
-  public Set<String> retrieveDelegateSelectors(Delegate delegate) {
+  public Set<String> retrieveDelegateSelectors(Delegate delegate, boolean fetchFromCache) {
     Set<String> selectors = delegate.getTags() == null ? new HashSet<>() : new HashSet<>(delegate.getTags());
     if (delegate.isNg()) {
-      DelegateGroup delegateGroup =
-          delegateCache.getDelegateGroup(delegate.getAccountId(), delegate.getDelegateGroupId());
+      DelegateGroup delegateGroup = fetchFromCache
+          ? delegateCache.getDelegateGroup(delegate.getAccountId(), delegate.getDelegateGroupId())
+          : delegateSetupService.getDelegateGroup(delegate.getAccountId(), delegate.getDelegateGroupId());
       if (delegateGroup.getTags() != null) {
         selectors.addAll(delegateGroup.getTags());
       }
     }
-    selectors.addAll(delegateSetupService.retrieveDelegateImplicitSelectors(delegate).keySet());
+    selectors.addAll(delegateSetupService.retrieveDelegateImplicitSelectors(delegate, fetchFromCache).keySet());
 
     return selectors;
   }
@@ -580,11 +581,15 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   @Override
-  public Double getConnectedRatioWithPrimary(String targetVersion) {
+  public Double getConnectedRatioWithPrimary(String targetVersion, String accountId) {
     targetVersion = Arrays.stream(targetVersion.split("-")).findFirst().get();
-    String primaryVersion = Arrays.stream(configurationController.getPrimaryVersion().split("-")).findFirst().get();
 
-    long primary = delegateConnectionDao.numberOfActiveDelegateConnectionsPerVersion(primaryVersion);
+    String primaryDelegateForAccount = StringUtils.isEmpty(accountId) ? Account.GLOBAL_ACCOUNT_ID : accountId;
+
+    DelegateConfiguration delegateConfiguration = accountService.getDelegateConfiguration(primaryDelegateForAccount);
+
+    String primaryVersion = delegateConfiguration.getDelegateVersions().get(0).split("-")[0];
+    long primary = delegateConnectionDao.numberOfActiveDelegateConnectionsPerVersion(primaryVersion, accountId);
 
     // If we do not have any delegates in the primary version, lets unblock the deployment,
     // that will be very rare and we are in trouble anyways, let report 1 to let the new deployment go.
@@ -592,9 +597,21 @@ public class DelegateServiceImpl implements DelegateService {
       return 1.0;
     }
 
-    long target = delegateConnectionDao.numberOfActiveDelegateConnectionsPerVersion(targetVersion);
-
+    long target = delegateConnectionDao.numberOfActiveDelegateConnectionsPerVersion(targetVersion, accountId);
     return BigDecimal.valueOf((double) target / (double) primary).setScale(3, RoundingMode.HALF_UP).doubleValue();
+  }
+
+  @Override
+  public Double getConnectedDelegatesRatio(String version, String accountId) {
+    long totalDelegatesWithVersion = delegateConnectionDao.numberOfDelegateConnectionsPerVersion(version, accountId);
+    if (totalDelegatesWithVersion == 0) {
+      return 0.0;
+    }
+    long connectedDelegatesWithVersion =
+        delegateConnectionDao.numberOfActiveDelegateConnectionsPerVersion(version, accountId);
+    return BigDecimal.valueOf((double) connectedDelegatesWithVersion / (double) totalDelegatesWithVersion)
+        .setScale(3, RoundingMode.HALF_UP)
+        .doubleValue();
   }
 
   @Override
@@ -826,7 +843,7 @@ public class DelegateServiceImpl implements DelegateService {
               .profileError(delegate.isProfileError())
               .grpcActive(connections.stream().allMatch(
                   connection -> connection.getLastGrpcHeartbeat() > System.currentTimeMillis() - MAX_GRPC_HB_TIMEOUT))
-              .implicitSelectors(delegateSetupService.retrieveDelegateImplicitSelectors(delegate))
+              .implicitSelectors(delegateSetupService.retrieveDelegateImplicitSelectors(delegate, false))
               .sampleDelegate(delegate.isSampleDelegate())
               .connections(connections)
               .tokenActive(delegate.getDelegateTokenName() == null
@@ -848,7 +865,7 @@ public class DelegateServiceImpl implements DelegateService {
     if (isGroupedCgDelegate(delegate)) {
       updatedDelegate = updateAllCgDelegatesInGroup(delegate, updateOperations, "ALL");
     } else {
-      log.info("Updating delegate : {}", delegate.getUuid());
+      log.debug("Updating delegate : {}", delegate.getUuid());
       updatedDelegate = updateDelegate(delegate, updateOperations);
     }
 
@@ -2277,7 +2294,7 @@ public class DelegateServiceImpl implements DelegateService {
       return DelegateRegisterResponse.builder().action(DelegateRegisterResponse.Action.SELF_DESTRUCT).build();
     }
     if (existingDelegate != null) {
-      log.info("Delegate {} already registered for Hostname with : {} IP: {}", delegate.getUuid(),
+      log.debug("Delegate {} already registered for Hostname with : {} IP: {}", delegate.getUuid(),
           delegate.getHostName(), delegate.getIp());
     } else {
       log.info("Registering delegate for Hostname: {} IP: {}", delegate.getHostName(), delegate.getIp());
@@ -2482,7 +2499,7 @@ public class DelegateServiceImpl implements DelegateService {
     long now = clock.millis();
     long skew = Math.abs(now - delegateHeartbeat);
     if (skew > TimeUnit.MINUTES.toMillis(2L)) {
-      log.warn("Delegate {} has clock skew of {}", delegate.getUuid(), Misc.getDurationString(skew));
+      log.debug("Delegate {} has clock skew of {}", delegate.getUuid(), Misc.getDurationString(skew));
     }
     delegate.setLastHeartBeat(now);
     delegate.setValidUntil(Date.from(OffsetDateTime.now().plusDays(Delegate.TTL.toDays()).toInstant()));
@@ -2504,7 +2521,7 @@ public class DelegateServiceImpl implements DelegateService {
       sendTelemetryTrackEvents(
           delegate.getAccountId(), delegate.getDelegateType(), delegate.isNg(), DELEGATE_REGISTERED_EVENT);
     } else {
-      log.info("Delegate exists, updating: {}", delegate.getUuid());
+      log.debug("Delegate exists, updating: {}", delegate.getUuid());
       delegate.setUuid(existingDelegate.getUuid());
       delegate.setStatus(existingDelegate.getStatus());
       delegate.setDelegateProfileId(existingDelegate.getDelegateProfileId());

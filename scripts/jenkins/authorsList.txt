@@ -1,5 +1,6 @@
 Aaditi Joag aaditi.joag@harness.io
 Aaditya Kumar aaditya.kumar@harness.io
+Abhijeet Sharma abhijeet.sharma@harness.io
 Abhijith Pradeep abhijith.pradeep@harness.io
 Abhijith V Mohan abhijith.mohan@harness.io
 Abhinav Hinger abhinav.hinger@harness.io
@@ -146,6 +147,7 @@ Rathnakara Malatesha rathna@harness.io
 Raunak Agrawal raunak.agrawal@harness.io
 Reetika mallavarapu.reetika@harness.io
 Richa Jajoo richa.jajoo@harness.io
+Rick Marry richard.marry@harness.io
 Rihaz Zahir rihaz.zahir@harness.io
 Rishi Singh rishi@harness.io
 Riyas P riyas.yash@harness.io
@@ -153,6 +155,7 @@ Roger Simms roger.simms@harness.io
 Rohit Karelia rohit.karelia@harness.io
 Rohit Kumar rohit.kumar@harness.io
 Rushabh Shah rushabh.shah@harness.io
+Rutvij Mehta rutvij.mehta@harness.io
 Sagnik De sagnik.de@harness.io
 Sahil Hindwani sahil.hindwani@harness.io
 Sahithi Kolichala sahithi@harness.io
@@ -261,3 +264,4 @@ Utkarsh Choubey utkarsh.choubey@harness.io
 Sahildeep Singh sahildeep.singh@harness.io
 Dhruv dhruv@harness.io
 Raghav raghav.gupta@harness.io
+Miloš Vasić milos.vasic@harness.io
