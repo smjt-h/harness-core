@@ -56,7 +56,6 @@ import software.wings.features.api.GetAccountId;
 import software.wings.features.api.RestrictedApi;
 import software.wings.features.extractors.LdapSettingsAccountIdExtractor;
 import software.wings.features.extractors.SamlSettingsAccountIdExtractor;
-import software.wings.helpers.ext.ldap.LdapConstants;
 import software.wings.scheduler.LdapGroupScheduledHandler;
 import software.wings.scheduler.LdapGroupSyncJob;
 import software.wings.scheduler.LdapGroupSyncJobHelper;
@@ -265,7 +264,7 @@ public class SSOSettingServiceImpl implements SSOSettingService {
     if (getLdapSettingsByAccountId(settings.getAccountId()) != null) {
       throw new InvalidRequestException("Ldap settings already exist for this account.");
     }
-    ssoServiceHelper.encryptLdapSecret(settings.getConnectionSettings(), secretManager);
+    ssoServiceHelper.encryptLdapSecret(settings.getConnectionSettings(), secretManager, settings.getAccountId());
     settings.encryptLdapInlineSecret(secretManager);
     if (isEmpty(settings.getCronExpression())) {
       settings.setCronExpression(ldapSyncJobConfig.getDefaultCronExpression());
@@ -288,24 +287,17 @@ public class SSOSettingServiceImpl implements SSOSettingService {
     if (oldSettings == null) {
       throw new InvalidRequestException("No existing Ldap settings found for this account.");
     }
-    if (isNotEmpty(settings.getConnectionSettings().getBindPassword())) {
-      settings.getConnectionSettings().setEncryptedBindPassword(
-          oldSettings.getConnectionSettings().getEncryptedBindPassword());
-      settings.getConnectionSettings().setPasswordType(LdapConnectionSettings.INLINE_SECRET);
-      oldSettings.setConnectionSettings(settings.getConnectionSettings());
-      oldSettings.encryptLdapInlineSecret(secretManager);
-    } else {
-      settings.getConnectionSettings().setEncryptedBindSecret(
-          oldSettings.getConnectionSettings().getEncryptedBindSecret());
-      settings.getConnectionSettings().setPasswordType(oldSettings.getConnectionSettings().getPasswordType());
-      settings.getConnectionSettings().setBindPassword(LdapConstants.MASKED_STRING);
-      oldSettings.setConnectionSettings(settings.getConnectionSettings());
-      ssoServiceHelper.encryptLdapSecret(oldSettings.getConnectionSettings(), secretManager);
-    }
+    settings.getConnectionSettings().setEncryptedBindPassword(
+        oldSettings.getConnectionSettings().getEncryptedBindPassword());
+    settings.getConnectionSettings().setPasswordType(oldSettings.getConnectionSettings().getPasswordType());
+    oldSettings.getConnectionSettings().setAccountId(settings.getAccountId());
     oldSettings.setUrl(settings.getUrl());
     oldSettings.setDisplayName(settings.getDisplayName());
+    oldSettings.setConnectionSettings(settings.getConnectionSettings());
     oldSettings.setUserSettingsList(settings.getUserSettingsList());
     oldSettings.setGroupSettingsList(settings.getGroupSettingsList());
+    ssoServiceHelper.encryptLdapSecret(oldSettings.getConnectionSettings(), secretManager, settings.getAccountId());
+    oldSettings.encryptLdapInlineSecret(secretManager);
     oldSettings.setDefaultCronExpression(ldapSyncJobConfig.getDefaultCronExpression());
     oldSettings.setCronExpression(settings.getCronExpression());
     updateNextIterations(oldSettings);

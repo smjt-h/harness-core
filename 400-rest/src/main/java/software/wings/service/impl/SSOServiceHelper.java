@@ -30,7 +30,8 @@ import lombok.extern.slf4j.Slf4j;
 public class SSOServiceHelper {
   @Inject private EncryptionService encryptionService;
 
-  public void encryptLdapSecret(LdapConnectionSettings connectionSettings, SecretManager secretManager) {
+  public void encryptLdapSecret(
+      LdapConnectionSettings connectionSettings, SecretManager secretManager, String accountId) {
     String existingPasswordType = "";
     existingPasswordType = connectionSettings.getPasswordType();
     if (isNotEmpty(connectionSettings.getBindSecret())) {
@@ -49,9 +50,10 @@ public class SSOServiceHelper {
           // If the LDAP Setting was already used with Inline Password, and now when they have choosed Secret, hence
           // deleting the orphan secret
           String oldEncryptedBindPassword = connectionSettings.getEncryptedBindPassword();
+          connectionSettings.setBindPassword(LdapConstants.MASKED_STRING);
           if (isNotEmpty(oldEncryptedBindPassword)) {
-            secretManager.deleteSecret(
-                connectionSettings.getAccountId(), oldEncryptedBindPassword, new HashMap<>(), false);
+            secretManager.deleteSecret(accountId, oldEncryptedBindPassword, new HashMap<>(), false);
+            connectionSettings.setEncryptedBindPassword(null);
           }
         }
       }
