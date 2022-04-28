@@ -156,7 +156,7 @@ public class AzureRepoEntityToDTOTest extends CategoryTest {
   @Test
   @Owner(developers = MANKRIT)
   @Category(UnitTests.class)
-  public void testToConnectorEntityNull() throws IOException {
+  public void testToConnectorEntityNull() {
     final AzureRepoConnector azureRepoConnector = null;
     assertThatThrownBy(() -> azureRepoEntityToDTO.createConnectorDTO(azureRepoConnector))
         .isInstanceOf(InvalidRequestException.class)
