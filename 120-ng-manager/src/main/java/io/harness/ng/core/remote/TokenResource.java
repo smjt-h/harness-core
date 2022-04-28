@@ -69,6 +69,7 @@ import javax.ws.rs.QueryParam;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.validator.constraints.NotBlank;
 
 @Api("token")
 @Path("token")
@@ -108,8 +109,8 @@ public class TokenResource {
         ApiResponse(responseCode = "default", description = "Returns created Token details")
       })
   public ResponseDTO<String>
-  createToken(@Valid TokenDTO tokenDTO,
-      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountIdentifier) {
+  createToken(@Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotBlank
+              @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier, @Valid TokenDTO tokenDTO) {
     tokenDTO.setAccountIdentifier(accountIdentifier);
     apiKeyService.validateParentIdentifier(tokenDTO.getAccountIdentifier(), tokenDTO.getOrgIdentifier(),
         tokenDTO.getProjectIdentifier(), tokenDTO.getApiKeyType(), tokenDTO.getParentIdentifier());
@@ -128,7 +129,8 @@ public class TokenResource {
   public ResponseDTO<TokenDTO>
   updateToken(@Parameter(description = "Token ID") @NotNull @PathParam("identifier") String identifier,
       @Valid TokenDTO tokenDTO,
-      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountIdentifier) {
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotBlank @QueryParam(
+          NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier) {
     tokenDTO.setAccountIdentifier(accountIdentifier);
     apiKeyService.validateParentIdentifier(tokenDTO.getAccountIdentifier(), tokenDTO.getOrgIdentifier(),
         tokenDTO.getProjectIdentifier(), tokenDTO.getApiKeyType(), tokenDTO.getParentIdentifier());

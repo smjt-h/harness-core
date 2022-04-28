@@ -20,6 +20,7 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.utils.PageUtils.getPageRequest;
 
+import io.harness.NGCommonEntityConstants;
 import io.harness.NGResourceFilterConstants;
 import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.accesscontrol.ResourceIdentifier;
@@ -67,6 +68,7 @@ import javax.ws.rs.QueryParam;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.validator.constraints.NotBlank;
 
 @Api("apikey")
 @Path("apikey")
@@ -105,8 +107,8 @@ public class ApiKeyResource {
         ApiResponse(responseCode = "default", description = "Returns the created API key")
       })
   public ResponseDTO<ApiKeyDTO>
-  createApiKey(
-      @Valid ApiKeyDTO apiKeyDTO, @NotNull @QueryParam(ACCOUNT_KEY) @AccountIdentifier String accountIdentifier) {
+  createApiKey(@Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotBlank
+               @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier, @Valid ApiKeyDTO apiKeyDTO) {
     apiKeyDTO.setAccountIdentifier(accountIdentifier);
     apiKeyService.validateParentIdentifier(apiKeyDTO.getAccountIdentifier(), apiKeyDTO.getOrgIdentifier(),
         apiKeyDTO.getProjectIdentifier(), apiKeyDTO.getApiKeyType(), apiKeyDTO.getParentIdentifier());
@@ -124,7 +126,8 @@ public class ApiKeyResource {
         ApiResponse(responseCode = "default", description = "Returns the updated API key")
       })
   public ResponseDTO<ApiKeyDTO>
-  updateApiKey(@Valid ApiKeyDTO apiKeyDTO,
+  updateApiKey(@Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotBlank
+               @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier, @Valid ApiKeyDTO apiKeyDTO,
       @Parameter(description = "This is the API key ID") @NotNull @PathParam("identifier") String identifier) {
     apiKeyService.validateParentIdentifier(apiKeyDTO.getAccountIdentifier(), apiKeyDTO.getOrgIdentifier(),
         apiKeyDTO.getProjectIdentifier(), apiKeyDTO.getApiKeyType(), apiKeyDTO.getParentIdentifier());
