@@ -15,6 +15,7 @@ import io.harness.beans.Scope;
 import io.harness.exception.InvalidRequestException;
 import io.harness.git.model.ChangeType;
 import io.harness.gitaware.dto.GitContextRequestParams;
+import io.harness.gitaware.helper.GitAwareContextHelper;
 import io.harness.gitaware.helper.GitAwareEntityHelper;
 import io.harness.gitsync.beans.StoreType;
 import io.harness.gitsync.common.helper.EntityDistinctElementHelper;
@@ -119,11 +120,11 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
   }
 
   private PipelineEntity savePipelineEntity(PipelineEntity pipelineToSave, Supplier<OutboxEvent> supplier) {
-    if (GitContextHelper.isOldFlow()) {
+    if (GitAwareContextHelper.isOldFlow()) {
       return gitAwarePersistence.save(
           pipelineToSave, pipelineToSave.getYaml(), ChangeType.ADD, PipelineEntity.class, supplier);
     }
-    GitContextHelper.initDefaultScmGitMetaData();
+    GitAwareContextHelper.initDefaultScmGitMetaData();
     GitEntityInfo gitEntityInfo = GitContextHelper.getGitEntityInfo();
     if (gitEntityInfo == null || gitEntityInfo.getStoreType().equals(StoreType.INLINE)) {
       pipelineToSave.setStoreType(StoreType.INLINE);
@@ -187,7 +188,7 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
     String accountIdentifier = pipelineToUpdate.getAccountIdentifier();
     String orgIdentifier = pipelineToUpdate.getOrgIdentifier();
     String projectIdentifier = pipelineToUpdate.getProjectIdentifier();
-    if (GitContextHelper.isOldFlow()) {
+    if (GitAwareContextHelper.isOldFlow()) {
       Supplier<OutboxEvent> supplier = null;
       if (!gitSyncSdkService.isGitSyncEnabled(accountIdentifier, orgIdentifier, projectIdentifier)) {
         supplier = ()
@@ -242,7 +243,7 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
   @Override
   public PipelineEntity updatePipelineMetadata(
       String accountId, String orgIdentifier, String projectIdentifier, Criteria criteria, Update update) {
-    if (GitContextHelper.isOldFlow()) {
+    if (GitAwareContextHelper.isOldFlow()) {
       criteria = gitAwarePersistence.makeCriteriaGitAware(
           accountId, orgIdentifier, projectIdentifier, PipelineEntity.class, criteria);
     }

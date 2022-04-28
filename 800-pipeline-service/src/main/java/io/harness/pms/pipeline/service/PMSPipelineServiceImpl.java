@@ -35,6 +35,7 @@ import io.harness.exception.ScmException;
 import io.harness.exception.ngexception.beans.yamlschema.YamlSchemaErrorDTO;
 import io.harness.exception.ngexception.beans.yamlschema.YamlSchemaErrorWrapperDTO;
 import io.harness.git.model.ChangeType;
+import io.harness.gitaware.helper.GitAwareContextHelper;
 import io.harness.gitsync.common.utils.GitEntityFilePath;
 import io.harness.gitsync.common.utils.GitSyncFilePathUtils;
 import io.harness.gitsync.helpers.GitContextHelper;
@@ -177,7 +178,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
   public PipelineEntity updatePipelineYaml(PipelineEntity pipelineEntity, ChangeType changeType) {
     PMSPipelineServiceHelper.validatePresenceOfRequiredFields(pipelineEntity.getAccountId(),
         pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getIdentifier());
-    if (!GitContextHelper.isOldFlow()) {
+    if (!GitAwareContextHelper.isOldFlow()) {
       return makePipelineUpdateCall(pipelineEntity, null, changeType);
     }
 

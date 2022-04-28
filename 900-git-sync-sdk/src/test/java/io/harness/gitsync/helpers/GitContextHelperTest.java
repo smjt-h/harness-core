@@ -18,6 +18,7 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.UnexpectedException;
+import io.harness.gitaware.helper.GitAwareContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.gitsync.scm.beans.ScmGitMetaData;
@@ -31,8 +32,6 @@ import org.junit.experimental.categories.Category;
 public class GitContextHelperTest extends CategoryTest {
   private static final String Branch = "branch";
   private static final String BaseBranch = "baseBranch";
-  private static final String CommitId = "commitId";
-  private static final String FilePath = "filePath";
 
   @Test
   @Owner(developers = BHAVYA)
@@ -46,38 +45,5 @@ public class GitContextHelperTest extends CategoryTest {
       String branch = GitContextHelper.getBranchForRefEntityValidations();
       assertThat(branch).isEqualTo(BaseBranch);
     }
-  }
-
-  @Test
-  @Owner(developers = MOHIT_GARG)
-  @Category(UnitTests.class)
-  public void testScmGitMetaDataUpdate() {
-    ScmGitMetaData scmGitMetaData = ScmGitMetaData.builder().commitId(CommitId).filePath(FilePath).build();
-    GitContextHelper.updateScmGitMetaData(scmGitMetaData);
-    ScmGitMetaData scmGitMetaDataFetched = GitContextHelper.getScmGitMetaData();
-    assertThat(scmGitMetaDataFetched).isNotNull();
-    assertThat(scmGitMetaDataFetched.getFilePath()).isEqualTo(FilePath);
-    assertThat(scmGitMetaDataFetched.getCommitId()).isEqualTo(CommitId);
-  }
-
-  @Test
-  @Owner(developers = MOHIT_GARG)
-  @Category(UnitTests.class)
-  public void testScmGitMetaDataNotFound() {
-    assertThatThrownBy(() -> GitContextHelper.getScmGitMetaData()).isInstanceOf(UnexpectedException.class);
-  }
-
-  @Test
-  @Owner(developers = MOHIT_GARG)
-  @Category(UnitTests.class)
-  public void testInitScmGitMetaData() {
-    GitContextHelper.initDefaultScmGitMetaData();
-    ScmGitMetaData scmGitMetaDataFetched = GitContextHelper.getScmGitMetaData();
-    assertThat(scmGitMetaDataFetched).isNotNull();
-    assertThat(scmGitMetaDataFetched.getFilePath()).isEqualTo(null);
-    assertThat(scmGitMetaDataFetched.getCommitId()).isEqualTo(null);
-    assertThat(scmGitMetaDataFetched.getBlobId()).isEqualTo(null);
-    assertThat(scmGitMetaDataFetched.getBranchName()).isEqualTo(null);
-    assertThat(scmGitMetaDataFetched.getRepoName()).isEqualTo(null);
   }
 }
