@@ -42,6 +42,7 @@ import software.wings.beans.NotificationRule;
 import software.wings.beans.alert.Alert;
 import software.wings.beans.alert.AlertType;
 import software.wings.beans.alert.SSOSyncFailedAlert;
+import software.wings.beans.sso.LdapConnectionSettings;
 import software.wings.beans.sso.LdapSettings;
 import software.wings.beans.sso.OauthSettings;
 import software.wings.beans.sso.SSOSettings;
@@ -55,6 +56,7 @@ import software.wings.features.api.GetAccountId;
 import software.wings.features.api.RestrictedApi;
 import software.wings.features.extractors.LdapSettingsAccountIdExtractor;
 import software.wings.features.extractors.SamlSettingsAccountIdExtractor;
+import software.wings.helpers.ext.ldap.LdapConstants;
 import software.wings.scheduler.LdapGroupScheduledHandler;
 import software.wings.scheduler.LdapGroupSyncJob;
 import software.wings.scheduler.LdapGroupSyncJobHelper;
@@ -108,6 +110,7 @@ public class SSOSettingServiceImpl implements SSOSettingService {
   @Inject private LdapGroupScheduledHandler ldapGroupScheduledHandler;
   @Inject @Named("BackgroundJobScheduler") private PersistentScheduler jobScheduler;
   @Inject private LdapSyncJobConfig ldapSyncJobConfig;
+  @Inject private SSOServiceHelper ssoServiceHelper;
   static final int ONE_DAY = 86400000;
 
   @Override
@@ -262,7 +265,8 @@ public class SSOSettingServiceImpl implements SSOSettingService {
     if (getLdapSettingsByAccountId(settings.getAccountId()) != null) {
       throw new InvalidRequestException("Ldap settings already exist for this account.");
     }
-    settings.encryptFields(secretManager);
+    ssoServiceHelper.encryptLdapSecret(settings.getConnectionSettings(), secretManager);
+    settings.encryptLdapInlineSecret(secretManager);
     if (isEmpty(settings.getCronExpression())) {
       settings.setCronExpression(ldapSyncJobConfig.getDefaultCronExpression());
     }
@@ -284,14 +288,24 @@ public class SSOSettingServiceImpl implements SSOSettingService {
     if (oldSettings == null) {
       throw new InvalidRequestException("No existing Ldap settings found for this account.");
     }
-    settings.getConnectionSettings().setEncryptedBindPassword(
-        oldSettings.getConnectionSettings().getEncryptedBindPassword());
+    if (isNotEmpty(settings.getConnectionSettings().getBindPassword())) {
+      settings.getConnectionSettings().setEncryptedBindPassword(
+          oldSettings.getConnectionSettings().getEncryptedBindPassword());
+      settings.getConnectionSettings().setPasswordType(LdapConnectionSettings.INLINE_SECRET);
+      oldSettings.setConnectionSettings(settings.getConnectionSettings());
+      oldSettings.encryptLdapInlineSecret(secretManager);
+    } else {
+      settings.getConnectionSettings().setEncryptedBindSecret(
+          oldSettings.getConnectionSettings().getEncryptedBindSecret());
+      settings.getConnectionSettings().setPasswordType(oldSettings.getConnectionSettings().getPasswordType());
+      settings.getConnectionSettings().setBindPassword(LdapConstants.MASKED_STRING);
+      oldSettings.setConnectionSettings(settings.getConnectionSettings());
+      ssoServiceHelper.encryptLdapSecret(oldSettings.getConnectionSettings(), secretManager);
+    }
     oldSettings.setUrl(settings.getUrl());
     oldSettings.setDisplayName(settings.getDisplayName());
-    oldSettings.setConnectionSettings(settings.getConnectionSettings());
     oldSettings.setUserSettingsList(settings.getUserSettingsList());
     oldSettings.setGroupSettingsList(settings.getGroupSettingsList());
-    oldSettings.encryptFields(secretManager);
     oldSettings.setDefaultCronExpression(ldapSyncJobConfig.getDefaultCronExpression());
     oldSettings.setCronExpression(settings.getCronExpression());
     updateNextIterations(oldSettings);
@@ -319,8 +333,10 @@ public class SSOSettingServiceImpl implements SSOSettingService {
       throw new InvalidRequestException(
           "Deleting SSO provider with linked user groups is not allowed. Unlink the user groups first.");
     }
-    secretManager.deleteSecret(
-        settings.getAccountId(), settings.getConnectionSettings().getEncryptedBindPassword(), new HashMap<>(), false);
+    if (settings.getConnectionSettings().getPasswordType().equals(LdapConnectionSettings.INLINE_SECRET)) {
+      secretManager.deleteSecret(
+          settings.getAccountId(), settings.getConnectionSettings().getEncryptedBindPassword(), new HashMap<>(), false);
+    }
     wingsPersistence.delete(settings);
     LdapGroupSyncJob.delete(jobScheduler, this, settings.getAccountId(), settings.getUuid());
     auditServiceHelper.reportDeleteForAuditingUsingAccountId(settings.getAccountId(), settings);
