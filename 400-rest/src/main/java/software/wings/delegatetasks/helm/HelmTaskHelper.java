@@ -58,6 +58,7 @@ import software.wings.beans.settings.helm.AmazonS3HelmRepoConfig;
 import software.wings.beans.settings.helm.GCSHelmRepoConfig;
 import software.wings.beans.settings.helm.HelmRepoConfig;
 import software.wings.beans.settings.helm.HttpHelmRepoConfig;
+import software.wings.beans.settings.helm.OciHelmRepoConfig;
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.helpers.ext.chartmuseum.ChartMuseumClient;
 import software.wings.helpers.ext.helm.request.HelmChartCollectionParams;
@@ -109,6 +110,7 @@ import org.zeroturnaround.exec.stream.LogOutputStream;
 public class HelmTaskHelper {
   private static final long DEFAULT_TIMEOUT_IN_MILLIS = Duration.ofMinutes(DEFAULT_STEADY_STATE_TIMEOUT).toMillis();
   public static final String RESOURCE_DIR_BASE = "./repository/helm/resources/";
+  public static final String REGISTRY_URL = "${REGISTRY_URL}";
 
   @Inject private EncryptionService encryptionService;
   @Inject private ChartMuseumClient chartMuseumClient;
@@ -149,6 +151,8 @@ public class HelmTaskHelper {
             destinationDirectory, timeoutInMillis, helmCommandFlag);
       } else if (helmRepoConfig instanceof HttpHelmRepoConfig) {
         fetchChartFromHttpServer(helmChartConfigParams, destinationDirectory, timeoutInMillis, helmCommandFlag);
+      } else if (helmRepoConfig instanceof OciHelmRepoConfig) {
+        fetchChartFromOciRegistry(helmChartConfigParams, destinationDirectory, timeoutInMillis, helmCommandFlag);
       }
     }
   }
@@ -387,6 +391,55 @@ public class HelmTaskHelper {
       String chartDirectory, HelmVersion helmVersion, long timeoutInMillis) {
     helmTaskHelperBase.addRepo(
         repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory, helmVersion, timeoutInMillis, "");
+  }
+
+  public void loginOciRegistry(
+      OciHelmRepoConfig repoConfig, HelmVersion helmVersion, long timeoutInMillis, String destinationDirectory) {
+    helmTaskHelperBase.loginOciRegistry(repoConfig.getChartRepoUrl(), repoConfig.getUsername(),
+        repoConfig.getPassword(), helmVersion, timeoutInMillis, destinationDirectory);
+  }
+
+  private void fetchChartFromOciRegistry(HelmChartConfigParams helmChartConfigParams, String chartDirectory,
+      long timeoutInMillis, HelmCommandFlag helmCommandFlag) {
+    String cacheDir = "";
+    if (helmChartConfigParams.isUseRepoFlags()) {
+      if (helmChartConfigParams.isDeleteRepoCacheDir()) {
+        cacheDir = Paths
+                       .get(RESOURCE_DIR_BASE, helmChartConfigParams.getRepoName(),
+                           RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT), "cache")
+                       .toAbsolutePath()
+                       .normalize()
+                       .toString();
+      } else {
+        cacheDir = Paths.get(RESOURCE_DIR_BASE, helmChartConfigParams.getRepoName(), "cache")
+                       .toAbsolutePath()
+                       .normalize()
+                       .toString();
+      }
+    }
+
+    if (!(helmChartConfigParams.getHelmRepoConfig() instanceof OciHelmRepoConfig)) {
+      log.error("Invalid repo config passed for OCI Registry based Helm Repo");
+      throw new HelmClientException("Invalid config for OCI Registry based Helm Repo", USER, HelmCliCommandType.FETCH);
+    }
+    OciHelmRepoConfig repoConfig = (OciHelmRepoConfig) helmChartConfigParams.getHelmRepoConfig();
+    try {
+      // TODO: 14/04/22 update repo name to be of type: "oci://<url>
+      String repoName = String.format("oci://%s", repoConfig.getChartRepoUrl());
+      helmTaskHelperBase.fetchChartFromRepo(repoName, helmChartConfigParams.getRepoDisplayName(),
+          helmChartConfigParams.getChartName(), helmChartConfigParams.getChartVersion(), chartDirectory,
+          helmChartConfigParams.getHelmVersion(), helmCommandFlag, timeoutInMillis,
+          helmChartConfigParams.isCheckIncorrectChartVersion(), cacheDir);
+    } finally {
+      if (helmChartConfigParams.isUseRepoFlags() && helmChartConfigParams.isDeleteRepoCacheDir()) {
+        try {
+          FileUtils.forceDelete(new File(cacheDir));
+        } catch (IOException ie) {
+          log.error("Deletion of charts folder failed due to : {}",
+              ExceptionMessageSanitizer.sanitizeException(ie).getMessage());
+        }
+      }
+    }
   }
 
   private void fetchChartFromHttpServer(HelmChartConfigParams helmChartConfigParams, String chartDirectory,

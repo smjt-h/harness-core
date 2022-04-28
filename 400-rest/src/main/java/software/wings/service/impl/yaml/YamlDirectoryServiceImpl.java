@@ -2267,6 +2267,7 @@ public class YamlDirectoryServiceImpl implements YamlDirectoryService {
     doArtifactServerType(accountId, artifactServersFolder, SettingVariableTypes.NEXUS, directoryPath.clone());
     doArtifactServerType(accountId, artifactServersFolder, SettingVariableTypes.ARTIFACTORY, directoryPath.clone());
     doArtifactServerType(accountId, artifactServersFolder, SettingVariableTypes.HTTP_HELM_REPO, directoryPath.clone());
+    doArtifactServerType(accountId, artifactServersFolder, SettingVariableTypes.OCI_HELM_REPO, directoryPath.clone());
     doArtifactServerType(
         accountId, artifactServersFolder, SettingVariableTypes.AMAZON_S3_HELM_REPO, directoryPath.clone());
     doArtifactServerType(accountId, artifactServersFolder, SettingVariableTypes.GCS_HELM_REPO, directoryPath.clone());
@@ -2825,6 +2826,7 @@ public class YamlDirectoryServiceImpl implements YamlDirectoryService {
       case ACR:
       case AMAZON_S3:
       case HTTP_HELM_REPO:
+      case OCI_HELM_REPO:
       case AMAZON_S3_HELM_REPO:
       case GCS_HELM_REPO:
       case AZURE_ARTIFACTS_PAT:

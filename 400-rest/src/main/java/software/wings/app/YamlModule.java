@@ -380,6 +380,9 @@ public class YamlModule extends CommandLibrarySharedModule {
         MapBinder.newMapBinder(binder(), String.class, HelmRepoYamlHandler.class);
     helmRepoYamlHandlerMapBinder.addBinding(SettingVariableTypes.HTTP_HELM_REPO.name())
         .to(HttpHelmRepoConfigYamlHandler.class);
+    // TODO: 13/04/22 add yaml handler here
+    helmRepoYamlHandlerMapBinder.addBinding(SettingVariableTypes.OCI_HELM_REPO.name())
+        .to(HttpHelmRepoConfigYamlHandler.class);
     helmRepoYamlHandlerMapBinder.addBinding(SettingVariableTypes.AMAZON_S3_HELM_REPO.name())
         .to(AmazonS3HelmRepoConfigYamlHandler.class);
     helmRepoYamlHandlerMapBinder.addBinding(SettingVariableTypes.GCS_HELM_REPO.name())
