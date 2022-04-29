@@ -8,7 +8,6 @@
 package io.harness.ccm.helper;
 
 import static io.harness.annotations.dev.HarnessTeam.CE;
-
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
