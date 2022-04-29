@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.CDStepHelper;
+import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
 import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.k8s.K8sCommandUnitConstants;
 import io.harness.plancreator.steps.TaskSelectorYaml;
@@ -36,8 +37,11 @@ import org.springframework.data.annotation.TypeAlias;
 public class K8sApplyStepParameters extends K8sApplyBaseStepInfo implements K8sSpecParameters {
   @Builder(builderMethodName = "infoBuilder")
   public K8sApplyStepParameters(ParameterField<Boolean> skipDryRun, ParameterField<Boolean> skipSteadyStateCheck,
-      ParameterField<List<String>> filePaths, ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
-    super(skipDryRun, skipSteadyStateCheck, filePaths, delegateSelectors);
+      ParameterField<List<String>> filePaths, ParameterField<List<TaskSelectorYaml>> delegateSelectors,
+      ParameterField<String> inlineOverride, ParameterField<StoreConfigWrapper> gitStore,
+      ParameterField<Boolean> stepLevelValuesYamlOverride) {
+    super(skipDryRun, skipSteadyStateCheck, filePaths, delegateSelectors, inlineOverride, gitStore,
+        stepLevelValuesYamlOverride);
   }
 
   @Nonnull
@@ -55,5 +59,15 @@ public class K8sApplyStepParameters extends K8sApplyBaseStepInfo implements K8sS
           K8sCommandUnitConstants.Prepare, K8sCommandUnitConstants.Apply, K8sCommandUnitConstants.WaitForSteadyState,
           K8sCommandUnitConstants.WrapUp);
     }
+  }
+
+  @Override
+  public StoreConfigWrapper getStepRemoteOverride() {
+    return this.getGitStore() == null ? null : this.gitStore.getValue();
+  }
+
+  @Override
+  public ParameterField<String> getStepInlineOverride() {
+    return this.inlineOverride;
   }
 }

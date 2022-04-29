@@ -352,6 +352,17 @@ public class K8sStepHelper extends CDStepHelper {
         K8sExecutionPassThroughData.builder().infrastructure(infrastructure).build(), true, null);
   }
 
+  private StoreConfig hasStepLevelRemoteOverride(StepElementParameters stepElementParameters) {
+    K8sSpecParameters k8sSpecParameters = (K8sSpecParameters) stepElementParameters.getSpec();
+    return k8sSpecParameters.getStepRemoteOverride() == null ? null
+                                                             : k8sSpecParameters.getStepRemoteOverride().getSpec();
+  }
+
+  private String hasStepLevelInlineOverride(StepElementParameters stepElementParameters) {
+    K8sSpecParameters k8sSpecParameters = (K8sSpecParameters) stepElementParameters.getSpec();
+    return getParameterFieldValue(k8sSpecParameters.getStepInlineOverride());
+  }
+
   private TaskChainResponse prepareGitFetchValuesTaskChainResponse(StoreConfig storeConfig, Ambiance ambiance,
       StepElementParameters stepElementParameters, InfrastructureOutcome infrastructure,
       ManifestOutcome k8sManifestOutcome, ValuesManifestOutcome valuesManifestOutcome,
@@ -359,6 +370,15 @@ public class K8sStepHelper extends CDStepHelper {
     LinkedList<ValuesManifestOutcome> orderedValuesManifests = new LinkedList<>(aggregatedValuesManifests);
     List<GitFetchFilesConfig> gitFetchFilesConfigs =
         mapValuesManifestToGitFetchFileConfig(aggregatedValuesManifests, ambiance);
+
+    StoreConfig stepLevelStore = hasStepLevelRemoteOverride(stepElementParameters);
+    if (stepLevelStore != null) {
+      ValuesManifestOutcome stepValuesOutcome =
+          ValuesManifestOutcome.builder().identifier("step-level-values-yaml").store(stepLevelStore).build();
+      gitFetchFilesConfigs.add(getGitFetchFilesConfig(ambiance, stepValuesOutcome.getStore(),
+          format("Values YAML with Id [%s]", stepValuesOutcome.getIdentifier()), stepValuesOutcome));
+      orderedValuesManifests.add(stepValuesOutcome);
+    }
 
     GitStoreConfig gitStoreConfig = (GitStoreConfig) storeConfig;
     if (ManifestType.K8Manifest.equals(k8sManifestOutcome.getType()) && hasOnlyOne(gitStoreConfig.getPaths())) {
@@ -774,6 +794,11 @@ public class K8sStepHelper extends CDStepHelper {
 
     if (!gitFetchFilesResultMap.isEmpty()) {
       valuesFileContents.addAll(getFileContents(gitFetchFilesResultMap, k8sStepPassThroughData));
+    }
+
+    String stepLevelInlineOverride = hasStepLevelInlineOverride(stepElementParameters);
+    if (stepLevelInlineOverride != null) {
+      valuesFileContents.add(stepLevelInlineOverride);
     }
 
     return k8sStepExecutor.executeK8sTask(k8sManifest, ambiance, stepElementParameters, valuesFileContents,

@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
 import io.harness.cdng.pipeline.CDStepInfo;
 import io.harness.cdng.visitor.helpers.cdstepinfo.K8sApplyStepInfoVisitorHelper;
 import io.harness.executions.steps.StepSpecTypeConstants;
@@ -46,8 +47,11 @@ public class K8sApplyStepInfo extends K8sApplyBaseStepInfo implements CDStepInfo
 
   @Builder(builderMethodName = "infoBuilder")
   public K8sApplyStepInfo(ParameterField<Boolean> skipDryRun, ParameterField<Boolean> skipSteadyStateCheck,
-      ParameterField<List<String>> filePaths, ParameterField<List<TaskSelectorYaml>> delegateSelectors) {
-    super(skipDryRun, skipSteadyStateCheck, filePaths, delegateSelectors);
+      ParameterField<List<String>> filePaths, ParameterField<List<TaskSelectorYaml>> delegateSelectors,
+      ParameterField<String> inlineOverride, ParameterField<StoreConfigWrapper> gitStore,
+      ParameterField<Boolean> stepLevelValuesYamlOverride) {
+    super(skipDryRun, skipSteadyStateCheck, filePaths, delegateSelectors, inlineOverride, gitStore,
+        stepLevelValuesYamlOverride);
   }
 
   @Override
@@ -66,6 +70,8 @@ public class K8sApplyStepInfo extends K8sApplyBaseStepInfo implements CDStepInfo
         .filePaths(this.getFilePaths())
         .skipDryRun(this.getSkipDryRun())
         .skipSteadyStateCheck(skipSteadyStateCheck)
+        .inlineOverride(inlineOverride)
+        .gitStore(gitStore)
         .delegateSelectors(delegateSelectors)
         .build();
   }

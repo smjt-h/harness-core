@@ -10,6 +10,7 @@ package io.harness.cdng.k8s;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
 import io.harness.k8s.K8sCommandUnitConstants;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
@@ -30,5 +31,13 @@ public interface K8sSpecParameters extends SpecParameters {
     return Arrays.asList(K8sCommandUnitConstants.FetchFiles, K8sCommandUnitConstants.Init,
         K8sCommandUnitConstants.Prepare, K8sCommandUnitConstants.Apply, K8sCommandUnitConstants.WaitForSteadyState,
         K8sCommandUnitConstants.WrapUp);
+  }
+
+  default StoreConfigWrapper getStepRemoteOverride() {
+    return null;
+  }
+
+  default ParameterField<String> getStepInlineOverride() {
+    return null;
   }
 }
