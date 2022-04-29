@@ -140,15 +140,15 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
                       .projectIdentifier(pipelineToSave.getProjectIdentifier())
                       .build();
     String yamlToPush = pipelineToSave.getYaml();
-    //    gitAwareEntityHelper.pushEntityToRemote(yamlToPush, scope, ChangeType.ADD);
-    gitAwareEntityHelper.pushEntityToRemote(pipelineToSave, yamlToPush, scope, ChangeType.ADD);
     pipelineToSave.setYaml("");
     pipelineToSave.setStoreType(StoreType.REMOTE);
     pipelineToSave.setConnectorRef(gitEntityInfo.getConnectorRef());
     pipelineToSave.setRepo(gitEntityInfo.getYamlGitConfigId());
     pipelineToSave.setFilePath(gitEntityInfo.getFilePath());
 
-    return mongoTemplate.save(pipelineToSave);
+    PipelineEntity savedEntity = mongoTemplate.save(pipelineToSave);
+    gitAwareEntityHelper.pushEntityToRemote(pipelineToSave, yamlToPush, scope, ChangeType.ADD);
+    return savedEntity;
   }
 
   private void checkForMetadataAndSaveIfAbsent(PipelineEntity savedEntity) {
@@ -229,7 +229,8 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
     Query query = new Query(criteria);
     GitEntityInfo gitEntityInfo = GitContextHelper.getGitEntityInfo();
     if (gitEntityInfo.getStoreType() == StoreType.INLINE) {
-      Update updateOperations = PMSPipelineFilterHelper.getUpdateOperationsForSimplifiedGitExperience(pipelineToUpdate);
+      Update updateOperations = PMSPipelineFilterHelper.getUpdateOperationsForSimplifiedGitExperience(
+          pipelineToUpdate, StoreType.INLINE, null, null, null);
       return mongoTemplate.findAndModify(
           query, updateOperations, new FindAndModifyOptions().returnNew(true), PipelineEntity.class);
     }
@@ -239,17 +240,15 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
                       .projectIdentifier(pipelineToUpdate.getProjectIdentifier())
                       .build();
     String yamlToPush = pipelineToUpdate.getYaml();
-    //    gitAwareEntityHelper.pushEntityToRemote(yamlToPush, scope, ChangeType.MODIFY);
-    gitAwareEntityHelper.pushEntityToRemote(pipelineToUpdate, yamlToPush, scope, ChangeType.MODIFY);
     pipelineToUpdate.setYaml("");
-    pipelineToUpdate.setStoreType(StoreType.REMOTE);
-    pipelineToUpdate.setConnectorRef(gitEntityInfo.getConnectorRef());
-    pipelineToUpdate.setRepo(gitEntityInfo.getYamlGitConfigId());
-    pipelineToUpdate.setFilePath(gitEntityInfo.getFilePath());
-    Update updateOperations = PMSPipelineFilterHelper.getUpdateOperationsForSimplifiedGitExperience(pipelineToUpdate);
+    Update updateOperations =
+        PMSPipelineFilterHelper.getUpdateOperationsForSimplifiedGitExperience(pipelineToUpdate, StoreType.REMOTE,
+            gitEntityInfo.getConnectorRef(), gitEntityInfo.getYamlGitConfigId(), gitEntityInfo.getFilePath());
 
-    return mongoTemplate.findAndModify(
+    PipelineEntity updatedPipelineEntity = mongoTemplate.findAndModify(
         query, updateOperations, new FindAndModifyOptions().returnNew(true), PipelineEntity.class);
+    gitAwareEntityHelper.pushEntityToRemote(updatedPipelineEntity, yamlToPush, scope, ChangeType.MODIFY);
+    return updatedPipelineEntity;
   }
 
   @Override

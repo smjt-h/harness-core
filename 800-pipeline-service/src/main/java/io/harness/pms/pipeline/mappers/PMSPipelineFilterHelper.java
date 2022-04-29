@@ -7,6 +7,8 @@
 
 package io.harness.pms.pipeline.mappers;
 
+import io.harness.data.structure.EmptyPredicate;
+import io.harness.gitsync.beans.StoreType;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineEntity.PipelineEntityKeys;
 
@@ -33,12 +35,19 @@ public class PMSPipelineFilterHelper {
     return update;
   }
 
-  public Update getUpdateOperationsForSimplifiedGitExperience(PipelineEntity pipelineEntity) {
+  public Update getUpdateOperationsForSimplifiedGitExperience(
+      PipelineEntity pipelineEntity, StoreType storeType, String connectorRef, String repoName, String filePath) {
     Update update = getUpdateOperations(pipelineEntity);
-    update.set(PipelineEntityKeys.repo, pipelineEntity.getRepo());
-    update.set(PipelineEntityKeys.connectorRef, pipelineEntity.getConnectorRef());
-    update.set(PipelineEntityKeys.storeType, pipelineEntity.getStoreType());
-    update.set(PipelineEntityKeys.filePath, pipelineEntity.getFilePath());
+    update.set(PipelineEntityKeys.storeType, storeType);
+    if (EmptyPredicate.isNotEmpty(repoName)) {
+      update.set(PipelineEntityKeys.repo, repoName);
+    }
+    if (EmptyPredicate.isNotEmpty(connectorRef)) {
+      update.set(PipelineEntityKeys.connectorRef, connectorRef);
+    }
+    if (EmptyPredicate.isNotEmpty(filePath)) {
+      update.set(PipelineEntityKeys.filePath, filePath);
+    }
     return update;
   }
 
