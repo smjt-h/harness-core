@@ -143,7 +143,7 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
     pipelineToSave.setYaml("");
     pipelineToSave.setStoreType(StoreType.REMOTE);
     pipelineToSave.setConnectorRef(gitEntityInfo.getConnectorRef());
-    pipelineToSave.setRepo(gitEntityInfo.getYamlGitConfigId());
+    pipelineToSave.setRepo(gitEntityInfo.getRepoName());
     pipelineToSave.setFilePath(gitEntityInfo.getFilePath());
 
     PipelineEntity savedEntity = mongoTemplate.save(pipelineToSave);
@@ -241,9 +241,8 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
                       .build();
     String yamlToPush = pipelineToUpdate.getYaml();
     pipelineToUpdate.setYaml("");
-    Update updateOperations =
-        PMSPipelineFilterHelper.getUpdateOperationsForSimplifiedGitExperience(pipelineToUpdate, StoreType.REMOTE,
-            gitEntityInfo.getConnectorRef(), gitEntityInfo.getYamlGitConfigId(), gitEntityInfo.getFilePath());
+    Update updateOperations = PMSPipelineFilterHelper.getUpdateOperationsForSimplifiedGitExperience(pipelineToUpdate,
+        StoreType.REMOTE, gitEntityInfo.getConnectorRef(), gitEntityInfo.getRepoName(), gitEntityInfo.getFilePath());
 
     PipelineEntity updatedPipelineEntity = mongoTemplate.findAndModify(
         query, updateOperations, new FindAndModifyOptions().returnNew(true), PipelineEntity.class);

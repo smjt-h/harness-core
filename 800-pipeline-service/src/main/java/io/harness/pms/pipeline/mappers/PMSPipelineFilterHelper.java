@@ -9,6 +9,7 @@ package io.harness.pms.pipeline.mappers;
 
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.gitsync.beans.StoreType;
+import io.harness.gitsync.interceptor.GitSyncConstants;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineEntity.PipelineEntityKeys;
 
@@ -39,13 +40,13 @@ public class PMSPipelineFilterHelper {
       PipelineEntity pipelineEntity, StoreType storeType, String connectorRef, String repoName, String filePath) {
     Update update = getUpdateOperations(pipelineEntity);
     update.set(PipelineEntityKeys.storeType, storeType);
-    if (EmptyPredicate.isNotEmpty(repoName)) {
+    if (EmptyPredicate.isNotEmpty(repoName) && !repoName.equals(GitSyncConstants.DEFAULT)) {
       update.set(PipelineEntityKeys.repo, repoName);
     }
-    if (EmptyPredicate.isNotEmpty(connectorRef)) {
+    if (EmptyPredicate.isNotEmpty(connectorRef) && !connectorRef.equals(GitSyncConstants.DEFAULT)) {
       update.set(PipelineEntityKeys.connectorRef, connectorRef);
     }
-    if (EmptyPredicate.isNotEmpty(filePath)) {
+    if (EmptyPredicate.isNotEmpty(filePath) && !filePath.equals(GitSyncConstants.DEFAULT)) {
       update.set(PipelineEntityKeys.filePath, filePath);
     }
     return update;

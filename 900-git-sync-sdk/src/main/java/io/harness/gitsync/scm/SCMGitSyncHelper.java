@@ -134,6 +134,7 @@ public class SCMGitSyncHelper {
             .setScopeIdentifiers(ScopeIdentifierMapper.getScopeIdentifiersFromScope(scope))
             .setChangeType(ChangeTypeMapper.toProto(changeType))
             .putAllContextMap(contextMap)
+            .setBaseBranchName(gitRequestParams.getBaseBranch())
             .build();
 
     final CommitFileResponse commitFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(

@@ -18,6 +18,7 @@ import io.harness.common.NGExpressionUtils;
 import io.harness.encryption.ScopeHelper;
 import io.harness.exception.InvalidRequestException;
 import io.harness.gitaware.helper.GitAwareContextHelper;
+import io.harness.gitsync.beans.StoreType;
 import io.harness.gitsync.sdk.EntityGitDetailsMapper;
 import io.harness.gitsync.sdk.EntityValidityDetails;
 import io.harness.ng.core.EntityDetail;
@@ -44,8 +45,13 @@ public class PMSPipelineDtoMapper {
         .yamlPipeline(pipelineEntity.getYaml())
         .version(pipelineEntity.getVersion())
         .modules(pipelineEntity.getFilters().keySet())
-        .gitDetails(GitAwareContextHelper.isOldFlow() ? EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity)
-                                                      : GitAwareContextHelper.getEntityGitDetailsFromScmGitMetadata())
+        // TODO @naman to clean the below condition
+        .gitDetails(pipelineEntity.getStoreType() == null ? EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity)
+                : pipelineEntity.getStoreType() == StoreType.REMOTE
+                ? GitAwareContextHelper.getEntityGitDetailsFromScmGitMetadata()
+                : null)
+        // TODO @naman to check if entity validity details should be there in v2 flow or not
+        // depends if we want to throw exception or we want to return error + pipeline metadata
         .entityValidityDetails(pipelineEntity.isEntityInvalid()
                 ? EntityValidityDetails.builder().valid(false).invalidYaml(pipelineEntity.getYaml()).build()
                 : EntityValidityDetails.builder().valid(true).build())

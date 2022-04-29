@@ -164,7 +164,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
           PipelineCRUDErrorResponse.errorMessageForPipelineNotFound(orgIdentifier, projectIdentifier, identifier));
     }
     PipelineEntity pipelineEntity = optionalPipelineEntity.get();
-    if (GitAwareContextHelper.isOldFlow() || pipelineEntity.getStoreType() == StoreType.INLINE) {
+    if (pipelineEntity.getStoreType() == null || pipelineEntity.getStoreType() == StoreType.INLINE) {
       return optionalPipelineEntity;
     }
     GovernanceMetadata governanceMetadata = pmsPipelineServiceHelper.validatePipelineYamlAndSetTemplateRefIfAny(

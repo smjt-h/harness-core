@@ -76,6 +76,7 @@ public class GitAwareEntityHelper {
             .commitMessage(gitEntityInfo.getCommitMsg())
             .oldCommitId(gitEntityInfo.getCommitId())
             .baseBranch(gitEntityInfo.getBaseBranch())
+            .oldFileSha(gitEntityInfo.getLastObjectId())
             .build();
 
     scmGitSyncHelper.commitFile(scope, scmCommitFileGitRequestParams, changeType, Collections.emptyMap());
