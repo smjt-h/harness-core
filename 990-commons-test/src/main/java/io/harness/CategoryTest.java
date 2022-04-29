@@ -56,7 +56,7 @@ public class CategoryTest {
     log.info(sb.toString());
   }
 
-  private static final long MAX_HEAP_SIZE = 2L * 1024L * 1024L * 1024L;
+  private static final long MAX_HEAP_SIZE = 32L * 1024L * 1024L * 1024L;
 
   @After
   public void dumpHeapMap() throws IOException {
