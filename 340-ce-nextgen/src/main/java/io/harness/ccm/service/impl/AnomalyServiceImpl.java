@@ -124,9 +124,9 @@ public class AnomalyServiceImpl implements AnomalyService {
       List<AnomalySummary> updatedTotalCostSummary = new ArrayList<>();
       totalCostSummary.forEach(entry
           -> updatedTotalCostSummary.add(buildAnomalySummary(entry.getName(), entry.getCount(), entry.getActualCost(),
-              ((entry.getActualCost() != null && entry.getExpectedCost() != null)
-                      ? (entry.getActualCost() - entry.getExpectedCost())
-                      : null))));
+              (entry.getActualCost() != null && entry.getExpectedCost() != null)
+                  ? (entry.getActualCost() - entry.getExpectedCost())
+                  : null)));
       return updatedTotalCostSummary;
     } else {
       List<AnomalyData> anomalies = listAnomalies(accountIdentifier, anomalyQuery);
@@ -220,8 +220,8 @@ public class AnomalyServiceImpl implements AnomalyService {
     List<CCMGroupBy> groupBy = new ArrayList<>();
     List<CCMAggregation> aggregations = new ArrayList<>();
     List<CCMSort> sortOrders = new ArrayList<>();
-    Integer limit = AnomalyUtils.DEFAULT_LIMIT;
-    Integer offset = AnomalyUtils.DEFAULT_OFFSET;
+    int limit = AnomalyUtils.DEFAULT_LIMIT;
+    int offset = AnomalyUtils.DEFAULT_OFFSET;
     switch (widget) {
       case TOTAL_COST_IMPACT:
         aggregations.add(CCMAggregation.builder().operationType(SUM).field(COST_IMPACT).build());

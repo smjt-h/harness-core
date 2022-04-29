@@ -9,6 +9,8 @@ package io.harness.ccm.helper;
 
 import static io.harness.annotations.dev.HarnessTeam.CE;
 
+import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ccm.commons.entities.*;
 import io.harness.ccm.commons.entities.anomaly.AnomalyQueryDTO;
@@ -30,14 +32,13 @@ public class AnomalyQueryHelper {
     }
     List<CCMStringFilter> stringFilters = new ArrayList<>();
     List<CCMNumberFilter> numberFilters = new ArrayList<>();
-    List<CCMTimeFilter> timeFilters =
-        (anomalyFilterPropertiesDTO.getTimeFilters() != null && !anomalyFilterPropertiesDTO.getTimeFilters().isEmpty())
+    List<CCMTimeFilter> timeFilters = isNotEmpty(anomalyFilterPropertiesDTO.getTimeFilters())
         ? anomalyFilterPropertiesDTO.getTimeFilters()
         : Collections.emptyList();
-    Integer offset = (anomalyFilterPropertiesDTO.getOffset() != null) ? anomalyFilterPropertiesDTO.getOffset()
-                                                                      : AnomalyUtils.DEFAULT_OFFSET;
-    Integer limit = (anomalyFilterPropertiesDTO.getLimit() != null) ? anomalyFilterPropertiesDTO.getLimit()
-                                                                    : AnomalyUtils.DEFAULT_LIMIT;
+    int offset = (anomalyFilterPropertiesDTO.getOffset() != null) ? anomalyFilterPropertiesDTO.getOffset()
+                                                                  : AnomalyUtils.DEFAULT_OFFSET;
+    int limit = (anomalyFilterPropertiesDTO.getLimit() != null) ? anomalyFilterPropertiesDTO.getLimit()
+                                                                : AnomalyUtils.DEFAULT_LIMIT;
 
     addStringFilter(
         CCMField.CLUSTER_NAME, CCMOperator.IN, anomalyFilterPropertiesDTO.getK8sClusterNames(), stringFilters);
@@ -80,7 +81,7 @@ public class AnomalyQueryHelper {
 
   public void addStringFilter(
       CCMField field, CCMOperator operator, List<String> values, List<CCMStringFilter> stringFilters) {
-    if (values != null && !values.isEmpty()) {
+    if (isNotEmpty(values)) {
       stringFilters.add(CCMFilterHelper.buildStringFilter(field, operator, values));
     }
   }

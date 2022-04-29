@@ -40,29 +40,38 @@ import lombok.experimental.FieldDefaults;
 @OwnedBy(CE)
 @Schema(name = "AnomalyFilterProperties", description = "Properties of the Anomaly Filter defined in Harness")
 public class AnomalyFilterPropertiesDTO extends FilterPropertiesDTO {
+  @Schema(description = "This is the list of Cluster Names on which filter will be applied.")
   List<String> k8sClusterNames;
-  List<String> k8sNamespaces;
+  @Schema(description = "This is the list of Namespaces on which filter will be applied.") List<String> k8sNamespaces;
+  @Schema(description = "This is the list of Workload Names on which filter will be applied.")
   List<String> k8sWorkloadNames;
 
-  List<String> gcpProjects;
-  List<String> gcpProducts;
+  @Schema(description = "This is the list of GCP Projects on which filter will be applied.") List<String> gcpProjects;
+  @Schema(description = "This is the list of GCP Products on which filter will be applied.") List<String> gcpProducts;
+  @Schema(description = "This is the list of GCP SKU Descriptions on which filter will be applied.")
   List<String> gcpSKUDescriptions;
 
-  List<String> awsAccounts;
-  List<String> awsServices;
+  @Schema(description = "This is the list of AWS Accounts on which filter will be applied.") List<String> awsAccounts;
+  @Schema(description = "This is the list of AWS Services on which filter will be applied.") List<String> awsServices;
+  @Schema(description = "This is the list of AWS Usage Types on which filter will be applied.")
   List<String> awsUsageTypes;
 
+  @Schema(description = "This is the list of Azure Subscriptions on which filter will be applied.")
   List<String> azureSubscriptions;
+  @Schema(description = "This is the list of Azure Service Names on which filter will be applied.")
   List<String> azureServiceNames;
+  @Schema(description = "This is the list of Azure Resources on which filter will be applied.")
   List<String> azureResources;
 
+  @Schema(description = "Fetch anomalies with Actual Amount greater-than or equal-to minActualAmount")
   Double minActualAmount;
+  @Schema(description = "Fetch anomalies with Anomalous Spend greater-than or equal-to minAnomalousSpend")
   Double minAnomalousSpend;
 
-  List<CCMTimeFilter> timeFilters;
+  @Schema(description = "List of filters to be applies on Anomaly Time") List<CCMTimeFilter> timeFilters;
 
-  Integer offset;
-  Integer limit;
+  @Schema(description = "Query Offset") Integer offset;
+  @Schema(description = "Query Limit") Integer limit;
 
   @Override
   public FilterType getFilterType() {
