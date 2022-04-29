@@ -9,10 +9,15 @@ package io.harness.ccm.helper;
 
 import static io.harness.annotations.dev.HarnessTeam.CE;
 
-import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.ccm.commons.entities.*;
+import io.harness.ccm.commons.entities.CCMField;
+import io.harness.ccm.commons.entities.CCMFilter;
+import io.harness.ccm.commons.entities.CCMNumberFilter;
+import io.harness.ccm.commons.entities.CCMOperator;
+import io.harness.ccm.commons.entities.CCMStringFilter;
+import io.harness.ccm.commons.entities.CCMTimeFilter;
 import io.harness.ccm.commons.entities.anomaly.AnomalyQueryDTO;
 import io.harness.ccm.commons.helper.CCMFilterHelper;
 import io.harness.ccm.commons.utils.AnomalyUtils;
