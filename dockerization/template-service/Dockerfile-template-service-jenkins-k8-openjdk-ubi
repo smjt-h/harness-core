@@ -1,4 +1,4 @@
-FROM harness/manager-openjdk-8u242:x86_64-alpine-jdk8u242-b08
+FROM redhat/ubi8-minimal:8.4
 
 COPY --chown=65534:65534 alpn-boot-8.1.13.v20181017.jar /opt/harness/
 COPY --chown=65534:65534 redisson-jcache.yaml /opt/harness/
