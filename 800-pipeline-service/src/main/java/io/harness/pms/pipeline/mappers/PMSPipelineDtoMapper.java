@@ -94,7 +94,10 @@ public class PMSPipelineDtoMapper {
         .modules(pipelineEntity.getFilters().keySet())
         .filters(ModuleInfoMapper.getModuleInfo(pipelineEntity.getFilters()))
         .stageNames(pipelineEntity.getStageNames())
-        .gitDetails(EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity))
+        .gitDetails(pipelineEntity.getStoreType() == null ? EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity)
+                : pipelineEntity.getStoreType() == StoreType.REMOTE
+                ? GitAwareContextHelper.getEntityGitDetailsFromScmGitMetadata()
+                : null)
         .entityValidityDetails(pipelineEntity.isEntityInvalid()
                 ? EntityValidityDetails.builder().valid(false).invalidYaml(pipelineEntity.getYaml()).build()
                 : EntityValidityDetails.builder().valid(true).build())
