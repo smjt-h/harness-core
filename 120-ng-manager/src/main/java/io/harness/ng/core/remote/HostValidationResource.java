@@ -82,7 +82,6 @@ public class HostValidationResource {
 
   @POST
   @Consumes({"application/json"})
-  //  @Path("ssh")
   @ApiOperation(value = "Validate hosts connectivity", nickname = "validateHosts")
   @Operation(operationId = "validateHosts", summary = "Validates hosts connectivity credentials",
       responses =
