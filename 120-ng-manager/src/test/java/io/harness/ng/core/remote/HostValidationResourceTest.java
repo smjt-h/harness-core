@@ -71,7 +71,7 @@ public class HostValidationResourceTest extends CategoryTest {
         .checkForAccessOrThrow(any(ResourceScope.class), any(Resource.class), eq(SECRET_ACCESS_PERMISSION), any());
     doReturn(Collections.singletonList(hostValidationDTO))
         .when(hostValidationService)
-        .validateSSHHosts(hosts, ACCOUNT_IDENTIFIER, null, null, SECRET_IDENTIFIER, tags);
+        .validateHosts(hosts, ACCOUNT_IDENTIFIER, null, null, SECRET_IDENTIFIER, tags);
 
     ResponseDTO<List<HostValidationDTO>> result = hostValidationResource.validateSshHost(ACCOUNT_IDENTIFIER, null, null,
         SECRET_IDENTIFIER,
@@ -93,7 +93,7 @@ public class HostValidationResourceTest extends CategoryTest {
         .checkForAccessOrThrow(any(ResourceScope.class), any(Resource.class), eq(SECRET_ACCESS_PERMISSION), any());
     doThrow(new InvalidRequestException("Secret identifier is empty or null"))
         .when(hostValidationService)
-        .validateSSHHosts(hosts, ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER, tags);
+        .validateHosts(hosts, ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER, tags);
     assertThatThrownBy(
         ()
             -> hostValidationResource.validateSshHost(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER,

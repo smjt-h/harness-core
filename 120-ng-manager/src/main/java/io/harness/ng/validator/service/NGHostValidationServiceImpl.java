@@ -153,7 +153,7 @@ public class NGHostValidationServiceImpl implements NGHostValidationService {
   }
 
   @Override
-  public List<HostValidationDTO> validateSSHHosts(@NotNull List<String> hosts, @Nullable String accountIdentifier,
+  public List<HostValidationDTO> validateHosts(@NotNull List<String> hosts, @Nullable String accountIdentifier,
       @Nullable String orgIdentifier, @Nullable String projectIdentifier, @NotNull String secretIdentifierWithScope,
       @Nullable Set<String> delegateSelectors) {
     if (hosts.isEmpty()) {
@@ -166,7 +166,7 @@ public class NGHostValidationServiceImpl implements NGHostValidationService {
     CompletableFutures<HostValidationDTO> validateSSHHostTasks = new CompletableFutures<>(hostsSSHExecutor);
     for (String hostName : limitHosts(hosts)) {
       validateSSHHostTasks.supplyAsync(()
-                                           -> validateSSHHost(hostName, accountIdentifier, orgIdentifier,
+                                           -> validateHost(hostName, accountIdentifier, orgIdentifier,
                                                projectIdentifier, secretIdentifierWithScope, delegateSelectors));
     }
 
@@ -174,8 +174,8 @@ public class NGHostValidationServiceImpl implements NGHostValidationService {
   }
 
   @Override
-  public HostValidationDTO validateSSHHost(@NotNull String host, String accountIdentifier,
-      @Nullable String orgIdentifier, @Nullable String projectIdentifier, @NotNull String secretIdentifierWithScope,
+  public HostValidationDTO validateHost(@NotNull String host, String accountIdentifier, @Nullable String orgIdentifier,
+      @Nullable String projectIdentifier, @NotNull String secretIdentifierWithScope,
       @Nullable Set<String> delegateSelectors) {
     if (isBlank(host)) {
       throw new InvalidArgumentsException("Host cannot be null or empty", USER_SRE);
