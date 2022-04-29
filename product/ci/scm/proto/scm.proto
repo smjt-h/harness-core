@@ -8,9 +8,8 @@ syntax = "proto3";
 package io.harness.product.ci.scm.proto;
 
 option java_multiple_files = true;
-option go_package = "ciscmpb";
+option go_package = "./testpackage";
 
-import "google/protobuf/timestamp.proto";
 
 enum GitProvider {
   BITBUCKET = 0;
@@ -45,8 +44,6 @@ message User {
   string name = 2;
   string email = 3;
   string avatar = 4;
-  google.protobuf.Timestamp created = 5;
-  google.protobuf.Timestamp updated = 6;
 }
 
 // Reference represents a git reference.
@@ -74,15 +71,12 @@ message Repository {
   string clone = 7;
   string clone_ssh = 8;
   string link = 9;
-  google.protobuf.Timestamp created = 10;
-  google.protobuf.Timestamp updated = 11;
 }
 
 // Signature identifies a git commit creator.
 message Signature {
   string name = 1;
   string email = 2;
-  google.protobuf.Timestamp date = 3;
   string login = 4;
   string avatar = 5;
 }
@@ -116,8 +110,6 @@ message PullRequest {
   Reference base = 12;
   Reference head = 13;
   User author = 14;
-  google.protobuf.Timestamp created = 15;
-  google.protobuf.Timestamp updated = 16;
   repeated Label labels = 17;
   repeated Commit commits = 18;  // List of commits associated with the pull request
 }
@@ -148,8 +140,6 @@ message Comment {
   int32 id = 1;
   string body = 2;
   User user = 3;
-  google.protobuf.Timestamp created = 4;
-  google.protobuf.Timestamp updated = 5;
 }
 
 message Issue {
@@ -162,8 +152,6 @@ message Issue {
   bool locked = 7;
   User user = 8;
   PullRequest pr = 9;
-  google.protobuf.Timestamp created = 10;
-  google.protobuf.Timestamp updated = 11;
 }
 
 message PushHook {
