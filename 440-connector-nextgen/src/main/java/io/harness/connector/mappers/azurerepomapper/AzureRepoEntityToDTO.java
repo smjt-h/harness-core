@@ -60,6 +60,9 @@ public class AzureRepoEntityToDTO implements ConnectorEntityToDTOMapper<AzureRep
   public AzureRepoAuthenticationDTO buildAzureRepoAuthentication(
       GitAuthType authType, AzureRepoAuthentication authenticationDetails) {
     AzureRepoCredentialsDTO azureCredentialsDTO = null;
+    if (authType == null) {
+      throw new InvalidRequestException("AzureRepo Auth Type not found");
+    }
     switch (authType) {
       case SSH:
         final AzureRepoSshAuthentication azureSshAuthentication = (AzureRepoSshAuthentication) authenticationDetails;
@@ -83,6 +86,9 @@ public class AzureRepoEntityToDTO implements ConnectorEntityToDTOMapper<AzureRep
 
   private AzureRepoHttpCredentialsSpecDTO getHttpCredentialsSpecDTO(AzureRepoHttpAuthenticationType type, Object auth) {
     AzureRepoHttpCredentialsSpecDTO azureHttpCredentialsSpecDTO = null;
+    if (type == null) {
+      throw new InvalidRequestException("AzureRepo Http Auth Type not found");
+    }
     switch (type) {
       case USERNAME_AND_TOKEN:
         final AzureRepoUsernameToken usernameToken = (AzureRepoUsernameToken) auth;
@@ -105,6 +111,9 @@ public class AzureRepoEntityToDTO implements ConnectorEntityToDTOMapper<AzureRep
   private AzureRepoApiAccessDTO buildApiAccess(AzureRepoConnector connector) {
     final AzureRepoApiAccessType apiAccessType = connector.getApiAccessType();
     AzureRepoApiAccessSpecDTO apiAccessSpecDTO = null;
+    if (apiAccessType == null) {
+      throw new InvalidRequestException("AzureRepo Api Access Type not found");
+    }
     switch (apiAccessType) {
       case TOKEN:
         final AzureRepoTokenApiAccess azureTokenApiAccess = (AzureRepoTokenApiAccess) connector.getAzureRepoApiAccess();

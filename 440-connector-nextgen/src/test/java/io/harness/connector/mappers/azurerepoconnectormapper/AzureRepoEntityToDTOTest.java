@@ -34,6 +34,7 @@ import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoTokenSpecDTO;
 import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoUsernameTokenDTO;
 import io.harness.encryption.SecretRefHelper;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.UnknownEnumTypeException;
 import io.harness.rule.Owner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -156,10 +157,69 @@ public class AzureRepoEntityToDTOTest extends CategoryTest {
   @Test
   @Owner(developers = MANKRIT)
   @Category(UnitTests.class)
-  public void testToConnectorEntityNull() {
+  public void testToConnectorEntityInvalidCases() {
+    // Entity value is null
     final AzureRepoConnector azureRepoConnector = null;
     assertThatThrownBy(() -> azureRepoEntityToDTO.createConnectorDTO(azureRepoConnector))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage("Connector object not found");
+
+    // Git Auth Type is null
+    final String url = "url";
+    final String tokenRef = "tokenRef";
+    final String validationRepo = "validationRepo";
+
+    final AzureRepoConnector azureRepoConnector1 =
+        AzureRepoConnector.builder()
+            .hasApiAccess(true)
+            .url(url)
+            .validationRepo(validationRepo)
+            .azureRepoApiAccess(AzureRepoTokenApiAccess.builder().tokenRef(tokenRef).build())
+            .apiAccessType(AzureRepoApiAccessType.TOKEN)
+            .connectionType(GitConnectionType.ACCOUNT)
+            .authenticationDetails(AzureRepoHttpAuthentication.builder()
+                                       .type(AzureRepoHttpAuthenticationType.USERNAME_AND_TOKEN)
+                                       .auth(AzureRepoUsernameToken.builder().tokenRef(tokenRef).build())
+                                       .build())
+            .build();
+    assertThatThrownBy(() -> azureRepoEntityToDTO.createConnectorDTO(azureRepoConnector1))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("AzureRepo Auth Type not found");
+
+    // HTTP Auth Type is null
+    final AzureRepoConnector azureRepoConnector2 =
+        AzureRepoConnector.builder()
+            .hasApiAccess(true)
+            .url(url)
+            .validationRepo(validationRepo)
+            .authType(HTTP)
+            .azureRepoApiAccess(AzureRepoTokenApiAccess.builder().tokenRef(tokenRef).build())
+            .apiAccessType(AzureRepoApiAccessType.TOKEN)
+            .connectionType(GitConnectionType.ACCOUNT)
+            .authenticationDetails(AzureRepoHttpAuthentication.builder()
+                                       .auth(AzureRepoUsernameToken.builder().tokenRef(tokenRef).build())
+                                       .build())
+            .build();
+    assertThatThrownBy(() -> azureRepoEntityToDTO.createConnectorDTO(azureRepoConnector2))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("AzureRepo Http Auth Type not found");
+
+    // API Access Type is null
+    final AzureRepoConnector azureRepoConnector3 =
+        AzureRepoConnector.builder()
+            .hasApiAccess(true)
+            .url(url)
+            .validationRepo(validationRepo)
+            .authType(HTTP)
+            .azureRepoApiAccess(AzureRepoTokenApiAccess.builder().tokenRef(tokenRef).build())
+            .connectionType(GitConnectionType.ACCOUNT)
+            .authenticationDetails(AzureRepoHttpAuthentication.builder()
+                                       .type(AzureRepoHttpAuthenticationType.USERNAME_AND_TOKEN)
+                                       .auth(AzureRepoUsernameToken.builder().tokenRef(tokenRef).build())
+                                       .build())
+            .build();
+    assertThatThrownBy(() -> azureRepoEntityToDTO.createConnectorDTO(azureRepoConnector3))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("AzureRepo Api Access Type not found");
   }
 }

@@ -68,6 +68,9 @@ public class AzureRepoDTOToEntity implements ConnectorDTOToEntityMapper<AzureRep
   }
   public AzureRepoAuthentication buildAuthenticationDetails(
       GitAuthType gitAuthType, AzureRepoCredentialsDTO credentialsDTO) {
+    if (gitAuthType == null) {
+      throw new InvalidRequestException("Auth Type not found");
+    }
     switch (gitAuthType) {
       case SSH:
         final AzureRepoSshCredentialsDTO sshCredentialsDTO = (AzureRepoSshCredentialsDTO) credentialsDTO;
@@ -85,6 +88,9 @@ public class AzureRepoDTOToEntity implements ConnectorDTOToEntityMapper<AzureRep
 
   private AzureRepoHttpAuth getHttpAuth(
       AzureRepoHttpAuthenticationType type, AzureRepoHttpCredentialsDTO httpCredentialsDTO) {
+    if (type == null) {
+      throw new InvalidRequestException("AzureRepo Http Auth Type not found");
+    }
     switch (type) {
       case USERNAME_AND_TOKEN:
         final AzureRepoUsernameTokenDTO azureRepoUsernameTokenDTO =
@@ -109,6 +115,9 @@ public class AzureRepoDTOToEntity implements ConnectorDTOToEntityMapper<AzureRep
   }
 
   private AzureRepoApiAccess getApiAcessByType(AzureRepoApiAccessSpecDTO spec, AzureRepoApiAccessType apiAccessType) {
+    if (apiAccessType == null) {
+      throw new InvalidRequestException("AzureRepo Api Access Type not found");
+    }
     switch (apiAccessType) {
       case TOKEN:
         final AzureRepoTokenSpecDTO tokenSpec = (AzureRepoTokenSpecDTO) spec;
