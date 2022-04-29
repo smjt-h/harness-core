@@ -118,11 +118,11 @@ public class OpaServiceImpl implements OpaService {
 
   private String getEntityMetadataString(String accountId, String orgIdentifier, String projectIdentifier,
       String identifier, String name) throws UnsupportedEncodingException {
-    Map<String, String> metadataMap = ImmutableMap.<String, String>builder()
-                                          .put("accountIdentifier", accountId)
-                                          .put("identifier", identifier)
-                                          .put("name", name)
-                                          .build();
+    Map<String, String> metadataMap = new HashMap<>();
+
+    metadataMap.put("accountIdentifier", accountId);
+    metadataMap.put("identifier", identifier);
+    metadataMap.put("name", name);
     if (orgIdentifier != null && !orgIdentifier.isEmpty()) {
       metadataMap.put("orgIdentifier", orgIdentifier);
     }
