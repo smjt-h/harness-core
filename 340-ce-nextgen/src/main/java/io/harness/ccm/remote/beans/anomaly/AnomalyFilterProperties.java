@@ -9,6 +9,7 @@ package io.harness.ccm.remote.beans.anomaly;
 
 import static io.harness.filter.FilterConstants.ANOMALY_FILTER;
 
+import io.harness.ccm.commons.entities.CCMTimeFilter;
 import io.harness.filter.entity.FilterProperties;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -51,4 +52,9 @@ public class AnomalyFilterProperties extends FilterProperties {
 
   Double minActualAmount;
   Double minAnomalousSpend;
+
+  List<CCMTimeFilter> timeFilters;
+
+  Integer offset;
+  Integer limit;
 }

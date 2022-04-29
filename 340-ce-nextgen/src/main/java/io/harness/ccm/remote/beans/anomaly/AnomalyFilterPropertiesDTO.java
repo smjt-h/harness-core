@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CE;
 import static io.harness.filter.FilterConstants.ANOMALY_FILTER;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ccm.commons.entities.CCMTimeFilter;
 import io.harness.filter.FilterType;
 import io.harness.filter.dto.FilterPropertiesDTO;
 
@@ -57,6 +58,11 @@ public class AnomalyFilterPropertiesDTO extends FilterPropertiesDTO {
 
   Double minActualAmount;
   Double minAnomalousSpend;
+
+  List<CCMTimeFilter> timeFilters;
+
+  Integer offset;
+  Integer limit;
 
   @Override
   public FilterType getFilterType() {

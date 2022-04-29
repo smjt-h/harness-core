@@ -124,7 +124,9 @@ public class AnomalyServiceImpl implements AnomalyService {
       List<AnomalySummary> updatedTotalCostSummary = new ArrayList<>();
       totalCostSummary.forEach(entry
           -> updatedTotalCostSummary.add(buildAnomalySummary(entry.getName(), entry.getCount(), entry.getActualCost(),
-              entry.getActualCost() - entry.getExpectedCost())));
+              ((entry.getActualCost() != null && entry.getExpectedCost() != null)
+                      ? (entry.getActualCost() - entry.getExpectedCost())
+                      : null))));
       return updatedTotalCostSummary;
     } else {
       List<AnomalyData> anomalies = listAnomalies(accountIdentifier, anomalyQuery);

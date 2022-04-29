@@ -13,6 +13,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
+import io.harness.ccm.commons.entities.CCMOperator;
+import io.harness.ccm.commons.entities.CCMTimeFilter;
 import io.harness.ccm.remote.beans.anomaly.AnomalyFilterProperties;
 import io.harness.ccm.remote.beans.anomaly.AnomalyFilterPropertiesDTO;
 import io.harness.filter.FilterType;
@@ -21,6 +23,7 @@ import io.harness.filter.entity.FilterProperties;
 import io.harness.rule.Owner;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,6 +46,10 @@ public class AnomalyFilterPropertiesMapperTest extends CategoryTest {
   List<String> azureResources = Arrays.asList("azureResource1");
   Double minActualAmount = 123.45;
   Double minAnomalousSpend = 1234.5;
+  List<CCMTimeFilter> timeFilters = Arrays.asList(
+      CCMTimeFilter.builder().operator(CCMOperator.BEFORE).timestamp(Calendar.getInstance().getTimeInMillis()).build());
+  Integer offset = 0;
+  Integer limit = 1000;
   @InjectMocks AnomalyFilterPropertiesMapper anomalyFilterPropertiesMapper;
 
   @Before
@@ -69,6 +76,9 @@ public class AnomalyFilterPropertiesMapperTest extends CategoryTest {
                                             .azureResources(azureResources)
                                             .minActualAmount(minActualAmount)
                                             .minAnomalousSpend(minAnomalousSpend)
+                                            .timeFilters(timeFilters)
+                                            .offset(offset)
+                                            .limit(limit)
                                             .build();
     AnomalyFilterPropertiesDTO filterPropertiesDTO =
         (AnomalyFilterPropertiesDTO) anomalyFilterPropertiesMapper.writeDTO(filterProperties);
@@ -87,6 +97,9 @@ public class AnomalyFilterPropertiesMapperTest extends CategoryTest {
     assertThat(filterPropertiesDTO.getAzureResources()).isEqualTo(azureResources);
     assertThat(filterPropertiesDTO.getMinActualAmount()).isEqualTo(minActualAmount);
     assertThat(filterPropertiesDTO.getMinAnomalousSpend()).isEqualTo(minAnomalousSpend);
+    assertThat(filterPropertiesDTO.getTimeFilters()).isEqualTo(timeFilters);
+    assertThat(filterPropertiesDTO.getOffset()).isEqualTo(offset);
+    assertThat(filterPropertiesDTO.getLimit()).isEqualTo(limit);
   }
 
   @Test
@@ -108,6 +121,9 @@ public class AnomalyFilterPropertiesMapperTest extends CategoryTest {
                                                   .azureResources(azureResources)
                                                   .minActualAmount(minActualAmount)
                                                   .minAnomalousSpend(minAnomalousSpend)
+                                                  .timeFilters(timeFilters)
+                                                  .offset(offset)
+                                                  .limit(limit)
                                                   .build();
     AnomalyFilterProperties filterProperties =
         (AnomalyFilterProperties) anomalyFilterPropertiesMapper.toEntity(filterPropertiesDTO);
@@ -125,5 +141,8 @@ public class AnomalyFilterPropertiesMapperTest extends CategoryTest {
     assertThat(filterProperties.getAzureResources()).isEqualTo(azureResources);
     assertThat(filterProperties.getMinActualAmount()).isEqualTo(minActualAmount);
     assertThat(filterProperties.getMinAnomalousSpend()).isEqualTo(minAnomalousSpend);
+    assertThat(filterProperties.getTimeFilters()).isEqualTo(timeFilters);
+    assertThat(filterProperties.getOffset()).isEqualTo(offset);
+    assertThat(filterProperties.getLimit()).isEqualTo(limit);
   }
 }
