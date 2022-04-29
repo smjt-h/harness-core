@@ -23,40 +23,8 @@ import software.wings.graphql.datafetcher.secrets.UsageScopeController;
 import software.wings.graphql.datafetcher.user.UserController;
 import software.wings.graphql.schema.type.QLConnectorType;
 import software.wings.graphql.schema.type.QLCustomCommitDetails;
-import software.wings.graphql.schema.type.connector.QLAmazonS3Connector;
-import software.wings.graphql.schema.type.connector.QLAmazonS3HelmRepoConnector;
-import software.wings.graphql.schema.type.connector.QLApmVerificationConnector;
-import software.wings.graphql.schema.type.connector.QLAppDynamicsConnector;
-import software.wings.graphql.schema.type.connector.QLArtifactoryConnector;
-import software.wings.graphql.schema.type.connector.QLBambooConnector;
-import software.wings.graphql.schema.type.connector.QLBugSnagConnector;
-import software.wings.graphql.schema.type.connector.QLConnectorBuilder;
-import software.wings.graphql.schema.type.connector.QLCustomConnector;
-import software.wings.graphql.schema.type.connector.QLDataDogConnector;
-import software.wings.graphql.schema.type.connector.QLDockerConnector;
-import software.wings.graphql.schema.type.connector.QLDynaTraceConnector;
-import software.wings.graphql.schema.type.connector.QLECRConnector;
-import software.wings.graphql.schema.type.connector.QLElbConnector;
-import software.wings.graphql.schema.type.connector.QLElkConnector;
-import software.wings.graphql.schema.type.connector.QLGCRConnector;
-import software.wings.graphql.schema.type.connector.QLGCSConnector;
-import software.wings.graphql.schema.type.connector.QLGCSHelmRepoConnector;
-import software.wings.graphql.schema.type.connector.QLGitConnector;
+import software.wings.graphql.schema.type.connector.*;
 import software.wings.graphql.schema.type.connector.QLGitConnector.QLGitConnectorBuilder;
-import software.wings.graphql.schema.type.connector.QLHttpHelmRepoConnector;
-import software.wings.graphql.schema.type.connector.QLInstanaConnector;
-import software.wings.graphql.schema.type.connector.QLJenkinsConnector;
-import software.wings.graphql.schema.type.connector.QLJiraConnector;
-import software.wings.graphql.schema.type.connector.QLLogzConnector;
-import software.wings.graphql.schema.type.connector.QLNewRelicConnector;
-import software.wings.graphql.schema.type.connector.QLNexusConnector;
-import software.wings.graphql.schema.type.connector.QLPrometheusConnector;
-import software.wings.graphql.schema.type.connector.QLServiceNowConnector;
-import software.wings.graphql.schema.type.connector.QLSftpConnector;
-import software.wings.graphql.schema.type.connector.QLSlackConnector;
-import software.wings.graphql.schema.type.connector.QLSmtpConnector;
-import software.wings.graphql.schema.type.connector.QLSplunkConnector;
-import software.wings.graphql.schema.type.connector.QLSumoConnector;
 import software.wings.helpers.ext.url.SubdomainUrlHelper;
 import software.wings.settings.SettingVariableTypes;
 
@@ -146,8 +114,7 @@ public class ConnectorsController {
       case HTTP_HELM_REPO:
         return QLHttpHelmRepoConnector.builder();
       case OCI_HELM_REPO:
-        return null;
-      // TODO: 13/04/22 add QL connector here for OCI
+        return QLOciHelmRepoConnector.builder();
       case AMAZON_S3_HELM_REPO:
         return QLAmazonS3HelmRepoConnector.builder();
       case GCS_HELM_REPO:
