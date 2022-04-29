@@ -7,6 +7,7 @@
 
 package io.harness.ng.core.filestore.utils;
 
+import static io.harness.rule.OwnerRule.BOJAN;
 import static io.harness.rule.OwnerRule.VLAD;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,10 +17,12 @@ import static org.mockito.Mockito.when;
 import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.IdentifierRef;
 import io.harness.category.element.UnitTests;
 import io.harness.ng.core.beans.SearchPageParams;
 import io.harness.ng.core.entities.NGFile;
 import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
+import io.harness.ng.core.entitysetupusage.entity.EntitySetupUsage.EntitySetupUsageKeys;
 import io.harness.ng.core.entitysetupusage.service.EntitySetupUsageService;
 import io.harness.rule.Owner;
 
@@ -36,6 +39,8 @@ import org.springframework.data.domain.Sort;
 @RunWith(MockitoJUnitRunner.class)
 public class FileReferencedByHelperTest {
   private static final String ACCOUNT_IDENTIFIER = "accountIdentifier";
+  private static final String ORG_IDENTIFIER = "orgIdentifier";
+  private static final String PROJECT_IDENTIFIER = "projectIdentifier";
 
   @Mock private EntitySetupUsageService entitySetupUsageService;
 
@@ -79,6 +84,27 @@ public class FileReferencedByHelperTest {
         .thenReturn(references);
     Page<EntitySetupUsageDTO> result =
         fileReferencedByHelper.getReferencedBy(searchPageParams, file, EntityType.PIPELINES);
+    assertThat(result).isEqualTo(references);
+  }
+
+  @Test
+  @Owner(developers = BOJAN)
+  @Category(UnitTests.class)
+  public void shouldFetchReferencedByForScope() {
+    String referredEntityFQScope = IdentifierRef.builder()
+                                       .accountIdentifier(ACCOUNT_IDENTIFIER)
+                                       .orgIdentifier(ORG_IDENTIFIER)
+                                       .projectIdentifier(PROJECT_IDENTIFIER)
+                                       .build()
+                                       .getFullyQualifiedScope();
+    io.harness.ng.core.beans.SearchPageParams searchPageParams = SearchPageParams.builder().page(1).size(10).build();
+    Page<EntitySetupUsageDTO> references = mock(Page.class);
+    when(entitySetupUsageService.listAllEntityUsageForScope(searchPageParams.getPage(), searchPageParams.getSize(),
+             ACCOUNT_IDENTIFIER, referredEntityFQScope, EntityType.FILES, EntityType.PIPELINES,
+             Sort.by(Sort.Direction.ASC, EntitySetupUsageKeys.referredByEntityName)))
+        .thenReturn(references);
+    Page<EntitySetupUsageDTO> result = fileReferencedByHelper.getAllReferencedByInScope(
+        ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, searchPageParams, EntityType.PIPELINES);
     assertThat(result).isEqualTo(references);
   }
 }

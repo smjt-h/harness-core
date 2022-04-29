@@ -192,18 +192,25 @@ public class FileStoreServiceImpl implements FileStoreService {
 
   @Override
   public Page<EntitySetupUsageDTO> listReferencedBy(SearchPageParams pageParams, @NotNull String accountIdentifier,
-      String orgIdentifier, String projectIdentifier, String identifier, EntityType entityType) {
+      String orgIdentifier, String projectIdentifier, @NotNull String identifier, EntityType entityType) {
+    if (isEmpty(identifier)) {
+      throw new InvalidArgumentsException("File identifier cannot be empty");
+    }
     if (isEmpty(accountIdentifier)) {
       throw new InvalidArgumentsException("Account identifier cannot be null or empty");
     }
-
-    if (isEmpty(identifier)) {
-      return fileReferencedByHelper.getAllReferencedByInScope(
-          accountIdentifier, orgIdentifier, projectIdentifier, pageParams, entityType);
-    }
-
     NGFile file = fetchFileOrThrow(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
     return fileReferencedByHelper.getReferencedBy(pageParams, file, entityType);
+  }
+
+  @Override
+  public Page<EntitySetupUsageDTO> listReferencedByInScope(SearchPageParams pageParams,
+      @NotNull String accountIdentifier, String orgIdentifier, String projectIdentifier, EntityType entityType) {
+    if (isEmpty(accountIdentifier)) {
+      throw new InvalidArgumentsException("Account identifier cannot be null or empty");
+    }
+    return fileReferencedByHelper.getAllReferencedByInScope(
+        accountIdentifier, orgIdentifier, projectIdentifier, pageParams, entityType);
   }
 
   @Override

@@ -281,12 +281,36 @@ public class FileStoreResource {
       @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
-      @Parameter(description = FILE_PARAM_MESSAGE) @EntityIdentifier @PathParam(IDENTIFIER_KEY) String identifier,
-      @Parameter(description = "Entity type") @QueryParam(ENTITY_TYPE) EntityType entityType,
+      @Parameter(description = FILE_PARAM_MESSAGE) @NotBlank @EntityIdentifier @PathParam(IDENTIFIER_KEY)
+      String identifier, @Parameter(description = "Entity type") @QueryParam(ENTITY_TYPE) EntityType entityType,
       @QueryParam(SEARCH_TERM_KEY) String searchTerm) {
     return ResponseDTO.newResponse(fileStoreService.listReferencedBy(
         SearchPageParams.builder().page(page).size(size).searchTerm(searchTerm).build(), accountIdentifier,
         orgIdentifier, projectIdentifier, identifier, entityType));
+  }
+
+  @GET
+  @Consumes({"application/json"})
+  @Path("referenced-by-in-scope")
+  @ApiOperation(value = "Get referenced by entities in scope", nickname = "getReferencedByInScope")
+  @Operation(operationId = "getReferencedByInScope", summary = "Get Referenced by Entities in scope.",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(description = "Returns the list of entities in scope are referenced by.")
+      })
+  public ResponseDTO<Page<EntitySetupUsageDTO>>
+  getReferencedByInScope(@Parameter(description = "Page number of navigation. The default value is 0") @QueryParam(
+                             NGResourceFilterConstants.PAGE_KEY) @DefaultValue("0") int page,
+      @Parameter(description = "Number of entries per page. The default value is 100") @QueryParam(
+          NGResourceFilterConstants.SIZE_KEY) @DefaultValue("100") int size,
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
+      @Parameter(description = "Entity type") @QueryParam(ENTITY_TYPE) EntityType entityType) {
+    return ResponseDTO.newResponse(
+        fileStoreService.listReferencedByInScope(SearchPageParams.builder().page(page).size(size).build(),
+            accountIdentifier, orgIdentifier, projectIdentifier, entityType));
   }
 
   @GET

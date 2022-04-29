@@ -95,6 +95,9 @@ public interface FileStoreService {
   Page<EntitySetupUsageDTO> listReferencedBy(SearchPageParams pageParams, @NotNull String accountIdentifier,
       String orgIdentifier, String projectIdentifier, @NotNull String identifier, EntityType entityType);
 
+  Page<EntitySetupUsageDTO> listReferencedByInScope(SearchPageParams pageParams, @NotNull String accountIdentifier,
+      String orgIdentifier, String projectIdentifier, EntityType entityType);
+
   Page<FileDTO> listFilesWithFilter(String accountIdentifier, String orgIdentifier, String projectIdentifier,
       String filterIdentifier, String searchTerm, FilesFilterPropertiesDTO filesFilterPropertiesDTO, Pageable pageable);
 

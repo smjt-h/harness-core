@@ -20,7 +20,6 @@ import io.swagger.annotations.ApiModel;
 @ApiModel(value = "EntityReference", subTypes = {IdentifierRef.class, InputSetReference.class}, discriminator = "type")
 public interface EntityReference extends NGAccess {
   @JsonIgnore String getFullyQualifiedName();
-  @JsonIgnore String getFullyQualifiedScope();
   String getBranch();
   String getRepoIdentifier();
   Boolean isDefault();

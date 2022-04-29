@@ -207,4 +207,23 @@ public class FileStoreResourceTest extends CategoryTest {
     assertThat(returnedList.isEmpty()).isFalse();
     assertThat(returnedList.size()).isEqualTo(2);
   }
+
+  @Test
+  @Owner(developers = BOJAN)
+  @Category(UnitTests.class)
+  public void testListReferencedByInScope() {
+    EntitySetupUsageDTO entitySetupUsage = EntitySetupUsageDTO.builder().build();
+    final Page<EntitySetupUsageDTO> entityServiceUsageList =
+        new PageImpl<>(Collections.singletonList(entitySetupUsage));
+    when(fileStoreService.listReferencedByInScope(any(), any(), any(), any(), any()))
+        .thenReturn(entityServiceUsageList);
+
+    ResponseDTO<Page<EntitySetupUsageDTO>> response =
+        fileStoreResource.getReferencedByInScope(1, 10, ACCOUNT, ORG, PROJECT, EntityType.PIPELINES);
+    Page<EntitySetupUsageDTO> returnedList = response.getData();
+
+    assertThat(returnedList).isNotNull();
+    assertThat(returnedList.getContent().size()).isEqualTo(1);
+    assertThat(returnedList.getContent()).containsExactly(entitySetupUsage);
+  }
 }

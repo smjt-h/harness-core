@@ -37,7 +37,6 @@ public class IdentifierRef implements EntityReference {
         accountIdentifier, orgIdentifier, projectIdentifier, identifier);
   }
 
-  @Override
   public String getFullyQualifiedScope() {
     return FullyQualifiedIdentifierHelper.getFullyQualifiedScope(accountIdentifier, orgIdentifier, projectIdentifier);
   }

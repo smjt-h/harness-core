@@ -70,12 +70,12 @@ public class FileReferencedByHelper {
 
   public Page<EntitySetupUsageDTO> getAllReferencedByInScope(String accountIdentifier, String orgIdentifier,
       String projectIdentifier, SearchPageParams pageParams, EntityType entityType) {
-    IdentifierRef identifierRef = IdentifierRef.builder()
-                                      .accountIdentifier(accountIdentifier)
-                                      .orgIdentifier(orgIdentifier)
-                                      .projectIdentifier(projectIdentifier)
-                                      .build();
-    String referredEntityFQScope = identifierRef.getFullyQualifiedScope();
+    String referredEntityFQScope = IdentifierRef.builder()
+                                       .accountIdentifier(accountIdentifier)
+                                       .orgIdentifier(orgIdentifier)
+                                       .projectIdentifier(projectIdentifier)
+                                       .build()
+                                       .getFullyQualifiedScope();
     return entitySetupUsageService.listAllEntityUsageForScope(pageParams.getPage(), pageParams.getSize(),
         accountIdentifier, referredEntityFQScope, EntityType.FILES, entityType,
         Sort.by(Sort.Direction.ASC, EntitySetupUsageKeys.referredByEntityName));
