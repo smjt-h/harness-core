@@ -8,6 +8,7 @@
 package io.harness.ng.validator.service;
 
 import static io.harness.rule.OwnerRule.IVAN;
+import static io.harness.rule.OwnerRule.VITALIE;
 import static io.harness.rule.OwnerRule.VLAD;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,6 +27,7 @@ import io.harness.delegate.beans.ErrorNotifyResponseData;
 import io.harness.delegate.beans.connector.pdcconnector.HostConnectivityTaskParams;
 import io.harness.delegate.beans.connector.pdcconnector.HostConnectivityTaskResponse;
 import io.harness.delegate.beans.secrets.SSHConfigValidationTaskResponse;
+import io.harness.delegate.beans.secrets.WinRmConfigValidationTaskResponse;
 import io.harness.delegate.utils.TaskSetupAbstractionHelper;
 import io.harness.eraro.ErrorCode;
 import io.harness.errorhandling.NGErrorHelper;
@@ -34,12 +36,14 @@ import io.harness.exception.InvalidArgumentsException;
 import io.harness.ng.core.api.NGSecretServiceV2;
 import io.harness.ng.core.dto.ErrorDetail;
 import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
+import io.harness.ng.core.dto.secrets.WinRmCredentialsSpecDTO;
 import io.harness.ng.core.models.Secret;
 import io.harness.ng.core.models.SecretSpec;
 import io.harness.ng.validator.dto.HostValidationDTO;
 import io.harness.rule.Owner;
 import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.services.SshKeySpecDTOHelper;
+import io.harness.secretmanagerclient.services.WinRmCredentialsSpecDTOHelper;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.service.DelegateGrpcClientWrapper;
 
@@ -73,6 +77,7 @@ public class NGHostValidationServiceImplTest extends CategoryTest {
 
   @Mock private NGSecretServiceV2 ngSecretServiceV2;
   @Mock private SshKeySpecDTOHelper sshKeySpecDTOHelper;
+  @Mock private WinRmCredentialsSpecDTOHelper winRmCredentialsSpecDTOHelper;
   @Mock private TaskSetupAbstractionHelper taskSetupAbstractionHelper;
   @Mock private DelegateGrpcClientWrapper delegateGrpcClientWrapper;
   @Mock private NGErrorHelper ngErrorHelper;
@@ -107,6 +112,49 @@ public class NGHostValidationServiceImplTest extends CategoryTest {
     when(ngErrorHelper.getReason(VALIDATION_HOST_FAILED_ERROR_MSG)).thenReturn(VALIDATION_HOST_FAILED_ERROR_MSG);
     when(ngErrorHelper.getCode(VALIDATION_HOST_FAILED_ERROR_MSG)).thenReturn(450);
     when(delegateGrpcClientWrapper.executeSyncTask(any())).thenReturn(buildSSHConfigValidationTaskResponseFailed());
+
+    HostValidationDTO result = hostValidationService.validateSSHHost(
+        HOST, ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER, Collections.emptySet());
+
+    assertThat(result.getHost()).isEqualTo(HOST);
+    assertThat(result.getStatus()).isEqualTo(HostValidationDTO.HostValidationStatus.FAILED);
+    assertThat(result.getError())
+        .isEqualTo(ErrorDetail.builder()
+                       .reason("SSH Validation host failed")
+                       .message(VALIDATION_HOST_FAILED_ERROR_MSG)
+                       .code(450)
+                       .build());
+  }
+
+  @Test
+  @Owner(developers = VITALIE)
+  @Category(UnitTests.class)
+  public void shouldValidateSshHostViaWinRm() {
+    mockWinRmSecret(SecretType.WinRmCredentials);
+    mockWinRmEncryptionDetails();
+    mockTaskAbstractions();
+
+    when(delegateGrpcClientWrapper.executeSyncTask(any())).thenReturn(buildWinRmConfigValidationTaskResponseSuccess());
+
+    HostValidationDTO result = hostValidationService.validateSSHHost(
+        HOST, ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER, Collections.emptySet());
+
+    assertThat(result.getHost()).isEqualTo(HOST);
+    assertThat(result.getStatus()).isEqualTo(HostValidationDTO.HostValidationStatus.SUCCESS);
+    assertThat(result.getError()).isEqualTo(ErrorDetail.builder().build());
+  }
+
+  @Test
+  @Owner(developers = VITALIE)
+  @Category(UnitTests.class)
+  public void testValidateSshHostViaWinRmWithFailedTaskResponse() {
+    mockWinRmSecret(SecretType.WinRmCredentials);
+    mockWinRmEncryptionDetails();
+    mockTaskAbstractions();
+
+    when(ngErrorHelper.getReason(VALIDATION_HOST_FAILED_ERROR_MSG)).thenReturn(VALIDATION_HOST_FAILED_ERROR_MSG);
+    when(ngErrorHelper.getCode(VALIDATION_HOST_FAILED_ERROR_MSG)).thenReturn(450);
+    when(delegateGrpcClientWrapper.executeSyncTask(any())).thenReturn(buildWinRmConfigValidationTaskResponseFailed());
 
     HostValidationDTO result = hostValidationService.validateSSHHost(
         HOST, ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER, Collections.emptySet());
@@ -294,8 +342,25 @@ public class NGHostValidationServiceImplTest extends CategoryTest {
         .thenReturn(Optional.of(secret));
   }
 
+  private void mockWinRmSecret(SecretType secretType) {
+    Secret secret = mock(Secret.class);
+    SecretSpec secretKeySpec = mock(SecretSpec.class);
+    WinRmCredentialsSpecDTO secretSpecDTO = mock(WinRmCredentialsSpecDTO.class);
+
+    when(secret.getType()).thenReturn(secretType);
+    when(secret.getSecretSpec()).thenReturn(secretKeySpec);
+    when(secretKeySpec.toDTO()).thenReturn(secretSpecDTO);
+
+    when(ngSecretServiceV2.get(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER))
+        .thenReturn(Optional.of(secret));
+  }
+
   private void mockEncryptionDetails() {
     when(sshKeySpecDTOHelper.getSSHKeyEncryptionDetails(any(), any())).thenReturn(getEncryptionDetails());
+  }
+
+  private void mockWinRmEncryptionDetails() {
+    when(winRmCredentialsSpecDTOHelper.getWinRmEncryptionDetails(any(), any())).thenReturn(getEncryptionDetails());
   }
 
   private void mockTaskAbstractions() {
@@ -311,8 +376,20 @@ public class NGHostValidationServiceImplTest extends CategoryTest {
     return SSHConfigValidationTaskResponse.builder().connectionSuccessful(true).build();
   }
 
+  private WinRmConfigValidationTaskResponse buildWinRmConfigValidationTaskResponseSuccess() {
+    return WinRmConfigValidationTaskResponse.builder().connectionSuccessful(true).build();
+  }
+
   private SSHConfigValidationTaskResponse buildSSHConfigValidationTaskResponseFailed() {
     return SSHConfigValidationTaskResponse.builder()
+        .connectionSuccessful(false)
+        .errorCode(ErrorCode.DEFAULT_ERROR_CODE)
+        .errorMessage(VALIDATION_HOST_FAILED_ERROR_MSG)
+        .build();
+  }
+
+  private WinRmConfigValidationTaskResponse buildWinRmConfigValidationTaskResponseFailed() {
+    return WinRmConfigValidationTaskResponse.builder()
         .connectionSuccessful(false)
         .errorCode(ErrorCode.DEFAULT_ERROR_CODE)
         .errorMessage(VALIDATION_HOST_FAILED_ERROR_MSG)
