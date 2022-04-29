@@ -200,9 +200,9 @@ public class ScmServiceClientImpl implements ScmServiceClient {
     String slug = scmGitProviderHelper.getSlug(scmConnector);
     final GetFileRequest.Builder gitFileRequestBuilder =
         GetFileRequest.newBuilder().setPath(gitFilePathDetails.getFilePath()).setProvider(gitProvider).setSlug(slug);
-    if (gitFilePathDetails.getBranch() != null) {
+    if (isNotEmpty(gitFilePathDetails.getBranch())) {
       gitFileRequestBuilder.setBranch(gitFilePathDetails.getBranch());
-    } else if (gitFilePathDetails.getRef() != null) {
+    } else if (isNotEmpty(gitFilePathDetails.getRef())) {
       gitFileRequestBuilder.setRef(gitFilePathDetails.getRef());
     }
     return ScmGrpcClientUtils.retryAndProcessException(scmBlockingStub::getFile, gitFileRequestBuilder.build());
@@ -714,10 +714,14 @@ public class ScmServiceClientImpl implements ScmServiceClient {
   }
 
   @Override
-  public GetUserReposResponse getUserRepos(ScmConnector scmConnector, SCMGrpc.SCMBlockingStub scmBlockingStub) {
+  public GetUserReposResponse getUserRepos(
+      ScmConnector scmConnector, io.harness.beans.PageRequestDTO pageRequest, SCMGrpc.SCMBlockingStub scmBlockingStub) {
     Provider gitProvider = scmGitProviderMapper.mapToSCMGitProvider(scmConnector);
-    return ScmGrpcClientUtils.retryAndProcessException(
-        scmBlockingStub::getUserRepos, GetUserReposRequest.newBuilder().setProvider(gitProvider).build());
+    return ScmGrpcClientUtils.retryAndProcessException(scmBlockingStub::getUserRepos,
+        GetUserReposRequest.newBuilder()
+            .setPagination(PageRequest.newBuilder().setPage(pageRequest.getPageIndex() + 1).build())
+            .setProvider(gitProvider)
+            .build());
   }
 
   private FileContentBatchResponse processListFilesByFilePaths(ScmConnector connector, List<String> filePaths,

@@ -28,6 +28,7 @@ import io.harness.delegate.beans.executioncapability.PcfAutoScalarCapability;
 import io.harness.delegate.beans.executioncapability.PcfInstallationCapability;
 import io.harness.delegate.beans.executioncapability.ProcessExecutorCapability;
 import io.harness.delegate.beans.executioncapability.SelectorCapability;
+import io.harness.delegate.beans.executioncapability.ServerlessInstallationCapability;
 import io.harness.delegate.beans.executioncapability.SmbConnectionCapability;
 import io.harness.delegate.beans.executioncapability.SmtpCapability;
 import io.harness.delegate.beans.executioncapability.SocketConnectivityBulkOrExecutionCapability;
@@ -52,18 +53,25 @@ import io.harness.morphia.MorphiaRegistrarHelperPut;
 import io.harness.ng.core.models.Secret;
 
 import software.wings.beans.AwsConfig;
+import software.wings.beans.EcrConfig;
+import software.wings.beans.GcpConfig;
 import software.wings.beans.GitConfig;
 import software.wings.beans.JenkinsConfig;
 import software.wings.beans.SettingAttribute;
+import software.wings.beans.SpotInstConfig;
 import software.wings.beans.config.ArtifactSourceable;
+import software.wings.beans.settings.helm.HttpHelmRepoConfig;
 import software.wings.beans.yaml.GitCommandExecutionResponse;
 import software.wings.beans.yaml.GitCommitAndPushResult;
 import software.wings.beans.yaml.GitCommitRequest;
 import software.wings.beans.yaml.GitDiffRequest;
 import software.wings.beans.yaml.GitDiffResult;
+import software.wings.helpers.ext.ecs.response.EcsCommandExecutionResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceDeployResponse;
 import software.wings.helpers.ext.helm.response.HelmInstallCommandResponse;
 import software.wings.sm.states.JenkinsExecutionResponse;
+import software.wings.sm.states.KubernetesSteadyStateCheckResponse;
+import software.wings.sm.states.KubernetesSwapServiceSelectorsResponse;
 import software.wings.yaml.gitSync.YamlGitConfig;
 
 import java.util.Set;
@@ -107,6 +115,8 @@ public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
         SocketConnectivityExecutionCapability.class);
     h.put("delegate.beans.executioncapability.SocketConnectivityBulkOrExecutionCapability",
         SocketConnectivityBulkOrExecutionCapability.class);
+    h.put(
+        "delegate.beans.executioncapability.ServerlessInstallationCapability", ServerlessInstallationCapability.class);
     h.put("delegate.beans.executioncapability.SystemEnvCheckerCapability", SystemEnvCheckerCapability.class);
     h.put("delegate.beans.executioncapability.SelectorCapability", SelectorCapability.class);
     h.put("delegate.command.CommandExecutionResult", CommandExecutionResult.class);
@@ -133,6 +143,13 @@ public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
     w.put("beans.yaml.GitDiffResult", GitDiffResult.class);
     w.put("beans.JenkinsConfig", JenkinsConfig.class);
     w.put("sm.states.JenkinsExecutionResponse", JenkinsExecutionResponse.class);
+    w.put("beans.settings.helm.HttpHelmRepoConfig", HttpHelmRepoConfig.class);
+    w.put("beans.GcpConfig", GcpConfig.class);
+    w.put("helpers.ext.ecs.response.EcsCommandExecutionResponse", EcsCommandExecutionResponse.class);
+    w.put("beans.EcrConfig", EcrConfig.class);
+    w.put("beans.SpotInstConfig", SpotInstConfig.class);
+    w.put("sm.states.KubernetesSteadyStateCheckResponse", KubernetesSteadyStateCheckResponse.class);
+    w.put("sm.states.KubernetesSwapServiceSelectorsResponse", KubernetesSwapServiceSelectorsResponse.class);
     h.put("waiter.ListNotifyResponseData", ListNotifyResponseData.class);
   }
 }

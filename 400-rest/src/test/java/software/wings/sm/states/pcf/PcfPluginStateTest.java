@@ -67,6 +67,7 @@ import static org.mockito.Mockito.when;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.beans.ArtifactMetadata;
 import io.harness.beans.DelegateTask;
 import io.harness.beans.EmbeddedUser;
 import io.harness.beans.SweepingOutputInstance;
@@ -104,7 +105,7 @@ import software.wings.beans.TaskType;
 import software.wings.beans.WorkflowExecution;
 import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.artifact.Artifact;
-import software.wings.beans.artifact.Artifact.ArtifactMetadataKeys;
+import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.command.CommandType;
 import software.wings.beans.command.ServiceCommand;
 import software.wings.beans.template.TemplateUtils;
@@ -233,11 +234,12 @@ public class PcfPluginStateTest extends WingsBaseTest {
 
   private Environment env = anEnvironment().appId(APP_ID).uuid(ENV_ID).name(ENV_NAME).build();
 
-  private Artifact artifact = anArtifact()
-                                  .withArtifactSourceName("source")
-                                  .withMetadata(ImmutableMap.of(ArtifactMetadataKeys.buildNo, "bn"))
-                                  .withArtifactStreamId(ARTIFACT_STREAM_ID)
-                                  .build();
+  private Artifact artifact =
+      anArtifact()
+          .withArtifactSourceName("source")
+          .withMetadata(new ArtifactMetadata(ImmutableMap.of(ArtifactMetadataKeys.buildNo, "bn")))
+          .withArtifactStreamId(ARTIFACT_STREAM_ID)
+          .build();
 
   private Service service = Service.builder()
                                 .appId(APP_ID)

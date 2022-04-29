@@ -465,7 +465,7 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
       return true;
     }
 
-    Set<String> delegateSelectors = trimmedLowercaseSet(delegateService.retrieveDelegateSelectors(delegate));
+    Set<String> delegateSelectors = trimmedLowercaseSet(delegateService.retrieveDelegateSelectors(delegate, true));
     if (isEmpty(delegateSelectors)) {
       return false;
     }
