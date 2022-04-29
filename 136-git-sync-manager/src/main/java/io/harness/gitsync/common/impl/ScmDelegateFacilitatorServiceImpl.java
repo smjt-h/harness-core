@@ -197,7 +197,7 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
   @Override
   public CreatePRDTO createPullRequest(
       Scope scope, String connectorRef, String repoName, String sourceBranch, String targetBranch, String title) {
-    final ScmConnector decryptedConnector = getScmConnector(
+    final ScmConnector decryptedConnector = gitSyncConnectorHelper.getScmConnectorForGivenRepo(
         scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier(), connectorRef, repoName);
     final List<EncryptedDataDetail> encryptionDetails = getEncryptedDataDetails(
         scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier(), decryptedConnector);
