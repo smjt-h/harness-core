@@ -46,7 +46,6 @@ import retrofit2.http.Url;
 @OwnedBy(CDC)
 @Slf4j
 public class SlackMessageSenderImpl implements SlackMessageSender {
-
   @Override
   public void send(SlackMessage slackMessage, boolean sendFromDelegate, boolean isCertValidationRequired) {
     String outgoingWebhookUrl = slackMessage.getOutgoingWebhookUrl();
