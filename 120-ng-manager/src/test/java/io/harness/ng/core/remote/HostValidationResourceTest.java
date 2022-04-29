@@ -73,7 +73,7 @@ public class HostValidationResourceTest extends CategoryTest {
         .when(hostValidationService)
         .validateHosts(hosts, ACCOUNT_IDENTIFIER, null, null, SECRET_IDENTIFIER, tags);
 
-    ResponseDTO<List<HostValidationDTO>> result = hostValidationResource.validateSshHost(ACCOUNT_IDENTIFIER, null, null,
+    ResponseDTO<List<HostValidationDTO>> result = hostValidationResource.validateHost(ACCOUNT_IDENTIFIER, null, null,
         SECRET_IDENTIFIER,
         HostValidationParams.builder().hosts(Collections.singletonList(host1)).tags(Collections.emptyList()).build());
 
@@ -96,7 +96,7 @@ public class HostValidationResourceTest extends CategoryTest {
         .validateHosts(hosts, ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, SECRET_IDENTIFIER, tags);
     assertThatThrownBy(
         ()
-            -> hostValidationResource.validateSshHost(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER,
+            -> hostValidationResource.validateHost(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER,
                 SECRET_IDENTIFIER, HostValidationParams.builder().hosts(hosts).tags(Collections.emptyList()).build()))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage("Secret identifier is empty or null");
@@ -113,7 +113,7 @@ public class HostValidationResourceTest extends CategoryTest {
 
     assertThatThrownBy(
         ()
-            -> hostValidationResource.validateSshHost(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER,
+            -> hostValidationResource.validateHost(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER,
                 SECRET_IDENTIFIER, HostValidationParams.builder().hosts(hosts).build()))
         .isInstanceOf(NGAccessDeniedException.class)
         .hasMessage("Not enough permission");
