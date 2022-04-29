@@ -34,6 +34,7 @@ import io.harness.exception.InvalidYamlException;
 import io.harness.exception.ScmException;
 import io.harness.git.model.ChangeType;
 import io.harness.gitaware.helper.GitAwareContextHelper;
+import io.harness.gitsync.beans.StoreType;
 import io.harness.gitsync.common.utils.GitEntityFilePath;
 import io.harness.gitsync.common.utils.GitSyncFilePathUtils;
 import io.harness.gitsync.helpers.GitContextHelper;
@@ -162,10 +163,10 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
       throw new EntityNotFoundException(
           PipelineCRUDErrorResponse.errorMessageForPipelineNotFound(orgIdentifier, projectIdentifier, identifier));
     }
-    if (GitAwareContextHelper.isOldFlow()) {
+    PipelineEntity pipelineEntity = optionalPipelineEntity.get();
+    if (GitAwareContextHelper.isOldFlow() || pipelineEntity.getStoreType() == StoreType.INLINE) {
       return optionalPipelineEntity;
     }
-    PipelineEntity pipelineEntity = optionalPipelineEntity.get();
     GovernanceMetadata governanceMetadata = pmsPipelineServiceHelper.validatePipelineYamlAndSetTemplateRefIfAny(
         pipelineEntity, pmsFeatureFlagService.isEnabled(accountId, FeatureName.OPA_PIPELINE_GOVERNANCE));
     if (governanceMetadata.getDeny()) {
