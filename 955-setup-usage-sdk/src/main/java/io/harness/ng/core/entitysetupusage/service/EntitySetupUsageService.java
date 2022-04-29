@@ -7,17 +7,17 @@
 
 package io.harness.ng.core.entitysetupusage.service;
 
-import static io.harness.annotations.dev.HarnessTeam.DX;
-
 import io.harness.EntityType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.core.entitysetupusage.dto.EntityReferencesDTO;
 import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
 import io.harness.ng.core.entitysetupusage.entity.EntitySetupUsage;
-
-import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
+
+import java.util.List;
+
+import static io.harness.annotations.dev.HarnessTeam.DX;
 
 @OwnedBy(DX)
 public interface EntitySetupUsageService {
@@ -39,6 +39,8 @@ public interface EntitySetupUsageService {
       String referredByEntityFQN, EntityType referredByEntityType);
 
   Boolean isEntityReferenced(String accountIdentifier, String referredEntityFQN, EntityType referredEntityType);
+
+  Long referredByEntityCount(String accountIdentifier, String referredEntityFQN, EntityType referredEntityType);
 
   // todo(abhinav): make delete and create a transactional operation
   Boolean flushSave(List<EntitySetupUsage> entitySetupUsage, EntityType entityTypeFromChannel,

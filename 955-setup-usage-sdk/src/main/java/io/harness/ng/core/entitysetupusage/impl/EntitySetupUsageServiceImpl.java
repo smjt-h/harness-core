@@ -7,9 +7,8 @@
 
 package io.harness.ng.core.entitysetupusage.impl;
 
-import static io.harness.annotations.dev.HarnessTeam.DX;
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
-
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.harness.EntityType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
@@ -27,15 +26,6 @@ import io.harness.ng.core.entitysetupusage.mappers.EntitySetupUsageEntityToDTO;
 import io.harness.ng.core.entitysetupusage.service.EntitySetupUsageService;
 import io.harness.repositories.entitysetupusage.EntitySetupUsageRepository;
 import io.harness.utils.FullyQualifiedIdentifierHelper;
-
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +35,16 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.Criteria;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static io.harness.annotations.dev.HarnessTeam.DX;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 @Singleton
 @AllArgsConstructor(access = AccessLevel.PRIVATE, onConstructor = @__({ @Inject }))
@@ -103,6 +103,13 @@ public class EntitySetupUsageServiceImpl implements EntitySetupUsageService {
     Criteria criteria = entitySetupUsageFilterHelper.createCriteriaToCheckWhetherThisEntityIsReferred(
         accountIdentifier, referredEntityFQN, referredEntityType);
     return entityReferenceRepository.exists(criteria);
+  }
+
+  @Override
+  public Long referredByEntityCount(String accountIdentifier, String referredEntityFQN, EntityType referredEntityType) {
+    Criteria criteria = entitySetupUsageFilterHelper.createCriteriaToCheckWhetherThisEntityIsReferred(
+            accountIdentifier, referredEntityFQN, referredEntityType);
+    return entityReferenceRepository.countAll(criteria);
   }
 
   @Override
