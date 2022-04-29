@@ -176,7 +176,10 @@ public class ArtifactoryArtifactTaskHandler extends DelegateArtifactTaskHandler<
                          return buildDetail;
                        })
                        .collect(Collectors.toList());
-    return ArtifactTaskExecutionResponse.builder().buildDetails(buildDetails).build();
+    List<ArtifactoryGenericArtifactDelegateResponse> artifactDelegateResponses = buildDetails.stream()
+            .map(build -> ArtifactoryRequestResponseMapper.toArtifactoryGenericResponse(build, artifactoryGenericArtifactDelegateRequest))
+            .collect(Collectors.toList());
+    return ArtifactTaskExecutionResponse.builder().artifactDelegateResponses(artifactDelegateResponses).buildDetails(buildDetails).build();
   }
 
   private void saveLogs(LogCallback executionLogCallback, String message) {

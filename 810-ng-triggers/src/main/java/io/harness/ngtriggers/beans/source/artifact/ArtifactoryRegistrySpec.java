@@ -25,8 +25,10 @@ import lombok.Data;
 public class ArtifactoryRegistrySpec implements ArtifactTypeSpec {
   String connectorRef;
   List<TriggerEventDataCondition> eventConditions;
-  String imagePath;
-  String tag;
+  String artifactDirectory;
+  String artifactPath;
+  String repository;
+  String repositoryFormat;
 
   @Override
   public String fetchConnectorRef() {
