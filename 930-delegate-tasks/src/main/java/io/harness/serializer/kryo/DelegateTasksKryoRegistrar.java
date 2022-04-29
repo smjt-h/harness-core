@@ -40,6 +40,7 @@ import software.wings.beans.GitFetchFilesConfig;
 import software.wings.beans.GitFetchFilesTaskParams;
 import software.wings.beans.HostConnectionAttributes;
 import software.wings.beans.HostValidationTaskParameters;
+import software.wings.beans.HttpStateExecutionResponse;
 import software.wings.beans.InstanaConfig;
 import software.wings.beans.JiraConfig;
 import software.wings.beans.KmsConfig;
@@ -66,6 +67,10 @@ import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.beans.config.ArtifactoryConfig;
 import software.wings.beans.config.LogzConfig;
 import software.wings.beans.config.NexusConfig;
+import software.wings.beans.container.EcsSteadyStateCheckParams;
+import software.wings.beans.container.EcsSteadyStateCheckResponse;
+import software.wings.beans.container.KubernetesSteadyStateCheckParams;
+import software.wings.beans.container.KubernetesSwapServiceSelectorsParams;
 import software.wings.beans.delegation.ShellScriptParameters;
 import software.wings.beans.settings.azureartifacts.AzureArtifactsPATConfig;
 import software.wings.beans.trigger.WebHookTriggerResponseData;
@@ -81,6 +86,7 @@ import software.wings.delegatetasks.rancher.RancherResolveClustersTaskParameters
 import software.wings.delegatetasks.validation.capabilities.BasicValidationInfo;
 import software.wings.delegatetasks.validation.capabilities.ClusterMasterUrlValidationCapability;
 import software.wings.delegatetasks.validation.capabilities.GitConnectionCapability;
+import software.wings.delegatetasks.validation.capabilities.SSHHostValidationCapability;
 import software.wings.delegatetasks.validation.capabilities.ShellConnectionCapability;
 import software.wings.delegatetasks.validation.capabilities.WinrmHostValidationCapability;
 import software.wings.helpers.ext.azure.devops.AzureArtifactsFeed;
@@ -226,6 +232,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(PcfConfig.class, 5296);
     kryo.register(SmtpConfig.class, 5304);
     kryo.register(TimeSeriesMlAnalysisType.class, 5347);
+    kryo.register(HttpStateExecutionResponse.class, 5375);
     kryo.register(ElkLogFetchRequest.class, 5376);
     kryo.register(AwsRequest.class, 5380);
     kryo.register(AwsResponse.class, 5381);
@@ -368,5 +375,10 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(RancherResolveClustersTaskParameters.class, 50004);
     kryo.register(RancherResolveClustersResponse.class, 50005);
     kryo.register(SpotInstCommandRequest.class, 7220);
+    kryo.register(EcsSteadyStateCheckParams.class, 5370);
+    kryo.register(EcsSteadyStateCheckResponse.class, 5371);
+    kryo.register(KubernetesSteadyStateCheckParams.class, 5276);
+    kryo.register(KubernetesSwapServiceSelectorsParams.class, 5365);
+    kryo.register(SSHHostValidationCapability.class, 7326);
   }
 }
