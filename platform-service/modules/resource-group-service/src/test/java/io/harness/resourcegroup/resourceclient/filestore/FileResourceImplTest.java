@@ -14,11 +14,9 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyList;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessTeam;
@@ -36,7 +34,6 @@ import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -121,9 +118,8 @@ public class FileResourceImplTest extends CategoryTest {
     }
   }
 
-  private List<String> getRandomPopulatedStringList(int elements) {
-    final Random rand = new Random();
-    return IntStream.range(0, elements)
+  private List<String> getRandomPopulatedStringList(int count) {
+    return IntStream.range(0, count)
         .mapToObj(i -> RandomStringUtils.random(5, true, true))
         .collect(Collectors.toList());
   }

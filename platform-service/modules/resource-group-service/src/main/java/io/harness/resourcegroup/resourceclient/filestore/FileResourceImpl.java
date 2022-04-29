@@ -24,11 +24,8 @@ import io.harness.eventsframework.consumer.Message;
 import io.harness.eventsframework.entity_crud.EntityChangeDTO;
 import io.harness.exception.InvalidRequestException;
 import io.harness.filestore.remote.FileStoreClient;
-import io.harness.gitops.models.Agent;
 import io.harness.ng.beans.PageResponse;
-import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.filestore.dto.FileDTO;
-import io.harness.remote.client.NGRestUtils;
 import io.harness.resourcegroup.beans.ValidatorType;
 import io.harness.resourcegroup.framework.v1.service.Resource;
 import io.harness.resourcegroup.framework.v1.service.ResourceInfo;
@@ -50,7 +47,6 @@ import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import retrofit2.Call;
 import retrofit2.Response;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
