@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
 public class TerraformConfigFilesWrapper {
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) private String uuid;
   @NotNull StoreConfigWrapper store;
-  ModuleSource moduleSource;
+  private ModuleSource moduleSource;
 
   public void validateParams() {
     Validator.notNullCheck("Store cannot be null in Config Files", store);

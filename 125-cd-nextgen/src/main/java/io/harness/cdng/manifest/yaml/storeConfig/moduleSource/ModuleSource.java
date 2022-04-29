@@ -16,6 +16,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.yaml.YamlSchemaTypes;
 
+import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -33,5 +34,6 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("moduleSource")
 @RecasterAlias("io.harness.cdng.manifest.yaml.storeConfig.moduleSource.ModuleSource")
 public class ModuleSource {
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) private String uuid;
   @YamlSchemaTypes({string, bool}) @NotNull @Wither private ParameterField<Boolean> useConnectorCredentials;
 }
