@@ -179,6 +179,8 @@ import io.harness.validation.SuppressValidation;
 import io.harness.version.VersionInfoManager;
 import io.harness.waiter.WaitNotifyEngine;
 
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import software.wings.app.DelegateGrpcConfig;
 import software.wings.app.MainConfiguration;
 import software.wings.audit.AuditHeader;
@@ -274,6 +276,7 @@ import javax.validation.ConstraintViolation;
 import javax.validation.executable.ValidateOnExecution;
 import javax.ws.rs.core.MediaType;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Request.Builder;
 import okhttp3.Response;
@@ -292,6 +295,11 @@ import org.mongodb.morphia.query.UpdateOperations;
 
 @Singleton
 @ValidateOnExecution
+// For testing since this class should probably be 20 classes, and it's hard to test it
+@lombok.Builder
+@AllArgsConstructor
+// For guice injection (since we wrongly use field injection, but this is not fixable for class at this size
+@NoArgsConstructor
 @Slf4j
 @TargetModule(HarnessModule._420_DELEGATE_SERVICE)
 @BreakDependencyOn("software.wings.beans.Event")
@@ -3483,11 +3491,13 @@ public class DelegateServiceImpl implements DelegateService {
    * All delegates matching {AccId, HostName Prefix, Type = ECS}
    */
   private List<Delegate> getAllDelegatesMatchingGroupName(final Delegate delegate) {
-    return persistence.createQuery(Delegate.class, excludeAuthority)
-        .filter(DelegateKeys.accountId, delegate.getAccountId())
-        .filter(DelegateKeys.ng, false)
-        .filter(DelegateKeys.delegateType, delegate.getDelegateType())
-        .filter(DelegateKeys.delegateGroupName, delegate.getDelegateGroupName())
+    final Query<Delegate> filter = persistence.createQuery(Delegate.class, excludeAuthority)
+            .filter(DelegateKeys.accountId, delegate.getAccountId())
+            .filter(DelegateKeys.ng, false);
+    final Query<Delegate> filter1 = filter
+            .filter(DelegateKeys.delegateType, delegate.getDelegateType())
+            .filter(DelegateKeys.delegateGroupName, delegate.getDelegateGroupName());
+    return filter1
         .asList();
   }
 
