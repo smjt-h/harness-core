@@ -359,6 +359,12 @@ public class NGHostValidationServiceImpl implements NGHostValidationService {
           String.format(HintException.DELEGATE_NOT_AVAILABLE, DocumentLinksConstants.DELEGATE_INSTALLATION_LINK),
           new DelegateNotAvailableException(ex.getCause().getMessage(), ex, WingsException.USER));
     }
+
+    if (delegateResponseData instanceof ErrorNotifyResponseData) {
+      throw new HintException(
+          String.format(HintException.DELEGATE_NOT_AVAILABLE, DocumentLinksConstants.DELEGATE_INSTALLATION_LINK),
+          new DelegateNotAvailableException("Delegates are not available", WingsException.USER));
+    }
     return delegateResponseData;
   }
 
