@@ -104,6 +104,30 @@ public class PMSPipelineDtoMapper {
         .build();
   }
 
+  public PMSPipelineSummaryResponseDTO preparePipelineSummaryForListView(PipelineEntity pipelineEntity) {
+    return PMSPipelineSummaryResponseDTO.builder()
+        .identifier(pipelineEntity.getIdentifier())
+        .description(pipelineEntity.getDescription())
+        .name(pipelineEntity.getName())
+        .tags(TagMapper.convertToMap(pipelineEntity.getTags()))
+        .version(pipelineEntity.getVersion())
+        .numOfStages(pipelineEntity.getStageCount())
+        .executionSummaryInfo(getExecutionSummaryInfoDTO(pipelineEntity))
+        .lastUpdatedAt(pipelineEntity.getLastUpdatedAt())
+        .createdAt(pipelineEntity.getCreatedAt())
+        .modules(pipelineEntity.getFilters().keySet())
+        .filters(ModuleInfoMapper.getModuleInfo(pipelineEntity.getFilters()))
+        .stageNames(pipelineEntity.getStageNames())
+        .gitDetails(pipelineEntity.getStoreType() == null ? EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity)
+                : pipelineEntity.getStoreType() == StoreType.REMOTE
+                ? GitAwareContextHelper.getEntityGitDetails(pipelineEntity)
+                : null)
+        .entityValidityDetails(pipelineEntity.isEntityInvalid()
+                ? EntityValidityDetails.builder().valid(false).invalidYaml(pipelineEntity.getYaml()).build()
+                : EntityValidityDetails.builder().valid(true).build())
+        .build();
+  }
+
   public PipelineEntity toPipelineEntity(String accountId, String yaml) {
     try {
       BasicPipeline basicPipeline = YamlUtils.read(yaml, BasicPipeline.class);

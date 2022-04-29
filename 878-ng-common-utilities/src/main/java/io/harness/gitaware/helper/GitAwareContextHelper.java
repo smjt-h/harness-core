@@ -19,6 +19,7 @@ import io.harness.gitsync.scm.beans.ScmGitMetaData;
 import io.harness.gitsync.scm.beans.ScmGitMetaDataContext;
 import io.harness.gitsync.sdk.EntityGitDetails;
 import io.harness.manage.GlobalContextManager;
+import io.harness.persistence.gitaware.GitAware;
 
 import lombok.experimental.UtilityClass;
 
@@ -75,6 +76,13 @@ public class GitAwareContextHelper {
         .repoName(scmGitMetaData.getRepoName())
         .filePath(scmGitMetaData.getFilePath())
         .commitId(scmGitMetaData.getCommitId())
+        .build();
+  }
+
+  public EntityGitDetails getEntityGitDetails(GitAware gitAware) {
+    return EntityGitDetails.builder()
+        .repoName(gitAware.getRepo())
+        .filePath(gitAware.getFilePath())
         .build();
   }
 }
