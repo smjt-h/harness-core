@@ -129,24 +129,14 @@ fi
 
 cp 260-delegate/config-delegate.yml dist/delegate/config-delegate.yml
 
-if [ "$BUILD_PURPOSE" == 'RELEASE' ]; then
-  echo "INFO: Signing Delegate..."
-  jarsigner -storetype pkcs12 -keystore ${KEY_STORE} -storepass ${KEY_STORE_PASSWORD} dist/delegate/delegate-capsule.jar ${KEY_STORE_ALIAS}
-else
-  echo "INFO: BUILD_PURPOSE = $BUILD_PURPOSE. Skipping Signing...."
-fi
+jarsigner -storetype pkcs12 -keystore ${KEY_STORE} -storepass ${KEY_STORE_PASSWORD} dist/delegate/delegate-capsule.jar ${KEY_STORE_ALIAS}
 cp dist/delegate/delegate-capsule.jar delegate-${VERSION}.jar
 cp protocol.info dist/delegate/.
 
 mkdir -p dist/watcher
 cp ${HOME}/.bazel-dirs/bin/960-watcher/module_deploy.jar dist/watcher/watcher-capsule.jar
 
-if [ "$BUILD_PURPOSE" == 'RELEASE' ]; then
-  echo "INFO: Signing Watcher..."
-  jarsigner -storetype pkcs12 -keystore ${KEY_STORE} -storepass ${KEY_STORE_PASSWORD} dist/watcher/watcher-capsule.jar ${KEY_STORE_ALIAS}
-else
-  echo "INFO: BUILD_PURPOSE = $BUILD_PURPOSE. Skipping Signing...."
-fi
+jarsigner -storetype pkcs12 -keystore ${KEY_STORE} -storepass ${KEY_STORE_PASSWORD} dist/watcher/watcher-capsule.jar ${KEY_STORE_ALIAS}
 cp dist/watcher/watcher-capsule.jar watcher-${VERSION}.jar
 cp protocol.info dist/watcher/.
 
