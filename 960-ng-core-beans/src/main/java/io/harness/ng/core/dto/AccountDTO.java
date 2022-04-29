@@ -38,14 +38,27 @@ import lombok.experimental.FieldDefaults;
 @OwnedBy(PL)
 @Schema(name = "Account", description = "This is the view of an Account defined in Harness")
 public class AccountDTO {
-  @EntityIdentifier(allowBlank = false) @VariableExpression(skipVariableExpression = true) String identifier;
-  @NGEntityName String name;
-  String companyName;
-  @VariableExpression(skipVariableExpression = true) String cluster;
-  @VariableExpression(skipVariableExpression = true) DefaultExperience defaultExperience;
-  @VariableExpression(skipVariableExpression = true) AuthenticationMechanism authenticationMechanism;
-  @VariableExpression(skipVariableExpression = true) ServiceAccountConfig serviceAccountConfig;
-  @VariableExpression(skipVariableExpression = true) boolean isNextGenEnabled;
+  @Schema(description = "Identifier of the account.")
+  @EntityIdentifier(allowBlank = false)
+  @VariableExpression(skipVariableExpression = true)
+  String identifier;
+  @Schema(description = "Name of the account.") @NGEntityName String name;
+  @Schema(description = "Name of the company name.") String companyName;
+  @Schema(description = "Name of the cluster associated with this account.")
+  @VariableExpression(skipVariableExpression = true)
+  String cluster;
+  @Schema(description = "Specifies the default experience of the account.")
+  @VariableExpression(skipVariableExpression = true)
+  DefaultExperience defaultExperience;
+  @Schema(description = "Authentication mechanism associated with the account.")
+  @VariableExpression(skipVariableExpression = true)
+  AuthenticationMechanism authenticationMechanism;
+  @Schema(description = "Configuration of the service account associated with the account.")
+  @VariableExpression(skipVariableExpression = true)
+  ServiceAccountConfig serviceAccountConfig;
+  @Schema(description = "Specifies whether or not Nextgen is enabled to the account.")
+  @VariableExpression(skipVariableExpression = true)
+  boolean isNextGenEnabled;
 
   @Builder
   public AccountDTO(String identifier, String name, String companyName, String cluster,

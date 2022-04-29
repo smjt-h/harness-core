@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
+import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.EntityName;
@@ -34,12 +35,14 @@ import lombok.experimental.FieldDefaults;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(name = "EnvironmentRequest", description = "This is the EnvironmentRequest entity defined in Harness")
 public class EnvironmentRequestDTO {
-  String orgIdentifier;
-  String projectIdentifier;
-  @EntityIdentifier String identifier;
-  Map<String, String> tags;
-  @EntityName String name;
-  String description;
-  String color;
-  @ApiModelProperty(required = true) EnvironmentType type;
+  @Schema(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) String orgIdentifier;
+  @Schema(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) String projectIdentifier;
+  @Schema(description = "Identifier of the Environment.") @EntityIdentifier String identifier;
+  @Schema(description = NGCommonEntityConstants.TAGS) Map<String, String> tags;
+  @Schema(description = "Name of the Environment.") @EntityName String name;
+  @Schema(description = NGCommonEntityConstants.DESCRIPTION) String description;
+  @Schema(description = "Color of the Environment.") String color;
+  @Schema(description = "Specify the environment type whether production or Preproduction. ")
+  @ApiModelProperty(required = true)
+  EnvironmentType type;
 }
