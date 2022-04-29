@@ -43,11 +43,6 @@ public class ServiceInstanceIdsParam implements ContextElement, SweepingOutput {
     return SERVICE_INSTANCE_IDS_PARAMS;
   }
 
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    return null;
-  }
-
   /**
    * Gets service id.
    *

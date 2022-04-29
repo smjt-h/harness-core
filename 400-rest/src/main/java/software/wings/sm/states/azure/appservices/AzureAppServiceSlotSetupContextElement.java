@@ -54,14 +54,6 @@ public class AzureAppServiceSlotSetupContextElement implements ContextElement, S
   }
 
   @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put("webApp", webApp);
-    map.put("deploymentSlot", deploymentSlot);
-    return ImmutableMap.of("azurewebapp", map);
-  }
-
-  @Override
   public ContextElement cloneMin() {
     return null;
   }

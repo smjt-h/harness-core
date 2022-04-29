@@ -58,11 +58,6 @@ public class ContainerRollbackRequestElement implements ContextElement, Sweeping
   }
 
   @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    return null;
-  }
-
-  @Override
   public ContextElement cloneMin() {
     return this;
   }

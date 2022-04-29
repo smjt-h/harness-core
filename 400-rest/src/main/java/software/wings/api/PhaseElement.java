@@ -82,22 +82,6 @@ public class PhaseElement implements ContextElement {
     return this;
   }
 
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put(SERVICE, serviceElement);
-
-    if (rollbackArtifactId != null) {
-      Artifact artifact = artifactService.getWithSource(rollbackArtifactId);
-      map.put(ARTIFACT, artifact);
-    } else if (isRollback()
-        && featureFlagService.isEnabled(FeatureName.ROLLBACK_NONE_ARTIFACT, context.getAccountId())) {
-      // In case of rollback if don't find rollbackArtifactId, set artifact object to null.
-      map.put(ARTIFACT, null);
-    }
-    return map;
-  }
-
   public String getPhaseExecutionIdForSweepingOutput() {
     return workflowExecutionId + uuid + phaseName;
   }

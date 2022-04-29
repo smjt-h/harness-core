@@ -14,13 +14,10 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.context.ContextElementType;
 
-import java.util.Map;
-
 /**
  * Interface for all RepeatElements.
  */
 @OwnedBy(CDC)
-@TargetModule(_957_CG_BEANS)
 public interface ContextElement {
   String WORKFLOW = "workflow";
   String DEPLOYMENT_URL = "deploymentUrl";
@@ -52,8 +49,6 @@ public interface ContextElement {
   String getUuid();
 
   String getName();
-
-  Map<String, Object> paramMap(ExecutionContext context);
 
   ContextElement cloneMin();
 }

@@ -63,19 +63,6 @@ public class InstanceElement implements ContextElement, VerificationElement {
     return ContextElementType.INSTANCE;
   }
 
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put(INSTANCE, this);
-    if (host != null) {
-      map.putAll(host.paramMap(context));
-    }
-    if (serviceTemplateElement != null) {
-      map.putAll(serviceTemplateElement.paramMap(context));
-    }
-    return map;
-  }
-
   public EcsContainerDetails getEcsContainerDetails() {
     return ecsContainerDetails;
   }

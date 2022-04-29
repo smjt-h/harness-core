@@ -98,17 +98,6 @@ public class ServiceTemplateElement implements ContextElement {
     return aServiceTemplateElement().withUuid(uuid).withName(name).build();
   }
 
-  /* (non-Javadoc)
-   * @see software.wings.sm.ContextElement#paramMap()
-   */
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put(SERVICE_TEMPLATE, this);
-    map.putAll(serviceElement.paramMap(context));
-    return map;
-  }
-
   /**
    * The type Builder.
    */

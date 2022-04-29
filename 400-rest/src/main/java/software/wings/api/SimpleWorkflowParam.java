@@ -24,9 +24,6 @@ import java.util.Map;
  * @author Rishi
  */
 public class SimpleWorkflowParam extends ServiceInstanceIdsParam {
-  private static final String SIMPLE_WORKFLOW_COMMAND_NAME = "SIMPLE_WORKFLOW_COMMAND_NAME";
-  private static final String SIMPLE_WORKFLOW_REPEAT_STRATEGY = "SIMPLE_WORKFLOW_REPEAT_STRATEGY";
-
   private ExecutionStrategy executionStrategy;
   private String commandName;
 
@@ -64,17 +61,6 @@ public class SimpleWorkflowParam extends ServiceInstanceIdsParam {
    */
   public void setCommandName(String commandName) {
     this.commandName = commandName;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = super.paramMap(context);
-    if (map == null) {
-      map = new HashMap<>();
-    }
-    map.put(SIMPLE_WORKFLOW_COMMAND_NAME, commandName);
-    map.put(SIMPLE_WORKFLOW_REPEAT_STRATEGY, executionStrategy);
-    return map;
   }
 
   /**

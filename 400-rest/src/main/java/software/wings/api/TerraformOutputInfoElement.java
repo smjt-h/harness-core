@@ -44,17 +44,6 @@ public class TerraformOutputInfoElement implements ContextElement {
     return null;
   }
 
-  /**
-   * @deprecated use {@link software.wings.api.terraform.TerraformOutputVariables} for storing outputs
-   */
-  @Override
-  @Deprecated
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    HashMap<String, Object> paramMap = new HashMap<>();
-    paramMap.put("terraform", outputVariables);
-    return paramMap;
-  }
-
   @Override
   public ContextElement cloneMin() {
     return null;

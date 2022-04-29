@@ -65,14 +65,6 @@ public class AmiServiceTrafficShiftAlbSetupElement implements ContextElement, Sw
   }
 
   @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put("newAsgName", newAutoScalingGroupName);
-    map.put("oldAsgName", oldAutoScalingGroupName);
-    return ImmutableMap.of("ami", map);
-  }
-
-  @Override
   public String getType() {
     return "amiServiceTrafficShiftAlbSetupElement";
   }

@@ -45,11 +45,4 @@ public class ServiceElement implements ContextElement {
   public ContextElement cloneMin() {
     return ServiceElement.builder().uuid(uuid).name(name).description(description).build();
   }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put(SERVICE, this);
-    return map;
-  }
 }

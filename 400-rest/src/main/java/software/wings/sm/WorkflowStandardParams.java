@@ -9,24 +9,17 @@ package software.wings.sm;
 
 import static io.harness.annotations.dev.HarnessModule._957_CG_BEANS;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
-import static io.harness.beans.OrchestrationWorkflowType.BUILD;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
-import static java.lang.String.format;
 import static org.apache.commons.lang3.RandomUtils.nextInt;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.EmbeddedUser;
-import io.harness.beans.FeatureName;
-import io.harness.beans.WorkflowType;
 import io.harness.context.ContextElementType;
 import io.harness.exception.InvalidRequestException;
-import io.harness.ff.FeatureFlagService;
 
-import software.wings.api.InfraMappingElement;
 import software.wings.api.InstanceElement;
 import software.wings.api.ServiceElement;
 import software.wings.api.WorkflowElement;
@@ -40,31 +33,24 @@ import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.ArtifactInput;
 import software.wings.common.InstanceExpressionProcessor;
-import software.wings.helpers.ext.url.SubdomainUrlHelperIntfc;
 import software.wings.service.intfc.AccountService;
 import software.wings.service.intfc.AppService;
-import software.wings.service.intfc.ApplicationManifestService;
 import software.wings.service.intfc.ArtifactService;
 import software.wings.service.intfc.ArtifactStreamService;
 import software.wings.service.intfc.ArtifactStreamServiceBindingService;
-import software.wings.service.intfc.BuildSourceService;
 import software.wings.service.intfc.EnvironmentService;
 import software.wings.service.intfc.ServiceTemplateService;
-import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.service.intfc.applicationmanifest.HelmChartService;
 import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.inject.Inject;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.jexl3.JexlException;
-import org.apache.http.client.utils.URIBuilder;
 import org.mongodb.morphia.annotations.Transient;
 
 /**
@@ -91,18 +77,11 @@ public class WorkflowStandardParams implements ExecutionContextAware, ContextEle
 
   @Inject private transient ArtifactStreamService artifactStreamService;
 
-  @Inject private transient BuildSourceService buildSourceService;
-
-  @Inject private transient WorkflowExecutionService workflowExecutionService;
-
   @Inject private transient ArtifactStreamServiceBindingService artifactStreamServiceBindingService;
 
   @Inject private transient SweepingOutputService sweepingOutputService;
 
-  @Inject private transient FeatureFlagService featureFlagService;
-  @Inject private transient SubdomainUrlHelperIntfc subdomainUrlHelper;
   @Inject private transient HelmChartService helmChartService;
-  @Inject private transient ApplicationManifestService applicationManifestService;
 
   private String appId;
   private String envId;
@@ -150,83 +129,6 @@ public class WorkflowStandardParams implements ExecutionContextAware, ContextEle
     return this;
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    if (workflowElement != null) {
-      if (WorkflowType.ORCHESTRATION == context.getWorkflowType() && workflowElement.getStartTs() == null) {
-        workflowElement.setStartTs(workflowExecutionService.fetchWorkflowExecutionStartTs(
-            getApp().getAppId(), context.getWorkflowExecutionId()));
-      }
-      map.put(WORKFLOW, workflowElement);
-    }
-    map.put(APP, getApp());
-    map.put(ACCOUNT, getAccount());
-    map.put(ENV, getEnv());
-    map.put(TIMESTAMP_ID, timestampId);
-
-    String envUrlId = null;
-    if (env != null) {
-      envUrlId = env.getUuid();
-    } else {
-      envUrlId = BUILD == context.getOrchestrationWorkflowType() ? "build" : "noEnv";
-    }
-
-    String url;
-    if (workflowElement != null && isNotBlank(workflowElement.getPipelineDeploymentUuid())) {
-      url = format("/account/%s/app/%s/pipeline-execution/%s/workflow-execution/%s/details", app.getAccountId(),
-          app.getUuid(), workflowElement.getPipelineDeploymentUuid(), context.getWorkflowExecutionId());
-    } else {
-      url = format("/account/%s/app/%s/env/%s/executions/%s/details", app.getAccountId(), app.getUuid(), envUrlId,
-          context.getWorkflowExecutionId());
-    }
-    map.put(DEPLOYMENT_URL, buildAbsoluteUrl(url, context.getAccountId()));
-
-    if (currentUser != null) {
-      map.put(DEPLOYMENT_TRIGGERED_BY, currentUser.getName());
-    }
-
-    InfraMappingElement infraMappingElement = context.fetchInfraMappingElement();
-    if (infraMappingElement != null) {
-      map.put(INFRA, infraMappingElement);
-    }
-
-    ServiceElement serviceElement = context.fetchServiceElement();
-    if (serviceElement == null) {
-      if (isNotEmpty(artifactIds)) {
-        Artifact artifact = artifactService.get(artifactIds.get(0));
-        ExecutionContextImpl.addArtifactToContext(
-            artifactStreamService, getApp().getAccountId(), map, artifact, buildSourceService, false);
-      }
-      if (isNotEmpty(rollbackArtifactIds)) {
-        Artifact rollbackArtifact = artifactService.get(rollbackArtifactIds.get(0));
-        ExecutionContextImpl.addArtifactToContext(
-            artifactStreamService, getApp().getAccountId(), map, rollbackArtifact, buildSourceService, true);
-      }
-    } else {
-      String accountId = getApp().getAccountId();
-      String serviceId = serviceElement.getUuid();
-      if (!featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, accountId)) {
-        Artifact artifact = getArtifactForService(serviceId);
-        ExecutionContextImpl.addArtifactToContext(
-            artifactStreamService, accountId, map, artifact, buildSourceService, false);
-
-        Artifact rollbackArtifact = getRollbackArtifactForService(serviceId);
-        ExecutionContextImpl.addArtifactToContext(
-            artifactStreamService, getApp().getAccountId(), map, rollbackArtifact, buildSourceService, true);
-      }
-      if (featureFlagService.isEnabled(FeatureName.HELM_CHART_AS_ARTIFACT, accountId)) {
-        HelmChart helmChart = getHelmChartForService(serviceId);
-        ExecutionContextImpl.addHelmChartToContext(appId, map, helmChart, applicationManifestService);
-      }
-    }
-
-    return map;
-  }
-
   public HelmChart getHelmChartForService(String serviceId) {
     getHelmCharts();
     if (isEmpty(helmCharts)) {
@@ -241,17 +143,6 @@ public class WorkflowStandardParams implements ExecutionContextAware, ContextEle
       helmCharts = helmChartService.listByIds(getApp().getAccountId(), helmChartIds);
     }
     return helmCharts;
-  }
-
-  private String buildAbsoluteUrl(String fragment, String accountId) {
-    String baseUrl = subdomainUrlHelper.getPortalBaseUrl(accountId);
-    try {
-      URIBuilder uriBuilder = new URIBuilder(baseUrl);
-      uriBuilder.setFragment(fragment);
-      return uriBuilder.toString();
-    } catch (URISyntaxException e) {
-      return baseUrl;
-    }
   }
 
   /**
@@ -522,7 +413,7 @@ public class WorkflowStandardParams implements ExecutionContextAware, ContextEle
     return application;
   }
 
-  private Account getAccount() {
+  public Account getAccount() {
     String accountId = getApp() == null ? null : getApp().getAccountId();
     if (account == null && accountId != null) {
       account = accountService.getAccountWithDefaults(accountId);

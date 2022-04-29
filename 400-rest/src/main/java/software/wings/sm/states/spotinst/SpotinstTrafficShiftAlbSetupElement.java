@@ -57,11 +57,6 @@ public class SpotinstTrafficShiftAlbSetupElement implements ContextElement, Swee
   }
 
   @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    return null;
-  }
-
-  @Override
   public ContextElement cloneMin() {
     return null;
   }

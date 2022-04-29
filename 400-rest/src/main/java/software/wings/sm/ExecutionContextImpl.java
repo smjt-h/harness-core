@@ -65,6 +65,8 @@ import io.harness.security.SimpleEncryption;
 import io.harness.serializer.KryoSerializer;
 import io.harness.terraform.expression.TerraformPlanExpressionInterface;
 
+import software.wings.api.ContextElementParamMapper;
+import software.wings.api.ContextElementParamMapperFactory;
 import software.wings.api.DeploymentType;
 import software.wings.api.InfraMappingElement;
 import software.wings.api.InfraMappingElement.CloudProvider;
@@ -217,6 +219,7 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
   @Inject private transient CustomDeploymentTypeService customDeploymentTypeService;
   @Inject private transient HelmChartService helmChartService;
   @Inject private transient FileService fileService;
+  @Inject private transient ContextElementParamMapperFactory paramMapperFactory;
 
   private StateMachine stateMachine;
   private StateExecutionInstance stateExecutionInstance;
@@ -225,6 +228,7 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
 
   /**
    * Instantiates a new execution context impl.
+   * Only used for UTs.
    *
    * @param stateExecutionInstance the state execution instance
    */
@@ -978,7 +982,8 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
     while (it.hasNext()) {
       ContextElement contextElement = it.next();
 
-      Map<String, Object> map = contextElement.paramMap(this);
+      ContextElementParamMapper paramMapper = this.paramMapperFactory.getParamMapper(contextElement);
+      Map<String, Object> map = paramMapper.paramMap(this);
       if (map != null) {
         contextMap.putAll(map);
       }
@@ -1099,8 +1104,13 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
     List<ContextElement> contextElements = stateExecutionContext.getContextElements();
     if (contextElements != null) {
       for (ContextElement contextElement : contextElements) {
-        map = copyIfNeeded(map);
-        map.putAll(contextElement.paramMap(this));
+        ContextElementParamMapper paramMapper = this.paramMapperFactory.getParamMapper(contextElement);
+        Map<String, Object> paramMap = paramMapper.paramMap(this);
+
+        if (paramMap != null) {
+          map = copyIfNeeded(map);
+          map.putAll(paramMap);
+        }
       }
     }
     StateExecutionData stateExecutionData = stateExecutionContext.getStateExecutionData();

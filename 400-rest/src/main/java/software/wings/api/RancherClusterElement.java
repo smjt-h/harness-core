@@ -52,14 +52,6 @@ public class RancherClusterElement implements ContextElement {
   }
 
   @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put(RANCHER, this);
-
-    return paramMap;
-  }
-
-  @Override
   public ContextElement cloneMin() {
     return new RancherClusterElement(this.uuid, this.clusterName);
   }

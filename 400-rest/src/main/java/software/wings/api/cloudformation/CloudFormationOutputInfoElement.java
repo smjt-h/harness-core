@@ -45,13 +45,6 @@ public class CloudFormationOutputInfoElement implements CloudFormationElement {
   }
 
   @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put("cloudformation", newStackOutputs);
-    return map;
-  }
-
-  @Override
   public ContextElement cloneMin() {
     return null;
   }

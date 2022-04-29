@@ -24,9 +24,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.joor.Reflect.on;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import io.harness.beans.SweepingOutput;
 import io.harness.beans.SweepingOutputInstance;
@@ -38,8 +40,13 @@ import io.harness.rule.Owner;
 import io.harness.serializer.KryoSerializer;
 
 import software.wings.WingsBaseTest;
+import software.wings.api.ContextElementParamMapper;
+import software.wings.api.ContextElementParamMapperFactory;
 import software.wings.api.InstanceElement;
+import software.wings.api.InstanceElementParamMapper;
+import software.wings.api.NoopContextElementParamMapper;
 import software.wings.api.PcfInstanceElement;
+import software.wings.api.PcfInstanceElementParamMapper;
 import software.wings.api.PhaseElement;
 import software.wings.api.instancedetails.InstanceInfoVariables;
 import software.wings.beans.Environment;
@@ -450,6 +457,10 @@ public class SweepingOutputServiceImplTest extends WingsBaseTest {
 
   private ExecutionContext generateExecutionContext() {
     WorkflowStandardParams workflowStandardParams = spy(WorkflowStandardParams.class);
+    doReturn(appId).when(workflowStandardParams).getAppId();
+
+    // mock paramMapper and factory
+    ContextElementParamMapper workflowStandardParamsMapper = spy(ContextElementParamMapper.class);
     doReturn(ImmutableMap.<String, Object>builder()
                  .put(ContextElement.APP,
                      anApplication().uuid(appId).appId(appId).accountId(ACCOUNT_ID).name(APP_NAME).build())
@@ -461,9 +472,15 @@ public class SweepingOutputServiceImplTest extends WingsBaseTest {
                          .name(ENV_NAME)
                          .build())
                  .build())
-        .when(workflowStandardParams)
+        .when(workflowStandardParamsMapper)
         .paramMap(any());
-    doReturn(appId).when(workflowStandardParams).getAppId();
+
+    ContextElementParamMapperFactory paramMapperFactory = spy(ContextElementParamMapperFactory.class);
+    when(paramMapperFactory.getParamMapper(any())).thenReturn(new NoopContextElementParamMapper());
+    when(paramMapperFactory.getParamMapper(isA(InstanceElement.class)))
+        .thenAnswer(
+            invocationOnMock -> new InstanceElementParamMapper((InstanceElement) invocationOnMock.getArguments()[0]));
+    when(paramMapperFactory.getParamMapper(workflowStandardParams)).thenReturn(workflowStandardParamsMapper);
 
     StateExecutionInstance stateExecutionInstance = new StateExecutionInstance();
     stateExecutionInstance.setDisplayName("name");
@@ -472,6 +489,9 @@ public class SweepingOutputServiceImplTest extends WingsBaseTest {
     stateExecutionInstance.getContextElements().add(workflowStandardParams);
     stateExecutionInstance.getContextElements().add(
         PhaseElement.builder().appId(appId).uuid(phaseElementId).phaseName(phaseName).build());
-    return new ExecutionContextImpl(stateExecutionInstance);
+    ExecutionContextImpl context = new ExecutionContextImpl(stateExecutionInstance);
+    on(context).set("paramMapperFactory", paramMapperFactory);
+
+    return context;
   }
 }

@@ -42,11 +42,6 @@ public class CloudFormationDeleteStackElement implements CloudFormationElement {
   }
 
   @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    return null;
-  }
-
-  @Override
   public ContextElement cloneMin() {
     return null;
   }

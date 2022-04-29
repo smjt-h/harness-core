@@ -8,8 +8,9 @@
 package software.wings.api;
 
 import static io.harness.annotations.dev.HarnessModule._957_CG_BEANS;
-import static io.harness.context.ContextElementType.CLUSTER;
+import static io.harness.annotations.dev.HarnessTeam.CDC;
 
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.context.ContextElementType;
 
@@ -17,25 +18,19 @@ import software.wings.sm.ContextElement;
 import software.wings.sm.ExecutionContext;
 
 import java.util.Map;
-import lombok.Builder;
-import lombok.Value;
 
-@Value
-@Builder
+/**
+ * An abstraction of a class that's responsible for creating a param map of a ContextElement for a given
+ * ExecutionContext.
+ */
+@OwnedBy(CDC)
 @TargetModule(_957_CG_BEANS)
-public class ClusterElement implements ContextElement {
-  private String uuid;
-  private String name;
-  private DeploymentType deploymentType;
-  private String infraMappingId;
-
-  @Override
-  public ContextElementType getElementType() {
-    return CLUSTER;
-  }
-
-  @Override
-  public ContextElement cloneMin() {
-    return this;
-  }
+public interface ContextElementParamMapper {
+  /**
+   * Creates a param map for the given ExecutionContext.
+   *
+   * @param context the ExecutionContext
+   * @return the map
+   */
+  Map<String, Object> paramMap(ExecutionContext context);
 }

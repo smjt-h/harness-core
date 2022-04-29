@@ -60,14 +60,6 @@ public class AmiServiceSetupElement implements ContextElement, SweepingOutput {
     return ContextElementType.AMI_SERVICE_SETUP;
   }
 
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put("newAsgName", newAutoScalingGroupName);
-    map.put("oldAsgName", oldAutoScalingGroupName);
-    return ImmutableMap.of("ami", map);
-  }
-
   public AwsAmiInfoVariables fetchAmiVariableInfo() {
     AwsAmiInfoVariablesBuilder builder = AwsAmiInfoVariables.builder();
     if (newAutoScalingGroupName != null) {

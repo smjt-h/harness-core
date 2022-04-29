@@ -63,14 +63,6 @@ public class PcfInstanceElement implements ContextElement, VerificationElement {
     return uuid;
   }
 
-  // @TODO why needed ?
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put(PCF_INSTANCE, this);
-    return map;
-  }
-
   @Override
   public ContextElement cloneMin() {
     return null;

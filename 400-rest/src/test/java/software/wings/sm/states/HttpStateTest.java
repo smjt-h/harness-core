@@ -48,7 +48,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.joor.Reflect.on;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -74,6 +76,8 @@ import io.harness.http.HttpServiceImpl;
 import io.harness.rule.Owner;
 
 import software.wings.WingsBaseTest;
+import software.wings.api.ContextElementParamMapper;
+import software.wings.api.ContextElementParamMapperFactory;
 import software.wings.api.HostElement;
 import software.wings.api.HttpStateExecutionData;
 import software.wings.api.ServiceElement;
@@ -89,6 +93,7 @@ import software.wings.service.impl.ActivityHelperService;
 import software.wings.service.intfc.DelegateService;
 import software.wings.service.intfc.InfrastructureMappingService;
 import software.wings.service.intfc.StateExecutionService;
+import software.wings.sm.ContextElement;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
@@ -196,8 +201,8 @@ public class HttpStateTest extends WingsBaseTest {
     when(workflowStandardParams.getAppId()).thenReturn(APP_ID);
     when(workflowStandardParams.getEnvId()).thenReturn(ENV_ID);
     when(workflowStandardParams.getApp()).thenReturn(app);
-
     when(workflowStandardParams.getElementType()).thenReturn(ContextElementType.STANDARD);
+
     context = new ExecutionContextImpl(stateExecutionInstance, null, injector);
     context.pushContextElement(workflowStandardParams);
     context.pushContextElement(HostElement.builder().hostName("localhost").build());
@@ -253,11 +258,21 @@ public class HttpStateTest extends WingsBaseTest {
                     .withBody(
                         "{\"status\":{\"code\":\"SUCCESS\"},\"data\":{\"title\":\"Some server\",\"version\":\"2.31.0-MASTER-SNAPSHOT\",\"buildTimestamp\":1506086747259}}")));
 
-    Map<String, Object> map = ImmutableMap.of(ARTIFACT,
-        anArtifact()
-            .withMetadata(new ArtifactMetadata(ImmutableMap.of(ArtifactMetadataKeys.buildNo, "2.31.0-MASTER-SNAPSHOT")))
-            .build());
-    when(workflowStandardParams.paramMap(context)).thenReturn(map);
+    ContextElementParamMapper workflowStandardParamsMapper = spy(ContextElementParamMapper.class);
+    when(workflowStandardParamsMapper.paramMap(any()))
+        .thenReturn(ImmutableMap.of(ARTIFACT,
+            anArtifact()
+                .withMetadata(
+                    new ArtifactMetadata(ImmutableMap.of(ArtifactMetadataKeys.buildNo, "2.31.0-MASTER-SNAPSHOT")))
+                .build()));
+
+    ContextElementParamMapperFactory mapperFactory = spy(ContextElementParamMapperFactory.class);
+    when(mapperFactory.getParamMapper(any()))
+        .thenAnswer(invocationOnMock
+            -> injector.getInstance(ContextElementParamMapperFactory.class)
+                   .getParamMapper((ContextElement) invocationOnMock.getArguments()[0]));
+    when(mapperFactory.getParamMapper(workflowStandardParams)).thenReturn(workflowStandardParamsMapper);
+    on(context).set("paramMapperFactory", mapperFactory);
 
     HttpState.Builder jsonHttpStateBuilder =
         aHttpState()
@@ -313,7 +328,7 @@ public class HttpStateTest extends WingsBaseTest {
         anArtifact()
             .withMetadata(new ArtifactMetadata(ImmutableMap.of(ArtifactMetadataKeys.buildNo, "2.31.0-MASTER-SNAPSHOT")))
             .build());
-    when(workflowStandardParams.paramMap(context)).thenReturn(map);
+    //    when(workflowStandardParams.paramMap(context)).thenReturn(map);
     List<Variable> templateVariables = asList(aVariable().name("url").value("localhost:8088/health/status").build(),
         aVariable().name("buildNo").value("2.31.0-MASTER-SNAPSHOT").build(),
         aVariable().name("contentType").value("application/json").build());

@@ -59,14 +59,6 @@ public class AzureVMSSSetupContextElement implements ContextElement {
   }
 
   @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put("newVMSSName", newVirtualMachineScaleSetName);
-    map.put("oldVMSSName", oldVirtualMachineScaleSetName);
-    return ImmutableMap.of("azurevmss", map);
-  }
-
-  @Override
   public ContextElement cloneMin() {
     return null;
   }
