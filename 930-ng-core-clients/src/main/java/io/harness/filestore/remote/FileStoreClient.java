@@ -17,7 +17,6 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.beans.PageResponse;
-import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.filestore.dto.FileDTO;
 
 import java.util.List;
@@ -30,7 +29,7 @@ public interface FileStoreClient {
   String FILE_STORE_API = "file-store";
 
   @GET(FILE_STORE_API)
-  Call<ResponseDTO<PageResponse<FileDTO>>> listFilesAndFolders(@Query(value = ACCOUNT_KEY) String accountIdentifier,
+  Call<PageResponse<FileDTO>> listFilesAndFolders(@Query(value = ACCOUNT_KEY) String accountIdentifier,
       @Query(value = ORG_KEY) String orgIdentifier, @Query(value = PROJECT_KEY) String projectIdentifier,
       @Query(value = IDENTIFIERS) List<String> identifiers, @Query(value = PAGE_KEY) int page,
       @Query(SIZE_KEY) int size);

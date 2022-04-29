@@ -18,6 +18,8 @@ import static io.harness.ng.core.events.filestore.FileDeleteEvent.FILE_DELETED_E
 import static io.harness.ng.core.events.filestore.FileUpdateEvent.FILE_UPDATED_EVENT;
 import static io.harness.security.PrincipalContextData.PRINCIPAL_CONTEXT;
 
+import static java.lang.String.format;
+
 import io.harness.ModuleType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.audit.Action;
@@ -82,9 +84,10 @@ public class FileEventHandler implements OutboxEventHandler {
         case FILE_DELETED_EVENT:
           return handleFileDeleteEvent(outboxEvent);
         default:
-          throw new InvalidArgumentsException(String.format("Not supported event type %s", outboxEvent.getEventType()));
+          throw new InvalidArgumentsException(format("Not supported event type %s", outboxEvent.getEventType()));
       }
     } catch (IOException exception) {
+      log.error(format("Failed to handle %s event", outboxEvent.getEventType()), exception);
       return false;
     }
   }

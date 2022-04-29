@@ -5,7 +5,7 @@
  * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
  */
 
-package io.harness.resourcegroup.resourceclient.file;
+package io.harness.resourcegroup.resourceclient.filestore;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
@@ -22,7 +22,11 @@ import io.harness.beans.ScopeLevel;
 import io.harness.eventsframework.EventsFrameworkMetadataConstants;
 import io.harness.eventsframework.consumer.Message;
 import io.harness.eventsframework.entity_crud.EntityChangeDTO;
+import io.harness.exception.InvalidRequestException;
 import io.harness.filestore.remote.FileStoreClient;
+import io.harness.gitops.models.Agent;
+import io.harness.ng.beans.PageResponse;
+import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.filestore.dto.FileDTO;
 import io.harness.remote.client.NGRestUtils;
 import io.harness.resourcegroup.beans.ValidatorType;
@@ -30,9 +34,11 @@ import io.harness.resourcegroup.framework.v1.service.Resource;
 import io.harness.resourcegroup.framework.v1.service.ResourceInfo;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -44,12 +50,16 @@ import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import retrofit2.Call;
+import retrofit2.Response;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @OwnedBy(CDP)
 public class FileResourceImpl implements Resource {
   private static final String FILE = "FILE";
+  private static final int REQUEST_ITEMS_SIZE = 20;
+
   FileStoreClient fileStoreClient;
 
   @Inject
@@ -63,14 +73,28 @@ public class FileResourceImpl implements Resource {
       return Collections.emptyList();
     }
 
-    List<FileDTO> files =
-        NGRestUtils
-            .getResponse(fileStoreClient.listFilesAndFolders(scope.getAccountIdentifier(), scope.getOrgIdentifier(),
-                scope.getProjectIdentifier(), resourceIds, 0, resourceIds.size()))
-            .getContent();
+    Set<String> validResourceIds = Lists.partition(resourceIds, REQUEST_ITEMS_SIZE)
+                                       .stream()
+                                       .map(ids -> getFileDTOS(ids, scope))
+                                       .flatMap(Collection::stream)
+                                       .map(FileDTO::getIdentifier)
+                                       .collect(Collectors.toSet());
 
-    Set<Object> validResourceIds = files.stream().map(FileDTO::getIdentifier).collect(Collectors.toSet());
     return resourceIds.stream().map(validResourceIds::contains).collect(toList());
+  }
+
+  private List<FileDTO> getFileDTOS(List<String> resourceIds, Scope scope) {
+    try {
+      Response<PageResponse<FileDTO>> response =
+          fileStoreClient
+              .listFilesAndFolders(scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier(),
+                  resourceIds, 0, resourceIds.size())
+              .execute();
+
+      return response.body().getContent();
+    } catch (Exception ex) {
+      throw new InvalidRequestException("Failed to verify file identifiers", ex);
+    }
   }
 
   @Override
