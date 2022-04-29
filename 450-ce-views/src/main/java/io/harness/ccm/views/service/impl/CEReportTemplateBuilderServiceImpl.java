@@ -196,10 +196,11 @@ public class CEReportTemplateBuilderServiceImpl implements CEReportTemplateBuild
     groupBy.add(QLCEViewGroupBy.builder()
                     .timeTruncGroupBy(QLCEViewTimeTruncGroupBy.builder().resolution(QLCEViewTimeGroupType.DAY).build())
                     .build());
-    List<QLCEViewTimeSeriesData> chartData =
-        viewsBillingService.convertToQLViewTimeSeriesData(viewsBillingService.getTimeSeriesStatsNg(bigQuery, filters,
-            groupBy, aggregationFunction, sortCriteria, cloudProviderTableName, false, DEFAULT_LIMIT,
-            viewsQueryHelper.buildQueryParams(accountId, true, false, false, false)));
+    List<QLCEViewTimeSeriesData> chartData = viewsBillingService.convertToQLViewTimeSeriesData(
+        viewsBillingService.getTimeSeriesStatsNg(bigQuery, filters, groupBy, aggregationFunction, sortCriteria,
+            cloudProviderTableName, false, DEFAULT_LIMIT,
+            viewsQueryHelper.buildQueryParams(accountId, true, false, false, false)),
+        accountId);
     if (chartData == null) {
       throw new InvalidRequestException("Exception while generating report. No data to for chart");
     }
