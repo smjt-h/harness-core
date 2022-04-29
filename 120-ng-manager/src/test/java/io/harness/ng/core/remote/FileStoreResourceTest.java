@@ -37,6 +37,7 @@ import com.google.api.client.util.Lists;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import javax.ws.rs.core.Response;
 import jersey.repackaged.com.google.common.collect.Sets;
@@ -163,6 +164,18 @@ public class FileStoreResourceTest extends CategoryTest {
     assertThat(pageResponse).isNotNull();
     assertThat(pageResponse.isEmpty()).isFalse();
     assertThat(pageResponse.getContent().get(0).getName()).isEqualTo("file1");
+  }
+
+  @Test
+  @Owner(developers = BOJAN)
+  @Category(UnitTests.class)
+  public void testGetReferencedByTypes() {
+    ResponseDTO<List<EntityType>> response = fileStoreResource.getSupportedEntityTypes();
+    List<EntityType> pageResponse = response.getData();
+
+    assertThat(pageResponse).isNotNull();
+    assertThat(pageResponse.isEmpty()).isFalse();
+    assertThat(pageResponse.size()).isEqualTo(5);
   }
 
   @Test

@@ -67,4 +67,17 @@ public class FileReferencedByHelper {
         file.getAccountIdentifier(), referredEntityFQN, EntityType.FILES, entityType, pageParams.getSearchTerm(),
         Sort.by(Sort.Direction.ASC, REFFERED_BY_IDENTIFIER_KEY));
   }
+
+  public Page<EntitySetupUsageDTO> getAllReferencedByInScope(String accountIdentifier, String orgIdentifier,
+      String projectIdentifier, SearchPageParams pageParams, EntityType entityType) {
+    IdentifierRef identifierRef = IdentifierRef.builder()
+                                      .accountIdentifier(accountIdentifier)
+                                      .orgIdentifier(orgIdentifier)
+                                      .projectIdentifier(projectIdentifier)
+                                      .build();
+    String referredEntityFQScope = identifierRef.getFullyQualifiedScope();
+    return entitySetupUsageService.listAllEntityUsageForScope(pageParams.getPage(), pageParams.getSize(),
+        accountIdentifier, referredEntityFQScope, EntityType.FILES, entityType,
+        Sort.by(Sort.Direction.ASC, EntitySetupUsageKeys.referredByEntityName));
+  }
 }

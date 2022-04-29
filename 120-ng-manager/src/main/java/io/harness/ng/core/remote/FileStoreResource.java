@@ -281,12 +281,26 @@ public class FileStoreResource {
       @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
-      @Parameter(description = FILE_PARAM_MESSAGE) @NotBlank @EntityIdentifier @PathParam(IDENTIFIER_KEY)
-      String identifier, @Parameter(description = "Entity type") @QueryParam(ENTITY_TYPE) EntityType entityType,
+      @Parameter(description = FILE_PARAM_MESSAGE) @EntityIdentifier @PathParam(IDENTIFIER_KEY) String identifier,
+      @Parameter(description = "Entity type") @QueryParam(ENTITY_TYPE) EntityType entityType,
       @QueryParam(SEARCH_TERM_KEY) String searchTerm) {
     return ResponseDTO.newResponse(fileStoreService.listReferencedBy(
         SearchPageParams.builder().page(page).size(size).searchTerm(searchTerm).build(), accountIdentifier,
         orgIdentifier, projectIdentifier, identifier, entityType));
+  }
+
+  @GET
+  @Consumes({"application/json"})
+  @Path("supported-entity-types")
+  @ApiOperation(value = "Get entity types", nickname = "getEntityTypes")
+  @Operation(operationId = "getEntityTypes", summary = "Get entity types.",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns the list of supported entity types")
+      })
+  public ResponseDTO<List<EntityType>>
+  getSupportedEntityTypes() {
+    return ResponseDTO.newResponse(fileStoreService.getSupportedEntityTypes());
   }
 
   @POST

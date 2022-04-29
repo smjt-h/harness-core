@@ -18,6 +18,7 @@ import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
@@ -98,4 +99,6 @@ public interface FileStoreService {
       String filterIdentifier, String searchTerm, FilesFilterPropertiesDTO filesFilterPropertiesDTO, Pageable pageable);
 
   Set<String> getCreatedByList(String accountIdentifier, String orgIdentifier, String projectIdentifier);
+
+  List<EntityType> getSupportedEntityTypes();
 }

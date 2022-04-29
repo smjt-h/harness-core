@@ -7,6 +7,11 @@
 
 package io.harness.ng.core.filestore.service;
 
+import static io.harness.EntityType.PIPELINES;
+import static io.harness.EntityType.PIPELINE_STEPS;
+import static io.harness.EntityType.SECRETS;
+import static io.harness.EntityType.SERVICE;
+import static io.harness.EntityType.TEMPLATE;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -51,6 +56,7 @@ import io.harness.stream.BoundedInputStream;
 import software.wings.app.MainConfiguration;
 import software.wings.service.intfc.FileService;
 
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -75,6 +81,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 @OwnedBy(CDP)
 @Slf4j
 public class FileStoreServiceImpl implements FileStoreService {
+  private static final List<EntityType> SUPPORTED_ENTITY_TYPES =
+      Lists.newArrayList(PIPELINES, PIPELINE_STEPS, SERVICE, SECRETS, TEMPLATE);
   private final FileService fileService;
   private final FileStoreRepository fileStoreRepository;
   private final MainConfiguration configuration;
@@ -184,13 +192,16 @@ public class FileStoreServiceImpl implements FileStoreService {
 
   @Override
   public Page<EntitySetupUsageDTO> listReferencedBy(SearchPageParams pageParams, @NotNull String accountIdentifier,
-      String orgIdentifier, String projectIdentifier, @NotNull String identifier, EntityType entityType) {
-    if (isEmpty(identifier)) {
-      throw new InvalidArgumentsException("File identifier cannot be empty");
-    }
+      String orgIdentifier, String projectIdentifier, String identifier, EntityType entityType) {
     if (isEmpty(accountIdentifier)) {
       throw new InvalidArgumentsException("Account identifier cannot be null or empty");
     }
+
+    if (isEmpty(identifier)) {
+      return fileReferencedByHelper.getAllReferencedByInScope(
+          accountIdentifier, orgIdentifier, projectIdentifier, pageParams, entityType);
+    }
+
     NGFile file = fetchFileOrThrow(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
     return fileReferencedByHelper.getReferencedBy(pageParams, file, entityType);
   }
@@ -228,6 +239,11 @@ public class FileStoreServiceImpl implements FileStoreService {
     AggregationResults<CreatedBy> aggregate = fileStoreRepository.aggregate(aggregation, CreatedBy.class);
 
     return aggregate.getMappedResults().stream().map(CreatedBy::getCreatedBy).collect(Collectors.toSet());
+  }
+
+  @Override
+  public List<EntityType> getSupportedEntityTypes() {
+    return SUPPORTED_ENTITY_TYPES;
   }
 
   private boolean shouldStoreFileContent(InputStream content, NGFile ngFile) {

@@ -248,4 +248,15 @@ public class EntitySetupUsageServiceImpl implements EntitySetupUsageService {
   public long deleteByReferredByEntityType(EntityType referredByEntityType) {
     return entityReferenceRepository.deleteAllByReferredByEntityType(referredByEntityType.getYamlName());
   }
+
+  @Override
+  public Page<EntitySetupUsageDTO> listAllEntityUsageForScope(int page, int size, String accountIdentifier,
+      String referredEntityFQScope, EntityType referredEntityType, EntityType referredByEntityType, Sort sort) {
+    Criteria criteria = entitySetupUsageFilterHelper.createCriteriaForEntitiesInScope(
+        accountIdentifier, referredEntityFQScope, referredEntityType, referredByEntityType);
+
+    Pageable pageable = getPageRequest(page, size, sort);
+    Page<EntitySetupUsage> entityReferences = entityReferenceRepository.findAll(criteria, pageable);
+    return entityReferences.map(entityReference -> setupUsageEntityToDTO.createEntityReferenceDTO(entityReference));
+  }
 }
