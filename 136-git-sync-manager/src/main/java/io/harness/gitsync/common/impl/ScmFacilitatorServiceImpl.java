@@ -7,12 +7,18 @@
 
 package io.harness.gitsync.common.impl;
 
+import static io.harness.data.structure.CollectionUtils.emptyIfNull;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.PageRequestDTO;
 import io.harness.beans.Scope;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
+import io.harness.gitsync.beans.GitRepositoryDTO;
 import io.harness.gitsync.common.beans.InfoForGitPush;
 import io.harness.gitsync.common.dtos.CreatePRDTO;
+import io.harness.gitsync.common.dtos.GitRepositoryResponseDTO;
 import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
 import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
 import io.harness.gitsync.common.dtos.ScmCreatePRRequestDTO;
@@ -26,22 +32,20 @@ import io.harness.gitsync.common.service.ScmOrchestratorService;
 import io.harness.ng.beans.PageRequest;
 import io.harness.product.ci.scm.proto.CreateFileResponse;
 import io.harness.product.ci.scm.proto.FileContent;
+import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.UpdateFileResponse;
 
 import com.google.inject.Inject;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 
+@AllArgsConstructor(onConstructor = @__({ @Inject }))
 @OwnedBy(HarnessTeam.PL)
 public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
   GitSyncConnectorHelper gitSyncConnectorHelper;
   ScmOrchestratorService scmOrchestratorService;
-
-  @Inject
-  public ScmFacilitatorServiceImpl(
-      GitSyncConnectorHelper gitSyncConnectorHelper, ScmOrchestratorService scmOrchestratorService) {
-    this.gitSyncConnectorHelper = gitSyncConnectorHelper;
-    this.scmOrchestratorService = scmOrchestratorService;
-  }
 
   @Override
   public List<String> listBranchesUsingConnector(String accountIdentifier, String orgIdentifier,
@@ -51,6 +55,39 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
         -> scmClientFacilitatorService.listBranchesForRepoByConnector(accountIdentifier, orgIdentifier,
             projectIdentifier, connectorIdentifierRef, repoURL, pageRequest, searchTerm),
         projectIdentifier, orgIdentifier, accountIdentifier, connectorIdentifierRef, null, null);
+  }
+
+  @Override
+  public List<GitRepositoryResponseDTO> listReposByRefConnector(String accountIdentifier, String orgIdentifier,
+      String projectIdentifier, String connectorRef, PageRequest pageRequest, String searchTerm) {
+    GetUserReposResponse response = scmOrchestratorService.processScmRequestUsingConnectorSettings(
+        scmClientFacilitatorService
+        -> scmClientFacilitatorService.listUserRepos(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef,
+            PageRequestDTO.builder().pageIndex(pageRequest.getPageIndex()).pageSize(pageRequest.getPageSize()).build()),
+        projectIdentifier, orgIdentifier, accountIdentifier, connectorRef);
+
+    return prepareListRepoResponse(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, response);
+  }
+
+  private List<GitRepositoryResponseDTO> prepareListRepoResponse(String accountIdentifier, String orgIdentifier,
+      String projectIdentifier, String connectorRef, GetUserReposResponse response) {
+    ScmConnector scmConnector =
+        gitSyncConnectorHelper.getScmConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
+    GitRepositoryDTO gitRepository = scmConnector.getGitRepositoryDetails();
+    if (isNotEmpty(gitRepository.getName())) {
+      return Collections.singletonList(GitRepositoryResponseDTO.builder().name(gitRepository.getName()).build());
+    } else if (isNotEmpty(gitRepository.getOrg())) {
+      return emptyIfNull(response.getReposList())
+          .stream()
+          .filter(repository -> repository.getNamespace().equals(gitRepository.getOrg()))
+          .map(repository -> GitRepositoryResponseDTO.builder().name(repository.getName()).build())
+          .collect(Collectors.toList());
+    } else {
+      return emptyIfNull(response.getReposList())
+          .stream()
+          .map(repository -> GitRepositoryResponseDTO.builder().name(repository.getName()).build())
+          .collect(Collectors.toList());
+    }
   }
 
   @Override

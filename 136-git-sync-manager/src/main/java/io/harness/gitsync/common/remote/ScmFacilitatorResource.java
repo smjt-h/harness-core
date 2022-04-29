@@ -32,6 +32,7 @@ import io.harness.gitsync.common.dtos.CreatePRDTO;
 import io.harness.gitsync.common.dtos.CreatePRRequest;
 import io.harness.gitsync.common.dtos.CreatePRResponse;
 import io.harness.gitsync.common.dtos.GitFileContent;
+import io.harness.gitsync.common.dtos.GitRepositoryResponseDTO;
 import io.harness.gitsync.common.dtos.SaasGitDTO;
 import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
 import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
@@ -382,5 +383,38 @@ public class ScmFacilitatorResource {
                                                                         .repoName(repoName)
                                                                         .oldFileSha(oldFileSha)
                                                                         .build()));
+  }
+
+  @GET
+  @Path("list-repos-by-connector")
+  @ApiOperation(
+      value = "Lists Git Repos corresponding to given reference connector", nickname = "getListOfReposByRefConnector")
+  @Hidden
+  @Operation(operationId = "listReposByRefConnector",
+      summary = "Lists Git Repos corresponding to given reference connector",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(description = "This contains list of Git Repos specific to given reference connector.")
+      },
+      hidden = true)
+  public ResponseDTO<List<GitRepositoryResponseDTO>>
+  listUserRepo(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotBlank @QueryParam(
+                   NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectIdentifier,
+      @Parameter(description = GitSyncApiConstants.GIT_CONNECTOR_REF_PARAM_MESSAGE) @NotBlank @QueryParam(
+          GitSyncApiConstants.CONNECTOR_REF) String connectorRef,
+      @Parameter(description = PAGE_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.PAGE) @DefaultValue(
+          "0") int pageNum,
+      @Parameter(description = SIZE_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.SIZE) @DefaultValue(
+          "50") int pageSize,
+      @Parameter(description = GitSyncApiConstants.SEARCH_TERM_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.SEARCH_TERM) @DefaultValue("") String searchTerm) {
+    return ResponseDTO.newResponse(
+        scmFacilitatorService.listReposByRefConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef,
+            PageRequest.builder().pageIndex(pageNum).pageSize(pageSize).build(), searchTerm));
   }
 }
