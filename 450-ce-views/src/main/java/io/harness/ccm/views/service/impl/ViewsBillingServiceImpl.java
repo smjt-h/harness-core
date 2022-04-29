@@ -1172,11 +1172,9 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
     if (!awsAccounts.isEmpty()) {
       final Map<String, String> entityIdToName =
           entityMetadataService.getEntityIdToNameMapping(new ArrayList<>(awsAccounts), accountId, AWS_ACCOUNT_FIELD);
-      if (Objects.nonNull(entityIdToName)) {
-        updatedTimeSeriesDataPointsMap =
-            timeSeriesDataPointsMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-                timeSeriesDataPoint -> getUpdatedTimeSeriesDataPoints(entityIdToName, timeSeriesDataPoint.getValue())));
-      }
+      updatedTimeSeriesDataPointsMap =
+          timeSeriesDataPointsMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+              timeSeriesDataPoint -> getUpdatedTimeSeriesDataPoints(entityIdToName, timeSeriesDataPoint.getValue())));
     }
     return updatedTimeSeriesDataPointsMap;
   }
