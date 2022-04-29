@@ -6,6 +6,7 @@
  */
 
 package software.wings.scheduler;
+
 import static io.harness.beans.FeatureName.DELEGATE_TASK_REBROADCAST_ITERATOR;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.JENNY;
@@ -33,14 +34,10 @@ import io.harness.rule.Owner;
 import io.harness.version.VersionInfoManager;
 
 import software.wings.WingsBaseTest;
-import software.wings.app.DelegateQueueTask;
 import software.wings.beans.Account;
 import software.wings.beans.DelegateTaskBroadcast;
 import software.wings.beans.TaskType;
-import software.wings.service.impl.DelegateTaskBroadcastHelper;
-import software.wings.service.intfc.AssignDelegateService;
 import software.wings.service.intfc.DelegateService;
-import software.wings.service.intfc.DelegateTaskServiceClassic;
 
 import com.google.inject.Inject;
 import java.util.Arrays;
@@ -54,24 +51,15 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.runners.MockitoJUnitRunner;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(PersistenceIteratorFactory.class)
-@PowerMockIgnore({"javax.security.*", "javax.net.*"})
+@RunWith(MockitoJUnitRunner.class)
 public class DelegateTaskRebroadcastIteratorTest extends WingsBaseTest {
   @Mock PersistenceIteratorFactory persistenceIteratorFactory;
   @InjectMocks @Inject private DelegateTaskRebroadcastIterator delegateTaskRebroadcastIterator;
-  @Mock private AssignDelegateService assignDelegateService;
   @Inject private HPersistence persistence;
-
-  @InjectMocks @Inject private DelegateTaskBroadcastHelper broadcastHelper;
   @Mock private FeatureFlagService featureFlagService;
-  @Mock private DelegateTaskServiceClassic delegateTaskServiceClassic;
   @Mock private DelegateService delegateService;
-  @InjectMocks @Inject DelegateQueueTask delegateQueueTask;
   @Inject private BroadcasterFactory broadcasterFactory;
 
   @Inject private VersionInfoManager versionInfoManager;
@@ -103,25 +91,7 @@ public class DelegateTaskRebroadcastIteratorTest extends WingsBaseTest {
                                     .expiry(System.currentTimeMillis() + 60000)
                                     .data(TaskData.builder().taskType(TaskType.HTTP.name()).async(false).build())
                                     .build();
-    Broadcaster broadcaster = mock(Broadcaster.class);
-    when(broadcasterFactory.lookup(anyString(), eq(true))).thenReturn(broadcaster);
-    delegateTask.setBroadcastCount(0);
-    delegateTask.setNextBroadcast(System.currentTimeMillis());
-    delegateTask.setEligibleToExecuteDelegateIds(new LinkedList<>(Arrays.asList(DELEGATE_ID)));
-    persistence.save(delegateTask);
-    when(delegateService.checkDelegateConnected(anyString(), anyString())).thenReturn(true);
-    when(featureFlagService.isEnabled(DELEGATE_TASK_REBROADCAST_ITERATOR, account.getUuid())).thenReturn(true);
-    delegateTaskRebroadcastIterator.handle(account);
-
-    ArgumentCaptor<DelegateTaskBroadcast> argumentCaptor = ArgumentCaptor.forClass(DelegateTaskBroadcast.class);
-    verify(broadcaster, times(1)).broadcast(argumentCaptor.capture());
-
-    DelegateTaskBroadcast delegateTaskBroadcast = argumentCaptor.getValue();
-    assertThat(delegateTaskBroadcast).isNotNull();
-    assertThat(delegateTaskBroadcast.getVersion()).isEqualTo(delegateTask.getVersion());
-    assertThat(delegateTaskBroadcast.getAccountId()).isEqualTo(delegateTask.getAccountId());
-    assertThat(delegateTaskBroadcast.getTaskId()).isEqualTo(delegateTask.getUuid());
-    assertThat(delegateTaskBroadcast.getBroadcastToDelegatesIds()).isNotEmpty();
+    verifyDelegateTaskRebroadcast(account, delegateTask);
   }
 
   @Test
@@ -132,22 +102,34 @@ public class DelegateTaskRebroadcastIteratorTest extends WingsBaseTest {
     account.setUuid(generateUuid());
     persistence.save(account);
     DelegateTask delegateTask = DelegateTask.builder()
-                                    .accountId(account.getUuid())
-                                    .version(versionInfoManager.getVersionInfo().getVersion())
-                                    .status(DelegateTask.Status.QUEUED)
-                                    .expiry(System.currentTimeMillis() + 60000)
-                                    .data(TaskData.builder().taskType(TaskType.HTTP.name()).async(true).build())
-                                    .build();
+            .accountId(account.getUuid())
+            .version(versionInfoManager.getVersionInfo().getVersion())
+            .status(DelegateTask.Status.QUEUED)
+            .expiry(System.currentTimeMillis() + 60000)
+            .data(TaskData.builder().taskType(TaskType.HTTP.name()).async(true).build())
+            .build();
+    verifyDelegateTaskRebroadcast(account, delegateTask);
+  }
+
+  private void verifyDelegateTaskRebroadcast(Account account, DelegateTask delegateTask) {
+    Broadcaster broadcaster = setupBroadcaster(account, delegateTask);
+    delegateTaskRebroadcastIterator.handle(account);
+    verifyRebroadcast(delegateTask, broadcaster);
+  }
+
+  private Broadcaster setupBroadcaster(Account account, DelegateTask delegateTask) {
     Broadcaster broadcaster = mock(Broadcaster.class);
     when(broadcasterFactory.lookup(anyString(), eq(true))).thenReturn(broadcaster);
     delegateTask.setBroadcastCount(0);
     delegateTask.setNextBroadcast(System.currentTimeMillis());
-    delegateTask.setEligibleToExecuteDelegateIds(new LinkedList<>(Arrays.asList(DELEGATE_ID)));
+    delegateTask.setEligibleToExecuteDelegateIds(new LinkedList<>(Collections.singletonList(DELEGATE_ID)));
     persistence.save(delegateTask);
     when(delegateService.checkDelegateConnected(anyString(), anyString())).thenReturn(true);
     when(featureFlagService.isEnabled(DELEGATE_TASK_REBROADCAST_ITERATOR, account.getUuid())).thenReturn(true);
-    delegateTaskRebroadcastIterator.handle(account);
+    return broadcaster;
+  }
 
+  private void verifyRebroadcast(DelegateTask delegateTask, Broadcaster broadcaster) {
     ArgumentCaptor<DelegateTaskBroadcast> argumentCaptor = ArgumentCaptor.forClass(DelegateTaskBroadcast.class);
     verify(broadcaster, times(1)).broadcast(argumentCaptor.capture());
 
@@ -185,15 +167,7 @@ public class DelegateTaskRebroadcastIteratorTest extends WingsBaseTest {
     when(featureFlagService.isEnabled(DELEGATE_TASK_REBROADCAST_ITERATOR, account.getUuid())).thenReturn(true);
     delegateTaskRebroadcastIterator.handle(account);
 
-    ArgumentCaptor<DelegateTaskBroadcast> argumentCaptor = ArgumentCaptor.forClass(DelegateTaskBroadcast.class);
-    verify(broadcaster, times(1)).broadcast(argumentCaptor.capture());
-
-    DelegateTaskBroadcast delegateTaskBroadcast = argumentCaptor.getValue();
-    assertThat(delegateTaskBroadcast).isNotNull();
-    assertThat(delegateTaskBroadcast.getVersion()).isEqualTo(delegateTask.getVersion());
-    assertThat(delegateTaskBroadcast.getAccountId()).isEqualTo(delegateTask.getAccountId());
-    assertThat(delegateTaskBroadcast.getTaskId()).isEqualTo(delegateTask.getUuid());
-    assertThat(delegateTaskBroadcast.getBroadcastToDelegatesIds()).isNotEmpty();
+    verifyRebroadcast(delegateTask, broadcaster);
 
     DelegateTask task = persistence.get(DelegateTask.class, delegateTask.getUuid());
     assertThat(task.getBroadcastRound()).isEqualTo(0);
@@ -214,14 +188,7 @@ public class DelegateTaskRebroadcastIteratorTest extends WingsBaseTest {
                                     .expiry(System.currentTimeMillis() + 60000)
                                     .data(TaskData.builder().taskType(TaskType.HTTP.name()).async(true).build())
                                     .build();
-    Broadcaster broadcaster = mock(Broadcaster.class);
-    when(broadcasterFactory.lookup(anyString(), eq(true))).thenReturn(broadcaster);
-    delegateTask.setBroadcastCount(0);
-    delegateTask.setNextBroadcast(System.currentTimeMillis());
-    delegateTask.setEligibleToExecuteDelegateIds(new LinkedList<>(Collections.singletonList(DELEGATE_ID)));
-    persistence.save(delegateTask);
-    when(delegateService.checkDelegateConnected(anyString(), anyString())).thenReturn(true);
-    when(featureFlagService.isEnabled(DELEGATE_TASK_REBROADCAST_ITERATOR, account.getUuid())).thenReturn(true);
+    Broadcaster broadcaster = setupBroadcaster(account, delegateTask);
     delegateTaskRebroadcastIterator.handle(account);
     DelegateTask task = persistence.get(DelegateTask.class, delegateTask.getUuid());
     // verify broadcast count and broadcast round count got updated
