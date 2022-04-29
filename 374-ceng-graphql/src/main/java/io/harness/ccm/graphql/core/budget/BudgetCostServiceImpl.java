@@ -52,8 +52,8 @@ public class BudgetCostServiceImpl implements BudgetCostService {
 
   @Override
   public double getActualCost(Budget budget) {
-    return getActualCost(budget.getAccountId(), BudgetUtils.getPerspectiveIdForBudget(budget), budget.getStartTime(),
-        budget.getPeriod());
+    return getActualCost(budget.getAccountId(), BudgetUtils.getPerspectiveIdForBudget(budget),
+        BudgetUtils.getBudgetStartTime(budget), budget.getPeriod());
   }
 
   @Override
@@ -99,8 +99,8 @@ public class BudgetCostServiceImpl implements BudgetCostService {
 
   @Override
   public double getLastPeriodCost(Budget budget) {
-    return getLastPeriodCost(
-        budget.getAccountId(), budget.getScope().getEntityIds().get(0), budget.getStartTime(), budget.getPeriod());
+    return getLastPeriodCost(budget.getAccountId(), budget.getScope().getEntityIds().get(0),
+        BudgetUtils.getBudgetStartTime(budget), budget.getPeriod());
   }
 
   @Override
