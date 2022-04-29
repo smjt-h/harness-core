@@ -121,10 +121,11 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
         Resource resource = serviceArnToResourceMapping.get(clusterIdAndServiceArn.getServiceArn());
         long cpuMilliUnits = BigDecimal.valueOf(resource.getCpuUnits()).scaleByPowerOfTen(3).longValue();
         long memoryBytes = BigDecimal.valueOf(resource.getMemoryMb()).scaleByPowerOfTen(6).longValue();
+        long memoryMb = BigDecimal.valueOf(resource.getMemoryMb()).longValue();
         List<ECSUtilizationData> utilData = utilMap.get(clusterIdAndServiceArn);
         // Create Partial Histogram for a day for this service
         ECSPartialRecommendationHistogram partialRecommendationHistogram = getPartialRecommendation(accountId,
-            clusterId, clusterName, serviceArn, serviceName, startTime, utilData, cpuMilliUnits, memoryBytes);
+            clusterId, clusterName, serviceArn, serviceName, startTime, utilData, cpuMilliUnits, memoryMb);
         ecsRecommendationDAO.savePartialRecommendation(partialRecommendationHistogram);
 
         // Get Partial recommendations for last 7 days
@@ -136,10 +137,10 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
 
         // Create ECSServiceRecommendation
         ECSServiceRecommendation recommendation =
-            getRecommendation(accountId, clusterId, clusterName, serviceName, serviceArn, cpuMilliUnits, memoryBytes);
+            getRecommendation(accountId, clusterId, clusterName, serviceName, serviceArn, cpuMilliUnits, memoryMb);
 
         // Merge partial recommendations and compute recommendations
-        mergePartialRecommendations(partialHistograms, recommendation, cpuMilliUnits, memoryBytes);
+        mergePartialRecommendations(partialHistograms, recommendation, cpuMilliUnits, memoryMb);
         recommendation.setCurrentResourceRequirements(
             convertToReadableForm(makeResourceMap(cpuMilliUnits, memoryBytes)));
         recommendation.setLastComputedRecommendationAt(startTime);
