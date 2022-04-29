@@ -146,21 +146,7 @@ import software.wings.service.impl.yaml.handler.infraprovisioner.InfrastructureP
 import software.wings.service.impl.yaml.handler.infraprovisioner.ShellScriptProvisionerYamlHandler;
 import software.wings.service.impl.yaml.handler.infraprovisioner.TerraformInfrastructureProvisionerYamlHandler;
 import software.wings.service.impl.yaml.handler.infraprovisioner.TerragruntInfrastructureProvisionerYamlHandler;
-import software.wings.service.impl.yaml.handler.setting.artifactserver.AmazonS3HelmRepoConfigYamlHandler;
-import software.wings.service.impl.yaml.handler.setting.artifactserver.ArtifactServerYamlHandler;
-import software.wings.service.impl.yaml.handler.setting.artifactserver.ArtifactoryConfigYamlHandler;
-import software.wings.service.impl.yaml.handler.setting.artifactserver.AzureArtifactsPATConfigYamlHandler;
-import software.wings.service.impl.yaml.handler.setting.artifactserver.AzureArtifactsYamlHandler;
-import software.wings.service.impl.yaml.handler.setting.artifactserver.BambooConfigYamlHandler;
-import software.wings.service.impl.yaml.handler.setting.artifactserver.CustomArtifactServerConfigYamlHandler;
-import software.wings.service.impl.yaml.handler.setting.artifactserver.DockerRegistryConfigYamlHandler;
-import software.wings.service.impl.yaml.handler.setting.artifactserver.GcsHelmRepoConfigYamlHandler;
-import software.wings.service.impl.yaml.handler.setting.artifactserver.HelmRepoYamlHandler;
-import software.wings.service.impl.yaml.handler.setting.artifactserver.HttpHelmRepoConfigYamlHandler;
-import software.wings.service.impl.yaml.handler.setting.artifactserver.JenkinsConfigYamlHandler;
-import software.wings.service.impl.yaml.handler.setting.artifactserver.NexusConfigYamlHandler;
-import software.wings.service.impl.yaml.handler.setting.artifactserver.SftpConfigYamlHandler;
-import software.wings.service.impl.yaml.handler.setting.artifactserver.SmbConfigYamlHandler;
+import software.wings.service.impl.yaml.handler.setting.artifactserver.*;
 import software.wings.service.impl.yaml.handler.setting.cloudprovider.AwsConfigYamlHandler;
 import software.wings.service.impl.yaml.handler.setting.cloudprovider.AzureConfigYamlHandler;
 import software.wings.service.impl.yaml.handler.setting.cloudprovider.CloudProviderYamlHandler;
@@ -380,9 +366,8 @@ public class YamlModule extends CommandLibrarySharedModule {
         MapBinder.newMapBinder(binder(), String.class, HelmRepoYamlHandler.class);
     helmRepoYamlHandlerMapBinder.addBinding(SettingVariableTypes.HTTP_HELM_REPO.name())
         .to(HttpHelmRepoConfigYamlHandler.class);
-    // TODO: 13/04/22 add yaml handler here
     helmRepoYamlHandlerMapBinder.addBinding(SettingVariableTypes.OCI_HELM_REPO.name())
-        .to(HttpHelmRepoConfigYamlHandler.class);
+        .to(OciHelmRepoConfigYamlHandler.class);
     helmRepoYamlHandlerMapBinder.addBinding(SettingVariableTypes.AMAZON_S3_HELM_REPO.name())
         .to(AmazonS3HelmRepoConfigYamlHandler.class);
     helmRepoYamlHandlerMapBinder.addBinding(SettingVariableTypes.GCS_HELM_REPO.name())

@@ -1218,7 +1218,7 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     w.put("beans.ScalyrConfig", ScalyrConfig.class);
     w.put("beans.settings.helm.AmazonS3HelmRepoConfig", AmazonS3HelmRepoConfig.class);
     w.put("beans.settings.helm.GCSHelmRepoConfig", GCSHelmRepoConfig.class);
-    w.put("beans.settings.helm.HttpHelmRepoConfig", HttpHelmRepoConfig.class);
+    // w.put("beans.settings.helm.HttpHelmRepoConfig", HttpHelmRepoConfig.class);
     w.put("beans.settings.helm.OciHelmRepoConfig", OciHelmRepoConfig.class);
     w.put("beans.SlackConfig", SlackConfig.class);
     w.put("beans.StringValue", StringValue.class);
