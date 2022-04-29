@@ -92,7 +92,8 @@ public class SlackNotificationServiceImpl implements SlackNotificationService {
   public void sendJSONMessage(String message, List<String> slackWebhooks, String accountId) {
     for (String slackWebHook : slackWebhooks) {
       // need to add feature flag so it is backwards compatible
-      if (featureFlagService.isEnabled(FeatureName.SEND_SLACK_NOTIFICATION_FROM_DELEGATE, accountId)) {
+      if (featureFlagService.isEnabled(FeatureName.SEND_SLACK_NOTIFICATION_FROM_DELEGATE, accountId)
+          && featureFlagService.isGlobalEnabled(FeatureName.SEND_SLACK_JSON_NOTIFICATION_FROM_DELEGATE)) {
         log.info("Sending message via delegate");
         SyncTaskContext syncTaskContext = SyncTaskContext.builder()
                                               .accountId(accountId)

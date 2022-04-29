@@ -80,12 +80,28 @@ public class SlackNotificationServiceTest extends WingsBaseTest {
   public void shouldSendJSONMessageFromDelegate() {
     when(accountService.isCertValidationRequired(any())).thenReturn(false);
     when(featureFlagService.isEnabled(any(), anyString())).thenReturn(true);
+    when(featureFlagService.isGlobalEnabled(any())).thenReturn(true);
     when(delegateProxyFactory.get(any(Class.class), any(SyncTaskContext.class))).thenReturn(slackMessageSender);
     doNothing().when(slackMessageSender).sendJSON(any(SlackMessageJSON.class));
 
     List<String> slackWebhookUrls = ImmutableList.of("http://webhook.com");
     slackNotificationService.sendJSONMessage("message", slackWebhookUrls, "account-id");
     verify(delegateProxyFactory, times(1)).get(any(), any());
+    verify(slackMessageSender, times(1)).sendJSON(any(SlackMessageJSON.class));
+  }
+
+  @Test
+  @Owner(developers = LUCAS_SALES)
+  @Category(UnitTests.class)
+  public void shouldSendJSONMessageFromManager() {
+    when(accountService.isCertValidationRequired(any())).thenReturn(false);
+    when(featureFlagService.isEnabled(any(), anyString())).thenReturn(true);
+    when(featureFlagService.isGlobalEnabled(any())).thenReturn(false);
+    doNothing().when(slackMessageSender).sendJSON(any(SlackMessageJSON.class));
+
+    List<String> slackWebhookUrls = ImmutableList.of("http://webhook.com");
+    slackNotificationService.sendJSONMessage("message", slackWebhookUrls, "account-id");
+    verify(delegateProxyFactory, times(0)).get(any(), any());
     verify(slackMessageSender, times(1)).sendJSON(any(SlackMessageJSON.class));
   }
 
