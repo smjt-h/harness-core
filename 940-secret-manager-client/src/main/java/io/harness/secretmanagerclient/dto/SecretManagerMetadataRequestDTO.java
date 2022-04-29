@@ -35,6 +35,7 @@ public class SecretManagerMetadataRequestDTO implements DecryptableEntity {
   @Schema(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) private String projectIdentifier;
   @Schema(description = "Identifier of the SecretManager metadata.") @NotNull private String identifier;
 
+  @Schema(description = "Spec of the Secret Manager.")
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "encryptionType",
       visible = true)
   @JsonSubTypes(value = { @JsonSubTypes.Type(name = "VAULT", value = VaultMetadataRequestSpecDTO.class) })
