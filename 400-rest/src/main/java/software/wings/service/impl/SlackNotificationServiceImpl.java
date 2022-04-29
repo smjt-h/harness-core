@@ -32,9 +32,6 @@ import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -49,7 +46,6 @@ public class SlackNotificationServiceImpl implements SlackNotificationService {
   @Inject private SlackMessageSender slackMessageSender;
   @Inject private FeatureFlagService featureFlagService;
   @Inject private AccountService accountService;
-  private OkHttpClient client = new OkHttpClient();
 
   public static final String SLACK_WEBHOOK_URL_PREFIX = "https://hooks.slack.com/services/";
   public static final MediaType APPLICATION_JSON = MediaType.parse("application/json; charset=utf-8");
@@ -94,8 +90,9 @@ public class SlackNotificationServiceImpl implements SlackNotificationService {
 
   @Override
   public void sendJSONMessage(String message, List<String> slackWebhooks, String accountId) {
-    if (featureFlagService.isEnabled(FeatureName.SEND_SLACK_NOTIFICATION_FROM_DELEGATE, accountId)) {
-      for (String slackWebHook : slackWebhooks) {
+    for (String slackWebHook : slackWebhooks) {
+      // need to add feature flag so it is backwards compatible
+      if (featureFlagService.isEnabled(FeatureName.SEND_SLACK_NOTIFICATION_FROM_DELEGATE, accountId)) {
         log.info("Sending message via delegate");
         SyncTaskContext syncTaskContext = SyncTaskContext.builder()
                                               .accountId(accountId)
@@ -106,21 +103,9 @@ public class SlackNotificationServiceImpl implements SlackNotificationService {
 
         delegateProxyFactory.get(SlackMessageSender.class, syncTaskContext)
             .sendJSON(new SlackMessageJSON(slackWebHook, message));
-      }
-    } else {
-      for (String slackWebHook : slackWebhooks) {
-        try {
-          Request request = SlackNotificationUtils.createHttpRequest(message, slackWebHook);
-          Response response = client.newCall(request).execute();
-
-          if (!response.isSuccessful()) {
-            String bodyString = (null != response.body()) ? response.body().string() : "null";
-
-            log.error("Response not Successful. Response body: {}", bodyString);
-          }
-        } catch (Exception e) {
-          log.error("Error sending post data", e);
-        }
+      } else {
+        log.info("Sending message for account {} via manager", accountId);
+        slackMessageSender.sendJSON(new SlackMessageJSON(slackWebHook, message));
       }
     }
   }

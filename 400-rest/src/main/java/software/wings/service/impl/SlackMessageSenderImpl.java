@@ -46,7 +46,6 @@ import retrofit2.http.Url;
 @OwnedBy(CDC)
 @Slf4j
 public class SlackMessageSenderImpl implements SlackMessageSender {
-  private OkHttpClient client = new OkHttpClient();
 
   @Override
   public void send(SlackMessage slackMessage, boolean sendFromDelegate, boolean isCertValidationRequired) {
@@ -95,6 +94,7 @@ public class SlackMessageSenderImpl implements SlackMessageSender {
 
   @Override
   public void sendJSON(SlackMessageJSON slackMessage) {
+    OkHttpClient client = getHttpClient();
     try {
       Request slackRequest =
           SlackNotificationUtils.createHttpRequest(slackMessage.getMessage(), slackMessage.getOutgoingWebhookUrl());
@@ -113,6 +113,10 @@ public class SlackMessageSenderImpl implements SlackMessageSender {
 
   SlackWebhookClient getWebhookClient(final String webhookUrl) {
     return SlackClientFactory.createWebhookClient(webhookUrl);
+  }
+
+  OkHttpClient getHttpClient() {
+    return new OkHttpClient();
   }
 
   private void sendGenericHttpPostRequest(String webhookUrl, Payload payload, boolean isCertValidationRequired) {
