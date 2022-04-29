@@ -11,19 +11,18 @@ public class SlackNotificationUtils {
 
   public Request createHttpRequest(String message, String slackWebHook) {
     RequestBody body = RequestBody.create(APPLICATION_JSON, message);
-    Request request = new Request.Builder()
-                          .url(slackWebHook)
-                          .post(body)
-                          .addHeader("Content-Type", "application/json")
-                          .addHeader("Accept", "*/*")
-                          .addHeader("Cache-Control", "no-cache")
-                          .addHeader("Host", "hooks.slack.com")
-                          .addHeader("accept-encoding", "gzip, deflate")
-                          .addHeader("content-length", "798")
-                          .addHeader("Connection", "keep-alive")
-                          .addHeader("cache-control", "no-cache")
-                          .build();
 
-    return request;
+    return new Request.Builder()
+        .url(slackWebHook)
+        .post(body)
+        .addHeader("Content-Type", "application/json")
+        .addHeader("Accept", "*/*")
+        .addHeader("Cache-Control", "no-cache")
+        .addHeader("Host", "hooks.slack.com")
+        .addHeader("accept-encoding", "gzip, deflate")
+        .addHeader("content-length", "798")
+        .addHeader("Connection", "keep-alive")
+        .addHeader("cache-control", "no-cache")
+        .build();
   }
 }
