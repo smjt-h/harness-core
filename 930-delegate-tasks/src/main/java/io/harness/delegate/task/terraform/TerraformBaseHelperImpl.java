@@ -865,10 +865,9 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
     File file = new File(Paths.get(sshKeyPath).toString());
 
     // Giving Read Only Permission to ownerOnly for the SSH File, This is needed to avoided security attack
-
-    file.setWritable(false, false);
-    file.setExecutable(false, false);
+    file.setWritable(false);
     file.setReadable(false, false);
+    file.setExecutable(false);
     file.setReadable(true);
 
     String newSSHArg = TF_SSH_COMMAND_ARG + sshKeyPath;
