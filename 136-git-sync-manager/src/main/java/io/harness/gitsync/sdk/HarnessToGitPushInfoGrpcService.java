@@ -18,6 +18,8 @@ import io.harness.exception.exceptionmanager.ExceptionManager;
 import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.CommitFileRequest;
 import io.harness.gitsync.CommitFileResponse;
+import io.harness.gitsync.CreateFileRequest;
+import io.harness.gitsync.CreateFileResponse;
 import io.harness.gitsync.CreatePRRequest;
 import io.harness.gitsync.CreatePRResponse;
 import io.harness.gitsync.ErrorDetails;
@@ -30,6 +32,8 @@ import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.PushInfo;
 import io.harness.gitsync.PushResponse;
 import io.harness.gitsync.RepoDetails;
+import io.harness.gitsync.UpdateFileRequest;
+import io.harness.gitsync.UpdateFileResponse;
 import io.harness.gitsync.common.service.HarnessToGitHelperService;
 import io.harness.logging.MdcContextSetter;
 import io.harness.manage.GlobalContextManager;
@@ -124,6 +128,42 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
                                .build();
     }
     responseObserver.onNext(commitFileResponse);
+    responseObserver.onCompleted();
+  }
+
+  @Override
+  public void createFile(CreateFileRequest request, StreamObserver<CreateFileResponse> responseObserver) {
+    CreateFileResponse createFileResponse;
+    try (GlobalContextManager.GlobalContextGuard guard = GlobalContextManager.ensureGlobalContextGuard();
+         MdcContextSetter ignore1 = new MdcContextSetter(request.getContextMapMap())) {
+      createFileResponse = harnessToGitHelperService.createFile(request);
+    } catch (Exception ex) {
+      log.error("Faced exception during createFile GIT call", ex);
+      final String errorMessage = ExceptionUtils.getMessage(ex);
+      createFileResponse = CreateFileResponse.newBuilder()
+                               .setStatusCode(500)
+                               .setError(ErrorDetails.newBuilder().setErrorMessage(errorMessage).build())
+                               .build();
+    }
+    responseObserver.onNext(createFileResponse);
+    responseObserver.onCompleted();
+  }
+
+  @Override
+  public void updateFile(UpdateFileRequest request, StreamObserver<UpdateFileResponse> responseObserver) {
+    UpdateFileResponse updateFileResponse;
+    try (GlobalContextManager.GlobalContextGuard guard = GlobalContextManager.ensureGlobalContextGuard();
+         MdcContextSetter ignore1 = new MdcContextSetter(request.getContextMapMap())) {
+      updateFileResponse = harnessToGitHelperService.updateFile(request);
+    } catch (Exception ex) {
+      log.error("Faced exception during updateFile GIT call", ex);
+      final String errorMessage = ExceptionUtils.getMessage(ex);
+      updateFileResponse = UpdateFileResponse.newBuilder()
+                               .setStatusCode(500)
+                               .setError(ErrorDetails.newBuilder().setErrorMessage(errorMessage).build())
+                               .build();
+    }
+    responseObserver.onNext(updateFileResponse);
     responseObserver.onCompleted();
   }
 

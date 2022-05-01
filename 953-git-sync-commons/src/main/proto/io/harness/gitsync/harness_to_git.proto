@@ -22,7 +22,6 @@ service HarnessToGitPushInfoService {
   rpc isGitSyncEnabledForScope(io.harness.eventsframework.schemas.entity.EntityScopeInfo) returns (IsGitSyncEnabled);
   rpc getDefaultBranch(RepoDetails) returns (BranchDetails);
   rpc getFile(GetFileRequest) returns (GetFileResponse);
-  rpc commitFile(CommitFileRequest) returns (CommitFileResponse);
   rpc createFile(CreateFileRequest) returns (CreateFileResponse);
   rpc updateFile(UpdateFileRequest) returns (UpdateFileResponse);
   rpc createPullRequest(CreatePRRequest) returns (CreatePRResponse);
@@ -107,28 +106,6 @@ message GetFileResponse {
   string fileContent = 2;
   string error = 3;
   GitMetaData gitMetaData = 4;
-}
-
-message CommitFileRequest {
-  string repoName = 1;
-  string branchName = 2;
-  string filePath = 3;
-  string connectorRef = 4;
-  string fileContent = 5;
-  bool isCommitToNewBranch = 6;
-  string baseBranchName = 7;
-  string commitMessage = 8;
-  string oldFileSha = 9;
-  string oldCommitId = 10;
-  io.harness.gitsync.ChangeType change_type = 11;
-  ScopeIdentifiers scopeIdentifiers = 12;
-  map<string, string> contextMap = 13;
-}
-
-message CommitFileResponse {
-  int32 statusCode = 1;
-  ErrorDetails error = 2;
-  GitMetaData gitMetaData = 3;
 }
 
 message CreateFileRequest {
