@@ -12,10 +12,6 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 
-import javax.validation.constraints.NotNull;
-import lombok.Builder;
-import lombok.Value;
-
 @OwnedBy(CDC)
 @RecasterAlias("io.harness.steps.resourcerestraint.beans.HoldingScope")
 public enum HoldingScope {

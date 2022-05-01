@@ -10,6 +10,7 @@ package io.harness.steps.resourcerestraint;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.distribution.constraint.Consumer.State.ACTIVE;
 import static io.harness.pms.sdk.core.execution.events.node.facilitate.FacilitatorResponse.FacilitatorResponseBuilder;
+import static io.harness.steps.resourcerestraint.beans.ResourceRestraint.ResourceRestraintKeys;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -148,8 +149,8 @@ public class ResourceRestraintFacilitator implements Facilitator {
     constraintContext.put(ResourceRestraintInstanceKeys.releaseEntityId, releaseEntityId);
     constraintContext.put(ResourceRestraintInstanceKeys.order,
         resourceRestraintInstanceService.getMaxOrder(resourceRestraint.getUuid()) + 1);
-    constraintContext.put(ResourceRestraint.ResourceRestraintKeys.capacity, resourceRestraint.getCapacity());
-    constraintContext.put(ResourceRestraint.ResourceRestraintKeys.name, resourceRestraint.getName());
+    constraintContext.put(ResourceRestraintKeys.capacity, resourceRestraint.getCapacity());
+    constraintContext.put(ResourceRestraintKeys.name, resourceRestraint.getName());
 
     return constraintContext;
   }

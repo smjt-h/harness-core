@@ -36,8 +36,7 @@ import org.mockito.Mock;
 
 public class ResourceRestraintObserverTest extends OrchestrationStepsTestBase {
   @Mock ResourceRestraintInstanceService restraintInstanceService;
-  @Inject @InjectMocks
-  ResourceRestraintObserver observer;
+  @Inject @InjectMocks ResourceRestraintObserver observer;
 
   @Test
   @Owner(developers = PRASHANT)

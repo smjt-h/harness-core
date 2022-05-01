@@ -185,7 +185,7 @@ public class AmbianceUtils {
 
   public String getStageRuntimeIdAmbiance(Ambiance ambiance) {
     Optional<Level> stageLevel = getStageLevelFromAmbiance(ambiance);
-    if (stageLevel.isPresent()){
+    if (stageLevel.isPresent()) {
       return stageLevel.get().getRuntimeId();
     }
     throw new InvalidRequestException("Stage not present");
