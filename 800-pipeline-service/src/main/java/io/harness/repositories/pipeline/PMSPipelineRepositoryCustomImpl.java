@@ -147,7 +147,7 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
     pipelineToSave.setFilePath(gitEntityInfo.getFilePath());
 
     PipelineEntity savedEntity = mongoTemplate.save(pipelineToSave);
-    gitAwareEntityHelper.pushEntityToRemote(pipelineToSave, yamlToPush, scope, ChangeType.ADD);
+    gitAwareEntityHelper.createEntityOnGit(pipelineToSave, yamlToPush, scope);
     return savedEntity;
   }
 
@@ -246,7 +246,7 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
 
     PipelineEntity updatedPipelineEntity = mongoTemplate.findAndModify(
         query, updateOperations, new FindAndModifyOptions().returnNew(true), PipelineEntity.class);
-    gitAwareEntityHelper.pushEntityToRemote(updatedPipelineEntity, yamlToPush, scope, ChangeType.MODIFY);
+    gitAwareEntityHelper.updateEntityOnGit(updatedPipelineEntity, yamlToPush, scope);
     return updatedPipelineEntity;
   }
 

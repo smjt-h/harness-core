@@ -22,6 +22,8 @@ import io.harness.exception.ngexception.beans.ScmErrorMetadataDTO;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.CommitFileRequest;
 import io.harness.gitsync.CommitFileResponse;
+import io.harness.gitsync.CreateFileRequest;
+import io.harness.gitsync.CreateFileResponse;
 import io.harness.gitsync.CreatePRRequest;
 import io.harness.gitsync.CreatePRResponse;
 import io.harness.gitsync.FileInfo;
@@ -30,6 +32,8 @@ import io.harness.gitsync.GetFileResponse;
 import io.harness.gitsync.GitMetaData;
 import io.harness.gitsync.HarnessToGitPushInfoServiceGrpc.HarnessToGitPushInfoServiceBlockingStub;
 import io.harness.gitsync.PushFileResponse;
+import io.harness.gitsync.UpdateFileRequest;
+import io.harness.gitsync.UpdateFileResponse;
 import io.harness.gitsync.common.helper.ChangeTypeMapper;
 import io.harness.gitsync.common.helper.GitSyncGrpcClientUtils;
 import io.harness.gitsync.common.helper.ScopeIdentifierMapper;
@@ -40,14 +44,20 @@ import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.scm.beans.SCMNoOpResponse;
 import io.harness.gitsync.scm.beans.ScmCommitFileGitRequestParams;
 import io.harness.gitsync.scm.beans.ScmCommitFileResponse;
+import io.harness.gitsync.scm.beans.ScmCreateFileGitRequest;
+import io.harness.gitsync.scm.beans.ScmCreateFileGitResponse;
 import io.harness.gitsync.scm.beans.ScmCreatePRResponse;
 import io.harness.gitsync.scm.beans.ScmErrorDetails;
 import io.harness.gitsync.scm.beans.ScmGetFileResponse;
 import io.harness.gitsync.scm.beans.ScmGitMetaData;
 import io.harness.gitsync.scm.beans.ScmPushResponse;
+import io.harness.gitsync.scm.beans.ScmUpdateFileGitRequest;
+import io.harness.gitsync.scm.beans.ScmUpdateFileGitResponse;
 import io.harness.gitsync.scm.errorhandling.CommitFileScmErrorHandler;
+import io.harness.gitsync.scm.errorhandling.CreateFileScmErrorHandler;
 import io.harness.gitsync.scm.errorhandling.CreatePullRequestScmErrorHandler;
 import io.harness.gitsync.scm.errorhandling.GetFileScmErrorHandler;
+import io.harness.gitsync.scm.errorhandling.UpdateFileScmErrorHandler;
 import io.harness.impl.ScmResponseStatusUtils;
 import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.entitydetail.EntityDetailRestToProtoMapper;
@@ -76,6 +86,8 @@ public class SCMGitSyncHelper {
   @Inject private GetFileScmErrorHandler getFileScmErrorHandler;
   @Inject private CommitFileScmErrorHandler commitFileScmErrorHandler;
   @Inject private CreatePullRequestScmErrorHandler createPullRequestScmErrorHandler;
+  @Inject private CreateFileScmErrorHandler createFileScmErrorHandler;
+  @Inject private UpdateFileScmErrorHandler updateFileScmErrorHandler;
 
   public ScmPushResponse pushToGit(
       GitEntityInfo gitBranchInfo, String yaml, ChangeType changeType, EntityDetail entityDetail) {
@@ -144,6 +156,58 @@ public class SCMGitSyncHelper {
         ScmErrorDetails.builder().errorMessage(commitFileResponse.getError().getErrorMessage()).build());
 
     return ScmCommitFileResponse.builder().gitMetaData(getGitMetaData(commitFileResponse.getGitMetaData())).build();
+  }
+
+  public ScmCreateFileGitResponse createFile(
+      Scope scope, ScmCreateFileGitRequest gitRequest, Map<String, String> contextMap) {
+    final CreateFileRequest createFileRequest =
+        CreateFileRequest.newBuilder()
+            .setRepoName(gitRequest.getRepoName())
+            .setFilePath(gitRequest.getFilePath())
+            .setBranchName(gitRequest.getBranchName())
+            .setConnectorRef(gitRequest.getConnectorRef())
+            .setFileContent(gitRequest.getFileContent())
+            .setIsCommitToNewBranch(gitRequest.isCommitToNewBranch())
+            .setCommitMessage(gitRequest.getCommitMessage())
+            .setScopeIdentifiers(ScopeIdentifierMapper.getScopeIdentifiersFromScope(scope))
+            .putAllContextMap(contextMap)
+            .setBaseBranchName(gitRequest.getBaseBranch())
+            .build();
+
+    final CreateFileResponse createFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
+        harnessToGitPushInfoServiceBlockingStub::createFile, createFileRequest);
+
+    createPullRequestScmErrorHandler.handlerAndThrowError(createFileResponse.getStatusCode(),
+        ScmErrorDetails.builder().errorMessage(createFileResponse.getError().getErrorMessage()).build());
+
+    return ScmCreateFileGitResponse.builder().gitMetaData(getGitMetaData(createFileResponse.getGitMetaData())).build();
+  }
+
+  public ScmUpdateFileGitResponse updateFile(
+      Scope scope, ScmUpdateFileGitRequest gitRequest, Map<String, String> contextMap) {
+    final UpdateFileRequest updateFileRequest =
+        UpdateFileRequest.newBuilder()
+            .setRepoName(gitRequest.getRepoName())
+            .setFilePath(gitRequest.getFilePath())
+            .setBranchName(gitRequest.getBranchName())
+            .setConnectorRef(gitRequest.getConnectorRef())
+            .setFileContent(gitRequest.getFileContent())
+            .setIsCommitToNewBranch(gitRequest.isCommitToNewBranch())
+            .setCommitMessage(gitRequest.getCommitMessage())
+            .setScopeIdentifiers(ScopeIdentifierMapper.getScopeIdentifiersFromScope(scope))
+            .putAllContextMap(contextMap)
+            .setBaseBranchName(gitRequest.getBaseBranch())
+            .setOldCommitId(gitRequest.getOldCommitId())
+            .setOldFileSha(gitRequest.getOldFileSha())
+            .build();
+
+    final UpdateFileResponse updateFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
+        harnessToGitPushInfoServiceBlockingStub::updateFile, updateFileRequest);
+
+    updateFileScmErrorHandler.handlerAndThrowError(updateFileResponse.getStatusCode(),
+        ScmErrorDetails.builder().errorMessage(updateFileResponse.getError().getErrorMessage()).build());
+
+    return ScmUpdateFileGitResponse.builder().gitMetaData(getGitMetaData(updateFileResponse.getGitMetaData())).build();
   }
 
   public ScmCreatePRResponse createPullRequest(Scope scope, String repoName, String connectorRef, String sourceBranch,

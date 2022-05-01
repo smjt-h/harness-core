@@ -23,6 +23,8 @@ service HarnessToGitPushInfoService {
   rpc getDefaultBranch(RepoDetails) returns (BranchDetails);
   rpc getFile(GetFileRequest) returns (GetFileResponse);
   rpc commitFile(CommitFileRequest) returns (CommitFileResponse);
+  rpc createFile(CreateFileRequest) returns (CreateFileResponse);
+  rpc updateFile(UpdateFileRequest) returns (UpdateFileResponse);
   rpc createPullRequest(CreatePRRequest) returns (CreatePRResponse);
 }
 
@@ -124,6 +126,46 @@ message CommitFileRequest {
 }
 
 message CommitFileResponse {
+  int32 statusCode = 1;
+  ErrorDetails error = 2;
+  GitMetaData gitMetaData = 3;
+}
+
+message CreateFileRequest {
+  string repoName = 1;
+  string branchName = 2;
+  string filePath = 3;
+  string connectorRef = 4;
+  string fileContent = 5;
+  bool isCommitToNewBranch = 6;
+  string baseBranchName = 7;
+  string commitMessage = 8;
+  ScopeIdentifiers scopeIdentifiers = 12;
+  map<string, string> contextMap = 13;
+}
+
+message CreateFileResponse {
+  int32 statusCode = 1;
+  ErrorDetails error = 2;
+  GitMetaData gitMetaData = 3;
+}
+
+message UpdateFileRequest {
+  string repoName = 1;
+  string branchName = 2;
+  string filePath = 3;
+  string connectorRef = 4;
+  string fileContent = 5;
+  bool isCommitToNewBranch = 6;
+  string baseBranchName = 7;
+  string commitMessage = 8;
+  string oldFileSha = 9;
+  string oldCommitId = 10;
+  ScopeIdentifiers scopeIdentifiers = 12;
+  map<string, string> contextMap = 13;
+}
+
+message UpdateFileResponse {
   int32 statusCode = 1;
   ErrorDetails error = 2;
   GitMetaData gitMetaData = 3;
