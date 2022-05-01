@@ -37,7 +37,6 @@ import io.harness.azure.client.AzureKubernetesClient;
 import io.harness.azure.client.AzureManagementClient;
 import io.harness.azure.client.AzureMonitorClient;
 import io.harness.azure.client.AzureNetworkClient;
-import io.harness.azure.client.AzureNgClient;
 import io.harness.azure.client.AzureWebClient;
 import io.harness.azure.impl.AzureAuthorizationClientImpl;
 import io.harness.azure.impl.AzureAutoScaleSettingsClientImpl;
@@ -48,7 +47,6 @@ import io.harness.azure.impl.AzureKubernetesClientImpl;
 import io.harness.azure.impl.AzureManagementClientImpl;
 import io.harness.azure.impl.AzureMonitorClientImpl;
 import io.harness.azure.impl.AzureNetworkClientImpl;
-import io.harness.azure.impl.AzureNgClientImpl;
 import io.harness.azure.impl.AzureWebClientImpl;
 import io.harness.cdng.notification.task.MailSenderDelegateTask;
 import io.harness.cdng.secrets.tasks.SSHConfigValidationDelegateTask;
@@ -118,6 +116,9 @@ import io.harness.delegate.message.MessageServiceImpl;
 import io.harness.delegate.message.MessengerType;
 import io.harness.delegate.provider.DelegateConfigurationServiceProviderImpl;
 import io.harness.delegate.provider.DelegatePropertiesServiceProviderImpl;
+import io.harness.delegate.serverless.ServerlessAwsLambdaDeployCommandTaskHandler;
+import io.harness.delegate.serverless.ServerlessAwsLambdaRollbackCommandTaskHandler;
+import io.harness.delegate.serverless.ServerlessCommandTaskHandler;
 import io.harness.delegate.service.DelegateAgentService;
 import io.harness.delegate.service.DelegateAgentServiceImpl;
 import io.harness.delegate.service.DelegateCVActivityLogServiceImpl;
@@ -139,9 +140,13 @@ import io.harness.delegate.task.artifactory.ArtifactoryDelegateTask;
 import io.harness.delegate.task.artifactory.ArtifactoryValidationHandler;
 import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
 import io.harness.delegate.task.artifacts.DelegateArtifactTaskHandler;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactTaskNG;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.azure.AcrArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.azure.AcrArtifactTaskHandler;
+import io.harness.delegate.task.artifacts.azure.AcrArtifactTaskNG;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactTaskNG;
@@ -154,7 +159,6 @@ import io.harness.delegate.task.aws.AwsCodeCommitApiDelegateTask;
 import io.harness.delegate.task.aws.AwsCodeCommitDelegateTask;
 import io.harness.delegate.task.aws.AwsDelegateTask;
 import io.harness.delegate.task.aws.AwsValidationHandler;
-import io.harness.delegate.task.azure.AzureTask;
 import io.harness.delegate.task.azure.AzureValidationHandler;
 import io.harness.delegate.task.azure.appservice.AzureAppServiceTaskParameters.AzureAppServiceTaskType;
 import io.harness.delegate.task.azure.arm.AzureARMTaskParameters;
@@ -218,6 +222,9 @@ import io.harness.delegate.task.scm.ScmGitRefTask;
 import io.harness.delegate.task.scm.ScmGitWebhookTask;
 import io.harness.delegate.task.scm.ScmPathFilterEvaluationTask;
 import io.harness.delegate.task.scm.ScmPushTask;
+import io.harness.delegate.task.serverless.ServerlessCommandTask;
+import io.harness.delegate.task.serverless.ServerlessCommandType;
+import io.harness.delegate.task.serverless.ServerlessGitFetchTask;
 import io.harness.delegate.task.servicenow.ServiceNowTaskNG;
 import io.harness.delegate.task.servicenow.ServiceNowValidationHandler;
 import io.harness.delegate.task.servicenow.connection.ServiceNowTestConnectionTaskNG;
@@ -398,6 +405,7 @@ import software.wings.delegatetasks.aws.ecs.ecstaskhandler.EcsSetupCommandHandle
 import software.wings.delegatetasks.aws.ecs.ecstaskhandler.deploy.EcsDeployCommandHandler;
 import software.wings.delegatetasks.aws.ecs.ecstaskhandler.deploy.EcsDeployRollbackDataFetchCommandHandler;
 import software.wings.delegatetasks.aws.ecs.ecstaskhandler.deploy.EcsRunTaskDeployCommandHandler;
+import software.wings.delegatetasks.azure.AzureTask;
 import software.wings.delegatetasks.azure.AzureVMSSTask;
 import software.wings.delegatetasks.azure.appservice.AbstractAzureAppServiceTaskHandler;
 import software.wings.delegatetasks.azure.appservice.AzureAppServiceTask;
@@ -1105,7 +1113,6 @@ public class DelegateModule extends AbstractModule {
     bind(AzureKubernetesClient.class).to(AzureKubernetesClientImpl.class);
     bind(ArtifactoryNgService.class).to(ArtifactoryNgServiceImpl.class);
     bind(AWSCloudformationClient.class).to(AWSCloudformationClientImpl.class);
-    bind(AzureNgClient.class).to(AzureNgClientImpl.class);
 
     // NG Delegate
     MapBinder<String, K8sRequestHandler> k8sTaskTypeToRequestHandler =
@@ -1163,11 +1170,24 @@ public class DelegateModule extends AbstractModule {
         .toInstance(NexusArtifactTaskHandler.class);
 
     MapBinder<Class<? extends ArtifactSourceDelegateRequest>, Class<? extends DelegateArtifactTaskHandler>>
-        artifactoryArtifactServiceMapBinder =
+        artifactoryDockerArtifactServiceMapBinder =
             MapBinder.newMapBinder(binder(), new TypeLiteral<Class<? extends ArtifactSourceDelegateRequest>>() {},
                 new TypeLiteral<Class<? extends DelegateArtifactTaskHandler>>() {});
-    artifactoryArtifactServiceMapBinder.addBinding(ArtifactoryArtifactDelegateRequest.class)
+    artifactoryDockerArtifactServiceMapBinder.addBinding(ArtifactoryDockerArtifactDelegateRequest.class)
         .toInstance(ArtifactoryArtifactTaskHandler.class);
+
+    MapBinder<Class<? extends ArtifactSourceDelegateRequest>, Class<? extends DelegateArtifactTaskHandler>>
+        artifactoryGenericArtifactServiceMapBinder =
+            MapBinder.newMapBinder(binder(), new TypeLiteral<Class<? extends ArtifactSourceDelegateRequest>>() {},
+                new TypeLiteral<Class<? extends DelegateArtifactTaskHandler>>() {});
+    artifactoryGenericArtifactServiceMapBinder.addBinding(ArtifactoryGenericArtifactDelegateRequest.class)
+        .toInstance(ArtifactoryArtifactTaskHandler.class);
+
+    MapBinder<Class<? extends ArtifactSourceDelegateRequest>, Class<? extends DelegateArtifactTaskHandler>>
+        acrArtifactServiceMapBinder =
+            MapBinder.newMapBinder(binder(), new TypeLiteral<Class<? extends ArtifactSourceDelegateRequest>>() {},
+                new TypeLiteral<Class<? extends DelegateArtifactTaskHandler>>() {});
+    acrArtifactServiceMapBinder.addBinding(AcrArtifactDelegateRequest.class).toInstance(AcrArtifactTaskHandler.class);
 
     MapBinder<GcpTaskType, TaskHandler> gcpTaskTypeToTaskHandlerMap =
         MapBinder.newMapBinder(binder(), GcpTaskType.class, TaskHandler.class);
@@ -1215,6 +1235,14 @@ public class DelegateModule extends AbstractModule {
         .to(AzureK8sResourceProviderTaskHandler.class);
     azureResourceTaskTypeToTaskHandlerMap.addBinding(AzureResourceProvider.CONTAINER_REGISTRY.name())
         .to(ACRResourceProviderTaskHandler.class);
+
+    // Serverless Tasks
+    MapBinder<String, ServerlessCommandTaskHandler> serverlessTaskTypeToTaskHandlerMap =
+        MapBinder.newMapBinder(binder(), String.class, ServerlessCommandTaskHandler.class);
+    serverlessTaskTypeToTaskHandlerMap.addBinding(ServerlessCommandType.SERVERLESS_AWS_LAMBDA_DEPLOY.name())
+        .to(ServerlessAwsLambdaDeployCommandTaskHandler.class);
+    serverlessTaskTypeToTaskHandlerMap.addBinding(ServerlessCommandType.SERVERLESS_AWS_LAMBDA_ROLLBACK.name())
+        .to(ServerlessAwsLambdaRollbackCommandTaskHandler.class);
 
     registerSecretManagementBindings();
     registerConnectorValidatorsBindings();
@@ -1492,6 +1520,7 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.DOCKER_ARTIFACT_TASK_NG).toInstance(DockerArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.GCR_ARTIFACT_TASK_NG).toInstance(GcrArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.ECR_ARTIFACT_TASK_NG).toInstance(EcrArtifactTaskNG.class);
+    mapBinder.addBinding(TaskType.ACR_ARTIFACT_TASK_NG).toInstance(AcrArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.NEXUS_ARTIFACT_TASK_NG).toInstance(NexusArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.ARTIFACTORY_ARTIFACT_TASK_NG).toInstance(ArtifactoryArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.AWS_ROUTE53_TASK).toInstance(AwsRoute53Task.class);
@@ -1561,6 +1590,8 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.SERVICENOW_CONNECTIVITY_TASK_NG).toInstance(ServiceNowTestConnectionTaskNG.class);
     mapBinder.addBinding(TaskType.SERVICENOW_TASK_NG).toInstance(ServiceNowTaskNG.class);
     mapBinder.addBinding(TaskType.CLOUDFORMATION_TASK_NG).toInstance(CloudformationTaskNG.class);
+    mapBinder.addBinding(TaskType.SERVERLESS_GIT_FETCH_TASK_NG).toInstance(ServerlessGitFetchTask.class);
+    mapBinder.addBinding(TaskType.SERVERLESS_COMMAND_TASK).toInstance(ServerlessCommandTask.class);
   }
 
   private void registerSecretManagementBindings() {
