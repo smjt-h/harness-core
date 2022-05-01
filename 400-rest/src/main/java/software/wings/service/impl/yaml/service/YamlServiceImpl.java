@@ -156,6 +156,7 @@ import software.wings.yaml.YamlPayload;
 
 import com.esotericsoftware.yamlbeans.YamlReader;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -204,6 +205,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
@@ -334,8 +336,26 @@ public class YamlServiceImpl<Y extends BaseYaml, B extends Base> implements Yaml
     return changeList.stream().filter(change -> change.getFilePath().startsWith(SETUP_FOLDER_PATH)).collect(toList());
   }
 
+  @SneakyThrows
   @Override
   public RestResponse<B> update(YamlPayload yamlPayload, String accountId, String entityId) {
+    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    JsonNode json = mapper.readTree(yamlPayload.getYaml());
+    JsonNode timeRangeBasedFreezeConfigs = json.get("timeRangeBasedFreezeConfigs");
+    for (JsonNode timeRangeBasedFreezeConfig : timeRangeBasedFreezeConfigs) {
+      for (JsonNode freezeWindow : timeRangeBasedFreezeConfig.get("appSelections")) {
+        if (!freezeWindow.has("serviceSelection") && !freezeWindow.has("envSelection")) {
+          throw new WingsException("serviceSelection and envSelection missing in Yaml File");
+        }
+        if (!freezeWindow.has("serviceSelection")) {
+          throw new WingsException("serviceSelection missing in Yaml File");
+        }
+        if (!freezeWindow.has("envSelection")) {
+          throw new WingsException("envSelection missing in Yaml File");
+        }
+      }
+    }
+
     GitFileChange change = GitFileChange.Builder.aGitFileChange()
                                .withChangeType(ChangeType.MODIFY)
                                .withFileContent(yamlPayload.getYaml())
