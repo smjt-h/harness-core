@@ -335,6 +335,7 @@ public class ResourceConstraintState extends State {
         releaseEntityId = ResourceConstraintService.releaseEntityId(pipelineDeploymentUuid);
         currentlyAcquiredPermits +=
             resourceConstraintService.getAllCurrentlyAcquiredPermits(holdingScope, releaseEntityId, appId);
+        return currentlyAcquiredPermits;
       case WORKFLOW:
         releaseEntityId = ResourceConstraintService.releaseEntityId(executionContext.getWorkflowExecutionId());
         currentlyAcquiredPermits +=
