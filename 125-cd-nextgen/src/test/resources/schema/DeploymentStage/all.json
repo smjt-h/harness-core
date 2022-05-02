@@ -565,9 +565,6 @@
                 "Commit"
               ]
             },
-            "metadata": {
-              "type": "string"
-            },
             "paths": {
               "oneOf": [
                 {
@@ -1092,22 +1089,6 @@
         }
       ]
     },
-    "DeploymentTemplateServiceSpec": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/ServiceSpec"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "metadata": {
-              "type": "string"
-            }
-          }
-        }
-      ],
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
     "Distribution": {
       "type": "object",
       "required": [
@@ -1512,9 +1493,6 @@
                 "Commit"
               ]
             },
-            "metadata": {
-              "type": "string"
-            },
             "paths": {
               "oneOf": [
                 {
@@ -1597,9 +1575,6 @@
                 "Commit"
               ]
             },
-            "metadata": {
-              "type": "string"
-            },
             "paths": {
               "oneOf": [
                 {
@@ -1681,9 +1656,6 @@
                 "Branch",
                 "Commit"
               ]
-            },
-            "metadata": {
-              "type": "string"
             },
             "paths": {
               "oneOf": [
@@ -4713,29 +4685,12 @@
             "NativeHelm",
             "Ssh",
             "WinRm",
-            "DeploymentTemplate",
             "ServerlessAwsLambda"
           ]
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#",
       "allOf": [
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "DeploymentTemplate"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "spec": {
-                "$ref": "#/definitions/DeploymentTemplateServiceSpec"
-              }
-            }
-          }
-        },
         {
           "if": {
             "properties": {

@@ -66,6 +66,7 @@ import io.harness.serializer.KryoRegistrar;
 import io.harness.tasks.BinaryResponseData;
 import io.harness.tasks.FailureResponseData;
 
+import software.wings.beans.NameValuePair;
 import software.wings.beans.appmanifest.StoreType;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -137,7 +138,7 @@ public class CommonsKryoRegistrar implements KryoRegistrar {
     kryo.register(AzureConfigException.class, 980023);
     kryo.register(AzureContainerRegistryException.class, 980024);
     kryo.register(DataProcessingException.class, 980025);
-
+    kryo.register(NameValuePair.class, 5226);
     kryo.register(ServerlessAwsLambdaRuntimeException.class, 980026);
     kryo.register(ServerlessCommandExecutionException.class, 980027);
   }

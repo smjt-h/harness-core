@@ -77,6 +77,7 @@ public class OwnerRule implements TestRule {
   public static final String SPG = "SPG";
 
   public static final String AADITI = "aaditi.joag";
+  public static final String ABHIJEET = "abhijeet.sharma";
   public static final String ABHIJITH = "abhijith.pradeep";
   public static final String ABHINAV = "abhinav.singh";
   public static final String ABHINAV2 = "abhinav.singh2";
@@ -87,6 +88,7 @@ public class OwnerRule implements TestRule {
   public static final String ALEKSANDAR = "aleksandar.radisavljevic";
   public static final String AGORODETKI = "alexandr.gorodetki";
   public static final String ALEXEI = "alexei.stirbul";
+  public static final String ALLEN = "allen.thomas";
   public static final String AMAN = "aman.singh";
   public static final String AMIT = "amit.jambure";
   public static final String ANJAN = "anjan.balgovind";
@@ -269,11 +271,13 @@ public class OwnerRule implements TestRule {
   private static final Map<String, UserInfo> active =
       ImmutableMap.<String, UserInfo>builder()
           .put(AADITI, defaultUserInfo(AADITI).slack("UCFPUNRAQ").team(CDC).build())
+          .put(ABHIJEET, defaultUserInfo(ABHIJEET).slack("U0395DJBXS7").team(CE).build())
           .put(ABHIJITH, defaultUserInfo(ABHIJITH).slack("U0270PE0T24").team(CV).build())
           .put(ABHINAV, defaultUserInfo(ABHINAV).slack("UQQPR8M6Y").team(DX).build())
           .put(ACHYUTH, defaultUserInfo(ACHYUTH).slack("U024FAWEZL7").team(CDP).build())
           .put(ADARSH, defaultUserInfo(ADARSH).slack("U01Q02K5LUR").team(CE).build())
           .put(ALEKSANDAR, defaultUserInfo(ALEKSANDAR).slack("U012MKR5FUZ").team(CI).build())
+          .put(ALLEN, defaultUserInfo(ALLEN).slack("U01QCSY8518").team(GTM).build())
           .put(AGORODETKI, defaultUserInfo(AGORODETKI).slack("U013KM8H2NL").team(CDC).build())
           .put(AKRITI, defaultUserInfo(AKRITI).slack("U01JCQAS84S").team(PL).build())
           .put(ALEXEI, defaultUserInfo(ALEXEI).slack("U012VS112EN").team(CDC).build())
@@ -320,6 +324,7 @@ public class OwnerRule implements TestRule {
           .put(KAPIL, defaultUserInfo(KAPIL).slack("U02E2J40E21").team(CV).build())
           .put(KARAN, defaultUserInfo(KARAN).slack("U015LRX21FD").team(PL).build())
           .put(LUCAS, defaultUserInfo(LUCAS).slack("U01C8MPTS2J").team(DEL).build())
+          .put(MANKRIT, defaultUserInfo(MANKRIT).slack("U02U8PSRMB4").team(PL).build())
           .put(MARKO, defaultUserInfo(MARKO).slack("U022NV33SF7").team(DEL).build())
           .put(MATT, defaultUserInfo(MATT).slack("U019QR7TA7M").team(DEL).build())
           .put(MEENAKSHI, UserInfo.builder().email("meenakshi.raikwar@harness.io").slack("UKP2AEUNA").build())

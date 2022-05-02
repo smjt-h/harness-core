@@ -105,6 +105,7 @@ import io.harness.delegate.beans.Delegate.DelegateKeys;
 import io.harness.delegate.beans.DelegateApproval;
 import io.harness.delegate.beans.DelegateConfiguration;
 import io.harness.delegate.beans.DelegateConnectionHeartbeat;
+import io.harness.delegate.beans.DelegateDTO;
 import io.harness.delegate.beans.DelegateEntityOwner;
 import io.harness.delegate.beans.DelegateGroup;
 import io.harness.delegate.beans.DelegateGroupStatus;
@@ -118,6 +119,7 @@ import io.harness.delegate.beans.DelegateScripts;
 import io.harness.delegate.beans.DelegateSetupDetails;
 import io.harness.delegate.beans.DelegateSize;
 import io.harness.delegate.beans.DelegateSizeDetails;
+import io.harness.delegate.beans.DelegateTags;
 import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
 import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.DelegateTokenDetails;
@@ -150,7 +152,6 @@ import io.harness.outbox.api.OutboxService;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptedDataDetail;
-import io.harness.service.impl.DelegateSetupServiceImpl;
 import io.harness.service.intfc.DelegateCache;
 import io.harness.service.intfc.DelegateProfileObserver;
 import io.harness.service.intfc.DelegateTaskRetryObserver;
@@ -201,6 +202,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.CharStreams;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
+import io.fabric8.utils.Lists;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -303,7 +305,6 @@ public class DelegateServiceTest extends WingsBaseTest {
   @InjectMocks @Inject private DelegateServiceImpl delegateService;
   @InjectMocks @Inject private DelegateTaskServiceClassicImpl delegateTaskServiceClassic;
   @InjectMocks @Inject private DelegateTaskService delegateTaskService;
-  @InjectMocks @Inject private DelegateSetupServiceImpl delegateSetupService;
 
   @Mock private UsageLimitedFeature delegatesFeature;
 
@@ -1087,7 +1088,7 @@ public class DelegateServiceTest extends WingsBaseTest {
 
     DelegateRegisterResponse registerResponse = delegateService.register(params);
     Delegate delegateFromDb = delegateCache.get(accountId, registerResponse.getDelegateId(), true);
-    DelegateGroup delegateGroupFromDb = delegateSetupService.getDelegateGroup(accountId, delegateGroup.getUuid());
+    DelegateGroup delegateGroupFromDb = delegateCache.getDelegateGroup(accountId, delegateGroup.getUuid());
 
     assertThat(delegateFromDb.getAccountId()).isEqualTo(params.getAccountId());
     assertThat(delegateFromDb.isNg()).isTrue();
@@ -1135,7 +1136,7 @@ public class DelegateServiceTest extends WingsBaseTest {
 
     DelegateRegisterResponse registerResponse = delegateService.register(params);
     Delegate delegateFromDb = delegateCache.get(ACCOUNT_ID, registerResponse.getDelegateId(), true);
-    DelegateGroup delegateGroupFromDb = delegateSetupService.getDelegateGroup(ACCOUNT_ID, delegateGroup.getUuid());
+    DelegateGroup delegateGroupFromDb = delegateCache.getDelegateGroup(ACCOUNT_ID, delegateGroup.getUuid());
 
     assertThat(delegateFromDb.getAccountId()).isEqualTo(params.getAccountId());
     assertThat(delegateFromDb.isNg()).isTrue();
@@ -3111,7 +3112,7 @@ public class DelegateServiceTest extends WingsBaseTest {
                             .build();
     persistence.save(delegate);
 
-    Set<String> tags = delegateService.retrieveDelegateSelectors(delegate);
+    Set<String> tags = delegateService.retrieveDelegateSelectors(delegate, false);
     assertThat(tags.size()).isEqualTo(3);
     assertThat(tags).containsExactlyInAnyOrder("abc", "qwe", "xde");
   }
@@ -3129,7 +3130,7 @@ public class DelegateServiceTest extends WingsBaseTest {
                             .build();
     persistence.save(delegate);
 
-    Set<String> tags = delegateService.retrieveDelegateSelectors(delegate);
+    Set<String> tags = delegateService.retrieveDelegateSelectors(delegate, false);
     assertThat(tags.size()).isEqualTo(0);
   }
 
@@ -3455,8 +3456,7 @@ public class DelegateServiceTest extends WingsBaseTest {
 
     DelegateRegisterResponse registerResponse = delegateService.register(params);
     Delegate delegateFromDb = delegateCache.get(ACCOUNT_ID, registerResponse.getDelegateId(), true);
-    DelegateGroup delegateGroupFromDb =
-        delegateSetupService.getDelegateGroup(ACCOUNT_ID, delegateFromDb.getDelegateGroupId());
+    DelegateGroup delegateGroupFromDb = delegateCache.getDelegateGroup(ACCOUNT_ID, delegateFromDb.getDelegateGroupId());
 
     assertThat(delegateFromDb.getAccountId()).isEqualTo(params.getAccountId());
     assertThat(delegateFromDb.isNg()).isTrue();
@@ -3835,6 +3835,110 @@ public class DelegateServiceTest extends WingsBaseTest {
     assertThatThrownBy(() -> delegateService.validateDelegateSetupDetails(accountId, setupDetails, DOCKER))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage(DELEGATE_TOKEN_ERROR_MESSAGE);
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldListDelegateTags() {
+    Delegate delegate = createDelegateBuilder()
+                            .uuid("delegateId1")
+                            .accountId(ACCOUNT_ID)
+                            .ng(false)
+                            .tags(Lists.newArrayList("tag123", "tag456"))
+                            .delegateType(KUBERNETES)
+                            .delegateName("delegate1")
+                            .description("description1")
+                            .hostName("kube-0")
+                            .delegateProfileId("delegateProfileId1")
+                            .build();
+
+    persistence.save(delegate);
+
+    DelegateDTO delegateFromDB = delegateService.listDelegateTags(ACCOUNT_ID, "delegateId1");
+
+    assertThat(delegateFromDB).isNotNull();
+    assertThat(delegateFromDB.getDelegateId()).isEqualTo("delegateId1");
+    assertThat(delegateFromDB.getTags()).containsExactly("tag123", "tag456");
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldAddDelegateTags() {
+    Delegate delegate = createDelegateBuilder()
+                            .uuid("delegateId1")
+                            .accountId(ACCOUNT_ID)
+                            .ng(false)
+                            .tags(Lists.newArrayList("tag123", "tag456"))
+                            .delegateType(KUBERNETES)
+                            .delegateName("delegate1")
+                            .description("description1")
+                            .hostName("kube-0")
+                            .delegateProfileId("delegateProfileId1")
+                            .build();
+
+    persistence.save(delegate);
+
+    DelegateTags delegateTags = new DelegateTags(Arrays.asList("  tag1  ", "  tag2", "tag123"));
+
+    DelegateDTO updatedDelegate = delegateService.addDelegateTags(ACCOUNT_ID, "delegateId1", delegateTags);
+
+    assertThat(updatedDelegate).isNotNull();
+    assertThat(updatedDelegate.getDelegateId()).isEqualTo("delegateId1");
+    assertThat(updatedDelegate.getTags()).containsExactlyInAnyOrder("tag123", "tag456", "tag1", "tag2");
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldUpdateDelegateTags() {
+    Delegate delegate = createDelegateBuilder()
+                            .uuid("delegateId1")
+                            .accountId(ACCOUNT_ID)
+                            .ng(false)
+                            .tags(Lists.newArrayList("tag123", "tag456"))
+                            .delegateType(KUBERNETES)
+                            .delegateName("delegate1")
+                            .description("description1")
+                            .hostName("kube-0")
+                            .delegateProfileId("delegateProfileId1")
+                            .build();
+
+    persistence.save(delegate);
+
+    DelegateTags delegateTags = new DelegateTags(Arrays.asList("  tag1  ", "  tag2", "tag123"));
+
+    DelegateDTO updatedDelegate = delegateService.updateDelegateTags(ACCOUNT_ID, "delegateId1", delegateTags);
+
+    assertThat(updatedDelegate).isNotNull();
+    assertThat(updatedDelegate.getDelegateId()).isEqualTo("delegateId1");
+    assertThat(updatedDelegate.getTags()).containsExactlyInAnyOrder("tag123", "tag1", "tag2");
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldDeleteDelegateTags() {
+    Delegate delegate = createDelegateBuilder()
+                            .uuid("delegateId1")
+                            .accountId(ACCOUNT_ID)
+                            .ng(false)
+                            .tags(Lists.newArrayList("tag123", "tag456"))
+                            .delegateType(KUBERNETES)
+                            .delegateName("delegate1")
+                            .description("description1")
+                            .hostName("kube-0")
+                            .delegateProfileId("delegateProfileId1")
+                            .build();
+
+    persistence.save(delegate);
+
+    DelegateDTO updatedDelegate = delegateService.deleteDelegateTags(ACCOUNT_ID, "delegateId1");
+
+    assertThat(updatedDelegate).isNotNull();
+    assertThat(updatedDelegate.getDelegateId()).isEqualTo("delegateId1");
+    assertThat(updatedDelegate.getTags()).isEmpty();
   }
 
   private CapabilityRequirement buildCapabilityRequirement() {
