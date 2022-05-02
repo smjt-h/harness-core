@@ -14,5 +14,7 @@ import io.harness.annotations.dev.OwnedBy;
 public interface InfrastructureKind {
   String KUBERNETES_DIRECT = "KubernetesDirect";
   String KUBERNETES_GCP = "KubernetesGcp";
+  String SERVERLESS_AWS_LAMBDA = "ServerlessAwsLambda";
   String PDC = "Pdc";
+  String KUBERNETES_AZURE = "KubernetesAzure";
 }

@@ -359,7 +359,6 @@ import software.wings.delegatetasks.event.EventsDeliveryCallback;
 import software.wings.delegatetasks.manifest.ManifestCollectionExecutionResponse;
 import software.wings.delegatetasks.manifest.ManifestCollectionResponse;
 import software.wings.delegatetasks.validation.capabilities.HelmCommandCapability;
-import software.wings.delegatetasks.validation.capabilities.SSHHostValidationCapability;
 import software.wings.expression.ShellScriptEnvironmentVariables;
 import software.wings.helpers.ext.cloudformation.CloudFormationCompletionFlag;
 import software.wings.helpers.ext.cloudformation.request.CloudFormationCommandRequest;
@@ -594,7 +593,6 @@ import software.wings.sm.states.EcsRunTaskDataBag;
 import software.wings.sm.states.EnvState.EnvExecutionResponseData;
 import software.wings.sm.states.ForkState.ForkStateExecutionData;
 import software.wings.sm.states.GcbState;
-import software.wings.sm.states.HttpState.HttpStateExecutionResponse;
 import software.wings.sm.states.RepeatState.RepeatStateExecutionData;
 import software.wings.sm.states.azure.AzureVMSSDeployExecutionSummary;
 import software.wings.sm.states.azure.AzureVMSSSetupContextElement;
@@ -948,7 +946,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(ApprovalStateType.class, 5617);
     kryo.register(BambooState.BambooExecutionResponse.class, 5374);
     kryo.register(ForkStateExecutionData.class, 4006);
-    kryo.register(HttpStateExecutionResponse.class, 5375);
     kryo.register(RepeatStateExecutionData.class, 4003);
     kryo.register(StateType.class, 4001);
     kryo.register(StepExecutionSummary.class, 5145);
@@ -1120,7 +1117,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(InstanaAnalyzeMetrics.Item.class, 7316);
 
     kryo.register(SkipStateExecutionData.class, 7322);
-    kryo.register(SSHHostValidationCapability.class, 7326);
 
     kryo.register(InstanceInfoVariables.class, 7331);
     kryo.register(AppDynamicsDataCollectionInfoV2.class, 7332);

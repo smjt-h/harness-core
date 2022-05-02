@@ -8,14 +8,21 @@
 package io.harness.beans.yaml.extended.infrastrucutre;
 
 import static io.harness.annotations.dev.HarnessTeam.CI;
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.pms.yaml.ParameterField;
+import io.harness.pms.yaml.YamlNode;
+import io.harness.yaml.YamlSchemaTypes;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.TypeAlias;
 
@@ -27,6 +34,13 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("VmInfraYaml")
 @OwnedBy(CI)
 public class VmInfraYaml implements Infrastructure {
+  @JsonProperty(YamlNode.UUID_FIELD_NAME)
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
+  @ApiModelProperty(hidden = true)
+  String uuid;
   @Builder.Default @NotNull private Type type = Type.VM;
+  @YamlSchemaTypes({string})
+  @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.infrastrucutre.OSType")
+  private ParameterField<OSType> os;
   @NotNull private VmInfraSpec spec;
 }

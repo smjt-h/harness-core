@@ -8,6 +8,8 @@
 package io.harness.serializer.kryo;
 
 import io.harness.beans.SecretChangeLog;
+import io.harness.cvng.beans.SplunkSavedSearch;
+import io.harness.cvng.beans.SplunkValidationResponse;
 import io.harness.delegate.task.executioncapability.BatchCapabilityCheckTaskParameters;
 import io.harness.delegate.task.executioncapability.BatchCapabilityCheckTaskResponse;
 import io.harness.delegate.task.winrm.AuthenticationScheme;
@@ -40,6 +42,7 @@ import software.wings.beans.GitFetchFilesConfig;
 import software.wings.beans.GitFetchFilesTaskParams;
 import software.wings.beans.HostConnectionAttributes;
 import software.wings.beans.HostValidationTaskParameters;
+import software.wings.beans.HttpStateExecutionResponse;
 import software.wings.beans.InstanaConfig;
 import software.wings.beans.JiraConfig;
 import software.wings.beans.KmsConfig;
@@ -85,6 +88,7 @@ import software.wings.delegatetasks.rancher.RancherResolveClustersTaskParameters
 import software.wings.delegatetasks.validation.capabilities.BasicValidationInfo;
 import software.wings.delegatetasks.validation.capabilities.ClusterMasterUrlValidationCapability;
 import software.wings.delegatetasks.validation.capabilities.GitConnectionCapability;
+import software.wings.delegatetasks.validation.capabilities.SSHHostValidationCapability;
 import software.wings.delegatetasks.validation.capabilities.ShellConnectionCapability;
 import software.wings.delegatetasks.validation.capabilities.WinrmHostValidationCapability;
 import software.wings.helpers.ext.azure.devops.AzureArtifactsFeed;
@@ -230,6 +234,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(PcfConfig.class, 5296);
     kryo.register(SmtpConfig.class, 5304);
     kryo.register(TimeSeriesMlAnalysisType.class, 5347);
+    kryo.register(HttpStateExecutionResponse.class, 5375);
     kryo.register(ElkLogFetchRequest.class, 5376);
     kryo.register(AwsRequest.class, 5380);
     kryo.register(AwsResponse.class, 5381);
@@ -336,6 +341,12 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(WebHookTriggerResponseData.class, 8552);
     kryo.register(AuthenticationScheme.class, 8600);
     kryo.register(DelegateStateType.class, 8601);
+    kryo.register(SplunkValidationResponse.Histogram.class, 9009);
+    kryo.register(SplunkValidationResponse.Histogram.Bar.class, 9010);
+    kryo.register(SplunkSavedSearch.class, 9014);
+    kryo.register(SplunkValidationResponse.SplunkSampleResponse.class, 9015);
+    kryo.register(SplunkValidationResponse.class, 9017);
+    kryo.register(SplunkValidationResponse.SampleLog.class, 9018);
 
     kryo.register(SSHVaultConfig.class, 15012);
     kryo.register(BaseVaultConfig.class, 15014);
@@ -376,5 +387,6 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(EcsSteadyStateCheckResponse.class, 5371);
     kryo.register(KubernetesSteadyStateCheckParams.class, 5276);
     kryo.register(KubernetesSwapServiceSelectorsParams.class, 5365);
+    kryo.register(SSHHostValidationCapability.class, 7326);
   }
 }
