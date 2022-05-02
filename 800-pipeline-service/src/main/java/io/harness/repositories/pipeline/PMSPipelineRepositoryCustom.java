@@ -29,7 +29,8 @@ public interface PMSPipelineRepositoryCustom {
   PipelineEntity save(PipelineEntity pipelineToSave);
 
   Optional<PipelineEntity> findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
-      String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier, boolean notDeleted);
+      String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier, boolean notDeleted,
+      boolean getMetadataOnly);
 
   PipelineEntity updatePipelineYaml(
       PipelineEntity pipelineToUpdate, PipelineEntity oldPipelineEntity, ChangeType changeType);
