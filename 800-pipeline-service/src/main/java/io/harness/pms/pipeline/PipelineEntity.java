@@ -138,11 +138,7 @@ public class PipelineEntity
   @Setter @NonFinal String connectorRef;
 
   public String getData() {
-    if (storeType == null || storeType == StoreType.INLINE) {
-      return yaml;
-    }
-    // TODO: add proper impl here for remote store type
-    return null;
+    return yaml;
   }
 
   @Override
