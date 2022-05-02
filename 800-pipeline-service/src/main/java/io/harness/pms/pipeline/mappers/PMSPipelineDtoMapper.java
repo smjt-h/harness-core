@@ -94,6 +94,7 @@ public class PMSPipelineDtoMapper {
         .modules(pipelineEntity.getFilters().keySet())
         .filters(ModuleInfoMapper.getModuleInfo(pipelineEntity.getFilters()))
         .stageNames(pipelineEntity.getStageNames())
+        .storeType(pipelineEntity.getStoreType())
         .gitDetails(pipelineEntity.getStoreType() == null ? EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity)
                 : pipelineEntity.getStoreType() == StoreType.REMOTE
                 ? GitAwareContextHelper.getEntityGitDetailsFromScmGitMetadata()
@@ -118,6 +119,7 @@ public class PMSPipelineDtoMapper {
         .modules(pipelineEntity.getFilters().keySet())
         .filters(ModuleInfoMapper.getModuleInfo(pipelineEntity.getFilters()))
         .stageNames(pipelineEntity.getStageNames())
+        .storeType(pipelineEntity.getStoreType())
         .gitDetails(pipelineEntity.getStoreType() == null ? EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity)
                 : pipelineEntity.getStoreType() == StoreType.REMOTE
                 ? GitAwareContextHelper.getEntityGitDetails(pipelineEntity)
