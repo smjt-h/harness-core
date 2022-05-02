@@ -306,8 +306,10 @@ public class PipelineResource implements YamlSchemaResource {
       return ResponseDTO.newResponse(
           PMSPipelineResponseDTO.builder().governanceMetadata(pe.getGovernanceMetadata()).build());
     } catch (InvalidYamlException e) {
-      return ResponseDTO.newResponse(
-          PMSPipelineResponseDTO.builder().yamlSchemaErrorWrapper((YamlSchemaErrorWrapperDTO) e.getMetadata()).build());
+      return ResponseDTO.newResponse(PMSPipelineResponseDTO.builder()
+                                         .yamlPipeline(e.getYaml())
+                                         .yamlSchemaErrorWrapper((YamlSchemaErrorWrapperDTO) e.getMetadata())
+                                         .build());
     }
     String version = "0";
     if (pipelineEntity.isPresent()) {
