@@ -12,9 +12,11 @@ import static io.harness.eraro.ErrorCode.UNEXPECTED;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.NestedExceptionUtils;
+import io.harness.exception.SCMExceptionErrorMessages;
 import io.harness.exception.SCMExceptionExplanations;
 import io.harness.exception.SCMExceptionHints;
 import io.harness.exception.ScmException;
+import io.harness.exception.ScmResourceNotFoundException;
 import io.harness.exception.ScmUnauthorizedException;
 import io.harness.exception.WingsException;
 import io.harness.gitsync.common.scmerrorhandling.handlers.ScmApiErrorHandler;
@@ -27,7 +29,11 @@ public class BitbucketGetFileScmApiErrorHandler implements ScmApiErrorHandler {
       case 401:
       case 403:
         throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.BITBUCKET_INVALID_CREDENTIALS,
-            SCMExceptionExplanations.LIST_REPO_WITH_INVALID_CRED, new ScmUnauthorizedException(errorMessage));
+            SCMExceptionExplanations.GET_FILE_WITH_INVALID_CREDS, new ScmUnauthorizedException(errorMessage));
+      case 404:
+        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.FILE_NOT_FOUND,
+            SCMExceptionExplanations.FILE_NOT_FOUND,
+            new ScmResourceNotFoundException(SCMExceptionErrorMessages.FILE_NOT_FOUND_ERROR));
       default:
         throw new ScmException(UNEXPECTED);
     }

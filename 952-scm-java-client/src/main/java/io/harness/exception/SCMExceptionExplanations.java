@@ -16,6 +16,9 @@ public class SCMExceptionExplanations {
       + "1. Missing permissions to fetch selected branch of the repo\n"
       + "2. Repo does not exist or has been deleted\n"
       + "3. Credentials are invalid or have expired";
-  public static final String LIST_REPO_WITH_INVALID_CRED =
+  public static final String LIST_REPO_WITH_INVALID_CREDS =
       "We couldn't list repositories as the credentials provided in connector are invalid or have expired.";
+  public static final String GET_FILE_WITH_INVALID_CREDS =
+      "We couldn't fetch requested file from git as the credentials provided in connector are invalid or have expired.";
+  public static final String FILE_NOT_FOUND = "The requested file path doesn't exist in git";
 }
