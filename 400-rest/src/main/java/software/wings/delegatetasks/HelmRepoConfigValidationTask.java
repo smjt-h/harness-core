@@ -118,7 +118,8 @@ public class HelmRepoConfigValidationTask extends AbstractDelegateRunnableTask {
         break;
 
       case OCI_HELM_REPO:
-        tryLoginOciRegistry(helmRepoConfig, defaultHelmVersion, workingDirectory);
+        HelmVersion helmVersion = taskParams.isUseHelmVersion3_8() ? HelmVersion.V380 : HelmVersion.V3;
+        tryLoginOciRegistry(helmRepoConfig, helmVersion, workingDirectory);
         break;
       case AMAZON_S3_HELM_REPO:
         tryAddingAmazonS3HelmRepo(helmRepoConfig, repoName, taskParams, workingDirectory);

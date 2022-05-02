@@ -9,6 +9,7 @@ package software.wings.service.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.beans.FeatureName.AWS_OVERRIDE_REGION;
+import static io.harness.beans.FeatureName.HELM_VERSION_3_8_0;
 import static io.harness.beans.FeatureName.USE_LATEST_CHARTMUSEUM_VERSION;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -648,6 +649,8 @@ public class SettingValidationService {
             .repoDisplayName(settingAttribute.getName())
             .useLatestChartMuseumVersion(
                 featureFlagService.isEnabled(USE_LATEST_CHARTMUSEUM_VERSION, settingAttribute.getAccountId()))
+            .useHelmVersion3_8(
+                featureFlagService.isEnabled(FeatureName.HELM_VERSION_3_8_0, settingAttribute.getAccountId()))
             .build();
 
     String connectorId = ((HelmRepoConfig) settingAttribute.getValue()).getConnectorId();

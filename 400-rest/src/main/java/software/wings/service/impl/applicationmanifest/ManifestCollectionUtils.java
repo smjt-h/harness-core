@@ -201,6 +201,8 @@ public class ManifestCollectionUtils {
             .repoDisplayName(helmChartCollectionParams.getHelmChartConfigParams().getRepoDisplayName())
             .useLatestChartMuseumVersion(featureFlagService.isEnabled(
                 FeatureName.USE_LATEST_CHARTMUSEUM_VERSION, helmChartCollectionParams.getAccountId()))
+            .useHelmVersion3_8(
+                featureFlagService.isEnabled(FeatureName.HELM_VERSION_3_8_0, helmChartCollectionParams.getAccountId()))
             .connectorEncryptedDataDetails(
                 helmChartCollectionParams.getHelmChartConfigParams().getConnectorEncryptedDataDetails())
             .build();
