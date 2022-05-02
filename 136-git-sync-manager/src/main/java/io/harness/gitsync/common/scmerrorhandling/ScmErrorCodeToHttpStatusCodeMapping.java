@@ -16,6 +16,9 @@ import lombok.experimental.UtilityClass;
 @OwnedBy(HarnessTeam.PL)
 @UtilityClass
 public class ScmErrorCodeToHttpStatusCodeMapping {
+  public static final int HTTP_200 = 200;
+  public static final int HTTP_500 = 500;
+
   public int getHttpStatusCode(ErrorCode errorCode) {
     switch (errorCode) {
       case SCM_UNAUTHORIZED:
@@ -27,7 +30,7 @@ public class ScmErrorCodeToHttpStatusCodeMapping {
       case SCM_UNPROCESSABLE_ENTITY:
         return 422;
       default:
-        return 500;
+        return HTTP_500;
     }
   }
 }

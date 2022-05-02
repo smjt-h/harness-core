@@ -10,6 +10,7 @@ package io.harness.gitsync.common.impl;
 import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.UNSYNCED;
+import static io.harness.gitsync.common.scmerrorhandling.ScmErrorCodeToHttpStatusCodeMapping.HTTP_200;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
@@ -481,7 +482,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
   private GetFileResponse prepareGetFileResponse(
       GetFileRequest getFileRequest, ScmGetFileResponseDTO scmGetFileResponseDTO) {
     return GetFileResponse.newBuilder()
-        .setStatusCode(200)
+        .setStatusCode(HTTP_200)
         .setFileContent(scmGetFileResponseDTO.getFileContent())
         .setGitMetaData(GitMetaData.newBuilder()
                             .setRepoName(getFileRequest.getRepoName())
@@ -496,7 +497,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
   private io.harness.gitsync.CreateFileResponse prepareCreateFileResponse(
       CreateFileRequest createFileRequest, ScmCommitFileResponseDTO scmCommitFileResponseDTO) {
     return io.harness.gitsync.CreateFileResponse.newBuilder()
-        .setStatusCode(200)
+        .setStatusCode(HTTP_200)
         .setGitMetaData(GitMetaData.newBuilder()
                             .setFilePath(createFileRequest.getFilePath())
                             .setRepoName(createFileRequest.getRepoName())
@@ -510,7 +511,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
   private io.harness.gitsync.UpdateFileResponse prepareUpdateFileResponse(
       UpdateFileRequest updateFileRequest, ScmCommitFileResponseDTO scmCommitFileResponseDTO) {
     return io.harness.gitsync.UpdateFileResponse.newBuilder()
-        .setStatusCode(200)
+        .setStatusCode(HTTP_200)
         .setGitMetaData(GitMetaData.newBuilder()
                             .setFilePath(updateFileRequest.getFilePath())
                             .setRepoName(updateFileRequest.getRepoName())

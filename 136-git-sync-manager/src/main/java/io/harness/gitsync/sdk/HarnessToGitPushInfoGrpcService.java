@@ -9,6 +9,7 @@ package io.harness.gitsync.sdk;
 
 import static io.harness.AuthorizationServiceHeader.GIT_SYNC_SERVICE;
 import static io.harness.annotations.dev.HarnessTeam.DX;
+import static io.harness.gitsync.common.scmerrorhandling.ScmErrorCodeToHttpStatusCodeMapping.HTTP_500;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.eventsframework.schemas.entity.EntityScopeInfo;
@@ -106,7 +107,7 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
       log.error("Faced exception during getFile GIT call", ex);
       final String errorMessage = ExceptionUtils.getMessage(ex);
       getFileResponse = GetFileResponse.newBuilder()
-                            .setStatusCode(500)
+                            .setStatusCode(HTTP_500)
                             .setError(ErrorDetails.newBuilder().setErrorMessage(errorMessage).build())
                             .build();
     }
@@ -124,7 +125,7 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
       log.error("Faced exception during createFile GIT call", ex);
       final String errorMessage = ExceptionUtils.getMessage(ex);
       createFileResponse = CreateFileResponse.newBuilder()
-                               .setStatusCode(500)
+                               .setStatusCode(HTTP_500)
                                .setError(ErrorDetails.newBuilder().setErrorMessage(errorMessage).build())
                                .build();
     }
@@ -142,7 +143,7 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
       log.error("Faced exception during updateFile GIT call", ex);
       final String errorMessage = ExceptionUtils.getMessage(ex);
       updateFileResponse = UpdateFileResponse.newBuilder()
-                               .setStatusCode(500)
+                               .setStatusCode(HTTP_500)
                                .setError(ErrorDetails.newBuilder().setErrorMessage(errorMessage).build())
                                .build();
     }
