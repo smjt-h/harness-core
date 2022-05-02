@@ -516,6 +516,7 @@ import software.wings.beans.s3.FetchS3FilesExecutionResponse;
 import software.wings.beans.s3.S3Bucket;
 import software.wings.beans.s3.S3FetchFileResult;
 import software.wings.beans.s3.S3File;
+import software.wings.beans.s3.S3FileRequest;
 import software.wings.beans.servicenow.ServiceNowFields;
 import software.wings.beans.settings.helm.HttpHelmRepoConfig;
 import software.wings.beans.shellscript.provisioner.ShellScriptProvisionParameters;
@@ -1183,6 +1184,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(HostValidationResponse.class, 5167);
     kryo.register(HostReachabilityInfo.class, 5172);
     kryo.register(HttpHelmRepoConfig.class, 7159);
+    kryo.register(S3FileRequest.class, 8067);
 
     // WinRm
     kryo.register(WinRmCredentialsSpecDTO.class, 600001);
