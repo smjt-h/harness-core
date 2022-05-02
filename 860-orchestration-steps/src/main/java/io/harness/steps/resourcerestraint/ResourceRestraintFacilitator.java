@@ -10,7 +10,6 @@ package io.harness.steps.resourcerestraint;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.distribution.constraint.Consumer.State.ACTIVE;
 import static io.harness.pms.sdk.core.execution.events.node.facilitate.FacilitatorResponse.FacilitatorResponseBuilder;
-import static io.harness.steps.resourcerestraint.beans.ResourceRestraint.ResourceRestraintKeys;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -38,6 +37,7 @@ import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepParameters;
 import io.harness.steps.resourcerestraint.beans.AcquireMode;
 import io.harness.steps.resourcerestraint.beans.ResourceRestraint;
+import io.harness.steps.resourcerestraint.beans.ResourceRestraint.ResourceRestraintKeys;
 import io.harness.steps.resourcerestraint.beans.ResourceRestraintInstance.ResourceRestraintInstanceKeys;
 import io.harness.steps.resourcerestraint.service.ResourceRestraintInstanceService;
 import io.harness.steps.resourcerestraint.service.ResourceRestraintRegistry;
