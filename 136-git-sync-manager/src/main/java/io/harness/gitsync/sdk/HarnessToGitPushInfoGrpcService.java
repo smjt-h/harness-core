@@ -105,7 +105,10 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
     } catch (Exception ex) {
       log.error("Faced exception during getFile GIT call", ex);
       final String errorMessage = ExceptionUtils.getMessage(ex);
-      getFileResponse = GetFileResponse.newBuilder().setStatusCode(500).setError(errorMessage).build();
+      getFileResponse = GetFileResponse.newBuilder()
+                            .setStatusCode(500)
+                            .setError(ErrorDetails.newBuilder().setErrorMessage(errorMessage).build())
+                            .build();
     }
     responseObserver.onNext(getFileResponse);
     responseObserver.onCompleted();

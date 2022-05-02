@@ -21,4 +21,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ScmErrorDetails {
   String errorMessage;
+  String explanationMessage;
+  String hintMessage;
 }

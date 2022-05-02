@@ -9,6 +9,7 @@ package io.harness.gitsync.scm.errorhandling;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.gitsync.ErrorDetails;
 import io.harness.gitsync.scm.beans.ScmErrorDetails;
 
 @OwnedBy(HarnessTeam.PL)
@@ -21,5 +22,9 @@ public abstract class ScmErrorHandler {
     }
 
     handleError(statusCode, errorDetails);
+  }
+
+  public final ScmErrorDetails getScmErrorDetails(ErrorDetails errorDetails) {
+    return ScmErrorDetails.builder().errorMessage(errorDetails.getErrorMessage()).build();
   }
 }

@@ -17,6 +17,7 @@ import io.harness.beans.Scope;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.gitsync.beans.GitRepositoryDTO;
 import io.harness.gitsync.common.beans.InfoForGitPush;
+import io.harness.gitsync.common.beans.ScmApis;
 import io.harness.gitsync.common.dtos.CreatePRDTO;
 import io.harness.gitsync.common.dtos.GitRepositoryResponseDTO;
 import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
@@ -27,6 +28,7 @@ import io.harness.gitsync.common.dtos.ScmGetFileRequestDTO;
 import io.harness.gitsync.common.dtos.ScmGetFileResponseDTO;
 import io.harness.gitsync.common.dtos.ScmUpdateFileRequestDTO;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
+import io.harness.gitsync.common.scmerrorhandling.ScmApiErrorHandlingHelper;
 import io.harness.gitsync.common.service.ScmFacilitatorService;
 import io.harness.gitsync.common.service.ScmOrchestratorService;
 import io.harness.ng.beans.PageRequest;
@@ -179,6 +181,12 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
             scmGetFileRequestDTO.getCommitId()),
         scope.getProjectIdentifier(), scope.getOrgIdentifier(), scope.getAccountIdentifier(),
         scmGetFileRequestDTO.getConnectorRef());
+
+    ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.GET_FILE,
+        gitSyncConnectorHelper.getDecryptedConnectorByRef(scope, scmGetFileRequestDTO.getConnectorRef())
+            .getConnectorType(),
+        fileContent.getStatus(), fileContent.getError());
+
     return ScmGetFileResponseDTO.builder()
         .fileContent(fileContent.getContent())
         .blobId(fileContent.getBlobId())

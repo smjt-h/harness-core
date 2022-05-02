@@ -116,7 +116,7 @@ public class SCMGitSyncHelper {
         harnessToGitPushInfoServiceBlockingStub::getFile, getFileRequest);
 
     getFileScmErrorHandler.handlerAndThrowError(
-        getFileResponse.getStatusCode(), ScmErrorDetails.builder().errorMessage(getFileResponse.getError()).build());
+        getFileResponse.getStatusCode(), getFileScmErrorHandler.getScmErrorDetails(getFileResponse.getError()));
 
     return ScmGetFileResponse.builder()
         .fileContent(getFileResponse.getFileContent())

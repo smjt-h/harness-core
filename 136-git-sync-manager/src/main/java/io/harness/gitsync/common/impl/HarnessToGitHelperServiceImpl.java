@@ -24,12 +24,14 @@ import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
 import io.harness.eventsframework.schemas.entity.EntityScopeInfo;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.ScmException;
 import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.ChangeType;
 import io.harness.gitsync.CreateFileRequest;
 import io.harness.gitsync.CreatePRRequest;
 import io.harness.gitsync.CreatePRResponse;
+import io.harness.gitsync.ErrorDetails;
 import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.GetFileRequest;
 import io.harness.gitsync.GetFileResponse;
@@ -53,6 +55,7 @@ import io.harness.gitsync.common.dtos.ScmUpdateFileRequestDTO;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.helper.ScopeIdentifierMapper;
 import io.harness.gitsync.common.helper.UserProfileHelper;
+import io.harness.gitsync.common.scmerrorhandling.ScmErrorCodeToHttpStatusCodeMapping;
 import io.harness.gitsync.common.service.GitBranchService;
 import io.harness.gitsync.common.service.GitBranchSyncService;
 import io.harness.gitsync.common.service.GitEntityService;
@@ -338,16 +341,23 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
 
   @Override
   public GetFileResponse getFile(GetFileRequest getFileRequest) {
-    ScmGetFileResponseDTO scmGetFileResponseDTO = scmFacilitatorService.getFile(
-        ScmGetFileRequestDTO.builder()
-            .branchName(getFileRequest.getBranchName())
-            .commitId(getFileRequest.getCommitId())
-            .connectorRef(getFileRequest.getConnectorRef())
-            .filePath(getFileRequest.getFilePath())
-            .repoName(getFileRequest.getRepoName())
-            .scope(ScopeIdentifierMapper.getScopeFromScopeIdentifiers(getFileRequest.getScopeIdentifiers()))
-            .build());
-    return prepareGetFileResponse(getFileRequest, scmGetFileResponseDTO);
+    try {
+      ScmGetFileResponseDTO scmGetFileResponseDTO = scmFacilitatorService.getFile(
+          ScmGetFileRequestDTO.builder()
+              .branchName(getFileRequest.getBranchName())
+              .commitId(getFileRequest.getCommitId())
+              .connectorRef(getFileRequest.getConnectorRef())
+              .filePath(getFileRequest.getFilePath())
+              .repoName(getFileRequest.getRepoName())
+              .scope(ScopeIdentifierMapper.getScopeFromScopeIdentifiers(getFileRequest.getScopeIdentifiers()))
+              .build());
+      return prepareGetFileResponse(getFileRequest, scmGetFileResponseDTO);
+    } catch (ScmException scmException) {
+      return GetFileResponse.newBuilder()
+          .setStatusCode(ScmErrorCodeToHttpStatusCodeMapping.getHttpStatusCode(scmException.getCode()))
+          .setError(ErrorDetails.newBuilder().setErrorMessage(scmException.getMessage()).build())
+          .build();
+    }
   }
 
   @Override
