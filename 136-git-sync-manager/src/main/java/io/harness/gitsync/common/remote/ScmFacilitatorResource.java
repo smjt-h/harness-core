@@ -21,12 +21,9 @@ import static io.harness.NGCommonEntityConstants.SIZE_PARAM_MESSAGE;
 import static io.harness.annotations.dev.HarnessTeam.DX;
 
 import io.harness.NGCommonEntityConstants;
-import io.harness.ScopeIdentifiers;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.beans.gitsync.GitPRCreateRequest;
-import io.harness.gitsync.GetFileRequest;
-import io.harness.gitsync.GetFileResponse;
 import io.harness.gitsync.common.YamlConstants;
 import io.harness.gitsync.common.dtos.CreatePRDTO;
 import io.harness.gitsync.common.dtos.CreatePRRequest;
@@ -39,6 +36,8 @@ import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
 import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
 import io.harness.gitsync.common.dtos.ScmCreatePRRequestDTO;
 import io.harness.gitsync.common.dtos.ScmCreatePRResponseDTO;
+import io.harness.gitsync.common.dtos.ScmGetFileRequestDTO;
+import io.harness.gitsync.common.dtos.ScmGetFileResponseDTO;
 import io.harness.gitsync.common.dtos.ScmUpdateFileRequestDTO;
 import io.harness.gitsync.common.impl.GitUtils;
 import io.harness.gitsync.common.service.HarnessToGitHelperService;
@@ -273,7 +272,7 @@ public class ScmFacilitatorResource {
   @Operation(operationId = "getFile", summary = "get file",
       responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Successfully created a PR") },
       hidden = true)
-  public ResponseDTO<GetFileResponse>
+  public ResponseDTO<ScmGetFileResponseDTO>
   getFile(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotBlank @NotNull @QueryParam(
               NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
@@ -286,19 +285,18 @@ public class ScmFacilitatorResource {
       @Parameter(description = "File Path") @QueryParam(YamlConstants.FILE_PATH) @NotBlank @NotNull String filePath,
       @Parameter(description = "Commit Id") @QueryParam(YamlConstants.COMMIT_ID) String commitId,
       @Parameter(description = "Connector Ref") @QueryParam("ConnectorRef") String connectorRef) {
-    return ResponseDTO.newResponse(
-        harnessToGitHelperService.getFile(GetFileRequest.newBuilder()
-                                              .setScopeIdentifiers(ScopeIdentifiers.newBuilder()
-                                                                       .setAccountIdentifier(accountIdentifier)
-                                                                       .setOrgIdentifier(orgIdentifier)
-                                                                       .setProjectIdentifier(projectIdentifier)
-                                                                       .build())
-                                              .setRepoName(repoName)
-                                              .setBranchName(branch)
-                                              .setFilePath(filePath)
-                                              .setCommitId(commitId)
-                                              .setConnectorRef(connectorRef)
-                                              .build()));
+    return ResponseDTO.newResponse(scmFacilitatorService.getFile(ScmGetFileRequestDTO.builder()
+                                                                     .scope(Scope.builder()
+                                                                                .accountIdentifier(accountIdentifier)
+                                                                                .orgIdentifier(orgIdentifier)
+                                                                                .projectIdentifier(projectIdentifier)
+                                                                                .build())
+                                                                     .repoName(repoName)
+                                                                     .branchName(branch)
+                                                                     .filePath(filePath)
+                                                                     .commitId(commitId)
+                                                                     .connectorRef(connectorRef)
+                                                                     .build()));
   }
 
   // API just for testing purpose, not exposed to customer
