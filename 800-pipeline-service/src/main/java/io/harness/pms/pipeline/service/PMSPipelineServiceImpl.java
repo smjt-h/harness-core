@@ -32,6 +32,8 @@ import io.harness.exception.ExplanationException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.InvalidYamlException;
 import io.harness.exception.ScmException;
+import io.harness.exception.ngexception.beans.yamlschema.YamlSchemaErrorDTO;
+import io.harness.exception.ngexception.beans.yamlschema.YamlSchemaErrorWrapperDTO;
 import io.harness.git.model.ChangeType;
 import io.harness.gitaware.helper.GitAwareContextHelper;
 import io.harness.gitsync.beans.StoreType;
@@ -166,6 +168,16 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     PipelineEntity pipelineEntity = optionalPipelineEntity.get();
     if (pipelineEntity.getStoreType() == null || pipelineEntity.getStoreType() == StoreType.INLINE) {
       return optionalPipelineEntity;
+    }
+    if (EmptyPredicate.isEmpty(pipelineEntity.getData())) {
+      String errorMessage = PipelineCRUDErrorResponse.errorMessageForEmptyYamlOnGit(
+          orgIdentifier, projectIdentifier, identifier, GitAwareContextHelper.getBranchInRequest());
+      YamlSchemaErrorWrapperDTO errorWrapperDTO =
+          YamlSchemaErrorWrapperDTO.builder()
+              .schemaErrors(Collections.singletonList(
+                  YamlSchemaErrorDTO.builder().message(errorMessage).fqn("$.pipeline").build()))
+              .build();
+      throw new io.harness.yaml.validator.InvalidYamlException(errorMessage, errorWrapperDTO);
     }
     GovernanceMetadata governanceMetadata = pmsPipelineServiceHelper.validatePipelineYamlAndSetTemplateRefIfAny(
         pipelineEntity, pmsFeatureFlagService.isEnabled(accountId, FeatureName.OPA_PIPELINE_GOVERNANCE));
