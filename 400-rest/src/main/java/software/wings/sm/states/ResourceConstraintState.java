@@ -322,13 +322,20 @@ public class ResourceConstraintState extends State {
     return ExecutionResponse.builder().stateExecutionData(stateExecutionData);
   }
 
+  private String getPipelineDeploymentIdIfExists(WorkflowStandardParams workflowStandardParams) {
+    if (workflowStandardParams != null && workflowStandardParams.getWorkflowElement() != null) {
+      return workflowStandardParams.getWorkflowElement().getPipelineDeploymentUuid();
+    }
+    return null;
+  }
+
   int alreadyAcquiredPermits(String holdingScope, ExecutionContext executionContext) {
     int currentlyAcquiredPermits = 0;
     String releaseEntityId;
     String parentReleaseEntityId;
     String appId = executionContext.fetchRequiredApp().getUuid();
     WorkflowStandardParams workflowStandardParams = executionContext.getContextElement(ContextElementType.STANDARD);
-    final String pipelineDeploymentUuid = workflowStandardParams.getWorkflowElement().getPipelineDeploymentUuid();
+    String pipelineDeploymentUuid = getPipelineDeploymentIdIfExists(workflowStandardParams);
 
     switch (HoldingScope.valueOf(holdingScope)) {
       case PIPELINE:

@@ -91,14 +91,7 @@ public class ResourceConstraintStateTest extends WingsBaseTest {
     assertThat(permits_4).isEqualTo(2);
   }
 
-  @Test(expected = InvalidRequestException.class)
-  @Owner(developers = ROHIT_KUMAR)
-  @Category(UnitTests.class)
-  public void alreadyAcquiredPermits_error() {
-    state.alreadyAcquiredPermits(HoldingScope.PIPELINE.name(), executionContext);
-  }
-
-  @Test(expected = InvalidRequestException.class)
+  @Test(expected = IllegalArgumentException.class)
   @Owner(developers = ROHIT_KUMAR)
   @Category(UnitTests.class)
   public void testExecute_error() {
@@ -111,7 +104,7 @@ public class ResourceConstraintStateTest extends WingsBaseTest {
     doReturn(2).when(state).alreadyAcquiredPermits(any(), any());
 
     state.setAcquireMode(AcquireMode.ENSURE);
-    state.setHoldingScope("PIPELINE");
+    state.setHoldingScope("UNMAPPED_SCOPE");
     state.execute(executionContext);
   }
 
