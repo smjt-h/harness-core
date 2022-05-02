@@ -119,7 +119,6 @@ public class HelmConnector extends Connector {
 
     } else if (ociPlatformInput != null) {
       OciHelmRepoConfig ociHelmRepoConfig = (OciHelmRepoConfig) settingAttribute.getValue();
-      ;
       setUsernameAndPassword(ociPlatformInput, ociHelmRepoConfig);
       setUrl(ociPlatformInput, ociHelmRepoConfig);
       settingAttribute.setValue(ociHelmRepoConfig);
@@ -214,7 +213,7 @@ public class HelmConnector extends Connector {
   }
 
   private QLOCIPlatformInput getOCIPlatformInput(QLHelmConnectorInput helmConnectorInput) {
-    if (helmConnectorInput.getHttpServerPlatformDetails().isPresent()) {
+    if (helmConnectorInput.getOciPlatformDetails().isPresent()) {
       return helmConnectorInput.getOciPlatformDetails().getValue().orElse(null);
     }
     return null;
