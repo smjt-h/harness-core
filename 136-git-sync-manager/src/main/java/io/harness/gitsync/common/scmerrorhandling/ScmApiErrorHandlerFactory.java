@@ -43,7 +43,8 @@ class ScmApiErrorHandlerFactory {
     try {
       return scmApiErrorHandlerMap.get(Pair.of(scmApi, repoProvider)).newInstance();
     } catch (Exception ex) {
-      log.error(String.format("Error while getting handler for scmApi [%s] and repoProvider [%s]"), ex);
+      log.error(
+          String.format("Error while getting handler for scmApi [%s] and repoProvider [%s]", scmApi, repoProvider), ex);
     }
     return defaultScmApiErrorHandler;
   }
