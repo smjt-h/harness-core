@@ -58,6 +58,8 @@ if [[ "${DISABLE_NEW_RELIC}" != "true" ]]; then
     echo "Using new relic env " $NEWRELIC_ENV
 fi
 
+JAVA_OPTS=$JAVA_OPTS" -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=localhost:5005"
+
 if [[ "${DEPLOY_MODE}" == "KUBERNETES" ]] || [[ "${DEPLOY_MODE}" == "KUBERNETES_ONPREM" ]]; then
     java $JAVA_OPTS -jar $CAPSULE_JAR $COMMAND /opt/harness/config.yml
 else
