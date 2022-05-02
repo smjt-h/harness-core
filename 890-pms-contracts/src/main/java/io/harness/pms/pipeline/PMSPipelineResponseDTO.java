@@ -10,13 +10,14 @@ package io.harness.pms.pipeline;
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.exception.ngexception.beans.yamlschema.YamlSchemaErrorWrapperDTO;
 import io.harness.gitsync.sdk.EntityGitDetails;
 import io.harness.gitsync.sdk.EntityValidityDetails;
+import io.harness.pms.contracts.governance.GovernanceMetadata;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.harness.pms.contracts.governance.GovernanceMetadata;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Set;
 import lombok.Builder;
@@ -36,4 +37,5 @@ public class PMSPipelineResponseDTO {
   EntityValidityDetails entityValidityDetails;
   Set<String> modules;
   GovernanceMetadata governanceMetadata;
+  YamlSchemaErrorWrapperDTO yamlSchemaErrorWrapper;
 }

@@ -26,6 +26,7 @@ import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.governance.PolicyEvaluationFailureException;
 import io.harness.exception.EntityNotFoundException;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.ngexception.beans.yamlschema.YamlSchemaErrorWrapperDTO;
 import io.harness.filter.dto.FilterPropertiesDTO;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.interceptor.GitEntityCreateInfoDTO;
@@ -54,6 +55,7 @@ import io.harness.steps.template.TemplateStepNode;
 import io.harness.utils.PageUtils;
 import io.harness.yaml.core.StepSpecType;
 import io.harness.yaml.schema.YamlSchemaResource;
+import io.harness.yaml.validator.InvalidYamlException;
 
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
@@ -303,6 +305,9 @@ public class PipelineResource implements YamlSchemaResource {
     } catch (PolicyEvaluationFailureException pe) {
       return ResponseDTO.newResponse(
           PMSPipelineResponseDTO.builder().governanceMetadata(pe.getGovernanceMetadata()).build());
+    } catch (InvalidYamlException e) {
+      return ResponseDTO.newResponse(
+          PMSPipelineResponseDTO.builder().yamlSchemaErrorWrapper((YamlSchemaErrorWrapperDTO) e.getMetadata()).build());
     }
     String version = "0";
     if (pipelineEntity.isPresent()) {
