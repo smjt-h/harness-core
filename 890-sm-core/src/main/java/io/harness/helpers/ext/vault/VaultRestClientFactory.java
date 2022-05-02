@@ -64,7 +64,7 @@ public class VaultRestClientFactory {
     } else {
       httpClient = Http.getUnsafeOkHttpClientBuilder(vaultUrl, 10, 10)
                        .addInterceptor(loggingInterceptor)
-                       .protocols(Arrays.asList(Protocol.HTTP_1_1, Protocol.HTTP_2))
+                       .protocols(Arrays.asList(Protocol.HTTP_1_1))
                        .build();
     }
     return new Retrofit.Builder()
