@@ -33,6 +33,7 @@ public class ConnectorFactory {
       case NEXUS:
         return new NexusConnector(secretManager, connectorsController);
       case AMAZON_S3_HELM_REPO:
+      case OCI_HELM_REPO:
       case GCS_HELM_REPO:
       case HTTP_HELM_REPO:
         return new HelmConnector(secretManager, connectorsController, settingsService);

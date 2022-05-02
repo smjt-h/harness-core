@@ -43,6 +43,7 @@ public enum QLConnectorType implements QLEnum {
   SFTP,
   SERVICENOW,
   HTTP_HELM_REPO,
+  OCI_HELM_REPO,
   AMAZON_S3_HELM_REPO,
   GCS_HELM_REPO;
 
