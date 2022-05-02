@@ -74,7 +74,7 @@ public class K8sWorkloadDao {
   // to get the workloads with at least one of the label(key:value) present (time filters are applied on last updated
   // at)
   public List<K8sWorkload> list(String accountId, long startTime, long endTime, Map<String, List<String>> labels) {
-    if (labels == null || labels.isEmpty()) {
+    if (labels == null) {
       return new ArrayList<>();
     }
     labels = labels.entrySet().stream().collect(Collectors.toMap(e -> encode(e.getKey()), Map.Entry::getValue));

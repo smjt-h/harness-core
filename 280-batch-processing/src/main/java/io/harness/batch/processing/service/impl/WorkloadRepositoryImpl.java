@@ -22,9 +22,6 @@ import io.harness.persistence.HPersistence;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +71,6 @@ public class WorkloadRepositoryImpl implements WorkloadRepository {
                      .set(K8sWorkloadKeys.namespace, podInfo.getNamespace())
                      .set(K8sWorkloadKeys.uid, topLevelOwner.getUid())
                      .set(K8sWorkloadKeys.kind, topLevelOwner.getKind())
-                     .set(K8sWorkloadKeys.ttl, new Date(Instant.now().plus(90, ChronoUnit.DAYS).toEpochMilli()))
                      .set(K8sWorkloadKeys.labels, encodeDotsInKey(labelMap)),
                  HPersistence.upsertReturnNewOptions))
               != null);
