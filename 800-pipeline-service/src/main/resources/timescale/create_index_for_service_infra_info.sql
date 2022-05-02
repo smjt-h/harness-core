@@ -4,6 +4,6 @@
 -- https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
 
 BEGIN;
- CREATE UNIQUE INDEX accountId_orgId_projecId_serviceId_service_startts ON service_infra_info
+ CREATE INDEX accountId_orgId_projecId_serviceId_service_startts ON service_infra_info
  (accountid, orgidentifier, projectidentifier, service_id, service_startts);
 COMMIT;
