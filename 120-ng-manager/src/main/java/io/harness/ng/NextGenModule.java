@@ -485,8 +485,6 @@ public class NextGenModule extends AbstractModule {
     bind(WebhookEventService.class).to(WebhookServiceImpl.class);
     bind(ScimUserService.class).to(NGScimUserServiceImpl.class);
     bind(ScimGroupService.class).to(NGScimGroupServiceImpl.class);
-    install(new OpaClientModule(
-        appConfig.getOpaServerConfig().getBaseUrl(), appConfig.getNextGenConfig().getJwtAuthSecret()));
 
     install(new ValidationModule(getValidatorFactory()));
     install(new AbstractMongoModule() {
