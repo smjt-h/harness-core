@@ -63,7 +63,6 @@ public class ClusterDataToBigQueryTaskletTest extends BaseTaskletTest {
   private static final String INSTANCE_ID = "instanceId";
   private static final String CLUSTER_ID = "clusterId";
   private static final String SETTING_ID = "settingId";
-  private static final String UID = "uid";
   private static final String KIND = "kind";
   private static final String NAMESPACE = "namespace";
   private static final String LABEL_KEY = "labelKey";
@@ -154,11 +153,12 @@ public class ClusterDataToBigQueryTaskletTest extends BaseTaskletTest {
                                .settingId(SETTING_ID)
                                .name(NAME_0)
                                .namespace(NAMESPACE)
-                               .uid(UID)
+                               .uid(NAME_0)
                                .kind(KIND)
                                .labels(Collections.singletonMap(LABEL_KEY, LABEL_VALUE))
                                .build();
-    when(workloadRepository.getWorkload(any(), any(), any(), any())).thenReturn(Collections.singletonList(workload));
+    when(workloadRepository.getWorkloadByWorkloadUid(any(), any(), any()))
+        .thenReturn(Collections.singletonList(workload));
   }
 
   private InstanceBillingData createBillingData(@NotNull String name) {
@@ -167,6 +167,7 @@ public class ClusterDataToBigQueryTaskletTest extends BaseTaskletTest {
         .endTimestamp(END_TIME_MILLIS)
         .accountId(ACCOUNT_ID)
         .instanceId(INSTANCE_ID)
+        .taskId(name)
         .clusterId(CLUSTER_ID)
         .instanceType(InstanceType.K8S_POD.name())
         .billingAmount(BigDecimal.ZERO)
