@@ -171,7 +171,8 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
 
   @Override
   public Optional<PipelineEntity> findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
-      String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier, boolean notDeleted) {
+      String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier, boolean notDeleted,
+      boolean getMetadataOnly) {
     Criteria criteria = Criteria.where(PipelineEntityKeys.deleted)
                             .is(!notDeleted)
                             .and(PipelineEntityKeys.identifier)
@@ -185,7 +186,7 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
     Optional<PipelineEntity> optionalPipelineEntity =
         gitAwarePersistence.findOne(criteria, projectIdentifier, orgIdentifier, accountId, PipelineEntity.class);
 
-    return findV2(accountId, orgIdentifier, projectIdentifier, criteria, optionalPipelineEntity);
+    return findV2(accountId, orgIdentifier, projectIdentifier, criteria, optionalPipelineEntity, getMetadataOnly);
   }
 
   @Override
@@ -272,12 +273,19 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
     String projectIdentifier = pipelineToUpdate.getProjectIdentifier();
     Optional<PipelineEntity> pipelineEntityOptional =
         findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
-            accountId, orgIdentifier, projectIdentifier, pipelineToUpdate.getIdentifier(), true);
+            accountId, orgIdentifier, projectIdentifier, pipelineToUpdate.getIdentifier(), true, false);
     if (pipelineEntityOptional.isPresent()) {
       Supplier<OutboxEvent> supplier = ()
           -> outboxService.save(new PipelineDeleteEvent(accountId, orgIdentifier, projectIdentifier, pipelineToUpdate));
-      PipelineEntity pipelineEntity = gitAwarePersistence.save(
-          pipelineToUpdate, pipelineToUpdate.getYaml(), ChangeType.DELETE, PipelineEntity.class, supplier);
+      PipelineEntity pipelineEntity;
+      if (pipelineToUpdate.getStoreType() == null) {
+        pipelineEntity = gitAwarePersistence.save(
+            pipelineToUpdate, pipelineToUpdate.getYaml(), ChangeType.DELETE, PipelineEntity.class, supplier);
+      } else {
+        pipelineEntity = mongoTemplate.save(pipelineToUpdate);
+        supplier.get();
+      }
+
       if (pipelineEntity.getDeleted()) {
         Supplier<OutboxEvent> supplierWithGitSyncTrue = ()
             -> outboxService.save(
@@ -313,7 +321,7 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
   }
 
   private Optional<PipelineEntity> findV2(String accountId, String orgIdentifier, String projectIdentifier,
-      Criteria criteria, Optional<PipelineEntity> entityV1) {
+      Criteria criteria, Optional<PipelineEntity> entityV1, boolean getMetadataOnly) {
     if (pmsFeatureFlagService.isEnabled(accountId, GIT_SIMPLIFICATION)) {
       if (entityV1.isPresent()) {
         PipelineEntity entity = entityV1.get();
@@ -332,6 +340,10 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
       PipelineEntity savedEntity = mongoTemplate.findOne(query, PipelineEntity.class);
       if (savedEntity == null) {
         return Optional.empty();
+      }
+
+      if (getMetadataOnly) {
+        return entityV1;
       }
 
       if (savedEntity.getStoreType() == StoreType.REMOTE) {

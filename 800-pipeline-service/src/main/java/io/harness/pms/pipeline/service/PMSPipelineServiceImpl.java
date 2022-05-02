@@ -150,7 +150,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     try {
       optionalPipelineEntity =
           pmsPipelineRepository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
-              accountId, orgIdentifier, projectIdentifier, identifier, !deleted);
+              accountId, orgIdentifier, projectIdentifier, identifier, !deleted, false);
     } catch (ScmException e) {
       log.error(String.format("Error while retrieving pipeline [%s]", identifier), e);
       throw e;
@@ -198,7 +198,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     Optional<PipelineEntity> optionalOriginalEntity =
         pmsPipelineRepository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
             pipelineEntity.getAccountId(), pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(),
-            pipelineEntity.getIdentifier(), true);
+            pipelineEntity.getIdentifier(), true, false);
     if (!optionalOriginalEntity.isPresent()) {
       throw new InvalidRequestException(PipelineCRUDErrorResponse.errorMessageForPipelineNotFound(
           pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getIdentifier()));
@@ -338,7 +338,8 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
   public boolean delete(
       String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier, Long version) {
     Optional<PipelineEntity> optionalPipelineEntity =
-        get(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, false);
+        pmsPipelineRepository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
+            accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, true, true);
     if (!optionalPipelineEntity.isPresent()) {
       throw new InvalidRequestException(PipelineCRUDErrorResponse.errorMessageForPipelineNotFound(
           orgIdentifier, projectIdentifier, pipelineIdentifier));
