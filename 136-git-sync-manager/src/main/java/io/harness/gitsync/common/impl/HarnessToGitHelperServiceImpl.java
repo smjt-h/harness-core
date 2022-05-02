@@ -26,6 +26,7 @@ import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.ScmException;
 import io.harness.exception.UnexpectedException;
+import io.harness.exception.WingsException;
 import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.ChangeType;
 import io.harness.gitsync.CreateFileRequest;
@@ -53,6 +54,7 @@ import io.harness.gitsync.common.dtos.ScmGetFileRequestDTO;
 import io.harness.gitsync.common.dtos.ScmGetFileResponseDTO;
 import io.harness.gitsync.common.dtos.ScmUpdateFileRequestDTO;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
+import io.harness.gitsync.common.helper.ScmExceptionUtils;
 import io.harness.gitsync.common.helper.ScopeIdentifierMapper;
 import io.harness.gitsync.common.helper.UserProfileHelper;
 import io.harness.gitsync.common.scmerrorhandling.ScmErrorCodeToHttpStatusCodeMapping;
@@ -352,10 +354,18 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
               .scope(ScopeIdentifierMapper.getScopeFromScopeIdentifiers(getFileRequest.getScopeIdentifiers()))
               .build());
       return prepareGetFileResponse(getFileRequest, scmGetFileResponseDTO);
-    } catch (ScmException scmException) {
+    } catch (WingsException ex) {
+      ScmException scmException = ScmExceptionUtils.getScmException(ex);
+      if (scmException == null) {
+        throw ex;
+      }
       return GetFileResponse.newBuilder()
           .setStatusCode(ScmErrorCodeToHttpStatusCodeMapping.getHttpStatusCode(scmException.getCode()))
-          .setError(ErrorDetails.newBuilder().setErrorMessage(scmException.getMessage()).build())
+          .setError(ErrorDetails.newBuilder()
+                        .setErrorMessage(scmException.getMessage())
+                        .setExplanationMessage(ScmExceptionUtils.getExplanationMessage(ex))
+                        .setHintMessage(ScmExceptionUtils.getHintMessage(ex))
+                        .build())
           .build();
     }
   }
