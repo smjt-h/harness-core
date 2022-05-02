@@ -1348,6 +1348,7 @@ public class CommandState extends State {
     }
     return null;
   }
+
   @Override
   @SchemaIgnore
   public List<EntityType> getRequiredExecutionArgumentTypes() {

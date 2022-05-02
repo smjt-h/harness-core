@@ -36,9 +36,13 @@ import software.wings.beans.PhaseStepType;
 import software.wings.beans.VMSSAuthType;
 import software.wings.beans.VMSSDeploymentType;
 import software.wings.beans.VariableType;
+import software.wings.beans.artifact.ArtifactInput;
 import software.wings.beans.artifact.ArtifactStreamSummary;
 import software.wings.beans.artifact.ArtifactSummary;
 import software.wings.beans.trigger.WebhookSource;
+import software.wings.helpers.ext.gcb.models.BuildStep;
+import software.wings.helpers.ext.gcb.models.GcbBuildDetails;
+import software.wings.helpers.ext.gcb.models.GcbBuildStatus;
 import software.wings.metrics.MetricType;
 import software.wings.service.impl.ThirdPartyApiCallLog;
 import software.wings.sm.ExecutionInterruptEffect;
@@ -88,5 +92,10 @@ public class CgOrchestrationBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(CloudProviderType.class, 400126);
     kryo.register(TerraformPlanParam.class, 7458);
     kryo.register(OrchestrationWorkflowType.class, 5148);
+    kryo.register(GcbBuildDetails.class, 7411);
+    kryo.register(GcbBuildStatus.class, 7412);
+    kryo.register(BuildStep.class, 7423);
+
+    kryo.register(ArtifactInput.class, 7459);
   }
 }

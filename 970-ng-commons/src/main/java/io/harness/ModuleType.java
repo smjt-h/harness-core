@@ -23,12 +23,13 @@ public enum ModuleType {
   @JsonProperty("CV") CV("Continuous Verification"),
   @JsonProperty("CF") CF("Continuous Features"),
   @JsonProperty("CE") CE("Continuous Efficiency"),
-  @JsonProperty("STO") STO("Security Testing Orchestration", false, true),
+  @JsonProperty("STO") STO("Security Testing Orchestration"),
 
   // Internal
   @JsonProperty("CORE") CORE("Core", true, false),
   @JsonProperty("PMS") PMS("Pipelines", true, false),
-  @JsonProperty("TEMPLATESERVICE") TEMPLATESERVICE("TemplateService", true, false);
+  @JsonProperty("TEMPLATESERVICE") TEMPLATESERVICE("TemplateService", true, false),
+  @JsonProperty("GOVERNANCE") GOVERNANCE("Governance", true, true);
 
   String displayName;
   boolean internal;

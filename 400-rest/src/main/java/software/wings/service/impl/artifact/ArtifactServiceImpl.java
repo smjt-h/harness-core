@@ -57,6 +57,7 @@ import io.harness.beans.FeatureName;
 import io.harness.beans.PageRequest;
 import io.harness.beans.PageResponse;
 import io.harness.exception.InvalidArgumentsException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.ff.FeatureFlagService;
 import io.harness.persistence.HIterator;
@@ -84,6 +85,7 @@ import software.wings.service.intfc.ArtifactStreamServiceBindingService;
 import software.wings.service.intfc.FileService;
 import software.wings.service.intfc.SettingsService;
 import software.wings.utils.ArtifactType;
+import software.wings.utils.DelegateArtifactCollectionUtils;
 import software.wings.utils.RepositoryFormat;
 import software.wings.utils.RepositoryType;
 
@@ -180,6 +182,34 @@ public class ArtifactServiceImpl implements ArtifactService {
   }
 
   @Override
+  public PageResponse<Artifact> listArtifactsForServiceWithCollectionEnabled(
+      String appId, String serviceId, PageRequest<Artifact> pageRequest) {
+    if (isEmpty(serviceId)) {
+      throw new InvalidRequestException("ServiceId is required");
+    }
+
+    List<String> projections = new ArrayList<>();
+    projections.add(ArtifactStreamKeys.uuid);
+    projections.add(ArtifactStreamKeys.collectionEnabled);
+    List<ArtifactStream> artifactStreams =
+        artifactStreamService.getArtifactStreamsForService(appId, serviceId, projections);
+
+    List<String> artifactStreamIds = new ArrayList<>();
+    for (ArtifactStream artifactStream : artifactStreams) {
+      if (!Boolean.FALSE.equals(artifactStream.getCollectionEnabled())) {
+        artifactStreamIds.add(artifactStream.getUuid());
+      }
+    }
+
+    if (isNotEmpty(artifactStreamIds)) {
+      pageRequest.addFilter(ArtifactKeys.artifactStreamId, IN, artifactStreamIds.toArray());
+      return listArtifactsForService(pageRequest);
+    } else {
+      return aPageResponse().withResponse(new ArrayList<Artifact>()).build();
+    }
+  }
+
+  @Override
   public PageResponse<Artifact> listArtifactsForService(String serviceId, PageRequest<Artifact> pageRequest) {
     if (serviceId != null) {
       List<String> artifactStreamIds = artifactStreamServiceBindingService.listArtifactStreamIds(serviceId);
@@ -269,7 +299,7 @@ public class ArtifactServiceImpl implements ArtifactService {
     if (AMI.name().equals(artifactStreamType)) {
       key = ArtifactKeys.revision;
       value = artifact.getRevision();
-    } else if (ArtifactCollectionUtils.isGenericArtifactStream(artifactStreamType, artifactStreamAttributes)) {
+    } else if (DelegateArtifactCollectionUtils.isGenericArtifactStream(artifactStreamType, artifactStreamAttributes)) {
       key = ArtifactKeys.metadata_artifactPath;
       value = artifact.getArtifactPath();
     } else {
@@ -297,7 +327,7 @@ public class ArtifactServiceImpl implements ArtifactService {
     String key;
     if (AMI.name().equals(artifactStreamType)) {
       key = ArtifactKeys.revision;
-    } else if (ArtifactCollectionUtils.isGenericArtifactStream(artifactStreamType, artifactStreamAttributes)) {
+    } else if (DelegateArtifactCollectionUtils.isGenericArtifactStream(artifactStreamType, artifactStreamAttributes)) {
       key = ArtifactKeys.metadata_artifactPath;
     } else {
       key = ArtifactKeys.metadata_buildNo;
