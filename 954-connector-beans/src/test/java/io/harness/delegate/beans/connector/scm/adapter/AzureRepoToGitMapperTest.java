@@ -154,6 +154,6 @@ public class AzureRepoToGitMapperTest extends CategoryTest {
                                                             .build();
     assertThatThrownBy(() -> AzureRepoToGitMapper.mapToGitConfigDTO(azureRepoConnectorDTO))
         .isInstanceOf(InvalidRequestException.class)
-        .hasMessage("Azure Repo DTO Auth Type value is null");
+        .hasMessage("Azure Repo DTO Auth Type not found");
   }
 }
