@@ -240,7 +240,7 @@ public class ScmFacilitatorResource {
   @POST
   @Hidden
   @Path("create-pull-request")
-  @ApiOperation(value = "creates a pull request", nickname = "createPR")
+  @ApiOperation(value = "creates a pull request", nickname = "createPRV2")
   @Operation(operationId = "createPR", summary = "creates a Pull Request",
       responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Successfully created a PR") })
   public ResponseDTO<CreatePRResponse>
