@@ -27,8 +27,6 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.ChangeType;
-import io.harness.gitsync.CommitFileRequest;
-import io.harness.gitsync.CommitFileResponse;
 import io.harness.gitsync.CreateFileRequest;
 import io.harness.gitsync.CreatePRRequest;
 import io.harness.gitsync.CreatePRResponse;
@@ -497,20 +495,6 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
                             .setFilePath(updateFileRequest.getFilePath())
                             .setRepoName(updateFileRequest.getRepoName())
                             .setBranchName(updateFileRequest.getBranchName())
-                            .setCommitId(scmCommitFileResponseDTO.getCommitId())
-                            .setBlobId(scmCommitFileResponseDTO.getBlobId())
-                            .build())
-        .build();
-  }
-
-  private CommitFileResponse prepareCommitFileResponse(
-      CommitFileRequest commitFileRequest, ScmCommitFileResponseDTO scmCommitFileResponseDTO) {
-    return CommitFileResponse.newBuilder()
-        .setStatusCode(200)
-        .setGitMetaData(GitMetaData.newBuilder()
-                            .setFilePath(commitFileRequest.getFilePath())
-                            .setRepoName(commitFileRequest.getRepoName())
-                            .setBranchName(commitFileRequest.getBranchName())
                             .setCommitId(scmCommitFileResponseDTO.getCommitId())
                             .setBlobId(scmCommitFileResponseDTO.getBlobId())
                             .build())
