@@ -80,9 +80,11 @@ public class GitAwareContextHelper {
   }
 
   public EntityGitDetails getEntityGitDetails(GitAware gitAware) {
-    return EntityGitDetails.builder()
-        .repoName(gitAware.getRepo())
-        .filePath(gitAware.getFilePath())
-        .build();
+    return EntityGitDetails.builder().repoName(gitAware.getRepo()).filePath(gitAware.getFilePath()).build();
+  }
+
+  public String getBranchInRequest() {
+    GitEntityInfo gitEntityInfo = GitContextHelper.getGitEntityInfo();
+    return gitEntityInfo == null ? "" : gitEntityInfo.getBranch();
   }
 }
