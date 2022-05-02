@@ -5,22 +5,18 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.entities.deploymentinfo;
+package io.harness.models.infrastructuredetails;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
-import javax.validation.constraints.NotNull;
 import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Value;
 
-@Data
-@Builder
-@EqualsAndHashCode(callSuper = true)
 @OwnedBy(HarnessTeam.CDP)
-public class ServerlessAwsLambdaDeploymentInfo extends DeploymentInfo {
-  @NotNull private String serviceName;
-  @NotNull private String region;
-  // todo: need to check required object
+@Value
+@Builder
+public class ServerlessAwsLambdaInfrastructureDetails extends InfrastructureDetails {
+  String region;
+  String stage;
 }

@@ -5,30 +5,28 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.delegate.beans.instancesync.info;
+package io.harness.entities.instanceinfo;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 
-import com.fasterxml.jackson.annotation.JsonTypeName;
+import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-@OwnedBy(HarnessTeam.CDP)
-@JsonTypeName("ServerlessAwsLambdaServerInstanceInfo")
+@OwnedBy(HarnessTeam.DX)
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = true)
-public class ServerlessAwsLambdaServerInstanceInfo extends ServerInstanceInfo {
-  private String serviceName;
-  private String region;
+public class ServerlessAwsLambdaInstanceInfo extends InstanceInfo {
+  @NotNull private String serviceName;
+  @NotNull private String functionName;
+  @NotNull private String region;
   private String stage;
-  private String functionName;
   private String handler;
   private String memorySize;
   private String runTime;
   private String timeout;
-  // todo: need to verify with sainath
+  // todo: need to check required object
 }

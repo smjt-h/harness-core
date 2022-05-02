@@ -11,6 +11,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.dtos.InstanceDTO;
 import io.harness.dtos.instanceinfo.K8sInstanceInfoDTO;
+import io.harness.dtos.instanceinfo.ServerlessAwsLambdaInstanceInfoDTO;
 import io.harness.models.InstanceDetailsDTO;
 import io.harness.ng.core.k8s.ServiceSpecType;
 import io.harness.service.instancesynchandler.AbstractInstanceSyncHandler;
@@ -57,6 +58,8 @@ public class InstanceDetailsMapper {
   private String getInstanceInfoDTOType(InstanceDTO instanceDTO) {
     if (instanceDTO.getInstanceInfoDTO() instanceof K8sInstanceInfoDTO) {
       return ServiceSpecType.KUBERNETES;
+    } else if (instanceDTO.getInstanceInfoDTO() instanceof ServerlessAwsLambdaInstanceInfoDTO) {
+      return ServiceSpecType.SERVERLESS_AWS_LAMBDA;
     }
     return ServiceSpecType.NATIVE_HELM; // as of now either K8s or NativeHelm
   }
