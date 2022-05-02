@@ -11,6 +11,8 @@ import static io.harness.annotations.dev.HarnessTeam.DEL;
 import static io.harness.data.encoding.EncodingUtils.decodeBase64ToString;
 import static io.harness.eraro.ErrorCode.DEFAULT_ERROR_CODE;
 import static io.harness.eraro.ErrorCode.EXPIRED_TOKEN;
+import static io.harness.eraro.ErrorCode.INVALID_TOKEN;
+import static io.harness.exception.WingsException.USER;
 import static io.harness.exception.WingsException.USER_ADMIN;
 import static io.harness.manage.GlobalContextManager.initGlobalContextGuard;
 import static io.harness.manage.GlobalContextManager.upsertGlobalContextRecord;
@@ -37,6 +39,12 @@ import io.harness.security.DelegateTokenAuthenticator;
 
 import software.wings.beans.Account;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.InvalidClaimException;
+import com.auth0.jwt.exceptions.JWTDecodeException;
+import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.inject.Inject;
@@ -47,6 +55,7 @@ import com.nimbusds.jose.KeyLengthException;
 import com.nimbusds.jose.crypto.DirectDecrypter;
 import com.nimbusds.jwt.EncryptedJWT;
 import com.nimbusds.jwt.JWTClaimsSet;
+import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -126,6 +135,31 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
       }
     } catch (Exception ex) {
       throw new InvalidRequestException("Unauthorized", ex, EXPIRED_TOKEN, null);
+    }
+  }
+
+  @Override
+  public void validateWatcherToken(String accountId, String tokenString) {
+    String accountKey = null;
+    try {
+      accountKey = keyCache.get(accountId);
+    } catch (Exception ex) {
+      log.warn("Account key not found for accountId: {}", accountId, ex);
+    }
+
+    if (accountKey == null || GLOBAL_ACCOUNT_ID.equals(accountId)) {
+      throw new InvalidRequestException("Access denied", USER_ADMIN);
+    }
+
+    try {
+      Algorithm algorithm = Algorithm.HMAC256(accountKey);
+      JWTVerifier verifier = JWT.require(algorithm).withSubject(accountId).build();
+      verifier.verify(tokenString);
+    } catch (UnsupportedEncodingException | JWTDecodeException | SignatureVerificationException e) {
+      throw new InvalidRequestException(
+          "Invalid JWTToken received, failed to decode the token", e, INVALID_TOKEN, USER);
+    } catch (InvalidClaimException e) {
+      throw new InvalidRequestException("Token expired", e, EXPIRED_TOKEN, USER);
     }
   }
 

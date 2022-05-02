@@ -42,6 +42,7 @@ import io.harness.security.annotations.NextGenManagerAuth;
 import io.harness.security.annotations.PublicApi;
 import io.harness.security.annotations.PublicApiWithWhitelist;
 import io.harness.security.annotations.ScimAPI;
+import io.harness.security.annotations.WatcherAuth;
 
 import software.wings.beans.Account;
 import software.wings.beans.AccountStatus;
@@ -240,7 +241,7 @@ public class AuthRuleFilter implements ContainerRequestFilter {
 
     if (isDelegateRequest(requestContext) || isLearningEngineServiceRequest(requestContext)
         || isIdentityServiceRequest(requestContext) || isAdminPortalRequest(requestContext) || isNextGenManagerRequest()
-        || isInternalAPI()) {
+        || isInternalAPI() || isWatcherRequest(requestContext)) {
       return;
     }
 
@@ -602,6 +603,10 @@ public class AuthRuleFilter implements ContainerRequestFilter {
     return delegateAPI() && startsWith(requestContext.getHeaderString(HttpHeaders.AUTHORIZATION), "Delegate ");
   }
 
+  private boolean isWatcherRequest(ContainerRequestContext requestContext) {
+    return watcherAPI() && startsWith(requestContext.getHeaderString(HttpHeaders.AUTHORIZATION), "Watcher ");
+  }
+
   private boolean isLearningEngineServiceRequest(ContainerRequestContext requestContext) {
     return learningEngineServiceAPI()
         && startsWith(requestContext.getHeaderString(HttpHeaders.AUTHORIZATION), "LearningEngine ");
@@ -701,6 +706,14 @@ public class AuthRuleFilter implements ContainerRequestFilter {
 
     return resourceMethod.getAnnotation(DelegateAuth.class) != null
         || resourceClass.getAnnotation(DelegateAuth.class) != null;
+  }
+
+  private boolean watcherAPI() {
+    Class<?> resourceClass = resourceInfo.getResourceClass();
+    Method resourceMethod = resourceInfo.getResourceMethod();
+
+    return resourceMethod.getAnnotation(WatcherAuth.class) != null
+        || resourceClass.getAnnotation(WatcherAuth.class) != null;
   }
 
   private boolean learningEngineServiceAPI() {

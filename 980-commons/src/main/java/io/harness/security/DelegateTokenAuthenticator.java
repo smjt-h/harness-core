@@ -15,4 +15,6 @@ import io.harness.annotations.dev.OwnedBy;
 public interface DelegateTokenAuthenticator {
   void validateDelegateToken(
       String accountId, String tokenString, String delegateId, boolean shouldSetTokenNameInGlobalContext);
+
+  void validateWatcherToken(String accountId, String tokenString);
 }

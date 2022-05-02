@@ -45,6 +45,7 @@ import io.harness.security.annotations.NextGenManagerAuth;
 import io.harness.security.annotations.PublicApi;
 import io.harness.security.annotations.PublicApiWithWhitelist;
 import io.harness.security.annotations.ScimAPI;
+import io.harness.security.annotations.WatcherAuth;
 import io.harness.security.dto.Principal;
 
 import software.wings.beans.AuthToken;
@@ -130,6 +131,11 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
     if (delegateAPI()) {
       validateDelegateRequest(containerRequestContext);
+      return;
+    }
+
+    if (watcherAPI()) {
+      validateWatcherRequest(containerRequestContext);
       return;
     }
 
@@ -401,6 +407,22 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     }
   }
 
+  protected void validateWatcherRequest(ContainerRequestContext containerRequestContext) {
+    MultivaluedMap<String, String> pathParameters = containerRequestContext.getUriInfo().getPathParameters();
+    MultivaluedMap<String, String> queryParameters = containerRequestContext.getUriInfo().getQueryParameters();
+
+    String accountId = getRequestParamFromContext("accountId", pathParameters, queryParameters);
+    try (AccountLogContext ignore = new AccountLogContext(accountId, OVERRIDE_ERROR)) {
+      String authHeader = containerRequestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
+      if (authHeader != null && authHeader.contains("Watcher")) {
+        authService.validateWatcherToken(
+            accountId, substringAfter(containerRequestContext.getHeaderString(HttpHeaders.AUTHORIZATION), "Watcher "));
+      } else {
+        throw new IllegalStateException("Invalid authentication header:" + authHeader);
+      }
+    }
+  }
+
   protected void validateExternalFacingApiRequest(ContainerRequestContext containerRequestContext) {
     String apiKey = containerRequestContext.getHeaderString(API_KEY_HEADER);
     if (isBlank(apiKey)) {
@@ -460,6 +482,14 @@ public class AuthenticationFilter implements ContainerRequestFilter {
   boolean identityServiceAPI() {
     return resourceInfo.getResourceMethod().getAnnotation(IdentityServiceAuth.class) != null
         || resourceInfo.getResourceClass().getAnnotation(IdentityServiceAuth.class) != null;
+  }
+
+  protected boolean watcherAPI() {
+    Class<?> resourceClass = resourceInfo.getResourceClass();
+    Method resourceMethod = resourceInfo.getResourceMethod();
+
+    return resourceMethod.getAnnotation(WatcherAuth.class) != null
+        || resourceClass.getAnnotation(WatcherAuth.class) != null;
   }
 
   protected boolean delegateAPI() {
