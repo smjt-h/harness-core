@@ -303,7 +303,7 @@ public class ScmFacilitatorResource {
   // TODO should be removed after testing @Mohit
   @GET
   @Path("create-file")
-  @ApiOperation(value = "get file", nickname = "getFile")
+  @ApiOperation(value = "get file", nickname = "createFile")
   @Hidden
   @Operation(operationId = "getFile", summary = "get file",
       responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Successfully created a PR") },
@@ -344,7 +344,7 @@ public class ScmFacilitatorResource {
 
   @GET
   @Path("update-file")
-  @ApiOperation(value = "get file", nickname = "getFile")
+  @ApiOperation(value = "get file", nickname = "updateFile")
   @Hidden
   @Operation(operationId = "getFile", summary = "get file",
       responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Successfully created a PR") },
