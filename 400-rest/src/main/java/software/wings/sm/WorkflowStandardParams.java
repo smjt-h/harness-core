@@ -20,7 +20,6 @@ import io.harness.beans.EmbeddedUser;
 import io.harness.context.ContextElementType;
 import io.harness.exception.InvalidRequestException;
 
-import software.wings.api.InstanceElement;
 import software.wings.api.ServiceElement;
 import software.wings.api.WorkflowElement;
 import software.wings.app.MainConfiguration;
@@ -32,7 +31,6 @@ import software.wings.beans.ExecutionCredential;
 import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.ArtifactInput;
-import software.wings.common.InstanceExpressionProcessor;
 import software.wings.service.intfc.AccountService;
 import software.wings.service.intfc.AppService;
 import software.wings.service.intfc.ArtifactService;
@@ -50,7 +48,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.jexl3.JexlException;
 import org.mongodb.morphia.annotations.Transient;
 
 /**
@@ -60,7 +57,7 @@ import org.mongodb.morphia.annotations.Transient;
  */
 @OwnedBy(CDC)
 @TargetModule(_957_CG_BEANS)
-public class WorkflowStandardParams implements ExecutionContextAware, ContextElement {
+public class WorkflowStandardParams implements ContextElement {
   private static final String STANDARD_PARAMS = "STANDARD_PARAMS";
   public static final String DEPLOYMENT_TRIGGERED_BY = "deploymentTriggeredBy";
 
@@ -109,8 +106,6 @@ public class WorkflowStandardParams implements ExecutionContextAware, ContextEle
   private Long endTs;
 
   private String timestampId = System.currentTimeMillis() + "-" + nextInt(0, 1000);
-
-  @Transient @JsonIgnore private transient ExecutionContext context;
 
   private Map<String, String> workflowVariables;
 
@@ -536,23 +531,6 @@ public class WorkflowStandardParams implements ExecutionContextAware, ContextEle
    * @param uuid the uuid
    */
   public void setUuid(String uuid) {}
-
-  public List<InstanceElement> getInstances() {
-    try {
-      return (List<InstanceElement>) context.evaluateExpression(InstanceExpressionProcessor.DEFAULT_EXPRESSION);
-    } catch (JexlException ex) {
-      return new ArrayList<InstanceElement>();
-    }
-  }
-
-  protected ExecutionContext getContext() {
-    return context;
-  }
-
-  @Override
-  public void setExecutionContext(ExecutionContext executionContext) {
-    this.context = executionContext;
-  }
 
   public boolean isExcludeHostsWithSameArtifact() {
     return excludeHostsWithSameArtifact;
