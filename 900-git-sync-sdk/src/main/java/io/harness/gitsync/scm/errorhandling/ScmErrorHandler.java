@@ -7,8 +7,14 @@
 
 package io.harness.gitsync.scm.errorhandling;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.exception.ExplanationException;
+import io.harness.exception.HintException;
+import io.harness.exception.ScmException;
+import io.harness.exception.WingsException;
 import io.harness.gitsync.ErrorDetails;
 import io.harness.gitsync.scm.beans.ScmErrorDetails;
 
@@ -26,5 +32,17 @@ public abstract class ScmErrorHandler {
 
   public final ScmErrorDetails getScmErrorDetails(ErrorDetails errorDetails) {
     return ScmErrorDetails.builder().errorMessage(errorDetails.getErrorMessage()).build();
+  }
+
+  WingsException prepareException(Class<? extends ScmException> clazz, ScmErrorDetails scmErrorDetails)
+      throws InstantiationException, IllegalAccessException {
+    WingsException finalException = clazz.newInstance();
+    if (isNotEmpty(scmErrorDetails.getExplanationMessage())) {
+      finalException = new ExplanationException(scmErrorDetails.getExplanationMessage(), finalException);
+    }
+    if (isNotEmpty(scmErrorDetails.getHintMessage())) {
+      finalException = new HintException(scmErrorDetails.getHintMessage(), finalException);
+    }
+    return finalException;
   }
 }

@@ -15,17 +15,19 @@ import io.harness.exception.ScmUnexpectedException;
 import io.harness.gitsync.scm.beans.ScmErrorDetails;
 
 import groovy.lang.Singleton;
+import lombok.SneakyThrows;
 
 @OwnedBy(HarnessTeam.PL)
 @Singleton
 public class CreateFileScmErrorHandler extends ScmErrorHandler {
+  @SneakyThrows
   @Override
   void handleError(int statusCode, ScmErrorDetails errorDetails) {
     switch (statusCode) {
       case 400:
-        throw new ScmResourceNotFoundException(errorDetails.getErrorMessage());
+        throw prepareException(ScmResourceNotFoundException.class, errorDetails);
       case 500:
-        throw new ScmInternalServerErrorException(errorDetails.getErrorMessage());
+        throw prepareException(ScmInternalServerErrorException.class, errorDetails);
       default:
         throw new ScmUnexpectedException(errorDetails.getErrorMessage());
     }
