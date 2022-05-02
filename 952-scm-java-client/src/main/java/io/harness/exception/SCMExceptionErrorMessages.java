@@ -15,5 +15,5 @@ import lombok.experimental.UtilityClass;
 @OwnedBy(HarnessTeam.PL)
 @UtilityClass
 public class SCMExceptionErrorMessages {
-  public final String FILE_NOT_FOUND_ERROR = "Filepath doesn't exist";
+  public final String FILE_NOT_FOUND_ERROR = "File not found";
 }

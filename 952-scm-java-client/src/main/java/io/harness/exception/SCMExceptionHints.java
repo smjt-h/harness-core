@@ -14,5 +14,5 @@ public class SCMExceptionHints {
   public static final String INVALID_CREDENTIALS = "Please check your credentials.";
   public static final String BITBUCKET_INVALID_CREDENTIALS = "Please check your Bitbucket credentials.";
   public static final String GITHUB_INVALID_CREDENTIALS = "Please check your Github credentials.";
-  public static final String FILE_NOT_FOUND = "Please check the file path";
+  public static final String FILE_NOT_FOUND = "Please check the requested file path / branch / repo name";
 }
