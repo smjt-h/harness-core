@@ -18,6 +18,7 @@ import io.harness.ccm.commons.entities.anomaly.AnomalyFeedbackDTO;
 import io.harness.ccm.commons.entities.anomaly.AnomalySummary;
 import io.harness.ccm.commons.entities.anomaly.AnomalyWidgetData;
 import io.harness.ccm.commons.entities.anomaly.PerspectiveAnomalyData;
+import io.harness.ccm.graphql.dto.recommendation.FilterStatsDTO;
 import io.harness.ccm.helper.AnomalyQueryHelper;
 import io.harness.ccm.remote.beans.anomaly.AnomalyFilterPropertiesDTO;
 import io.harness.ccm.service.intf.AnomalyService;
@@ -88,6 +89,29 @@ public class AnomalyResource {
       @RequestBody(description = "Anomaly Filter Properties") AnomalyFilterPropertiesDTO anomalyFilterPropertiesDTO) {
     return ResponseDTO.newResponse(anomalyService.listAnomalies(
         accountId, AnomalyQueryHelper.buildAnomalyQueryFromFilterProperties(anomalyFilterPropertiesDTO)));
+  }
+
+  @POST
+  @Path("filter-values")
+  @Timed
+  @LogAccountIdentifier
+  @ExceptionMetered
+  @ApiOperation(value = "Filter Values available for given Anomaly-Filter fields", nickname = "anomalyFilterValues")
+  @Operation(operationId = "anomalyFilterValues",
+      description = "Returns the list of distinct values for all the specified Anomaly fields.",
+      summary = "Returns the list of distinct values for all the specified Anomaly fields.",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
+            description = "Returns the list of distinct values for all the specified Anomaly fields.",
+            content = { @Content(mediaType = MediaType.APPLICATION_JSON) })
+      })
+  public ResponseDTO<List<FilterStatsDTO>>
+  getAnomalyFilterStats(@Parameter(required = true, description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
+                            NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @NotNull @Valid String accountId,
+      @RequestBody(required = true, description = "List of Anomaly columns whose unique values will be fetched")
+      List<String> anomalyColumnsList) {
+    return ResponseDTO.newResponse(anomalyService.getAnomalyFilterStats(accountId, anomalyColumnsList));
   }
 
   @POST
