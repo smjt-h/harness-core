@@ -8,6 +8,7 @@
 package io.harness.pms.ngpipeline.inputset.helpers;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+import static io.harness.beans.FeatureName.NG_PIPELINE_TEMPLATE;
 import static io.harness.pms.merger.helpers.InputSetMergeHelper.mergeInputSetIntoPipelineForGivenStages;
 import static io.harness.pms.merger.helpers.InputSetMergeHelper.mergeInputSets;
 import static io.harness.pms.merger.helpers.InputSetMergeHelper.mergeInputSetsForGivenStages;
@@ -21,6 +22,7 @@ import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.pms.gitsync.PmsGitSyncBranchContextGuard;
+import io.harness.pms.helpers.PmsFeatureFlagHelper;
 import io.harness.pms.inputset.InputSetErrorWrapperDTOPMS;
 import io.harness.pms.merger.helpers.InputSetMergeHelper;
 import io.harness.pms.merger.helpers.InputSetYamlHelper;
@@ -30,6 +32,7 @@ import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetTemplateRespons
 import io.harness.pms.ngpipeline.inputset.service.PMSInputSetService;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.service.PMSPipelineService;
+import io.harness.pms.pipeline.service.PMSPipelineTemplateHelper;
 import io.harness.pms.pipeline.service.PipelineCRUDErrorResponse;
 import io.harness.pms.plan.execution.StagesExecutionHelper;
 import io.harness.pms.stages.StagesExpressionExtractor;
@@ -51,6 +54,8 @@ import lombok.extern.slf4j.Slf4j;
 public class ValidateAndMergeHelper {
   private final PMSPipelineService pmsPipelineService;
   private final PMSInputSetService pmsInputSetService;
+  private final PMSPipelineTemplateHelper pipelineTemplateHelper;
+  private final PmsFeatureFlagHelper featureFlagService;
 
   public InputSetErrorWrapperDTOPMS validateInputSet(String accountId, String orgIdentifier, String projectIdentifier,
       String pipelineIdentifier, String yaml, String pipelineBranch, String pipelineRepoID) {
@@ -152,9 +157,20 @@ public class ValidateAndMergeHelper {
       if (EmptyPredicate.isEmpty(stageIdentifiers)) {
         template = createTemplateFromPipeline(pipelineYaml);
       } else {
-        StagesExecutionHelper.throwErrorIfAllStagesAreDeleted(pipelineYaml, stageIdentifiers);
-        replacedExpressions =
-            new ArrayList<>(StagesExpressionExtractor.getNonLocalExpressions(pipelineYaml, stageIdentifiers));
+        if (featureFlagService.isEnabled(accountId, NG_PIPELINE_TEMPLATE)
+            && Boolean.TRUE.equals(optionalPipelineEntity.get().getTemplateReference())) {
+          String resolvedYaml =
+              pipelineTemplateHelper
+                  .resolveTemplateRefsInPipeline(accountId, orgIdentifier, projectIdentifier, pipelineYaml)
+                  .getMergedPipelineYaml();
+          StagesExecutionHelper.throwErrorIfAllStagesAreDeleted(resolvedYaml, stageIdentifiers);
+          replacedExpressions =
+              new ArrayList<>(StagesExpressionExtractor.getNonLocalExpressions(resolvedYaml, stageIdentifiers));
+        } else {
+          StagesExecutionHelper.throwErrorIfAllStagesAreDeleted(pipelineYaml, stageIdentifiers);
+          replacedExpressions =
+              new ArrayList<>(StagesExpressionExtractor.getNonLocalExpressions(pipelineYaml, stageIdentifiers));
+        }
         template = createTemplateFromPipelineForGivenStages(pipelineYaml, stageIdentifiers);
       }
 
