@@ -175,6 +175,7 @@ import software.wings.sm.StateExecutionContext;
 import software.wings.sm.StateExecutionContext.StateExecutionContextBuilder;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.k8s.K8sStateHelper;
 import software.wings.sm.states.utils.StateTimeoutUtils;
 import software.wings.stencils.DefaultValue;
@@ -236,6 +237,7 @@ public class HelmDeployState extends State {
   @Inject private LogService logService;
   @Inject private SweepingOutputService sweepingOutputService;
   @Inject private EnvironmentService environmentService;
+  @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @DefaultValue("10") private int steadyStateTimeout; // Minutes
 
@@ -964,7 +966,7 @@ public class HelmDeployState extends State {
     WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
 
     final Application app = appService.get(context.getAppId());
-    final Environment env = workflowStandardParams.getEnv();
+    final Environment env = workflowStandardParamsExtensionService.getEnv(workflowStandardParams);
     ServiceElement serviceElement = phaseElement.getServiceElement();
     Artifact artifact = ((DeploymentExecutionContext) context).getDefaultArtifactForService(serviceElement.getUuid());
     String artifactStreamId = artifact == null ? null : artifact.getArtifactStreamId();

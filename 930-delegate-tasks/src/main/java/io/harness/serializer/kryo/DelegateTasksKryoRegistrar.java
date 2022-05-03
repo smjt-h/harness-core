@@ -199,6 +199,7 @@ import software.wings.service.intfc.analysis.ClusterLevel;
 import software.wings.settings.validation.ConnectivityValidationDelegateRequest;
 import software.wings.settings.validation.SshConnectionConnectivityValidationAttributes;
 import software.wings.settings.validation.WinRmConnectivityValidationAttributes;
+import software.wings.sm.WorkflowStandardParams;
 import software.wings.utils.ArtifactType;
 import software.wings.verification.stackdriver.StackDriverMetricDefinition;
 
@@ -235,6 +236,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(DataCollectionTaskResult.class, 5184);
     kryo.register(DataCollectionTaskResult.DataCollectionTaskStatus.class, 5185);
     kryo.register(ShellScriptParameters.class, 5186);
+    kryo.register(WorkflowStandardParams.class, 5227);
     kryo.register(DynaTraceConfig.class, 5237);
     kryo.register(DynaTraceDataCollectionInfo.class, 5238);
     kryo.register(DynaTraceTimeSeries.class, 5239);

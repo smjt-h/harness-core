@@ -1097,7 +1097,6 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     w.put("api.SelectNodeStepExecutionSummary", SelectNodeStepExecutionSummary.class);
     w.put("api.ServiceArtifactElement", ServiceArtifactElement.class);
     w.put("api.ServiceArtifactElements", ServiceArtifactElements.class);
-    w.put("api.ServiceElement", ServiceElement.class);
     w.put("api.ServiceInstanceArtifactParam", ServiceInstanceArtifactParam.class);
     w.put("api.ServiceInstanceIdsParam", ServiceInstanceIdsParam.class);
     w.put("api.ServiceNowExecutionData", ServiceNowExecutionData.class);
@@ -1462,7 +1461,6 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
         "sm.states.azure.appservices.AzureAppServiceSlotSwapExecutionData", AzureAppServiceSlotSwapExecutionData.class);
     w.put("sm.states.azure.appservices.AzureAppServiceSlotSwapExecutionSummary",
         AzureAppServiceSlotSwapExecutionSummary.class);
-    w.put("sm.WorkflowStandardParams", WorkflowStandardParams.class);
     w.put("verification.apm.APMCVServiceConfiguration", APMCVServiceConfiguration.class);
     w.put("verification.appdynamics.AppDynamicsCVServiceConfiguration", AppDynamicsCVServiceConfiguration.class);
     w.put("verification.cloudwatch.CloudWatchCVServiceConfiguration", CloudWatchCVServiceConfiguration.class);

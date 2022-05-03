@@ -66,6 +66,7 @@ import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
 import software.wings.service.impl.stackdriver.StackDriverDataCollectionInfo;
 import software.wings.service.impl.stackdriver.StackDriverLogDataCollectionInfo;
 import software.wings.service.impl.sumo.SumoDataCollectionInfo;
+import software.wings.sm.WorkflowStandardParams;
 
 import java.util.Set;
 
@@ -144,5 +145,6 @@ public class DelegateTasksMorphiaRegistrar implements MorphiaRegistrar {
     w.put("delegatetasks.validation.capabilities.SSHHostValidationCapability", SSHHostValidationCapability.class);
     w.put("service.impl.stackdriver.StackDriverLogDataCollectionInfo", StackDriverLogDataCollectionInfo.class);
     w.put("service.impl.stackdriver.StackDriverDataCollectionInfo", StackDriverDataCollectionInfo.class);
+    w.put("sm.WorkflowStandardParams", WorkflowStandardParams.class);
   }
 }

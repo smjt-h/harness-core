@@ -84,6 +84,7 @@ import software.wings.settings.SettingValue;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -117,6 +118,7 @@ public class K8sStateHelper {
   @Inject private FeatureFlagService featureFlagService;
   @Inject private KryoSerializer kryoSerializer;
   @Inject private EnvironmentService environmentService;
+  @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   public static List<String> fetchDelegateSelectorsFromK8sCloudProvider(SettingValue settingValue) {
     if (!(settingValue instanceof KubernetesClusterConfig)) {
@@ -183,11 +185,12 @@ public class K8sStateHelper {
 
   public static Environment fetchEnvFromExecutionContext(ExecutionContext context) {
     WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
-    if (workflowStandardParams == null || workflowStandardParams.getEnv() == null) {
+    if (workflowStandardParams == null
+        || new WorkflowStandardParamsExtensionService().getEnv(workflowStandardParams) == null) {
       return null;
     }
 
-    return workflowStandardParams.getEnv();
+    return new WorkflowStandardParamsExtensionService().getEnv(workflowStandardParams);
   }
 
   public static long fetchSafeTimeoutInMillis(Integer timeoutInMillis) {

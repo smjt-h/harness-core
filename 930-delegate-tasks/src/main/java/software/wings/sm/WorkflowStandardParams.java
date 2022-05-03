@@ -9,8 +9,6 @@ package software.wings.sm;
 
 import static io.harness.annotations.dev.HarnessModule._957_CG_BEANS;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import static org.apache.commons.lang3.RandomUtils.nextInt;
 
@@ -18,37 +16,18 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.EmbeddedUser;
 import io.harness.context.ContextElementType;
-import io.harness.exception.InvalidRequestException;
 
 import software.wings.api.ServiceElement;
 import software.wings.api.WorkflowElement;
-import software.wings.app.MainConfiguration;
-import software.wings.beans.Account;
-import software.wings.beans.Application;
-import software.wings.beans.Environment;
 import software.wings.beans.ErrorStrategy;
 import software.wings.beans.ExecutionCredential;
-import software.wings.beans.appmanifest.HelmChart;
-import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.ArtifactInput;
-import software.wings.service.intfc.AccountService;
-import software.wings.service.intfc.AppService;
-import software.wings.service.intfc.ArtifactService;
-import software.wings.service.intfc.ArtifactStreamService;
-import software.wings.service.intfc.ArtifactStreamServiceBindingService;
-import software.wings.service.intfc.EnvironmentService;
-import software.wings.service.intfc.ServiceTemplateService;
-import software.wings.service.intfc.applicationmanifest.HelmChartService;
-import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.inject.Inject;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
-import org.mongodb.morphia.annotations.Transient;
 
 /**
  * The Class WorkflowStandardParams.
@@ -61,25 +40,6 @@ public class WorkflowStandardParams implements ContextElement {
   private static final String STANDARD_PARAMS = "STANDARD_PARAMS";
   public static final String DEPLOYMENT_TRIGGERED_BY = "deploymentTriggeredBy";
 
-  @Inject private transient AppService appService;
-  @Inject private transient AccountService accountService;
-
-  @Inject private transient ArtifactService artifactService;
-
-  @Inject private transient EnvironmentService environmentService;
-
-  @Inject private transient ServiceTemplateService serviceTemplateService;
-
-  @Inject private transient MainConfiguration configuration;
-
-  @Inject private transient ArtifactStreamService artifactStreamService;
-
-  @Inject private transient ArtifactStreamServiceBindingService artifactStreamServiceBindingService;
-
-  @Inject private transient SweepingOutputService sweepingOutputService;
-
-  @Inject private transient HelmChartService helmChartService;
-
   private String appId;
   private String envId;
   private List<String> artifactIds;
@@ -90,13 +50,6 @@ public class WorkflowStandardParams implements ContextElement {
 
   // TODO: centralized in-memory executionCredential and special encrypted mapping
   private ExecutionCredential executionCredential;
-
-  @JsonIgnore private transient Application app;
-  @JsonIgnore @Transient private transient Environment env;
-  @JsonIgnore @Transient private transient List<Artifact> artifacts;
-  @JsonIgnore @Transient private transient List<Artifact> rollbackArtifacts;
-  @JsonIgnore @Transient private transient List<HelmChart> helmCharts;
-  @JsonIgnore @Transient private transient Account account;
 
   private List<ServiceElement> services;
 
@@ -122,22 +75,6 @@ public class WorkflowStandardParams implements ContextElement {
   @Override
   public ContextElement cloneMin() {
     return this;
-  }
-
-  public HelmChart getHelmChartForService(String serviceId) {
-    getHelmCharts();
-    if (isEmpty(helmCharts)) {
-      return null;
-    }
-
-    return helmCharts.stream().filter(helmChart -> serviceId.equals(helmChart.getServiceId())).findFirst().orElse(null);
-  }
-
-  public List<HelmChart> getHelmCharts() {
-    if (isEmpty(helmCharts) && isNotEmpty(helmChartIds)) {
-      helmCharts = helmChartService.listByIds(getApp().getAccountId(), helmChartIds);
-    }
-    return helmCharts;
   }
 
   /**
@@ -386,138 +323,6 @@ public class WorkflowStandardParams implements ContextElement {
 
   public void setCurrentUser(EmbeddedUser currentUser) {
     this.currentUser = currentUser;
-  }
-
-  /**
-   * Gets app.
-   *
-   * @return the app
-   */
-  public Application getApp() {
-    if (app == null && appId != null) {
-      app = appService.getApplicationWithDefaults(appId);
-    }
-    return app;
-  }
-
-  public Application fetchRequiredApp() {
-    Application application = getApp();
-    if (application == null) {
-      throw new InvalidRequestException("App cannot be null");
-    }
-    return application;
-  }
-
-  public Account getAccount() {
-    String accountId = getApp() == null ? null : getApp().getAccountId();
-    if (account == null && accountId != null) {
-      account = accountService.getAccountWithDefaults(accountId);
-    }
-    return account;
-  }
-
-  /**
-   * Gets env.
-   *
-   * @return the env
-   */
-  public Environment getEnv() {
-    if (env == null && envId != null) {
-      env = environmentService.get(appId, envId, false);
-    }
-    return env;
-  }
-
-  public Environment fetchRequiredEnv() {
-    Environment environment = getEnv();
-    if (environment == null) {
-      throw new InvalidRequestException("Env cannot be null");
-    }
-    return environment;
-  }
-
-  /**
-   * Gets artifacts.
-   *
-   * @return the artifacts
-   */
-  public List<Artifact> getArtifacts() {
-    if (artifacts == null && isNotEmpty(artifactIds)) {
-      List<Artifact> list = new ArrayList<>();
-      for (String artifactId : artifactIds) {
-        Artifact artifact = artifactService.get(artifactId);
-        if (artifact != null) {
-          list.add(artifact);
-        }
-      }
-      artifacts = list;
-    }
-    return artifacts;
-  }
-
-  /**
-   * Gets rollback artifacts.
-   *
-   * @return the rollback artifacts
-   */
-  public List<Artifact> getRollbackArtifacts() {
-    if (rollbackArtifacts == null && isNotEmpty(rollbackArtifactIds)) {
-      List<Artifact> list = new ArrayList<>();
-      for (String rollbackArtifactId : rollbackArtifactIds) {
-        Artifact rollbackArtifact = artifactService.get(rollbackArtifactId);
-        if (rollbackArtifact != null) {
-          list.add(rollbackArtifact);
-        }
-      }
-      rollbackArtifacts = list;
-    }
-    return rollbackArtifacts;
-  }
-
-  /**
-   * Gets artifact for service.
-   *
-   * @param serviceId the service id
-   * @return the artifact for service
-   */
-  public Artifact getArtifactForService(String serviceId) {
-    getArtifacts();
-    if (isEmpty(artifacts)) {
-      return null;
-    }
-
-    List<String> artifactStreamIds = artifactStreamServiceBindingService.listArtifactStreamIds(serviceId);
-    if (isEmpty(artifactStreamIds)) {
-      return null;
-    }
-
-    return artifacts.stream()
-        .filter(artifact -> artifactStreamIds.contains(artifact.getArtifactStreamId()))
-        .findFirst()
-        .orElse(null);
-  }
-
-  /**
-   * Gets rollback artifact for service.
-   *
-   * @param serviceId the service id
-   * @return the rollback artifact for service
-   */
-  public Artifact getRollbackArtifactForService(String serviceId) {
-    getRollbackArtifacts();
-    if (isEmpty(rollbackArtifacts)) {
-      return null;
-    }
-
-    List<String> rollbackArtifactStreamIds = artifactStreamServiceBindingService.listArtifactStreamIds(serviceId);
-    if (isEmpty(rollbackArtifactStreamIds)) {
-      return null;
-    }
-
-    return rollbackArtifacts.stream()
-        .filter(rollbackArtifact -> rollbackArtifactStreamIds.contains(rollbackArtifact.getArtifactStreamId()))
-        .findFirst()
-        .orElse(null);
   }
 
   @Override

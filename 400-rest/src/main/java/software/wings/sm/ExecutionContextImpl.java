@@ -220,6 +220,7 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
   @Inject private transient HelmChartService helmChartService;
   @Inject private transient FileService fileService;
   @Inject private transient ContextElementParamMapperFactory paramMapperFactory;
+  @Inject private transient WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   private StateMachine stateMachine;
   private StateExecutionInstance stateExecutionInstance;
@@ -470,11 +471,11 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
   @Override
   public List<Artifact> getArtifacts() {
     WorkflowStandardParams workflowStandardParams = fetchWorkflowStandardParamsFromContext();
-    String accountId = workflowStandardParams.fetchRequiredApp().getAccountId();
+    String accountId = workflowStandardParamsExtensionService.fetchRequiredApp(workflowStandardParams).getAccountId();
     if (!featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, accountId)) {
       List<ServiceArtifactElement> artifactElements = getArtifactElements();
       if (isEmpty(artifactElements)) {
-        return workflowStandardParams.getArtifacts();
+        return workflowStandardParamsExtensionService.getArtifacts(workflowStandardParams);
       }
       List<Artifact> list = new ArrayList<>();
       for (ServiceArtifactElement artifactElement : artifactElements) {
@@ -484,7 +485,7 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
     } else {
       List<ServiceArtifactVariableElement> artifactVariableElements = getArtifactVariableElements();
       if (isEmpty(artifactVariableElements)) {
-        return workflowStandardParams.getArtifacts();
+        return workflowStandardParamsExtensionService.getArtifacts(workflowStandardParams);
       }
       List<Artifact> list = new ArrayList<>();
       for (ServiceArtifactVariableElement artifactVariableElement : artifactVariableElements) {
@@ -501,7 +502,7 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
       return artifactService.get(artifactElement.get().getUuid());
     } else {
       WorkflowStandardParams workflowStandardParams = fetchWorkflowStandardParamsFromContext();
-      return workflowStandardParams.getArtifactForService(serviceId);
+      return workflowStandardParamsExtensionService.getArtifactForService(workflowStandardParams, serviceId);
     }
   }
 
@@ -702,7 +703,7 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
 
     List<ServiceHelmElement> helmElements = getHelmChartElements();
     if (isEmpty(helmElements)) {
-      return workflowStandardParams.getHelmCharts();
+      return workflowStandardParamsExtensionService.getHelmCharts(workflowStandardParams);
     }
     List<HelmChart> list = new ArrayList<>();
     for (ServiceHelmElement helmElement : helmElements) {
@@ -714,14 +715,14 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
   @Override
   public HelmChart getHelmChartForService(String serviceId) {
     WorkflowStandardParams workflowStandardParams = fetchWorkflowStandardParamsFromContext();
-    return workflowStandardParams.getHelmChartForService(serviceId);
+    return workflowStandardParamsExtensionService.getHelmChartForService(workflowStandardParams, serviceId);
   }
 
   @Override
   public Application getApp() {
     WorkflowStandardParams stdParam = getContextElement(ContextElementType.STANDARD);
     if (stdParam != null) {
-      return stdParam.getApp();
+      return workflowStandardParamsExtensionService.getApp(stdParam);
     }
     return null;
   }
@@ -730,7 +731,7 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
   public Application fetchRequiredApp() {
     WorkflowStandardParams stdParam = getContextElement(ContextElementType.STANDARD);
     if (stdParam != null) {
-      return stdParam.fetchRequiredApp();
+      return workflowStandardParamsExtensionService.fetchRequiredApp(stdParam);
     }
     throw new InvalidRequestException("WorkflowStandardParams cannot be null");
   }
@@ -739,7 +740,7 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
   public Environment fetchRequiredEnvironment() {
     WorkflowStandardParams stdParam = getContextElement(ContextElementType.STANDARD);
     if (stdParam != null) {
-      return stdParam.fetchRequiredEnv();
+      return workflowStandardParamsExtensionService.fetchRequiredEnv(stdParam);
     }
     throw new InvalidRequestException("WorkflowStandardParams cannot be null");
   }
@@ -747,7 +748,7 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
   public Environment getEnv() {
     WorkflowStandardParams stdParam = getContextElement(ContextElementType.STANDARD);
     if (stdParam != null) {
-      return stdParam.getEnv();
+      return workflowStandardParamsExtensionService.getEnv(stdParam);
     }
     return null;
   }
@@ -1201,7 +1202,7 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
       return null;
     }
 
-    Application app = ((WorkflowStandardParams) contextElement).getApp();
+    Application app = workflowStandardParamsExtensionService.getApp((WorkflowStandardParams) contextElement);
     notNullCheck("app", app);
     return app.getAccountId();
   }
@@ -1651,9 +1652,10 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
 
   public String getEnvType() {
     WorkflowStandardParams workflowStandardParams = getContextElement(ContextElementType.STANDARD);
-    return (workflowStandardParams == null || workflowStandardParams.getEnv() == null)
+    return (workflowStandardParams == null
+               || workflowStandardParamsExtensionService.getEnv(workflowStandardParams) == null)
         ? null
-        : workflowStandardParams.getEnv().getEnvironmentType().name();
+        : workflowStandardParamsExtensionService.getEnv(workflowStandardParams).getEnvironmentType().name();
   }
   private boolean isEligible(boolean instanceFromNewDeployment, boolean newInstancesOnly) {
     return !newInstancesOnly || instanceFromNewDeployment;

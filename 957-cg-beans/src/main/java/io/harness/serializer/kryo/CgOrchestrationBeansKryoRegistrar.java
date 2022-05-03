@@ -24,6 +24,7 @@ import io.harness.serializer.KryoRegistrar;
 import software.wings.api.CloudProviderType;
 import software.wings.api.ContainerServiceData;
 import software.wings.api.ExecutionDataValue;
+import software.wings.api.ServiceElement;
 import software.wings.beans.AmiDeploymentType;
 import software.wings.beans.ArtifactStreamMetadata;
 import software.wings.beans.ArtifactVariable;
@@ -61,6 +62,7 @@ public class CgOrchestrationBeansKryoRegistrar implements KryoRegistrar {
   public void register(Kryo kryo) {
     kryo.register(ContextElementType.class, 4004);
     kryo.register(WorkflowType.class, 5025);
+    kryo.register(ServiceElement.class, 5083);
     kryo.register(ExecutionStatus.class, 5136);
     kryo.register(Variable.class, 5378);
     kryo.register(GitFileConfig.class, 5472);

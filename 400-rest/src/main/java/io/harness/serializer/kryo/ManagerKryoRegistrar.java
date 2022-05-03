@@ -706,7 +706,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(SelectedNodeExecutionData.class, 5110);
     kryo.register(SelectNodeStepExecutionSummary.class, 5111);
     kryo.register(ServiceArtifactElement.class, 5231);
-    kryo.register(ServiceElement.class, 5083);
     kryo.register(ServiceInstanceArtifactParam.class, 5112);
     kryo.register(ServiceInstanceIdsParam.class, 5113);
     kryo.register(ServiceTemplateElement.class, 5084);
@@ -928,7 +927,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(RepeatStateExecutionData.class, 4003);
     kryo.register(StateType.class, 4001);
     kryo.register(StepExecutionSummary.class, 5145);
-    kryo.register(WorkflowStandardParams.class, 5227);
     kryo.register(ContainerFamily.class, 5118);
     kryo.register(VerificationStateAnalysisExecutionData.class, 5552);
     kryo.register(EcsBGRoute53ServiceSetupRequest.class, 7101);

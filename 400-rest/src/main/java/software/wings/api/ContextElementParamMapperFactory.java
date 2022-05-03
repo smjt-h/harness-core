@@ -22,13 +22,13 @@ import software.wings.service.intfc.BuildSourceService;
 import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.sm.ContextElement;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.WorkflowStandardParamsParamMapper;
 import software.wings.sm.states.azure.AzureVMSSSetupContextElement;
 import software.wings.sm.states.azure.AzureVMSSSetupContextElementParamMapper;
 import software.wings.sm.states.azure.appservices.AzureAppServiceSlotSetupContextElement;
 import software.wings.sm.states.azure.appservices.AzureAppServiceSlotSetupContextElementParamMapper;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 
 /**
@@ -43,6 +43,7 @@ public class ContextElementParamMapperFactory {
   private final ApplicationManifestService applicationManifestService;
   private final FeatureFlagService featureFlagService;
   private final BuildSourceService buildSourceService;
+  private final WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   /**
    * Used for UTs only.
@@ -55,13 +56,15 @@ public class ContextElementParamMapperFactory {
     this.applicationManifestService = null;
     this.featureFlagService = null;
     this.buildSourceService = null;
+    this.workflowStandardParamsExtensionService = null;
   }
 
   @Inject
   public ContextElementParamMapperFactory(SubdomainUrlHelperIntfc subdomainUrlHelper,
       WorkflowExecutionService workflowExecutionService, ArtifactService artifactService,
       ArtifactStreamService artifactStreamService, ApplicationManifestService applicationManifestService,
-      FeatureFlagService featureFlagService, BuildSourceService buildSourceService) {
+      FeatureFlagService featureFlagService, BuildSourceService buildSourceService,
+      WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService) {
     this.subdomainUrlHelper = subdomainUrlHelper;
     this.workflowExecutionService = workflowExecutionService;
     this.artifactService = artifactService;
@@ -69,6 +72,7 @@ public class ContextElementParamMapperFactory {
     this.applicationManifestService = applicationManifestService;
     this.featureFlagService = featureFlagService;
     this.buildSourceService = buildSourceService;
+    this.workflowStandardParamsExtensionService = workflowStandardParamsExtensionService;
   }
 
   /**
@@ -109,7 +113,7 @@ public class ContextElementParamMapperFactory {
     } else if (element instanceof WorkflowStandardParams) {
       return new WorkflowStandardParamsParamMapper(this.subdomainUrlHelper, this.workflowExecutionService,
           this.artifactService, this.artifactStreamService, this.applicationManifestService, this.featureFlagService,
-          this.buildSourceService, (WorkflowStandardParams) element);
+          this.buildSourceService, this.workflowStandardParamsExtensionService, (WorkflowStandardParams) element);
     } else {
       return new NoopContextElementParamMapper();
     }

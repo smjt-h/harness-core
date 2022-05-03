@@ -335,6 +335,7 @@ import software.wings.sm.StateMachineExecutor;
 import software.wings.sm.StateType;
 import software.wings.sm.StepExecutionSummary;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.rollback.RollbackStateMachineGenerator;
 import software.wings.sm.states.ElementStateExecutionData;
 import software.wings.sm.states.EnvState.EnvStateKeys;
@@ -456,6 +457,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   @Inject private HelmChartService helmChartService;
   @Inject private StateInspectionService stateInspectionService;
   @Inject private ApplicationManifestService applicationManifestService;
+  @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
   @Inject private Injector injector;
 
   @Inject @RateLimitCheck private PreDeploymentChecker deployLimitChecker;
@@ -5201,7 +5203,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
       return null;
     }
     WorkflowStandardParams workflowStandardParams = executionContext.fetchWorkflowStandardParamsFromContext();
-    String envId = workflowStandardParams.fetchRequiredEnv().getUuid();
+    String envId = workflowStandardParamsExtensionService.fetchRequiredEnv(workflowStandardParams).getUuid();
     PhaseElement phaseElement = executionContext.getContextElement(ContextElementType.PARAM, PhaseElement.PHASE_PARAM);
     String serviceId = phaseElement.getServiceElement().getUuid();
 
