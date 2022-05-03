@@ -1946,6 +1946,7 @@ public class WorkflowServiceHelperTest extends WingsBaseTest {
         (CanaryOrchestrationWorkflow) workflowServiceHelper.propagateWorkflowDataToPhases(
             workflow.getOrchestrationWorkflow(), Collections.emptyList(), APP_ID, null, null, true, false, false);
 
+    assertThat(orchestrationWorkflow.getWorkflowPhases()).hasSize(2);
     orchestrationWorkflow.getWorkflowPhases().forEach(phase -> {
       assertThat(phase.getComputeProviderId()).isNull();
       assertThat(phase.getInfraDefinitionId()).isNull();
