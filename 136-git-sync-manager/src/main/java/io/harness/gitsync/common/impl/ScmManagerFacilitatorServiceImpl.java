@@ -128,6 +128,7 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
             .sourceBranch(sourceBranch)
             .targetBranch(targetBranch)
             .title(title)
+            .isGitXSimplificationFlow(true)
             .build());
   }
 

@@ -20,7 +20,15 @@ public class SCMExceptionExplanations {
       "We couldn't list repositories as the credentials provided in connector are invalid or have expired.";
   public static final String GET_FILE_WITH_INVALID_CREDS =
       "We couldn't fetch requested file from git as the credentials provided in connector are invalid or have expired.";
+  public static final String CREATE_PULL_REQUEST_WITH_INVALID_CREDS =
+      "We couldn't create pull request in git as the credentials provided in connector are invalid or have expired.";
   public static final String FILE_NOT_FOUND = "The requested file path doesn't exist in git. Possible reasons can be:\n"
       + "1. The requested file path doesn't exist for given branch and repo\n"
       + "2. The given branch or repo is invalid";
+  public static final String CREATE_PULL_REQUEST_VALIDATION_FAILED =
+      "There was issue while creating pull request. Possible reasons can be:\n"
+      + "1. There is already an open pull request from source to target branch for given git repository.\n"
+      + "2. The source branch or target branch doesn't exist for given git repository.\n"
+      + "3. The title of the pull request is empty";
+  public static final String CREATE_PULL_REQUEST_NOT_FOUND_ERROR = "The requested repository doesn't exist in git.";
 }

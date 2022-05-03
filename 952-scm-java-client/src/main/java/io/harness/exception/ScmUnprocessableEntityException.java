@@ -9,13 +9,11 @@ package io.harness.exception;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-
-import lombok.experimental.UtilityClass;
+import io.harness.eraro.ErrorCode;
 
 @OwnedBy(HarnessTeam.PL)
-@UtilityClass
-public class SCMExceptionErrorMessages {
-  public final String FILE_NOT_FOUND_ERROR = "File not found";
-  public final String CREATE_PULL_REQUEST_VALIDATION_FAILED = "Issue while creating pull request";
-  public final String REPOSITORY_NOT_FOUND_ERROR = "Git repository not found";
+public class ScmUnprocessableEntityException extends ScmException {
+  public ScmUnprocessableEntityException(String errorMessage) {
+    super(errorMessage, ErrorCode.SCM_UNPROCESSABLE_ENTITY);
+  }
 }

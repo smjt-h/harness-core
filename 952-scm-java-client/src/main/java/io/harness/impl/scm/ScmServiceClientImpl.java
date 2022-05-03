@@ -572,14 +572,16 @@ public class ScmServiceClientImpl implements ScmServiceClient {
                                           .build();
     final CreatePRResponse prResponse =
         ScmGrpcClientUtils.retryAndProcessException(scmBlockingStub::createPR, createPRRequest);
-    try {
-      ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(prResponse.getStatus(), prResponse.getError());
-    } catch (WingsException e) {
-      final WingsException cause = ExceptionUtils.cause(ErrorCode.SCM_NOT_MODIFIED, e);
-      if (cause != null) {
-        throw new ExplanationException("A PR already exist for given branches", e);
-      } else {
-        throw new ExplanationException("Failed to create PR", e);
+    if (!gitPRCreateRequest.isGitXSimplificationFlow()) {
+      try {
+        ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(prResponse.getStatus(), prResponse.getError());
+      } catch (WingsException e) {
+        final WingsException cause = ExceptionUtils.cause(ErrorCode.SCM_NOT_MODIFIED, e);
+        if (cause != null) {
+          throw new ExplanationException("A PR already exist for given branches", e);
+        } else {
+          throw new ExplanationException("Failed to create PR", e);
+        }
       }
     }
     return prResponse;

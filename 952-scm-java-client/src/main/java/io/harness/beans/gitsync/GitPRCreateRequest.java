@@ -37,4 +37,5 @@ public class GitPRCreateRequest {
       description =
           "Specifies which token to use. If True, the SCM token will be used, else the Git Connector token will be used")
   boolean useUserFromToken;
+  @Schema(hidden = true) boolean isGitXSimplificationFlow;
 }

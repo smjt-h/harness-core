@@ -210,6 +210,7 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
                                                                   .sourceBranch(sourceBranch)
                                                                   .targetBranch(targetBranch)
                                                                   .title(title)
+                                                                  .isGitXSimplificationFlow(true)
                                                                   .build())
                                           .gitPRTaskType(GitPRTaskType.CREATE_PR)
                                           .encryptedDataDetails(encryptionDetails)
