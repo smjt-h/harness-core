@@ -195,7 +195,7 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
   }
 
   @Override
-  public CreatePRDTO createPullRequest(
+  public CreatePRResponse createPullRequest(
       Scope scope, String connectorRef, String repoName, String sourceBranch, String targetBranch, String title) {
     final ScmConnector decryptedConnector = gitSyncConnectorHelper.getScmConnectorForGivenRepo(
         scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier(), connectorRef, repoName);
@@ -225,15 +225,7 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
                                                   .build();
     final DelegateResponseData delegateResponseData = executeDelegateSyncTask(delegateTaskRequest);
     ScmPRTaskResponseData scmCreatePRResponse = (ScmPRTaskResponseData) delegateResponseData;
-    final CreatePRResponse createPRResponse = scmCreatePRResponse.getCreatePRResponse();
-    try {
-      ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
-          createPRResponse.getStatus(), createPRResponse.getError());
-    } catch (WingsException e) {
-      throw new ExplanationException(
-          String.format("Could not create the pull request from %s to %s", sourceBranch, targetBranch), e);
-    }
-    return CreatePRDTO.builder().prNumber(createPRResponse.getNumber()).build();
+    return scmCreatePRResponse.getCreatePRResponse();
   }
 
   @Override

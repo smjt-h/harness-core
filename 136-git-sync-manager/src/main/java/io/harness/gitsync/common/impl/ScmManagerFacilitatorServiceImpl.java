@@ -116,32 +116,19 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
   }
 
   @Override
-  public CreatePRDTO createPullRequest(
+  public CreatePRResponse createPullRequest(
       Scope scope, String connectorRef, String repoName, String sourceBranch, String targetBranch, String title) {
-    ScmConnector decryptedConnector = gitSyncConnectorHelper.getDecryptedConnector(
+    ScmConnector decryptedConnector = gitSyncConnectorHelper.getDecryptedConnectorForGivenRepo(
         scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier(), connectorRef, repoName);
-    CreatePRResponse createPRResponse;
-    try {
-      createPRResponse = scmClient.createPullRequest(decryptedConnector,
-          GitPRCreateRequest.builder()
-              .accountIdentifier(scope.getAccountIdentifier())
-              .orgIdentifier(scope.getOrgIdentifier())
-              .projectIdentifier(scope.getProjectIdentifier())
-              .sourceBranch(sourceBranch)
-              .targetBranch(targetBranch)
-              .title(title)
-              .build());
-      try {
-        ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
-            createPRResponse.getStatus(), createPRResponse.getError());
-      } catch (WingsException e) {
-        throw new ExplanationException(
-            String.format("Could not create the pull request from %s to %s", sourceBranch, targetBranch), e);
-      }
-    } catch (Exception ex) {
-      throw new ScmException(PR_CREATION_ERROR);
-    }
-    return CreatePRDTO.builder().prNumber(createPRResponse.getNumber()).build();
+    return scmClient.createPullRequest(decryptedConnector,
+        GitPRCreateRequest.builder()
+            .accountIdentifier(scope.getAccountIdentifier())
+            .orgIdentifier(scope.getOrgIdentifier())
+            .projectIdentifier(scope.getProjectIdentifier())
+            .sourceBranch(sourceBranch)
+            .targetBranch(targetBranch)
+            .title(title)
+            .build());
   }
 
   @Override

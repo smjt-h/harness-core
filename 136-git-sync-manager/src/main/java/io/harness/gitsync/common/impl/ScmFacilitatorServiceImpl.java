@@ -18,7 +18,6 @@ import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.gitsync.beans.GitRepositoryDTO;
 import io.harness.gitsync.common.beans.InfoForGitPush;
 import io.harness.gitsync.common.beans.ScmApis;
-import io.harness.gitsync.common.dtos.CreatePRDTO;
 import io.harness.gitsync.common.dtos.GitRepositoryResponseDTO;
 import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
 import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
@@ -33,6 +32,7 @@ import io.harness.gitsync.common.service.ScmFacilitatorService;
 import io.harness.gitsync.common.service.ScmOrchestratorService;
 import io.harness.ng.beans.PageRequest;
 import io.harness.product.ci.scm.proto.CreateFileResponse;
+import io.harness.product.ci.scm.proto.CreatePRResponse;
 import io.harness.product.ci.scm.proto.FileContent;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.UpdateFileResponse;
@@ -162,13 +162,19 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
   @Override
   public ScmCreatePRResponseDTO createPR(ScmCreatePRRequestDTO scmCreatePRRequestDTO) {
     Scope scope = scmCreatePRRequestDTO.getScope();
-    CreatePRDTO createPRDTO = scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
-        -> scmClientFacilitatorService.createPullRequest(scope, scmCreatePRRequestDTO.getConnectorRef(),
-            scmCreatePRRequestDTO.getRepoName(), scmCreatePRRequestDTO.getSourceBranch(),
-            scmCreatePRRequestDTO.getTargetBranch(), scmCreatePRRequestDTO.getTitle()),
-        scope.getProjectIdentifier(), scope.getOrgIdentifier(), scope.getAccountIdentifier(),
-        scmCreatePRRequestDTO.getConnectorRef());
-    return ScmCreatePRResponseDTO.builder().prNumber(createPRDTO.getPrNumber()).build();
+    CreatePRResponse createPRResponse =
+        scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
+            -> scmClientFacilitatorService.createPullRequest(scope, scmCreatePRRequestDTO.getConnectorRef(),
+                scmCreatePRRequestDTO.getRepoName(), scmCreatePRRequestDTO.getSourceBranch(),
+                scmCreatePRRequestDTO.getTargetBranch(), scmCreatePRRequestDTO.getTitle()),
+            scope.getProjectIdentifier(), scope.getOrgIdentifier(), scope.getAccountIdentifier(),
+            scmCreatePRRequestDTO.getConnectorRef());
+
+    ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.CREATE_PULL_REQUEST,
+        gitSyncConnectorHelper.getScmConnectorByRef(scope, scmCreatePRRequestDTO.getConnectorRef()).getConnectorType(),
+        createPRResponse.getStatus(), createPRResponse.getError());
+
+    return ScmCreatePRResponseDTO.builder().prNumber(createPRResponse.getNumber()).build();
   }
 
   @Override
@@ -183,8 +189,7 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
         scmGetFileRequestDTO.getConnectorRef());
 
     ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.GET_FILE,
-        gitSyncConnectorHelper.getDecryptedConnectorByRef(scope, scmGetFileRequestDTO.getConnectorRef())
-            .getConnectorType(),
+        gitSyncConnectorHelper.getScmConnectorByRef(scope, scmGetFileRequestDTO.getConnectorRef()).getConnectorType(),
         fileContent.getStatus(), fileContent.getError());
 
     return ScmGetFileResponseDTO.builder()
