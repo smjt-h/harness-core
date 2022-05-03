@@ -115,7 +115,7 @@ public class SCMGitSyncHelper {
     final GetFileResponse getFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::getFile, getFileRequest);
 
-    getFileScmErrorHandler.handlerAndThrowError(
+    getFileScmErrorHandler.handleIfError(
         getFileResponse.getStatusCode(), getFileScmErrorHandler.getScmErrorDetails(getFileResponse.getError()));
 
     return ScmGetFileResponse.builder()
@@ -143,7 +143,7 @@ public class SCMGitSyncHelper {
     final CreateFileResponse createFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::createFile, createFileRequest);
 
-    createPullRequestScmErrorHandler.handlerAndThrowError(createFileResponse.getStatusCode(),
+    createPullRequestScmErrorHandler.handleIfError(createFileResponse.getStatusCode(),
         ScmErrorDetails.builder().errorMessage(createFileResponse.getError().getErrorMessage()).build());
 
     return ScmCreateFileGitResponse.builder().gitMetaData(getGitMetaData(createFileResponse.getGitMetaData())).build();
@@ -170,7 +170,7 @@ public class SCMGitSyncHelper {
     final UpdateFileResponse updateFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::updateFile, updateFileRequest);
 
-    updateFileScmErrorHandler.handlerAndThrowError(updateFileResponse.getStatusCode(),
+    updateFileScmErrorHandler.handleIfError(updateFileResponse.getStatusCode(),
         ScmErrorDetails.builder().errorMessage(updateFileResponse.getError().getErrorMessage()).build());
 
     return ScmUpdateFileGitResponse.builder().gitMetaData(getGitMetaData(updateFileResponse.getGitMetaData())).build();
@@ -192,7 +192,7 @@ public class SCMGitSyncHelper {
     final CreatePRResponse createPRResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::createPullRequest, createPRRequest);
 
-    createPullRequestScmErrorHandler.handlerAndThrowError(createPRResponse.getStatusCode(),
+    createPullRequestScmErrorHandler.handleIfError(createPRResponse.getStatusCode(),
         ScmErrorDetails.builder().errorMessage(createPRResponse.getError().getErrorMessage()).build());
 
     return ScmCreatePRResponse.builder().prNumber(createPRResponse.getPrNumber()).build();

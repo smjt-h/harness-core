@@ -22,7 +22,7 @@ import io.harness.gitsync.scm.beans.ScmErrorDetails;
 public abstract class ScmErrorHandler {
   abstract void handleError(int statusCode, ScmErrorDetails errorDetails);
 
-  public final void handlerAndThrowError(int statusCode, ScmErrorDetails errorDetails) {
+  public final void handleIfError(int statusCode, ScmErrorDetails errorDetails) {
     if (statusCode < 400) {
       return;
     }
