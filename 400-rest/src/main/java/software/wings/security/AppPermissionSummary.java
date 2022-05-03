@@ -95,22 +95,12 @@ public class AppPermissionSummary {
   private Map<Action, Set<String>> deploymentPermissions;
   private Map<Action, Set<String>> pipelinePermissions;
   private Map<Action, Set<String>> templatePermissions;
-  // This map contains env-> pipeline map and will act as a final filter. It can contains more pipelines than user has
-  // perms too.
-  private Map<ExecutableElementInfo, Set<String>> envExecutableElementDeployPermissions;
 
   @Data
   @Builder
   public static class EnvInfo {
     private String envId;
     private String envType;
-  }
-
-  @Data
-  @Builder
-  public static class ExecutableElementInfo {
-    private String entityType;
-    private String entityId;
   }
 
   @Builder
@@ -125,8 +115,7 @@ public class AppPermissionSummary {
       Map<Action, Set<String>> provisionerPermissions, Map<Action, Set<EnvInfo>> envPermissions,
       Map<Action, Set<String>> workflowPermissions, Map<Action, Set<String>> deploymentPermissions,
       Map<Action, Set<String>> pipelinePermissions, boolean canCreateTemplate,
-      Map<Action, Set<String>> templatePermissions,
-      Map<ExecutableElementInfo, Set<String>> envExecutableElementDeployPermissions) {
+      Map<Action, Set<String>> templatePermissions) {
     this.canCreateService = canCreateService;
     this.canCreateProvisioner = canCreateProvisioner;
     this.canCreateEnvironment = canCreateEnvironment;
@@ -152,6 +141,5 @@ public class AppPermissionSummary {
     this.templatePermissions = templatePermissions;
     this.workflowUpdatePermissionsByEntity = workflowUpdatePermissionsByEntity;
     this.pipelineUpdatePermissionsByEntity = pipelineUpdatePermissionsByEntity;
-    this.envExecutableElementDeployPermissions = envExecutableElementDeployPermissions;
   }
 }

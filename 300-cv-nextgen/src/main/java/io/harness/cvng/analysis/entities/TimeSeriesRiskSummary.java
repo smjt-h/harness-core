@@ -94,7 +94,7 @@ public final class TimeSeriesRiskSummary implements PersistentEntity, UuidAware 
 
     public String getMetricIdentifier() {
       if (isEmpty(metricIdentifier)) {
-        String identifier = metricName.replaceAll(" ", "_").toLowerCase();
+        String identifier = metricName.replaceAll(" ", "_");
         identifier = identifier.replaceAll("\\(", "");
         identifier = identifier.replaceAll("\\)", "");
         return identifier;

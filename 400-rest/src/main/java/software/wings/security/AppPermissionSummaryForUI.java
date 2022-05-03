@@ -18,7 +18,6 @@ import java.util.Set;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.tuple.Pair;
 
 @OwnedBy(PL)
 @Data
@@ -39,7 +38,6 @@ public class AppPermissionSummaryForUI {
   private Map<String, Set<Action>> deploymentPermissions;
   private Map<String, Set<Action>> pipelinePermissions;
   private Map<String, Set<Action>> templatePermissions;
-  private Map<String, Set<Pair<String, String>>> envPipelineDeployPermissions;
 
   @Builder
   public AppPermissionSummaryForUI(boolean canCreateService, boolean canCreateProvisioner, boolean canCreateEnvironment,
@@ -47,8 +45,7 @@ public class AppPermissionSummaryForUI {
       Map<String, Set<Action>> provisionerPermissions, Map<String, Set<Action>> envPermissions,
       Map<String, Set<Action>> workflowPermissions, Map<String, Set<Action>> deploymentPermissions,
       Map<String, Set<Action>> pipelinePermissions, boolean canCreateTemplate,
-      Map<String, Set<Action>> templatePermissions,
-      Map<String, Set<Pair<String, String>>> envPipelineDeployPermissions) {
+      Map<String, Set<Action>> templatePermissions) {
     this.canCreateService = canCreateService;
     this.canCreateProvisioner = canCreateProvisioner;
     this.canCreateEnvironment = canCreateEnvironment;
@@ -62,6 +59,5 @@ public class AppPermissionSummaryForUI {
     this.deploymentPermissions = deploymentPermissions;
     this.pipelinePermissions = pipelinePermissions;
     this.templatePermissions = templatePermissions;
-    this.envPipelineDeployPermissions = envPipelineDeployPermissions;
   }
 }
