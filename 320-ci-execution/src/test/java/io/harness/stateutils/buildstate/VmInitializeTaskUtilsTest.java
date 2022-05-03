@@ -34,6 +34,8 @@ import io.harness.pms.sdk.core.resolver.RefObjectUtils;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.rule.Owner;
+import io.harness.sto.beans.entities.STOServiceConfig;
+import io.harness.stoserviceclient.STOServiceUtils;
 import io.harness.tiserviceclient.TIServiceUtils;
 
 import java.util.HashMap;
@@ -51,6 +53,7 @@ public class VmInitializeTaskUtilsTest extends CIExecutionTestBase {
   @InjectMocks private VmInitializeTaskUtils vmInitializeTaskUtils;
   @Mock private CILogServiceUtils logServiceUtils;
   @Mock private TIServiceUtils tiServiceUtils;
+  @Mock private STOServiceUtils stoServiceUtils;
   @Mock private CodebaseUtils codebaseUtils;
   @Mock private CIFeatureFlagService featureFlagService;
 
@@ -141,6 +144,8 @@ public class VmInitializeTaskUtilsTest extends CIExecutionTestBase {
     when(logServiceUtils.getLogServiceToken(any())).thenReturn("test");
     when(tiServiceUtils.getTiServiceConfig()).thenReturn(TIServiceConfig.builder().baseUrl("1.1.1.2").build());
     when(tiServiceUtils.getTIServiceToken(any())).thenReturn("test");
+    when(stoServiceUtils.getStoServiceConfig()).thenReturn(STOServiceConfig.builder().baseUrl("1.1.1.2").build());
+    when(stoServiceUtils.getSTOServiceToken(any())).thenReturn("test");
     when(featureFlagService.isEnabled(any(), any())).thenReturn(false);
     CIVmInitializeTaskParams response = vmInitializeTaskUtils.getInitializeTaskParams(initializeStepInfo, ambiance, "");
     assertThat(response.getStageRuntimeId()).isEqualTo(stageRuntimeId);

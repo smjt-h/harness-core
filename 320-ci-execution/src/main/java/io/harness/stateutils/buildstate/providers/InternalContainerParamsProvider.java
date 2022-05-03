@@ -95,15 +95,15 @@ public class InternalContainerParamsProvider {
   public CIK8ContainerParams getLiteEngineContainerParams(ConnectorDetails harnessInternalImageConnector,
       Map<String, ConnectorDetails> publishArtifactConnectors, K8PodDetails k8PodDetails, Integer stageCpuRequest,
       Integer stageMemoryRequest, Map<String, String> logEnvVars, Map<String, String> tiEnvVars,
-      Map<String, String> volumeToMountPath, String workDirPath, ContainerSecurityContext ctrSecurityContext,
-      String logPrefix, Ambiance ambiance) {
+      Map<String, String> stoEnvVars, Map<String, String> volumeToMountPath, String workDirPath,
+      ContainerSecurityContext ctrSecurityContext, String logPrefix, Ambiance ambiance) {
     String imageName = ciExecutionConfigService.getLiteEngineImage(AmbianceUtils.getAccountId(ambiance));
     String fullyQualifiedImage =
         IntegrationStageUtils.getFullyQualifiedImageName(imageName, harnessInternalImageConnector);
     return CIK8ContainerParams.builder()
         .name(LITE_ENGINE_CONTAINER_NAME)
         .containerResourceParams(getLiteEngineResourceParams(stageCpuRequest, stageMemoryRequest))
-        .envVars(getLiteEngineEnvVars(k8PodDetails, workDirPath, logPrefix, ambiance))
+        .envVars(getLiteEngineEnvVars(k8PodDetails, workDirPath, logPrefix, stoEnvVars, ambiance))
         .containerType(CIContainerType.LITE_ENGINE)
         .containerSecrets(ContainerSecrets.builder()
                               .connectorDetailsMap(publishArtifactConnectors)
@@ -119,8 +119,8 @@ public class InternalContainerParamsProvider {
         .build();
   }
 
-  private Map<String, String> getLiteEngineEnvVars(
-      K8PodDetails k8PodDetails, String workDirPath, String logPrefix, Ambiance ambiance) {
+  private Map<String, String> getLiteEngineEnvVars(K8PodDetails k8PodDetails, String workDirPath, String logPrefix,
+      Map<String, String> stoEnvVars, Ambiance ambiance) {
     Map<String, String> envVars = new HashMap<>();
     final String accountID = AmbianceUtils.getAccountId(ambiance);
     final String orgID = AmbianceUtils.getOrgIdentifier(ambiance);
@@ -129,6 +129,8 @@ public class InternalContainerParamsProvider {
     final int buildNumber = ambiance.getMetadata().getRunSequence();
     final String stageID = k8PodDetails.getStageID();
     final String executionID = ambiance.getPlanExecutionId();
+
+    envVars.putAll(stoEnvVars);
 
     // Check whether FF to enable blob upload to log service (as opposed to directly blob storage) is enabled
     if (featureFlagService.isEnabled(FeatureName.CI_INDIRECT_LOG_UPLOAD, accountID)) {
