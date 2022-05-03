@@ -14,14 +14,17 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.ExplanationException;
 import io.harness.exception.HintException;
 import io.harness.exception.ScmException;
+import io.harness.exception.ScmInternalServerErrorException;
+import io.harness.exception.ScmResourceNotFoundException;
+import io.harness.exception.ScmUnauthorizedException;
+import io.harness.exception.ScmUnexpectedException;
 import io.harness.exception.WingsException;
-import io.harness.gitsync.ErrorDetails;
 import io.harness.gitsync.scm.beans.ScmErrorDetails;
 
-@OwnedBy(HarnessTeam.PL)
-public abstract class ScmErrorHandler {
-  abstract void handleError(int statusCode, ScmErrorDetails errorDetails);
+import lombok.SneakyThrows;
 
+@OwnedBy(HarnessTeam.PL)
+public class ScmErrorHandler {
   public final void handleIfError(int statusCode, ScmErrorDetails errorDetails) {
     if (statusCode < 400) {
       return;
@@ -30,11 +33,22 @@ public abstract class ScmErrorHandler {
     handleError(statusCode, errorDetails);
   }
 
-  public final ScmErrorDetails getScmErrorDetails(ErrorDetails errorDetails) {
-    return ScmErrorDetails.builder().errorMessage(errorDetails.getErrorMessage()).build();
+  @SneakyThrows
+  void handleError(int statusCode, ScmErrorDetails errorDetails) {
+    switch (statusCode) {
+      case 401:
+      case 403:
+        throw prepareException(ScmUnauthorizedException.class, errorDetails);
+      case 404:
+        throw prepareException(ScmResourceNotFoundException.class, errorDetails);
+      case 500:
+        throw prepareException(ScmInternalServerErrorException.class, errorDetails);
+      default:
+        throw prepareException(ScmUnexpectedException.class, errorDetails);
+    }
   }
 
-  WingsException prepareException(Class<? extends ScmException> clazz, ScmErrorDetails scmErrorDetails)
+  private WingsException prepareException(Class<? extends ScmException> clazz, ScmErrorDetails scmErrorDetails)
       throws InstantiationException, IllegalAccessException {
     WingsException finalException = clazz.newInstance();
     if (isNotEmpty(scmErrorDetails.getExplanationMessage())) {

@@ -11,5 +11,6 @@ public enum ScmApis {
   LIST_REPOSITORIES,
   GET_FILE,
   CREATE_PULL_REQUEST,
+  CREATE_FILE,
   ;
 }

@@ -30,5 +30,11 @@ public class SCMExceptionExplanations {
       + "1. There is already an open pull request from source to target branch for given git repository.\n"
       + "2. The source branch or target branch doesn't exist for given git repository.\n"
       + "3. The title of the pull request is empty";
-  public static final String CREATE_PULL_REQUEST_NOT_FOUND_ERROR = "The requested repository doesn't exist in git.";
+  public static final String REPOSITORY_NOT_FOUND_ERROR = "The requested repository doesn't exist in git.";
+  public static final String CREATE_FILE_NOT_FOUND_ERROR =
+      "There was issue while creating file in git. Possible reasons can be:\n"
+      + "1. The requested git repository doesn't exist\n"
+      + "2. The requested branch doesn't exist in given git repository.";
+  public static final String CREATE_FILE_CONFLICT_ERROR =
+      "File with given filepath already exists in git, thus couldn't create a new file";
 }

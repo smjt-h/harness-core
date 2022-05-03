@@ -24,6 +24,7 @@ import io.harness.gitsync.CreateFileRequest;
 import io.harness.gitsync.CreateFileResponse;
 import io.harness.gitsync.CreatePRRequest;
 import io.harness.gitsync.CreatePRResponse;
+import io.harness.gitsync.ErrorDetails;
 import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.GetFileRequest;
 import io.harness.gitsync.GetFileResponse;
@@ -49,10 +50,7 @@ import io.harness.gitsync.scm.beans.ScmGitMetaData;
 import io.harness.gitsync.scm.beans.ScmPushResponse;
 import io.harness.gitsync.scm.beans.ScmUpdateFileGitRequest;
 import io.harness.gitsync.scm.beans.ScmUpdateFileGitResponse;
-import io.harness.gitsync.scm.errorhandling.CreateFileScmErrorHandler;
-import io.harness.gitsync.scm.errorhandling.CreatePullRequestScmErrorHandler;
-import io.harness.gitsync.scm.errorhandling.GetFileScmErrorHandler;
-import io.harness.gitsync.scm.errorhandling.UpdateFileScmErrorHandler;
+import io.harness.gitsync.scm.errorhandling.ScmErrorHandler;
 import io.harness.impl.ScmResponseStatusUtils;
 import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.entitydetail.EntityDetailRestToProtoMapper;
@@ -78,10 +76,7 @@ public class SCMGitSyncHelper {
   @Inject private HarnessToGitPushInfoServiceBlockingStub harnessToGitPushInfoServiceBlockingStub;
   @Inject private EntityDetailRestToProtoMapper entityDetailRestToProtoMapper;
   @Inject GitSyncSdkService gitSyncSdkService;
-  @Inject private GetFileScmErrorHandler getFileScmErrorHandler;
-  @Inject private CreatePullRequestScmErrorHandler createPullRequestScmErrorHandler;
-  @Inject private CreateFileScmErrorHandler createFileScmErrorHandler;
-  @Inject private UpdateFileScmErrorHandler updateFileScmErrorHandler;
+  @Inject private ScmErrorHandler scmErrorHandler;
 
   public ScmPushResponse pushToGit(
       GitEntityInfo gitBranchInfo, String yaml, ChangeType changeType, EntityDetail entityDetail) {
@@ -115,8 +110,7 @@ public class SCMGitSyncHelper {
     final GetFileResponse getFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::getFile, getFileRequest);
 
-    getFileScmErrorHandler.handleIfError(
-        getFileResponse.getStatusCode(), getFileScmErrorHandler.getScmErrorDetails(getFileResponse.getError()));
+    scmErrorHandler.handleIfError(getFileResponse.getStatusCode(), getScmErrorDetails(getFileResponse.getError()));
 
     return ScmGetFileResponse.builder()
         .fileContent(getFileResponse.getFileContent())
@@ -143,7 +137,7 @@ public class SCMGitSyncHelper {
     final CreateFileResponse createFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::createFile, createFileRequest);
 
-    createPullRequestScmErrorHandler.handleIfError(createFileResponse.getStatusCode(),
+    scmErrorHandler.handleIfError(createFileResponse.getStatusCode(),
         ScmErrorDetails.builder().errorMessage(createFileResponse.getError().getErrorMessage()).build());
 
     return ScmCreateFileGitResponse.builder().gitMetaData(getGitMetaData(createFileResponse.getGitMetaData())).build();
@@ -170,7 +164,7 @@ public class SCMGitSyncHelper {
     final UpdateFileResponse updateFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::updateFile, updateFileRequest);
 
-    updateFileScmErrorHandler.handleIfError(updateFileResponse.getStatusCode(),
+    scmErrorHandler.handleIfError(updateFileResponse.getStatusCode(),
         ScmErrorDetails.builder().errorMessage(updateFileResponse.getError().getErrorMessage()).build());
 
     return ScmUpdateFileGitResponse.builder().gitMetaData(getGitMetaData(updateFileResponse.getGitMetaData())).build();
@@ -192,7 +186,7 @@ public class SCMGitSyncHelper {
     final CreatePRResponse createPRResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::createPullRequest, createPRRequest);
 
-    createPullRequestScmErrorHandler.handleIfError(createPRResponse.getStatusCode(),
+    scmErrorHandler.handleIfError(createPRResponse.getStatusCode(),
         ScmErrorDetails.builder().errorMessage(createPRResponse.getError().getErrorMessage()).build());
 
     return ScmCreatePRResponse.builder().prNumber(createPRResponse.getPrNumber()).build();
@@ -316,5 +310,9 @@ public class SCMGitSyncHelper {
         .filePath(gitMetaData.getFilePath())
         .commitId(gitMetaData.getCommitId())
         .build();
+  }
+
+  private ScmErrorDetails getScmErrorDetails(ErrorDetails errorDetails) {
+    return ScmErrorDetails.builder().errorMessage(errorDetails.getErrorMessage()).build();
   }
 }

@@ -19,6 +19,10 @@ public class SCMExceptionHints {
       + "1. If already a pull request exists for request source to target branch.\n"
       + "2. If source branch and target branch both exists in git repository.\n"
       + "3. If title of the pull request is empty.";
-  public static final String CREATE_PULL_REQUEST_NOT_FOUND_ERROR =
-      "Please check if the repository exists in git or not";
+  public static final String REPOSITORY_NOT_FOUND_ERROR = "Please check if the repository exists in git or not";
+  public static final String CREATE_FILE_NOT_FOUND_ERROR = "Please check the following:\n"
+      + "1. If requested git repository exists.\n"
+      + "2. If requested branch exists.";
+  public static final String CREATE_FILE_CONFLICT_ERROR =
+      "Please check if there's already a file in git for the given filepath";
 }

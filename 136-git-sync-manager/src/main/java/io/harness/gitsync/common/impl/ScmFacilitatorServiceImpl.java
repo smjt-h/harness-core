@@ -118,6 +118,10 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
             scmCreateFileRequestDTO.getConnectorRef());
 
     // Put Error Handling
+    ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.CREATE_FILE,
+        gitSyncConnectorHelper.getScmConnectorByRef(scope, scmCreateFileRequestDTO.getConnectorRef())
+            .getConnectorType(),
+        createFileResponse.getStatus(), createFileResponse.getError());
 
     return ScmCommitFileResponseDTO.builder()
         .commitId(createFileResponse.getCommitId())

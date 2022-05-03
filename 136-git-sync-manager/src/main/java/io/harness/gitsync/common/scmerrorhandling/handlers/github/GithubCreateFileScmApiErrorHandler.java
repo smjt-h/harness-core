@@ -18,12 +18,11 @@ import io.harness.exception.SCMExceptionHints;
 import io.harness.exception.ScmException;
 import io.harness.exception.ScmResourceNotFoundException;
 import io.harness.exception.ScmUnauthorizedException;
-import io.harness.exception.ScmUnprocessableEntityException;
 import io.harness.exception.WingsException;
 import io.harness.gitsync.common.scmerrorhandling.handlers.ScmApiErrorHandler;
 
 @OwnedBy(PL)
-public class GithubCreatePullRequestScmApiErrorHandler implements ScmApiErrorHandler {
+public class GithubCreateFileScmApiErrorHandler implements ScmApiErrorHandler {
   @Override
   public void handleError(int statusCode, String errorMessage) throws WingsException {
     switch (statusCode) {
@@ -33,13 +32,9 @@ public class GithubCreatePullRequestScmApiErrorHandler implements ScmApiErrorHan
             SCMExceptionExplanations.CREATE_PULL_REQUEST_WITH_INVALID_CREDS,
             new ScmUnauthorizedException(errorMessage));
       case 404:
-        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.REPOSITORY_NOT_FOUND_ERROR,
+        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.CREATE_FILE_NOT_FOUND_ERROR,
             SCMExceptionExplanations.REPOSITORY_NOT_FOUND_ERROR,
             new ScmResourceNotFoundException(SCMExceptionErrorMessages.REPOSITORY_NOT_FOUND_ERROR));
-      case 422:
-        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.CREATE_PULL_REQUEST_VALIDATION_FAILED,
-            SCMExceptionExplanations.CREATE_PULL_REQUEST_VALIDATION_FAILED,
-            new ScmUnprocessableEntityException(SCMExceptionErrorMessages.CREATE_PULL_REQUEST_VALIDATION_FAILED));
       default:
         throw new ScmException(UNEXPECTED);
     }

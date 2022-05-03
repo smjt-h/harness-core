@@ -362,31 +362,37 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
       }
       return GetFileResponse.newBuilder()
           .setStatusCode(ScmErrorCodeToHttpStatusCodeMapping.getHttpStatusCode(scmException.getCode()))
-          .setError(ErrorDetails.newBuilder()
-                        .setErrorMessage(scmException.getMessage())
-                        .setExplanationMessage(ScmExceptionUtils.getExplanationMessage(ex))
-                        .setHintMessage(ScmExceptionUtils.getHintMessage(ex))
-                        .build())
+          .setError(prepareErrorDetails(ex))
           .build();
     }
   }
 
   @Override
   public io.harness.gitsync.CreateFileResponse createFile(CreateFileRequest createFileRequest) {
-    ScmCommitFileResponseDTO scmCommitFileResponseDTO = scmFacilitatorService.createFile(
-        ScmCreateFileRequestDTO.builder()
-            .repoName(createFileRequest.getRepoName())
-            .branchName(createFileRequest.getBranchName())
-            .connectorRef(createFileRequest.getConnectorRef())
-            .fileContent(createFileRequest.getFileContent())
-            .filePath(createFileRequest.getFilePath())
-            .commitMessage(createFileRequest.getCommitMessage())
-            .baseBranch(createFileRequest.getBaseBranchName())
-            .isCommitToNewBranch(createFileRequest.getIsCommitToNewBranch())
-            .scope(ScopeIdentifierMapper.getScopeFromScopeIdentifiers(createFileRequest.getScopeIdentifiers()))
-            .build());
-
-    return prepareCreateFileResponse(createFileRequest, scmCommitFileResponseDTO);
+    try {
+      ScmCommitFileResponseDTO scmCommitFileResponseDTO = scmFacilitatorService.createFile(
+          ScmCreateFileRequestDTO.builder()
+              .repoName(createFileRequest.getRepoName())
+              .branchName(createFileRequest.getBranchName())
+              .connectorRef(createFileRequest.getConnectorRef())
+              .fileContent(createFileRequest.getFileContent())
+              .filePath(createFileRequest.getFilePath())
+              .commitMessage(createFileRequest.getCommitMessage())
+              .baseBranch(createFileRequest.getBaseBranchName())
+              .isCommitToNewBranch(createFileRequest.getIsCommitToNewBranch())
+              .scope(ScopeIdentifierMapper.getScopeFromScopeIdentifiers(createFileRequest.getScopeIdentifiers()))
+              .build());
+      return prepareCreateFileResponse(createFileRequest, scmCommitFileResponseDTO);
+    } catch (WingsException ex) {
+      ScmException scmException = ScmExceptionUtils.getScmException(ex);
+      if (scmException == null) {
+        throw ex;
+      }
+      return io.harness.gitsync.CreateFileResponse.newBuilder()
+          .setStatusCode(ScmErrorCodeToHttpStatusCodeMapping.getHttpStatusCode(scmException.getCode()))
+          .setError(prepareErrorDetails(ex))
+          .build();
+    }
   }
 
   @Override
@@ -519,6 +525,15 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
                             .setCommitId(scmCommitFileResponseDTO.getCommitId())
                             .setBlobId(scmCommitFileResponseDTO.getBlobId())
                             .build())
+        .build();
+  }
+
+  private ErrorDetails prepareErrorDetails(WingsException ex) {
+    ScmException scmException = ScmExceptionUtils.getScmException(ex);
+    return ErrorDetails.newBuilder()
+        .setErrorMessage(scmException.getMessage())
+        .setExplanationMessage(ScmExceptionUtils.getExplanationMessage(ex))
+        .setHintMessage(ScmExceptionUtils.getHintMessage(ex))
         .build();
   }
 }

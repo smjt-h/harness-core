@@ -9,31 +9,9 @@ package io.harness.gitsync.scm.errorhandling;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.exception.ScmInternalServerErrorException;
-import io.harness.exception.ScmResourceNotFoundException;
-import io.harness.exception.ScmUnauthorizedException;
-import io.harness.exception.ScmUnexpectedException;
-import io.harness.gitsync.scm.beans.ScmErrorDetails;
 
 import groovy.lang.Singleton;
-import lombok.SneakyThrows;
 
 @OwnedBy(HarnessTeam.PL)
 @Singleton
-public class GetFileScmErrorHandler extends ScmErrorHandler {
-  @SneakyThrows
-  @Override
-  void handleError(int statusCode, ScmErrorDetails errorDetails) {
-    switch (statusCode) {
-      case 401:
-      case 403:
-        throw prepareException(ScmUnauthorizedException.class, errorDetails);
-      case 404:
-        throw prepareException(ScmResourceNotFoundException.class, errorDetails);
-      case 500:
-        throw prepareException(ScmInternalServerErrorException.class, errorDetails);
-      default:
-        throw prepareException(ScmUnexpectedException.class, errorDetails);
-    }
-  }
-}
+public class GetFileScmErrorHandler extends ScmErrorHandler {}

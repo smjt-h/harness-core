@@ -5,13 +5,15 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.gitsync.scm.errorhandling;
+package io.harness.exception;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-
-import groovy.lang.Singleton;
+import io.harness.eraro.ErrorCode;
 
 @OwnedBy(HarnessTeam.PL)
-@Singleton
-public class CreateFileScmErrorHandler extends ScmErrorHandler {}
+public class ScmConflictException extends ScmException {
+  public ScmConflictException(String errorMessage) {
+    super(errorMessage, ErrorCode.SCM_CONFLICT_ERROR);
+  }
+}
