@@ -40,7 +40,6 @@ public class ArtifactVariable extends Variable {
   private List<String> workflowIds;
   private String uiDisplayName;
   private ArtifactStreamMetadata artifactStreamMetadata;
-  private LastDeployedArtifactInformation lastDeployedArtifactInfo;
 
   /*
   This takes artifact buildNo and artifactStreamId. When this is populated, we will ignore ArtifactVariable#value and
@@ -54,7 +53,7 @@ public class ArtifactVariable extends Variable {
       EntityType entityType, String entityId, List<ArtifactVariable> overriddenArtifactVariables,
       List<ArtifactStreamSummary> artifactStreamSummaries, Map<String, List<String>> displayInfo,
       List<String> workflowIds, String uiDisplayName, ArtifactStreamMetadata artifactStreamMetadata,
-      LastDeployedArtifactInformation lastDeployedArtifactInfo, ArtifactInput artifactInput) {
+      ArtifactInput artifactInput) {
     super(name, description, mandatory, value, fixed, allowedValues, allowedList, metadata, type);
     this.entityType = entityType;
     this.entityId = entityId;
@@ -64,7 +63,6 @@ public class ArtifactVariable extends Variable {
     this.workflowIds = workflowIds;
     this.uiDisplayName = uiDisplayName;
     this.artifactStreamMetadata = artifactStreamMetadata;
-    this.lastDeployedArtifactInfo = lastDeployedArtifactInfo;
     this.artifactInput = artifactInput;
   }
 

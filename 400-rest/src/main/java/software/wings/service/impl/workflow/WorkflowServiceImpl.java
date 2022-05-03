@@ -2575,9 +2575,6 @@ public class WorkflowServiceImpl implements WorkflowService {
                                       .entityType(SERVICE)
                                       .entityId(serviceId)
                                       .allowedList(allowedArtifactStreams)
-                                      .lastDeployedArtifactInfo(includeList.contains(Include.LAST_DEPLOYED_ARTIFACT)
-                                              ? fetchLastDeployedArtifact(workflow, allowedArtifactStreams, serviceId)
-                                              : null)
                                       .build());
           }
         }

@@ -22,6 +22,7 @@ import io.harness.serializer.KryoRegistrar;
 
 import software.wings.api.DeploymentType;
 import software.wings.beans.APMValidateCollectorConfig;
+import software.wings.api.WorkflowElement;
 import software.wings.beans.AppDynamicsConfig;
 import software.wings.beans.AwsSecretsManagerConfig;
 import software.wings.beans.AzureConfig;
@@ -219,6 +220,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(HostConnectionAttributes.ConnectionType.class, 5071);
     kryo.register(BastionConnectionAttributes.class, 5073);
     kryo.register(AppDynamicsConfig.class, 5074);
+    kryo.register(WorkflowElement.class, 5086);
     kryo.register(ArtifactType.class, 5117);
     kryo.register(AppdynamicsDataCollectionInfo.class, 5168);
     kryo.register(ElkDataCollectionInfo.class, 5169);

@@ -11,8 +11,6 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.beans.OrchestrationWorkflowType.BUILD;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
-import static software.wings.sm.ContextElement.TIMESTAMP_ID;
-
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
@@ -24,26 +22,16 @@ import io.harness.ff.FeatureFlagService;
 import software.wings.api.ContextElementParamMapper;
 import software.wings.api.InfraMappingElement;
 import software.wings.api.ServiceElement;
-import software.wings.api.TerraformOutputInfoElement;
-import software.wings.app.MainConfiguration;
 import software.wings.beans.Application;
 import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.artifact.Artifact;
 import software.wings.helpers.ext.url.SubdomainUrlHelperIntfc;
-import software.wings.service.intfc.AccountService;
-import software.wings.service.intfc.AppService;
 import software.wings.service.intfc.ApplicationManifestService;
 import software.wings.service.intfc.ArtifactService;
 import software.wings.service.intfc.ArtifactStreamService;
-import software.wings.service.intfc.ArtifactStreamServiceBindingService;
 import software.wings.service.intfc.BuildSourceService;
-import software.wings.service.intfc.EnvironmentService;
-import software.wings.service.intfc.ServiceTemplateService;
 import software.wings.service.intfc.WorkflowExecutionService;
-import software.wings.service.intfc.applicationmanifest.HelmChartService;
-import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
 
-import com.google.inject.Inject;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;

@@ -716,7 +716,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(TerraformOutputInfoElement.class, 5523);
     kryo.register(WaitStateExecutionData.class, 5116);
     kryo.register(WingsTimestamp.class, 5085);
-    kryo.register(WorkflowElement.class, 5086);
 
     kryo.register(Account.class, 5356);
     kryo.register(AppContainer.class, 5064);
@@ -815,7 +814,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(UserInvite.class, 5182);
     kryo.register(UserInviteSource.SourceType.class, 5507);
     kryo.register(UserInviteSource.class, 5506);
-    kryo.register(Variable.class, 5378);
     kryo.register(ChangeContext.class, 5199);
     kryo.register(GitPullResult.class, 5209);
     kryo.register(YamlType.class, 5211);
@@ -1002,7 +1000,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(Artifact.class, 7192);
     kryo.register(Artifact.ContentStatus.class, 7193);
     kryo.register(Artifact.Status.class, 7194);
-    kryo.register(ArtifactVariable.class, 7195);
     kryo.register(UserLockoutInfo.class, 7196);
     kryo.register(AwsAmiAllPhaseRollbackData.class, 7197);
 
@@ -1212,7 +1209,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(TerragruntExecutionData.class, 8507);
     kryo.register(TerragruntOutputVariables.class, 8508);
     kryo.register(ApiException.class, 8125);
-    kryo.register(ArtifactStreamMetadata.class, 8126);
     kryo.register(CommandParameters.class, 8509);
 
     kryo.register(StateMachineResumeCallback.class, 40001);

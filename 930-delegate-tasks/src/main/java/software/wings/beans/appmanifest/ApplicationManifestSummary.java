@@ -19,7 +19,6 @@ import lombok.Data;
 @Data
 @Builder
 @OwnedBy(CDC)
-@TargetModule(HarnessModule._870_CG_ORCHESTRATION)
 public class ApplicationManifestSummary {
   private String appManifestId;
   private String appManifestName;
