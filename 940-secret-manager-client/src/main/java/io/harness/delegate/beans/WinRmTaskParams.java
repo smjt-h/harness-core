@@ -11,15 +11,16 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.beans.connector.ConnectorCapabilityBaseHelper;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.ExecutionCapabilityDemander;
-import io.harness.delegate.beans.executioncapability.SelectorCapability;
 import io.harness.delegate.beans.executioncapability.SocketConnectivityExecutionCapability;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.expression.ExpressionEvaluator;
 import io.harness.ng.core.dto.secrets.WinRmCredentialsSpecDTO;
 import io.harness.security.encryption.EncryptedDataDetail;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -41,8 +42,9 @@ public class WinRmTaskParams implements TaskParameters, ExecutionCapabilityDeman
     if (isEmpty(delegateSelectors)) {
       return Collections.singletonList(getSocketConnectivityCapability());
     } else {
-      return Arrays.asList(getSocketConnectivityCapability(),
-          SelectorCapability.builder().selectors(delegateSelectors).selectorOrigin("Task Selectors").build());
+      List<ExecutionCapability> capabilityList = new ArrayList<>(Arrays.asList(getSocketConnectivityCapability()));
+      ConnectorCapabilityBaseHelper.populateDelegateSelectorCapability(capabilityList, delegateSelectors);
+      return capabilityList;
     }
   }
 
