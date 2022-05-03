@@ -16,6 +16,7 @@ import static io.harness.persistence.HQuery.allChecks;
 import static io.harness.persistence.HQuery.excludeAuthority;
 
 import static software.wings.beans.ResourceConstraintInstance.NOT_FINISHED_STATES;
+import static software.wings.sm.states.HoldingScope.PIPELINE;
 import static software.wings.sm.states.HoldingScope.WORKFLOW;
 
 import static java.lang.String.format;
@@ -199,8 +200,8 @@ public class ResourceConstraintServiceImpl implements ResourceConstraintService,
       query.filter(ResourceConstraintInstanceKeys.appId, appId);
     }
     if (workflowExecutionId != null) {
-      query.filter(ResourceConstraintInstanceKeys.releaseEntityType, WORKFLOW.name())
-          .filter(ResourceConstraintInstanceKeys.releaseEntityId, workflowExecutionId);
+      query.filter(ResourceConstraintInstanceKeys.releaseEntityId, workflowExecutionId)
+          .field(ResourceConstraintInstanceKeys.releaseEntityType).in(asList(WORKFLOW.name(), PIPELINE.name()));
     }
 
     Set<String> constraintIds = new HashSet<>();

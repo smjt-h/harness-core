@@ -29,17 +29,18 @@ import io.harness.beans.ResourceConstraint;
 import io.harness.category.element.UnitTests;
 import io.harness.context.ContextElementType;
 import io.harness.distribution.constraint.Constraint;
-import io.harness.exception.InvalidRequestException;
 import io.harness.rule.Owner;
 
 import software.wings.WingsBaseTest;
 import software.wings.api.PhaseElement;
 import software.wings.api.ResourceConstraintExecutionData;
+import software.wings.api.WorkflowElement;
 import software.wings.beans.Application;
 import software.wings.service.intfc.AppService;
 import software.wings.service.intfc.ResourceConstraintService;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse.ExecutionResponseBuilder;
+import software.wings.sm.WorkflowStandardParams;
 import software.wings.sm.states.ResourceConstraintState.AcquireMode;
 
 import org.junit.Before;
@@ -60,6 +61,8 @@ public class ResourceConstraintStateTest extends WingsBaseTest {
 
   private String phaseName;
 
+  private static final String PIPELINE_DEPLOYMENT_UUID = "PIPE_UUID";
+
   @Before
   public void setUp() {
     phaseName = "phase-name";
@@ -68,6 +71,9 @@ public class ResourceConstraintStateTest extends WingsBaseTest {
     when(executionContext.getWorkflowExecutionId()).thenReturn(WORKFLOW_EXECUTION_ID);
     when(executionContext.getContextElement(ContextElementType.PARAM, PhaseElement.PHASE_PARAM))
         .thenReturn(PhaseElement.builder().phaseName(phaseName).build());
+    when(executionContext.getContextElement(ContextElementType.STANDARD))
+        .thenReturn(WorkflowStandardParams.Builder.aWorkflowStandardParams().withWorkflowElement(
+            WorkflowElement.builder().pipelineDeploymentUuid(PIPELINE_DEPLOYMENT_UUID).build()).build());
   }
 
   @Test
@@ -80,15 +86,23 @@ public class ResourceConstraintStateTest extends WingsBaseTest {
     when(resourceConstraintService.getAllCurrentlyAcquiredPermits(HoldingScope.PHASE.name(),
              ResourceConstraintService.releaseEntityId(WORKFLOW_EXECUTION_ID, phaseName), APP_ID))
         .thenReturn(0, 1);
+    when(resourceConstraintService.getAllCurrentlyAcquiredPermits(
+             HoldingScope.PIPELINE.name(), ResourceConstraintService.releaseEntityId(PIPELINE_DEPLOYMENT_UUID), APP_ID))
+        .thenReturn(0, 1);
     int permits_1 = state.alreadyAcquiredPermits(HoldingScope.WORKFLOW.name(), executionContext);
     int permits_2 = state.alreadyAcquiredPermits(HoldingScope.WORKFLOW.name(), executionContext);
     assertThat(permits_1).isEqualTo(0);
     assertThat(permits_2).isEqualTo(1);
 
-    int permits_3 = state.alreadyAcquiredPermits(HoldingScope.PHASE.name(), executionContext);
-    int permits_4 = state.alreadyAcquiredPermits(HoldingScope.PHASE.name(), executionContext);
-    assertThat(permits_3).isEqualTo(1);
-    assertThat(permits_4).isEqualTo(2);
+    int permits_3 = state.alreadyAcquiredPermits(HoldingScope.PIPELINE.name(), executionContext);
+    int permits_4 = state.alreadyAcquiredPermits(HoldingScope.PIPELINE.name(), executionContext);
+    assertThat(permits_3).isEqualTo(0);
+    assertThat(permits_4).isEqualTo(1);
+
+    int permits_5 = state.alreadyAcquiredPermits(HoldingScope.PHASE.name(), executionContext);
+    int permits_6 = state.alreadyAcquiredPermits(HoldingScope.PHASE.name(), executionContext);
+    assertThat(permits_5).isEqualTo(2);
+    assertThat(permits_6).isEqualTo(3);
   }
 
   @Test(expected = IllegalArgumentException.class)
