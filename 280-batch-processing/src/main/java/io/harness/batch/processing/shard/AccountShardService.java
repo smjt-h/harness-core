@@ -7,10 +7,15 @@
 
 package io.harness.batch.processing.shard;
 
+import io.harness.ModuleType;
 import io.harness.batch.processing.config.BatchMainConfig;
 import io.harness.batch.processing.config.PodInfoConfig;
 import io.harness.batch.processing.dao.intfc.AccountShardMappingDao;
 import io.harness.batch.processing.entities.AccountShardMapping;
+import io.harness.licensing.beans.modules.ModuleLicenseDTO;
+import io.harness.licensing.remote.NgLicenseHttpClient;
+import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.utils.RestCallToNGManagerClientUtils;
 
 import software.wings.beans.Account;
 import software.wings.service.intfc.instance.CloudToHarnessMappingService;
@@ -20,6 +25,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import retrofit2.Call;
 
 @Slf4j
 @Component
@@ -27,17 +33,27 @@ public class AccountShardService {
   private BatchMainConfig mainConfig;
   private CloudToHarnessMappingService cloudToHarnessMappingService;
   private AccountShardMappingDao accountShardMappingDao;
+  private NgLicenseHttpClient ngLicenseHttpClient;
 
   @Autowired
   public AccountShardService(BatchMainConfig mainConfig, CloudToHarnessMappingService cloudToHarnessMappingService,
-      AccountShardMappingDao accountShardMappingDao) {
+      AccountShardMappingDao accountShardMappingDao, NgLicenseHttpClient ngLicenseHttpClient) {
     this.mainConfig = mainConfig;
     this.cloudToHarnessMappingService = cloudToHarnessMappingService;
     this.accountShardMappingDao = accountShardMappingDao;
+    this.ngLicenseHttpClient = ngLicenseHttpClient;
   }
 
   public List<Account> getCeEnabledAccounts() {
     log.info("Shard Id {} master pod {}", getShardId(), isMasterPod());
+    try {
+      Call<ResponseDTO<List<ModuleLicenseDTO>>> moduleLicensesByModuleType =
+          ngLicenseHttpClient.getModuleLicensesByModuleType(ModuleType.CE, 1641024000000l);
+      List<ModuleLicenseDTO> response = RestCallToNGManagerClientUtils.execute(moduleLicensesByModuleType);
+      log.info("Response is {}", response);
+    } catch (Exception ex) {
+      log.error("Exception in account shard ", ex);
+    }
     List<AccountShardMapping> accountShardMappings = accountShardMappingDao.getAccountShardMapping();
     List<String> isolatedAccounts =
         accountShardMappings.stream().map(AccountShardMapping::getAccountId).collect(Collectors.toList());
