@@ -273,7 +273,7 @@ public class CloudformationStepHelper {
     String identifier = generateIdentifier(provisionerIdentifier, ambiance);
     String inheritOutputName = format(CLOUDFORMATION_INHERIT_OUTPUT_FORMAT, identifier);
     executionSweepingOutputService.consume(
-        ambiance, inheritOutputName, cloudFormationInheritOutput, StepOutcomeGroup.PIPELINE.name());
+        ambiance, inheritOutputName, cloudFormationInheritOutput, StepOutcomeGroup.STAGE.name());
   }
 
   public CloudFormationInheritOutput getSavedCloudFormationInheritOutput(
