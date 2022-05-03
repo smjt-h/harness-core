@@ -336,26 +336,8 @@ public class YamlServiceImpl<Y extends BaseYaml, B extends Base> implements Yaml
     return changeList.stream().filter(change -> change.getFilePath().startsWith(SETUP_FOLDER_PATH)).collect(toList());
   }
 
-  @SneakyThrows
   @Override
   public RestResponse<B> update(YamlPayload yamlPayload, String accountId, String entityId) {
-    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-    JsonNode json = mapper.readTree(yamlPayload.getYaml());
-    JsonNode timeRangeBasedFreezeConfigs = json.get("timeRangeBasedFreezeConfigs");
-    for (JsonNode timeRangeBasedFreezeConfig : timeRangeBasedFreezeConfigs) {
-      for (JsonNode freezeWindow : timeRangeBasedFreezeConfig.get("appSelections")) {
-        if (!freezeWindow.has("serviceSelection") && !freezeWindow.has("envSelection")) {
-          throw new WingsException("serviceSelection and envSelection missing in Yaml File");
-        }
-        if (!freezeWindow.has("serviceSelection")) {
-          throw new WingsException("serviceSelection missing in Yaml File");
-        }
-        if (!freezeWindow.has("envSelection")) {
-          throw new WingsException("envSelection missing in Yaml File");
-        }
-      }
-    }
-
     GitFileChange change = GitFileChange.Builder.aGitFileChange()
                                .withChangeType(ChangeType.MODIFY)
                                .withFileContent(yamlPayload.getYaml())

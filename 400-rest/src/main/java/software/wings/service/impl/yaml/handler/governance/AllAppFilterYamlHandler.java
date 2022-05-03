@@ -7,6 +7,7 @@
 
 package software.wings.service.impl.yaml.handler.governance;
 
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.exception.InvalidRequestException;
@@ -74,9 +75,13 @@ public class AllAppFilterYamlHandler extends ApplicationFilterYamlHandler<AllApp
     }
 
     List<EnvironmentFilter> environmentFilters = new ArrayList<>();
-    for (EnvironmentFilterYaml entry : yaml.getEnvSelection()) {
-      ChangeContext clonedContext = cloneFileChangeContext(changeContext, entry).build();
-      environmentFilters.add(environmentFilterYamlHandler.upsertFromYaml(clonedContext, changeSetContext));
+    if (isNotEmpty(yaml.getEnvSelection())) {
+      for (EnvironmentFilterYaml entry : yaml.getEnvSelection()) {
+        ChangeContext clonedContext = cloneFileChangeContext(changeContext, entry).build();
+        environmentFilters.add(environmentFilterYamlHandler.upsertFromYaml(clonedContext, changeSetContext));
+      }
+    } else {
+      throw new InvalidRequestException("Environment Selection Missing in Yaml");
     }
 
     List<ServiceFilter> serviceFilters = new ArrayList<>();
@@ -85,6 +90,8 @@ public class AllAppFilterYamlHandler extends ApplicationFilterYamlHandler<AllApp
         ChangeContext clonedContext = cloneFileChangeContext(changeContext, entry).build();
         serviceFilters.add(serviceFilterYamlHandler.upsertFromYaml(clonedContext, changeSetContext));
       }
+    } else {
+      throw new InvalidRequestException("Service Selection Missing in Yaml");
     }
 
     bean.setFilterType(yaml.getFilterType());

@@ -86,18 +86,22 @@ public class CustomAppFilterYamlHandler extends ApplicationFilterYamlHandler<Cus
 
     // // envSelection is made a List to make Yaml cleanup work YamlUtils.cleanUpDoubleExclamationLines
     List<EnvironmentFilter> environmentFilters = new ArrayList<>();
-    for (EnvironmentFilterYaml entry : yaml.getEnvSelection()) {
-      ChangeContext clonedContext = cloneFileChangeContext(changeContext, entry).build();
+    if (isNotEmpty(yaml.getEnvSelection())) {
+      for (EnvironmentFilterYaml entry : yaml.getEnvSelection()) {
+        ChangeContext clonedContext = cloneFileChangeContext(changeContext, entry).build();
 
-      environmentFilterYamlHandler =
-          yamlHandlerFactory.getYamlHandler(YamlType.ENV_FILTER, entry.getFilterType().name());
-      if (entry instanceof CustomEnvFilter.Yaml && appIds.size() != 1) {
-        throw new InvalidRequestException(
-            "Application filter should have exactly one app when environment filter type is CUSTOM");
+        environmentFilterYamlHandler =
+            yamlHandlerFactory.getYamlHandler(YamlType.ENV_FILTER, entry.getFilterType().name());
+        if (entry instanceof CustomEnvFilter.Yaml && appIds.size() != 1) {
+          throw new InvalidRequestException(
+              "Application filter should have exactly one app when environment filter type is CUSTOM");
+        }
+        // If Custom Env Filter, we need app Id to find the environments
+        clonedContext.getEntityIdMap().put("appId", appIds.get(0));
+        environmentFilters.add(environmentFilterYamlHandler.upsertFromYaml(clonedContext, changeSetContext));
       }
-      // If Custom Env Filter, we need app Id to find the environments
-      clonedContext.getEntityIdMap().put("appId", appIds.get(0));
-      environmentFilters.add(environmentFilterYamlHandler.upsertFromYaml(clonedContext, changeSetContext));
+    } else {
+      throw new InvalidRequestException("Environment Selection Missing in Yaml");
     }
 
     List<ServiceFilter> serviceFilters = new ArrayList<>();
@@ -107,6 +111,8 @@ public class CustomAppFilterYamlHandler extends ApplicationFilterYamlHandler<Cus
         clonedContext.getEntityIdMap().put("appId", appIds.get(0));
         serviceFilters.add(serviceFilterYamlHandler.upsertFromYaml(clonedContext, changeSetContext));
       }
+    } else {
+      throw new InvalidRequestException("Service Selection Missing in Yaml");
     }
 
     bean.setApps(appIds);

@@ -9,13 +9,7 @@ package software.wings.service.impl.yaml.service;
 
 import static io.harness.git.model.ChangeType.DELETE;
 import static io.harness.git.model.ChangeType.MODIFY;
-import static io.harness.rule.OwnerRule.ABHINAV;
-import static io.harness.rule.OwnerRule.ADWAIT;
-import static io.harness.rule.OwnerRule.ALEXEI;
-import static io.harness.rule.OwnerRule.DEEPAK;
-import static io.harness.rule.OwnerRule.ROHIT_KUMAR;
-import static io.harness.rule.OwnerRule.RUSHABH;
-import static io.harness.rule.OwnerRule.VARDAN_BANSAL;
+import static io.harness.rule.OwnerRule.*;
 
 import static software.wings.beans.yaml.Change.Builder.aFileChange;
 import static software.wings.beans.yaml.GitFileChange.Builder.aGitFileChange;
@@ -42,6 +36,7 @@ import static org.mockito.Mockito.when;
 
 import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.WingsException;
 import io.harness.ff.FeatureFlagService;
 import io.harness.git.model.ChangeType;
 import io.harness.rule.Owner;
@@ -122,7 +117,6 @@ public class YamlServiceImplTest extends WingsBaseTest {
         .isEmpty();
   }
 
-  @Test
   @Owner(developers = ADWAIT)
   @Category(UnitTests.class)
   public void testFilterInvalidFilePaths() throws Exception {
@@ -160,7 +154,6 @@ public class YamlServiceImplTest extends WingsBaseTest {
       assertThat(yamlService.isProcessingAllowed(change, type)).isEqualTo(true);
     }
   }
-
   @Test
   @Owner(developers = ROHIT_KUMAR)
   @Category(UnitTests.class)
