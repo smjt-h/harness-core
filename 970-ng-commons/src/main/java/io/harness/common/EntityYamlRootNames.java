@@ -83,7 +83,7 @@ public class EntityYamlRootNames {
   public static final String PLUGIN = "Plugin";
   public static final String SECURITY = "Security";
   public static final String SECURITY_STAGE = "securityStage";
-  public static final String SECURITY_STEP = "securityStep";
+  public static final String SECURITY_STEP = "securitySteps";
   public static final String RESTORE_CACHE_GCS = "RestoreCacheGCS";
   public static final String RESTORE_CACHE_S3 = "RestoreCacheS3";
   public static final String SAVE_CACHE_GCS = "SaveCacheGCS";
@@ -91,9 +91,10 @@ public class EntityYamlRootNames {
   public static final String ARTIFACTORY_UPLOAD = "ArtifactoryUpload";
   public static final String GCS_UPLOAD = "GCSUpload";
   public static final String S3_UPLOAD = "S3Upload";
-
   public static final String BUILD_AND_PUSH_GCR = "BuildAndPushGCR";
   public static final String BUILD_AND_PUSH_ECR = "BuildAndPushECR";
   public static final String BUILD_AND_PUSH_DOCKER_REGISTRY = "BuildAndPushDockerRegistry";
   public static final String NG_FILE = "NgFile";
+  public static final String SERVERLESS_AWS_LAMBDA_DEPLOY = "ServerlessAwsLambdaDeploy";
+  public static final String SERVERLESS_AWS_LAMBDA_ROLLBACK = "ServerlessAwsLambdaRollback";
 }

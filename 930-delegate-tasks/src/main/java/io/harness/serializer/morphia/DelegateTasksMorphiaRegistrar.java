@@ -7,6 +7,7 @@
 
 package io.harness.serializer.morphia;
 
+import io.harness.beans.SecretChangeLog;
 import io.harness.beans.SecretManagerConfig;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.morphia.MorphiaRegistrarHelperPut;
@@ -21,9 +22,7 @@ import software.wings.beans.BastionConnectionAttributes;
 import software.wings.beans.CyberArkConfig;
 import software.wings.beans.DockerConfig;
 import software.wings.beans.DynaTraceConfig;
-import software.wings.beans.EcrConfig;
 import software.wings.beans.ElkConfig;
-import software.wings.beans.GcpConfig;
 import software.wings.beans.GcpKmsConfig;
 import software.wings.beans.GcpSecretsManagerConfig;
 import software.wings.beans.HostConnectionAttributes;
@@ -54,6 +53,10 @@ import software.wings.delegatetasks.cv.beans.CustomLogResponseMapper;
 import software.wings.delegatetasks.validation.DelegateConnectionResult;
 import software.wings.delegatetasks.validation.capabilities.ClusterMasterUrlValidationCapability;
 import software.wings.delegatetasks.validation.capabilities.GitConnectionCapability;
+import software.wings.delegatetasks.validation.capabilities.SSHHostValidationCapability;
+import software.wings.delegatetasks.validation.capabilities.ShellConnectionCapability;
+import software.wings.delegatetasks.validation.capabilities.WinrmHostValidationCapability;
+import software.wings.helpers.ext.helm.response.HelmCollectChartResponse;
 import software.wings.helpers.ext.mail.SmtpConfig;
 import software.wings.service.impl.analysis.CustomLogDataCollectionInfo;
 import software.wings.service.impl.analysis.DataCollectionTaskResult;
@@ -82,6 +85,7 @@ public class DelegateTasksMorphiaRegistrar implements MorphiaRegistrar {
     set.add(BaseVaultConfig.class);
     set.add(SecretManagerConfig.class);
     set.add(SSHVaultConfig.class);
+    set.add(SecretChangeLog.class);
   }
 
   @Override
@@ -98,7 +102,6 @@ public class DelegateTasksMorphiaRegistrar implements MorphiaRegistrar {
     w.put("beans.ElkConfig", ElkConfig.class);
     w.put("service.impl.elk.ElkDataCollectionInfo", ElkDataCollectionInfo.class);
     w.put("service.impl.logz.LogzDataCollectionInfo", LogzDataCollectionInfo.class);
-    w.put("beans.EcrConfig", EcrConfig.class);
     w.put("beans.AwsSecretsManagerConfig", AwsSecretsManagerConfig.class);
     w.put("beans.AzureVaultConfig", AzureVaultConfig.class);
     w.put("beans.CyberArkConfig", CyberArkConfig.class);
@@ -118,7 +121,6 @@ public class DelegateTasksMorphiaRegistrar implements MorphiaRegistrar {
     w.put("delegatetasks.validation.capabilities.GitConnectionCapability", GitConnectionCapability.class);
     w.put("beans.SSHVaultConfig", SSHVaultConfig.class);
     w.put("beans.BaseVaultConfig", BaseVaultConfig.class);
-    w.put("beans.GcpConfig", GcpConfig.class);
     w.put("beans.artifact.ArtifactFile", ArtifactFile.class);
     w.put("beans.ServiceNowConfig", ServiceNowConfig.class);
     w.put("beans.DockerConfig", DockerConfig.class);
@@ -134,5 +136,9 @@ public class DelegateTasksMorphiaRegistrar implements MorphiaRegistrar {
     w.put("beans.SmbConfig", SmbConfig.class);
     w.put("beans.config.ArtifactoryConfig", ArtifactoryConfig.class);
     w.put("helpers.ext.mail.SmtpConfig", SmtpConfig.class);
+    w.put("helpers.ext.helm.response.HelmCollectChartResponse", HelmCollectChartResponse.class);
+    w.put("delegatetasks.validation.capabilities.WinrmHostValidationCapability", WinrmHostValidationCapability.class);
+    w.put("delegatetasks.validation.capabilities.ShellConnectionCapability", ShellConnectionCapability.class);
+    w.put("delegatetasks.validation.capabilities.SSHHostValidationCapability", SSHHostValidationCapability.class);
   }
 }
