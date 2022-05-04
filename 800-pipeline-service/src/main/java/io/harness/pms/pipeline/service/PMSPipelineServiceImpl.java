@@ -131,7 +131,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
       throw new InvalidYamlException(format("Invalid yaml in node [%s]", YamlUtils.getErrorNodePartialFQN(ex)), ex);
 
     } catch (ExplanationException | ScmException e) {
-      log.error("Error while updating pipeline " + pipelineEntity.getIdentifier(), e);
+      log.error("Error while creating pipeline " + pipelineEntity.getIdentifier(), e);
       throw e;
     } catch (Exception e) {
       log.error(String.format("Error while saving pipeline [%s]", pipelineEntity.getIdentifier()), e);
