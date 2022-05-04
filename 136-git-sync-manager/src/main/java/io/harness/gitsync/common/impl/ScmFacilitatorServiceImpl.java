@@ -145,8 +145,7 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
                                                           .scmConnector(scmConnector)
                                                           .yaml(scmCreateFileRequestDTO.getFileContent())
                                                           .build()),
-            scope.getProjectIdentifier(), scope.getOrgIdentifier(), scope.getAccountIdentifier(),
-            scmCreateFileRequestDTO.getConnectorRef());
+            scmConnector);
 
     if (isFailureResponse(createFileResponse.getStatus())) {
       ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.CREATE_FILE,
@@ -184,8 +183,7 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
                                                           .oldFileSha(scmUpdateFileRequestDTO.getOldFileSha())
                                                           .yaml(scmUpdateFileRequestDTO.getFileContent())
                                                           .build()),
-            scope.getProjectIdentifier(), scope.getOrgIdentifier(), scope.getAccountIdentifier(),
-            scmUpdateFileRequestDTO.getConnectorRef());
+            scmConnector);
 
     if (isFailureResponse(updateFileResponse.getStatus())) {
       ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.UPDATE_FILE,
