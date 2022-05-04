@@ -62,8 +62,9 @@ public class AzureRepoToGitMapperTest extends CategoryTest {
     final String usernameRef = "usernameRef";
     final String tokenRef = "tokenRef";
     final String username = "username";
+    final String validationProject = "validationProject";
     final String validationRepo = "validationRepo";
-
+    final String validationProjAndRepo = validationProject+"/_git"+validationRepo;
     final AzureRepoAuthenticationDTO azureRepoAuthenticationDTO =
         AzureRepoAuthenticationDTO.builder()
             .authType(HTTP)
@@ -85,6 +86,7 @@ public class AzureRepoToGitMapperTest extends CategoryTest {
     final AzureRepoConnectorDTO azureRepoConnectorDTO = AzureRepoConnectorDTO.builder()
                                                             .connectionType(GitConnectionType.ACCOUNT)
                                                             .url(url)
+                                                            .validationProject(validationProject)
                                                             .validationRepo(validationRepo)
                                                             .authentication(azureRepoAuthenticationDTO)
                                                             .apiAccess(azureRepoApiAccessDTO)
@@ -97,7 +99,7 @@ public class AzureRepoToGitMapperTest extends CategoryTest {
     GitHTTPAuthenticationDTO gitAuthentication = (GitHTTPAuthenticationDTO) gitConfigDTO.getGitAuth();
     assertThat(gitConfigDTO.getGitConnectionType()).isEqualTo(ACCOUNT);
     assertThat(gitConfigDTO.getUrl()).isEqualTo(url);
-    assertThat(gitConfigDTO.getValidationRepo()).isEqualTo(validationRepo);
+    assertThat(gitConfigDTO.getValidationRepo()).isEqualTo(validationProjAndRepo);
     assertThat(gitAuthentication.getUsername()).isEqualTo(username);
     assertThat(gitAuthentication.getUsernameRef().toSecretRefStringValue()).isEqualTo(usernameRef);
     assertThat(gitAuthentication.getPasswordRef().toSecretRefStringValue()).isEqualTo(tokenRef);

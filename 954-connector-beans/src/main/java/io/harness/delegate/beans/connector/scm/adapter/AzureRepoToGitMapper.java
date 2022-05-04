@@ -24,7 +24,7 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 @OwnedBy(HarnessTeam.PL)
 public class AzureRepoToGitMapper {
-  public static final String GIT = "_git";
+  public static final String GIT = "/_git/";
   public static GitConfigDTO mapToGitConfigDTO(AzureRepoConnectorDTO azureRepoConnectorDTO) {
     final GitAuthType authType = azureRepoConnectorDTO.getAuthentication().getAuthType();
     final GitConnectionType connectionType = azureRepoConnectorDTO.getConnectionType();
