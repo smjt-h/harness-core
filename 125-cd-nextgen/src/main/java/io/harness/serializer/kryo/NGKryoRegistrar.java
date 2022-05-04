@@ -253,7 +253,5 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(ServerlessGitFetchFailurePassThroughData.class, 12581);
     kryo.register(ServerlessGitFetchOutcome.class, 12582);
     kryo.register(ServerlessAwsLambdaRollbackDataOutcome.class, 12583);
-
-
   }
 }

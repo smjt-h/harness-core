@@ -36,8 +36,7 @@ import org.mockito.MockitoAnnotations;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public class ServiceEntityManagementServiceTest extends CategoryTest {
-  @Mock
-  ServiceEntityService serviceEntityService;
+  @Mock ServiceEntityService serviceEntityService;
   @Mock InstanceService instanceService;
   @Inject @InjectMocks ServiceEntityManagementServiceImpl serviceEntityManagementService;
 
