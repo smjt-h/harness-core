@@ -29,6 +29,7 @@ import io.harness.cdng.manifest.yaml.OpenshiftParamManifestOutcome;
 import io.harness.cdng.manifest.yaml.ServerlessAwsLambdaManifestOutcome;
 import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
+import io.harness.cdng.service.beans.ServiceConfigOutcome;
 import io.harness.cdng.service.beans.ServiceOutcome;
 import io.harness.serializer.KryoRegistrar;
 
@@ -64,5 +65,6 @@ public class NGBeanKryoRegistrar implements KryoRegistrar {
     kryo.register(ArtifactoryGenericArtifactOutcome.class, 390010);
     kryo.register(AcrArtifactOutcome.class, 390011);
     kryo.register(ServerlessAwsLambdaManifestOutcome.class, 390012);
+    kryo.register(ServiceConfigOutcome.class, 12508);
   }
 }
