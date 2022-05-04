@@ -7,7 +7,8 @@
 
 package io.harness.cdng.service.beans;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import static io.harness.annotations.dev.HarnessTeam.CDC;
+
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
@@ -16,14 +17,13 @@ import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
-
-import javax.validation.constraints.NotNull;
-
-import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 @Data
 @Builder
@@ -36,6 +36,8 @@ public class ServiceYamlV2 implements Visitable {
   @ApiModelProperty(hidden = true)
   private String uuid;
 
-  //For New Service Yaml
-  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) private ParameterField<String> serviceConfigRef;
+  // For New Service Yaml
+  @NotNull
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
+  private ParameterField<String> serviceConfigRef;
 }
