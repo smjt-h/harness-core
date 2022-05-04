@@ -106,7 +106,6 @@ import io.harness.cdng.service.beans.KubernetesServiceSpec;
 import io.harness.cdng.service.beans.NativeHelmServiceSpec;
 import io.harness.cdng.service.beans.ServerlessAwsLambdaServiceSpec;
 import io.harness.cdng.service.beans.ServiceConfig;
-import io.harness.cdng.service.beans.ServiceConfigOutcome;
 import io.harness.cdng.service.beans.ServiceDefinition;
 import io.harness.cdng.service.beans.ServiceDefinitionType;
 import io.harness.cdng.service.beans.ServiceUseFromStage;
@@ -120,7 +119,6 @@ import io.harness.cdng.tasks.manifestFetch.step.ManifestFetchOutcome;
 import io.harness.cdng.tasks.manifestFetch.step.ManifestFetchParameters;
 import io.harness.cdng.variables.beans.NGVariableOverrideSetWrapper;
 import io.harness.cdng.variables.beans.NGVariableOverrideSets;
-import io.harness.ng.core.service.entity.ServiceEntity;
 import io.harness.serializer.KryoRegistrar;
 
 import com.esotericsoftware.kryo.Kryo;
