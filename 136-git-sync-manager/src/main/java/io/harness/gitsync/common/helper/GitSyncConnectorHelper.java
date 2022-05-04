@@ -8,15 +8,17 @@
 package io.harness.gitsync.common.helper;
 
 import static io.harness.annotations.dev.HarnessTeam.DX;
+import static io.harness.exception.WingsException.USER;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
-import io.harness.connector.impl.ConnectorErrorMessagesHelper;
 import io.harness.connector.services.ConnectorService;
 import io.harness.delegate.beans.connector.ConnectorConfigDTO;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoApiAccessDTO;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoConnectorDTO;
 import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketApiAccessDTO;
 import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketConnectorDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubApiAccessDTO;
@@ -24,6 +26,7 @@ import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabApiAccessDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabConnectorDTO;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
+import io.harness.exception.ConnectorNotFoundException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.common.service.YamlGitConfigService;
@@ -48,7 +51,6 @@ public class GitSyncConnectorHelper {
   ConnectorService connectorService;
   DecryptGitApiAccessHelper decryptGitApiAccessHelper;
   YamlGitConfigService yamlGitConfigService;
-  ConnectorErrorMessagesHelper connectorErrorMessagesHelper;
 
   @Inject
   public GitSyncConnectorHelper(@Named("connectorDecoratorService") ConnectorService connectorService,
@@ -129,6 +131,8 @@ public class GitSyncConnectorHelper {
       checkAPIAccessFieldPresence((GitlabConnectorDTO) scmConnector);
     } else if (scmConnector instanceof BitbucketConnectorDTO) {
       checkAPIAccessFieldPresence((BitbucketConnectorDTO) scmConnector);
+    } else if (scmConnector instanceof AzureRepoConnectorDTO) {
+      checkAPIAccessFieldPresence((AzureRepoConnectorDTO) scmConnector);
     } else {
       throw new NotImplementedException(
           String.format("The scm apis for the provider type %s is not supported", scmConnector.getClass()));
@@ -153,6 +157,14 @@ public class GitSyncConnectorHelper {
 
   private void checkAPIAccessFieldPresence(BitbucketConnectorDTO bitbucketConnectorDTO) {
     BitbucketApiAccessDTO apiAccess = bitbucketConnectorDTO.getApiAccess();
+    if (apiAccess == null) {
+      throw new InvalidRequestException(
+          "The connector doesn't contain api access field which is required for the git sync ");
+    }
+  }
+
+  private void checkAPIAccessFieldPresence(AzureRepoConnectorDTO azureRepoConnectorDTO) {
+    AzureRepoApiAccessDTO apiAccess = azureRepoConnectorDTO.getApiAccess();
     if (apiAccess == null) {
       throw new InvalidRequestException(
           "The connector doesn't contain api access field which is required for the git sync ");
@@ -222,5 +234,51 @@ public class GitSyncConnectorHelper {
       GlobalContextManager.upsertGlobalContextRecord(
           GitSyncBranchContext.builder().gitBranchInfo(oldGitEntityInfo).build());
     }
+  }
+
+  // ----------------------- GIT-SIMPLIFICATION METHODS ---------------------------
+
+  public ScmConnector getScmConnector(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef) {
+    Optional<ConnectorResponseDTO> connectorDTO =
+        connectorService.getByRef(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
+    if (connectorDTO.isPresent()) {
+      ConnectorInfoDTO connectorInfoDTO = connectorDTO.get().getConnector();
+      ConnectorConfigDTO connectorConfigDTO = connectorInfoDTO.getConnectorConfig();
+      if (connectorConfigDTO instanceof ScmConnector) {
+        return (ScmConnector) connectorInfoDTO.getConnectorConfig();
+      } else {
+        throw new UnexpectedException(String.format(
+            "The connector with the  identifier [%s], accountIdentifier [%s], orgIdentifier [%s], projectIdentifier [%s] is not an scm connector",
+            connectorInfoDTO.getIdentifier(), accountIdentifier, orgIdentifier, projectIdentifier));
+      }
+    }
+    throw new ConnectorNotFoundException(
+        String.format(
+            "No connector found for accountIdentifier: [%s], orgIdentifier : [%s], projectIdentifier : [%s], connectorRef : [%s]",
+            accountIdentifier, orgIdentifier, projectIdentifier, connectorDTO),
+        USER);
+  }
+
+  public ScmConnector getDecryptedConnectorByRef(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef) {
+    ScmConnector gitConnectorConfig =
+        getScmConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
+    return getDecryptedConnector(accountIdentifier, orgIdentifier, projectIdentifier, gitConnectorConfig);
+  }
+
+  public ScmConnector getScmConnectorForGivenRepo(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef, String repoName) {
+    ScmConnector scmConnector = getScmConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
+    scmConnector.setUrl(scmConnector.getGitConnectionUrl(repoName));
+    return scmConnector;
+  }
+
+  public ScmConnector getDecryptedConnectorForGivenRepo(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef, String repoName) {
+    ScmConnector scmConnector =
+        getDecryptedConnectorByRef(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
+    scmConnector.setUrl(scmConnector.getGitConnectionUrl(repoName));
+    return scmConnector;
   }
 }

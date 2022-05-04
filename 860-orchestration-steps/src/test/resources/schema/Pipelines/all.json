@@ -1752,8 +1752,7 @@
       "type": "object",
       "required": [
         "identifier",
-        "name",
-        "stages"
+        "name"
       ],
       "properties": {
         "allowStageExecutions": {
@@ -1816,6 +1815,9 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "template": {
+          "$ref": "#/definitions/TemplateLinkConfig"
         },
         "timeout": {
           "type": "string",

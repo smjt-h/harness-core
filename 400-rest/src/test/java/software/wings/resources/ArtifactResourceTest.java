@@ -9,6 +9,7 @@ package software.wings.resources;
 
 import static io.harness.rule.OwnerRule.ANUBHAW;
 import static io.harness.rule.OwnerRule.GARVIT;
+import static io.harness.rule.OwnerRule.INDER;
 import static io.harness.rule.OwnerRule.SRINIVAS;
 
 import static software.wings.beans.artifact.Artifact.Builder.anArtifact;
@@ -31,6 +32,7 @@ import static org.mockito.Mockito.when;
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.ArtifactMetadata;
 import io.harness.beans.PageRequest;
 import io.harness.beans.PageResponse;
 import io.harness.beans.SearchFilter.Operator;
@@ -147,7 +149,7 @@ public class ArtifactResourceTest extends CategoryTest {
                             .withAccountId(ACCOUNT_ID)
                             .withAppId(APP_ID)
                             .withArtifactStreamId(ARTIFACT_STREAM_ID)
-                            .withMetadata(ImmutableMap.of("BUILD_NO", "5"))
+                            .withMetadata(new ArtifactMetadata(ImmutableMap.of("BUILD_NO", "5")))
                             .build();
     when(ARTIFACT_STREAM_SERVICE.get(ARTIFACT_STREAM_ID).fetchArtifactDisplayName("5")).thenReturn("DISPLAY_NAME");
 
@@ -267,5 +269,19 @@ public class ArtifactResourceTest extends CategoryTest {
     Response response = RESOURCES.client().target("/artifacts/" + ARTIFACT_ID + "?appId=" + APP_ID).request().delete();
     verify(ARTIFACT_SERVICE).delete(ACCOUNT_ID, ARTIFACT_ID);
     assertThat(response.getStatus()).isEqualTo(200);
+  }
+
+  @Test
+  @Owner(developers = INDER)
+  @Category(UnitTests.class)
+  public void shouldListArtifactsWithCollectionEnabled() throws IOException {
+    RESOURCES.client()
+        .target("/artifacts/collection-enabled-artifacts?appId=" + APP_ID + "&serviceId=" + SERVICE_ID)
+        .request()
+        .get(new GenericType<RestResponse<PageResponse<Artifact>>>() {});
+    PageRequest<Artifact> expectedPageRequest = new PageRequest<>();
+    expectedPageRequest.addFilter("appId", Operator.EQ, APP_ID);
+    expectedPageRequest.setOffset("0");
+    verify(ARTIFACT_SERVICE).listArtifactsForServiceWithCollectionEnabled(APP_ID, SERVICE_ID, expectedPageRequest);
   }
 }

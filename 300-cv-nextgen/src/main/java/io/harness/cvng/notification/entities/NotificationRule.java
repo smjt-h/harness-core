@@ -11,10 +11,12 @@ import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.StoreIn;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cvng.core.services.api.UpdatableEntity;
 import io.harness.cvng.notification.beans.NotificationRuleType;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.DbAliases;
+import io.harness.notification.channelDetails.PmsNotificationChannel;
 import io.harness.persistence.AccountAccess;
 import io.harness.persistence.CreatedAtAware;
 import io.harness.persistence.PersistentEntity;
@@ -34,6 +36,7 @@ import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.query.UpdateOperations;
 
 @Data
 @SuperBuilder
@@ -72,6 +75,20 @@ public abstract class NotificationRule
   private Instant lastSuccessfullCheckTime;
   private long lastUpdatedAt;
   private long createdAt;
+  private int version;
 
   NotificationRuleType type;
+  PmsNotificationChannel notificationMethod;
+
+  public abstract static class NotificationRuleUpdatableEntity<T extends NotificationRule, D extends NotificationRule>
+      implements UpdatableEntity<T, D> {
+    protected void setCommonOperations(UpdateOperations<T> updateOperations, D notificationRule) {
+      updateOperations.set(NotificationRuleKeys.identifier, notificationRule.getIdentifier())
+          .set(NotificationRuleKeys.name, notificationRule.getName())
+          .set(NotificationRuleKeys.enabled, notificationRule.isEnabled())
+          .set(NotificationRuleKeys.type, notificationRule.getType())
+          .set(NotificationRuleKeys.notificationMethod, notificationRule.getNotificationMethod())
+          .inc(NotificationRuleKeys.version);
+    }
+  }
 }

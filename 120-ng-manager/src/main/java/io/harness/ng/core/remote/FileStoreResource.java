@@ -9,29 +9,42 @@ package io.harness.ng.core.remote;
 
 import static io.harness.NGCommonEntityConstants.ACCOUNT_KEY;
 import static io.harness.NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.APPLICATION_YAML_MEDIA_TYPE;
+import static io.harness.NGCommonEntityConstants.ENTITY_TYPE;
 import static io.harness.NGCommonEntityConstants.FILE_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.IDENTIFIER_KEY;
 import static io.harness.NGCommonEntityConstants.ORG_KEY;
 import static io.harness.NGCommonEntityConstants.ORG_PARAM_MESSAGE;
 import static io.harness.NGCommonEntityConstants.PROJECT_KEY;
 import static io.harness.NGCommonEntityConstants.PROJECT_PARAM_MESSAGE;
+import static io.harness.NGResourceFilterConstants.FILTER_KEY;
+import static io.harness.NGResourceFilterConstants.SEARCH_TERM_KEY;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.ng.core.utils.NGUtils.validate;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 
+import io.harness.EntityType;
 import io.harness.NGCommonEntityConstants;
+import io.harness.NGResourceFilterConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityIdentifier;
-import io.harness.ng.core.api.FileStoreService;
+import io.harness.ng.beans.PageRequest;
+import io.harness.ng.core.beans.SearchPageParams;
 import io.harness.ng.core.common.beans.NGTag;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.dto.filestore.FileDTO;
+import io.harness.ng.core.dto.filestore.FileDtoYamlWrapper;
+import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
+import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
+import io.harness.ng.core.filestore.service.FileStoreService;
 import io.harness.security.annotations.NextGenManagerAuth;
 import io.harness.serializer.JsonUtils;
+import io.harness.utils.PageUtils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.inject.Inject;
@@ -48,11 +61,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.File;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -64,6 +79,8 @@ import javax.ws.rs.core.Response;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.hibernate.validator.constraints.NotBlank;
+import org.springframework.data.domain.Page;
 
 @OwnedBy(CDP)
 @Path("/file-store")
@@ -100,12 +117,10 @@ public class FileStoreResource {
   @Operation(operationId = "create", summary = "Creates file or folder",
       responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns create response") })
   public ResponseDTO<FileDTO>
-  create(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
-             ACCOUNT_KEY) @EntityIdentifier String accountIdentifier,
-      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) @EntityIdentifier(
-          allowBlank = true) String orgIdentifier,
-      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) @EntityIdentifier(allowBlank = true)
-      String projectIdentifier, @Parameter(description = "The file tags") @FormDataParam("tags") String tagsJson,
+  create(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
+      @Parameter(description = "The file tags") @FormDataParam("tags") String tagsJson,
       @FormDataParam("content") InputStream content, @NotNull @BeanParam FileDTO file) {
     file.setAccountIdentifier(accountIdentifier);
     file.setOrgIdentifier(orgIdentifier);
@@ -114,7 +129,7 @@ public class FileStoreResource {
 
     validate(file);
 
-    return ResponseDTO.newResponse(fileStoreService.create(file, content));
+    return ResponseDTO.newResponse(fileStoreService.create(file, content, null));
   }
 
   @PUT
@@ -124,13 +139,10 @@ public class FileStoreResource {
   @Operation(operationId = "update", summary = "Updates file or folder",
       responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns update response") })
   public ResponseDTO<FileDTO>
-  update(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
-             ACCOUNT_KEY) @EntityIdentifier String accountIdentifier,
-      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) @EntityIdentifier(
-          allowBlank = true) String orgIdentifier,
-      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) @EntityIdentifier(
-          allowBlank = true) String projectIdentifier,
-      @Parameter(description = FILE_PARAM_MESSAGE) @EntityIdentifier @PathParam(NGCommonEntityConstants.IDENTIFIER_KEY)
+  update(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
+      @Parameter(description = FILE_PARAM_MESSAGE) @NotBlank @EntityIdentifier @PathParam(IDENTIFIER_KEY)
       String identifier, @Parameter(description = "The file tags") @FormDataParam("tags") String tagsJson,
       @NotNull @BeanParam FileDTO file, @FormDataParam("content") InputStream content) {
     file.setAccountIdentifier(accountIdentifier);
@@ -154,14 +166,12 @@ public class FileStoreResource {
         ApiResponse(responseCode = "default", description = "Download the file with content")
       })
   public Response
-  downloadFile(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
-                   ACCOUNT_KEY) @EntityIdentifier String accountIdentifier,
-      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) @EntityIdentifier(
-          allowBlank = true) String orgIdentifier,
-      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) @EntityIdentifier(
-          allowBlank = true) String projectIdentifier,
+  downloadFile(
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
       @Parameter(description = FILE_PARAM_MESSAGE) @PathParam(
-          NGCommonEntityConstants.FILE_IDENTIFIER_KEY) @NotNull String fileIdentifier) {
+          NGCommonEntityConstants.FILE_IDENTIFIER_KEY) @NotBlank @EntityIdentifier String fileIdentifier) {
     File file = fileStoreService.downloadFile(accountIdentifier, orgIdentifier, projectIdentifier, fileIdentifier);
     return Response.ok(file, APPLICATION_OCTET_STREAM)
         .header("Content-Disposition", "attachment; filename=" + file.getName())
@@ -179,14 +189,11 @@ public class FileStoreResource {
         ApiResponse(responseCode = "default", description = "Returns true if deletion was successful.")
       })
   public ResponseDTO<Boolean>
-  delete(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
-             ACCOUNT_KEY) @EntityIdentifier String accountIdentifier,
-      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) @EntityIdentifier(
-          allowBlank = true) String orgIdentifier,
-      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) @EntityIdentifier(
-          allowBlank = true) String projectIdentifier,
-      @Parameter(description = FILE_PARAM_MESSAGE) @EntityIdentifier @PathParam(
-          NGCommonEntityConstants.IDENTIFIER_KEY) String identifier) {
+  delete(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
+      @Parameter(description = FILE_PARAM_MESSAGE) @NotBlank @EntityIdentifier @PathParam(
+          IDENTIFIER_KEY) String identifier) {
     return ResponseDTO.newResponse(
         fileStoreService.delete(accountIdentifier, orgIdentifier, projectIdentifier, identifier));
   }
@@ -202,15 +209,121 @@ public class FileStoreResource {
         ApiResponse(responseCode = "default", description = "Returns the list of folder nodes as children")
       })
   public ResponseDTO<FolderNodeDTO>
-  listFolderNodes(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
-                      ACCOUNT_KEY) @EntityIdentifier String accountIdentifier,
-      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) @EntityIdentifier(
-          allowBlank = true) String orgIdentifier,
-      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) @EntityIdentifier(
-          allowBlank = true) String projectIdentifier,
+  listFolderNodes(
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
       @RequestBody(required = true, description = "Folder node for which to return the list of nodes") @Valid
       @NotNull FolderNodeDTO folderNodeDTO) {
     return ResponseDTO.newResponse(
         fileStoreService.listFolderNodes(accountIdentifier, orgIdentifier, projectIdentifier, folderNodeDTO));
+  }
+
+  @POST
+  @Path("/yaml")
+  @Consumes({APPLICATION_YAML_MEDIA_TYPE})
+  @ApiOperation(value = "Create file or folder via YAML", nickname = "createViaYAML")
+  @Operation(operationId = "createViaYAML", summary = "Creates file or folder via YAML",
+      responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns create response") })
+  public ResponseDTO<FileDTO>
+  createViaYaml(
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
+      @RequestBody(required = true,
+          description = "YAML definition of file or folder") @NotNull @Valid FileDtoYamlWrapper fileDtoYamlWrapper) {
+    FileDTO file = fileDtoYamlWrapper.getFile();
+    file.setAccountIdentifier(accountIdentifier);
+    file.setOrgIdentifier(orgIdentifier);
+    file.setProjectIdentifier(projectIdentifier);
+
+    return ResponseDTO.newResponse(fileStoreService.create(file, null, true));
+  }
+
+  @PUT
+  @Path("yaml/{identifier}")
+  @Consumes({APPLICATION_YAML_MEDIA_TYPE})
+  @ApiOperation(value = "Update file or folder via YAML", nickname = "updateViaYAML")
+  @Operation(operationId = "updateViaYAML", summary = "Updates file or folder via YAML",
+      responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns update response") })
+  public ResponseDTO<FileDTO>
+  updateViaYaml(
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
+      @Parameter(description = FILE_PARAM_MESSAGE) @PathParam(IDENTIFIER_KEY) @EntityIdentifier String identifier,
+      @RequestBody(required = true,
+          description = "YAML definition of file or folder") @NotNull @Valid FileDtoYamlWrapper fileDtoYamlWrapper) {
+    FileDTO file = fileDtoYamlWrapper.getFile();
+    file.setAccountIdentifier(accountIdentifier);
+    file.setOrgIdentifier(orgIdentifier);
+    file.setProjectIdentifier(projectIdentifier);
+    file.setIdentifier(identifier);
+
+    return ResponseDTO.newResponse(fileStoreService.update(file, null, identifier));
+  }
+
+  @GET
+  @Consumes({"application/json"})
+  @Path("{identifier}/referenced-by")
+  @ApiOperation(value = "Get referenced by entities", nickname = "getReferencedBy")
+  @Operation(operationId = "getReferencedBy", summary = "Get Referenced by Entities.",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(responseCode = "default", description = "Returns the list of entities file is referenced by")
+      })
+  public ResponseDTO<Page<EntitySetupUsageDTO>>
+  getReferencedBy(@Parameter(description = "Page number of navigation. The default value is 0") @QueryParam(
+                      NGResourceFilterConstants.PAGE_KEY) @DefaultValue("0") int page,
+      @Parameter(description = "Number of entries per page. The default value is 100") @QueryParam(
+          NGResourceFilterConstants.SIZE_KEY) @DefaultValue("100") int size,
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
+      @Parameter(description = FILE_PARAM_MESSAGE) @NotBlank @EntityIdentifier @PathParam(IDENTIFIER_KEY)
+      String identifier, @Parameter(description = "Entity type") @QueryParam(ENTITY_TYPE) EntityType entityType,
+      @QueryParam(SEARCH_TERM_KEY) String searchTerm) {
+    return ResponseDTO.newResponse(fileStoreService.listReferencedBy(
+        SearchPageParams.builder().page(page).size(size).searchTerm(searchTerm).build(), accountIdentifier,
+        orgIdentifier, projectIdentifier, identifier, entityType));
+  }
+
+  @POST
+  @Consumes({"application/json"})
+  @Path("filter")
+  @ApiOperation(value = "Gets the filtered list of files", nickname = "listFilesWithFilter")
+  @Operation(operationId = "listFilesWithFilter", summary = "Get filtered list of files.",
+      responses =
+      { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns filtered list of files.") })
+  public ResponseDTO<Page<FileDTO>>
+  listFilesWithFilter(
+      @RequestBody(description = "Details of Page including: size, index, sort") @BeanParam PageRequest pageRequest,
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
+      @QueryParam(FILTER_KEY) String filterIdentifier, @QueryParam(SEARCH_TERM_KEY) String searchTerm,
+      @RequestBody(description = "Details of the File filter properties to be applied")
+      FilesFilterPropertiesDTO filesFilterPropertiesDTO) {
+    return ResponseDTO.newResponse(
+        fileStoreService.listFilesWithFilter(accountIdentifier, orgIdentifier, projectIdentifier, filterIdentifier,
+            searchTerm, filesFilterPropertiesDTO, PageUtils.getPageRequest(pageRequest)));
+  }
+
+  @GET
+  @Consumes({"application/json"})
+  @Path("createdBy")
+  @ApiOperation(value = "Get list of created by usernames", nickname = "getCreatedByList")
+  @Operation(operationId = "getCreatedByList", summary = "Get list of created by usernames.",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns the list of created by usernames")
+      })
+  public ResponseDTO<Set<String>>
+  getCreatedByList(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier) {
+    return ResponseDTO.newResponse(
+        fileStoreService.getCreatedByList(accountIdentifier, orgIdentifier, projectIdentifier));
   }
 }

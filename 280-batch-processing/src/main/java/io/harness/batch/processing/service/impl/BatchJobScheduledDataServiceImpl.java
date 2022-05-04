@@ -47,7 +47,8 @@ public class BatchJobScheduledDataServiceImpl implements BatchJobScheduledDataSe
               .contains(batchJobType.getBatchJobBucket())) {
         Instant connectorCreationTime =
             Instant.ofEpochMilli(Instant.now().toEpochMilli()).truncatedTo(ChronoUnit.DAYS).minus(1, ChronoUnit.DAYS);
-        if (ImmutableSet.of(BatchJobType.AWS_ECS_CLUSTER_SYNC).contains(batchJobType)) {
+        if (ImmutableSet.of(BatchJobType.AWS_ECS_CLUSTER_SYNC, BatchJobType.AWS_ECS_SERVICE_RECOMMENDATION)
+                .contains(batchJobType)) {
           Instant startInstant = Instant.now().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS);
           connectorCreationTime = startInstant.isAfter(connectorCreationTime) ? startInstant : connectorCreationTime;
         } else {
@@ -104,7 +105,8 @@ public class BatchJobScheduledDataServiceImpl implements BatchJobScheduledDataSe
     if (null != instant
         && ImmutableSet.of(BatchJobBucket.OUT_OF_CLUSTER, BatchJobBucket.OUT_OF_CLUSTER_ECS)
                .contains(batchJobType.getBatchJobBucket())
-        && !ImmutableSet.of(BatchJobType.AWS_ECS_CLUSTER_SYNC).contains(batchJobType)) {
+        && !ImmutableSet.of(BatchJobType.AWS_ECS_CLUSTER_SYNC, BatchJobType.AWS_ECS_SERVICE_RECOMMENDATION)
+                .contains(batchJobType)) {
       Instant startInstant = Instant.now().minus(2, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS);
       instant = startInstant.isAfter(instant) ? startInstant : instant;
     }
@@ -115,7 +117,9 @@ public class BatchJobScheduledDataServiceImpl implements BatchJobScheduledDataSe
     }
 
     // We can reduce the last days (to 2-3 days) data to generate, before GA if required.
-    if (null != instant && batchJobType == BatchJobType.K8S_NODE_RECOMMENDATION) {
+    if (null != instant
+        && ImmutableSet.of(BatchJobType.K8S_NODE_RECOMMENDATION, BatchJobType.AWS_ECS_SERVICE_RECOMMENDATION)
+               .contains(batchJobType)) {
       Instant startInstant = Instant.now().minus(2, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS);
       instant = startInstant.isAfter(instant) ? startInstant : instant;
     }

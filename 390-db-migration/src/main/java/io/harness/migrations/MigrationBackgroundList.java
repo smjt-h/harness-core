@@ -52,12 +52,14 @@ import io.harness.migrations.all.AddEnableIteratorsToGovernanceConfig;
 import io.harness.migrations.all.AddHarnessOwnedToResourceConstraint;
 import io.harness.migrations.all.AddInfraMappingNameToInstanceData;
 import io.harness.migrations.all.AddIsDefaultFlagToUserGroup;
+import io.harness.migrations.all.AddNotificationGroupReferenceToUserGroups;
 import io.harness.migrations.all.AddOrchestrationToWorkflows;
 import io.harness.migrations.all.AddPipelinesReferenceToUserGroups;
 import io.harness.migrations.all.AddRingsToAccountMigration;
 import io.harness.migrations.all.AddStateMachineToWorkflowExecutions;
 import io.harness.migrations.all.AddValidUntilToSecretUsageLogs;
 import io.harness.migrations.all.AddValidUntilToWorkflowExecution;
+import io.harness.migrations.all.AlertCheckJobPollIntervalMigration;
 import io.harness.migrations.all.AmendCorruptedEncryptedServiceVariable;
 import io.harness.migrations.all.ApiKeysSetNameMigration;
 import io.harness.migrations.all.CDPaidLicenseToNGMigration;
@@ -372,6 +374,9 @@ public class MigrationBackgroundList {
         .add(Pair.of(215, AddPipelinesReferenceToUserGroups.class))
         .add(Pair.of(216, BaseMigration.class))
         .add(Pair.of(217, DeleteFailedNgDelegateTokenAuditsMigration.class))
+        .add(Pair.of(218, AlertCheckJobPollIntervalMigration.class))
+        .add(Pair.of(219, BaseMigration.class))
+        .add(Pair.of(220, AddNotificationGroupReferenceToUserGroups.class))
         .build();
   }
 }

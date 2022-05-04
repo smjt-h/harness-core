@@ -18,6 +18,7 @@ import static io.harness.rule.OwnerRule.ALEXEI;
 import static io.harness.rule.OwnerRule.ANIL;
 import static io.harness.rule.OwnerRule.DEEPAK_PUTHRAYA;
 import static io.harness.rule.OwnerRule.GARVIT;
+import static io.harness.rule.OwnerRule.INDER;
 import static io.harness.rule.OwnerRule.PRABU;
 import static io.harness.rule.OwnerRule.ROHITKARELIA;
 import static io.harness.rule.OwnerRule.SRINIVAS;
@@ -71,6 +72,7 @@ import static org.mockito.Mockito.when;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.beans.ArtifactMetadata;
 import io.harness.beans.EmbeddedUser;
 import io.harness.beans.FeatureName;
 import io.harness.category.element.UnitTests;
@@ -3943,7 +3945,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
                                            .withCreatedAt(System.currentTimeMillis())
                                            .withCreatedBy(EmbeddedUser.builder().uuid("USER_ID").build());
 
-    persistence.save(artifactBuilder.withMetadata(ImmutableMap.of(BUILD_NO, name)).but().build());
+    persistence.save(artifactBuilder.withMetadata(new ArtifactMetadata(ImmutableMap.of(BUILD_NO, name))).but().build());
   }
 
   @Test
@@ -4502,5 +4504,34 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
     createArtifactStream(dockerArtifactStream);
     artifactStreamService.update(dockerArtifactStream, false);
     verify(subject).fireInform(any(), eq(dockerArtifactStream));
+  }
+
+  @Test
+  @Owner(developers = INDER)
+  @Category(UnitTests.class)
+  public void shouldGetArtifactStreamsForService() {
+    DockerArtifactStream dockerArtifactStream = DockerArtifactStream.builder()
+                                                    .accountId(ACCOUNT_ID)
+                                                    .appId(APP_ID)
+                                                    .settingId(SETTING_ID)
+                                                    .imageName("wingsplugins/todolist")
+                                                    .autoPopulate(true)
+                                                    .serviceId(SERVICE_ID)
+                                                    .uuid(ARTIFACT_STREAM_ID)
+                                                    .build();
+
+    dockerArtifactStream.setCollectionEnabled(false);
+    ArtifactStream savedArtifactSteam = artifactStreamService.create(dockerArtifactStream);
+
+    List<String> projections = new ArrayList<>();
+    projections.add(ArtifactStreamKeys.uuid);
+    projections.add(ArtifactStreamKeys.collectionEnabled);
+
+    List<ArtifactStream> artifactStreams =
+        artifactStreamService.getArtifactStreamsForService(APP_ID, SERVICE_ID, projections);
+    assertThat(artifactStreams).isNotEmpty().hasSize(1);
+    ArtifactStream expectedArtifactStream = DockerArtifactStream.builder().uuid(savedArtifactSteam.getUuid()).build();
+    expectedArtifactStream.setCollectionEnabled(false);
+    assertThat(artifactStreams.get(0)).isEqualTo(expectedArtifactStream);
   }
 }

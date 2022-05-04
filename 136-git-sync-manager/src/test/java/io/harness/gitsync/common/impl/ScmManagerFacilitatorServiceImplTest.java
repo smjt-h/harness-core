@@ -7,22 +7,29 @@
 
 package io.harness.gitsync.common.impl;
 
+import static io.harness.rule.OwnerRule.BHAVYA;
 import static io.harness.rule.OwnerRule.DEEPAK;
 import static io.harness.rule.OwnerRule.HARI;
+import static io.harness.rule.OwnerRule.MOHIT_GARG;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
+import io.harness.beans.PageRequestDTO;
+import io.harness.beans.gitsync.GitFilePathDetails;
 import io.harness.category.element.UnitTests;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.services.ConnectorService;
+import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.delegate.beans.connector.scm.github.GithubApiAccessDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
@@ -34,7 +41,9 @@ import io.harness.ng.beans.PageRequest;
 import io.harness.product.ci.scm.proto.Commit;
 import io.harness.product.ci.scm.proto.FileContent;
 import io.harness.product.ci.scm.proto.GetLatestCommitResponse;
+import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.ListBranchesResponse;
+import io.harness.product.ci.scm.proto.Repository;
 import io.harness.rule.Owner;
 import io.harness.service.ScmClient;
 import io.harness.tasks.DecryptGitApiAccessHelper;
@@ -68,8 +77,12 @@ public class ScmManagerFacilitatorServiceImplTest extends GitSyncTestBase {
   String repoURL = "repoURL";
   String yamlGitConfigIdentifier = "yamlGitConfigIdentifier";
   String filePath = "filePath";
+  String connectorRef = "connectorRef";
   final String branch = "branch";
+  String repoName = "repoName";
+  String commitId = "commitId";
   FileContent fileContent = FileContent.newBuilder().build();
+  GithubConnectorDTO githubConnector;
   final ListBranchesResponse listBranchesResponse =
       ListBranchesResponse.newBuilder().addBranches("master").addBranches("feature").build();
 
@@ -80,8 +93,7 @@ public class ScmManagerFacilitatorServiceImplTest extends GitSyncTestBase {
         .thenReturn(GithubConnectorDTO.builder().build());
     when(scmClient.getFileContent(any(), any())).thenReturn(fileContent);
     when(scmClient.listBranches(any())).thenReturn(listBranchesResponse);
-    GithubConnectorDTO githubConnector =
-        GithubConnectorDTO.builder().apiAccess(GithubApiAccessDTO.builder().build()).build();
+    githubConnector = GithubConnectorDTO.builder().apiAccess(GithubApiAccessDTO.builder().build()).build();
     ConnectorInfoDTO connectorInfo = ConnectorInfoDTO.builder().connectorConfig(githubConnector).build();
     doReturn(Optional.of(ConnectorResponseDTO.builder().connector(connectorInfo).build()))
         .when(connectorService)
@@ -90,6 +102,12 @@ public class ScmManagerFacilitatorServiceImplTest extends GitSyncTestBase {
     doReturn(githubConnector)
         .when(gitSyncConnectorHelper)
         .getDecryptedConnector(anyString(), anyString(), anyString(), anyString());
+    doReturn(githubConnector)
+        .when(gitSyncConnectorHelper)
+        .getDecryptedConnectorByRef(anyString(), anyString(), anyString(), anyString());
+    doReturn(githubConnector)
+        .when(gitSyncConnectorHelper)
+        .getDecryptedConnectorForGivenRepo(anyString(), anyString(), anyString(), anyString(), anyString());
     when(abstractScmClientFacilitatorService.getYamlGitConfigDTO(
              accountIdentifier, orgIdentifier, projectIdentifier, yamlGitConfigIdentifier))
         .thenReturn(YamlGitConfigDTO.builder().build());
@@ -126,6 +144,34 @@ public class ScmManagerFacilitatorServiceImplTest extends GitSyncTestBase {
   }
 
   @Test
+  @Owner(developers = MOHIT_GARG)
+  @Category(UnitTests.class)
+  public void getFileTest() {
+    final ArgumentCaptor<ScmConnector> scmConnectorArgumentCaptor = ArgumentCaptor.forClass(ScmConnector.class);
+    final ArgumentCaptor<GitFilePathDetails> gitFilePathDetailsArgumentCaptor =
+        ArgumentCaptor.forClass(GitFilePathDetails.class);
+    FileContent gitFileContent = scmManagerFacilitatorService.getFile(
+        accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName, branch, filePath, null);
+    assertThat(gitFileContent).isEqualTo(fileContent);
+
+    gitFileContent = scmManagerFacilitatorService.getFile(
+        accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName, branch, filePath, commitId);
+    verify(scmClient, times(2))
+        .getFileContent(scmConnectorArgumentCaptor.capture(), gitFilePathDetailsArgumentCaptor.capture());
+
+    List<ScmConnector> scmConnectors = scmConnectorArgumentCaptor.getAllValues();
+    List<GitFilePathDetails> gitFilePathDetails = gitFilePathDetailsArgumentCaptor.getAllValues();
+
+    assertThat(scmConnectors.get(0)).isEqualTo(githubConnector);
+    assertThat(scmConnectors.get(1)).isEqualTo(githubConnector);
+    assertThat(gitFilePathDetails.get(0))
+        .isEqualTo(GitFilePathDetails.builder().filePath(filePath).branch(branch).ref(null).build());
+    assertThat(gitFilePathDetails.get(1))
+        .isEqualTo(GitFilePathDetails.builder().filePath(filePath).branch(null).ref(commitId).build());
+    assertThat(gitFileContent).isEqualTo(fileContent);
+  }
+
+  @Test
   @Owner(developers = HARI)
   @Category(UnitTests.class)
   public void isSaasGitTest() {
@@ -150,5 +196,18 @@ public class ScmManagerFacilitatorServiceImplTest extends GitSyncTestBase {
     YamlGitConfigDTO yamlGitConfigDTO = YamlGitConfigDTO.builder().branch("default").build();
     final Commit returnedCommit = scmManagerFacilitatorService.getLatestCommit(yamlGitConfigDTO, "branch1");
     assertThat(returnedCommit.getSha()).isEqualTo(commitId);
+  }
+
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void testListUserRepos() {
+    Repository repoDetails = Repository.newBuilder().setName(repoName).build();
+    when(scmClient.getUserRepos(any(), any()))
+        .thenReturn(GetUserReposResponse.newBuilder().addRepos(repoDetails).build());
+    final GetUserReposResponse userReposResponse = scmManagerFacilitatorService.listUserRepos(
+        accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, PageRequestDTO.builder().build());
+    assertThat(userReposResponse.getReposCount()).isEqualTo(1);
+    assertThat(userReposResponse.getRepos(0).getName()).isEqualTo(repoName);
   }
 }

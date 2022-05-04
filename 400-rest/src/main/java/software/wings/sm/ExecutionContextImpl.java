@@ -115,6 +115,7 @@ import software.wings.common.InfrastructureConstants;
 import software.wings.common.RancherK8sClusterProcessor;
 import software.wings.common.VariableProcessor;
 import software.wings.expression.ArtifactLabelEvaluator;
+import software.wings.expression.ArtifactMetadataEvaluator;
 import software.wings.expression.ManagerExpressionEvaluator;
 import software.wings.expression.SecretFunctor;
 import software.wings.expression.ShellScriptFunctor;
@@ -190,7 +191,7 @@ import org.mongodb.morphia.Key;
 public class ExecutionContextImpl implements DeploymentExecutionContext {
   public static final String PHASE_PARAM = "PHASE_PARAM";
   private static final SecureRandom random = new SecureRandom();
-  private static final Pattern wildCharPattern = Pattern.compile("[-+*/\\\\ &$\"'.|]");
+  private static final Pattern wildCharPattern = Pattern.compile("[-+*/\\\\ &$\"'.|\\(\\)]");
   private static final Pattern argsCharPattern = Pattern.compile("[()\"']");
   private static final String CURRENT_STEP_LITERAL = "currentStep";
 
@@ -268,6 +269,9 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
                            .buildSourceService(buildSourceService)
                            .artifactStream(artifactStream)
                            .build();
+      ArtifactMetadataEvaluator metadataEvaluator = new ArtifactMetadataEvaluator(
+          artifact.getMetadata(), artifact.getBuildNo(), artifactStream, buildSourceService);
+      artifact.setMetadata(metadataEvaluator);
       map.put(rollbackArtifact ? ROLLBACK_ARTIFACT : ARTIFACT, artifact);
       String artifactFileName = null;
       if (isNotEmpty(artifact.getArtifactFiles())) {
@@ -917,7 +921,8 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
     return context;
   }
 
-  private String normalizeStateName(String name) {
+  @VisibleForTesting
+  String normalizeStateName(String name) {
     Matcher matcher = wildCharPattern.matcher(name);
     return matcher.replaceAll("__");
   }

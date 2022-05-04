@@ -17,6 +17,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.visitor.helpers.manifest.StoreConfigWrapperVisitorHelper;
 import io.harness.exception.UnexpectedTypeException;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
+import io.harness.pms.yaml.YamlNode;
 import io.harness.validation.Validator;
 import io.harness.walktree.beans.VisitableChildren;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
@@ -25,10 +26,12 @@ import io.harness.yaml.core.intfc.OverridesApplier;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.experimental.FieldDefaults;
@@ -43,6 +46,11 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("storeConfigWrapper")
 @RecasterAlias("io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper")
 public class StoreConfigWrapper implements OverridesApplier<StoreConfigWrapper>, Visitable {
+  @JsonProperty(YamlNode.UUID_FIELD_NAME)
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
+  @ApiModelProperty(hidden = true)
+  private String uuid;
+
   @NotNull @JsonProperty("type") StoreConfigType type;
   @NotNull
   @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
@@ -50,7 +58,8 @@ public class StoreConfigWrapper implements OverridesApplier<StoreConfigWrapper>,
   StoreConfig spec;
 
   @Builder
-  public StoreConfigWrapper(StoreConfigType type, StoreConfig spec) {
+  public StoreConfigWrapper(String uuid, StoreConfigType type, StoreConfig spec) {
+    this.uuid = uuid;
     this.type = type;
     this.spec = spec;
   }

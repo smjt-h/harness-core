@@ -23,6 +23,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.NGCommonEntityConstants;
 import io.harness.NGResourceFilterConstants;
+import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.accesscontrol.acl.api.Resource;
 import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
@@ -480,7 +481,7 @@ public class UserResource {
       log.info("User is externally managed, cannot update user - userId: {}", userInfo.getUuid());
       throw new InvalidRequestException("Cannot update user as it is externally managed.");
     } else {
-      return ResponseDTO.newResponse(userInfoService.update(userInfo));
+      return ResponseDTO.newResponse(userInfoService.update(userInfo, accountIdentifier));
     }
   }
 
@@ -512,7 +513,7 @@ public class UserResource {
   @FeatureRestrictionCheck(FeatureRestrictionName.TWO_FACTOR_AUTH_SUPPORT)
   public ResponseDTO<UserInfo>
   updateTwoFactorAuthInfo(@Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @QueryParam(
-                              NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
+                              NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountIdentifier,
       @Body TwoFactorAuthSettingsInfo authSettingsInfo) {
     return ResponseDTO.newResponse(userInfoService.updateTwoFactorAuthInfo(authSettingsInfo));
   }
@@ -529,7 +530,7 @@ public class UserResource {
   @FeatureRestrictionCheck(FeatureRestrictionName.TWO_FACTOR_AUTH_SUPPORT)
   public ResponseDTO<UserInfo>
   disableTFA(@Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @QueryParam(
-      NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier) {
+      NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountIdentifier) {
     return ResponseDTO.newResponse(userInfoService.disableTFA());
   }
 

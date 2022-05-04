@@ -593,8 +593,8 @@ newRelicMetricRecords {"name": "workflowExIdx", "background": true} {"workflowEx
 ngApiKeys {"name": "list_keys_idx", "background": true} {"accountIdentifier": 1, "orgIdentifier": 1, "projectIdentifier": 1, "parentIdentifier": 1}
 ngApiKeys {"name": "unique_idx", "unique": true, "collation": {"locale": "en", "strength": 1}} {"accountIdentifier": 1, "orgIdentifier": 1, "projectIdentifier": 1, "identifier": 1, "parentIdentifier": 1, "apiKeyType": 1}
 ngEncryptedRecords {"name": "uniqueNGEncryptedDataIdx", "unique": true} {"accountIdentifier": 1, "orgIdentifier": 1, "projectIdentifier": 1, "identifier": 1}
-ngFiles {"name": "list_files_idx", "background": true} {"accountIdentifier": 1, "orgIdentifier": 1, "projectIdentifier": 1, "parentIdentifier": 1}
-ngFiles {"name": "unique_idx", "unique": true, "collation": {"locale": "en", "strength": 1}} {"accountIdentifier": 1, "orgIdentifier": 1, "projectIdentifier": 1, "parentIdentifier": 1, "identifier": 1}
+ngFiles {"name": "list_files_idx", "unique": true} {"accountIdentifier": 1, "orgIdentifier": 1, "projectIdentifier": 1, "identifier": 1}
+ngFiles {"name": "unique_idx", "unique": true, "collation": {"locale": "en", "strength": 1}} {"accountIdentifier": 1, "orgIdentifier": 1, "projectIdentifier": 1, "parentIdentifier": 1, "name": 1}
 ngGcsFileMetadata {"name": "accountId_1", "background": true} {"accountId": 1}
 ngGcsFileMetadata {"name": "entityId_1", "background": true} {"entityId": 1}
 ngGcsFileMetadata {"name": "fileId_1", "background": true} {"fileId": 1}
@@ -968,6 +968,7 @@ workflowExecutions {"name": "accountId_appId_cdPageCandidate_pipelineSummary.pip
 workflowExecutions {"name": "accountId_appId_tags_createdAt", "background": true} {"accountId": 1, "appId": 1, "tags.name": 1, "createdAt": -1}
 workflowExecutions {"name": "accountId_cdPageCandidate_appId", "background": true} {"accountId": 1, "cdPageCandidate": 1, "appId": 1}
 workflowExecutions {"name": "accountId_cdPageCandidate_appId_createdAtDesc", "background": true} {"accountId": 1, "cdPageCandidate": 1, "appId": 1, "createdAt": -1}
+workflowExecutions {"name": "accountId_cdPageCandidate_createdAt", "background": true} {"accountId": 1, "cdPageCandidate": 1, "createdAt": -1}
 workflowExecutions {"name": "accountId_cdPageCandidate_keywords_createdAt", "background": true} {"accountId": 1, "cdPageCandidate": 1, "keywords": 1, "createdAt": -1}
 workflowExecutions {"name": "accountId_createdAt2", "background": true} {"accountId": 1, "createdAt": -1}
 workflowExecutions {"name": "accountId_endTs", "background": true} {"accountId": 1, "endTs": -1}
