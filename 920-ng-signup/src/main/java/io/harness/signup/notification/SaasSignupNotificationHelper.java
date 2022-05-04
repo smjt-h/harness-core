@@ -10,7 +10,6 @@ https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt
 
 package io.harness.signup.notification;
 
-import com.google.inject.Inject;
 import io.harness.Team;
 import io.harness.ng.core.user.UserInfo;
 import io.harness.notification.channeldetails.EmailChannel;
