@@ -346,6 +346,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(ClusterLevel.class, 7348);
     kryo.register(StackdriverLogGcpConfigTaskParams.class, 7360);
     kryo.register(StackdriverGcpConfigTaskParams.class, 7361);
+    kryo.register(StackDriverMetricDefinition.Aggregation.class, 7380);
     kryo.register(GitConnectionCapability.class, 7391);
     kryo.register(SetupTestNodeData.Instance.class, 7470);
     kryo.register(DynaTraceApplication.class, 8074);

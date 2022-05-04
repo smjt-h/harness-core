@@ -612,7 +612,6 @@ import software.wings.sm.status.StateStatusUpdateInfo;
 import software.wings.utils.ContainerFamily;
 import software.wings.verification.VerificationDataAnalysisResponse;
 import software.wings.verification.VerificationStateAnalysisExecutionData;
-import software.wings.verification.stackdriver.StackDriverMetricDefinition;
 
 import com.amazonaws.services.cloudformation.model.StackStatus;
 import com.amazonaws.services.cloudwatch.model.Datapoint;
@@ -1118,7 +1117,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(CopiedTemplateMetadata.class, 7376);
     kryo.register(CustomSecretsManagerConfig.class, 7378);
     kryo.register(CustomSecretsManagerShellScript.class, 7379);
-    kryo.register(StackDriverMetricDefinition.Aggregation.class, 7380);
     kryo.register(Criteria.class, 7382);
     kryo.register(ConditionalOperator.class, 7383);
     kryo.register(ContainerSyncResponse.class, 7384);
