@@ -33,6 +33,7 @@ import io.harness.cdng.serverless.ServerlessAwsLambdaRollbackStepNode;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.serializer.kryo.NGKryoRegistrar;
+import io.harness.serializer.morphia.NGEntitiesMorphiaRegistrar;
 import io.harness.serializer.morphia.NGMorphiaRegistrar;
 import io.harness.yaml.schema.beans.SchemaNamespaceConstants;
 import io.harness.yaml.schema.beans.YamlGroup;
@@ -57,7 +58,7 @@ public class CDNGRegistrars {
           .addAll(ConnectorNextGenRegistrars.kryoRegistrars)
           .addAll(GitOpsRegistrars.kryoRegistrars)
           .addAll(YamlBeansModuleRegistrars.kryoRegistrars)
-          .addAll(OrchestrationStepsModuleRegistrars.kryoRegistrars)
+          .addAll(io.harness.serializer.OrchestrationStepsModuleRegistrars.kryoRegistrars)
           .addAll(CDNGBeanRegistrars.kryoRegistrars)
           .add(NGKryoRegistrar.class)
           .add(PollingKryoRegistrar.class)
@@ -80,6 +81,7 @@ public class CDNGRegistrars {
           .addAll(InstanceRegistrars.morphiaRegistrars)
           .addAll(DelegateTaskRegistrars.morphiaRegistrars)
           .addAll(NGCommonModuleRegistrars.morphiaRegistrars)
+          .add(NGEntitiesMorphiaRegistrar.class)
           .build();
 
   public static final ImmutableList<YamlSchemaRootClass> yamlSchemaRegistrars =

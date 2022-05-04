@@ -13,6 +13,7 @@ java_library(
         "//:lombok",
         "//126-instance:module",
         "//127-cd-nextgen-beans:module",
+        "//127-cd-nextgen-entities:module",
         "//400-rest:module",
         "//440-connector-nextgen:module",
         "//445-gitops:module",
