@@ -68,8 +68,8 @@ public class InstanceDataDaoTest extends WingsBaseTest {
     assertThat(instanceData.get(0).getInstanceName()).isEqualTo(INSTANCE_NAME);
     assertThat(instanceData.get(0).getTotalResource().getCpuUnits()).isEqualTo(CPU_UNITS);
     assertThat(instanceData.get(0).getTotalResource().getMemoryMb()).isEqualTo(MEMORY_MB);
-    assertThat(instanceData.get(0).getUsageStartTime()).isEqualTo(USAGE_START_TIME);
-    assertThat(instanceData.get(0).getUsageStopTime()).isEqualTo(USAGE_STOP_TIME);
+    assertThat(instanceData.get(0).getUsageStartTime()).isEqualTo(USAGE_START_TIME.truncatedTo(ChronoUnit.MILLIS));
+    assertThat(instanceData.get(0).getUsageStopTime()).isEqualTo(USAGE_STOP_TIME.truncatedTo(ChronoUnit.MILLIS));
     assertThat(instanceData.get(0).getMetaData().get(INSTANCE_CATEGORY)).isEqualTo("SPOT");
     assertThat(instanceData.get(0).getMetaData().get(OPERATING_SYSTEM)).isEqualTo("linux");
   }

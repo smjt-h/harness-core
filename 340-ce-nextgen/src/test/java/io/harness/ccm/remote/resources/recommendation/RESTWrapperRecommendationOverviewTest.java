@@ -31,6 +31,7 @@ import java.util.List;
 import javax.validation.constraints.NotNull;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -39,6 +40,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+@Ignore
 @RunWith(MockitoJUnitRunner.class)
 public class RESTWrapperRecommendationOverviewTest extends CategoryTest {
   @Mock private RecommendationsOverviewQueryV2 overviewQueryV2;
