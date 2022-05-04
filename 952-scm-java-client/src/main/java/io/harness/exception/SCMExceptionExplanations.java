@@ -37,4 +37,6 @@ public class SCMExceptionExplanations {
       + "2. The requested branch doesn't exist in given git repository.";
   public static final String CREATE_FILE_CONFLICT_ERROR =
       "File with given filepath already exists in git, thus couldn't create a new file";
+  public static final String CREATE_FILE_UNPROCESSABLE_ENTITY_ERROR =
+      "Requested filepath doesn't match with expected valid format.";
 }

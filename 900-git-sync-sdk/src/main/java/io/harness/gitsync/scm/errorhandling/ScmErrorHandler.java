@@ -13,11 +13,13 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.ExplanationException;
 import io.harness.exception.HintException;
+import io.harness.exception.ScmConflictException;
 import io.harness.exception.ScmException;
 import io.harness.exception.ScmInternalServerErrorException;
 import io.harness.exception.ScmResourceNotFoundException;
 import io.harness.exception.ScmUnauthorizedException;
 import io.harness.exception.ScmUnexpectedException;
+import io.harness.exception.ScmUnprocessableEntityException;
 import io.harness.exception.WingsException;
 import io.harness.gitsync.scm.beans.ScmErrorDetails;
 
@@ -41,6 +43,10 @@ public class ScmErrorHandler {
         throw prepareException(ScmUnauthorizedException.class, errorDetails);
       case 404:
         throw prepareException(ScmResourceNotFoundException.class, errorDetails);
+      case 409:
+        throw prepareException(ScmConflictException.class, errorDetails);
+      case 422:
+        throw prepareException(ScmUnprocessableEntityException.class, errorDetails);
       case 500:
         throw prepareException(ScmInternalServerErrorException.class, errorDetails);
       default:

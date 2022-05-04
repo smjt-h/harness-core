@@ -25,4 +25,6 @@ public class SCMExceptionHints {
       + "2. If requested branch exists or not.";
   public static final String CREATE_FILE_CONFLICT_ERROR =
       "Please check if there's already a file in git for the given filepath";
+  public static final String CREATE_FILE_UNPROCESSABLE_ENTITY_ERROR =
+      "Please check if requested filepath is a valid one.";
 }

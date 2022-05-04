@@ -18,6 +18,7 @@ import io.harness.exception.ScmConflictException;
 import io.harness.exception.ScmException;
 import io.harness.exception.ScmResourceNotFoundException;
 import io.harness.exception.ScmUnauthorizedException;
+import io.harness.exception.ScmUnprocessableEntityException;
 import io.harness.exception.WingsException;
 import io.harness.gitsync.common.scmerrorhandling.handlers.ScmApiErrorHandler;
 
@@ -37,6 +38,11 @@ public class GithubCreateFileScmApiErrorHandler implements ScmApiErrorHandler {
       case 409:
         throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.CREATE_FILE_CONFLICT_ERROR,
             SCMExceptionExplanations.CREATE_FILE_CONFLICT_ERROR, new ScmConflictException(errorMessage));
+      case 422:
+        throw NestedExceptionUtils.hintWithExplanationException(
+            SCMExceptionHints.CREATE_FILE_UNPROCESSABLE_ENTITY_ERROR,
+            SCMExceptionExplanations.CREATE_FILE_UNPROCESSABLE_ENTITY_ERROR,
+            new ScmUnprocessableEntityException(errorMessage));
       default:
         throw new ScmException(UNEXPECTED);
     }
