@@ -31,6 +31,9 @@ public class AzureRepoToGitMapper {
     final String url = azureRepoConnectorDTO.getUrl();
     final String validationProject = azureRepoConnectorDTO.getValidationProject();
     final String validationRepo = azureRepoConnectorDTO.getValidationRepo();
+    if (authType == null) {
+      throw new InvalidRequestException("Azure Repo DTO Auth Type not found");
+    }
     switch (authType) {
       case HTTP:
         return mapToGitHTTP(azureRepoConnectorDTO, connectionType, url, validationProject, validationRepo);
