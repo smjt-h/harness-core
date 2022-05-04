@@ -34,7 +34,7 @@ public class EventMonitoringServiceImpl implements EventMonitoringService {
       if (!Objects.equals(metadataMap.getOrDefault(PIPELINE_MONITORING_ENABLED, "false"), "true")) {
         return;
       }
-      long currentTimeMillis = System.currentTimeMillis();
+      long currentTimeMillis = SystemWrapper.currentTimeMillis();
       String metricValue = String.format(metricName, monitoringInfo.getMetricPrefix());
       long newCount = countMap.compute(metricValue, (k, v) -> v == null ? 1 : ((v + 1) % SAMPLE_SIZE));
       if (newCount == 1 || (currentTimeMillis - monitoringInfo.getCreatedAt() > 5000)) {

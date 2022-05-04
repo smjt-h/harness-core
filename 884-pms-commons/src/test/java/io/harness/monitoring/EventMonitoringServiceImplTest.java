@@ -32,15 +32,13 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 @Slf4j
-@RunWith(PowerMockRunner.class)
-//@PrepareForTest(EventMonitoringServiceImpl.class)
-@PrepareForTest(System.class)
+@RunWith(MockitoJUnitRunner.class)
 public class EventMonitoringServiceImplTest extends PmsCommonsTestBase {
   @Mock private MetricService metricService;
   @InjectMocks private EventMonitoringServiceImpl eventMonitoringService;
@@ -57,8 +55,8 @@ public class EventMonitoringServiceImplTest extends PmsCommonsTestBase {
     eventMonitoringService.sendMetric(metricName, null, ImmutableMap.of(PIPELINE_MONITORING_ENABLED, "false"));
     verify(metricService, never()).recordMetric(anyString(), anyDouble());
 
-    PowerMockito.mockStatic(System.class);
-    PowerMockito.when(System.currentTimeMillis()).thenReturn(10001L);
+    MockedStatic<SystemWrapper> aStatic = Mockito.mockStatic(SystemWrapper.class);
+    aStatic.when(SystemWrapper::currentTimeMillis).thenReturn(10001L);
     MonitoringInfo monitoringInfo = MonitoringInfo.builder().metricPrefix("p").createdAt(10000L).build();
     eventMonitoringService.sendMetric(metricName, monitoringInfo, ImmutableMap.of(PIPELINE_MONITORING_ENABLED, "true"));
     verify(metricService, times(1)).recordMetric(anyString(), anyDouble());
@@ -67,7 +65,7 @@ public class EventMonitoringServiceImplTest extends PmsCommonsTestBase {
     eventMonitoringService.sendMetric(metricName, monitoringInfo, ImmutableMap.of(PIPELINE_MONITORING_ENABLED, "true"));
     verify(metricService, times(2)).recordMetric(anyString(), anyDouble());
 
-    PowerMockito.when(System.currentTimeMillis()).thenReturn(11000L);
+    aStatic.when(SystemWrapper::currentTimeMillis).thenReturn(11000L);
     eventMonitoringService.sendMetric(metricName, monitoringInfo, ImmutableMap.of(PIPELINE_MONITORING_ENABLED, "true"));
     verify(metricService, times(3)).recordMetric(anyString(), anyDouble());
   }
