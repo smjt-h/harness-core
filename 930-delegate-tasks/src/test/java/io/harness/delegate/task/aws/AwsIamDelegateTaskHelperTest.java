@@ -10,6 +10,7 @@ package io.harness.delegate.task.aws;
 import static io.harness.rule.OwnerRule.VLICA;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -93,18 +94,12 @@ public class AwsIamDelegateTaskHelperTest extends CategoryTest {
   @Test
   @Owner(developers = VLICA)
   @Category(UnitTests.class)
-  public void testGetIAMRoleListIsFailure() throws Exception {
+  public void testGetIAMRoleListIsThrownException() {
     doReturn(AwsInternalConfig.builder().build())
         .when(awsNgConfigMapper)
         .createAwsInternalConfig(awsTaskParams.getAwsConnector());
     doThrow(Exception.class).when(awsApiHelperService).listIAMRoles(any());
-
-    AwsIAMRolesResponse awsIAMRolesResponse =
-        (AwsIAMRolesResponse) awsIamDelegateTaskHelper.getIAMRoleList(awsTaskParams);
-
-    assertThat(awsIAMRolesResponse).isNotNull();
-    assertThat(awsIAMRolesResponse).isInstanceOf(AwsIAMRolesResponse.class);
+    assertThatThrownBy(() -> awsIamDelegateTaskHelper.getIAMRoleList(awsTaskParams)).isInstanceOf(Exception.class);
     verify(awsApiHelperService, times(1)).listIAMRoles(any());
-    assertThat(awsIAMRolesResponse.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.FAILURE);
   }
 }

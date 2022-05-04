@@ -56,5 +56,5 @@ public interface AwsClient {
   AWSOrganizationsClient getAWSOrganizationsClient(
       String crossAccountRoleArn, String externalId, String awsAccessKey, String awsSecretKey);
 
-  Map<String, String> listIAMRoles(AwsInternalConfig awsInternalConfig) throws Exception;
+  Map<String, String> listIAMRoles(AwsInternalConfig awsInternalConfig);
 }

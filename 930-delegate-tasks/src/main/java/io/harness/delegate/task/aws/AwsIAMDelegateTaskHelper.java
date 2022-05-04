@@ -18,7 +18,6 @@ import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsIAMRolesResponse;
 import io.harness.delegate.beans.connector.awsconnector.AwsManualConfigSpecDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsTaskParams;
-import io.harness.logging.CommandExecutionStatus;
 import io.harness.security.encryption.SecretDecryptionService;
 
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
@@ -42,12 +41,8 @@ public class AwsIAMDelegateTaskHelper {
   public DelegateResponseData getIAMRoleList(AwsTaskParams awsTaskParams) {
     decryptRequestDTOs(awsTaskParams);
     AwsInternalConfig awsInternalConfig = getAwsInternalConfig(awsTaskParams);
-    try {
-      Map<String, String> roles = awsApiHelperService.listIAMRoles(awsInternalConfig);
-      return AwsIAMRolesResponse.builder().roles(roles).commandExecutionStatus(SUCCESS).build();
-    } catch (Exception e) {
-      return AwsIAMRolesResponse.builder().commandExecutionStatus(CommandExecutionStatus.FAILURE).build();
-    }
+    Map<String, String> roles = awsApiHelperService.listIAMRoles(awsInternalConfig);
+    return AwsIAMRolesResponse.builder().roles(roles).commandExecutionStatus(SUCCESS).build();
   }
 
   private AwsInternalConfig getAwsInternalConfig(AwsTaskParams awsTaskParams) {

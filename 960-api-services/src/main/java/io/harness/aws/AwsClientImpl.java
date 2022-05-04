@@ -451,7 +451,7 @@ public class AwsClientImpl implements AwsClient {
   }
 
   @Override
-  public Map<String, String> listIAMRoles(AwsInternalConfig awsInternalConfig) throws Exception {
+  public Map<String, String> listIAMRoles(AwsInternalConfig awsInternalConfig) {
     try (CloseableAmazonWebServiceClient<AmazonIdentityManagementClient> closeableAmazonIdentityManagementClient =
              new CloseableAmazonWebServiceClient(getAmazonIdentityManagementClient(awsInternalConfig))) {
       Map<String, String> result = new HashMap<>();

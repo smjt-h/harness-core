@@ -24,6 +24,8 @@ import io.harness.delegate.beans.connector.awsconnector.AwsTaskParams;
 import io.harness.delegate.beans.connector.scm.adapter.ScmConnectorMapper;
 import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
+import io.harness.exception.ExceptionUtils;
+import io.harness.exception.InvalidRequestException;
 import io.harness.git.model.FetchFilesResult;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.security.encryption.SecretDecryptionService;
@@ -94,7 +96,7 @@ public class AwsCFDelegateTaskHelper {
           .build();
     } catch (Exception e) {
       log.error("error while retrieving parameters from cloudformation template ", e.getMessage());
-      return AwsCFTaskResponse.builder().commandExecutionStatus(CommandExecutionStatus.FAILURE).build();
+      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
     }
   }
 

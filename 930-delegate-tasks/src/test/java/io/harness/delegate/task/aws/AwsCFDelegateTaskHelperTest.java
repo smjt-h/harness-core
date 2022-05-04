@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.rule.OwnerRule.NGONZALEZ;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -36,9 +37,9 @@ import io.harness.delegate.beans.connector.scm.github.GithubHttpCredentialsDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubUsernamePasswordDTO;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.encryption.SecretRefData;
+import io.harness.exception.InvalidRequestException;
 import io.harness.git.model.FetchFilesResult;
 import io.harness.git.model.GitFile;
-import io.harness.logging.CommandExecutionStatus;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.shell.SshSessionConfig;
@@ -95,7 +96,7 @@ public class AwsCFDelegateTaskHelperTest extends CategoryTest {
   @Test
   @Owner(developers = NGONZALEZ)
   @Category(UnitTests.class)
-  public void getCFParamsListFailToRetrieveTemplateParams() throws IOException {
+  public void getCFParamsListFailToRetrieveTemplateParamsExceptionIsThrown() throws IOException {
     AwsCFTaskParamsRequest awsCFTaskParamsRequest = generateParameters();
     doNothing().when(gitDecryptionHelper).decryptGitConfig(any(), any());
     SshSessionConfig sshSessionConfig = SshSessionConfig.Builder.aSshSessionConfig().build();
@@ -108,23 +109,8 @@ public class AwsCFDelegateTaskHelperTest extends CategoryTest {
     AwsInternalConfig awsInternalConfig = AwsInternalConfig.builder().build();
     doReturn(awsInternalConfig).when(awsNgConfigMapper).createAwsInternalConfig(any());
     doThrow(Exception.class).when(awsCloudformationClient).getParamsData(any(), any(), any(), any());
-    AwsCFTaskResponse response = (AwsCFTaskResponse) awsCFDelegateTaskHelper.getCFParamsList(awsCFTaskParamsRequest);
-    assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.FAILURE);
-  }
-
-  @Test
-  @Owner(developers = NGONZALEZ)
-  @Category(UnitTests.class)
-  public void getCFParamsListThrowsException() throws IOException {
-    AwsCFTaskParamsRequest awsCFTaskParamsRequest = generateParameters();
-    doNothing().when(gitDecryptionHelper).decryptGitConfig(any(), any());
-    SshSessionConfig sshSessionConfig = SshSessionConfig.Builder.aSshSessionConfig().build();
-    doReturn(sshSessionConfig).when(gitDecryptionHelper).getSSHSessionConfig(any(), any());
-    List<GitFile> gitFiles = new ArrayList<>();
-    gitFiles.add(GitFile.builder().fileContent("content").build());
-    doThrow(IOException.class).when(gitService).fetchFilesByPath(any(), any(), any(), any());
-    AwsCFTaskResponse response = (AwsCFTaskResponse) awsCFDelegateTaskHelper.getCFParamsList(awsCFTaskParamsRequest);
-    assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.FAILURE);
+    assertThatThrownBy(() -> awsCFDelegateTaskHelper.getCFParamsList(awsCFTaskParamsRequest))
+        .isInstanceOf(InvalidRequestException.class);
   }
 
   private AwsCFTaskParamsRequest generateParameters() {
