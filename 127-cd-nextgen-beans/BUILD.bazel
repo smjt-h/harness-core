@@ -14,6 +14,7 @@ java_library(
         "//860-orchestration-steps:module",  # This should be removed from here
         "//878-ng-common-utilities:module",
         "//879-pms-sdk:module",
+        "//979-recaster:module",
         "//960-ng-license-usage-beans:module",
         "@maven//:com_fasterxml_jackson_core_jackson_annotations",
         "@maven//:io_swagger_swagger_annotations",

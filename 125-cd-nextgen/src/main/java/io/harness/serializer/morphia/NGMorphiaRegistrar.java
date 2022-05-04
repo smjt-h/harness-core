@@ -38,6 +38,7 @@ import io.harness.cdng.service.beans.StageOverridesConfig;
 import io.harness.cdng.service.steps.ServiceStepParameters;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.morphia.MorphiaRegistrarHelperPut;
+import io.harness.ng.core.service.entity.ServiceEntity;
 import io.harness.polling.bean.PollingDocument;
 
 import java.util.Set;
@@ -58,6 +59,7 @@ public class NGMorphiaRegistrar implements MorphiaRegistrar {
     set.add(CDAccountExecutionMetadata.class);
     set.add(EnvironmentGroupEntity.class);
     set.add(ServerlessAwsLambdaInfraMapping.class);
+    set.add(ServiceEntity.class);
   }
 
   @Override

@@ -120,6 +120,7 @@ import io.harness.cdng.tasks.manifestFetch.step.ManifestFetchOutcome;
 import io.harness.cdng.tasks.manifestFetch.step.ManifestFetchParameters;
 import io.harness.cdng.variables.beans.NGVariableOverrideSetWrapper;
 import io.harness.cdng.variables.beans.NGVariableOverrideSets;
+import io.harness.ng.core.service.entity.ServiceEntity;
 import io.harness.serializer.KryoRegistrar;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -178,7 +179,6 @@ public class NGKryoRegistrar implements KryoRegistrar {
 
     // Starting using 12500 series as 8100 series is also used in 400-rest
     kryo.register(K8sBlueGreenOutcome.class, 12500);
-    kryo.register(ServiceConfigOutcome.class, 12508);
     kryo.register(ArtifactOverrideSetWrapper.class, 12509);
     kryo.register(ManifestOverrideSetWrapper.class, 12510);
     kryo.register(NGVariableOverrideSetWrapper.class, 12511);
@@ -253,5 +253,7 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(ServerlessGitFetchFailurePassThroughData.class, 12581);
     kryo.register(ServerlessGitFetchOutcome.class, 12582);
     kryo.register(ServerlessAwsLambdaRollbackDataOutcome.class, 12583);
+
+
   }
 }
