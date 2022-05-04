@@ -9,6 +9,7 @@ package io.harness.gitsync.common.service;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.gitsync.common.dtos.GitBranchesResponseDTO;
 import io.harness.gitsync.common.dtos.GitRepositoryResponseDTO;
 import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
 import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
@@ -36,4 +37,7 @@ public interface ScmFacilitatorService {
   ScmCreatePRResponseDTO createPR(ScmCreatePRRequestDTO scmCreatePRRequestDTO);
 
   ScmGetFileResponseDTO getFile(ScmGetFileRequestDTO scmGetFileRequestDTO);
+  
+  GitBranchesResponseDTO listBranchesV2(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      String connectorRef, String repoName, PageRequest pageRequest, String searchTerm);
 }
