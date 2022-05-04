@@ -17,9 +17,11 @@ import static io.harness.rule.OwnerRule.TMACARI;
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
 import static software.wings.utils.WingsTestConstants.ACTIVITY_ID;
 import static software.wings.utils.WingsTestConstants.APP_ID;
+import static software.wings.utils.WingsTestConstants.ENTITY_ID;
 import static software.wings.utils.WingsTestConstants.ENV_ID;
 import static software.wings.utils.WingsTestConstants.PORTAL_URL;
 import static software.wings.utils.WingsTestConstants.PROVISIONER_ID;
+import static software.wings.utils.WingsTestConstants.STATE_EXECUTION_ID;
 import static software.wings.utils.WingsTestConstants.UUID;
 import static software.wings.utils.WingsTestConstants.WORKFLOW_EXECUTION_ID;
 import static software.wings.utils.WingsTestConstants.WORKSPACE;
@@ -27,9 +29,7 @@ import static software.wings.utils.WingsTestConstants.WORKSPACE;
 import static java.util.stream.Collectors.toMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -145,9 +145,10 @@ public class TerraformRollbackStateTest extends WingsBaseTest {
         .extractUnresolvedTextVariables(anyListOf(NameValuePair.class));
     doAnswer(doExtractEncryptedVariables)
         .when(infrastructureProvisionerService)
-        .extractEncryptedTextVariables(anyListOf(NameValuePair.class), anyString(), anyString());
+        .extractEncryptedTextVariables(anyListOf(NameValuePair.class), anyString(), any());
     doAnswer(doReturnSameValue).when(executionContext).renderExpression(anyString());
     doNothing().when(stateExecutionService).appendDelegateTaskDetails(anyString(), any());
+    doReturn(STATE_EXECUTION_ID).when(executionContext).getStateExecutionInstanceId();
   }
 
   /**
@@ -263,6 +264,7 @@ public class TerraformRollbackStateTest extends WingsBaseTest {
     TerraformInfrastructureProvisioner terraformInfrastructureProvisioner = TerraformInfrastructureProvisioner.builder()
                                                                                 .name("Terraform Provisioner")
                                                                                 .sourceRepoBranch(sourceRepoBranch)
+                                                                                .appId("appId")
                                                                                 .build();
     when(infrastructureProvisionerService.get(APP_ID, PROVISIONER_ID)).thenReturn(terraformInfrastructureProvisioner);
     when(executionContext.prepareSweepingOutputInquiryBuilder()).thenReturn(SweepingOutputInquiry.builder());
@@ -360,6 +362,7 @@ public class TerraformRollbackStateTest extends WingsBaseTest {
     TerraformExecutionData terraformExecutionData = TerraformExecutionData.builder()
                                                         .executionStatus(ExecutionStatus.SUCCESS)
                                                         .stateFileId("stateFileId")
+                                                        .entityId(ENTITY_ID)
                                                         .commandExecuted(TerraformCommand.APPLY)
                                                         .build();
     response.put("activityId", terraformExecutionData);
@@ -368,7 +371,7 @@ public class TerraformRollbackStateTest extends WingsBaseTest {
     verifyResponse(executionResponse, 1);
     verify(fileService, times(1))
         .updateParentEntityIdAndVersion(
-            any(Class.class), anyString(), anyInt(), anyString(), anyMap(), any(FileBucket.class));
+            any(Class.class), anyString(), any(), anyString(), any(), any(FileBucket.class));
 
     // no state file
     terraformExecutionData.setStateFileId(null);
@@ -403,18 +406,19 @@ public class TerraformRollbackStateTest extends WingsBaseTest {
                                                         .executionStatus(ExecutionStatus.SUCCESS)
                                                         .stateFileId("stateFileId")
                                                         .commandExecuted(TerraformCommand.DESTROY)
+                                                        .entityId(ENTITY_ID)
                                                         .build();
     response.put("activityId", terraformExecutionData);
 
     Query<TerraformConfig> query = mock(Query.class);
     when(wingsPersistence.createQuery(any(Class.class))).thenReturn(query);
-    when(query.filter(anyString(), any(Object.class))).thenReturn(query);
+    when(query.filter(any(), any())).thenReturn(query);
     when(wingsPersistence.delete(any(Query.class))).thenReturn(true);
     ExecutionResponse executionResponse = terraformRollbackState.handleAsyncResponse(executionContext, response);
 
     verify(fileService, times(1))
         .updateParentEntityIdAndVersion(
-            any(Class.class), anyString(), anyInt(), anyString(), anyMap(), any(FileBucket.class));
+            any(Class.class), anyString(), any(), anyString(), any(), any(FileBucket.class));
     verify(infrastructureProvisionerService, times(1)).get(APP_ID, PROVISIONER_ID);
     verify(wingsPersistence, times(2)).createQuery(TerraformConfig.class);
     verify(wingsPersistence, times(2)).delete(query);
@@ -434,19 +438,20 @@ public class TerraformRollbackStateTest extends WingsBaseTest {
     TerraformExecutionData terraformExecutionData = TerraformExecutionData.builder()
                                                         .executionStatus(ExecutionStatus.SUCCESS)
                                                         .stateFileId("stateFileId")
+                                                        .entityId(ENTITY_ID)
                                                         .commandExecuted(TerraformCommand.DESTROY)
                                                         .build();
     response.put("activityId", terraformExecutionData);
 
     Query<TerraformConfig> query = mock(Query.class);
     when(wingsPersistence.createQuery(any(Class.class))).thenReturn(query);
-    when(query.filter(anyString(), any(Object.class))).thenReturn(query);
+    when(query.filter(any(), any())).thenReturn(query);
     when(wingsPersistence.delete(any(Query.class))).thenReturn(false);
     ExecutionResponse executionResponse = terraformRollbackState.handleAsyncResponse(executionContext, response);
 
     verify(fileService, times(1))
         .updateParentEntityIdAndVersion(
-            any(Class.class), anyString(), anyInt(), anyString(), anyMap(), any(FileBucket.class));
+            any(Class.class), anyString(), any(), anyString(), any(), any(FileBucket.class));
     verify(infrastructureProvisionerService, times(1)).get(APP_ID, PROVISIONER_ID);
     verify(wingsPersistence, times(2)).createQuery(TerraformConfig.class);
     verify(wingsPersistence, times(2)).delete(query);

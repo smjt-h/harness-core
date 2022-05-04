@@ -21,6 +21,8 @@ import static software.wings.utils.WingsTestConstants.APP_ID;
 import static software.wings.utils.WingsTestConstants.ENV_ID;
 import static software.wings.utils.WingsTestConstants.ENV_NAME;
 import static software.wings.utils.WingsTestConstants.PROVISIONER_ID;
+import static software.wings.utils.WingsTestConstants.REPO_NAME;
+import static software.wings.utils.WingsTestConstants.SOURCE_REPO_SETTINGS_ID;
 import static software.wings.utils.WingsTestConstants.USER_EMAIL;
 import static software.wings.utils.WingsTestConstants.USER_NAME;
 import static software.wings.utils.WingsTestConstants.WORKFLOW_EXECUTION_ID;
@@ -179,7 +181,7 @@ public class TerragruntProvisionStateTest extends WingsBaseTest {
         .extractUnresolvedTextVariables(anyListOf(NameValuePair.class));
     doAnswer(doExtractEncryptedVariables)
         .when(infrastructureProvisionerService)
-        .extractEncryptedTextVariables(anyListOf(NameValuePair.class), anyString(), anyString());
+        .extractEncryptedTextVariables(anyListOf(NameValuePair.class), anyString(), any());
     doAnswer(doReturnSameValue).when(executionContext).renderExpression(anyString());
     doAnswer(doReturnSameValue).when(executionContext).renderExpression(anyString(), any(StateExecutionContext.class));
 
@@ -188,6 +190,7 @@ public class TerragruntProvisionStateTest extends WingsBaseTest {
     doAnswer(doReturnSameValue).when(executionContext).renderExpression(anyString());
     doAnswer(doReturnSameValue).when(executionContext).renderExpression(anyString(), any(StateExecutionContext.class));
     doReturn(APP_ID).when(executionContext).getAppId();
+    doReturn(ACCOUNT_ID).when(executionContext).getAccountId();
     doReturn(Environment.Builder.anEnvironment().build()).when(executionContext).getEnv();
     doReturn(Application.Builder.anApplication().appId(APP_ID).build()).when(executionContext).getApp();
     doReturn(WorkflowStandardParams.Builder.aWorkflowStandardParams()
@@ -230,6 +233,7 @@ public class TerragruntProvisionStateTest extends WingsBaseTest {
                                                           .appId(APP_ID)
                                                           .path("current/working/directory")
                                                           .skipRefreshBeforeApplyingPlan(true)
+                                                          .repoName(REPO_NAME)
                                                           .build();
 
     doReturn(provisioner).when(infrastructureProvisionerService).get(APP_ID, PROVISIONER_ID);
@@ -263,6 +267,7 @@ public class TerragruntProvisionStateTest extends WingsBaseTest {
                                                           .appId(APP_ID)
                                                           .path("current/working/directory")
                                                           .skipRefreshBeforeApplyingPlan(true)
+                                                          .repoName(REPO_NAME)
                                                           .build();
     FileMetadata fileMetadata = FileMetadata.builder()
                                     .metadata(ImmutableMap.<String, Object>builder()
@@ -322,6 +327,7 @@ public class TerragruntProvisionStateTest extends WingsBaseTest {
             .variables(getTerragruntVariables())
             .encryptedTfPlan(encryptedPlan)
             .pathToModule("module1")
+            .sourceRepoSettingId(SOURCE_REPO_SETTINGS_ID)
             .build();
     terragruntProvisionInheritPlanElements.add(terragruntProvisionInheritPlanElement);
     when(executionContext.getContextElementList(TERRAGRUNT_INHERIT_PLAN))
@@ -334,13 +340,13 @@ public class TerragruntProvisionStateTest extends WingsBaseTest {
                                                           .appId(APP_ID)
                                                           .path("current/working/directory")
                                                           .sourceRepoBranch("sourceRepoBranch")
+                                                          .repoName(REPO_NAME)
                                                           .secretManagerId("secretManagerID")
                                                           .build();
 
     doReturn(gitConfig).when(gitUtilsManager).getGitConfig(anyString());
     doReturn(provisioner).when(infrastructureProvisionerService).get(APP_ID, PROVISIONER_ID);
     doReturn("fileId").when(fileService).getLatestFileId(anyString(), eq(FileBucket.TERRAFORM_STATE));
-    doReturn(ACCOUNT_ID).when(executionContext).getAccountId();
     when(executionContext.getWorkflowExecutionId()).thenReturn(WORKFLOW_EXECUTION_ID);
     when(executionContext.prepareSweepingOutputInquiryBuilder()).thenReturn(SweepingOutputInquiry.builder());
     List<EncryptedDataDetail> encryptedDataDetails = new ArrayList<>();
@@ -635,12 +641,15 @@ public class TerragruntProvisionStateTest extends WingsBaseTest {
                                                .variables(nameValuePairList)
                                                .tfVarFiles(asList("file-1", "file-2"))
                                                .targets(asList("target1", "target2"))
+                                               .branch("master")
+                                               .pathToModule("module")
                                                .build();
 
     TerragruntInfrastructureProvisioner provisioner = TerragruntInfrastructureProvisioner.builder()
                                                           .appId(APP_ID)
                                                           .path("current/working/directory")
                                                           .variables(getTerragruntVariables())
+                                                          .sourceRepoSettingId(SOURCE_REPO_SETTINGS_ID)
                                                           .build();
     Map<String, ResponseData> responseMap = ImmutableMap.of(ACTIVITY_ID, responseData);
     state.setRunPlanOnly(false);
@@ -689,12 +698,15 @@ public class TerragruntProvisionStateTest extends WingsBaseTest {
                                                .executionStatus(ExecutionStatus.SUCCESS)
                                                .workspace("workspace")
                                                .targets(asList("target1", "target2"))
+                                               .branch("master")
+                                               .pathToModule("module")
                                                .build();
 
     TerragruntInfrastructureProvisioner provisioner = TerragruntInfrastructureProvisioner.builder()
                                                           .appId(APP_ID)
                                                           .path("current/working/directory")
                                                           .variables(getTerragruntVariables())
+                                                          .sourceRepoSettingId(SOURCE_REPO_SETTINGS_ID)
                                                           .build();
     Map<String, ResponseData> responseMap = ImmutableMap.of(ACTIVITY_ID, responseData);
     destroyProvisionState.setRunPlanOnly(false);
