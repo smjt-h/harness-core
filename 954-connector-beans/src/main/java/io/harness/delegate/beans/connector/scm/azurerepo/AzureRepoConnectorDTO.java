@@ -64,9 +64,9 @@ public class AzureRepoConnectorDTO extends ConnectorConfigDTO implements ScmConn
   @Schema(description = "Selected Connectivity Modes") Set<String> delegateSelectors;
 
   @Builder
-  public AzureRepoConnectorDTO(GitConnectionType connectionType, String url, String validationProject, String validationRepo,
-      AzureRepoAuthenticationDTO authentication, AzureRepoApiAccessDTO apiAccess, Set<String> delegateSelectors,
-      boolean executeOnDelegate) {
+  public AzureRepoConnectorDTO(GitConnectionType connectionType, String url, String validationProject,
+      String validationRepo, AzureRepoAuthenticationDTO authentication, AzureRepoApiAccessDTO apiAccess,
+      Set<String> delegateSelectors, boolean executeOnDelegate) {
     this.connectionType = connectionType;
     this.url = url;
     this.validationProject = validationProject;
