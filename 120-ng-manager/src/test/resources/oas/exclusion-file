@@ -1,1 +1,0 @@
-endpoint-exclusion: io.harness.ng.core.delegate.resources.DelegateMtlsEndpointNgResource.isDomainPrefixAvailable
