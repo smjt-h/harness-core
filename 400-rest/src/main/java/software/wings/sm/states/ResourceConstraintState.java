@@ -167,7 +167,7 @@ public class ResourceConstraintState extends State {
     String releaseEntityId = null;
     switch (HoldingScope.valueOf(holdingScope)) {
       case PIPELINE:
-        if(featureFlagService.isEnabled(RESOURCE_CONSTRAINT_SCOPE_PIPELINE_ENABLED, context.getAccountId())) {
+        if (featureFlagService.isEnabled(RESOURCE_CONSTRAINT_SCOPE_PIPELINE_ENABLED, context.getAccountId())) {
           WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
           String pipelineDeploymentUuid = workflowStandardParams.getWorkflowElement().getPipelineDeploymentUuid();
           if (pipelineDeploymentUuid == null) {
@@ -342,7 +342,7 @@ public class ResourceConstraintState extends State {
 
     switch (HoldingScope.valueOf(holdingScope)) {
       case PIPELINE:
-        if(featureFlagService.isEnabled(RESOURCE_CONSTRAINT_SCOPE_PIPELINE_ENABLED, executionContext.getAccountId())) {
+        if (featureFlagService.isEnabled(RESOURCE_CONSTRAINT_SCOPE_PIPELINE_ENABLED, executionContext.getAccountId())) {
           releaseEntityId = ResourceConstraintService.releaseEntityId(pipelineDeploymentUuid);
           currentlyAcquiredPermits +=
               resourceConstraintService.getAllCurrentlyAcquiredPermits(holdingScope, releaseEntityId, appId);

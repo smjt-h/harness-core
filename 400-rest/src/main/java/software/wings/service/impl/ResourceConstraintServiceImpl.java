@@ -204,7 +204,8 @@ public class ResourceConstraintServiceImpl implements ResourceConstraintService,
     }
     if (workflowExecutionId != null) {
       query.filter(ResourceConstraintInstanceKeys.releaseEntityId, workflowExecutionId)
-          .field(ResourceConstraintInstanceKeys.releaseEntityType).in(asList(WORKFLOW.name(), PIPELINE.name()));
+          .field(ResourceConstraintInstanceKeys.releaseEntityType)
+          .in(asList(WORKFLOW.name(), PIPELINE.name()));
     }
 
     Set<String> constraintIds = new HashSet<>();
@@ -226,7 +227,7 @@ public class ResourceConstraintServiceImpl implements ResourceConstraintService,
     boolean finished = false;
     switch (holdingScope) {
       case PIPELINE:
-        if(featureFlagService.isEnabled(RESOURCE_CONSTRAINT_SCOPE_PIPELINE_ENABLED, instance.getAccountId())) {
+        if (featureFlagService.isEnabled(RESOURCE_CONSTRAINT_SCOPE_PIPELINE_ENABLED, instance.getAccountId())) {
           finished = workflowExecutionService.checkWorkflowExecutionInFinalStatus(
               instance.getAppId(), instance.getReleaseEntityId());
           break;
@@ -361,7 +362,7 @@ public class ResourceConstraintServiceImpl implements ResourceConstraintService,
         HoldingScope scope = HoldingScope.valueOf(instance.getReleaseEntityType());
         switch (scope) {
           case PIPELINE:
-            if(featureFlagService.isEnabled(RESOURCE_CONSTRAINT_SCOPE_PIPELINE_ENABLED, accountId)) {
+            if (featureFlagService.isEnabled(RESOURCE_CONSTRAINT_SCOPE_PIPELINE_ENABLED, accountId)) {
               final WorkflowExecution workflowExecution = workflowExecutionService.fetchWorkflowExecution(
                   instance.getAppId(), instance.getReleaseEntityId(), WorkflowExecutionKeys.name);
               builder.releaseEntityName(workflowExecution.getName());
