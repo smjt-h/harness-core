@@ -26,6 +26,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
+
 @Slf4j
 public class SaasSignupNotificationHelper implements SignupNotificationHelper {
   private final NotificationClient notificationClient;
@@ -45,6 +47,7 @@ public class SaasSignupNotificationHelper implements SignupNotificationHelper {
                 .build(cacheLoader);
   }
 
+  @Inject
   public void sendSignupNotification(UserInfo userInfo, EmailType emailType, String defaultTemplateId, String url) {
     String templateId = decideTemplateId(emailType, defaultTemplateId);
 
