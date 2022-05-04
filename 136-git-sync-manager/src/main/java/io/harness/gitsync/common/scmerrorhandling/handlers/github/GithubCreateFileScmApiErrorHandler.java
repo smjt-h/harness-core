@@ -12,7 +12,6 @@ import static io.harness.eraro.ErrorCode.UNEXPECTED;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.NestedExceptionUtils;
-import io.harness.exception.SCMExceptionErrorMessages;
 import io.harness.exception.SCMExceptionExplanations;
 import io.harness.exception.SCMExceptionHints;
 import io.harness.exception.ScmException;
@@ -33,8 +32,10 @@ public class GithubCreateFileScmApiErrorHandler implements ScmApiErrorHandler {
             new ScmUnauthorizedException(errorMessage));
       case 404:
         throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.CREATE_FILE_NOT_FOUND_ERROR,
-            SCMExceptionExplanations.REPOSITORY_NOT_FOUND_ERROR,
-            new ScmResourceNotFoundException(SCMExceptionErrorMessages.REPOSITORY_NOT_FOUND_ERROR));
+            SCMExceptionExplanations.CREATE_FILE_NOT_FOUND_ERROR, new ScmResourceNotFoundException(errorMessage));
+      case 409:
+        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.CREATE_FILE_CONFLICT_ERROR,
+            SCMExceptionExplanations.CREATE_FILE_CONFLICT_ERROR, new ScmResourceNotFoundException(errorMessage));
       default:
         throw new ScmException(UNEXPECTED);
     }
