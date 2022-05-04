@@ -235,7 +235,7 @@
 
     <module name="RegexpSingleline">
         <property name="format" value="Logger logger = LoggerFactory.getLogger"/>
-        <property name="message" value="Do not create logger object on your own, use lombok @Slf4j onstead"/>
+        <property name="message" value="Do not create logger object on your own, use lombok @Slf4j instead"/>
     </module>
 
     <!-- Spelling consistence -->
@@ -277,4 +277,15 @@
         <property name="message" value="Without is a single word"/>
     </module>
 
+    <module name="MatchXpath">
+        <property name="query" value="//VARIABLE_DEF/MODIFIERS/ANNOTATION/IDENT[@text='Inject']"/>
+        <message key="matchxpath.match"
+                 value="Inject annotation only allowed on constructors."/>
+    </module>
+
+    <module name="MatchXpath">
+        <property name="query" value="//METHOD_DEF/MODIFIERS/ANNOTATION[./IDENT[@text='Inject']]"/>
+        <message key="matchxpath.match"
+                 value="Inject annotation only allowed on constructors."/>
+    </module>
 </module>

@@ -29,7 +29,7 @@ import org.mockito.junit.MockitoRule;
 
 @OwnedBy(PL)
 @TargetModule(HarnessModule._980_COMMONS)
-public abstract class WingsBaseTest extends CategoryTest implements MockableTestMixin {
+public abstract class WingsBaseTest implements MockableTestMixin {
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
 
   // I am not absolutely sure why, but there is dependency between wings io.harness.rule and
