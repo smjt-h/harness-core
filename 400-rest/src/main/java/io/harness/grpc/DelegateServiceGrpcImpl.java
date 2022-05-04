@@ -8,6 +8,7 @@
 package io.harness.grpc;
 
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
+import static java.lang.System.currentTimeMillis;
 
 import io.harness.annotations.dev.BreakDependencyOn;
 import io.harness.annotations.dev.HarnessModule;
@@ -107,6 +108,7 @@ public class DelegateServiceGrpcImpl extends DelegateServiceImplBase {
   public void submitTask(SubmitTaskRequest request, StreamObserver<SubmitTaskResponse> responseObserver) {
     try {
       String taskId = generateUuid();
+      log.info("Grpc submit task call received, task created with id: {} ", taskId);
       TaskDetails taskDetails = request.getDetails();
       Map<String, String> setupAbstractions = request.getSetupAbstractions().getValuesMap();
       LinkedHashMap<String, String> logAbstractions =
@@ -152,6 +154,7 @@ public class DelegateServiceGrpcImpl extends DelegateServiceImplBase {
 
       DelegateTask task = taskBuilder.build();
 
+      long startTime = currentTimeMillis();
       if (task.getData().isParked()) {
         delegateTaskServiceClassic.processDelegateTask(task, DelegateTask.Status.PARKED);
       } else {
@@ -161,6 +164,7 @@ public class DelegateServiceGrpcImpl extends DelegateServiceImplBase {
           delegateService.scheduleSyncTask(task);
         }
       }
+      log.info("submitTask took {} milliseconds", currentTimeMillis() - startTime);
       responseObserver.onNext(SubmitTaskResponse.newBuilder()
                                   .setTaskId(TaskId.newBuilder().setId(taskId).build())
                                   .setTotalExpiry(Timestamps.fromMillis(task.getExpiry() + task.getData().getTimeout()))
