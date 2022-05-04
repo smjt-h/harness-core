@@ -7,6 +7,9 @@
 
 package io.harness.managerclient;
 
+import static com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT;
+import static com.fasterxml.jackson.core.JsonParser.Feature.AUTO_CLOSE_SOURCE;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.network.Http;
@@ -45,6 +48,8 @@ public class VerificationManagerClientFactory implements Provider<VerificationMa
   @Override
   public VerificationManagerClient get() {
     ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.configure(AUTO_CLOSE_SOURCE, false);
+    objectMapper.configure(AUTO_CLOSE_JSON_CONTENT, false);
     objectMapper.registerModule(new Jdk8Module());
     objectMapper.registerModule(new GuavaModule());
     objectMapper.registerModule(new JavaTimeModule());
