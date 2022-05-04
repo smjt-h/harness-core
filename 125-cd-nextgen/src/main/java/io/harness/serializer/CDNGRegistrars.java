@@ -34,6 +34,7 @@ import io.harness.morphia.MorphiaRegistrar;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.serializer.kryo.NGKryoRegistrar;
 import io.harness.serializer.morphia.NGEntitiesMorphiaRegistrar;
+import io.harness.serializer.kryo.NGEntitiesKryoRegistrar;
 import io.harness.serializer.morphia.NGMorphiaRegistrar;
 import io.harness.yaml.schema.beans.SchemaNamespaceConstants;
 import io.harness.yaml.schema.beans.YamlGroup;
@@ -58,12 +59,13 @@ public class CDNGRegistrars {
           .addAll(ConnectorNextGenRegistrars.kryoRegistrars)
           .addAll(GitOpsRegistrars.kryoRegistrars)
           .addAll(YamlBeansModuleRegistrars.kryoRegistrars)
-          .addAll(OrchestrationStepsModuleRegistrars.kryoRegistrars)
+          .addAll(io.harness.serializer.OrchestrationStepsModuleRegistrars.kryoRegistrars)
           .addAll(CDNGBeanRegistrars.kryoRegistrars)
           .add(NGKryoRegistrar.class)
           .add(PollingKryoRegistrar.class)
           .addAll(DelegateTaskRegistrars.kryoRegistrars)
           .addAll(NGCommonModuleRegistrars.kryoRegistrars)
+          .add(NGEntitiesKryoRegistrar.class)
           .build();
 
   public final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =

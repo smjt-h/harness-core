@@ -8,6 +8,7 @@ java_library(
     visibility = ["//visibility:public"],
     deps = [
         "//:lombok",
+        "//127-cd-nextgen-beans:module",
         "//860-orchestration-steps:module",  # This should be removed from here
         "//878-ng-common-utilities:module",
         "//879-pms-sdk:module",
