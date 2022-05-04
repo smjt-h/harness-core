@@ -56,8 +56,6 @@ import io.harness.ng.core.service.services.ServiceEntityService;
 import io.harness.ng.core.service.services.impl.ServiceEntityServiceImpl;
 import io.harness.service.instance.InstanceService;
 import io.harness.service.instance.InstanceServiceImpl;
-import io.harness.service.instancesync.InstanceSyncService;
-import io.harness.service.instancesync.InstanceSyncServiceImpl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
@@ -103,7 +101,6 @@ public class NGModule extends AbstractModule {
     bind(AcrResourceService.class).to(AcrResourceServiceImpl.class);
     bind(AzureResourceService.class).to(AzureResourceServiceImpl.class);
     bind(FilterService.class).to(FilterServiceImpl.class);
-    bind(InstanceSyncService.class).to(InstanceSyncServiceImpl.class);
 
     MapBinder<String, FilterPropertiesMapper> filterPropertiesMapper =
         MapBinder.newMapBinder(binder(), String.class, FilterPropertiesMapper.class);
