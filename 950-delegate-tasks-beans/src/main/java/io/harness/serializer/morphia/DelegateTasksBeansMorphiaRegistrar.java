@@ -28,6 +28,7 @@ import io.harness.delegate.beans.executioncapability.PcfAutoScalarCapability;
 import io.harness.delegate.beans.executioncapability.PcfInstallationCapability;
 import io.harness.delegate.beans.executioncapability.ProcessExecutorCapability;
 import io.harness.delegate.beans.executioncapability.SelectorCapability;
+import io.harness.delegate.beans.executioncapability.ServerlessInstallationCapability;
 import io.harness.delegate.beans.executioncapability.SmbConnectionCapability;
 import io.harness.delegate.beans.executioncapability.SmtpCapability;
 import io.harness.delegate.beans.executioncapability.SocketConnectivityBulkOrExecutionCapability;
@@ -59,6 +60,9 @@ import software.wings.beans.JenkinsConfig;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.SpotInstConfig;
 import software.wings.beans.config.ArtifactSourceable;
+import software.wings.beans.infrastructure.instance.info.EcsContainerInfo;
+import software.wings.beans.infrastructure.instance.info.K8sPodInfo;
+import software.wings.beans.infrastructure.instance.info.KubernetesContainerInfo;
 import software.wings.beans.settings.helm.HttpHelmRepoConfig;
 import software.wings.beans.yaml.GitCommandExecutionResponse;
 import software.wings.beans.yaml.GitCommitAndPushResult;
@@ -114,6 +118,8 @@ public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
         SocketConnectivityExecutionCapability.class);
     h.put("delegate.beans.executioncapability.SocketConnectivityBulkOrExecutionCapability",
         SocketConnectivityBulkOrExecutionCapability.class);
+    h.put(
+        "delegate.beans.executioncapability.ServerlessInstallationCapability", ServerlessInstallationCapability.class);
     h.put("delegate.beans.executioncapability.SystemEnvCheckerCapability", SystemEnvCheckerCapability.class);
     h.put("delegate.beans.executioncapability.SelectorCapability", SelectorCapability.class);
     h.put("delegate.command.CommandExecutionResult", CommandExecutionResult.class);
@@ -147,6 +153,9 @@ public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
     w.put("beans.SpotInstConfig", SpotInstConfig.class);
     w.put("sm.states.KubernetesSteadyStateCheckResponse", KubernetesSteadyStateCheckResponse.class);
     w.put("sm.states.KubernetesSwapServiceSelectorsResponse", KubernetesSwapServiceSelectorsResponse.class);
+    w.put("beans.infrastructure.instance.info.EcsContainerInfo", EcsContainerInfo.class);
+    w.put("beans.infrastructure.instance.info.K8sPodInfo", K8sPodInfo.class);
+    w.put("beans.infrastructure.instance.info.KubernetesContainerInfo", KubernetesContainerInfo.class);
     h.put("waiter.ListNotifyResponseData", ListNotifyResponseData.class);
   }
 }

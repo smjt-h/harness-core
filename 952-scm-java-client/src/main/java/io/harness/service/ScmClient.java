@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FileContentBatchResponse;
+import io.harness.beans.PageRequestDTO;
 import io.harness.beans.gitsync.GitFileDetails;
 import io.harness.beans.gitsync.GitFilePathDetails;
 import io.harness.beans.gitsync.GitPRCreateRequest;
@@ -31,6 +32,7 @@ import io.harness.product.ci.scm.proto.GetLatestCommitResponse;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.IsLatestFileResponse;
 import io.harness.product.ci.scm.proto.ListBranchesResponse;
+import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
 import io.harness.product.ci.scm.proto.ListCommitsInPRResponse;
 import io.harness.product.ci.scm.proto.ListCommitsResponse;
 import io.harness.product.ci.scm.proto.ListWebhooksResponse;
@@ -65,6 +67,8 @@ public interface ScmClient {
 
   ListBranchesResponse listBranches(ScmConnector scmConnector);
 
+  ListBranchesWithDefaultResponse listBranchesWithDefault(ScmConnector scmConnector, PageRequestDTO pageRequest);
+
   ListCommitsResponse listCommits(ScmConnector scmConnector, String branchName);
 
   ListCommitsInPRResponse listCommitsInPR(ScmConnector scmConnector, int prNumber);
@@ -91,5 +95,5 @@ public interface ScmClient {
 
   FindCommitResponse findCommit(ScmConnector scmConnector, String commitId);
 
-  GetUserReposResponse getUserRepos(ScmConnector scmConnector);
+  GetUserReposResponse getUserRepos(ScmConnector scmConnector, PageRequestDTO pageRequest);
 }

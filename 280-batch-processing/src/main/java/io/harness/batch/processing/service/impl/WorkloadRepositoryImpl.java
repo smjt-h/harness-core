@@ -104,6 +104,28 @@ public class WorkloadRepositoryImpl implements WorkloadRepository {
   }
 
   @Override
+  public List<K8sWorkload> getWorkloadByWorkloadUid(String accountId, String clusterId, Set<String> workloadUid) {
+    return hPersistence.createQuery(K8sWorkload.class, excludeAuthorityCount)
+        .filter(K8sWorkloadKeys.accountId, accountId)
+        .filter(K8sWorkloadKeys.clusterId, clusterId)
+        .field(K8sWorkloadKeys.uid)
+        .in(workloadUid)
+        .asList();
+  }
+
+  @Override
+  public List<K8sWorkload> getWorkloadWithoutSorting(
+      String accountId, String clusterId, String namespace, Set<String> workloadName) {
+    return hPersistence.createQuery(K8sWorkload.class, excludeAuthorityCount)
+        .filter(K8sWorkloadKeys.accountId, accountId)
+        .filter(K8sWorkloadKeys.clusterId, clusterId)
+        .filter(K8sWorkloadKeys.namespace, namespace)
+        .field(K8sWorkloadKeys.name)
+        .in(workloadName)
+        .asList();
+  }
+
+  @Override
   public Optional<K8sWorkload> getWorkload(String accountId, String clusterId, String uid) {
     return Optional.ofNullable(hPersistence.createQuery(K8sWorkload.class)
                                    .field(K8sWorkloadKeys.accountId)
