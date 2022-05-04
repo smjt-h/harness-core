@@ -55,18 +55,12 @@ import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Slf4j
 @OwnedBy(PL)
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({NGRestUtils.class})
 public class NextGenAuthenticationFilterTest extends ApiKeyFilterTestBase {
   private static final String accountIdentifier = "accountIdentifier";
   private static final String incorrectAccountIdentifier = "incorrectAccountIdentifier";
@@ -145,7 +139,7 @@ public class NextGenAuthenticationFilterTest extends ApiKeyFilterTestBase {
     apiKey = "sat" + delimiter + uuid + delimiter + rawPassword;
     when(containerRequestContext.getHeaderString(AUTHORIZATION_HEADER)).thenReturn("Bearer " + apiKey);
     when(authenticationFilter.testRequestPredicate(containerRequestContext)).thenReturn(true);
-    PowerMockito.mockStatic(NGRestUtils.class);
+    Mockito.mockStatic(NGRestUtils.class);
     assertThatThrownBy(() -> authenticationFilter.filter(containerRequestContext))
         .isInstanceOf(InvalidRequestException.class);
   }
@@ -171,7 +165,7 @@ public class NextGenAuthenticationFilterTest extends ApiKeyFilterTestBase {
     apiKey = "sat" + delimiter + uuid + delimiter + rawPassword;
     when(containerRequestContext.getHeaderString(X_API_KEY)).thenReturn(apiKey);
     when(authenticationFilter.testRequestPredicate(containerRequestContext)).thenReturn(true);
-    PowerMockito.mockStatic(NGRestUtils.class);
+    Mockito.mockStatic(NGRestUtils.class);
     TokenDTO tokenDTO = TokenDTO.builder()
                             .apiKeyType(ApiKeyType.SERVICE_ACCOUNT)
                             .encodedPassword(encodedPassword)
@@ -188,7 +182,7 @@ public class NextGenAuthenticationFilterTest extends ApiKeyFilterTestBase {
 
     newApiKey = "sat" + delimiter + accountIdentifier + delimiter + uuid + delimiter + rawPassword;
     when(containerRequestContext.getHeaderString(X_API_KEY)).thenReturn(newApiKey);
-    PowerMockito.mockStatic(NGRestUtils.class);
+    Mockito.mockStatic(NGRestUtils.class);
     TokenDTO tokenDTO1 = TokenDTO.builder()
                              .apiKeyType(ApiKeyType.SERVICE_ACCOUNT)
                              .encodedPassword(encodedPassword)
@@ -212,7 +206,7 @@ public class NextGenAuthenticationFilterTest extends ApiKeyFilterTestBase {
     String uuid = generateUuid();
     String rawPassword = generateUuid();
     String encodedPassword = new BCryptPasswordEncoder($2A, 10).encode(rawPassword);
-    PowerMockito.mockStatic(NGRestUtils.class);
+    Mockito.mockStatic(NGRestUtils.class);
     TokenDTO tokenDTO = TokenDTO.builder()
                             .apiKeyType(ApiKeyType.SERVICE_ACCOUNT)
                             .encodedPassword(encodedPassword)
@@ -288,7 +282,7 @@ public class NextGenAuthenticationFilterTest extends ApiKeyFilterTestBase {
     apiKey = "pat" + delimiter + uuid + delimiter + rawPassword;
     when(containerRequestContext.getHeaderString(X_API_KEY)).thenReturn(apiKey);
     when(authenticationFilter.testRequestPredicate(containerRequestContext)).thenReturn(true);
-    PowerMockito.mockStatic(NGRestUtils.class);
+    Mockito.mockStatic(NGRestUtils.class);
     TokenDTO tokenDTO = TokenDTO.builder()
                             .apiKeyType(ApiKeyType.USER)
                             .encodedPassword(encodedPassword)
@@ -307,7 +301,7 @@ public class NextGenAuthenticationFilterTest extends ApiKeyFilterTestBase {
 
     newApiKey = "pat" + delimiter + accountIdentifier + delimiter + uuid + delimiter + rawPassword;
     when(containerRequestContext.getHeaderString(X_API_KEY)).thenReturn(newApiKey);
-    PowerMockito.mockStatic(NGRestUtils.class);
+    Mockito.mockStatic(NGRestUtils.class);
     TokenDTO tokenDTO1 = TokenDTO.builder()
                              .apiKeyType(ApiKeyType.USER)
                              .encodedPassword(encodedPassword)
@@ -333,7 +327,7 @@ public class NextGenAuthenticationFilterTest extends ApiKeyFilterTestBase {
     String uuid = generateUuid();
     String rawPassword = generateUuid();
     String encodedPassword = new BCryptPasswordEncoder($2A, 10).encode(rawPassword);
-    PowerMockito.mockStatic(NGRestUtils.class);
+    Mockito.mockStatic(NGRestUtils.class);
     TokenDTO tokenDTO = TokenDTO.builder()
                             .apiKeyType(ApiKeyType.USER)
                             .encodedPassword(encodedPassword)

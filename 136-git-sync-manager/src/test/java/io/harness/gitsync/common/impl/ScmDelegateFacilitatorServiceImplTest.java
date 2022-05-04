@@ -15,7 +15,6 @@ import static io.harness.rule.OwnerRule.MOHIT_GARG;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -96,11 +95,11 @@ public class ScmDelegateFacilitatorServiceImplTest extends GitSyncTestBase {
     ConnectorInfoDTO connectorInfo = ConnectorInfoDTO.builder().connectorConfig(githubConnector).build();
     doReturn(Optional.of(ConnectorResponseDTO.builder().connector(connectorInfo).build()))
         .when(connectorService)
-        .get(anyString(), anyString(), anyString(), anyString());
+        .get(any(), any(), any(), any());
     doReturn((ScmConnector) connectorInfo.getConnectorConfig())
         .when(gitSyncConnectorHelper)
         .getScmConnector(any(), any(), any(), any());
-    when(yamlGitConfigService.get(anyString(), anyString(), anyString(), anyString()))
+    when(yamlGitConfigService.get(any(), any(), any(), any()))
         .thenReturn(YamlGitConfigDTO.builder()
                         .accountIdentifier(accountIdentifier)
                         .projectIdentifier(projectIdentifier)
@@ -108,11 +107,11 @@ public class ScmDelegateFacilitatorServiceImplTest extends GitSyncTestBase {
                         .gitConnectorRef(connectorIdentifierRef)
                         .build());
     when(gitSyncConnectorHelper.getScmConnector(
-             anyString(), anyString(), anyString(), anyString(), anyString(), anyString()))
+             any(), any(), any(), any(), any(), any()))
         .thenReturn((ScmConnector) connectorInfo.getConnectorConfig());
     doReturn(githubConnector)
         .when(gitSyncConnectorHelper)
-        .getScmConnectorForGivenRepo(anyString(), anyString(), anyString(), anyString(), anyString());
+        .getScmConnectorForGivenRepo(any(), any(), any(), any(), any());
   }
 
   @Test

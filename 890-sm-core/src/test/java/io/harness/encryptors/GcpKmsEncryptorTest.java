@@ -13,10 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
@@ -42,17 +39,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 @Slf4j
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(KeyManagementServiceClient.class)
-@PowerMockIgnore({"javax.security.*", "org.apache.http.conn.ssl.", "javax.net.ssl.", "javax.crypto.*"})
 public class GcpKmsEncryptorTest extends CategoryTest {
   private GcpKmsEncryptor gcpKmsEncryptor;
   private GcpKmsConfig gcpKmsConfig;
@@ -83,7 +72,7 @@ public class GcpKmsEncryptorTest extends CategoryTest {
     String encryptedDek = "encryptedDek";
     String plainTextValue = "value";
 
-    KeyManagementServiceClient keyManagementServiceClient = PowerMockito.mock(KeyManagementServiceClient.class);
+    KeyManagementServiceClient keyManagementServiceClient = mock(KeyManagementServiceClient.class);
     EncryptResponse encryptResponse =
         EncryptResponse.newBuilder()
             .setCiphertext(ByteString.copyFrom(encryptedDek.getBytes(StandardCharsets.ISO_8859_1)))
@@ -93,7 +82,7 @@ public class GcpKmsEncryptorTest extends CategoryTest {
     doReturn(keyManagementServiceClient).when(gcpKmsEncryptor).getClientInternal(any());
 
     // Encryption Test
-    PowerMockito.when(keyManagementServiceClient.encrypt(eq(resourceName), any(ByteString.class)))
+    when(keyManagementServiceClient.encrypt(eq(resourceName), any(ByteString.class)))
         .thenReturn(encryptResponse);
     EncryptedRecord encryptedRecord =
         gcpKmsEncryptor.encryptSecret(gcpKmsConfig.getAccountId(), plainTextValue, gcpKmsConfig);
@@ -111,7 +100,7 @@ public class GcpKmsEncryptorTest extends CategoryTest {
                                             .encryptedValue(encryptedRecord.getEncryptedValue())
                                             .build();
     DecryptResponse decryptResponse = DecryptResponse.newBuilder().setPlaintext(plainTextDek).build();
-    PowerMockito.when(keyManagementServiceClient.decrypt(eq(resourceName), any())).thenReturn(decryptResponse);
+    when(keyManagementServiceClient.decrypt(eq(resourceName), any())).thenReturn(decryptResponse);
     char[] decryptedValue = gcpKmsEncryptor.fetchSecretValue(gcpKmsConfig.getAccountId(), encryptedData, gcpKmsConfig);
     assertThat(String.valueOf(decryptedValue)).isEqualTo(plainTextValue);
   }
@@ -122,13 +111,13 @@ public class GcpKmsEncryptorTest extends CategoryTest {
   public void testEncryptSecret_shouldThrowError() {
     String plainTextValue = "value";
 
-    KeyManagementServiceClient keyManagementServiceClient = PowerMockito.mock(KeyManagementServiceClient.class);
+    KeyManagementServiceClient keyManagementServiceClient = mock(KeyManagementServiceClient.class);
     String resourceName = CryptoKeyName.format(
         gcpKmsConfig.getProjectId(), gcpKmsConfig.getRegion(), gcpKmsConfig.getKeyRing(), gcpKmsConfig.getKeyName());
     doReturn(keyManagementServiceClient).when(gcpKmsEncryptor).getClientInternal(any());
 
     // Encryption Test
-    PowerMockito.when(keyManagementServiceClient.encrypt(eq(resourceName), any(ByteString.class)))
+    when(keyManagementServiceClient.encrypt(eq(resourceName), any(ByteString.class)))
         .thenThrow(new RuntimeException());
     try {
       gcpKmsEncryptor.encryptSecret(gcpKmsConfig.getAccountId(), plainTextValue, gcpKmsConfig);
@@ -142,7 +131,7 @@ public class GcpKmsEncryptorTest extends CategoryTest {
   @Owner(developers = UTKARSH)
   @Category(UnitTests.class)
   public void testFetchValue_shouldThrowError() {
-    KeyManagementServiceClient keyManagementServiceClient = PowerMockito.mock(KeyManagementServiceClient.class);
+    KeyManagementServiceClient keyManagementServiceClient = mock(KeyManagementServiceClient.class);
     String resourceName = CryptoKeyName.format(
         gcpKmsConfig.getProjectId(), gcpKmsConfig.getRegion(), gcpKmsConfig.getKeyRing(), gcpKmsConfig.getKeyName());
     doReturn(keyManagementServiceClient).when(gcpKmsEncryptor).getClientInternal(any());
@@ -152,7 +141,7 @@ public class GcpKmsEncryptorTest extends CategoryTest {
                                             .encryptionKey(UUIDGenerator.generateUuid())
                                             .encryptedValue(UUIDGenerator.generateUuid().toCharArray())
                                             .build();
-    PowerMockito.when(keyManagementServiceClient.decrypt(eq(resourceName), any())).thenThrow(new RuntimeException());
+    when(keyManagementServiceClient.decrypt(eq(resourceName), any())).thenThrow(new RuntimeException());
     try {
       gcpKmsEncryptor.fetchSecretValue(gcpKmsConfig.getAccountId(), encryptedData, gcpKmsConfig);
       fail("Method call should have thrown an exception");
