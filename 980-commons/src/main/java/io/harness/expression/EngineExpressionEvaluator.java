@@ -425,7 +425,7 @@ public class EngineExpressionEvaluator {
     if (hasExpressions(normalizedExpression)) {
       return Collections.singletonList(normalizedExpression);
     }
-    return this.fetchPrefixes()
+    return fetchPrefixes()
         .stream()
         .map(prefix -> EmptyPredicate.isEmpty(prefix) ? normalizedExpression : prefix + "." + normalizedExpression)
         .collect(Collectors.toList());

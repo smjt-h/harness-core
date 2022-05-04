@@ -21,8 +21,8 @@ import java.util.List;
 
 @OwnedBy(HarnessTeam.CDC)
 public class YamlExpressionEvaluator extends EngineExpressionEvaluator {
-  protected final String yaml;
-  protected final String fqnPathToElement;
+  private final String yaml;
+  private final String fqnPathToElement;
 
   public YamlExpressionEvaluator(String yaml, String fqnPathToElement) {
     super(null);
