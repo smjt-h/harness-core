@@ -1,43 +1,38 @@
 /*
- * Copyright 2021 Harness Inc. All rights reserved.
- * Use of this source code is governed by the PolyForm Shield 1.0.0 license
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
  * that can be found in the licenses directory at the root of this repository, also available at
- * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.evaluators;
+package io.harness.cvng.core.utils.template;
 
-import io.harness.annotations.dev.HarnessTeam;
-import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
 import io.harness.expression.EngineExpressionEvaluator;
-import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlUtils;
 
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
+import lombok.Builder;
+import lombok.Value;
 
-@OwnedBy(HarnessTeam.CDC)
-public class YamlExpressionEvaluator extends EngineExpressionEvaluator {
+@Value
+@Builder
+public class MonitoredServiceYamlExpressionEvaluator extends EngineExpressionEvaluator {
   protected final String yaml;
-  protected final String fqnPathToElement;
 
-  public YamlExpressionEvaluator(String yaml, String fqnPathToElement) {
+  public MonitoredServiceYamlExpressionEvaluator(String yaml) {
     super(null);
     this.yaml = yaml;
-    this.fqnPathToElement = fqnPathToElement;
   }
 
   @Override
   protected void initialize() {
     super.initialize();
     addToContext("__yamlExpression",
-        YamlExpressionFunctor.builder()
-            .rootYamlField(getPipelineYamlField())
-            .fqnPathToElement(fqnPathToElement)
-            .build());
+        MonitoredServiceYamlExpressionFunctor.builder().rootYamlField(getPipelineYamlField()).build());
   }
 
   @Override
@@ -49,7 +44,7 @@ public class YamlExpressionEvaluator extends EngineExpressionEvaluator {
   private YamlField getPipelineYamlField() {
     try {
       YamlField yamlField = YamlUtils.readTree(yaml);
-      return yamlField.getNode().getField(YAMLFieldNameConstants.PIPELINE);
+      return yamlField.getNode().getField("monitoredService");
     } catch (IOException e) {
       throw new InvalidRequestException("Not valid yaml passed.");
     }

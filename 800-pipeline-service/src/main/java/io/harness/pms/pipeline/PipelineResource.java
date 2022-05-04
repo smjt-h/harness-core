@@ -247,7 +247,7 @@ public class PipelineResource implements YamlSchemaResource {
       summary = "Get all the Variables which can be used as expression in the Pipeline.",
       responses =
       {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = " default",
             description = "Returns all Variables used that are valid to be used as expression in pipeline.")
       })
   @ApiOperation(value = "Create variables for Pipeline", nickname = "createVariablesV2")
