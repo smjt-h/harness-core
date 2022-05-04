@@ -13,6 +13,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.PageRequestDTO;
 import io.harness.beans.Scope;
 import io.harness.beans.gitsync.GitPRCreateRequest;
+import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
 import io.harness.delegate.task.scm.GitWebhookTaskType;
 import io.harness.gitsync.common.beans.InfoForGitPush;
@@ -88,7 +89,7 @@ public interface ScmClientFacilitatorService {
   CreateBranchResponse createBranch(InfoForGitPush infoForGitPush, String yamlGitConfigIdentifier);
 
   GetUserReposResponse listUserRepos(String accountIdentifier, String orgIdentifier, String projectIdentifier,
-      String connectorRef, PageRequestDTO pageRequest);
+      ScmConnector scmConnector, PageRequestDTO pageRequest);
 
   ListBranchesWithDefaultResponse listBranches(String accountIdentifier, String orgIdentifier, String projectIdentifier,
       String connectorRef, String repoName, PageRequestDTO pageRequest);

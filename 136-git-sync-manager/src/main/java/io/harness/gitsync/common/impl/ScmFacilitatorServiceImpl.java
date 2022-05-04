@@ -65,13 +65,18 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
   @Override
   public List<GitRepositoryResponseDTO> listReposByRefConnector(String accountIdentifier, String orgIdentifier,
       String projectIdentifier, String connectorRef, PageRequest pageRequest, String searchTerm) {
-    GetUserReposResponse response = scmOrchestratorService.processScmRequestUsingConnectorSettings(
-        scmClientFacilitatorService
-        -> scmClientFacilitatorService.listUserRepos(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef,
+    ScmConnector scmConnector =
+        gitSyncConnectorHelper.getScmConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
+    GetUserReposResponse response = scmOrchestratorService.processScmRequestUsingConnector(scmClientFacilitatorService
+        -> scmClientFacilitatorService.listUserRepos(accountIdentifier, orgIdentifier, projectIdentifier, scmConnector,
             PageRequestDTO.builder().pageIndex(pageRequest.getPageIndex()).pageSize(pageRequest.getPageSize()).build()),
-        projectIdentifier, orgIdentifier, accountIdentifier, connectorRef);
+        scmConnector);
+    if (isFailureResponse(response.getStatus())) {
+      ScmApiErrorHandlingHelper.processAndThrowError(
+          ScmApis.LIST_REPOSITORIES, scmConnector.getConnectorType(), response.getStatus(), response.getError());
+    }
 
-    return prepareListRepoResponse(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, response);
+    return prepareListRepoResponse(scmConnector, response);
   }
 
   @Override
@@ -98,10 +103,8 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
         .build();
   }
 
-  private List<GitRepositoryResponseDTO> prepareListRepoResponse(String accountIdentifier, String orgIdentifier,
-      String projectIdentifier, String connectorRef, GetUserReposResponse response) {
-    ScmConnector scmConnector =
-        gitSyncConnectorHelper.getScmConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
+  private List<GitRepositoryResponseDTO> prepareListRepoResponse(
+      ScmConnector scmConnector, GetUserReposResponse response) {
     GitRepositoryDTO gitRepository = scmConnector.getGitRepositoryDetails();
     if (isNotEmpty(gitRepository.getName())) {
       return Collections.singletonList(GitRepositoryResponseDTO.builder().name(gitRepository.getName()).build());
@@ -230,5 +233,9 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
         .blobId(fileContent.getBlobId())
         .commitId(fileContent.getCommitId())
         .build();
+  }
+
+  private boolean isFailureResponse(int statusCode) {
+    return statusCode >= 300;
   }
 }
