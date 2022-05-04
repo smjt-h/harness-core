@@ -397,22 +397,32 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
 
   @Override
   public io.harness.gitsync.UpdateFileResponse updateFile(UpdateFileRequest updateFileRequest) {
-    ScmCommitFileResponseDTO scmCommitFileResponseDTO = scmFacilitatorService.updateFile(
-        ScmUpdateFileRequestDTO.builder()
-            .repoName(updateFileRequest.getRepoName())
-            .branchName(updateFileRequest.getBranchName())
-            .connectorRef(updateFileRequest.getConnectorRef())
-            .fileContent(updateFileRequest.getFileContent())
-            .filePath(updateFileRequest.getFilePath())
-            .commitMessage(updateFileRequest.getCommitMessage())
-            .oldCommitId(updateFileRequest.getOldCommitId())
-            .baseBranch(updateFileRequest.getBaseBranchName())
-            .oldFileSha(updateFileRequest.getOldFileSha())
-            .isCommitToNewBranch(updateFileRequest.getIsCommitToNewBranch())
-            .scope(ScopeIdentifierMapper.getScopeFromScopeIdentifiers(updateFileRequest.getScopeIdentifiers()))
-            .build());
-
-    return prepareUpdateFileResponse(updateFileRequest, scmCommitFileResponseDTO);
+    try {
+      ScmCommitFileResponseDTO scmCommitFileResponseDTO = scmFacilitatorService.updateFile(
+          ScmUpdateFileRequestDTO.builder()
+              .repoName(updateFileRequest.getRepoName())
+              .branchName(updateFileRequest.getBranchName())
+              .connectorRef(updateFileRequest.getConnectorRef())
+              .fileContent(updateFileRequest.getFileContent())
+              .filePath(updateFileRequest.getFilePath())
+              .commitMessage(updateFileRequest.getCommitMessage())
+              .oldCommitId(updateFileRequest.getOldCommitId())
+              .baseBranch(updateFileRequest.getBaseBranchName())
+              .oldFileSha(updateFileRequest.getOldFileSha())
+              .isCommitToNewBranch(updateFileRequest.getIsCommitToNewBranch())
+              .scope(ScopeIdentifierMapper.getScopeFromScopeIdentifiers(updateFileRequest.getScopeIdentifiers()))
+              .build());
+      return prepareUpdateFileResponse(updateFileRequest, scmCommitFileResponseDTO);
+    } catch (WingsException ex) {
+      ScmException scmException = ScmExceptionUtils.getScmException(ex);
+      if (scmException == null) {
+        throw ex;
+      }
+      return io.harness.gitsync.UpdateFileResponse.newBuilder()
+          .setStatusCode(ScmErrorCodeToHttpStatusCodeMapping.getHttpStatusCode(scmException.getCode()))
+          .setError(prepareErrorDetails(ex))
+          .build();
+    }
   }
 
   @Override

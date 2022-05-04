@@ -23,24 +23,24 @@ import io.harness.exception.WingsException;
 import io.harness.gitsync.common.scmerrorhandling.handlers.ScmApiErrorHandler;
 
 @OwnedBy(PL)
-public class GithubCreateFileScmApiErrorHandler implements ScmApiErrorHandler {
+public class GithubUpdateFileScmApiErrorHandler implements ScmApiErrorHandler {
   @Override
   public void handleError(int statusCode, String errorMessage) throws WingsException {
     switch (statusCode) {
       case 401:
       case 403:
         throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.GITHUB_INVALID_CREDENTIALS,
-            SCMExceptionExplanations.CREATE_FILE_WITH_INVALID_CREDS, new ScmUnauthorizedException(errorMessage));
+            SCMExceptionExplanations.UPDATE_FILE_WITH_INVALID_CREDS, new ScmUnauthorizedException(errorMessage));
       case 404:
-        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.CREATE_FILE_NOT_FOUND_ERROR,
-            SCMExceptionExplanations.CREATE_FILE_NOT_FOUND_ERROR, new ScmResourceNotFoundException(errorMessage));
+        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.UPDATE_FILE_NOT_FOUND_ERROR,
+            SCMExceptionExplanations.UPDATE_FILE_NOT_FOUND_ERROR, new ScmResourceNotFoundException(errorMessage));
       case 409:
-        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.CREATE_FILE_CONFLICT_ERROR,
-            SCMExceptionExplanations.CREATE_FILE_CONFLICT_ERROR, new ScmConflictException(errorMessage));
+        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.UPDATE_FILE_CONFLICT_ERROR,
+            SCMExceptionExplanations.UPDATE_FILE_CONFLICT_ERROR, new ScmConflictException(errorMessage));
       case 422:
         throw NestedExceptionUtils.hintWithExplanationException(
-            SCMExceptionHints.CREATE_FILE_UNPROCESSABLE_ENTITY_ERROR,
-            SCMExceptionExplanations.CREATE_FILE_UNPROCESSABLE_ENTITY_ERROR,
+            SCMExceptionHints.UPDATE_FILE_UNPROCESSABLE_ENTITY_ERROR,
+            SCMExceptionExplanations.UPDATE_FILE_UNPROCESSABLE_ENTITY_ERROR,
             new ScmUnprocessableEntityException(errorMessage));
       default:
         throw new ScmException(UNEXPECTED);

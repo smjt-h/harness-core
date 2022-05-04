@@ -37,8 +37,8 @@ import io.harness.product.ci.scm.proto.CreateFileResponse;
 import io.harness.product.ci.scm.proto.CreatePRResponse;
 import io.harness.product.ci.scm.proto.FileContent;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
-import io.harness.product.ci.scm.proto.UpdateFileResponse;
 import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
+import io.harness.product.ci.scm.proto.UpdateFileResponse;
 
 import com.google.inject.Inject;
 import java.util.Collections;
@@ -144,7 +144,6 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
             scope.getProjectIdentifier(), scope.getOrgIdentifier(), scope.getAccountIdentifier(),
             scmCreateFileRequestDTO.getConnectorRef());
 
-    // Put Error Handling
     ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.CREATE_FILE,
         gitSyncConnectorHelper.getScmConnectorByRef(scope, scmCreateFileRequestDTO.getConnectorRef())
             .getConnectorType(),
@@ -182,7 +181,10 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
             scope.getProjectIdentifier(), scope.getOrgIdentifier(), scope.getAccountIdentifier(),
             scmUpdateFileRequestDTO.getConnectorRef());
 
-    // Put Error Handling
+    ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.UPDATE_FILE,
+        gitSyncConnectorHelper.getScmConnectorByRef(scope, scmUpdateFileRequestDTO.getConnectorRef())
+            .getConnectorType(),
+        updateFileResponse.getStatus(), updateFileResponse.getError());
 
     return ScmCommitFileResponseDTO.builder()
         .commitId(updateFileResponse.getCommitId())
