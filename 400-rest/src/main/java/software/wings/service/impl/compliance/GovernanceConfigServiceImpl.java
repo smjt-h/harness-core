@@ -126,7 +126,23 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
       }
       toggleExpiredWindows(governanceConfig, accountId);
       populateWindowsStatus(governanceConfig, accountId);
+      populateUserGroupInBackwardCompatibleManner(governanceConfig, accountId);
       return governanceConfig;
+    }
+  }
+
+  private void populateUserGroupInBackwardCompatibleManner(GovernanceConfig governanceConfig, String accountId) {
+    if (featureFlagService.isEnabled(FeatureName.NEW_DEPLOYMENT_FREEZE, accountId)
+        && isNotEmpty(governanceConfig.getTimeRangeBasedFreezeConfigs())) {
+      governanceConfig.getTimeRangeBasedFreezeConfigs().forEach(timeRangeBasedFreezeConfig -> {
+        if (timeRangeBasedFreezeConfig.getUserGroups() != null) {
+          timeRangeBasedFreezeConfig.setUserGroupSelection(CustomUserGroupFilter.builder()
+                                                               .userGroupFilterType(BlackoutWindowFilterType.CUSTOM)
+                                                               .userGroups(timeRangeBasedFreezeConfig.getUserGroups())
+                                                               .build());
+          timeRangeBasedFreezeConfig.setUserGroups(null);
+        }
+      });
     }
   }
 
