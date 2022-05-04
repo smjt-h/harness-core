@@ -312,7 +312,8 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
     return scmClient.listBranchesWithDefault(decryptedConnector, pageRequest);
   }
 
-  private CreateBranchResponse createBranch(String branch, String baseBranch, ScmConnector scmConnector) {
+  @Override
+  public CreateBranchResponse createBranch(String branch, String baseBranch, ScmConnector scmConnector) {
     return scmClient.createNewBranch(scmConnector, branch, baseBranch);
   }
 }

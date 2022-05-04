@@ -14,11 +14,13 @@ import io.harness.gitsync.common.beans.ScmApis;
 import io.harness.gitsync.common.dtos.RepoProviders;
 import io.harness.gitsync.common.scmerrorhandling.handlers.DefaultScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.ScmApiErrorHandler;
+import io.harness.gitsync.common.scmerrorhandling.handlers.bitbucket.BitbucketCreateBranchScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.bitbucket.BitbucketCreateFileScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.bitbucket.BitbucketCreatePullRequestScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.bitbucket.BitbucketGetFileScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.bitbucket.BitbucketListRepoScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.bitbucket.BitbucketUpdateFileScmApiErrorHandler;
+import io.harness.gitsync.common.scmerrorhandling.handlers.github.GithubCreateBranchScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.github.GithubCreateFileScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.github.GithubCreatePullRequestScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.github.GithubGetFileScmApiErrorHandler;
@@ -51,6 +53,8 @@ class ScmApiErrorHandlerFactory {
           .put(Pair.of(ScmApis.CREATE_FILE, RepoProviders.GITHUB), GithubCreateFileScmApiErrorHandler.class)
           .put(Pair.of(ScmApis.UPDATE_FILE, RepoProviders.BITBUCKET), BitbucketUpdateFileScmApiErrorHandler.class)
           .put(Pair.of(ScmApis.UPDATE_FILE, RepoProviders.GITHUB), GithubUpdateFileScmApiErrorHandler.class)
+          .put(Pair.of(ScmApis.CREATE_BRANCH, RepoProviders.BITBUCKET), BitbucketCreateBranchScmApiErrorHandler.class)
+          .put(Pair.of(ScmApis.CREATE_BRANCH, RepoProviders.GITHUB), GithubCreateBranchScmApiErrorHandler.class)
           .build();
 
   public ScmApiErrorHandler getHandler(ScmApis scmApi, RepoProviders repoProvider) {

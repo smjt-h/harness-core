@@ -13,5 +13,6 @@ public enum ScmApis {
   CREATE_PULL_REQUEST,
   CREATE_FILE,
   UPDATE_FILE,
+  CREATE_BRANCH,
   ;
 }

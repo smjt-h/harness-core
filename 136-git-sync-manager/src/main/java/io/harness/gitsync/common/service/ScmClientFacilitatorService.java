@@ -93,4 +93,6 @@ public interface ScmClientFacilitatorService {
 
   ListBranchesWithDefaultResponse listBranches(String accountIdentifier, String orgIdentifier, String projectIdentifier,
       String connectorRef, String repoName, PageRequestDTO pageRequest);
+
+  CreateBranchResponse createBranch(String branch, String baseBranch, ScmConnector scmConnector);
 }
