@@ -7,9 +7,9 @@ import io.harness.serializer.KryoRegistrar;
 import com.esotericsoftware.kryo.Kryo;
 
 public class NGEntitiesKryoRegistrar implements KryoRegistrar {
-    @Override
-    public void register(Kryo kryo) {
-        kryo.register(ServiceConfigOutcome.class, 12508);
-        kryo.register(ServiceEntity.class, 22002);
-    }
+  @Override
+  public void register(Kryo kryo) {
+    kryo.register(ServiceConfigOutcome.class, 12508);
+    kryo.register(ServiceEntity.class, 22002);
+  }
 }
