@@ -14,6 +14,8 @@ import static io.harness.NGConstants.HARNESS_SECRET_MANAGER_IDENTIFIER;
 import static io.harness.connector.accesscontrol.ConnectorsAccessControlPermissions.DELETE_CONNECTOR_PERMISSION;
 import static io.harness.connector.accesscontrol.ConnectorsAccessControlPermissions.EDIT_CONNECTOR_PERMISSION;
 import static io.harness.connector.accesscontrol.ConnectorsAccessControlPermissions.VIEW_CONNECTOR_PERMISSION;
+import static io.harness.delegate.beans.connector.scm.GitConnectionType.ACCOUNT;
+import static io.harness.delegate.beans.connector.scm.github.GithubApiAccessType.TOKEN;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.ng.core.utils.URLDecoderUtility.getDecodedString;
 import static io.harness.utils.PageUtils.getNGPageResponse;
@@ -44,6 +46,11 @@ import io.harness.connector.utils.FieldValues;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.ConnectorValidationParameterResponse;
+import io.harness.delegate.beans.connector.scm.ScmConnector;
+import io.harness.delegate.beans.connector.scm.github.GithubApiAccessDTO;
+import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
+import io.harness.delegate.beans.connector.scm.github.GithubTokenSpecDTO;
+import io.harness.encryption.SecretRefData;
 import io.harness.exception.ConnectorNotFoundException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.interceptor.GitEntityCreateInfoDTO;
@@ -59,6 +66,7 @@ import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.remote.CEAwsSetupConfig;
 import io.harness.security.annotations.InternalApi;
 import io.harness.security.annotations.NextGenManagerAuth;
+import io.harness.service.ScmClient;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -125,6 +133,7 @@ public class ConnectorResource {
   private static final String SOURCE_CATEGORY_KEY = "source_category";
   private final AccessControlClient accessControlClient;
   private ConnectorRbacHelper connectorRbacHelper;
+  @Inject(optional = true) private ScmClient scmClient;
 
   @Inject
   public ConnectorResource(@Named("connectorDecoratorService") ConnectorService connectorService,

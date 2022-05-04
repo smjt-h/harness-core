@@ -15,8 +15,7 @@ import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.String.format;
 
-import io.harness.account.ProvisionStep;
-import io.harness.account.ProvisionStep.ProvisionStepKeys;
+import io.harness.connector.ConnectivityStatus;
 import io.harness.connector.ConnectorDTO;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
@@ -34,6 +33,7 @@ import io.harness.delegate.beans.connector.k8Connector.KubernetesCredentialType;
 import io.harness.exception.UnexpectedException;
 import io.harness.network.Http;
 import io.harness.ng.NextGenConfiguration;
+import io.harness.ng.core.api.SecretCrudService;
 import io.harness.ng.core.delegate.client.DelegateNgManagerCgManagerClient;
 import io.harness.ng.trialsignup.ProvisionResponse.DelegateStatus;
 import io.harness.rest.RestResponse;
@@ -187,7 +187,7 @@ public class ProvisionService {
 
       ConnectorDTO connectorDTO = ConnectorDTO.builder().connectorInfo(connectorInfoDTO).build();
 
-      connectorService.create(connectorDTO, accountId);
+      ConnectorResponseDTO connectorResponse = connectorService.create(connectorDTO, accountId);
     } catch (Exception e) {
       log.error("Error adding hosted k8s connector", e);
       return FALSE;
