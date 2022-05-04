@@ -142,6 +142,8 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
         recommendation.setCurrentResourceRequirements(
             convertToReadableForm(makeResourceMap(cpuMilliUnits, memoryBytes)));
         recommendation.setLastComputedRecommendationAt(startTime);
+        recommendation.setLastUpdateTime(startTime);
+        recommendation.setVersion(1);
 
         // Estimate savings
         Cost lastDayCost = billingDataService.getECSServiceLastAvailableDayCost(accountId, clusterId, serviceName,
@@ -153,23 +155,26 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
               recommendation.getPercentileBasedResourceRecommendation().get(String.format(PERCENTILE_KEY, 90)),
               lastDayCost);
           recommendation.setEstimatedSavings(monthlySavings);
+          recommendation.setValidRecommendation(true);
         } else {
           recommendation.setLastDayCostAvailable(false);
+          recommendation.setValidRecommendation(false);
           log.debug("Unable to get lastDayCost for serviceArn: {}", serviceArn);
         }
         recommendation.setTtl(Instant.now().plus(RECOMMENDATION_TTL));
-        recommendation.setValidRecommendation(true);
         recommendation.setDirty(false);
 
         // Save recommendation in mongo
         log.info("Saving ECS Recommendation: {}", recommendation);
-        final String uuid = ecsRecommendationDAO.saveRecommendation(recommendation);
+        final ECSServiceRecommendation ecsServiceRecommendation =
+            ecsRecommendationDAO.saveRecommendation(recommendation);
         final Double monthlyCost = calculateMonthlyCost(recommendation);
         final Double monthlySaving =
             ofNullable(recommendation.getEstimatedSavings()).map(BigDecimal::doubleValue).orElse(null);
         // Save recommendation in timescale
-        ecsRecommendationDAO.upsertCeRecommendation(uuid, accountId, clusterName, serviceName, monthlyCost,
-            monthlySaving, recommendation.shouldShowRecommendation(), recommendation.getLastReceivedUtilDataAt());
+        ecsRecommendationDAO.upsertCeRecommendation(ecsServiceRecommendation.getUuid(), accountId, clusterName,
+            serviceName, monthlyCost, monthlySaving, recommendation.shouldShowRecommendation(),
+            recommendation.getLastReceivedUtilDataAt());
       }
     }
 
@@ -177,8 +182,8 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
   }
 
   ECSPartialRecommendationHistogram getPartialRecommendation(String accountId, String clusterId, String clusterName,
-      String serviceArn, String serviceName, Instant startTime, List<ECSUtilizationData> utilData, long cpuMilliUnits,
-      long memoryBytes) {
+                                                             String serviceArn, String serviceName, Instant startTime, List<ECSUtilizationData> utilData, long cpuMilliUnits,
+                                                             long memoryBytes) {
     return ECSPartialRecommendationHistogram.builder()
         .accountId(accountId)
         .clusterId(clusterId)
@@ -198,7 +203,7 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
   }
 
   ECSServiceRecommendation getRecommendation(String accountId, String clusterId, String clusterName, String serviceName,
-      String serviceArn, long cpuMilliUnits, long memoryBytes) {
+                                             String serviceArn, long cpuMilliUnits, long memoryBytes) {
     return ECSServiceRecommendation.builder()
         .accountId(accountId)
         .clusterId(clusterId)
@@ -211,7 +216,7 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
   }
 
   void mergePartialRecommendations(List<ECSPartialRecommendationHistogram> partialHistograms,
-      ECSServiceRecommendation recommendation, long cpuMilliUnits, long memoryBytes) {
+                                   ECSServiceRecommendation recommendation, long cpuMilliUnits, long memoryBytes) {
     Histogram cpuHistogram = newHistogram(cpuMilliUnits);
     Histogram memoryHistogram = newHistogram(memoryBytes);
     Instant firstSampleStart = Instant.now();
