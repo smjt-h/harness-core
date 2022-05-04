@@ -67,7 +67,8 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
       String projectIdentifier, String connectorRef, PageRequest pageRequest, String searchTerm) {
     ScmConnector scmConnector =
         gitSyncConnectorHelper.getScmConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
-    GetUserReposResponse response = scmOrchestratorService.processScmRequestUsingConnector(scmClientFacilitatorService
+    GetUserReposResponse response = scmOrchestratorService.processScmRequestUsingConnectorSettings(
+        scmClientFacilitatorService
         -> scmClientFacilitatorService.listUserRepos(accountIdentifier, orgIdentifier, projectIdentifier, scmConnector,
             PageRequestDTO.builder().pageIndex(pageRequest.getPageIndex()).pageSize(pageRequest.getPageSize()).build()),
         scmConnector);
@@ -147,10 +148,12 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
             scope.getProjectIdentifier(), scope.getOrgIdentifier(), scope.getAccountIdentifier(),
             scmCreateFileRequestDTO.getConnectorRef());
 
-    ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.CREATE_FILE,
-        gitSyncConnectorHelper.getScmConnectorByRef(scope, scmCreateFileRequestDTO.getConnectorRef())
-            .getConnectorType(),
-        createFileResponse.getStatus(), createFileResponse.getError());
+    if (isFailureResponse(createFileResponse.getStatus())) {
+      ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.CREATE_FILE,
+          gitSyncConnectorHelper.getScmConnectorByRef(scope, scmCreateFileRequestDTO.getConnectorRef())
+              .getConnectorType(),
+          createFileResponse.getStatus(), createFileResponse.getError());
+    }
 
     return ScmCommitFileResponseDTO.builder()
         .commitId(createFileResponse.getCommitId())
@@ -184,10 +187,12 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
             scope.getProjectIdentifier(), scope.getOrgIdentifier(), scope.getAccountIdentifier(),
             scmUpdateFileRequestDTO.getConnectorRef());
 
-    ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.UPDATE_FILE,
-        gitSyncConnectorHelper.getScmConnectorByRef(scope, scmUpdateFileRequestDTO.getConnectorRef())
-            .getConnectorType(),
-        updateFileResponse.getStatus(), updateFileResponse.getError());
+    if (isFailureResponse(updateFileResponse.getStatus())) {
+      ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.UPDATE_FILE,
+          gitSyncConnectorHelper.getScmConnectorByRef(scope, scmUpdateFileRequestDTO.getConnectorRef())
+              .getConnectorType(),
+          updateFileResponse.getStatus(), updateFileResponse.getError());
+    }
 
     return ScmCommitFileResponseDTO.builder()
         .commitId(updateFileResponse.getCommitId())
@@ -206,9 +211,12 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
             scope.getProjectIdentifier(), scope.getOrgIdentifier(), scope.getAccountIdentifier(),
             scmCreatePRRequestDTO.getConnectorRef());
 
-    ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.CREATE_PULL_REQUEST,
-        gitSyncConnectorHelper.getScmConnectorByRef(scope, scmCreatePRRequestDTO.getConnectorRef()).getConnectorType(),
-        createPRResponse.getStatus(), createPRResponse.getError());
+    if (isFailureResponse(createPRResponse.getStatus())) {
+      ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.CREATE_PULL_REQUEST,
+          gitSyncConnectorHelper.getScmConnectorByRef(scope, scmCreatePRRequestDTO.getConnectorRef())
+              .getConnectorType(),
+          createPRResponse.getStatus(), createPRResponse.getError());
+    }
 
     return ScmCreatePRResponseDTO.builder().prNumber(createPRResponse.getNumber()).build();
   }
@@ -224,9 +232,11 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
         scope.getProjectIdentifier(), scope.getOrgIdentifier(), scope.getAccountIdentifier(),
         scmGetFileRequestDTO.getConnectorRef());
 
-    ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.GET_FILE,
-        gitSyncConnectorHelper.getScmConnectorByRef(scope, scmGetFileRequestDTO.getConnectorRef()).getConnectorType(),
-        fileContent.getStatus(), fileContent.getError());
+    if (isFailureResponse(fileContent.getStatus())) {
+      ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.GET_FILE,
+          gitSyncConnectorHelper.getScmConnectorByRef(scope, scmGetFileRequestDTO.getConnectorRef()).getConnectorType(),
+          fileContent.getStatus(), fileContent.getError());
+    }
 
     return ScmGetFileResponseDTO.builder()
         .fileContent(fileContent.getContent())
