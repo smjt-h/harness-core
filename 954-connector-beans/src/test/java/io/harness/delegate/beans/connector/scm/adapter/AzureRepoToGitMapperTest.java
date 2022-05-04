@@ -66,7 +66,7 @@ public class AzureRepoToGitMapperTest extends CategoryTest {
     final String username = "username";
     final String validationProject = "validationProject";
     final String validationRepo = "validationRepo";
-    final String validationProjAndRepo = validationProject + "/_git" + validationRepo;
+    final String validationProjAndRepo = validationProject + "/_git/" + validationRepo;
     final AzureRepoAuthenticationDTO azureRepoAuthenticationDTO =
         AzureRepoAuthenticationDTO.builder()
             .authType(HTTP)
