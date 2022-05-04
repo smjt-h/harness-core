@@ -34,6 +34,7 @@ import io.harness.exception.ScmInternalServerErrorException;
 import io.harness.exception.WingsException;
 import io.harness.exception.ngexception.beans.ScmErrorMetadataDTO;
 import io.harness.git.model.ChangeType;
+import io.harness.gitsync.ErrorDetails;
 import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.GetFileRequest;
 import io.harness.gitsync.GetFileResponse;
@@ -249,7 +250,8 @@ public class SCMGitSyncHelperTest extends GitSdkTestBase {
   @Owner(developers = MEET)
   @Category(UnitTests.class)
   public void testGetFileInCaseOfError() {
-    GetFileResponse successfulGetFileResponse = GetFileResponse.newBuilder().setStatusCode(500).setError(error).build();
+    GetFileResponse successfulGetFileResponse =
+        GetFileResponse.newBuilder().setStatusCode(500).setError(ErrorDetails.getDefaultInstance()).build();
     when(GitSyncGrpcClientUtils.retryAndProcessException(
              harnessToGitPushInfoServiceBlockingStub::getFile, any(GetFileRequest.class)))
         .thenReturn(successfulGetFileResponse);
