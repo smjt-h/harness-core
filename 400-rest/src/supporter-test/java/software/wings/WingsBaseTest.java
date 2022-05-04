@@ -10,7 +10,6 @@ package software.wings;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 
-import io.harness.CategoryTest;
 import io.harness.MockableTestMixin;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
@@ -29,7 +28,7 @@ import org.mockito.junit.MockitoRule;
 
 @OwnedBy(PL)
 @TargetModule(HarnessModule._980_COMMONS)
-public abstract class WingsBaseTest extends CategoryTest implements MockableTestMixin {
+public abstract class WingsBaseTest implements MockableTestMixin {
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
 
   // I am not absolutely sure why, but there is dependency between wings io.harness.rule and
