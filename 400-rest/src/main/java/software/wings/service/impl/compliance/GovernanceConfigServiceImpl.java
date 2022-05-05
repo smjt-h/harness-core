@@ -140,7 +140,6 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
                                                                .userGroupFilterType(BlackoutWindowFilterType.CUSTOM)
                                                                .userGroups(timeRangeBasedFreezeConfig.getUserGroups())
                                                                .build());
-          timeRangeBasedFreezeConfig.setUserGroups(null);
         }
       });
     }
@@ -526,7 +525,7 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
             throw new InvalidRequestException("Cannot update expired freeze window: " + entry.getName());
           }
         }
-        if (entry.getUserGroupSelection() != null) {
+        if (entry.getUserGroupSelection() == null) {
           validateUserGroups(entry.getUserGroups(), accountId);
         } else if (entry.getUserGroupSelection() instanceof CustomUserGroupFilter) {
           validateUserGroups(((CustomUserGroupFilter) entry.getUserGroupSelection()).getUserGroups(), accountId);
