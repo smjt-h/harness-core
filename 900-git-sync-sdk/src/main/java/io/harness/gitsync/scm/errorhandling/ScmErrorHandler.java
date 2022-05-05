@@ -27,11 +27,7 @@ import lombok.SneakyThrows;
 
 @OwnedBy(HarnessTeam.PL)
 public class ScmErrorHandler {
-  public final void handleIfError(int statusCode, ScmErrorDetails errorDetails) {
-    if (statusCode < 400) {
-      return;
-    }
-
+  public final void processAndThrowException(int statusCode, ScmErrorDetails errorDetails) {
     handleError(statusCode, errorDetails);
   }
 
