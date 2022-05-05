@@ -4,5 +4,5 @@ FROM mcr.microsoft.com/windows/nanoserver:1809
 USER ContainerAdministrator
 
 ENV GODEBUG=netdns=go
-ADD engine_/engine C:/addon.exe
+ADD ci-addon_/ci-addon.exe C:/addon.exe
 ENTRYPOINT [ "C:\\addon.exe" ]

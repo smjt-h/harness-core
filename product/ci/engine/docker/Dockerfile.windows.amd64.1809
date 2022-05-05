@@ -20,5 +20,5 @@ USER ContainerAdministrator
 RUN setx /M PATH "%PATH%;C:\git\cmd;C:\git\mingw64\bin;C:\git\usr\bin;C:\openssh"
 
 ENV GODEBUG=netdns=go
-ADD engine_/engine C:/lite-engine.exe
+ADD engine_/engine.exe C:/lite-engine.exe
 ENTRYPOINT [ "C:\\lite-engine.exe" ]
