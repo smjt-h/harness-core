@@ -3,7 +3,6 @@ package io.harness.exception;
 import static io.harness.eraro.ErrorCode.QUEUE_TASK_EXCEPTION;
 
 import io.harness.eraro.Level;
-import io.harness.exception.ngexception.ErrorMetadataDTO;
 
 public class QueueTaskException extends WingsException {
   private static final String MESSAGE_ARG = "message";
