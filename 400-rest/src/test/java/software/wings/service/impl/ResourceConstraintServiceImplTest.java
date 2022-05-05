@@ -15,9 +15,6 @@ import static io.harness.rule.OwnerRule.PRANJAL;
 import static io.harness.rule.OwnerRule.PRASHANT;
 import static io.harness.rule.OwnerRule.YOGESH;
 
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static software.wings.infra.InfraDefinitionTestConstants.RESOURCE_CONSTRAINT_NAME;
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
 import static software.wings.utils.WingsTestConstants.APP_ID;
@@ -29,10 +26,13 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import io.harness.beans.FeatureFlag;
 import io.harness.beans.FeatureName;
@@ -45,8 +45,6 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.ff.FeatureFlagService;
 import io.harness.rule.Owner;
 
-import org.mongodb.morphia.query.UpdateOperations;
-import org.mongodb.morphia.query.UpdateResults;
 import software.wings.WingsBaseTest;
 import software.wings.beans.ResourceConstraintInstance;
 import software.wings.beans.ResourceConstraintInstance.ResourceConstraintInstanceBuilder;
@@ -67,6 +65,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mongodb.morphia.query.FieldEnd;
 import org.mongodb.morphia.query.Query;
+import org.mongodb.morphia.query.UpdateOperations;
+import org.mongodb.morphia.query.UpdateResults;
 
 public class ResourceConstraintServiceImplTest extends WingsBaseTest {
   private static final String RESOURCE_CONSTRAINT_ID = "RC_ID";
@@ -219,20 +219,20 @@ public class ResourceConstraintServiceImplTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testUpdateActiveConstraintsForPipeline() {
     ResourceConstraintInstance resourceConstraintInstance = ResourceConstraintInstance.builder()
-        .resourceConstraintId(RESOURCE_CONSTRAINT_ID)
-        .uuid("uuid")
-        .permits(100)
-        .state(State.ACTIVE.name())
-        .appId("appid")
-        .releaseEntityId("releaseid")
-        .releaseEntityType(PIPELINE)
-        .build();
+                                                                .resourceConstraintId(RESOURCE_CONSTRAINT_ID)
+                                                                .uuid("uuid")
+                                                                .permits(100)
+                                                                .state(State.ACTIVE.name())
+                                                                .appId("appid")
+                                                                .releaseEntityId("releaseid")
+                                                                .releaseEntityType(PIPELINE)
+                                                                .build();
 
     FieldEnd fieldEnd = mock(FieldEnd.class);
     UpdateOperations<ResourceConstraintInstance> mockOps = mock(UpdateOperations.class);
     UpdateResults updateResults = mock(UpdateResults.class);
 
-    doReturn(query).when(wingsPersistence).createQuery(eq(ResourceConstraint.class));
+    doReturn(query).when(wingsPersistence).createQuery(eq(ResourceConstraintInstance.class));
     doReturn(query).when(query).filter(eq(ResourceConstraintInstanceKeys.appId), anyString());
     doReturn(query).when(query).filter(eq(ResourceConstraintInstanceKeys.uuid), anyString());
     doReturn(query).when(query).filter(eq(ResourceConstraintInstanceKeys.resourceUnit), anyString());
@@ -249,6 +249,29 @@ public class ResourceConstraintServiceImplTest extends WingsBaseTest {
 
     assertThat(response).isTrue();
 
-    verify(workflowExecutionService.checkWorkflowExecutionInFinalStatus(eq(resourceConstraintInstance.getAppId()),eq(resourceConstraintInstance.getReleaseEntityId())));
+    verify(workflowExecutionService)
+        .checkWorkflowExecutionInFinalStatus(
+            eq(resourceConstraintInstance.getAppId()), eq(resourceConstraintInstance.getReleaseEntityId()));
+  }
+
+  @Test
+  @Owner(developers = LUCAS_SALES)
+  @Category(UnitTests.class)
+  public void testUpdateAConstraintsForPipelineWithFFDisabled() {
+    ResourceConstraintInstance resourceConstraintInstance = ResourceConstraintInstance.builder()
+                                                                .resourceConstraintId(RESOURCE_CONSTRAINT_ID)
+                                                                .uuid("uuid")
+                                                                .permits(100)
+                                                                .state(State.ACTIVE.name())
+                                                                .appId("appid")
+                                                                .releaseEntityId("releaseid")
+                                                                .releaseEntityType(PIPELINE)
+                                                                .build();
+
+    doReturn(false).when(featureFlagService).isEnabled(any(FeatureName.class), anyString());
+
+    boolean response = resourceConstraintService.updateActiveConstraintForInstance(resourceConstraintInstance);
+
+    assertThat(response).isFalse();
   }
 }
