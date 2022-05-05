@@ -1214,8 +1214,10 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
     for (FieldValueList row : result.iterateAll()) {
       for (QLCEViewFieldInput field : viewFieldList) {
         final String filterStringValue = fetchStringValue(row, field);
-        if (!filterStringValue.equals(nullStringValueConstant)) {
-          filterValues.add(fetchStringValue(row, field));
+        if (ViewFieldIdentifier.BUSINESS_MAPPING == field.getIdentifier()) {
+          filterValues.add(filterStringValue);
+        } else if (!filterStringValue.equals(nullStringValueConstant)) {
+          filterValues.add(filterStringValue);
         }
       }
     }
@@ -1225,8 +1227,8 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
   public List<String> costCategoriesPostFetchResponseUpdate(List<String> response, String businessMappingId) {
     if (businessMappingId != null) {
       BusinessMapping businessMapping = businessMappingService.get(businessMappingId);
-      List<String> updatedResponse = new ArrayList<>();
       if (businessMapping.getUnallocatedCost() != null) {
+        List<String> updatedResponse = new ArrayList<>();
         UnallocatedCostStrategy strategy = businessMapping.getUnallocatedCost().getStrategy();
         switch (strategy) {
           case DISPLAY_NAME:
