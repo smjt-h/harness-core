@@ -4698,7 +4698,8 @@
           "type": "object",
           "required": [
             "connectorRef",
-            "ticketType"
+            "ticketType",
+            "useServiceNowTemplate"
           ],
           "properties": {
             "connectorRef": {
@@ -4765,7 +4766,8 @@
           "required": [
             "connectorRef",
             "ticketNumber",
-            "ticketType"
+            "ticketType",
+            "useServiceNowTemplate"
           ],
           "properties": {
             "connectorRef": {
@@ -6193,11 +6195,28 @@
     },
     "VmPoolYamlSpec": {
       "type": "object",
-      "required": [
-        "identifier"
-      ],
       "properties": {
         "identifier": {
+          "type": "string"
+        },
+        "os": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "Linux",
+                "Osx",
+                "Windows"
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
+        "poolName": {
           "type": "string"
         }
       },

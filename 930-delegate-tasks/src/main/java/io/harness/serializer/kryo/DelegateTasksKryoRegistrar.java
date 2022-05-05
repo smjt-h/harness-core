@@ -13,7 +13,6 @@ import io.harness.cvng.beans.SplunkValidationResponse;
 import io.harness.delegate.task.executioncapability.BatchCapabilityCheckTaskParameters;
 import io.harness.delegate.task.executioncapability.BatchCapabilityCheckTaskResponse;
 import io.harness.delegate.task.winrm.AuthenticationScheme;
-import io.harness.exception.SecretManagementDelegateException;
 import io.harness.exception.SecretManagementException;
 import io.harness.helpers.ext.vault.SSHVaultAuthResult;
 import io.harness.helpers.ext.vault.SecretEngineSummary;
@@ -21,6 +20,7 @@ import io.harness.helpers.ext.vault.VaultAppRoleLoginResult;
 import io.harness.serializer.KryoRegistrar;
 
 import software.wings.api.DeploymentType;
+import software.wings.beans.APMValidateCollectorConfig;
 import software.wings.beans.AppDynamicsConfig;
 import software.wings.beans.AwsSecretsManagerConfig;
 import software.wings.beans.AzureConfig;
@@ -60,6 +60,7 @@ import software.wings.beans.SplunkConfig;
 import software.wings.beans.SumoConfig;
 import software.wings.beans.VaultConfig;
 import software.wings.beans.WinRmConnectionAttributes;
+import software.wings.beans.apm.Method;
 import software.wings.beans.appmanifest.AppManifestKind;
 import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.artifact.ArtifactFile;
@@ -93,13 +94,18 @@ import software.wings.delegatetasks.validation.capabilities.ShellConnectionCapab
 import software.wings.delegatetasks.validation.capabilities.WinrmHostValidationCapability;
 import software.wings.helpers.ext.azure.devops.AzureArtifactsFeed;
 import software.wings.helpers.ext.azure.devops.AzureArtifactsPackageVersion;
+import software.wings.helpers.ext.external.comm.CollaborationProviderRequest;
+import software.wings.helpers.ext.external.comm.CollaborationProviderResponse;
+import software.wings.helpers.ext.external.comm.EmailRequest;
 import software.wings.helpers.ext.helm.request.HelmChartCollectionParams;
 import software.wings.helpers.ext.helm.request.HelmChartConfigParams;
 import software.wings.helpers.ext.helm.response.HelmCollectChartResponse;
 import software.wings.helpers.ext.k8s.request.K8sClusterConfig;
+import software.wings.helpers.ext.mail.EmailData;
 import software.wings.helpers.ext.mail.SmtpConfig;
 import software.wings.helpers.ext.pcf.request.CfCommandSetupRequest;
 import software.wings.service.impl.ContainerServiceParams;
+import software.wings.service.impl.MasterUrlFetchTaskParameter;
 import software.wings.service.impl.analysis.AnalysisComparisonStrategy;
 import software.wings.service.impl.analysis.CustomLogDataCollectionInfo;
 import software.wings.service.impl.analysis.DataCollectionTaskResult;
@@ -184,12 +190,19 @@ import software.wings.service.impl.newrelic.NewRelicDataCollectionInfo;
 import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
 import software.wings.service.impl.newrelic.NewRelicSetupTestNodeData;
 import software.wings.service.impl.spotinst.SpotInstCommandRequest;
+import software.wings.service.impl.stackdriver.StackDriverDataCollectionInfo;
+import software.wings.service.impl.stackdriver.StackDriverLogDataCollectionInfo;
+import software.wings.service.impl.stackdriver.StackDriverMetric;
+import software.wings.service.impl.stackdriver.StackDriverSetupTestNodeData;
+import software.wings.service.impl.stackdriver.StackdriverGcpConfigTaskParams;
+import software.wings.service.impl.stackdriver.StackdriverLogGcpConfigTaskParams;
 import software.wings.service.impl.sumo.SumoDataCollectionInfo;
 import software.wings.service.intfc.analysis.ClusterLevel;
 import software.wings.settings.validation.ConnectivityValidationDelegateRequest;
 import software.wings.settings.validation.SshConnectionConnectivityValidationAttributes;
 import software.wings.settings.validation.WinRmConnectivityValidationAttributes;
 import software.wings.utils.ArtifactType;
+import software.wings.verification.stackdriver.StackDriverMetricDefinition;
 
 import com.esotericsoftware.kryo.Kryo;
 
@@ -233,6 +246,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(ElkQueryType.class, 5275);
     kryo.register(PcfConfig.class, 5296);
     kryo.register(SmtpConfig.class, 5304);
+    kryo.register(APMValidateCollectorConfig.class, 5323);
     kryo.register(TimeSeriesMlAnalysisType.class, 5347);
     kryo.register(HttpStateExecutionResponse.class, 5375);
     kryo.register(ElkLogFetchRequest.class, 5376);
@@ -286,6 +300,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(AwsAsgListInstancesResponse.class, 5429);
     kryo.register(AwsAsgListDesiredCapacitiesRequest.class, 5463);
     kryo.register(AwsAsgListDesiredCapacitiesResponse.class, 5464);
+    kryo.register(Method.class, 5481);
     kryo.register(LogElement.class, 5486);
     kryo.register(CustomLogDataCollectionInfo.class, 5492);
     kryo.register(CustomLogResponseMapper.class, 5493);
@@ -300,7 +315,9 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(SetupTestNodeData.class, 5530);
     kryo.register(AppdynamicsSetupTestNodeData.class, 5531);
     kryo.register(JiraConfig.JiraSetupType.class, 5569);
-    kryo.register(SecretManagementDelegateException.class, 5585);
+    kryo.register(StackDriverSetupTestNodeData.class, 5592);
+    kryo.register(StackDriverMetric.class, 5593);
+    kryo.register(StackDriverDataCollectionInfo.class, 5594);
     kryo.register(AwsElbListListenerRequest.class, 5601);
     kryo.register(AwsElbListListenerResponse.class, 5602);
     kryo.register(GitFetchFilesFromMultipleRepoResult.class, 5615);
@@ -316,8 +333,10 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(ServiceNowConfig.class, 7155);
     kryo.register(AwsAsgGetRunningCountRequest.class, 7188);
     kryo.register(AwsAsgGetRunningCountResponse.class, 7189);
+    kryo.register(StackDriverLogDataCollectionInfo.class, 7191);
     kryo.register(AwsEcsListClusterServicesRequest.class, 7206);
     kryo.register(AwsEcsListClusterServicesResponse.class, 7207);
+    kryo.register(StackDriverMetricDefinition.class, 7249);
     kryo.register(AwsS3Request.class, 7266);
     kryo.register(AwsS3RequestType.class, 7267);
     kryo.register(AwsS3ListBucketNamesRequest.class, 7268);
@@ -331,6 +350,9 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(ClusterMasterUrlValidationCapability.class, 7345);
     kryo.register(NewRelicMetricDataRecord.class, 7347);
     kryo.register(ClusterLevel.class, 7348);
+    kryo.register(StackdriverLogGcpConfigTaskParams.class, 7360);
+    kryo.register(StackdriverGcpConfigTaskParams.class, 7361);
+    kryo.register(StackDriverMetricDefinition.Aggregation.class, 7380);
     kryo.register(GitConnectionCapability.class, 7391);
     kryo.register(SetupTestNodeData.Instance.class, 7470);
     kryo.register(DynaTraceApplication.class, 8074);
@@ -388,5 +410,11 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(KubernetesSteadyStateCheckParams.class, 5276);
     kryo.register(KubernetesSwapServiceSelectorsParams.class, 5365);
     kryo.register(SSHHostValidationCapability.class, 7326);
+    kryo.register(MasterUrlFetchTaskParameter.class, 7226);
+    kryo.register(EmailData.class, 5303);
+    kryo.register(EmailRequest.class, 5309);
+    kryo.register(CollaborationProviderRequest.CommunicationType.class, 5307);
+    kryo.register(CollaborationProviderRequest.class, 5306);
+    kryo.register(CollaborationProviderResponse.class, 5308);
   }
 }
