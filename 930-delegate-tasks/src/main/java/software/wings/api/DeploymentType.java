@@ -15,7 +15,6 @@ import io.harness.annotations.dev.TargetModule;
 
 import software.wings.utils.ArtifactType;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,19 +26,19 @@ import java.util.List;
 @OwnedBy(CDP)
 @TargetModule(_930_DELEGATE_TASKS)
 public enum DeploymentType {
-  @JsonProperty("Ssh") SSH("Secure Shell (SSH)"),
-  @JsonProperty("AwsCodePloy") AWS_CODEDEPLOY("AWS CodeDeploy"),
-  @JsonProperty("Ecs") ECS("Amazon EC2 Container Services (ECS)"),
-  @JsonProperty("Spotinst") SPOTINST("SPOTINST"),
-  @JsonProperty("Kubernetes") KUBERNETES("Kubernetes"),
-  @JsonProperty("Helm") HELM("Helm"),
-  @JsonProperty("AwsLambda") AWS_LAMBDA("AWS Lambda"),
-  @JsonProperty("Ami") AMI("AMI"),
-  @JsonProperty("Winrm") WINRM("Windows Remote Management (WinRM)"),
-  @JsonProperty("Pcf") PCF("Tanzu Application Services"),
-  @JsonProperty("AzureVmss") AZURE_VMSS("Azure Virtual Machine Image"),
-  @JsonProperty("AzureWebapp") AZURE_WEBAPP("Azure Web App"),
-  @JsonProperty("Custom") CUSTOM("Custom");
+  SSH("Secure Shell (SSH)"),
+  AWS_CODEDEPLOY("AWS CodeDeploy"),
+  ECS("Amazon EC2 Container Services (ECS)"),
+  SPOTINST("SPOTINST"),
+  KUBERNETES("Kubernetes"),
+  HELM("Helm"),
+  AWS_LAMBDA("AWS Lambda"),
+  AMI("AMI"),
+  WINRM("Windows Remote Management (WinRM)"),
+  PCF("Tanzu Application Services"),
+  AZURE_VMSS("Azure Virtual Machine Image"),
+  AZURE_WEBAPP("Azure Web App"),
+  CUSTOM("Custom");
 
   private String displayName;
 
