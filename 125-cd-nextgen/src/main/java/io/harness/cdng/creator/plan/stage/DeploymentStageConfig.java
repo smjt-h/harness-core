@@ -9,6 +9,7 @@ package io.harness.cdng.creator.plan.stage;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.environment.yaml.EnvironmentYamlV2;
 import io.harness.cdng.pipeline.PipelineInfrastructure;
 import io.harness.cdng.service.beans.ServiceConfig;
 import io.harness.cdng.service.beans.ServiceDefinitionType;
@@ -18,6 +19,7 @@ import io.harness.plancreator.execution.ExecutionElementConfig;
 import io.harness.plancreator.stages.stage.StageInfoConfig;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.validation.OneOfSet;
+import io.harness.validation.OneOfField;
 import io.harness.walktree.beans.VisitableChild;
 import io.harness.walktree.beans.VisitableChildren;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
@@ -46,8 +48,8 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonTypeName("Deployment")
-@OneOfSet(fields = {"serviceConfig", "service, deploymentType"},
-    requiredFieldNames = {"service", "serviceConfig", "deploymentType"})
+@OneOfSet(fields = {"serviceConfig, infrastructure", "service, deploymentType, environment"},
+    requiredFieldNames = {"service", "serviceConfig", "deploymentType", "environment" , "infrastructure"})
 @TypeAlias("deploymentStageConfig")
 @SimpleVisitorHelper(helperClass = DeploymentStageVisitorHelper.class)
 public class DeploymentStageConfig implements StageInfoConfig, Visitable {
@@ -62,7 +64,10 @@ public class DeploymentStageConfig implements StageInfoConfig, Visitable {
   ServiceYamlV2 service;
   ServiceDefinitionType deploymentType;
 
-  @NotNull PipelineInfrastructure infrastructure;
+  // New Environment Yaml
+  EnvironmentYamlV2 environment;
+
+  PipelineInfrastructure infrastructure;
   @NotNull @VariableExpression(skipVariableExpression = true) ExecutionElementConfig execution;
 
   // For Visitor Framework Impl
