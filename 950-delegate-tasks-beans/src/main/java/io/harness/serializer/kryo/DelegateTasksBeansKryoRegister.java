@@ -249,9 +249,9 @@ import io.harness.delegate.exception.TaskNGDataException;
 import io.harness.delegate.task.ListNotifyResponseData;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
 import io.harness.delegate.task.artifacts.ArtifactTaskType;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryBaseArtifactDelegateRequest;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateRequest;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.azure.AcrArtifactDelegateRequest;
@@ -550,11 +550,14 @@ import software.wings.beans.TaskType;
 import software.wings.beans.command.CodeDeployParams;
 import software.wings.beans.command.GcbTaskParams;
 import software.wings.beans.command.JenkinsTaskParams;
+import software.wings.beans.infrastructure.instance.info.EcsContainerInfo;
+import software.wings.beans.infrastructure.instance.info.KubernetesContainerInfo;
 import software.wings.beans.s3.FetchS3FilesCommandParams;
 import software.wings.beans.s3.FetchS3FilesExecutionResponse;
 import software.wings.beans.s3.S3Bucket;
 import software.wings.beans.s3.S3FetchFileResult;
 import software.wings.beans.s3.S3File;
+import software.wings.beans.s3.S3FileRequest;
 import software.wings.beans.servicenow.ServiceNowFields;
 import software.wings.beans.settings.helm.HttpHelmRepoConfig;
 import software.wings.beans.shellscript.provisioner.ShellScriptProvisionParameters;
@@ -884,8 +887,8 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(HttpStepResponse.class, 19439);
     kryo.register(NexusArtifactDelegateRequest.class, 19448);
     kryo.register(NexusArtifactDelegateResponse.class, 19456);
-    kryo.register(ArtifactoryDockerArtifactDelegateRequest.class, 19472);
-    kryo.register(ArtifactoryDockerArtifactDelegateResponse.class, 19473);
+    kryo.register(ArtifactoryArtifactDelegateRequest.class, 19472);
+    kryo.register(ArtifactoryArtifactDelegateResponse.class, 19473);
     kryo.register(ArtifactoryGenericArtifactDelegateRequest.class, 19483);
     kryo.register(ArtifactoryGenericArtifactDelegateResponse.class, 19484);
 
@@ -1251,7 +1254,9 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(SpotInstConfig.class, 7221);
     kryo.register(KubernetesSteadyStateCheckResponse.class, 5277);
     kryo.register(KubernetesSwapServiceSelectorsResponse.class, 5366);
-
+    kryo.register(EcsContainerInfo.class, 5166);
+    kryo.register(KubernetesContainerInfo.class, 5165);
+    kryo.register(S3FileRequest.class, 8067);
     // WinRm
     kryo.register(WinRmCredentialsSpecDTO.class, 600001);
     kryo.register(WinRmAuthScheme.class, 600002);
