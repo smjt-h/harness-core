@@ -97,8 +97,8 @@ public class CENextGenConfiguration extends Configuration {
   @JsonProperty(value = "ceAzureSetupConfig") @ConfigSecret private CEAzureSetupConfig ceAzureSetupConfig;
   @JsonProperty(value = "awsConfig") @ConfigSecret private AwsConfig awsConfig;
 
-  @JsonProperty(value = "hostname") private String hostname;
-  @JsonProperty(value = "basePathPrefix") private String basePathPrefix;
+  @JsonProperty(value = "hostname") private String hostname = "localhost";
+  @JsonProperty(value = "basePathPrefix") private String basePathPrefix = "";
 
   @JsonProperty("secretsConfiguration") private SecretsConfiguration secretsConfiguration;
 
@@ -148,7 +148,7 @@ public class CENextGenConfiguration extends Configuration {
     return logbackAccessRequestLogFactory;
   }
 
-  protected OpenAPIConfiguration getOasConfig() {
+  public OpenAPIConfiguration getOasConfig() {
     OpenAPI oas = new OpenAPI();
     Info info =
         new Info()

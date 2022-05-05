@@ -39,6 +39,7 @@ public class NGCommonEntityConstants {
   public static final String MONGODB_ID = "_id";
   public static final String CONNECTOR_IDENTIFIER_KEY = "connectorIdentifier";
   public static final String REPO_URL = "repoURL";
+  public static final String REPO_NAME = "repoName";
   public static final String PLAN_KEY = "planExecutionId";
   public static final String TYPE_KEY = "type";
   public static final String TOKEN_KEY = "tokenId";
@@ -58,6 +59,7 @@ public class NGCommonEntityConstants {
   public static final String RUN_ALL_STAGES = "runAllStages";
   public static final String FILE_IDENTIFIER_KEY = "fileIdentifier";
   public static final Integer MAX_PAGE_SIZE = 10000;
+  public static final String EXPIRY_TIME = "expiryTime";
 
   // TODO(UTSAV): Move to 340-ce-nextgen
   public static final String IS_EVENTS_ENABLED = "eventsEnabled";
