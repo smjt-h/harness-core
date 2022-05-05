@@ -305,8 +305,9 @@ public class DelegateProfileServiceImpl implements DelegateProfileService, Accou
                                        .filter(DelegateProfileKeys.accountId, accountId)
                                        .filter(DelegateProfileKeys.owner, owner)
                                        .filter(DelegateProfileKeys.identifier, profileIdentifier);
-    // Update
+    // Update and invalidate cache
     DelegateProfile updatedDelegateProfile = persistence.findAndModify(query, updateOperations, returnNewOptions);
+    delegateCache.invalidateDelegateProfileCache(accountId, updatedDelegateProfile.getUuid());
     log.info("Updated profile scoping rules for accountId={}", accountId);
 
     return updatedDelegateProfile;
