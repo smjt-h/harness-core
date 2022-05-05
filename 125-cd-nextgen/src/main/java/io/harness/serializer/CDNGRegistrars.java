@@ -58,14 +58,13 @@ public class CDNGRegistrars {
           .addAll(DelegateServiceDriverRegistrars.kryoRegistrars)
           .addAll(ConnectorNextGenRegistrars.kryoRegistrars)
           .addAll(GitOpsRegistrars.kryoRegistrars)
-          .addAll(YamlBeansModuleRegistrars.kryoRegistrars)
+          .addAll(io.harness.serializer.YamlBeansModuleRegistrars.kryoRegistrars)
           .addAll(io.harness.serializer.OrchestrationStepsModuleRegistrars.kryoRegistrars)
           .addAll(CDNGEntityRegistrars.kryoRegistrars)
           .add(NGKryoRegistrar.class)
           .add(PollingKryoRegistrar.class)
           .addAll(DelegateTaskRegistrars.kryoRegistrars)
           .addAll(NGCommonModuleRegistrars.kryoRegistrars)
-          .add(NGEntitiesKryoRegistrar.class)
           .build();
 
   public final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =
@@ -77,13 +76,12 @@ public class CDNGRegistrars {
           .addAll(GitOpsRegistrars.morphiaRegistrars)
           .add(NGMorphiaRegistrar.class)
           .addAll(ConnectorBeansRegistrars.morphiaRegistrars)
-          .addAll(YamlBeansModuleRegistrars.morphiaRegistrars)
+          .addAll(io.harness.serializer.YamlBeansModuleRegistrars.morphiaRegistrars)
           .addAll(io.harness.serializer.OrchestrationStepsModuleRegistrars.morphiaRegistrars)
           .addAll(CDNGEntityRegistrars.morphiaRegistrars)
           .addAll(InstanceRegistrars.morphiaRegistrars)
           .addAll(DelegateTaskRegistrars.morphiaRegistrars)
           .addAll(NGCommonModuleRegistrars.morphiaRegistrars)
-          .add(NGEntitiesMorphiaRegistrar.class)
           .build();
 
   public static final ImmutableList<YamlSchemaRootClass> yamlSchemaRegistrars =
