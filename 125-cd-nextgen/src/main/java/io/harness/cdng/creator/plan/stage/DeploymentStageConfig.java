@@ -47,7 +47,8 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonTypeName("Deployment")
-@OneOfSet(fields = {"serviceConfig", "service, deploymentType"}, requiredFieldNames = {"service","serviceConfig", "deploymentType"})
+@OneOfSet(fields = {"serviceConfig", "service, deploymentType"},
+    requiredFieldNames = {"service", "serviceConfig", "deploymentType"})
 @TypeAlias("deploymentStageConfig")
 @SimpleVisitorHelper(helperClass = DeploymentStageVisitorHelper.class)
 public class DeploymentStageConfig implements StageInfoConfig, Visitable {
@@ -56,10 +57,25 @@ public class DeploymentStageConfig implements StageInfoConfig, Visitable {
   @ApiModelProperty(hidden = true)
   String uuid;
 
-  DeploymentType deploymentType;
   ServiceConfig serviceConfig;
-  // For multi infra feature
-  ServiceYamlV2 service;
+  /*
+  Have added Getter Annotation for service and deployment type since we do not want current users to get these fields as
+  suggestion from schema.
+  TODO: Need to remove this getter method along with hidden=true once we completely get rid of serviceConfig
+
+  Yaml for these fields
+
+       spec:
+         deploymentType: Kubernetes
+         service:
+            serviceConfigRef: ref
+   */
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) ServiceYamlV2 service;
+
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
+  @ApiModelProperty(hidden = true)
+  DeploymentType deploymentType;
+
   @NotNull PipelineInfrastructure infrastructure;
   @NotNull @VariableExpression(skipVariableExpression = true) ExecutionElementConfig execution;
 
