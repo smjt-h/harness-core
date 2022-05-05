@@ -137,8 +137,8 @@ public class SCMGitSyncHelper {
     final CreateFileResponse createFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::createFile, createFileRequest);
 
-    scmErrorHandler.handleIfError(createFileResponse.getStatusCode(),
-        ScmErrorDetails.builder().errorMessage(createFileResponse.getError().getErrorMessage()).build());
+    scmErrorHandler.handleIfError(
+        createFileResponse.getStatusCode(), getScmErrorDetails(createFileResponse.getError()));
 
     return ScmCreateFileGitResponse.builder().gitMetaData(getGitMetaData(createFileResponse.getGitMetaData())).build();
   }
@@ -164,8 +164,8 @@ public class SCMGitSyncHelper {
     final UpdateFileResponse updateFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::updateFile, updateFileRequest);
 
-    scmErrorHandler.handleIfError(updateFileResponse.getStatusCode(),
-        ScmErrorDetails.builder().errorMessage(updateFileResponse.getError().getErrorMessage()).build());
+    scmErrorHandler.handleIfError(
+        updateFileResponse.getStatusCode(), getScmErrorDetails(updateFileResponse.getError()));
 
     return ScmUpdateFileGitResponse.builder().gitMetaData(getGitMetaData(updateFileResponse.getGitMetaData())).build();
   }
@@ -186,8 +186,7 @@ public class SCMGitSyncHelper {
     final CreatePRResponse createPRResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::createPullRequest, createPRRequest);
 
-    scmErrorHandler.handleIfError(createPRResponse.getStatusCode(),
-        ScmErrorDetails.builder().errorMessage(createPRResponse.getError().getErrorMessage()).build());
+    scmErrorHandler.handleIfError(createPRResponse.getStatusCode(), getScmErrorDetails(createPRResponse.getError()));
 
     return ScmCreatePRResponse.builder().prNumber(createPRResponse.getPrNumber()).build();
   }
@@ -313,6 +312,10 @@ public class SCMGitSyncHelper {
   }
 
   private ScmErrorDetails getScmErrorDetails(ErrorDetails errorDetails) {
-    return ScmErrorDetails.builder().errorMessage(errorDetails.getErrorMessage()).build();
+    return ScmErrorDetails.builder()
+        .errorMessage(errorDetails.getErrorMessage())
+        .explanationMessage(errorDetails.getExplanationMessage())
+        .hintMessage(errorDetails.getHintMessage())
+        .build();
   }
 }
