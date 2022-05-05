@@ -7,11 +7,16 @@
 
 package io.harness.serializer.morphia;
 
+import io.harness.beans.EncryptedData;
+import io.harness.beans.MigrateSecretTask;
 import io.harness.beans.SecretChangeLog;
+import io.harness.beans.SecretKey;
 import io.harness.beans.SecretManagerConfig;
+import io.harness.beans.SecretUsageLog;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.morphia.MorphiaRegistrarHelperPut;
 
+import software.wings.beans.APMVerificationConfig;
 import software.wings.beans.AppDynamicsConfig;
 import software.wings.beans.AwsSecretsManagerConfig;
 import software.wings.beans.AzureConfig;
@@ -61,8 +66,12 @@ import software.wings.helpers.ext.mail.SmtpConfig;
 import software.wings.service.impl.analysis.CustomLogDataCollectionInfo;
 import software.wings.service.impl.analysis.DataCollectionTaskResult;
 import software.wings.service.impl.elk.ElkDataCollectionInfo;
+import software.wings.service.impl.elk.ElkDataCollectionInfoV2;
+import software.wings.service.impl.instana.InstanaDataCollectionInfo;
 import software.wings.service.impl.logz.LogzDataCollectionInfo;
+import software.wings.service.impl.newrelic.NewRelicDataCollectionInfoV2;
 import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
+import software.wings.service.impl.splunk.SplunkDataCollectionInfoV2;
 import software.wings.service.impl.stackdriver.StackDriverDataCollectionInfo;
 import software.wings.service.impl.stackdriver.StackDriverLogDataCollectionInfo;
 import software.wings.service.impl.sumo.SumoDataCollectionInfo;
@@ -88,6 +97,10 @@ public class DelegateTasksMorphiaRegistrar implements MorphiaRegistrar {
     set.add(SecretManagerConfig.class);
     set.add(SSHVaultConfig.class);
     set.add(SecretChangeLog.class);
+    set.add(EncryptedData.class);
+    set.add(SecretUsageLog.class);
+    set.add(MigrateSecretTask.class);
+    set.add(SecretKey.class);
   }
 
   @Override
@@ -144,5 +157,10 @@ public class DelegateTasksMorphiaRegistrar implements MorphiaRegistrar {
     w.put("delegatetasks.validation.capabilities.SSHHostValidationCapability", SSHHostValidationCapability.class);
     w.put("service.impl.stackdriver.StackDriverLogDataCollectionInfo", StackDriverLogDataCollectionInfo.class);
     w.put("service.impl.stackdriver.StackDriverDataCollectionInfo", StackDriverDataCollectionInfo.class);
+    w.put("service.impl.splunk.SplunkDataCollectionInfoV2", SplunkDataCollectionInfoV2.class);
+    w.put("beans.APMVerificationConfig", APMVerificationConfig.class);
+    w.put("service.impl.newrelic.NewRelicDataCollectionInfoV2", NewRelicDataCollectionInfoV2.class);
+    w.put("service.impl.instana.InstanaDataCollectionInfo", InstanaDataCollectionInfo.class);
+    w.put("service.impl.elk.ElkDataCollectionInfoV2", ElkDataCollectionInfoV2.class);
   }
 }
