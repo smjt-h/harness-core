@@ -40,23 +40,22 @@ public class ScmErrorHandler {
     switch (statusCode) {
       case 401:
       case 403:
-        throw prepareException(ScmUnauthorizedException.class, errorDetails);
+        throw prepareException(new ScmUnauthorizedException(errorDetails.getErrorMessage()), errorDetails);
       case 404:
-        throw prepareException(ScmResourceNotFoundException.class, errorDetails);
+        throw prepareException(new ScmResourceNotFoundException(errorDetails.getErrorMessage()), errorDetails);
       case 409:
-        throw prepareException(ScmConflictException.class, errorDetails);
+        throw prepareException(new ScmConflictException(errorDetails.getErrorMessage()), errorDetails);
       case 422:
-        throw prepareException(ScmUnprocessableEntityException.class, errorDetails);
+        throw prepareException(new ScmUnprocessableEntityException(errorDetails.getErrorMessage()), errorDetails);
       case 500:
-        throw prepareException(ScmInternalServerErrorException.class, errorDetails);
+        throw prepareException(new ScmInternalServerErrorException(errorDetails.getErrorMessage()), errorDetails);
       default:
-        throw prepareException(ScmUnexpectedException.class, errorDetails);
+        throw prepareException(new ScmUnexpectedException(errorDetails.getErrorMessage()), errorDetails);
     }
   }
 
-  private WingsException prepareException(Class<? extends ScmException> clazz, ScmErrorDetails scmErrorDetails)
-      throws InstantiationException, IllegalAccessException {
-    WingsException finalException = clazz.newInstance();
+  private WingsException prepareException(ScmException scmException, ScmErrorDetails scmErrorDetails) {
+    WingsException finalException = scmException;
     if (isNotEmpty(scmErrorDetails.getExplanationMessage())) {
       finalException = new ExplanationException(scmErrorDetails.getExplanationMessage(), finalException);
     }

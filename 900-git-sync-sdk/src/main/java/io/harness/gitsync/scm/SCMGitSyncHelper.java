@@ -157,7 +157,7 @@ public class SCMGitSyncHelper {
             .setScopeIdentifiers(ScopeIdentifierMapper.getScopeIdentifiersFromScope(scope))
             .putAllContextMap(contextMap)
             .setBaseBranchName(gitRequest.getBaseBranch())
-            .setOldCommitId(gitRequest.getOldCommitId())
+            .setOldCommitId(emptyIfNull(gitRequest.getOldCommitId()))
             .setOldFileSha(gitRequest.getOldFileSha())
             .build();
 
