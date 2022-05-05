@@ -975,8 +975,8 @@
           "type": "object",
           "required": [
             "execution",
-            "infrastructure",
-            "serviceConfig"
+            "serviceConfig",
+            "infrastructure"
           ],
           "properties": {
             "execution": {
@@ -995,8 +995,8 @@
           "type": "object",
           "required": [
             "execution",
-            "infrastructure",
             "deploymentType",
+            "environment",
             "service"
           ],
           "properties": {
@@ -1010,11 +1010,11 @@
                 "ServerlessAwsLambda"
               ]
             },
+            "environment": {
+              "$ref": "#/definitions/EnvironmentYamlV2"
+            },
             "execution": {
               "$ref": "#/definitions/ExecutionElementConfig"
-            },
-            "infrastructure": {
-              "$ref": "#/definitions/PipelineInfrastructure"
             },
             "service": {
               "$ref": "#/definitions/ServiceYamlV2"
@@ -1281,6 +1281,27 @@
             "PreProduction",
             "Production"
           ]
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "EnvironmentYamlV2": {
+      "type": "object",
+      "required": [
+        "environmentRef"
+      ],
+      "properties": {
+        "environmentRef": {
+          "type": "string"
+        },
+        "infrastructureDefinitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/InfraStructureDefinition"
+          }
+        },
+        "metadata": {
+          "type": "string"
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2044,6 +2065,21 @@
         },
         "infrastructureDefinition": {
           "$ref": "#/definitions/InfrastructureDef"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "InfraStructureDefinition": {
+      "type": "object",
+      "required": [
+        "ref"
+      ],
+      "properties": {
+        "metadata": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
