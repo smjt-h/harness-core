@@ -106,6 +106,6 @@ public class CIExecutionTestModule extends AbstractModule {
     install(new TIServiceClientModule(
         TIServiceConfig.builder().baseUrl("http://localhost:8078").globalToken("token").build()));
     install(new STOServiceClientModule(
-        STOServiceConfig.builder().baseUrl("http://localhost:4000").globalToken("token").build()));
+        STOServiceConfig.builder().baseUrl("http://localhost:4000").globalToken("api/v1/token").build()));
   }
 }
