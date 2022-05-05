@@ -13,12 +13,15 @@ import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.StoreIn;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cvng.notification.beans.NotificationRuleRef;
 import io.harness.cvng.servicelevelobjective.beans.DayOfWeek;
 import io.harness.cvng.servicelevelobjective.beans.SLOCalenderType;
 import io.harness.cvng.servicelevelobjective.beans.SLODashboardDetail.TimeRangeFilter;
 import io.harness.cvng.servicelevelobjective.beans.SLOTargetType;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelIndicatorType;
+import io.harness.iterator.PersistentRegularIterable;
 import io.harness.mongo.index.CompoundMongoIndex;
+import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.DbAliases;
 import io.harness.ng.core.common.beans.NGTag;
@@ -38,6 +41,7 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.validation.constraints.NotNull;
@@ -69,7 +73,7 @@ import org.mongodb.morphia.annotations.Id;
 @OwnedBy(HarnessTeam.CV)
 @StoreIn(DbAliases.CVNG)
 public class ServiceLevelObjective
-    implements PersistentEntity, UuidAware, AccountAccess, UpdatedAtAware, CreatedAtAware {
+    implements PersistentEntity, UuidAware, AccountAccess, UpdatedAtAware, CreatedAtAware, PersistentRegularIterable {
   String accountId;
   String orgIdentifier;
   String projectIdentifier;
@@ -82,13 +86,23 @@ public class ServiceLevelObjective
   String healthSourceIdentifier;
   String monitoredServiceIdentifier;
   List<String> serviceLevelIndicators;
+  List<NotificationRuleRef> notificationRuleRefs;
   SLOTarget sloTarget;
   ServiceLevelIndicatorType type;
   private long lastUpdatedAt;
   private long createdAt;
   private Double sloTargetPercentage;
+  @FdIndex private long nextNotificationIteration;
+
   public ZoneOffset getZoneOffset() {
     return ZoneOffset.UTC; // hardcoding it to UTC for now. We need to ask it from user.
+  }
+
+  public List<NotificationRuleRef> getNotificationRuleRefs() {
+    if (notificationRuleRefs == null) {
+      return Collections.emptyList();
+    }
+    return notificationRuleRefs;
   }
 
   public int getActiveErrorBudgetMinutes(
@@ -125,6 +139,23 @@ public class ServiceLevelObjective
 
   public List<TimeRangeFilter> getTimeRangeFilters() {
     return sloTarget.getTimeRangeFilters();
+  }
+
+  @Override
+  public Long obtainNextIteration(String fieldName) {
+    if (ServiceLevelObjectiveKeys.nextNotificationIteration.equals(fieldName)) {
+      return this.nextNotificationIteration;
+    }
+    throw new IllegalArgumentException("Invalid fieldName " + fieldName);
+  }
+
+  @Override
+  public void updateNextIteration(String fieldName, long nextIteration) {
+    if (ServiceLevelObjectiveKeys.nextNotificationIteration.equals(fieldName)) {
+      this.nextNotificationIteration = nextIteration;
+      return;
+    }
+    throw new IllegalArgumentException("Invalid fieldName " + fieldName);
   }
 
   @Value

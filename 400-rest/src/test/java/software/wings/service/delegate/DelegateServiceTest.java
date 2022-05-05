@@ -103,8 +103,10 @@ import io.harness.delegate.beans.Delegate;
 import io.harness.delegate.beans.Delegate.DelegateBuilder;
 import io.harness.delegate.beans.Delegate.DelegateKeys;
 import io.harness.delegate.beans.DelegateApproval;
+import io.harness.delegate.beans.DelegateApprovalResponse;
 import io.harness.delegate.beans.DelegateConfiguration;
 import io.harness.delegate.beans.DelegateConnectionHeartbeat;
+import io.harness.delegate.beans.DelegateDTO;
 import io.harness.delegate.beans.DelegateEntityOwner;
 import io.harness.delegate.beans.DelegateGroup;
 import io.harness.delegate.beans.DelegateGroupStatus;
@@ -118,6 +120,7 @@ import io.harness.delegate.beans.DelegateScripts;
 import io.harness.delegate.beans.DelegateSetupDetails;
 import io.harness.delegate.beans.DelegateSize;
 import io.harness.delegate.beans.DelegateSizeDetails;
+import io.harness.delegate.beans.DelegateTags;
 import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
 import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.DelegateTokenDetails;
@@ -150,7 +153,6 @@ import io.harness.outbox.api.OutboxService;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptedDataDetail;
-import io.harness.service.impl.DelegateSetupServiceImpl;
 import io.harness.service.intfc.DelegateCache;
 import io.harness.service.intfc.DelegateProfileObserver;
 import io.harness.service.intfc.DelegateTaskRetryObserver;
@@ -201,6 +203,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.CharStreams;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
+import io.fabric8.utils.Lists;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -254,6 +257,8 @@ public class DelegateServiceTest extends WingsBaseTest {
   private static final String VERSION = "1.0.0";
   private static final String DELEGATE_NAME = "harness-delegate";
   private static final String DELEGATE_PROFILE_ID = "QFWin33JRlKWKBzpzE5A9A";
+  private static final String DELEGATE_ID_1 = "delegateId1";
+  private static final String DELEGATE_ID_2 = "delegateId2";
   private static final String DELEGATE_TYPE = "dockerType";
   private static final String PRIMARY_PROFILE_NAME = "primary";
   private static final String TOKEN_NAME = "TOKEN_NAME";
@@ -303,7 +308,6 @@ public class DelegateServiceTest extends WingsBaseTest {
   @InjectMocks @Inject private DelegateServiceImpl delegateService;
   @InjectMocks @Inject private DelegateTaskServiceClassicImpl delegateTaskServiceClassic;
   @InjectMocks @Inject private DelegateTaskService delegateTaskService;
-  @InjectMocks @Inject private DelegateSetupServiceImpl delegateSetupService;
 
   @Mock private UsageLimitedFeature delegatesFeature;
 
@@ -1087,7 +1091,7 @@ public class DelegateServiceTest extends WingsBaseTest {
 
     DelegateRegisterResponse registerResponse = delegateService.register(params);
     Delegate delegateFromDb = delegateCache.get(accountId, registerResponse.getDelegateId(), true);
-    DelegateGroup delegateGroupFromDb = delegateSetupService.getDelegateGroup(accountId, delegateGroup.getUuid());
+    DelegateGroup delegateGroupFromDb = delegateCache.getDelegateGroup(accountId, delegateGroup.getUuid());
 
     assertThat(delegateFromDb.getAccountId()).isEqualTo(params.getAccountId());
     assertThat(delegateFromDb.isNg()).isTrue();
@@ -1135,7 +1139,7 @@ public class DelegateServiceTest extends WingsBaseTest {
 
     DelegateRegisterResponse registerResponse = delegateService.register(params);
     Delegate delegateFromDb = delegateCache.get(ACCOUNT_ID, registerResponse.getDelegateId(), true);
-    DelegateGroup delegateGroupFromDb = delegateSetupService.getDelegateGroup(ACCOUNT_ID, delegateGroup.getUuid());
+    DelegateGroup delegateGroupFromDb = delegateCache.getDelegateGroup(ACCOUNT_ID, delegateGroup.getUuid());
 
     assertThat(delegateFromDb.getAccountId()).isEqualTo(params.getAccountId());
     assertThat(delegateFromDb.isNg()).isTrue();
@@ -3111,7 +3115,7 @@ public class DelegateServiceTest extends WingsBaseTest {
                             .build();
     persistence.save(delegate);
 
-    Set<String> tags = delegateService.retrieveDelegateSelectors(delegate);
+    Set<String> tags = delegateService.retrieveDelegateSelectors(delegate, false);
     assertThat(tags.size()).isEqualTo(3);
     assertThat(tags).containsExactlyInAnyOrder("abc", "qwe", "xde");
   }
@@ -3129,7 +3133,7 @@ public class DelegateServiceTest extends WingsBaseTest {
                             .build();
     persistence.save(delegate);
 
-    Set<String> tags = delegateService.retrieveDelegateSelectors(delegate);
+    Set<String> tags = delegateService.retrieveDelegateSelectors(delegate, false);
     assertThat(tags.size()).isEqualTo(0);
   }
 
@@ -3455,8 +3459,7 @@ public class DelegateServiceTest extends WingsBaseTest {
 
     DelegateRegisterResponse registerResponse = delegateService.register(params);
     Delegate delegateFromDb = delegateCache.get(ACCOUNT_ID, registerResponse.getDelegateId(), true);
-    DelegateGroup delegateGroupFromDb =
-        delegateSetupService.getDelegateGroup(ACCOUNT_ID, delegateFromDb.getDelegateGroupId());
+    DelegateGroup delegateGroupFromDb = delegateCache.getDelegateGroup(ACCOUNT_ID, delegateFromDb.getDelegateGroupId());
 
     assertThat(delegateFromDb.getAccountId()).isEqualTo(params.getAccountId());
     assertThat(delegateFromDb.isNg()).isTrue();
@@ -3835,6 +3838,259 @@ public class DelegateServiceTest extends WingsBaseTest {
     assertThatThrownBy(() -> delegateService.validateDelegateSetupDetails(accountId, setupDetails, DOCKER))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage(DELEGATE_TOKEN_ERROR_MESSAGE);
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldListDelegateTags() {
+    Delegate delegate = createDelegateBuilder()
+                            .uuid("delegateId1")
+                            .accountId(ACCOUNT_ID)
+                            .ng(false)
+                            .tags(Lists.newArrayList("tag123", "tag456"))
+                            .delegateType(KUBERNETES)
+                            .delegateName("delegate1")
+                            .description("description1")
+                            .hostName("kube-0")
+                            .delegateProfileId("delegateProfileId1")
+                            .build();
+
+    persistence.save(delegate);
+
+    DelegateDTO delegateFromDB = delegateService.listDelegateTags(ACCOUNT_ID, "delegateId1");
+
+    assertThat(delegateFromDB).isNotNull();
+    assertThat(delegateFromDB.getDelegateId()).isEqualTo("delegateId1");
+    assertThat(delegateFromDB.getTags()).containsExactly("tag123", "tag456");
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldAddDelegateTags() {
+    Delegate delegate = createDelegateBuilder()
+                            .uuid("delegateId1")
+                            .accountId(ACCOUNT_ID)
+                            .ng(false)
+                            .tags(Lists.newArrayList("tag123", "tag456"))
+                            .delegateType(KUBERNETES)
+                            .delegateName("delegate1")
+                            .description("description1")
+                            .hostName("kube-0")
+                            .delegateProfileId("delegateProfileId1")
+                            .build();
+
+    persistence.save(delegate);
+
+    DelegateTags delegateTags = new DelegateTags(Arrays.asList("  tag1  ", "  tag2", "tag123"));
+
+    DelegateDTO updatedDelegate = delegateService.addDelegateTags(ACCOUNT_ID, "delegateId1", delegateTags);
+
+    assertThat(updatedDelegate).isNotNull();
+    assertThat(updatedDelegate.getDelegateId()).isEqualTo("delegateId1");
+    assertThat(updatedDelegate.getTags()).containsExactlyInAnyOrder("tag123", "tag456", "tag1", "tag2");
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldUpdateDelegateTags() {
+    Delegate delegate = createDelegateBuilder()
+                            .uuid("delegateId1")
+                            .accountId(ACCOUNT_ID)
+                            .ng(false)
+                            .tags(Lists.newArrayList("tag123", "tag456"))
+                            .delegateType(KUBERNETES)
+                            .delegateName("delegate1")
+                            .description("description1")
+                            .hostName("kube-0")
+                            .delegateProfileId("delegateProfileId1")
+                            .build();
+
+    persistence.save(delegate);
+
+    DelegateTags delegateTags = new DelegateTags(Arrays.asList("  tag1  ", "  tag2", "tag123"));
+
+    DelegateDTO updatedDelegate = delegateService.updateDelegateTags(ACCOUNT_ID, "delegateId1", delegateTags);
+
+    assertThat(updatedDelegate).isNotNull();
+    assertThat(updatedDelegate.getDelegateId()).isEqualTo("delegateId1");
+    assertThat(updatedDelegate.getTags()).containsExactlyInAnyOrder("tag123", "tag1", "tag2");
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldDeleteDelegateTags() {
+    Delegate delegate = createDelegateBuilder()
+                            .uuid("delegateId1")
+                            .accountId(ACCOUNT_ID)
+                            .ng(false)
+                            .tags(Lists.newArrayList("tag123", "tag456"))
+                            .delegateType(KUBERNETES)
+                            .delegateName("delegate1")
+                            .description("description1")
+                            .hostName("kube-0")
+                            .delegateProfileId("delegateProfileId1")
+                            .build();
+
+    persistence.save(delegate);
+
+    DelegateDTO updatedDelegate = delegateService.deleteDelegateTags(ACCOUNT_ID, "delegateId1");
+
+    assertThat(updatedDelegate).isNotNull();
+    assertThat(updatedDelegate.getDelegateId()).isEqualTo("delegateId1");
+    assertThat(updatedDelegate.getTags()).isEmpty();
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldApproveDelegatesUsingProfile() {
+    Delegate delegate1 = createDelegateBuilder()
+                             .uuid(DELEGATE_ID_1)
+                             .delegateProfileId(DELEGATE_PROFILE_ID)
+                             .status(DelegateInstanceStatus.WAITING_FOR_APPROVAL)
+                             .build();
+    Delegate delegate2 = createDelegateBuilder()
+                             .uuid(DELEGATE_ID_2)
+                             .delegateProfileId(DELEGATE_PROFILE_ID)
+                             .status(DelegateInstanceStatus.ENABLED)
+                             .build();
+
+    persistence.save(delegate1);
+    persistence.save(delegate2);
+
+    DelegateApprovalResponse delegateApprovalResponse =
+        delegateService.approveDelegatesUsingProfile(ACCOUNT_ID, DELEGATE_PROFILE_ID, DelegateApproval.ACTIVATE);
+
+    Delegate delegateFromDB1 = delegateCache.get(ACCOUNT_ID, DELEGATE_ID_1, true);
+    Delegate delegateFromDB2 = delegateCache.get(ACCOUNT_ID, DELEGATE_ID_2, true);
+
+    assertThat(delegateApprovalResponse).isNotNull();
+    assertThat(delegateApprovalResponse.getListOfUpdatedDelegateIds()).isEqualTo(singletonList(DELEGATE_ID_1));
+
+    assertThat(delegateFromDB1).isNotNull();
+    assertThat(delegateFromDB1.getStatus()).isEqualTo(DelegateInstanceStatus.ENABLED);
+
+    assertThat(delegateFromDB2).isNotNull();
+    assertThat(delegateFromDB2.getStatus()).isEqualTo(DelegateInstanceStatus.ENABLED);
+
+    verify(auditServiceHelper, times(1))
+        .reportForAuditingUsingAccountId(ACCOUNT_ID, delegate1, delegateFromDB1, Type.DELEGATE_APPROVAL);
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldRejectDelegatesUsingProfile() {
+    Delegate delegate1 = createDelegateBuilder()
+                             .uuid(DELEGATE_ID_1)
+                             .delegateProfileId(DELEGATE_PROFILE_ID)
+                             .status(DelegateInstanceStatus.WAITING_FOR_APPROVAL)
+                             .build();
+    Delegate delegate2 = createDelegateBuilder()
+                             .uuid(DELEGATE_ID_2)
+                             .delegateProfileId(DELEGATE_PROFILE_ID)
+                             .status(DelegateInstanceStatus.ENABLED)
+                             .build();
+
+    persistence.save(delegate1);
+    persistence.save(delegate2);
+
+    DelegateApprovalResponse delegateApprovalResponse =
+        delegateService.approveDelegatesUsingProfile(ACCOUNT_ID, DELEGATE_PROFILE_ID, DelegateApproval.REJECT);
+
+    Delegate delegateFromDB1 = delegateCache.get(ACCOUNT_ID, DELEGATE_ID_1, true);
+    Delegate delegateFromDB2 = delegateCache.get(ACCOUNT_ID, DELEGATE_ID_2, true);
+
+    assertThat(delegateApprovalResponse).isNotNull();
+    assertThat(delegateApprovalResponse.getListOfUpdatedDelegateIds()).isEqualTo(singletonList(DELEGATE_ID_1));
+
+    assertThat(delegateFromDB1).isNotNull();
+    assertThat(delegateFromDB1.getStatus()).isEqualTo(DelegateInstanceStatus.DELETED);
+    assertThat(delegateFromDB2).isNotNull();
+    assertThat(delegateFromDB2.getStatus()).isEqualTo(DelegateInstanceStatus.ENABLED);
+
+    verify(auditServiceHelper, times(1))
+        .reportForAuditingUsingAccountId(ACCOUNT_ID, delegate1, delegateFromDB1, Type.DELEGATE_REJECTION);
+    verify(broadcaster).broadcast(SELF_DESTRUCT + DELEGATE_ID_1);
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldApproveDelegatesUsingToken() {
+    Delegate delegate1 = createDelegateBuilder()
+                             .uuid(DELEGATE_ID_1)
+                             .delegateTokenName(TOKEN_NAME)
+                             .status(DelegateInstanceStatus.WAITING_FOR_APPROVAL)
+                             .build();
+    Delegate delegate2 = createDelegateBuilder()
+                             .uuid(DELEGATE_ID_2)
+                             .delegateTokenName(TOKEN_NAME)
+                             .status(DelegateInstanceStatus.ENABLED)
+                             .build();
+
+    persistence.save(delegate1);
+    persistence.save(delegate2);
+
+    DelegateApprovalResponse delegateApprovalResponse =
+        delegateService.approveDelegatesUsingToken(ACCOUNT_ID, TOKEN_NAME, DelegateApproval.ACTIVATE);
+
+    Delegate delegateFromDB1 = delegateCache.get(ACCOUNT_ID, DELEGATE_ID_1, true);
+    Delegate delegateFromDB2 = delegateCache.get(ACCOUNT_ID, DELEGATE_ID_2, true);
+
+    assertThat(delegateApprovalResponse).isNotNull();
+    assertThat(delegateApprovalResponse.getListOfUpdatedDelegateIds()).isEqualTo(singletonList(DELEGATE_ID_1));
+
+    assertThat(delegateFromDB1).isNotNull();
+    assertThat(delegateFromDB1.getStatus()).isEqualTo(DelegateInstanceStatus.ENABLED);
+
+    assertThat(delegateFromDB2).isNotNull();
+    assertThat(delegateFromDB2.getStatus()).isEqualTo(DelegateInstanceStatus.ENABLED);
+
+    verify(auditServiceHelper, times(1))
+        .reportForAuditingUsingAccountId(ACCOUNT_ID, delegate1, delegateFromDB1, Type.DELEGATE_APPROVAL);
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldRejectDelegatesUsingToken() {
+    Delegate delegate1 = createDelegateBuilder()
+                             .uuid(DELEGATE_ID_1)
+                             .delegateTokenName(TOKEN_NAME)
+                             .status(DelegateInstanceStatus.WAITING_FOR_APPROVAL)
+                             .build();
+    Delegate delegate2 = createDelegateBuilder()
+                             .uuid(DELEGATE_ID_2)
+                             .delegateTokenName(TOKEN_NAME)
+                             .status(DelegateInstanceStatus.ENABLED)
+                             .build();
+
+    persistence.save(delegate1);
+    persistence.save(delegate2);
+
+    DelegateApprovalResponse delegateApprovalResponse =
+        delegateService.approveDelegatesUsingToken(ACCOUNT_ID, TOKEN_NAME, DelegateApproval.REJECT);
+
+    Delegate delegateFromDB1 = delegateCache.get(ACCOUNT_ID, DELEGATE_ID_1, true);
+    Delegate delegateFromDB2 = delegateCache.get(ACCOUNT_ID, DELEGATE_ID_2, true);
+
+    assertThat(delegateApprovalResponse).isNotNull();
+    assertThat(delegateApprovalResponse.getListOfUpdatedDelegateIds()).isEqualTo(singletonList(DELEGATE_ID_1));
+
+    assertThat(delegateFromDB1).isNotNull();
+    assertThat(delegateFromDB1.getStatus()).isEqualTo(DelegateInstanceStatus.DELETED);
+
+    assertThat(delegateFromDB2).isNotNull();
+    assertThat(delegateFromDB2.getStatus()).isEqualTo(DelegateInstanceStatus.ENABLED);
+
+    verify(auditServiceHelper, times(1))
+        .reportForAuditingUsingAccountId(ACCOUNT_ID, delegate1, delegateFromDB1, Type.DELEGATE_REJECTION);
+    verify(broadcaster).broadcast(SELF_DESTRUCT + DELEGATE_ID_1);
   }
 
   private CapabilityRequirement buildCapabilityRequirement() {

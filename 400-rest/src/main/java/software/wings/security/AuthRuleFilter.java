@@ -28,7 +28,6 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.FeatureName;
-import io.harness.delegate.utils.DelegateMtlsApiConstants;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.AccessDeniedException;
 import io.harness.exception.InvalidRequestException;
@@ -115,14 +114,14 @@ public class AuthRuleFilter implements ContainerRequestFilter {
       "harness-api-keys",
       "users/set-default-account",
       "account/new",
-      DelegateMtlsApiConstants.API_ROOT_RELATIVE + "/" + DelegateMtlsApiConstants.API_PATH_CHECK_AVAILABILITY,
   };
   private static final String[] NO_FILTERING_URIS_SUFFIXES = new String[] {"/logout"};
   private static final String[] EXEMPTED_URI_PREFIXES = new String[] {"limits/configure", "account/license",
       "account/export", "account/import", "account/delete/", "account/disable", "account/enable", "users/reset-cache",
       "executions/workflow-variables", "executions/nodeSubGraphs", "executions/deployment-metadata",
       "setup-as-code/yaml/internal/template-yaml-sync", "infrastructure-definitions/list",
-      "usageRestrictions/references", "setup/delegates/ng/v2"};
+      "usageRestrictions/references", "setup/delegates/ng/v2", "custom-dashboard/deployment-recon-per-account",
+      "custom-dashboard/deployment-recon-all-accounts", "custom-dashboard/instance-recon-per-account"};
   private static final String[] EXEMPTED_URI_SUFFIXES = new String[] {"sales-contacts", "addSubdomainUrl"};
   private static final String USER_NOT_AUTHORIZED = "User not authorized";
   private static final String X_FORWARDED_FOR = "X-Forwarded-For";
@@ -435,7 +434,7 @@ public class AuthRuleFilter implements ContainerRequestFilter {
 
   private void validateAccountStatus(String accountId, boolean isHarnessUserExemptedRequest) {
     String accountStatus = accountService.getAccountStatus(accountId);
-    log.info("Testing: accountstatus for accountId {} is {}", accountId, accountStatus);
+    log.debug("Testing: accountstatus for accountId {} is {}", accountId, accountStatus);
     if (AccountStatus.DELETED.equals(accountStatus)) {
       log.error("Testing: account {} does not exist with status {}", accountId, accountStatus);
       throw new WingsException(ACCOUNT_DOES_NOT_EXIST, USER);
