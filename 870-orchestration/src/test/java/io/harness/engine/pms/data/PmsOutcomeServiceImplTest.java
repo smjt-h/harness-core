@@ -220,8 +220,7 @@ public class PmsOutcomeServiceImplTest extends OrchestrationTestBase {
     String outcomeJson = RecastOrchestrationUtils.toJson(DummyOrchestrationOutcome.builder().test("test").build());
     pmsOutcomeService.consume(ambiance, outcomeName, outcomeJson, null);
 
-    when(expressionEvaluatorProvider.get(
-             any(VariableResolverTracker.class), any(Ambiance.class), anySet(), anyBoolean()))
+    when(expressionEvaluatorProvider.get(any(), any(Ambiance.class), anySet(), anyBoolean()))
         .thenReturn(prepareEngineExpressionEvaluator(
             ImmutableMap.of(outcomeName, DummyOrchestrationOutcome.builder().test("test").build())));
 
