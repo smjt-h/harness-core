@@ -88,7 +88,7 @@ public class FileStoreServiceImpl implements FileStoreService {
   private final FileFailsafeService fileFailsafeService;
 
   @Override
-  public FileDTO create(@NotNull FileDTO fileDto, InputStream content, Boolean draft) {
+  public FileDTO create(@NotNull FileDTO fileDto, InputStream content) {
     log.info("Creating {}: {}", fileDto.getType().name().toLowerCase(), fileDto);
 
     if (isFileExistsByIdentifier(fileDto)) {
@@ -99,7 +99,7 @@ public class FileStoreServiceImpl implements FileStoreService {
       throw new DuplicateFieldException(getDuplicateEntityNameMessage(fileDto));
     }
 
-    NGFile ngFile = FileDTOMapper.getNGFileFromDTO(fileDto, draft);
+    NGFile ngFile = FileDTOMapper.getNGFileFromDTO(fileDto);
 
     if (shouldStoreFileContent(content, ngFile)) {
       log.info("Start creating file in file system, identifier: {}", fileDto.getIdentifier());
