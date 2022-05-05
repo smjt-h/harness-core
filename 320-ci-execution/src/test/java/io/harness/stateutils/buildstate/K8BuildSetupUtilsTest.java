@@ -149,7 +149,7 @@ public class K8BuildSetupUtilsTest extends CIExecutionTestBase {
     String tiEndpoint = "http://localhost:8078";
     String tiToken = "token";
 
-    String stoEndpoint = "http://localhost:8078";
+    String stoEndpoint = "http://localhost:4000";
     String stoToken = "stoToken";
     TIServiceConfig tiServiceConfig = TIServiceConfig.builder().baseUrl(tiEndpoint).globalToken(tiToken).build();
     when(tiServiceUtils.getTiServiceConfig()).thenReturn(tiServiceConfig);

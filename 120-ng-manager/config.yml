@@ -183,7 +183,7 @@ gitSyncServerConfig:
       certFilePath: cert.pem
     - port: 13002
 
-shouldDeployWithGitSync: true
+shouldDeployWithGitSync: false
 
 fileServiceConfiguration:
   fileStorageMode: MONGO
