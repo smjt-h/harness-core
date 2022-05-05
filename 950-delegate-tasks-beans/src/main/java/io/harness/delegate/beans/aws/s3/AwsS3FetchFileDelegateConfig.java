@@ -18,8 +18,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
-@EqualsAndHashCode
 @Builder
+@EqualsAndHashCode
 @OwnedBy(HarnessTeam.CDP)
 public class AwsS3FetchFileDelegateConfig {
   String identifier;
