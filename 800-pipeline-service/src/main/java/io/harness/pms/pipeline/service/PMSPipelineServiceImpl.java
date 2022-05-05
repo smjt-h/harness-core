@@ -25,6 +25,7 @@ import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.EntityNotFoundException;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.ExplanationException;
+import io.harness.exception.HintException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.InvalidYamlException;
 import io.harness.exception.ScmException;
@@ -129,7 +130,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
       log.error(format("Invalid yaml in node [%s]", YamlUtils.getErrorNodePartialFQN(ex)), ex);
       throw new InvalidYamlException(format("Invalid yaml in node [%s]", YamlUtils.getErrorNodePartialFQN(ex)), ex);
 
-    } catch (ExplanationException | ScmException e) {
+    } catch (ExplanationException | HintException | ScmException e) {
       log.error("Error while creating pipeline " + pipelineEntity.getIdentifier(), e);
       throw e;
     } catch (Exception e) {
@@ -147,7 +148,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
       optionalPipelineEntity =
           pmsPipelineRepository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
               accountId, orgIdentifier, projectIdentifier, identifier, !deleted, false);
-    } catch (ScmException e) {
+    } catch (ExplanationException | HintException | ScmException e) {
       log.error(String.format("Error while retrieving pipeline [%s]", identifier), e);
       throw e;
     } catch (Exception e) {
@@ -261,7 +262,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     } catch (IOException ex) {
       log.error(format("Invalid yaml in node [%s]", YamlUtils.getErrorNodePartialFQN(ex)), ex);
       throw new InvalidYamlException(format("Invalid yaml in node [%s]", YamlUtils.getErrorNodePartialFQN(ex)), ex);
-    } catch (ExplanationException | ScmException e) {
+    } catch (ExplanationException | HintException | ScmException e) {
       log.error("Error while updating pipeline " + pipelineEntity.getIdentifier(), e);
       throw e;
     } catch (Exception e) {
