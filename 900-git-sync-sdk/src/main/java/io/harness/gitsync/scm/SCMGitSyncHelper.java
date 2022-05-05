@@ -110,7 +110,10 @@ public class SCMGitSyncHelper {
     final GetFileResponse getFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::getFile, getFileRequest);
 
-    scmErrorHandler.handleIfError(getFileResponse.getStatusCode(), getScmErrorDetails(getFileResponse.getError()));
+    if (isFailureResponse(getFileResponse.getStatusCode())) {
+      scmErrorHandler.processAndThrowException(
+          getFileResponse.getStatusCode(), getScmErrorDetails(getFileResponse.getError()));
+    }
 
     return ScmGetFileResponse.builder()
         .fileContent(getFileResponse.getFileContent())
@@ -137,8 +140,10 @@ public class SCMGitSyncHelper {
     final CreateFileResponse createFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::createFile, createFileRequest);
 
-    scmErrorHandler.handleIfError(createFileResponse.getStatusCode(),
-        ScmErrorDetails.builder().errorMessage(createFileResponse.getError().getErrorMessage()).build());
+    if (isFailureResponse(createFileResponse.getStatusCode())) {
+      scmErrorHandler.processAndThrowException(createFileResponse.getStatusCode(),
+          ScmErrorDetails.builder().errorMessage(createFileResponse.getError().getErrorMessage()).build());
+    }
 
     return ScmCreateFileGitResponse.builder().gitMetaData(getGitMetaData(createFileResponse.getGitMetaData())).build();
   }
@@ -164,8 +169,10 @@ public class SCMGitSyncHelper {
     final UpdateFileResponse updateFileResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::updateFile, updateFileRequest);
 
-    scmErrorHandler.handleIfError(updateFileResponse.getStatusCode(),
-        ScmErrorDetails.builder().errorMessage(updateFileResponse.getError().getErrorMessage()).build());
+    if (isFailureResponse(updateFileResponse.getStatusCode())) {
+      scmErrorHandler.processAndThrowException(updateFileResponse.getStatusCode(),
+          ScmErrorDetails.builder().errorMessage(updateFileResponse.getError().getErrorMessage()).build());
+    }
 
     return ScmUpdateFileGitResponse.builder().gitMetaData(getGitMetaData(updateFileResponse.getGitMetaData())).build();
   }
@@ -186,8 +193,10 @@ public class SCMGitSyncHelper {
     final CreatePRResponse createPRResponse = GitSyncGrpcClientUtils.retryAndProcessException(
         harnessToGitPushInfoServiceBlockingStub::createPullRequest, createPRRequest);
 
-    scmErrorHandler.handleIfError(createPRResponse.getStatusCode(),
-        ScmErrorDetails.builder().errorMessage(createPRResponse.getError().getErrorMessage()).build());
+    if (isFailureResponse(createPRResponse.getStatusCode())) {
+      scmErrorHandler.processAndThrowException(createPRResponse.getStatusCode(),
+          ScmErrorDetails.builder().errorMessage(createPRResponse.getError().getErrorMessage()).build());
+    }
 
     return ScmCreatePRResponse.builder().prNumber(createPRResponse.getPrNumber()).build();
   }
@@ -314,5 +323,9 @@ public class SCMGitSyncHelper {
 
   private ScmErrorDetails getScmErrorDetails(ErrorDetails errorDetails) {
     return ScmErrorDetails.builder().errorMessage(errorDetails.getErrorMessage()).build();
+  }
+
+  private boolean isFailureResponse(int statusCode) {
+    return statusCode >= 300;
   }
 }
