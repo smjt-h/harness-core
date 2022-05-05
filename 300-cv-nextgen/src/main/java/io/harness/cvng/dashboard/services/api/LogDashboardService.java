@@ -26,8 +26,7 @@ public interface LogDashboardService {
       PageParams pageParams);
 
   PageResponse<AnalyzedRadarChartLogDataDTO> getAllRadarChartLogsData(MonitoredServiceParams monitoredServiceParams,
-      TimeRangeParams timeRangeParams, LiveMonitoringLogAnalysisFilter liveMonitoringLogAnalysisFilter,
-      PageParams pageParams);
+      MonitoredServiceLogAnalysisFilter monitoredServiceLogAnalysisFilter, PageParams pageParams);
 
   List<LiveMonitoringLogAnalysisClusterDTO> getLogAnalysisClusters(MonitoredServiceParams monitoredServiceParams,
       TimeRangeParams timeRangeParams, LiveMonitoringLogAnalysisFilter liveMonitoringLogAnalysisFilter);

@@ -125,18 +125,9 @@ public class LogDashboardResource {
                                                           .projectIdentifier(projectParams.getProjectIdentifier())
                                                           .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                                           .build();
-    /*TimeRangeParams timeRangeParams = TimeRangeParams.builder()
-            .startTime(Instant.ofEpochMilli(monitoredServiceLogAnalysisFilter.getStartTimeMillis()))
-            .endTime(Instant.ofEpochMilli(monitoredServiceLogAnalysisFilter.getEndTimeMillis()))
-            .build();
-    LiveMonitoringLogAnalysisFilter liveMonitoringLogAnalysisFilter =
-            LiveMonitoringLogAnalysisFilter.builder()
-                    .healthSourceIdentifiers(monitoredServiceLogAnalysisFilter.getHealthSourceIdentifiers())
-                    .clusterTypes(monitoredServiceLogAnalysisFilter.getClusterTypes())
-                    .build();*/
 
-    return new RestResponse<>(logDashboardService.getLogAnalysisRadarChartClusters(serviceEnvironmentParams,
-        monitoredServiceLogAnalysisFilter /*timeRangeParams, liveMonitoringLogAnalysisFilter*/));
+    return new RestResponse<>(logDashboardService.getLogAnalysisRadarChartClusters(
+        serviceEnvironmentParams, monitoredServiceLogAnalysisFilter));
   }
 
   @GET
@@ -147,9 +138,7 @@ public class LogDashboardResource {
   public RestResponse<PageResponse<AnalyzedRadarChartLogDataDTO>> getAllLogsRadarChartData(
       @NotNull @BeanParam ProjectParams projectParams,
       @QueryParam("monitoredServiceIdentifier") String monitoredServiceIdentifier,
-      @QueryParam("clusterTypes") List<LogAnalysisTag> clusterTypes,
-      @NotNull @QueryParam("startTime") Long startTimeMillis, @NotNull @QueryParam("endTime") Long endTimeMillis,
-      @QueryParam("healthSources") List<String> healthSourceIdentifiers,
+      @BeanParam MonitoredServiceLogAnalysisFilter monitoredServiceLogAnalysisFilter,
       @QueryParam("page") @DefaultValue("0") int page, @QueryParam("size") @DefaultValue("10") int size) {
     MonitoredServiceParams serviceEnvironmentParams = MonitoredServiceParams.builder()
                                                           .accountIdentifier(projectParams.getAccountIdentifier())
@@ -157,18 +146,18 @@ public class LogDashboardResource {
                                                           .projectIdentifier(projectParams.getProjectIdentifier())
                                                           .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                                           .build();
-    TimeRangeParams timeRangeParams = TimeRangeParams.builder()
+    /*TimeRangeParams timeRangeParams = TimeRangeParams.builder()
                                           .startTime(Instant.ofEpochMilli(startTimeMillis))
                                           .endTime(Instant.ofEpochMilli(endTimeMillis))
-                                          .build();
+                                          .build();*/
     PageParams pageParams = PageParams.builder().page(page).size(size).build();
-    LiveMonitoringLogAnalysisFilter liveMonitoringLogAnalysisFilter =
+    /*LiveMonitoringLogAnalysisFilter liveMonitoringLogAnalysisFilter =
         LiveMonitoringLogAnalysisFilter.builder()
             .healthSourceIdentifiers(healthSourceIdentifiers)
             .clusterTypes(clusterTypes)
-            .build();
+            .build();*/
 
     return new RestResponse<>(logDashboardService.getAllRadarChartLogsData(
-        serviceEnvironmentParams, timeRangeParams, liveMonitoringLogAnalysisFilter, pageParams));
+        serviceEnvironmentParams, monitoredServiceLogAnalysisFilter, pageParams));
   }
 }

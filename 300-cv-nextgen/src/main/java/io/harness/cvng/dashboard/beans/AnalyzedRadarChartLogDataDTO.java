@@ -10,6 +10,7 @@ package io.harness.cvng.dashboard.beans;
 import io.harness.cvng.analysis.beans.Risk;
 import io.harness.cvng.analysis.entities.LogAnalysisResult;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import lombok.Builder;
 import lombok.Data;
@@ -33,6 +34,8 @@ public class AnalyzedRadarChartLogDataDTO implements Comparable<AnalyzedRadarCha
     String clusterId;
     Long label;
     int count;
+    @JsonIgnore Double angle;
+    @JsonIgnore Double radius;
     double riskScore;
     Risk riskStatus;
     List<AnalyzedLogDataDTO.FrequencyDTO> trend;
