@@ -167,7 +167,7 @@ public class ScimGroupServiceImpl implements ScimGroupService {
       // no operation needed. Pass
     } else {
       try {
-        return patchOperation.getValue(String.class);
+        return patchOperation.getValues(String.class).get(0);
       } catch (Exception ex) {
         log.error("SCIM: Failed to process the operation: {}, for accountId: {}, for GroupId {}",
             patchOperation.toString(), accountId, groupId, ex);
@@ -178,8 +178,8 @@ public class ScimGroupServiceImpl implements ScimGroupService {
 
   private String processOktaReplaceOperationOnGroup(String groupId, String accountId, PatchOperation patchOperation) {
     try {
-      if (patchOperation.getValue(ScimMultiValuedObject.class) != null) {
-        return patchOperation.getValue(ScimMultiValuedObject.class).getDisplayName();
+      if (patchOperation.getValues(ScimMultiValuedObject.class).get(0) != null) {
+        return patchOperation.getValues(ScimMultiValuedObject.class).get(0).getDisplayName();
       }
     } catch (Exception ex) {
       log.error("SCIM: Failed to process the REPLACE_OKTA operation: {}, for accountId: {}, for GroupId {}",

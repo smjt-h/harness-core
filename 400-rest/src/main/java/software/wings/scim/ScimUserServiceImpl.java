@@ -245,22 +245,22 @@ public class ScimUserServiceImpl implements ScimUserService {
     }
     if ("displayName".equals(patchOperation.getPath())) {
       UpdateOperations<User> updateOperation = wingsPersistence.createUpdateOperations(User.class);
-      updateOperation.set(UserKeys.name, patchOperation.getValue(String.class));
+      updateOperation.set(UserKeys.name, patchOperation.getValues(String.class).get(0));
       userService.updateUser(user.getUuid(), updateOperation);
     }
-    if (patchOperation.getValue(ScimMultiValuedObject.class) != null
-        && patchOperation.getValue(ScimMultiValuedObject.class).getDisplayName() != null) {
+    if (patchOperation.getValues(ScimMultiValuedObject.class).get(0) != null
+        && patchOperation.getValues(ScimMultiValuedObject.class).get(0).getDisplayName() != null) {
       UpdateOperations<User> updateOperation = wingsPersistence.createUpdateOperations(User.class);
-      updateOperation.set(UserKeys.name, patchOperation.getValue(String.class));
+      updateOperation.set(UserKeys.name, patchOperation.getValues(String.class).get(0));
       userService.updateUser(user.getUuid(), updateOperation);
     }
-    if ("active".equals(patchOperation.getPath()) && patchOperation.getValue(Boolean.class) != null) {
-      changeScimUserDisabled(accountId, user.getUuid(), !(patchOperation.getValue(Boolean.class)));
+    if ("active".equals(patchOperation.getPath()) && patchOperation.getValues(Boolean.class).get(0) != null) {
+      changeScimUserDisabled(accountId, user.getUuid(), !(patchOperation.getValues(Boolean.class).get(0)));
     }
 
-    if (patchOperation.getValue(ScimUserValuedObject.class) != null) {
+    if (patchOperation.getValues(ScimUserValuedObject.class).get(0) != null) {
       changeScimUserDisabled(
-          accountId, user.getUuid(), !(patchOperation.getValue(ScimUserValuedObject.class)).isActive());
+          accountId, user.getUuid(), !(patchOperation.getValues(ScimUserValuedObject.class).get(0)).isActive());
     } else {
       // Not supporting any other updates as of now.
       log.error("SCIM: Unexpected patch operation received: accountId: {}, userId: {}, patchOperation: {}", accountId,

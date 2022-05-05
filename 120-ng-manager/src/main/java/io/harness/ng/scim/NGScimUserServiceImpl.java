@@ -218,24 +218,25 @@ public class NGScimUserServiceImpl implements ScimUserService {
     // Not sure why this needs to be done for displayName as well as ScimMultiValuedObject
     // Relying on CG implementation as it has been around for a while
     if ("displayName".equals(patchOperation.getPath())) {
-      userMetadataDTO.setName(patchOperation.getValue(String.class));
+      userMetadataDTO.setName(patchOperation.getValues(String.class).get(0));
       userMetadataDTO.setExternallyManaged(true);
       ngUserService.updateUserMetadata(userMetadataDTO);
     }
-    if (patchOperation.getValue(ScimMultiValuedObject.class) != null
-        && patchOperation.getValue(ScimMultiValuedObject.class).getDisplayName() != null) {
+    if (patchOperation.getValues(ScimMultiValuedObject.class).get(0) != null
+        && patchOperation.getValues(ScimMultiValuedObject.class).get(0).getDisplayName() != null) {
       // @Todo: Check with Ujjawal why CG has patchOperation.getValue(String.class)
-      userMetadataDTO.setName(patchOperation.getValue(ScimMultiValuedObject.class).getDisplayName());
+      userMetadataDTO.setName(patchOperation.getValues(ScimMultiValuedObject.class).get(0).getDisplayName());
       userMetadataDTO.setExternallyManaged(true);
       ngUserService.updateUserMetadata(userMetadataDTO);
     }
 
-    if ("active".equals(patchOperation.getPath()) && patchOperation.getValue(Boolean.class) != null) {
-      changeScimUserDisabled(accountId, userId, !patchOperation.getValue(Boolean.class));
+    if ("active".equals(patchOperation.getPath()) && patchOperation.getValues(Boolean.class).get(0) != null) {
+      changeScimUserDisabled(accountId, userId, !patchOperation.getValues(Boolean.class).get(0));
     }
 
-    if (patchOperation.getValue(ScimUserValuedObject.class) != null) {
-      changeScimUserDisabled(accountId, userId, !(patchOperation.getValue(ScimUserValuedObject.class)).isActive());
+    if (patchOperation.getValues(ScimUserValuedObject.class).get(0) != null) {
+      changeScimUserDisabled(
+          accountId, userId, !(patchOperation.getValues(ScimUserValuedObject.class)).get(0).isActive());
     } else {
       // Not supporting any other updates as of now.
       log.error("NGSCIM: Unexpected patch operation received: accountId: {}, userId: {}, patchOperation: {}", accountId,

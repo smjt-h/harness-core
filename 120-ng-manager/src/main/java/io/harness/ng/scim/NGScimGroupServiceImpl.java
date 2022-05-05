@@ -193,7 +193,7 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
     }
   }
 
-  private String processReplaceOperationOnGroup(String groupId, String accountId, PatchOperation patchOperation) {
+  private List<String> processReplaceOperationOnGroup(String groupId, String accountId, PatchOperation patchOperation) {
     if (!DISPLAY_NAME.equals(patchOperation.getPath())) {
       log.error(
           "NGSCIM: Expected replace operation only on the displayName. Received it on path: {}, for accountId: {}, for GroupId {}",
@@ -201,7 +201,7 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
       // no operation needed. Pass
     } else {
       try {
-        return patchOperation.getValue(String.class);
+        return patchOperation.getValues(String.class);
       } catch (Exception ex) {
         log.error("NGSCIM: Failed to process the operation: {}, for accountId: {}, for GroupId {}",
             patchOperation.toString(), accountId, groupId, ex);
@@ -212,8 +212,8 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
 
   private String processOktaReplaceOperationOnGroup(String groupId, String accountId, PatchOperation patchOperation) {
     try {
-      if (patchOperation.getValue(ScimMultiValuedObject.class) != null) {
-        return patchOperation.getValue(ScimMultiValuedObject.class).getDisplayName();
+      if (patchOperation.getValues(ScimMultiValuedObject.class).get(0) != null) {
+        return patchOperation.getValues(ScimMultiValuedObject.class).get(0).getDisplayName();
       }
     } catch (Exception ex) {
       log.error("NGSCIM: Failed to process the REPLACE_OKTA operation: {}, for accountId: {}, for GroupId {}",
@@ -246,7 +246,7 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
       Set<String> userIdsFromOperation = getUserIdsFromOperation(patchOperation, accountId, groupId);
       switch (patchOperation.getOpType()) {
         case REPLACE: {
-          newGroupName = processReplaceOperationOnGroup(groupId, accountId, patchOperation);
+          newGroupName = processReplaceOperationOnGroup(groupId, accountId, patchOperation).get(0);
           break;
         }
         case REPLACE_OKTA: {
