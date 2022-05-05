@@ -509,7 +509,6 @@ import software.wings.service.impl.newrelic.MLExperiments;
 import software.wings.service.impl.newrelic.NewRelicMarkerExecutionData;
 import software.wings.service.impl.newrelic.NewRelicMetricAnalysisRecord;
 import software.wings.service.impl.splunk.SplunkAnalysisCluster;
-import software.wings.service.impl.splunk.SplunkDataCollectionInfoV2;
 import software.wings.service.impl.trigger.TriggerCallback;
 import software.wings.service.impl.trigger.TriggerServiceImpl.TriggerIdempotentResult;
 import software.wings.service.impl.yaml.GitCommandCallback;
@@ -1272,7 +1271,6 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     w.put("service.impl.newrelic.MetricAnalysisExecutionData", NotFoundClass.class);
     w.put("service.impl.newrelic.NewRelicMarkerExecutionData", NewRelicMarkerExecutionData.class);
     w.put("service.impl.splunk.SplunkAnalysisCluster", SplunkAnalysisCluster.class);
-    w.put("service.impl.splunk.SplunkDataCollectionInfoV2", SplunkDataCollectionInfoV2.class);
     w.put("service.impl.trigger.TriggerCallback", TriggerCallback.class);
     w.put("service.impl.trigger.TriggerServiceImpl$TriggerIdempotentResult", TriggerIdempotentResult.class);
     w.put("service.impl.WorkflowExecutionUpdate", WorkflowExecutionUpdate.class);
