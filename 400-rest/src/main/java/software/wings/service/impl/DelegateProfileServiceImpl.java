@@ -172,8 +172,9 @@ public class DelegateProfileServiceImpl implements DelegateProfileService, Accou
                                        .filter(DelegateProfileKeys.accountId, delegateProfile.getAccountId())
                                        .filter(ID_KEY, delegateProfile.getUuid());
 
-    // Update
+    // Update and invalidate cache
     persistence.update(query, updateOperations);
+    delegateCache.invalidateDelegateProfileCache(delegateProfile.getAccountId(), delegateProfile.getUuid());
 
     DelegateProfile updatedDelegateProfile = get(delegateProfile.getAccountId(), delegateProfile.getUuid());
     log.info("Updated delegate profile: {}", updatedDelegateProfile.getUuid());
@@ -239,9 +240,10 @@ public class DelegateProfileServiceImpl implements DelegateProfileService, Accou
 
     setUnset(updateOperations, DelegateProfileKeys.selectors, selectors);
 
-    // Update
+    // Update and invalidate cache
     DelegateProfile delegateProfileSelectorsUpdated =
         persistence.findAndModify(delegateProfileQuery, updateOperations, returnNewOptions);
+    delegateCache.invalidateDelegateProfileCache(accountId, delegateProfileId);
     log.info("Updated delegate profile selectors: {}", delegateProfileSelectorsUpdated.getSelectors());
 
     auditServiceHelper.reportForAuditingUsingAccountId(
@@ -265,9 +267,10 @@ public class DelegateProfileServiceImpl implements DelegateProfileService, Accou
 
     setUnset(updateOperations, DelegateProfileKeys.selectors, selectors);
 
-    // Update
+    // Update and invalidate cache
     DelegateProfile delegateProfileSelectorsUpdated =
         persistence.findAndModify(delegateProfileQuery, updateOperations, returnNewOptions);
+    delegateCache.invalidateDelegateProfileCache(accountId, delegateProfileSelectorsUpdated.getUuid());
     log.info("Updated delegate profile selectors: {}", delegateProfileSelectorsUpdated.getSelectors());
 
     auditServiceHelper.reportForAuditingUsingAccountId(
@@ -285,8 +288,9 @@ public class DelegateProfileServiceImpl implements DelegateProfileService, Accou
     Query<DelegateProfile> query = persistence.createQuery(DelegateProfile.class)
                                        .filter(DelegateProfileKeys.accountId, accountId)
                                        .filter(DelegateProfileKeys.uuid, delegateProfileId);
-    // Update
+    // Update and invalidate cache
     DelegateProfile updatedDelegateProfile = persistence.findAndModify(query, updateOperations, returnNewOptions);
+    delegateCache.invalidateDelegateProfileCache(accountId, delegateProfileId);
     log.info("Updated profile scoping rules for accountId={}", accountId);
 
     return updatedDelegateProfile;
@@ -360,8 +364,10 @@ public class DelegateProfileServiceImpl implements DelegateProfileService, Accou
     if (delegateProfile != null) {
       ensureProfileSafeToDelete(accountId, delegateProfile);
       log.info("Deleting delegate profile: {}", delegateProfileId);
-      // Delete
+      // Delete and invalidate cache
       persistence.delete(delegateProfile);
+
+      delegateCache.invalidateDelegateProfileCache(accountId, delegateProfileId);
 
       auditServiceHelper.reportDeleteForAuditingUsingAccountId(delegateProfile.getAccountId(), delegateProfile);
       log.info("Auditing deleting of Delegate Profile for accountId={}", delegateProfile.getAccountId());
@@ -380,8 +386,10 @@ public class DelegateProfileServiceImpl implements DelegateProfileService, Accou
     if (delegateProfile != null) {
       ensureProfileSafeToDelete(accountId, delegateProfile);
       log.info("Deleting delegate profile: {}", delegateProfile.getUuid());
-      // Delete
+      // Delete and invalidate cache
       persistence.delete(delegateProfile);
+
+      delegateCache.invalidateDelegateProfileCache(accountId, delegateProfile.getUuid());
 
       auditServiceHelper.reportDeleteForAuditingUsingAccountId(delegateProfile.getAccountId(), delegateProfile);
       log.info("Auditing deleting of Delegate Profile for accountId={}", delegateProfile.getAccountId());

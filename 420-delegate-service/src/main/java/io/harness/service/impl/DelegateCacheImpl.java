@@ -131,4 +131,8 @@ public class DelegateCacheImpl implements DelegateCache {
     }
   }
 
+  @Override
+  public void invalidateDelegateProfileCache(String accountId, String delegateProfileId) {
+    delegateProfilesCache.invalidate(ImmutablePair.of(accountId, delegateProfileId));
+  }
 }
