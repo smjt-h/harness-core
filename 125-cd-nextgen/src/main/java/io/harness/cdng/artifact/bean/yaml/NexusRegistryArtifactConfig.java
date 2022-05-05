@@ -26,6 +26,7 @@ import io.harness.validation.OneOfField;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
 import io.harness.yaml.YamlSchemaTypes;
+import io.harness.yaml.core.VariableExpression;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModelProperty;
@@ -98,9 +99,9 @@ public class NexusRegistryArtifactConfig implements ArtifactConfig, Visitable, W
   /**
    * Identifier for artifact.
    */
-  @EntityIdentifier String identifier;
+  @EntityIdentifier @VariableExpression(skipVariableExpression = true) String identifier;
   /** Whether this config corresponds to primary artifact.*/
-  boolean primaryArtifact;
+  @VariableExpression(skipVariableExpression = true) boolean primaryArtifact;
 
   // For Visitor Framework Impl
   String metadata;
@@ -123,8 +124,17 @@ public class NexusRegistryArtifactConfig implements ArtifactConfig, Visitable, W
     if (!ParameterField.isNull(nexusRegistryArtifactConfig.getConnectorRef())) {
       resultantConfig = resultantConfig.withConnectorRef(nexusRegistryArtifactConfig.getConnectorRef());
     }
+    if (!ParameterField.isNull(nexusRegistryArtifactConfig.getRepository())) {
+      resultantConfig = resultantConfig.withArtifactPath(nexusRegistryArtifactConfig.getRepository());
+    }
     if (!ParameterField.isNull(nexusRegistryArtifactConfig.getArtifactPath())) {
       resultantConfig = resultantConfig.withArtifactPath(nexusRegistryArtifactConfig.getArtifactPath());
+    }
+    if (!ParameterField.isNull(nexusRegistryArtifactConfig.getRepositoryPort())) {
+      resultantConfig = resultantConfig.withArtifactPath(nexusRegistryArtifactConfig.getRepositoryPort());
+    }
+    if (!ParameterField.isNull(nexusRegistryArtifactConfig.getRepositoryUrl())) {
+      resultantConfig = resultantConfig.withArtifactPath(nexusRegistryArtifactConfig.getRepositoryUrl());
     }
     if (!ParameterField.isNull(nexusRegistryArtifactConfig.getTag())) {
       resultantConfig = resultantConfig.withTag(nexusRegistryArtifactConfig.getTag());

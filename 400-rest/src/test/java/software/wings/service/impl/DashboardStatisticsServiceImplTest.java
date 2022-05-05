@@ -138,6 +138,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.ArtifactMetadata;
 import io.harness.beans.EnvironmentType;
 import io.harness.beans.ExecutionStatus;
 import io.harness.beans.FeatureName;
@@ -197,12 +198,14 @@ import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.service.intfc.instance.DashboardStatisticsService;
 import software.wings.sm.PipelineSummary;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -557,6 +560,11 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
   public void shallGetAppInstanceSummaryStatsByService() {
     try {
       List<String> appIdList = asList(APP_1_ID, APP_2_ID, APP_3_ID, APP_4_ID, APP_5_ID);
+      Map<String, String> entry = new HashMap<>();
+      entry.put("service1_id", "updatedService1Name");
+      Set<String> setOfServiceIds = new HashSet<>();
+      setOfServiceIds.add("service1_id");
+      when(serviceResourceService.getServiceNamesWithAccountId(any(), any())).thenReturn(entry);
 
       PageResponse<InstanceSummaryStatsByService> currentAppInstanceStatsByService =
           dashboardService.getAppInstanceSummaryStatsByService(
@@ -570,6 +578,17 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
       currentAppInstanceStatsByService = dashboardService.getAppInstanceSummaryStatsByService(
           ACCOUNT_1_ID, appIdList, System.currentTimeMillis(), 0, 10);
       assertThat(currentAppInstanceStatsByService.getResponse()).hasSize(7);
+
+      currentAppInstanceStatsByService = dashboardService.getAppInstanceSummaryStatsByService(
+          ACCOUNT_1_ID, appIdList, System.currentTimeMillis(), 0, 10);
+      for (InstanceSummaryStatsByService instanceSummaryStatsByService :
+          currentAppInstanceStatsByService.getResponse()) {
+        if (instanceSummaryStatsByService.getServiceSummary().getId().equals("service1_id")) {
+          assertThat(instanceSummaryStatsByService.getServiceSummary().getName().equals("updatedService1Name"));
+          break;
+        }
+      }
+
     } finally {
       UserThreadLocal.unset();
     }
@@ -619,11 +638,12 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
       executionArgs.setArtifacts(asList(Artifact.Builder.anArtifact()
                                             .withAppId(APP_1_ID)
                                             .withDisplayName(ARTIFACT_NAME)
+                                            .withMetadata(new ArtifactMetadata(ImmutableMap.of("buildNo", "v20")))
                                             .withUuid(ARTIFACT_ID)
                                             .withArtifactStreamId(ARTIFACT_STREAM_ID)
                                             .withArtifactSourceName(ARTIFACT_SOURCE_NAME)
                                             .build()));
-
+      Long startTS = 1630969310005L;
       WorkflowExecution workflowExecution = WorkflowExecution.builder()
                                                 .pipelineSummary(pipelineSummary)
                                                 .executionArgs(executionArgs)
@@ -635,7 +655,22 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
                                                 .workflowId(WORKFLOW_ID)
                                                 .uuid(WORKFLOW_EXECUTION_ID)
                                                 .name(WORKFLOW_NAME)
+                                                .startTs(startTS)
                                                 .build();
+      /*
+        This addition is to test the shouldUpdate() and updateActiveInstanceArtifactDetails() methods
+        as part of this test itself
+       */
+      persistence.save(workflowExecution);
+      Instance instance = buildInstance(INSTANCE_1_ID, ACCOUNT_1_ID, APP_1_ID, SERVICE_1_ID, ENV_1_ID,
+          INFRA_MAPPING_1_ID, INFRA_MAPPING_1_NAME, CONTAINER_1_ID, currentTime);
+      instance.setInstanceInfo(
+          K8sPodInfo.builder()
+              .helmChartInfo(HelmChartInfo.builder().name(CHART_NAME).repoUrl(REPO_URL).version("1").build())
+              .build());
+      instance.setLastWorkflowExecutionId(WORKFLOW_EXECUTION_ID);
+      instance.setLastArtifactBuildNum("v10");
+      persistence.save(instance);
       PageResponse<WorkflowExecution> executionsPageResponse =
           aPageResponse().withResponse(asList(workflowExecution)).build();
       when(workflowExecutionService.listExecutions(any(PageRequest.class), anyBoolean()))
@@ -724,12 +759,14 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
                                                  .build();
 
       ServiceInstanceDashboard serviceInstanceDashboard =
-          dashboardService.getServiceInstanceDashboard(ACCOUNT_1_ID, APP_1_ID, SERVICE_1_ID);
+          dashboardService.getServiceInstanceDashboard(ACCOUNT_1_ID, APP_1_ID, SERVICE_1_ID, null);
       assertThat(serviceInstanceDashboard).isNotNull();
       assertThat(serviceInstanceDashboard.getCurrentActiveInstancesList()).hasSize(1);
       assertThat(serviceInstanceDashboard.getCurrentActiveInstancesList().get(0).getInstanceCount()).isEqualTo(1);
       assertThat(serviceInstanceDashboard.getDeploymentHistoryList()).hasSize(1);
       DeploymentHistory deploymentHistory = serviceInstanceDashboard.getDeploymentHistoryList().get(0);
+      assertThat(deepEquals(serviceInstanceDashboard.getCurrentActiveInstancesList().get(0).getArtifactSummaryFromSvc(),
+          deploymentHistory.getArtifact()));
       assertThat(deepEquals(expectedDeployment.getEnvs(), deploymentHistory.getEnvs())).isTrue();
       assertThat(deepEquals(expectedDeployment.getInframappings(), deploymentHistory.getInframappings())).isTrue();
       assertThat(deepEquals(expectedDeployment.getStatus(), deploymentHistory.getStatus())).isTrue();
@@ -847,7 +884,7 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
         .thenReturn(asList(ARTIFACT_STREAM_ID));
     DashboardStatisticsServiceImpl dashboardStatisticsService = (DashboardStatisticsServiceImpl) dashboardService;
     List<DeploymentHistory> deploymentHistories =
-        dashboardStatisticsService.getDeploymentHistory(ACCOUNT_ID, APP_1_ID, SERVICE_ID);
+        dashboardStatisticsService.getDeploymentHistory(ACCOUNT_ID, APP_1_ID, SERVICE_ID, null);
     assertThat(deploymentHistories).hasSize(3);
     DeploymentHistory deploymentHistory1 = deploymentHistories.get(0);
     assertThat(deploymentHistory1.getManifest().getName()).isEqualTo(CHART_NAME);

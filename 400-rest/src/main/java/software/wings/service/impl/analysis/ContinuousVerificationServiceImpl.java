@@ -103,6 +103,7 @@ import software.wings.beans.WorkflowExecution;
 import software.wings.beans.WorkflowExecution.WorkflowExecutionKeys;
 import software.wings.beans.alert.cv.ContinuousVerificationAlertData;
 import software.wings.beans.alert.cv.ContinuousVerificationAlertData.AlertRiskDetail;
+import software.wings.beans.apm.Method;
 import software.wings.delegatetasks.DelegateProxyFactory;
 import software.wings.delegatetasks.DelegateStateType;
 import software.wings.delegatetasks.cv.DataCollectionException;
@@ -168,7 +169,6 @@ import software.wings.sm.StateExecutionData;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.StateExecutionInstance.StateExecutionInstanceKeys;
 import software.wings.sm.StateType;
-import software.wings.sm.states.APMVerificationState.Method;
 import software.wings.sm.states.AppDynamicsState;
 import software.wings.sm.states.BugsnagState;
 import software.wings.sm.states.CustomLogVerificationState;
@@ -2382,6 +2382,7 @@ public class ContinuousVerificationServiceImpl implements ContinuousVerification
         for (List<String> hostBatch : Lists.partition(hostList, HOST_BATCH_SIZE)) {
           final CustomLogDataCollectionInfo dataCollectionInfo = createCustomLogDataCollectionInfo(
               datadogConfig, context, collectionStartMinute, new HashSet<>(hostBatch));
+          dataCollectionInfo.setDelayMinutes(0);
           delegateTasks.add(createDelegateTaskAndNotify(
               dataCollectionInfo, CUSTOM_LOG_COLLECTION_TASK, executionData, context, true));
         }

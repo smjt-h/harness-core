@@ -11,7 +11,6 @@ import static io.harness.cvng.CVConstants.DEPLOYMENT;
 import static io.harness.cvng.CVConstants.LIVE_MONITORING;
 import static io.harness.cvng.CVConstants.TAG_DATA_SOURCE;
 import static io.harness.cvng.CVConstants.TAG_VERIFICATION_TYPE;
-import static io.harness.persistence.HQuery.excludeAuthority;
 import static io.harness.persistence.HQuery.excludeValidate;
 
 import io.harness.cvng.CVConstants;
@@ -42,6 +41,7 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -55,28 +55,45 @@ public class VerificationTaskServiceImpl implements VerificationTaskService {
   // TODO: optimize this and add caching support. Since this collection is immutable
   @Override
   public String createLiveMonitoringVerificationTask(String accountId, String cvConfigId, DataSourceType provider) {
+    return createLiveMonitoringVerificationTask(
+        accountId, cvConfigId, Maps.of(TAG_DATA_SOURCE, provider.name(), TAG_VERIFICATION_TYPE, LIVE_MONITORING));
+  }
+
+  @Override
+  public String createSLIVerificationTask(String accountId, String sliId) {
+    return createSLIVerificationTask(accountId, sliId, Collections.emptyMap());
+  }
+
+  public String createDeploymentVerificationTask(
+      String accountId, String cvConfigId, String verificationJobInstanceId, DataSourceType provider) {
+    return createDeploymentVerificationTask(accountId, cvConfigId, verificationJobInstanceId,
+        Maps.of(TAG_DATA_SOURCE, provider.name(), TAG_VERIFICATION_TYPE, DEPLOYMENT));
+  }
+
+  @Override
+  public String createLiveMonitoringVerificationTask(String accountId, String cvConfigId, Map<String, String> tags) {
     Preconditions.checkNotNull(accountId);
     Preconditions.checkNotNull(cvConfigId);
     // TODO: Change to new generated uuid in a separate PR since it needs more validation.
-    VerificationTask verificationTask =
-        VerificationTask.builder()
-            .uuid(cvConfigId)
-            .accountId(accountId)
-            .taskInfo(LiveMonitoringInfo.builder().cvConfigId(cvConfigId).build())
-            .tags(Maps.of(TAG_DATA_SOURCE, provider.name(), TAG_VERIFICATION_TYPE, LIVE_MONITORING))
-            .build();
+    VerificationTask verificationTask = VerificationTask.builder()
+                                            .uuid(cvConfigId)
+                                            .accountId(accountId)
+                                            .taskInfo(LiveMonitoringInfo.builder().cvConfigId(cvConfigId).build())
+                                            .tags(tags)
+                                            .build();
     hPersistence.save(verificationTask);
     return verificationTask.getUuid();
   }
 
   @Override
-  public String createSLIVerificationTask(String accountId, String sliId) {
+  public String createSLIVerificationTask(String accountId, String sliId, Map<String, String> tags) {
     Preconditions.checkNotNull(accountId);
     Preconditions.checkNotNull(sliId);
     // TODO: Change to new generated uuid in a separate PR since it needs more validation.
     VerificationTask verificationTask = VerificationTask.builder()
                                             .uuid(sliId)
                                             .accountId(accountId)
+                                            .tags(tags)
                                             .taskInfo(SLIInfo.builder().sliId(sliId).build())
                                             .build();
     hPersistence.save(verificationTask);
@@ -84,7 +101,7 @@ public class VerificationTaskServiceImpl implements VerificationTaskService {
   }
 
   public String createDeploymentVerificationTask(
-      String accountId, String cvConfigId, String verificationJobInstanceId, DataSourceType provider) {
+      String accountId, String cvConfigId, String verificationJobInstanceId, Map<String, String> tags) {
     Preconditions.checkNotNull(accountId, "accountId can not be null");
     Preconditions.checkNotNull(cvConfigId, "cvConfigId can not be null");
     Preconditions.checkNotNull(verificationJobInstanceId, "verificationJobInstanceId can not be null");
@@ -97,7 +114,7 @@ public class VerificationTaskServiceImpl implements VerificationTaskService {
                           .verificationJobInstanceId(verificationJobInstanceId)
                           .build())
             .validUntil(Date.from(clock.instant().plus(CVConstants.MAX_DATA_RETENTION_DURATION)))
-            .tags(Maps.of(TAG_DATA_SOURCE, provider.name(), TAG_VERIFICATION_TYPE, DEPLOYMENT))
+            .tags(tags)
             .build();
     hPersistence.save(verificationTask);
     return verificationTask.getUuid();
@@ -201,14 +218,7 @@ public class VerificationTaskServiceImpl implements VerificationTaskService {
             .stream()
             .map(VerificationTask::getUuid)
             .collect(Collectors.toList()));
-    // TODO: remove after data migration
-    verificationTasksIds.addAll(hPersistence.createQuery(VerificationTask.class)
-                                    .filter(VerificationTaskKeys.accountId, accountId)
-                                    .filter(VerificationTaskKeys.verificationJobInstanceId, verificationJobInstanceId)
-                                    .asList()
-                                    .stream()
-                                    .map(VerificationTask::getUuid)
-                                    .collect(Collectors.toSet()));
+
     return verificationTasksIds;
   }
 
@@ -229,6 +239,14 @@ public class VerificationTaskServiceImpl implements VerificationTaskService {
   }
 
   @Override
+  public List<String> getSLIVerificationTaskIds(String accountId, List<String> sliIds) {
+    List<VerificationTask> result = getSLITasks(accountId, sliIds);
+    Preconditions.checkNotNull(
+        result, "VerificationTask mapping does not exist for SLI Id %s. Please check sliId", sliIds);
+    return result.stream().map(VerificationTask::getUuid).collect(Collectors.toList());
+  }
+
+  @Override
   public List<String> getServiceGuardVerificationTaskIds(String accountId, List<String> cvConfigIds) {
     List<String> verificationTasksIds = new ArrayList<>();
     verificationTasksIds.addAll(
@@ -241,18 +259,7 @@ public class VerificationTaskServiceImpl implements VerificationTaskService {
             .stream()
             .map(VerificationTask::getUuid)
             .collect(Collectors.toList()));
-    // TODO: remove after data migration
-    verificationTasksIds.addAll(hPersistence.createQuery(VerificationTask.class)
-                                    .filter(VerificationTaskKeys.accountId, accountId)
-                                    .field(VerificationTaskKeys.cvConfigId)
-                                    .in(cvConfigIds)
-                                    .field(VerificationTaskKeys.verificationJobInstanceId)
-                                    .doesNotExist()
-                                    .project(VerificationTaskKeys.uuid, true)
-                                    .asList()
-                                    .stream()
-                                    .map(VerificationTask::getUuid)
-                                    .collect(Collectors.toList()));
+
     return verificationTasksIds;
   }
 
@@ -270,8 +277,6 @@ public class VerificationTaskServiceImpl implements VerificationTaskService {
   @Override
   public void removeLiveMonitoringMappings(String accountId, String cvConfigId) {
     hPersistence.delete(createQueryForLiveMonitoring(accountId, cvConfigId));
-    // TODO: remove after data migration
-    hPersistence.delete(createQueryForOldLiveMonitoring(accountId, cvConfigId));
   }
 
   @Override
@@ -300,18 +305,7 @@ public class VerificationTaskServiceImpl implements VerificationTaskService {
             .stream()
             .map(verificationTask -> ((DeploymentInfo) verificationTask.getTaskInfo()).getVerificationJobInstanceId())
             .collect(Collectors.toList()));
-    // TODO: remove after data migration
-    verificationJobInstanceIds.addAll(
-        hPersistence.createQuery(VerificationTask.class, excludeAuthority)
-            .filter(VerificationTaskKeys.cvConfigId, cvConfigId)
-            .field(VerificationTaskKeys.verificationJobInstanceId)
-            .exists()
-            .project(VerificationTaskKeys.verificationJobInstanceId, true)
-            .project(VerificationTaskKeys.cvConfigId, true)
-            .asList()
-            .stream()
-            .map(verificationTask -> ((DeploymentInfo) verificationTask.getTaskInfo()).getVerificationJobInstanceId())
-            .collect(Collectors.toList()));
+
     return verificationJobInstanceIds;
   }
 
@@ -327,32 +321,21 @@ public class VerificationTaskServiceImpl implements VerificationTaskService {
             .stream()
             .map(VerificationTask::getUuid)
             .collect(Collectors.toList()));
-    // TODO: remove after data migration
-    verificationTasksIds.addAll(hPersistence.createQuery(VerificationTask.class, EnumSet.of(QueryChecks.COUNT))
-                                    .field(VerificationTaskKeys.verificationJobInstanceId)
-                                    .in(verificationJobInstanceIds)
-                                    .asList()
-                                    .stream()
-                                    .map(VerificationTask::getUuid)
-                                    .collect(Collectors.toList()));
+
     return verificationTasksIds;
   }
 
+  @Override
+  public void deleteVerificationTask(String taskId) {
+    hPersistence.delete(VerificationTask.class, taskId);
+  }
+
   private VerificationTask getDeploymentTask(String accountId, String cvConfigId, String verificationJobInstanceId) {
-    VerificationTask verificationTask =
-        createQueryForDeploymentTasks(accountId, cvConfigId, verificationJobInstanceId).get();
-    if (verificationTask != null) {
-      return verificationTask;
-    }
-    return createQueryForOldDeploymentTasks(accountId, cvConfigId, verificationJobInstanceId).get();
+    return createQueryForDeploymentTasks(accountId, cvConfigId, verificationJobInstanceId).get();
   }
 
   private VerificationTask getLiveMonitoringTask(String accountId, String cvConfigId) {
-    VerificationTask verificationTask = createQueryForLiveMonitoring(accountId, cvConfigId).get();
-    if (verificationTask != null) {
-      return verificationTask;
-    }
-    return createQueryForOldLiveMonitoring(accountId, cvConfigId).get();
+    return createQueryForLiveMonitoring(accountId, cvConfigId).get();
   }
 
   @Override
@@ -364,19 +347,20 @@ public class VerificationTaskServiceImpl implements VerificationTaskService {
         .get();
   }
 
+  private List<VerificationTask> getSLITasks(String accountId, List<String> sliIds) {
+    return hPersistence.createQuery(VerificationTask.class, excludeValidate)
+        .filter(VerificationTaskKeys.accountId, accountId)
+        .filter(VerificationTaskKeys.taskInfo + "." + TaskInfo.TASK_TYPE_FIELD_NAME, TaskType.SLI)
+        .field(VerificationTaskKeys.taskInfo + "." + SLIInfoKeys.sliId)
+        .in(sliIds)
+        .asList();
+  }
+
   private Query<VerificationTask> createQueryForLiveMonitoring(String accountId, String cvConfigId) {
     return hPersistence.createQuery(VerificationTask.class, excludeValidate)
         .filter(VerificationTaskKeys.accountId, accountId)
         .filter(VerificationTaskKeys.taskInfo + "." + TaskInfo.TASK_TYPE_FIELD_NAME, TaskType.LIVE_MONITORING)
         .filter(VerificationTaskKeys.taskInfo + "." + LiveMonitoringInfoKeys.cvConfigId, cvConfigId);
-  }
-
-  @Deprecated
-  private Query<VerificationTask> createQueryForOldLiveMonitoring(String accountId, String cvConfigId) {
-    return hPersistence.createQuery(VerificationTask.class)
-        .filter(VerificationTaskKeys.cvConfigId, cvConfigId)
-        .field(VerificationTaskKeys.verificationJobInstanceId)
-        .doesNotExist();
   }
 
   private Query<VerificationTask> createQueryForDeploymentTasks(
@@ -387,14 +371,5 @@ public class VerificationTaskServiceImpl implements VerificationTaskService {
         .filter(VerificationTaskKeys.taskInfo + "." + DeploymentInfoKeys.cvConfigId, cvConfigId)
         .filter(VerificationTaskKeys.taskInfo + "." + DeploymentInfoKeys.verificationJobInstanceId,
             verificationJobInstanceId);
-  }
-
-  @Deprecated
-  private Query<VerificationTask> createQueryForOldDeploymentTasks(
-      String accountId, String cvConfigId, String verificationJobInstanceId) {
-    return hPersistence.createQuery(VerificationTask.class)
-        .filter(VerificationTaskKeys.accountId, accountId)
-        .filter(VerificationTaskKeys.verificationJobInstanceId, verificationJobInstanceId)
-        .filter(VerificationTaskKeys.cvConfigId, cvConfigId);
   }
 }

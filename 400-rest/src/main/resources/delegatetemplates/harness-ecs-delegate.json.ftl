@@ -15,8 +15,8 @@
           "value": "${accountId}"
         },
         {
-          "name": "ACCOUNT_SECRET",
-          "value": "${accountSecret}"
+          "name": "DELEGATE_TOKEN",
+          "value": "${delegateToken}"
         },
         {
           "name": "DELEGATE_CHECK_LOCATION",
@@ -67,17 +67,19 @@
           "value": "${watcherStorageUrl}"
         },
         {
-          "name": "REMOTE_WATCHER_URL_CDN",
-          "value": "${remoteWatcherUrlCdn}"
-        },
-        {
           "name": "CF_PLUGIN_HOME",
           "value": ""
         },
+        <#if useCdn == "true">
         {
           "name": "CDN_URL",
           "value": "${cdnUrl}"
         },
+        {
+          "name": "REMOTE_WATCHER_URL_CDN",
+          "value": "${remoteWatcherUrlCdn}"
+        },
+        </#if>
         {
           "name": "JRE_VERSION",
           "value": "${jreVersion}"

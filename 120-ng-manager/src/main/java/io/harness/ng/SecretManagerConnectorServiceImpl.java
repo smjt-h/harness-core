@@ -85,6 +85,12 @@ public class SecretManagerConnectorServiceImpl implements ConnectorService {
   }
 
   @Override
+  public Optional<ConnectorResponseDTO> getByRef(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef) {
+    return defaultConnectorService.getByRef(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
+  }
+
+  @Override
   public Optional<ConnectorResponseDTO> getByName(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String name, boolean isDeletedAllowed) {
     return defaultConnectorService.getByName(
@@ -267,8 +273,8 @@ public class SecretManagerConnectorServiceImpl implements ConnectorService {
   }
 
   @Override
-  public ConnectorCatalogueResponseDTO getConnectorCatalogue() {
-    return defaultConnectorService.getConnectorCatalogue();
+  public ConnectorCatalogueResponseDTO getConnectorCatalogue(String accountIdentifier) {
+    return defaultConnectorService.getConnectorCatalogue(accountIdentifier);
   }
 
   @Override

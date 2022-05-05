@@ -8,6 +8,7 @@
 package io.harness.cvng.statemachine.services.impl;
 
 import static io.harness.cvng.CVConstants.STATE_MACHINE_IGNORE_MINUTES;
+import static io.harness.cvng.CVConstants.STATE_MACHINE_IGNORE_MINUTES_DEFAULT;
 import static io.harness.cvng.CVConstants.STATE_MACHINE_IGNORE_MINUTES_FOR_DEMO;
 import static io.harness.cvng.CVConstants.STATE_MACHINE_IGNORE_MINUTES_FOR_SLI;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
@@ -24,6 +25,8 @@ import io.harness.cvng.core.entities.VerificationTask.TaskType;
 import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.ExecutionLogService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
+import io.harness.cvng.metrics.CVNGMetricsUtils;
+import io.harness.cvng.metrics.services.impl.MetricContextBuilder;
 import io.harness.cvng.models.VerificationType;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelIndicatorService;
@@ -46,6 +49,8 @@ import io.harness.cvng.statemachine.services.api.AnalysisStateMachineService;
 import io.harness.cvng.verificationjob.entities.HealthVerificationJob;
 import io.harness.cvng.verificationjob.entities.VerificationJobInstance;
 import io.harness.cvng.verificationjob.services.api.VerificationJobInstanceService;
+import io.harness.metrics.AutoMetricContext;
+import io.harness.metrics.service.api.MetricService;
 import io.harness.persistence.HPersistence;
 
 import com.google.common.base.Preconditions;
@@ -70,6 +75,8 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
   @Inject private Clock clock;
   @Inject private ServiceLevelIndicatorService serviceLevelIndicatorService;
   @Inject private ExecutionLogService executionLogService;
+  @Inject private MetricService metricService;
+  @Inject private MetricContextBuilder metricContextBuilder;
 
   @Override
   public void initiateStateMachine(String verificationTaskId, AnalysisStateMachine stateMachine) {
@@ -145,12 +152,22 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
 
   @Override
   public AnalysisStatus executeStateMachine(AnalysisStateMachine analysisStateMachine) {
+    if (Instant.ofEpochMilli(analysisStateMachine.getNextAttemptTime()).isAfter(clock.instant())) {
+      log.info("The next attempt time for the statemachine {} is {}. skipping for now", analysisStateMachine.getUuid(),
+          analysisStateMachine.getNextAttemptTime());
+      return analysisStateMachine.getCurrentState().getStatus();
+    }
     log.info("Executing state machine {} for verificationTask {}", analysisStateMachine.getUuid(),
         analysisStateMachine.getVerificationTaskId());
-
     AnalysisState currentState = analysisStateMachine.getCurrentState();
     AnalysisStateExecutor analysisStateExecutor = stateTypeAnalysisStateExecutorMap.get(currentState.getType());
     AnalysisStatus status = analysisStateExecutor.getExecutionStatus(currentState);
+    if (status.equals(AnalysisStatus.RETRY) && !currentState.getStatus().equals(AnalysisStatus.RETRY)) {
+      analysisStateMachine.getCurrentState().setStatus(AnalysisStatus.RETRY);
+      analysisStateMachine.setNextAttemptTimeUsingRetryCount(clock.instant());
+      hPersistence.save(analysisStateMachine);
+      return analysisStateMachine.getCurrentState().getStatus();
+    }
     AnalysisState nextState = null;
     switch (status) {
       case CREATED:
@@ -185,6 +202,7 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
         log.info("Analysis is going to be RETRIED for {} and analysis range {} to {}. We will call handleRetry.",
             analysisStateMachine.getVerificationTaskId(), analysisStateMachine.getAnalysisStartTime(),
             analysisStateMachine.getAnalysisEndTime());
+        analysisStateMachine.incrementTotalRetryCount();
         nextState = analysisStateExecutor.handleRetry(currentState);
         break;
       case SUCCESS:
@@ -215,10 +233,13 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
       analysisStateMachine.setStatus(AnalysisStatus.SUCCESS);
       nextStateExecutor.handleFinalStatuses(nextState);
     } else if (AnalysisStatus.getFinalStates().contains(nextState.getStatus())) {
-      // The current state has closed down as either FAILED or TIMEOUT
-      analysisStateMachine.setNextAttemptTime(Instant.now().plus(30, ChronoUnit.MINUTES).toEpochMilli());
+      analysisStateMachine.setNextAttemptTimeUsingRetryCount(clock.instant());
       analysisStateMachine.setStatus(nextState.getStatus());
       nextStateExecutor.handleFinalStatuses(nextState);
+      try (AutoMetricContext ignore =
+               metricContextBuilder.getContext(analysisStateMachine, AnalysisStateMachine.class)) {
+        metricService.incCounter(CVNGMetricsUtils.ANALYSIS_STATE_MACHINE_RETRY_COUNT);
+      }
     }
     hPersistence.save(analysisStateMachine);
     executionLogService.getLogger(analysisStateMachine)
@@ -297,6 +318,8 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
       }
       if (cvConfig.isDemo()) {
         stateMachine.setStateMachineIgnoreMinutes(STATE_MACHINE_IGNORE_MINUTES_FOR_DEMO);
+      } else {
+        stateMachine.setStateMachineIgnoreMinutes(STATE_MACHINE_IGNORE_MINUTES_DEFAULT);
       }
       firstState.setStatus(AnalysisStatus.CREATED);
       firstState.setInputs(inputForAnalysis);
@@ -310,6 +333,7 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
       Preconditions.checkNotNull(verificationJobInstance, "verificationJobInstance can not be null");
       Preconditions.checkNotNull(cvConfigForDeployment, "cvConfigForDeployment can not be null");
       stateMachine.setAccountId(verificationTask.getAccountId());
+      stateMachine.setStateMachineIgnoreMinutes(STATE_MACHINE_IGNORE_MINUTES_DEFAULT);
       if (verificationJobInstance.getResolvedJob().getType() == VerificationJobType.HEALTH) {
         createHealthAnalysisState(stateMachine, inputForAnalysis, verificationJobInstance);
       } else {

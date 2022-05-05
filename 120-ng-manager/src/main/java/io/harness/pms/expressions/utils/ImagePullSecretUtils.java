@@ -8,6 +8,7 @@
 package io.harness.pms.expressions.utils;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.k8s.model.ImageDetails.ImageDetailsBuilder;
 
 import static java.lang.String.format;
@@ -15,6 +16,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
+import io.harness.cdng.artifact.outcome.AcrArtifactOutcome;
 import io.harness.cdng.artifact.outcome.ArtifactOutcome;
 import io.harness.cdng.artifact.outcome.ArtifactoryArtifactOutcome;
 import io.harness.cdng.artifact.outcome.DockerArtifactOutcome;
@@ -24,11 +26,15 @@ import io.harness.cdng.artifact.outcome.NexusArtifactOutcome;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.services.ConnectorService;
-import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryAuthType;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryUsernamePasswordAuthDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureClientSecretKeyDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
+import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureSecretType;
 import io.harness.delegate.beans.connector.docker.DockerAuthType;
 import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
 import io.harness.delegate.beans.connector.docker.DockerUserNamePasswordDTO;
@@ -93,15 +99,18 @@ public class ImagePullSecretUtils {
       case ArtifactSourceConstants.ARTIFACTORY_REGISTRY_NAME:
         getImageDetailsFromArtifactory((ArtifactoryArtifactOutcome) artifactOutcome, imageDetailsBuilder, ambiance);
         break;
+      case ArtifactSourceConstants.ACR_NAME:
+        getImageDetailsFromAcr((AcrArtifactOutcome) artifactOutcome, imageDetailsBuilder, ambiance);
+        break;
       default:
         throw new UnsupportedOperationException(
             String.format("Unknown Artifact Config type: [%s]", artifactOutcome.getArtifactType()));
     }
     ImageDetails imageDetails = imageDetailsBuilder.build();
-    if (EmptyPredicate.isNotEmpty(imageDetails.getRegistryUrl()) && isNotBlank(imageDetails.getUsername())
+    if (isNotEmpty(imageDetails.getRegistryUrl()) && isNotBlank(imageDetails.getUsername())
         && isNotBlank(imageDetails.getPassword())) {
       return getArtifactRegistryCredentials(imageDetails);
-    } else if (EmptyPredicate.isNotEmpty(imageDetails.getRegistryUrl()) && isNotBlank(imageDetails.getUsernameRef())
+    } else if (isNotEmpty(imageDetails.getRegistryUrl()) && isNotBlank(imageDetails.getUsernameRef())
         && isNotBlank(imageDetails.getPassword())) {
       return getArtifactRegistryCredentialsFromUsernameRef(imageDetails);
     }
@@ -199,7 +208,11 @@ public class ImagePullSecretUtils {
       }
       imageDetailsBuilder.username(credentials.getUsername());
       imageDetailsBuilder.password(getPasswordExpression(passwordRef, ambiance));
-      imageDetailsBuilder.registryUrl(connectorConfig.getNexusServerUrl());
+      if (isNotEmpty(nexusArtifactOutcome.getRegistryHostname())) {
+        imageDetailsBuilder.registryUrl(nexusArtifactOutcome.getRegistryHostname());
+      } else {
+        imageDetailsBuilder.registryUrl(connectorConfig.getNexusServerUrl());
+      }
     }
   }
 
@@ -219,7 +232,32 @@ public class ImagePullSecretUtils {
       }
       imageDetailsBuilder.username(credentials.getUsername());
       imageDetailsBuilder.password(getPasswordExpression(passwordRef, ambiance));
-      imageDetailsBuilder.registryUrl(connectorConfig.getArtifactoryServerUrl());
+      if (isNotEmpty(artifactoryArtifactOutcome.getRegistryHostname())) {
+        imageDetailsBuilder.registryUrl(artifactoryArtifactOutcome.getRegistryHostname());
+      } else {
+        imageDetailsBuilder.registryUrl(connectorConfig.getArtifactoryServerUrl());
+      }
+    }
+  }
+
+  private void getImageDetailsFromAcr(
+      AcrArtifactOutcome acrArtifactOutcome, ImageDetailsBuilder imageDetailsBuilder, Ambiance ambiance) {
+    String connectorRef = acrArtifactOutcome.getConnectorRef();
+    ConnectorInfoDTO connectorDTO = getConnector(connectorRef, ambiance);
+    AzureConnectorDTO connectorConfig = (AzureConnectorDTO) connectorDTO.getConnectorConfig();
+    imageDetailsBuilder.registryUrl(acrArtifactOutcome.getRegistry());
+    if (connectorConfig.getCredential() != null
+        && connectorConfig.getCredential().getAzureCredentialType() == AzureCredentialType.MANUAL_CREDENTIALS) {
+      AzureManualDetailsDTO config = (AzureManualDetailsDTO) connectorConfig.getCredential().getConfig();
+      if (config.getAuthDTO().getAzureSecretType() == AzureSecretType.SECRET_KEY) {
+        throw new InvalidRequestException(
+            "Currently unable to use Service Principal with certificate for pulling docker images from ACR");
+      } else {
+        imageDetailsBuilder.username(config.getClientId());
+        imageDetailsBuilder.password(getPasswordExpression(
+            ((AzureClientSecretKeyDTO) config.getAuthDTO().getCredentials()).getSecretKey().toSecretRefStringValue(),
+            ambiance));
+      }
     }
   }
 

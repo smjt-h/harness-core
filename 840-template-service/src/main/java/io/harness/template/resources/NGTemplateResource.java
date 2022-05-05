@@ -527,6 +527,7 @@ public class NGTemplateResource {
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectId,
       @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo, @NotNull TemplateApplyRequestDTO templateApplyRequestDTO) {
     log.info("Applying templates to pipeline yaml in project {}, org {}, account {}", projectId, orgId, accountId);
+    long start = System.currentTimeMillis();
     TemplateMergeResponseDTO templateMergeResponseDTO = templateMergeHelper.applyTemplatesToYaml(
         accountId, orgId, projectId, templateApplyRequestDTO.getOriginalEntityYaml());
     if (templateApplyRequestDTO.isCheckForAccess() && templateMergeResponseDTO != null
@@ -539,6 +540,7 @@ public class NGTemplateResource {
           -> accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgId, projectId),
               Resource.of(TEMPLATE, templateIdentifier), PermissionTypes.TEMPLATE_ACCESS_PERMISSION));
     }
+    log.info("[TemplateService] applyTemplates took {}ms ", System.currentTimeMillis() - start);
     return ResponseDTO.newResponse(templateMergeResponseDTO);
   }
 
@@ -614,7 +616,8 @@ public class NGTemplateResource {
   public ResponseDTO<List<EntityDetailProtoDTO>> getTemplateReferences(
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgId,
-      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectId, @NotNull String yaml) {
+      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectId,
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo, @NotNull String yaml) {
     return ResponseDTO.newResponse(
         templateReferenceHelper.getNestedTemplateReferences(accountId, orgId, projectId, yaml, false));
   }

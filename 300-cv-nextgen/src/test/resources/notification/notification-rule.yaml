@@ -1,0 +1,19 @@
+---
+name: rule
+identifier: rule
+orgIdentifier: $orgIdentifier
+projectIdentifier: $projectIdentifier
+type: slo
+conditions:
+  - type: slo
+    conditionType: errorBudgetRemainingPercentage
+    spec:
+      threshold: 10
+  - type: slo
+    conditionType: errorBudgetBurnRate
+    spec:
+      threshold: 5
+notificationMethod:
+  type: Email
+  userGroups: [testUserGroup]
+  recipients: [test@harness.io]

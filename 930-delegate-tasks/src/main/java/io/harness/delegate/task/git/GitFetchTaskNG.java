@@ -47,6 +47,7 @@ import software.wings.beans.LogWeight;
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
 import com.google.inject.Inject;
+import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.util.HashMap;
 import java.util.List;
@@ -105,7 +106,7 @@ public class GitFetchTaskNG extends AbstractDelegateRunnableTask {
           gitFetchFilesResult =
               fetchFilesFromRepo(gitFetchFilesConfig, executionLogCallback, gitFetchRequest.getAccountId());
         } catch (Exception ex) {
-          String exceptionMsg = ex.getMessage();
+          String exceptionMsg = gitFetchFilesTaskHelper.extractErrorMessage(ex);
 
           // Values.yaml in service spec is optional.
           if (ex.getCause() instanceof NoSuchFileException && gitFetchFilesConfig.isSucceedIfFileNotFound()) {
@@ -143,7 +144,7 @@ public class GitFetchTaskNG extends AbstractDelegateRunnableTask {
   }
 
   private FetchFilesResult fetchFilesFromRepo(
-      GitFetchFilesConfig gitFetchFilesConfig, LogCallback executionLogCallback, String accountId) {
+      GitFetchFilesConfig gitFetchFilesConfig, LogCallback executionLogCallback, String accountId) throws IOException {
     GitStoreDelegateConfig gitStoreDelegateConfig = gitFetchFilesConfig.getGitStoreDelegateConfig();
     executionLogCallback.saveExecutionLog("Git connector Url: " + gitStoreDelegateConfig.getGitConfigDTO().getUrl());
     String fetchTypeInfo = gitStoreDelegateConfig.getFetchType() == FetchType.BRANCH

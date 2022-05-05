@@ -14,7 +14,8 @@ import static com.google.common.base.MoreObjects.firstNonNull;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ccm.commons.beans.recommendation.NodePoolId;
 import io.harness.ccm.commons.beans.recommendation.ResourceType;
-import io.harness.ccm.commons.beans.recommendation.models.RecommendClusterRequest;
+import io.harness.ccm.commons.beans.recommendation.models.RecommendNodePoolClusterRequest;
+import io.harness.ccm.graphql.core.recommendation.ECSRecommendationService;
 import io.harness.ccm.graphql.core.recommendation.NodeRecommendationService;
 import io.harness.ccm.graphql.core.recommendation.WorkloadRecommendationService;
 import io.harness.ccm.graphql.dto.recommendation.RecommendationDetailsDTO;
@@ -44,6 +45,7 @@ public class RecommendationsDetailsQuery {
   @Inject private GraphQLUtils graphQLUtils;
   @Inject private WorkloadRecommendationService workloadRecommendationService;
   @Inject private NodeRecommendationService nodeRecommendationService;
+  @Inject private ECSRecommendationService ecsRecommendationService;
 
   /**
    * Note: If this query becomes slow due to n+1 serial calls in future. Then,
@@ -73,7 +75,7 @@ public class RecommendationsDetailsQuery {
   }
 
   @GraphQLQuery(name = "nodeRecommendationRequest")
-  public RecommendClusterRequest nodeRecommendationRequest(
+  public RecommendNodePoolClusterRequest nodeRecommendationRequest(
       @GraphQLNonNull @GraphQLArgument(name = "nodePoolId") NodePoolId nodePoolId,
       @GraphQLArgument(name = "startTime", description = "defaults to Now().minusDays(7)") OffsetDateTime startTime,
       @GraphQLArgument(name = "endTime", description = "defaults to Now()") OffsetDateTime endTime,
@@ -93,6 +95,9 @@ public class RecommendationsDetailsQuery {
             firstNonNull(startTime, OffsetDateTime.now().minusDays(7)), firstNonNull(endTime, OffsetDateTime.now()));
       case NODE_POOL:
         return nodeRecommendationService.getRecommendation(accountIdentifier, id);
+      case ECS_SERVICE:
+        return ecsRecommendationService.getECSRecommendationById(accountIdentifier, id,
+            firstNonNull(startTime, OffsetDateTime.now().minusDays(7)), firstNonNull(endTime, OffsetDateTime.now()));
       default:
         throw new InvalidRequestException(String.format("Recommendation not yet implemented for %s", resourceType));
     }

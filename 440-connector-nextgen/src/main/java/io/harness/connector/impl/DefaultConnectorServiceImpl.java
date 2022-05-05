@@ -17,6 +17,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.errorhandling.NGErrorHelper.DEFAULT_ERROR_SUMMARY;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.git.model.ChangeType.ADD;
+import static io.harness.utils.PageUtils.getPageRequest;
 import static io.harness.utils.RestCallToNGManagerClientUtils.execute;
 
 import static java.lang.String.format;
@@ -76,20 +77,21 @@ import io.harness.exception.ConnectorNotFoundException;
 import io.harness.exception.DelegateServiceDriverException;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.ReferencedEntityException;
 import io.harness.exception.UnexpectedException;
 import io.harness.exception.WingsException;
 import io.harness.exception.ngexception.ConnectorValidationException;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.clients.YamlGitConfigClient;
 import io.harness.gitsync.common.dtos.GitSyncConfigDTO;
+import io.harness.gitsync.common.utils.GitEntityFilePath;
+import io.harness.gitsync.common.utils.GitSyncFilePathUtils;
 import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.scm.EntityObjectIdUtils;
 import io.harness.gitsync.sdk.EntityGitDetailsMapper;
-import io.harness.gitsync.utils.GitEntityFilePath;
-import io.harness.gitsync.utils.GitSyncSdkUtils;
 import io.harness.manage.GlobalContextManager;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.core.BaseNGAccess;
@@ -106,7 +108,7 @@ import io.harness.outbox.api.OutboxService;
 import io.harness.perpetualtask.PerpetualTaskId;
 import io.harness.repositories.ConnectorRepository;
 import io.harness.utils.FullyQualifiedIdentifierHelper;
-import io.harness.utils.PageUtils;
+import io.harness.utils.IdentifierRefHelper;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -166,6 +168,15 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
   }
 
   @Override
+  public Optional<ConnectorResponseDTO> getByRef(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef) {
+    IdentifierRef identifierRef =
+        IdentifierRefHelper.getIdentifierRef(connectorRef, accountIdentifier, orgIdentifier, projectIdentifier);
+    return get(identifierRef.getAccountIdentifier(), identifierRef.getOrgIdentifier(),
+        identifierRef.getProjectIdentifier(), identifierRef.getIdentifier());
+  }
+
+  @Override
   public Optional<ConnectorResponseDTO> getByName(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String name, boolean isDeletedAllowed) {
     /***
@@ -202,7 +213,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
     Criteria criteria =
         filterService.createCriteriaFromConnectorListQueryParams(accountIdentifier, orgIdentifier, projectIdentifier,
             filterIdentifier, searchTerm, filterProperties, includeAllConnectorsAccessibleAtScope, isBuiltInSMDisabled);
-    Pageable pageable = PageUtils.getPageRequest(
+    Pageable pageable = getPageRequest(
         PageRequest.builder()
             .pageIndex(page)
             .pageSize(size)
@@ -284,7 +295,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
         accountSettingService.getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
     Criteria criteria = filterService.createCriteriaFromConnectorFilter(accountIdentifier, orgIdentifier,
         projectIdentifier, searchTerm, type, category, sourceCategory, isBuiltInSMDisabled);
-    Pageable pageable = PageUtils.getPageRequest(
+    Pageable pageable = getPageRequest(
         PageRequest.builder()
             .pageIndex(page)
             .pageSize(size)
@@ -381,14 +392,13 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
         connectorInfo.getOrgIdentifier(), connectorInfo.getProjectIdentifier(), connectorInfo.getIdentifier());
     if (!isIdentifierUnique) {
       throw new InvalidRequestException(
-          String.format("The connector with identifier %s already exists in the account %s, org %s, project %s",
-              connectorInfo.getIdentifier(), accountIdentifier, connectorInfo.getOrgIdentifier(),
-              connectorInfo.getProjectIdentifier()));
+          String.format("Connector: %s has been given an identifier: %s that already exists. Please enter a unique ID.",
+              connectorInfo.getName(), connectorInfo.getIdentifier()));
     }
     if (HARNESS_SECRET_MANAGER_IDENTIFIER.equalsIgnoreCase(connectorRequestDTO.getConnectorInfo().getIdentifier())) {
       log.info("[AccountSetup]:Creating default SecretManager");
     }
-    validateThatAConnectorWithThisNameDoesNotExists(connectorRequestDTO.getConnectorInfo(), accountIdentifier);
+
     Connector connectorEntity = connectorMapper.toConnector(connectorRequestDTO, accountIdentifier);
     connectorEntity.setTimeWhenConnectorIsLastUpdated(System.currentTimeMillis());
     Connector savedConnectorEntity = null;
@@ -558,7 +568,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
                             .and(ConnectorKeys.identifier)
                             .is(connectorDTO.getConnectorInfo().getIdentifier());
 
-    GitEntityFilePath gitEntityFilePath = GitSyncSdkUtils.getRootFolderAndFilePath(newFilePath);
+    GitEntityFilePath gitEntityFilePath = GitSyncFilePathUtils.getRootFolderAndFilePath(newFilePath);
     Update update = new Update()
                         .set(ConnectorKeys.filePath, gitEntityFilePath.getFilePath())
                         .set(ConnectorKeys.rootFolder, gitEntityFilePath.getRootFolder());
@@ -643,7 +653,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
               new ConnectorDeleteEvent(accountIdentifier, connectorMapper.writeDTO(existingConnector).getConnector()));
     }
 
-    connectorRepository.save(existingConnector, null, changeType, supplier);
+    connectorRepository.delete(existingConnector, null, changeType, supplier);
 
     return true;
   }
@@ -673,7 +683,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
       throw new UnexpectedException("Error while deleting the connector");
     }
     if (isEntityReferenced) {
-      throw new InvalidRequestException(String.format(
+      throw new ReferencedEntityException(String.format(
           "Could not delete the connector %s as it is referenced by other entities", connector.getIdentifier()));
     }
   }
@@ -850,9 +860,9 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
   }
 
   @Override
-  public ConnectorCatalogueResponseDTO getConnectorCatalogue() {
+  public ConnectorCatalogueResponseDTO getConnectorCatalogue(String accountIdentifier) {
     return ConnectorCatalogueResponseDTO.builder()
-        .catalogue(catalogueHelper.getConnectorTypeToCategoryMapping())
+        .catalogue(catalogueHelper.getConnectorTypeToCategoryMapping(accountIdentifier))
         .build();
   }
 
@@ -944,7 +954,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
       return emptyList();
     }
 
-    Pageable pageable = PageUtils.getPageRequest(
+    Pageable pageable = getPageRequest(
         PageRequest.builder()
             .pageSize(connectorFQN.size())
             .sortOrders(Collections.singletonList(
@@ -974,7 +984,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
               }
             }
             item.setDeleted(true);
-            connectorRepository.save(item, ChangeType.DELETE);
+            connectorRepository.delete(item, ChangeType.DELETE);
             Connector existingConnector = connectorOptional.get();
             ConnectorResponseDTO connectorDTO = connectorMapper.writeDTO(existingConnector);
             connectorEntityReferenceHelper.deleteConnectorEntityReferenceWhenConnectorGetsDeleted(

@@ -65,7 +65,7 @@ spec:
         resources:
           limits:
             cpu: "1"
-            memory: "4Gi"
+            memory: "8Gi"
         readinessProbe:
           exec:
             command:
@@ -104,22 +104,18 @@ spec:
           value: ""
         - name: DELEGATE_PROFILE
           value: ""
-        - name: ACCOUNT_SECRET
+        - name: DELEGATE_TOKEN
           value: ACCOUNT_KEY
         - name: WATCHER_STORAGE_URL
           value: http://localhost:8888
         - name: WATCHER_CHECK_LOCATION
           value: watcherci.txt
-        - name: REMOTE_WATCHER_URL_CDN
-          value: http://localhost:9500/builds
         - name: DELEGATE_STORAGE_URL
           value: http://localhost:8888
         - name: DELEGATE_CHECK_LOCATION
           value: delegateci.txt
         - name: HELM_DESIRED_VERSION
           value: ""
-        - name: CDN_URL
-          value: http://localhost:9500
         - name: JRE_VERSION
           value: 1.8.0_242
         - name: HELM3_PATH

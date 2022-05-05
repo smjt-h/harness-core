@@ -35,9 +35,10 @@ public interface CVConstants {
   int STATE_MACHINE_IGNORE_LIMIT = 100;
 
   int CREATE_TIME_MINUTES_FOR_DEMO_CVCONFIG = 120;
-  int DATA_COLLECTION_TIME_RANGE_FOR_SLI = 24 * 60;
+  Duration DATA_COLLECTION_TIME_RANGE_FOR_SLI = Duration.ofDays(1);
   int STATE_MACHINE_IGNORE_MINUTES = 30;
   int STATE_MACHINE_IGNORE_MINUTES_FOR_DEMO = CREATE_TIME_MINUTES_FOR_DEMO_CVCONFIG + 120;
+  int STATE_MACHINE_IGNORE_MINUTES_DEFAULT = 30;
   int STATE_MACHINE_IGNORE_MINUTES_FOR_SLI = Integer.MAX_VALUE;
 
   String DATA_SOURCE_TYPE = "type";
@@ -46,11 +47,13 @@ public interface CVConstants {
   String LIVE_MONITORING = "live_monitoring";
   String DEPLOYMENT = "deployment";
 
-  String TAG_DATA_SOURCE = "dataSource";
+  String TAG_DATA_SOURCE = "dataSourceType";
   String TAG_VERIFICATION_TYPE = "verificationType";
   String TAG_ACCOUNT_ID = "accountId";
   String TAG_ONBOARDING = "onboarding";
   String TAG_UNRECORDED = "unrecorded";
   String STATEMACHINE_PUBLISHER = "srm_statemachine_publisher";
   String STATEMACHINE_CONSUMER = "srm_statemachine_consumer";
+  String SET_KEY = "$set";
+  int BULK_OPERATION_THRESHOLD = 1000;
 }

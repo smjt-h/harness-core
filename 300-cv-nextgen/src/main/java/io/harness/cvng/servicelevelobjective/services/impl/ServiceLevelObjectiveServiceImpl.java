@@ -9,10 +9,15 @@ package io.harness.cvng.servicelevelobjective.services.impl;
 
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
+import io.harness.cvng.beans.cvnglog.CVNGLogDTO;
 import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
+import io.harness.cvng.core.beans.params.logsFilterParams.SLILogsFilter;
+import io.harness.cvng.core.services.api.CVNGLogService;
+import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.core.utils.DateTimeUtils;
+import io.harness.cvng.notification.services.api.NotificationRuleService;
 import io.harness.cvng.servicelevelobjective.SLORiskCountResponse;
 import io.harness.cvng.servicelevelobjective.SLORiskCountResponse.RiskCount;
 import io.harness.cvng.servicelevelobjective.beans.ErrorBudgetRisk;
@@ -22,8 +27,6 @@ import io.harness.cvng.servicelevelobjective.beans.SLOErrorBudgetResetDTO;
 import io.harness.cvng.servicelevelobjective.beans.SLOTarget;
 import io.harness.cvng.servicelevelobjective.beans.SLOTarget.SLOTargetKeys;
 import io.harness.cvng.servicelevelobjective.beans.SLOTargetType;
-import io.harness.cvng.servicelevelobjective.beans.ServiceLevelIndicatorDTO;
-import io.harness.cvng.servicelevelobjective.beans.ServiceLevelIndicatorSpec;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelIndicatorType;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelObjectiveDTO;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelObjectiveFilter;
@@ -60,6 +63,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.ws.rs.NotFoundException;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -78,6 +82,9 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
   @Inject private Map<SLOTargetType, SLOTargetTransformer> sloTargetTypeSLOTargetTransformerMap;
   @Inject private SLIRecordService sliRecordService;
   @Inject private SLOErrorBudgetResetService sloErrorBudgetResetService;
+  @Inject private VerificationTaskService verificationTaskService;
+  @Inject private CVNGLogService cvngLogService;
+  @Inject private NotificationRuleService notificationRuleService;
 
   @Override
   public ServiceLevelObjectiveResponse create(
@@ -121,6 +128,7 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
     serviceLevelIndicatorService.deleteByIdentifier(projectParams, serviceLevelObjective.getServiceLevelIndicators());
     sloErrorBudgetResetService.clearErrorBudgetResets(projectParams, identifier);
     sloHealthIndicatorService.delete(projectParams, serviceLevelObjective.getIdentifier());
+    notificationRuleService.delete(projectParams, serviceLevelObjective.getNotificationRuleRefs());
     return hPersistence.delete(serviceLevelObjective);
   }
 
@@ -238,9 +246,28 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
   public ServiceLevelObjectiveResponse get(ProjectParams projectParams, String identifier) {
     ServiceLevelObjective serviceLevelObjective = getEntity(projectParams, identifier);
     if (Objects.isNull(serviceLevelObjective)) {
-      return null;
+      throw new NotFoundException("SLO with identifier " + identifier + " not found.");
     }
     return sloEntityToSLOResponse(serviceLevelObjective);
+  }
+
+  @Override
+  public PageResponse<CVNGLogDTO> getCVNGLogs(
+      ProjectParams projectParams, String identifier, SLILogsFilter sliLogsFilter, PageParams pageParams) {
+    ServiceLevelObjective serviceLevelObjective = getEntity(projectParams, identifier);
+    if (Objects.isNull(serviceLevelObjective)) {
+      throw new NotFoundException("SLO with identifier " + identifier + " not found.");
+    }
+    List<String> sliIds =
+        serviceLevelIndicatorService.getEntities(projectParams, serviceLevelObjective.getServiceLevelIndicators())
+            .stream()
+            .map(ServiceLevelIndicator::getUuid)
+            .collect(Collectors.toList());
+    List<String> verificationTaskIds =
+        verificationTaskService.getSLIVerificationTaskIds(projectParams.getAccountIdentifier(), sliIds);
+
+    return cvngLogService.getCVNGLogs(
+        projectParams.getAccountIdentifier(), verificationTaskIds, sliLogsFilter, pageParams);
   }
 
   @Override
@@ -324,7 +351,6 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
 
   private ServiceLevelObjective updateSLOEntity(ProjectParams projectParams,
       ServiceLevelObjective serviceLevelObjective, ServiceLevelObjectiveDTO serviceLevelObjectiveDTO) {
-    prePersistenceCleanup(serviceLevelObjectiveDTO);
     UpdateOperations<ServiceLevelObjective> updateOperations =
         hPersistence.createUpdateOperations(ServiceLevelObjective.class);
     updateOperations.set(ServiceLevelObjectiveKeys.name, serviceLevelObjectiveDTO.getName());
@@ -350,6 +376,8 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
             .getSLOTarget(serviceLevelObjectiveDTO.getTarget().getSpec()));
     updateOperations.set(
         ServiceLevelObjectiveKeys.sloTargetPercentage, serviceLevelObjectiveDTO.getTarget().getSloTargetPercentage());
+    updateOperations.set(ServiceLevelObjectiveKeys.notificationRuleRefs,
+        notificationRuleService.update(projectParams, serviceLevelObjectiveDTO.getNotificationRuleRefs()));
     hPersistence.update(serviceLevelObjective, updateOperations);
     return serviceLevelObjective;
   }
@@ -377,6 +405,8 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
             .healthSourceRef(serviceLevelObjective.getHealthSourceIdentifier())
             .serviceLevelIndicators(
                 serviceLevelIndicatorService.get(projectParams, serviceLevelObjective.getServiceLevelIndicators()))
+            .notificationRuleRefs(notificationRuleService.getNotificationRuleRefs(
+                projectParams, serviceLevelObjective.getNotificationRuleRefs()))
             .target(SLOTarget.builder()
                         .type(serviceLevelObjective.getSloTarget().getType())
                         .spec(sloTargetTypeSLOTargetTransformerMap.get(serviceLevelObjective.getSloTarget().getType())
@@ -395,7 +425,6 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
 
   private ServiceLevelObjective saveServiceLevelObjectiveEntity(
       ProjectParams projectParams, ServiceLevelObjectiveDTO serviceLevelObjectiveDTO) {
-    prePersistenceCleanup(serviceLevelObjectiveDTO);
     ServiceLevelObjective serviceLevelObjective =
         ServiceLevelObjective.builder()
             .accountId(projectParams.getAccountIdentifier())
@@ -408,6 +437,8 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
             .serviceLevelIndicators(serviceLevelIndicatorService.create(projectParams,
                 serviceLevelObjectiveDTO.getServiceLevelIndicators(), serviceLevelObjectiveDTO.getIdentifier(),
                 serviceLevelObjectiveDTO.getMonitoredServiceRef(), serviceLevelObjectiveDTO.getHealthSourceRef()))
+            .notificationRuleRefs(
+                notificationRuleService.update(projectParams, serviceLevelObjectiveDTO.getNotificationRuleRefs()))
             .monitoredServiceIdentifier(serviceLevelObjectiveDTO.getMonitoredServiceRef())
             .healthSourceIdentifier(serviceLevelObjectiveDTO.getHealthSourceRef())
             .tags(TagMapper.convertToList(serviceLevelObjectiveDTO.getTags()))
@@ -418,19 +449,6 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
             .build();
     hPersistence.save(serviceLevelObjective);
     return serviceLevelObjective;
-  }
-
-  private void prePersistenceCleanup(ServiceLevelObjectiveDTO sloCreateDTO) {
-    SLOTarget sloTarget = sloCreateDTO.getTarget();
-    if (Objects.isNull(sloTarget.getType())) {
-      sloTarget.setType(sloTarget.getSpec().getType());
-    }
-    for (ServiceLevelIndicatorDTO serviceLevelIndicator : sloCreateDTO.getServiceLevelIndicators()) {
-      ServiceLevelIndicatorSpec serviceLevelIndicatorSpec = serviceLevelIndicator.getSpec();
-      if (Objects.isNull(serviceLevelIndicatorSpec.getType())) {
-        serviceLevelIndicatorSpec.setType(serviceLevelIndicatorSpec.getSpec().getType());
-      }
-    }
   }
 
   public void validateCreate(ServiceLevelObjectiveDTO sloCreateDTO, ProjectParams projectParams) {

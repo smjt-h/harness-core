@@ -14,18 +14,21 @@ import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
 import io.harness.filters.WithConnectorRef;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
+import io.harness.plancreator.steps.common.WithDelegateSelector;
 import io.harness.plancreator.steps.internal.PMSStepInfo;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
+import io.harness.pms.yaml.YamlNode;
 import io.harness.steps.StepSpecTypeConstants;
-import io.harness.steps.jira.create.JiraCreateStep;
 import io.harness.steps.servicenow.ServiceNowStepUtils;
 import io.harness.steps.servicenow.beans.ServiceNowField;
 import io.harness.yaml.YamlSchemaTypes;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.HashMap;
@@ -35,6 +38,7 @@ import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.annotation.TypeAlias;
 
@@ -45,20 +49,30 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonTypeName(StepSpecTypeConstants.SERVICENOW_UPDATE)
 @TypeAlias("serviceNowUpdateStepInfo")
 @RecasterAlias("io.harness.steps.servicenow.update.ServiceNowUpdateStepInfo")
-public class ServiceNowUpdateStepInfo implements PMSStepInfo, WithConnectorRef {
+public class ServiceNowUpdateStepInfo implements PMSStepInfo, WithConnectorRef, WithDelegateSelector {
+  @JsonProperty(YamlNode.UUID_FIELD_NAME)
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
+  @ApiModelProperty(hidden = true)
+  private String uuid;
+
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> connectorRef;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> ticketType;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> ticketNumber;
+
+  @NotNull
+  @ApiModelProperty(dataType = SwaggerConstants.BOOLEAN_CLASSPATH)
+  ParameterField<Boolean> useServiceNowTemplate;
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> templateName;
 
   List<ServiceNowField> fields;
 
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   @YamlSchemaTypes(value = {runtime})
-  ParameterField<List<String>> delegateSelectors;
+  ParameterField<List<TaskSelectorYaml>> delegateSelectors;
 
   @Override
   public StepType getStepType() {
-    return JiraCreateStep.STEP_TYPE;
+    return ServiceNowUpdateStep.STEP_TYPE;
   }
 
   @Override
@@ -74,6 +88,8 @@ public class ServiceNowUpdateStepInfo implements PMSStepInfo, WithConnectorRef {
         .ticketNumber(ticketNumber)
         .fields(ServiceNowStepUtils.processServiceNowFieldsList(fields))
         .delegateSelectors(delegateSelectors)
+        .templateName(templateName)
+        .useServiceNowTemplate(useServiceNowTemplate)
         .build();
   }
 

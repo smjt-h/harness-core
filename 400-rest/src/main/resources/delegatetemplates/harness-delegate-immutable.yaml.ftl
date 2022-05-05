@@ -67,23 +67,32 @@ spec:
             path: /api/health
             port: 3460
             scheme: HTTP
-          initialDelaySeconds: 60
+          initialDelaySeconds: 10
           periodSeconds: 10
           failureThreshold: 2
+        startupProbe:
+          httpGet:
+            path: /api/health
+            port: 3460
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 15
         envFrom:
         - secretRef:
             name: ${accountTokenName}
         env:
 <@delegateEnvironment.common />
 <@delegateEnvironment.cgSpecific />
+<@delegateEnvironment.cgImmutableSpecific />
 <@delegateEnvironment.immutable />
 
 <#if ciEnabled == "true">
 ---
 
-    <@delegateService.cg />
+    <@delegateService.ng />
 </#if>
 
 ---
 
-<@upgrader.cronjob fullDelegateName=delegateName + "-" + kubernetesAccountLabel/>
+<@upgrader.cronjob base64Secret=base64Secret fullDelegateName=delegateName + "-" + kubernetesAccountLabel/>

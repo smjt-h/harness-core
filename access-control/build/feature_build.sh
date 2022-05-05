@@ -6,7 +6,7 @@
 
 set -ex
 
-# GCP_KEY, HARNESS_WILD_CERT, KEYSTORE_PASS, JDK, VERSION, PURPOSE are externally provided
+# GCP_KEY, HARNESS_WILD_CERT, KEYSTORE_PASS, JDK, VERSION, PURPOSE, BUILD are externally provided
 # to this script through environment variables.
 
 echo $GCP_KEY | base64 -d > /tmp/storage_secret.json
@@ -22,6 +22,10 @@ export GIT_COMMIT=$(git rev-parse HEAD)
 echo "--------------------------------------"
 echo $JDK $BUILD $VERSION $PURPOSE $GIT_BRANCH $GIT_COMMIT $(date)
 echo "--------------------------------------"
+
+echo \ >> bazelrc.remote
+echo build --google_credentials=/tmp/storage_secret.json >> bazelrc.remote
+cat bazelrc.remote
 
 yum install zlib-devel -y
 

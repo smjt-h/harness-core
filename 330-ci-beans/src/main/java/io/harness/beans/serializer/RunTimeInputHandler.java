@@ -21,7 +21,8 @@ import io.harness.beans.yaml.extended.CIShellType;
 import io.harness.beans.yaml.extended.ImagePullPolicy;
 import io.harness.beans.yaml.extended.TIBuildTool;
 import io.harness.beans.yaml.extended.TILanguage;
-import io.harness.beans.yaml.extended.infrastrucutre.Toleration;
+import io.harness.beans.yaml.extended.infrastrucutre.OSType;
+import io.harness.beans.yaml.extended.infrastrucutre.k8.Toleration;
 import io.harness.encryption.SecretRefData;
 import io.harness.exception.ngexception.CIStageExecutionUserException;
 import io.harness.pms.yaml.ParameterField;
@@ -79,6 +80,14 @@ public class RunTimeInputHandler {
     }
   }
 
+  public OSType resolveOSType(ParameterField<OSType> osType) {
+    if (osType == null || osType.isExpression() || osType.getValue() == null) {
+      return OSType.LINUX;
+    } else {
+      return OSType.fromString(osType.fetchFinalValue().toString());
+    }
+  }
+
   public String resolveImagePullPolicy(ParameterField<ImagePullPolicy> pullPolicy) {
     if (pullPolicy == null || pullPolicy.isExpression() || pullPolicy.getValue() == null) {
       return null;
@@ -120,7 +129,12 @@ public class RunTimeInputHandler {
     if (parameterField == null || parameterField.isExpression() || parameterField.getValue() == null) {
       return defaultValue;
     } else {
-      return (Integer) parameterField.fetchFinalValue();
+      try {
+        return Integer.parseInt(parameterField.fetchFinalValue().toString());
+      } catch (Exception exception) {
+        throw new CIStageExecutionUserException(
+            format("Invalid value %s, Value should be number", parameterField.fetchFinalValue().toString()));
+      }
     }
   }
 

@@ -14,23 +14,33 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.DecryptableEntity;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.artifact.bean.ArtifactConfig;
+import io.harness.cdng.artifact.bean.yaml.AcrArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.ArtifactoryRegistryArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.DockerHubArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.EcrArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.GcrArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.NexusRegistryArtifactConfig;
 import io.harness.cdng.artifact.mappers.ArtifactConfigToDelegateReqMapper;
+import io.harness.cdng.artifact.steps.ArtifactStepParameters;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.services.ConnectorService;
 import io.harness.connector.utils.ConnectorUtils;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.TaskSelector;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
+import io.harness.delegate.beans.connector.azureconnector.AzureInheritFromDelegateDetailsDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureMSIAuthDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureMSIAuthUADTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
 import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.beans.connector.nexusconnector.NexusConnectorDTO;
 import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
+import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidConnectorTypeException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
@@ -48,6 +58,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -143,6 +154,32 @@ public class ArtifactStepHelper {
         return ArtifactConfigToDelegateReqMapper.getArtifactoryArtifactDelegateRequest(
             artifactoryRegistryArtifactConfig, artifactoryConnectorDTO, encryptedDataDetails,
             artifactoryRegistryArtifactConfig.getConnectorRef().getValue());
+      case ACR:
+        AcrArtifactConfig acrArtifactConfig = (AcrArtifactConfig) artifactConfig;
+        connectorDTO = getConnector(acrArtifactConfig.getConnectorRef().getValue(), ambiance);
+        if (!(connectorDTO.getConnectorConfig() instanceof AzureConnectorDTO)) {
+          throw new InvalidConnectorTypeException(
+              String.format("Provided connector %s is not compatible with %s artifact",
+                  acrArtifactConfig.getConnectorRef().getValue(), acrArtifactConfig.getSourceType()),
+              WingsException.USER);
+        }
+        AzureConnectorDTO azureConnectorDTO = (AzureConnectorDTO) connectorDTO.getConnectorConfig();
+        if (azureConnectorDTO.getCredential() != null && azureConnectorDTO.getCredential().getConfig() != null) {
+          if (azureConnectorDTO.getCredential().getAzureCredentialType() == AzureCredentialType.MANUAL_CREDENTIALS) {
+            encryptedDataDetails = secretManagerClientService.getEncryptionDetails(ngAccess,
+                ((AzureManualDetailsDTO) azureConnectorDTO.getCredential().getConfig()).getAuthDTO().getCredentials());
+          } else if (azureConnectorDTO.getCredential().getAzureCredentialType()
+              == AzureCredentialType.INHERIT_FROM_DELEGATE) {
+            AzureMSIAuthDTO azureMSIAuthDTO =
+                ((AzureInheritFromDelegateDetailsDTO) azureConnectorDTO.getCredential().getConfig()).getAuthDTO();
+            if (azureMSIAuthDTO instanceof AzureMSIAuthUADTO) {
+              encryptedDataDetails = secretManagerClientService.getEncryptionDetails(
+                  ngAccess, ((AzureMSIAuthUADTO) azureMSIAuthDTO).getCredentials());
+            }
+          }
+        }
+        return ArtifactConfigToDelegateReqMapper.getAcrDelegateRequest(
+            acrArtifactConfig, azureConnectorDTO, encryptedDataDetails, acrArtifactConfig.getConnectorRef().getValue());
       default:
         throw new UnsupportedOperationException(
             String.format("Unknown Artifact Config type: [%s]", artifactConfig.getSourceType()));
@@ -171,6 +208,8 @@ public class ArtifactStepHelper {
         return TaskType.GCR_ARTIFACT_TASK_NG;
       case ECR:
         return TaskType.ECR_ARTIFACT_TASK_NG;
+      case ACR:
+        return TaskType.ACR_ARTIFACT_TASK_NG;
       case NEXUS3_REGISTRY:
         return TaskType.NEXUS_ARTIFACT_TASK_NG;
       case ARTIFACTORY_REGISTRY:
@@ -225,9 +264,41 @@ public class ArtifactStepHelper {
                                                    .stream()
                                                    .map(TaskSelectorYaml::new)
                                                    .collect(Collectors.toList()));
+      case ACR:
+        AcrArtifactConfig acrArtifactConfig = (AcrArtifactConfig) artifactConfig;
+        connectorDTO = getConnector(acrArtifactConfig.getConnectorRef().getValue(), ambiance);
+        return TaskSelectorYaml.toTaskSelector(((AzureConnectorDTO) connectorDTO.getConnectorConfig())
+                                                   .getDelegateSelectors()
+                                                   .stream()
+                                                   .map(TaskSelectorYaml::new)
+                                                   .collect(Collectors.toList()));
       default:
         throw new UnsupportedOperationException(
             String.format("Unknown Artifact Config type: [%s]", artifactConfig.getSourceType()));
     }
+  }
+
+  public ArtifactConfig applyArtifactsOverlay(ArtifactStepParameters stepParameters) {
+    List<ArtifactConfig> artifactList = new LinkedList<>();
+    // 1. Original artifacts
+    if (stepParameters.getSpec() != null) {
+      artifactList.add(stepParameters.getSpec());
+    }
+    // 2. Override sets
+    if (stepParameters.getOverrideSets() != null) {
+      artifactList.addAll(stepParameters.getOverrideSets());
+    }
+    // 3. Stage Overrides
+    if (stepParameters.getStageOverride() != null) {
+      artifactList.add(stepParameters.getStageOverride());
+    }
+    if (EmptyPredicate.isEmpty(artifactList)) {
+      throw new InvalidArgumentsException("No artifacts defined");
+    }
+    ArtifactConfig resultantArtifact = artifactList.get(0);
+    for (ArtifactConfig artifact : artifactList.subList(1, artifactList.size())) {
+      resultantArtifact = resultantArtifact.applyOverrides(artifact);
+    }
+    return resultantArtifact;
   }
 }

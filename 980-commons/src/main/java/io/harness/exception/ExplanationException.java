@@ -17,6 +17,7 @@ import java.util.EnumSet;
 
 @OwnedBy(HarnessTeam.DX)
 public class ExplanationException extends WingsException {
+  static final long serialVersionUID = -1494201320263679028L;
   public static String EXPLANATION_IRSA_ROLE_CHECK =
       "IRSA capability for delegate doesn't exist or doesn't have required permissions to describe regions.";
   public static final String EXPLANATION_EMPTY_ACCESS_KEY = "Access Key cannot be empty";
@@ -65,9 +66,13 @@ public class ExplanationException extends WingsException {
   public static String EXPLANATION_MISSING_BRANCH = "Provided branch '%s' doesn't exist in the git repository";
   public static String EXPLANATION_MISSING_REFERENCE = "Provided reference '%s' doesn't exist in the git repository";
   public static String EXPLANATION_GIT_FILE_NOT_FOUND = "Provided file path doesn't exist";
+  public static String EXPLANATION_SCM_INVALID_REQUEST =
+      "Delegate wasn’t able to download or run SCM service which interacts with Git provider";
 
   public static String URL_NOT_FOUND = "Provided URL path does not exist.";
   public static String AUTHORIZATION_FAILURE = "Provided credentials are unauthorized.";
+  public static String DELEGATE_TO_HOST_SOCKET_CONNECTION_FAILED =
+      "Delegate(s) is(are) not able to establish socket connection to host(s)";
   public ExplanationException(String message, Throwable cause) {
     super(message, cause, EXPLANATION, INFO, USER_SRE, null);
     super.excludeReportTarget(EXPLANATION, EnumSet.of(ReportTarget.LOG_SYSTEM));

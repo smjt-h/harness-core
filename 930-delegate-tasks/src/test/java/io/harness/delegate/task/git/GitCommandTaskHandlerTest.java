@@ -9,6 +9,7 @@ package io.harness.delegate.task.git;
 
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.ABHINAV2;
+import static io.harness.rule.OwnerRule.DEV_MITTAL;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -46,6 +47,9 @@ import io.harness.encryption.Scope;
 import io.harness.encryption.SecretRefData;
 import io.harness.errorhandling.NGErrorHelper;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.WingsException;
+import io.harness.exception.exceptionmanager.ExceptionManager;
+import io.harness.exception.runtime.JGitRuntimeException;
 import io.harness.exception.runtime.SCMRuntimeException;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.rule.Owner;
@@ -69,6 +73,7 @@ public class GitCommandTaskHandlerTest extends CategoryTest {
   @Mock private ScmServiceClient scmServiceClient;
 
   @Spy @InjectMocks GitCommandTaskHandler gitCommandTaskHandler;
+  @Spy @InjectMocks ExceptionManager exceptionManager;
 
   private static final long SIMULATED_REQUEST_TIME_MILLIS = 1609459200000L;
   private static final String ACCOUNT_IDENTIFIER = generateUuid();
@@ -101,20 +106,18 @@ public class GitCommandTaskHandlerTest extends CategoryTest {
     assertThat(validationResult.getTestedAt()).isEqualTo(SIMULATED_REQUEST_TIME_MILLIS);
   }
 
-  @Test
+  @Test(expected = WingsException.class)
   @Owner(developers = ABHINAV2)
   @Category(UnitTests.class)
   public void testGitCredentialsWhenException() {
     GitConfigDTO gitConfig = GitConfigDTO.builder().build();
     ScmConnector connector = GitlabConnectorDTO.builder().build();
-    doThrow(new InvalidRequestException(SIMULATED_EXCEPTION_MESSAGE))
+    doThrow(new JGitRuntimeException(SIMULATED_EXCEPTION_MESSAGE))
         .when(gitCommandTaskHandler)
         .handleValidateTask(
             any(GitConfigDTO.class), any(ScmConnector.class), any(String.class), any(SshSessionConfig.class));
 
-    ConnectorValidationResult validationResult =
-        gitCommandTaskHandler.validateGitCredentials(gitConfig, connector, ACCOUNT_IDENTIFIER, sshSessionConfig);
-    assertThat(validationResult.getStatus()).isEqualTo(ConnectivityStatus.FAILURE);
+    gitCommandTaskHandler.validateGitCredentials(gitConfig, connector, ACCOUNT_IDENTIFIER, sshSessionConfig);
   }
 
   @Test
@@ -229,5 +232,23 @@ public class GitCommandTaskHandlerTest extends CategoryTest {
     assertThatThrownBy(
         () -> gitCommandTaskHandler.handleValidateTask(gitConfig, connector, ACCOUNT_IDENTIFIER, sshSessionConfig))
         .isInstanceOf(SCMRuntimeException.class);
+  }
+
+  @Test
+  @Owner(developers = DEV_MITTAL)
+  @Category(UnitTests.class)
+  public void testInvalidScmRequest() {
+    GitConfigDTO gitConfig = GitConfigDTO.builder().gitConnectionType(GitConnectionType.ACCOUNT).build();
+    ScmConnector connector =
+        GitlabConnectorDTO.builder()
+            .apiAccess(GitlabApiAccessDTO.builder().spec(GitlabTokenSpecDTO.builder().build()).build())
+            .build();
+    doThrow(new InvalidRequestException(SIMULATED_EXCEPTION_MESSAGE)).when(scmDelegateClient).processScmRequest(any());
+    try {
+      gitCommandTaskHandler.handleValidateTask(gitConfig, connector, ACCOUNT_IDENTIFIER, sshSessionConfig);
+    } catch (Exception e) {
+      assertThat(e instanceof SCMRuntimeException).isTrue();
+      assertThat(e.getMessage().equals(SIMULATED_EXCEPTION_MESSAGE)).isTrue();
+    }
   }
 }

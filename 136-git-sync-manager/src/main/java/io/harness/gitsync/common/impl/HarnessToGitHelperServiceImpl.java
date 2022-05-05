@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.UNSYNCED;
 
+import io.harness.ScopeIdentifiers;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.common.EntityReference;
@@ -22,11 +23,15 @@ import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
 import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
 import io.harness.eventsframework.schemas.entity.EntityScopeInfo;
+import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.ChangeType;
 import io.harness.gitsync.FileInfo;
+import io.harness.gitsync.GetFileRequest;
+import io.harness.gitsync.GetFileResponse;
+import io.harness.gitsync.GitMetaData;
 import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.PushInfo;
 import io.harness.gitsync.RepoDetails;
@@ -43,6 +48,7 @@ import io.harness.gitsync.common.service.GitEntityService;
 import io.harness.gitsync.common.service.HarnessToGitHelperService;
 import io.harness.gitsync.common.service.ScmOrchestratorService;
 import io.harness.gitsync.common.service.YamlGitConfigService;
+import io.harness.gitsync.common.utils.GitSyncFilePathUtils;
 import io.harness.gitsync.core.beans.GitCommit.GitCommitProcessingStatus;
 import io.harness.gitsync.core.dtos.GitCommitDTO;
 import io.harness.gitsync.core.fullsync.entity.GitFullSyncJob;
@@ -56,15 +62,18 @@ import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.entitydetail.EntityDetailProtoToRestMapper;
 import io.harness.product.ci.scm.proto.CreateFileResponse;
 import io.harness.product.ci.scm.proto.DeleteFileResponse;
+import io.harness.product.ci.scm.proto.FileContent;
 import io.harness.product.ci.scm.proto.UpdateFileResponse;
 import io.harness.security.Principal;
 import io.harness.security.dto.UserPrincipal;
 import io.harness.tasks.DecryptGitApiAccessHelper;
 import io.harness.utils.IdentifierRefHelper;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
@@ -169,7 +178,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
               -> gitBranchSyncService.createBranchSyncEvent(yamlGitConfigDTO.getAccountIdentifier(),
                   yamlGitConfigDTO.getOrganizationIdentifier(), yamlGitConfigDTO.getProjectIdentifier(),
                   yamlGitConfigDTO.getIdentifier(), yamlGitConfigDTO.getRepo(), pushInfo.getBranchName(),
-                  ScmGitUtils.createFilePath(pushInfo.getFolderPath(), pushInfo.getFilePath())));
+                  Arrays.asList(ScmGitUtils.createFilePath(pushInfo.getFolderPath(), pushInfo.getFilePath()))));
     }
   }
 
@@ -178,7 +187,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
   }
 
   private void resolveGitToHarnessErrors(PushInfo pushInfo, YamlGitConfigDTO yamlGitConfigDTO) {
-    String completeFilePath = ScmGitUtils.createFilePath(pushInfo.getFolderPath(), pushInfo.getFilePath());
+    String completeFilePath = GitSyncFilePathUtils.createFilePath(pushInfo.getFolderPath(), pushInfo.getFilePath());
     gitSyncErrorService.resolveGitToHarnessErrors(pushInfo.getAccountId(), yamlGitConfigDTO.getRepo(),
         pushInfo.getBranchName(), new HashSet<>(Collections.singleton(completeFilePath)), pushInfo.getCommitId());
   }
@@ -229,12 +238,15 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
 
   @Override
   public BranchDetails getBranchDetails(RepoDetails repoDetails) {
-    final YamlGitConfigDTO yamlGitConfigDTO = yamlGitConfigService.get(repoDetails.getProjectIdentifier().getValue(),
-        repoDetails.getOrgIdentifier().getValue(), repoDetails.getAccountId(), repoDetails.getYamlGitConfigId());
-    if (yamlGitConfigDTO == null) {
-      return BranchDetails.newBuilder().build();
+    try {
+      final YamlGitConfigDTO yamlGitConfigDTO = yamlGitConfigService.get(repoDetails.getProjectIdentifier().getValue(),
+          repoDetails.getOrgIdentifier().getValue(), repoDetails.getAccountId(), repoDetails.getYamlGitConfigId());
+      return BranchDetails.newBuilder().setDefaultBranch(yamlGitConfigDTO.getBranch()).build();
+    } catch (InvalidRequestException ex) {
+      log.error("Error while getting yamlGitConfig", ex);
+      String errorMessage = ExceptionUtils.getMessage(ex);
+      return BranchDetails.newBuilder().setError(errorMessage).build();
     }
-    return BranchDetails.newBuilder().setDefaultBranch(yamlGitConfigDTO.getBranch()).build();
   }
 
   @Override
@@ -246,7 +258,6 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     final ChangeType changeType = request.getChangeType();
     final YamlGitConfigDTO yamlGitConfig = yamlGitConfigService.get(
         entityReference.getProjectIdentifier(), entityReference.getOrgIdentifier(), accountId, yamlGitConfigId);
-
     final InfoForGitPush infoForGitPush = getInfoForGitPush(request, entityDetailDTO, accountId, yamlGitConfig);
 
     switch (changeType) {
@@ -311,6 +322,19 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     return gitFullSyncJob.get().getTriggeredBy();
   }
 
+  @Override
+  public GetFileResponse getFile(GetFileRequest getFileRequest) {
+    ScopeIdentifiers scopeIdentifiers = getFileRequest.getScopeIdentifiers();
+    FileContent fileContent = scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
+        -> scmClientFacilitatorService.getFile(scopeIdentifiers.getAccountIdentifier(),
+            scopeIdentifiers.getOrgIdentifier(), scopeIdentifiers.getProjectIdentifier(),
+            getFileRequest.getConnectorRef(), getFileRequest.getRepoName(), getFileRequest.getBranchName(),
+            getFileRequest.getFilePath(), getFileRequest.getCommitId()),
+        scopeIdentifiers.getProjectIdentifier(), scopeIdentifiers.getOrgIdentifier(),
+        scopeIdentifiers.getAccountIdentifier(), getFileRequest.getConnectorRef());
+    return prepareGetFileResponse(getFileRequest, fileContent);
+  }
+
   private InfoForGitPush getInfoForGitPush(
       FileInfo request, EntityDetail entityDetailDTO, String accountId, YamlGitConfigDTO yamlGitConfig) {
     Principal principal = request.getPrincipal();
@@ -325,18 +349,6 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     final ScmConnector connectorConfig = (ScmConnector) connector.get().getConnector().getConnectorConfig();
     connectorConfig.setUrl(yamlGitConfig.getRepo());
 
-    // Incoming commit id could be a conflict resolved commit id for an entity
-    String lastCommitIdForFile = request.getCommitId() == null ? "" : request.getCommitId();
-    // Currently putting this BITBUCKET check to avoid a bug on GITHUB UpdateFile use-case
-    // https://harness.slack.com/archives/C029SDS22FN/p1645792247538309
-    // Once properly handled, this should be removed
-    if (connectorConfig.getConnectorType().equals(ConnectorType.BITBUCKET) && isEmpty(lastCommitIdForFile)
-        && request.getChangeType() != ChangeType.ADD) {
-      GitSyncEntityDTO gitSyncEntityDTO =
-          gitEntityService.get(entityDetailDTO.getEntityRef(), entityDetailDTO.getType(), request.getBranch());
-      lastCommitIdForFile = gitSyncEntityDTO.getLastCommitId();
-    }
-
     return InfoForGitPush.builder()
         .accountId(accountId)
         .orgIdentifier(entityDetailDTO.getEntityRef().getOrgIdentifier())
@@ -350,7 +362,46 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
         .oldFileSha(StringValueUtils.getStringFromStringValue(request.getOldFileSha()))
         .yaml(request.getYaml())
         .scmConnector(connectorConfig)
-        .commitId(lastCommitIdForFile)
+        .commitId(fetchLastCommitIdForFile(request, entityDetailDTO, connectorConfig))
+        .build();
+  }
+
+  @VisibleForTesting
+  protected String fetchLastCommitIdForFile(FileInfo request, EntityDetail entityDetailDTO) {
+    // Incoming commit id could be a conflict resolved commit id for an entity
+    String lastCommitIdForFile = request.getCommitId() == null ? "" : request.getCommitId();
+    if (isEmpty(lastCommitIdForFile) && request.getChangeType() != ChangeType.ADD) {
+      // If its saveToNewBranch use-case, then we choose base branch for existing entity commit
+      String branch = request.getIsNewBranch() ? request.getBaseBranch().getValue() : request.getBranch();
+      GitSyncEntityDTO gitSyncEntityDTO =
+          gitEntityService.get(entityDetailDTO.getEntityRef(), entityDetailDTO.getType(), branch);
+      lastCommitIdForFile = gitSyncEntityDTO.getLastCommitId();
+    }
+    return lastCommitIdForFile;
+  }
+
+  private String fetchLastCommitIdForFile(
+      FileInfo request, EntityDetail entityDetailDTO, ScmConnector connectorConfig) {
+    // Perform fetch commit id ops for only bitbucket for now
+    if (ConnectorType.BITBUCKET.equals(connectorConfig.getConnectorType())) {
+      return fetchLastCommitIdForFile(request, entityDetailDTO);
+    }
+    // Return dummy commit id in other cases, will not be used anywhere
+    return "";
+  }
+
+  private GetFileResponse prepareGetFileResponse(GetFileRequest getFileRequest, FileContent fileContent) {
+    return GetFileResponse.newBuilder()
+        .setStatus(fileContent.getStatus())
+        .setFileContent(fileContent.getContent())
+        .setError(fileContent.getError())
+        .setGitMetaData(GitMetaData.newBuilder()
+                            .setRepoName(getFileRequest.getRepoName())
+                            .setBranchName(getFileRequest.getBranchName())
+                            .setCommitId(fileContent.getCommitId())
+                            .setBlobId(fileContent.getBlobId())
+                            .setFilePath(fileContent.getPath())
+                            .build())
         .build();
   }
 }

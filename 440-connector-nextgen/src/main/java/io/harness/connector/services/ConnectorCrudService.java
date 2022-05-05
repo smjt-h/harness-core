@@ -37,6 +37,9 @@ public interface ConnectorCrudService {
   Optional<ConnectorResponseDTO> get(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorIdentifier);
 
+  Optional<ConnectorResponseDTO> getByRef(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef);
+
   Optional<ConnectorResponseDTO> getByName(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String name, boolean isDeletedAllowed);
 
@@ -56,7 +59,7 @@ public interface ConnectorCrudService {
   boolean delete(String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorIdentifier,
       ChangeType changeType);
 
-  ConnectorCatalogueResponseDTO getConnectorCatalogue();
+  ConnectorCatalogueResponseDTO getConnectorCatalogue(String accountIdentifier);
 
   void updateConnectorEntityWithPerpetualtaskId(String accountIdentifier, String connectorOrgIdentifier,
       String connectorProjectIdentifier, String connectorIdentifier, String perpetualTaskId);

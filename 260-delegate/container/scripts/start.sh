@@ -13,6 +13,14 @@ function jar_app_version() {
 
   if [ -z "$VERSION" ]
   then
+    if unzip -l $JAR | grep -q BOOT-INF/classes/main/resources-filtered/versionInfo.yaml
+    then
+      VERSION=$(unzip -c $JAR BOOT-INF/classes/main/resources-filtered/versionInfo.yaml | grep "^version " | cut -d ":" -f2 | tr -d " " | tr -d "\r" | tr -d "\n")
+    fi
+  fi
+
+  if [ -z "$VERSION" ]
+  then
     if unzip -l $JAR | grep -q main/resources-filtered/versionInfo.yaml
     then
       VERSION=$(unzip -c $JAR main/resources-filtered/versionInfo.yaml | grep "^version " | cut -d ":" -f2 | tr -d " " | tr -d "\r" | tr -d "\n")
@@ -24,6 +32,22 @@ function jar_app_version() {
     VERSION=$(unzip -c $JAR META-INF/MANIFEST.MF | grep Application-Version | cut -d "=" -f2 | tr -d " " | tr -d "\r" | tr -d "\n")
   fi
   echo $VERSION
+}
+
+# url-encodes a given input string - used to encode the proxy password for curl commands.
+# Note:
+#   - We implement the functionality ourselves to avoid dependencies on new packages.
+#   - We encode a superset of the characters defined in the specification, which is explicitly
+#     allowed: https://www.ietf.org/rfc/rfc1738.txt
+url_encode () {
+    local input=$1
+    for (( i=0; i<${#input}; i++ )); do
+        local c=${input:$i:1}
+        case $c in
+            [a-zA-Z0-9-_\.\!\*]) printf "$c" ;;
+            *) printf '%%%02X' "'$c"
+        esac
+    done
 }
 
 JVM_URL_BASE_PATH=$DELEGATE_STORAGE_URL
@@ -50,13 +74,13 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 if [ ! -e proxy.config ]; then
-  echo "PROXY_HOST=$PROXY_HOST" > proxy.config
-  echo "PROXY_PORT=$PROXY_PORT" >> proxy.config
-  echo "PROXY_SCHEME=$PROXY_SCHEME" >> proxy.config
-  echo "PROXY_USER=$PROXY_USER" >> proxy.config
-  echo "PROXY_PASSWORD=$PROXY_PASSWORD" >> proxy.config
-  echo "NO_PROXY=$NO_PROXY" >> proxy.config
-  echo "PROXY_MANAGER=${PROXY_MANAGER:-true}" >> proxy.config
+  echo "PROXY_HOST='$PROXY_HOST'" > proxy.config
+  echo "PROXY_PORT='$PROXY_PORT'" >> proxy.config
+  echo "PROXY_SCHEME='$PROXY_SCHEME'" >> proxy.config
+  echo "PROXY_USER='$PROXY_USER'" >> proxy.config
+  echo "PROXY_PASSWORD='${PROXY_PASSWORD//"'"/"'\\''"}'" >> proxy.config
+  echo "NO_PROXY='$NO_PROXY'" >> proxy.config
+  echo "PROXY_MANAGER='${PROXY_MANAGER:-true}'" >> proxy.config
 fi
 
 source proxy.config
@@ -66,7 +90,7 @@ if [[ $PROXY_HOST != "" ]]; then
     export PROXY_USER
     export PROXY_PASSWORD
     echo "using proxy auth config"
-    export PROXY_CURL="-x "$PROXY_SCHEME"://"$PROXY_USER:$PROXY_PASSWORD@$PROXY_HOST:$PROXY_PORT
+    export PROXY_CURL="-x "$PROXY_SCHEME"://"$PROXY_USER:$(url_encode "$PROXY_PASSWORD")@$PROXY_HOST:$PROXY_PORT
   else
     export PROXY_CURL="-x "$PROXY_SCHEME"://"$PROXY_HOST:$PROXY_PORT
     export http_proxy=$PROXY_SCHEME://$PROXY_HOST:$PROXY_PORT
@@ -121,6 +145,7 @@ if [[ "$OSTYPE" == linux* ]]; then
   if [ ! $? -eq 0 ]; then
     echo "/tmp is mounted noexec. Overriding tmpdir"
     export OVERRIDE_TMP_PROPS="-Djava.io.tmpdir=$DIR/tmp"
+    export WATCHER_JAVA_OPTS
     export JAVA_OPTS
   fi
 fi
@@ -209,8 +234,14 @@ if [ ! -e config-watcher.yml ]; then
   echo "accountId: $ACCOUNT_ID" > config-watcher.yml
 fi
 test "$(tail -c 1 config-watcher.yml)" && `echo "" >> config-watcher.yml`
-if ! `grep accountSecret config-watcher.yml > /dev/null`; then
-  echo "accountSecret: $ACCOUNT_SECRET" >> config-watcher.yml
+# delegateToken is a replacement of accountSecret. There is a possibility where pod is running with older yaml,
+# where ACCOUNT_SECRET is present in env variable, prefer using ACCOUNT_SECRET in those scenarios.
+if ! `grep -E 'accountSecret|delegateToken' config-watcher.yml > /dev/null`; then
+  if [ ! -e $ACCOUNT_SECRET ]; then
+    echo "delegateToken: $ACCOUNT_SECRET" >> config-watcher.yml
+  else
+    echo "delegateToken: $DELEGATE_TOKEN" >> config-watcher.yml
+  fi
 fi
 if ! `grep managerUrl config-watcher.yml > /dev/null`; then
   echo "managerUrl: $MANAGER_HOST_AND_PORT/api/" >> config-watcher.yml
@@ -234,7 +265,7 @@ fi
 
 if [ ! -e config-delegate.yml ]; then
   echo "accountId: $ACCOUNT_ID" > config-delegate.yml
-  echo "accountSecret: $ACCOUNT_SECRET" >> config-delegate.yml
+  echo "delegateToken: $DELEGATE_TOKEN" >> config-delegate.yml
 fi
 test "$(tail -c 1 config-delegate.yml)" && `echo "" >> config-delegate.yml`
 if ! `grep managerUrl config-delegate.yml > /dev/null`; then
@@ -315,12 +346,12 @@ if [[ $1 == "upgrade" ]]; then
   WATCHER_CURRENT_VERSION=$(jar_app_version watcher.jar)
   mkdir -p watcherBackup.$WATCHER_CURRENT_VERSION
   cp watcher.jar watcherBackup.$WATCHER_CURRENT_VERSION
-  $JRE_BINARY $JAVA_OPTS $PROXY_SYS_PROPS $OVERRIDE_TMP_PROPS -Dwatchersourcedir="$DIR" -Xmx192m -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:mygclogfilename.gc -XX:+UseParallelGC -XX:MaxGCPauseMillis=500 -Dfile.encoding=UTF-8 -jar watcher.jar config-watcher.yml upgrade $2
+  $JRE_BINARY $PROXY_SYS_PROPS $OVERRIDE_TMP_PROPS -Dwatchersourcedir="$DIR" -Xmx192m -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:mygclogfilename.gc -XX:+UseParallelGC -XX:MaxGCPauseMillis=500 -Dfile.encoding=UTF-8 $WATCHER_JAVA_OPTS -jar watcher.jar config-watcher.yml upgrade $2
 else
   if `pgrep -f "\-Dwatchersourcedir=$DIR"> /dev/null`; then
     echo "Watcher already running"
   else
-    nohup $JRE_BINARY $JAVA_OPTS $PROXY_SYS_PROPS $OVERRIDE_TMP_PROPS -Dwatchersourcedir="$DIR" -Xmx192m -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:mygclogfilename.gc -XX:+UseParallelGC -XX:MaxGCPauseMillis=500 -Dfile.encoding=UTF-8 -jar watcher.jar config-watcher.yml >nohup-watcher.out 2>&1 &
+    nohup $JRE_BINARY $PROXY_SYS_PROPS $OVERRIDE_TMP_PROPS -Dwatchersourcedir="$DIR" -Xmx192m -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:mygclogfilename.gc -XX:+UseParallelGC -XX:MaxGCPauseMillis=500 -Dfile.encoding=UTF-8 $WATCHER_JAVA_OPTS -jar watcher.jar config-watcher.yml >nohup-watcher.out 2>&1 &
     sleep 1
     if [ -s nohup-watcher.out ]; then
       echo "Failed to start Watcher."

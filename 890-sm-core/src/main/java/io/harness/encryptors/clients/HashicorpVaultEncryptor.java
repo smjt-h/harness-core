@@ -13,8 +13,10 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.eraro.ErrorCode.VAULT_OPERATION_ERROR;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.helpers.NGVaultTaskHelper.getVaultAwmIamAuthLoginResult;
-import static io.harness.helpers.ext.vault.VaultRestClientFactory.getFullPath;
+import static io.harness.helpers.NGVaultTaskHelper.getVaultK8sAuthLoginResult;
 import static io.harness.threading.Morpheus.sleep;
+
+import static software.wings.helpers.ext.vault.VaultRestClientFactory.getFullPath;
 
 import static java.time.Duration.ofMillis;
 
@@ -24,12 +26,13 @@ import io.harness.encryptors.VaultEncryptor;
 import io.harness.exception.SecretManagementDelegateException;
 import io.harness.exception.runtime.HashiCorpVaultRuntimeException;
 import io.harness.helpers.ext.vault.VaultAppRoleLoginResult;
-import io.harness.helpers.ext.vault.VaultRestClientFactory;
 import io.harness.security.encryption.EncryptedRecord;
 import io.harness.security.encryption.EncryptedRecordData;
 import io.harness.security.encryption.EncryptionConfig;
 
 import software.wings.beans.VaultConfig;
+import software.wings.helpers.ext.vault.VaultK8sLoginResult;
+import software.wings.helpers.ext.vault.VaultRestClientFactory;
 
 import com.google.common.util.concurrent.TimeLimiter;
 import com.google.inject.Inject;
@@ -240,6 +243,9 @@ public class HashicorpVaultEncryptor implements VaultEncryptor {
     } else if (vaultConfig.isUseAwsIam()) {
       VaultAppRoleLoginResult vaultAwmIamAuthLoginResult = getVaultAwmIamAuthLoginResult(vaultConfig);
       vaultConfig.setAuthToken(vaultAwmIamAuthLoginResult.getClientToken());
+    } else if (vaultConfig.isUseK8sAuth()) {
+      VaultK8sLoginResult vaultK8sLoginResult = getVaultK8sAuthLoginResult(vaultConfig);
+      vaultConfig.setAuthToken(vaultK8sLoginResult.getClientToken());
     }
     return vaultConfig.getAuthToken();
   }

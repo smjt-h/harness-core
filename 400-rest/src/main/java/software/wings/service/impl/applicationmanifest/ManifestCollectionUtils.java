@@ -89,7 +89,7 @@ public class ManifestCollectionUtils {
 
     boolean useRepoFlags = false;
     if (featureFlagService.isEnabled(FeatureName.USE_HELM_REPO_FLAGS, accountId)
-        && HelmVersion.V3.equals(service.getHelmVersion())) {
+        && HelmVersion.isHelmV3(service.getHelmVersion())) {
       useRepoFlags = true;
     }
 
@@ -126,7 +126,7 @@ public class ManifestCollectionUtils {
 
     boolean useRepoFlags = false;
     if (featureFlagService.isEnabled(FeatureName.USE_HELM_REPO_FLAGS, accountId)
-        && HelmVersion.V3.equals(service.getHelmVersion())) {
+        && HelmVersion.isHelmV3(service.getHelmVersion())) {
       useRepoFlags = true;
     }
 
@@ -166,6 +166,8 @@ public class ManifestCollectionUtils {
             .repoName(convertBase64UuidToCanonicalForm(appManifestId))
             .repoDisplayName(settingAttribute.getName())
             .helmVersion(helmVersion)
+            .useLatestChartMuseumVersion(
+                featureFlagService.isEnabled(FeatureName.USE_LATEST_CHARTMUSEUM_VERSION, accountId))
             .bypassHelmFetch(featureFlagService.isEnabled(FeatureName.BYPASS_HELM_FETCH, accountId))
             .helmRepoConfig(helmRepoConfig);
 

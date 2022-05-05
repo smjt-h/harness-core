@@ -7,6 +7,8 @@
 
 package io.harness.licensing.services;
 
+import static io.harness.configuration.DeployMode.DEPLOY_MODE;
+import static io.harness.configuration.DeployVariant.DEPLOY_VERSION;
 import static io.harness.licensing.LicenseModule.LICENSE_CACHE_NAMESPACE;
 import static io.harness.licensing.interfaces.ModuleLicenseImpl.TRIAL_DURATION;
 import static io.harness.remote.client.RestClientUtils.getResponse;
@@ -18,6 +20,8 @@ import io.harness.account.services.AccountService;
 import io.harness.beans.EmbeddedUser;
 import io.harness.ccm.license.CeLicenseInfoDTO;
 import io.harness.ccm.license.remote.CeLicenseClient;
+import io.harness.configuration.DeployMode;
+import io.harness.configuration.DeployVariant;
 import io.harness.exception.InvalidRequestException;
 import io.harness.licensing.Edition;
 import io.harness.licensing.EditionAction;
@@ -115,10 +119,17 @@ public class DefaultLicenseServiceImpl implements LicenseService {
   }
 
   @Override
+  public List<ModuleLicenseDTO> getEnabledModuleLicensesByModuleType(ModuleType moduleType, long expiryTime) {
+    List<ModuleLicense> licenses =
+        moduleLicenseRepository.findByModuleTypeAndExpiryTimeGreaterThanEqual(moduleType, expiryTime);
+    return licenses.stream().map(licenseObjectConverter::<ModuleLicenseDTO>toDTO).collect(Collectors.toList());
+  }
+
+  @Override
   public AccountLicenseDTO getAccountLicense(String accountIdentifier) {
     AccountLicenseDTO dto = AccountLicenseDTO.builder().accountId(accountIdentifier).build();
     Map<ModuleType, List<ModuleLicenseDTO>> allModuleLicenses = new HashMap<>();
-    for (ModuleType moduleType : ModuleType.values()) {
+    for (ModuleType moduleType : ModuleType.getModules()) {
       if (moduleType.isInternal()) {
         continue;
       }
@@ -212,6 +223,7 @@ public class DefaultLicenseServiceImpl implements LicenseService {
     log.info("Free license for module [{}] is started in account [{}]", moduleType, accountIdentifier);
 
     accountService.updateDefaultExperienceIfApplicable(accountIdentifier, DefaultExperience.NG);
+    startTrialInCGIfCE(savedEntity);
     return licenseObjectConverter.toDTO(savedEntity);
   }
 
@@ -351,7 +363,16 @@ public class DefaultLicenseServiceImpl implements LicenseService {
         });
 
     if (!highestEditionLicense.isPresent()) {
-      return Edition.FREE;
+      Edition edition = Edition.FREE;
+      if (DeployMode.isOnPrem(System.getenv().get(DEPLOY_MODE))) {
+        if (DeployVariant.isCommunity(System.getenv().get(DEPLOY_VERSION))) {
+          edition = Edition.COMMUNITY;
+        } else {
+          edition = Edition.ENTERPRISE;
+        }
+      }
+      log.warn("Account {} has no highest edition license, fallback to {}", accountIdentifier, edition);
+      return edition;
     }
     return highestEditionLicense.get().getEdition();
   }
@@ -373,7 +394,7 @@ public class DefaultLicenseServiceImpl implements LicenseService {
   @Override
   public Map<ModuleType, Long> getLastUpdatedAtMap(String accountIdentifier) {
     Map<ModuleType, Long> lastUpdatedAtMap = new HashMap<>();
-    for (ModuleType moduleType : ModuleType.values()) {
+    for (ModuleType moduleType : ModuleType.getModules()) {
       if (moduleType.isInternal()) {
         continue;
       }
@@ -413,6 +434,8 @@ public class DefaultLicenseServiceImpl implements LicenseService {
 
     HashMap<String, Object> groupProperties = new HashMap<>();
     String moduleType = moduleLicense.getModuleType().name();
+    groupProperties.put("group_id", accountIdentifier);
+    groupProperties.put("group_type", "Account");
 
     if (moduleLicense.getEdition() != null) {
       groupProperties.put(format("%s%s", moduleType, "LicenseEdition"), moduleLicense.getEdition());
@@ -479,6 +502,7 @@ public class DefaultLicenseServiceImpl implements LicenseService {
         getResponse(ceLicenseClient.createCeTrial(CeLicenseInfoDTO.builder()
                                                       .accountId(moduleLicense.getAccountIdentifier())
                                                       .expiryTime(moduleLicense.getExpiryTime())
+                                                      .edition(moduleLicense.getEdition())
                                                       .build()));
       } catch (Exception e) {
         log.error("Unable to sync trial start in CG CCM", e);

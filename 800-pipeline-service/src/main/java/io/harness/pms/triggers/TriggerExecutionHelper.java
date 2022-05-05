@@ -58,8 +58,10 @@ import io.harness.pms.merger.helpers.InputSetMergeHelper;
 import io.harness.pms.ngpipeline.inputset.helpers.InputSetSanitizer;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.service.PMSPipelineService;
+import io.harness.pms.pipeline.service.PMSPipelineServiceHelper;
 import io.harness.pms.pipeline.service.PMSPipelineTemplateHelper;
 import io.harness.pms.pipeline.service.PMSYamlSchemaService;
+import io.harness.pms.pipeline.service.PipelineEnforcementService;
 import io.harness.pms.pipeline.yaml.BasicPipeline;
 import io.harness.pms.plan.execution.ExecutionHelper;
 import io.harness.pms.plan.execution.service.PMSExecutionService;
@@ -85,12 +87,14 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(HarnessTeam.PIPELINE)
 public class TriggerExecutionHelper {
   private final PMSPipelineService pmsPipelineService;
+  private final PMSPipelineServiceHelper pmsPipelineServiceHelper;
   private final PlanExecutionService planExecutionService;
   private final PMSExecutionService pmsExecutionService;
   private final PmsGitSyncHelper pmsGitSyncHelper;
   private final PMSYamlSchemaService pmsYamlSchemaService;
   private final ExecutionHelper executionHelper;
   private final PMSPipelineTemplateHelper pipelineTemplateHelper;
+  private final PipelineEnforcementService pipelineEnforcementService;
 
   public PlanExecution resolveRuntimeInputAndSubmitExecutionReques(
       TriggerDetails triggerDetails, TriggerPayload triggerPayload) {
@@ -179,12 +183,15 @@ public class TriggerExecutionHelper {
         pipelineYaml =
             pipelineTemplateHelper
                 .resolveTemplateRefsInPipeline(pipelineEntity.getAccountId(), pipelineEntity.getOrgIdentifier(),
-                    pipelineEntity.getProjectIdentifier(), pipelineYaml, true)
+                    pipelineEntity.getProjectIdentifier(), pipelineYaml, false)
                 .getMergedPipelineYaml();
       }
+
       BasicPipeline basicPipeline = YamlUtils.read(pipelineYaml, BasicPipeline.class);
 
-      String expandedJson = pmsPipelineService.fetchExpandedPipelineJSONFromYaml(pipelineEntity.getAccountId(),
+      pipelineEnforcementService.validateExecutionEnforcementsBasedOnStage(pipelineEntity);
+
+      String expandedJson = pmsPipelineServiceHelper.fetchExpandedPipelineJSONFromYaml(pipelineEntity.getAccountId(),
           pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineYaml);
 
       planExecutionMetadataBuilder.yaml(pipelineYaml);

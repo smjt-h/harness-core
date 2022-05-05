@@ -22,9 +22,11 @@ import io.harness.ccm.commons.utils.BigQueryHelper;
 import io.harness.ccm.graphql.core.budget.BudgetCostService;
 import io.harness.ccm.graphql.core.budget.BudgetService;
 import io.harness.ccm.remote.resources.perspectives.PerspectiveResource;
+import io.harness.ccm.service.intf.CCMNotificationService;
 import io.harness.ccm.views.entities.CEView;
 import io.harness.ccm.views.entities.ViewState;
 import io.harness.ccm.views.entities.ViewType;
+import io.harness.ccm.views.helper.AwsAccountFieldHelper;
 import io.harness.ccm.views.service.CEReportScheduleService;
 import io.harness.ccm.views.service.CEViewService;
 import io.harness.ccm.views.service.ViewCustomFieldService;
@@ -44,6 +46,8 @@ public class PerspectiveResourceTest extends CategoryTest {
   private BigQueryHelper bigQueryHelper = mock(BigQueryHelper.class);
   private BudgetCostService budgetCostService = mock(BudgetCostService.class);
   private BudgetService budgetService = mock(BudgetService.class);
+  private CCMNotificationService notificationService = mock(CCMNotificationService.class);
+  private AwsAccountFieldHelper awsAccountFieldHelper = mock(AwsAccountFieldHelper.class);
   private PerspectiveResource perspectiveResource;
 
   private final String ACCOUNT_ID = "ACCOUNT_ID";
@@ -72,9 +76,10 @@ public class PerspectiveResourceTest extends CategoryTest {
     when(ceViewService.update(perspective)).thenReturn(perspective);
     when(bigQueryHelper.getCloudProviderTableName(ACCOUNT_ID, UNIFIED_TABLE)).thenReturn(UNIFIED_TABLE_NAME);
     when(budgetService.deleteBudgetsForPerspective(ACCOUNT_ID, PERSPECTIVE_ID)).thenReturn(true);
+    when(notificationService.delete(PERSPECTIVE_ID, ACCOUNT_ID)).thenReturn(true);
 
     perspectiveResource = new PerspectiveResource(ceViewService, ceReportScheduleService, viewCustomFieldService,
-        bigQueryService, bigQueryHelper, budgetCostService, budgetService);
+        bigQueryService, bigQueryHelper, budgetCostService, budgetService, notificationService, awsAccountFieldHelper);
   }
 
   @Test

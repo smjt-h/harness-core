@@ -10,13 +10,10 @@ package io.harness.cvng.analysis.services.impl;
 import static io.harness.cvng.analysis.CVAnalysisConstants.TIMESERIES_SERVICE_GUARD_DATA_LENGTH;
 import static io.harness.cvng.analysis.CVAnalysisConstants.TIMESERIES_SERVICE_GUARD_WINDOW_SIZE;
 import static io.harness.cvng.analysis.CVAnalysisConstants.TREND_METRIC_NAME;
-import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.persistence.HQuery.excludeAuthority;
 import static io.harness.rule.OwnerRule.SOWMYA;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doReturn;
 
 import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
@@ -39,19 +36,14 @@ import io.harness.cvng.analysis.entities.TimeSeriesLearningEngineTask;
 import io.harness.cvng.analysis.entities.TimeSeriesShortTermHistory;
 import io.harness.cvng.analysis.services.api.LearningEngineTaskService;
 import io.harness.cvng.analysis.services.api.TrendAnalysisService;
-import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.TimeSeriesMetricType;
-import io.harness.cvng.client.NextGenService;
 import io.harness.cvng.core.beans.TimeSeriesMetricDefinition;
 import io.harness.cvng.core.entities.CVConfig;
-import io.harness.cvng.core.entities.SplunkCVConfig;
 import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.dashboard.entities.HeatMap;
 import io.harness.cvng.dashboard.services.api.HeatMapService;
-import io.harness.cvng.models.VerificationType;
 import io.harness.cvng.statemachine.beans.AnalysisInput;
-import io.harness.ng.core.environment.beans.EnvironmentType;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 
@@ -71,7 +63,6 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 public class TrendAnalysisServiceImplTest extends CvNextGenTestBase {
@@ -83,7 +74,6 @@ public class TrendAnalysisServiceImplTest extends CvNextGenTestBase {
   @Inject private CVConfigService cvConfigService;
   @Inject private VerificationTaskService verificationTaskService;
   @Inject private HeatMapService heatMapService;
-  @Mock private NextGenService nextGenService;
   private BuilderFactory builderFactory;
 
   @Before
@@ -95,7 +85,6 @@ public class TrendAnalysisServiceImplTest extends CvNextGenTestBase {
     cvConfigId = cvConfig.getUuid();
     verificationTaskId = verificationTaskService.getServiceGuardVerificationTaskId(cvConfig.getAccountId(), cvConfigId);
 
-    FieldUtils.writeField(cvConfigService, "nextGenService", nextGenService, true);
     FieldUtils.writeField(trendAnalysisService, "heatMapService", heatMapService, true);
   }
 
@@ -197,12 +186,9 @@ public class TrendAnalysisServiceImplTest extends CvNextGenTestBase {
   @Owner(developers = SOWMYA)
   @Category(UnitTests.class)
   public void testSaveAnalysis() {
-    doReturn(builderFactory.environmentResponseDTOBuilder().type(EnvironmentType.Production).build())
-        .when(nextGenService)
-        .getEnvironment(any(), any(), any(), any());
     Instant start = Instant.now().minus(10, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MINUTES);
     Instant end = start.plus(5, ChronoUnit.MINUTES);
-    List<LogAnalysisCluster> logAnalysisClusters = createLogAnalysisClusters(start, end);
+    List<LogAnalysisCluster> logAnalysisClusters = createLogAnalysisClusters(start, end.plus(Duration.ofMinutes(5)));
     List<LogAnalysisResult> logAnalysisResults = createLogAnalysisResults(start, end);
     hPersistence.save(logAnalysisClusters);
     hPersistence.save(logAnalysisResults);
@@ -230,7 +216,9 @@ public class TrendAnalysisServiceImplTest extends CvNextGenTestBase {
     int index = 0;
     for (LogAnalysisCluster cluster : savedClusters) {
       for (Frequency frequency : cluster.getFrequencyTrend()) {
-        assertThat(frequency.getRiskScore()).isEqualTo((double) index);
+        if (frequency.getTimestamp() >= start.toEpochMilli() && frequency.getTimestamp() < end.toEpochMilli()) {
+          assertThat(frequency.getRiskScore()).isEqualTo((double) index);
+        }
       }
       index++;
     }
@@ -251,9 +239,6 @@ public class TrendAnalysisServiceImplTest extends CvNextGenTestBase {
   @Owner(developers = SOWMYA)
   @Category(UnitTests.class)
   public void testSaveAnalysis_emptyCumulativeSums() {
-    doReturn(builderFactory.environmentResponseDTOBuilder().type(EnvironmentType.Production).build())
-        .when(nextGenService)
-        .getEnvironment(any(), any(), any(), any());
     Instant start = Instant.now().minus(10, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MINUTES);
     Instant end = start.plus(5, ChronoUnit.MINUTES);
     List<LogAnalysisCluster> logAnalysisClusters = createLogAnalysisClusters(start, end);
@@ -296,9 +281,6 @@ public class TrendAnalysisServiceImplTest extends CvNextGenTestBase {
   @Owner(developers = SOWMYA)
   @Category(UnitTests.class)
   public void testSaveAnalysis_baselineWindow() {
-    doReturn(builderFactory.environmentResponseDTOBuilder().type(EnvironmentType.Production).build())
-        .when(nextGenService)
-        .getEnvironment(any(), any(), any(), any());
     Instant start = Instant.now().minus(10, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MINUTES);
     Instant end = start.plus(5, ChronoUnit.MINUTES);
     List<LogAnalysisCluster> logAnalysisClusters = createLogAnalysisClusters(start, end);
@@ -366,6 +348,7 @@ public class TrendAnalysisServiceImplTest extends CvNextGenTestBase {
     timeSeriesLearningEngineTask.setVerificationTaskId(verificationTaskId);
     timeSeriesLearningEngineTask.setAnalysisStartTime(start);
     timeSeriesLearningEngineTask.setAnalysisEndTime(end);
+    timeSeriesLearningEngineTask.setPickedAt(end.plus(Duration.ofMinutes(2)));
     return learningEngineTaskService.createLearningEngineTask(timeSeriesLearningEngineTask);
   }
 
@@ -473,16 +456,10 @@ public class TrendAnalysisServiceImplTest extends CvNextGenTestBase {
                                      .build();
     Instant timestamp = startTime;
     while (timestamp.isBefore(endTime)) {
-      Frequency frequency1 = Frequency.builder()
-                                 .timestamp(TimeUnit.SECONDS.toMinutes(timestamp.getEpochSecond()))
-                                 .count(4)
-                                 .riskScore(0.5)
-                                 .build();
-      Frequency frequency2 = Frequency.builder()
-                                 .timestamp(TimeUnit.SECONDS.toMinutes(timestamp.getEpochSecond()))
-                                 .count(10)
-                                 .riskScore(0.1)
-                                 .build();
+      Frequency frequency1 =
+          Frequency.builder().timestamp(TimeUnit.SECONDS.toMinutes(timestamp.getEpochSecond())).count(4).build();
+      Frequency frequency2 =
+          Frequency.builder().timestamp(TimeUnit.SECONDS.toMinutes(timestamp.getEpochSecond())).count(10).build();
       record1.getFrequencyTrend().add(frequency1);
       record2.getFrequencyTrend().add(frequency2);
       timestamp = timestamp.plus(1, ChronoUnit.MINUTES);
@@ -510,24 +487,6 @@ public class TrendAnalysisServiceImplTest extends CvNextGenTestBase {
   }
 
   private CVConfig createCVConfig() {
-    SplunkCVConfig cvConfig = new SplunkCVConfig();
-    fillCommon(cvConfig);
-    cvConfig.setQuery("exception");
-    cvConfig.setServiceInstanceIdentifier(generateUuid());
-    return cvConfig;
-  }
-
-  private void fillCommon(CVConfig cvConfig) {
-    cvConfig.setVerificationType(VerificationType.LOG);
-    cvConfig.setAccountId(generateUuid());
-    cvConfig.setConnectorIdentifier(generateUuid());
-    cvConfig.setServiceIdentifier(generateUuid());
-    cvConfig.setEnvIdentifier(generateUuid());
-    cvConfig.setProjectIdentifier(generateUuid());
-    cvConfig.setOrgIdentifier(generateUuid());
-    cvConfig.setIdentifier(generateUuid());
-    cvConfig.setMonitoringSourceName(generateUuid());
-    cvConfig.setCategory(CVMonitoringCategory.PERFORMANCE);
-    cvConfig.setProductName(generateUuid());
+    return builderFactory.splunkCVConfigBuilder().build();
   }
 }

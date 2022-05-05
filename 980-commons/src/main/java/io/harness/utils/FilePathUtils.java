@@ -7,6 +7,8 @@
 
 package io.harness.utils;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
@@ -53,12 +55,26 @@ public class FilePathUtils {
     return filePath;
   }
 
+  public static String addEndingSlashIfMissing(String filePath) {
+    if (isNotEmpty(filePath) && filePath.endsWith("/")) {
+      return filePath;
+    }
+    return filePath + "/";
+  }
+
   // ---------------------------------- PRIVATE METHODS ----------------------------
 
   // Remove starting and ending backslashes
   private String trimPath(String path) {
     path = path.replaceAll("^/+", "");
     path = path.replaceAll("/+$", "");
+    return path;
+  }
+
+  public static String addStartingSlashIfMissing(String path) {
+    if (path.charAt(0) != '/') {
+      return "/" + path;
+    }
     return path;
   }
 }

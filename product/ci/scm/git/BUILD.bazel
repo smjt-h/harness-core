@@ -18,6 +18,7 @@ go_library(
 go_test(
     name = "git_test",
     srcs = [
+        "azure_test.go",
         "bitbucket_cloud_test.go",
         "git_test.go",
         "github_test.go",
@@ -25,12 +26,14 @@ go_test(
     ],
     data = [
         "testdata/branches.json",
+        "testdata/branches_with_default.json",
         "testdata/commit.json",
         "testdata/commits.json",
         "testdata/compare.json",
         "testdata/find_pr.json",
         "testdata/pr.json",
         "testdata/pr_files.json",
+        "testdata/repo.json",
         "testdata/repos.json",
         "testdata/user.json",
     ],

@@ -13,12 +13,15 @@ import static io.harness.data.encoding.EncodingUtils.encodeBase64;
 import static io.harness.data.encoding.EncodingUtils.encodeBase64ToByteArray;
 import static io.harness.k8s.KubernetesConvention.CompressedReleaseHistoryFlag;
 import static io.harness.k8s.KubernetesConvention.ReleaseHistoryKeyName;
+import static io.harness.k8s.model.KubernetesClusterAuthType.GCP_OAUTH;
 import static io.harness.k8s.model.KubernetesClusterAuthType.OIDC;
 import static io.harness.k8s.model.KubernetesClusterAuthType.USER_PASSWORD;
 import static io.harness.rule.OwnerRule.ABHINAV2;
 import static io.harness.rule.OwnerRule.ABOSII;
 import static io.harness.rule.OwnerRule.ACASIAN;
+import static io.harness.rule.OwnerRule.ACHYUTH;
 import static io.harness.rule.OwnerRule.ANSHUL;
+import static io.harness.rule.OwnerRule.BOGDAN;
 import static io.harness.rule.OwnerRule.BRETT;
 import static io.harness.rule.OwnerRule.YOGESH;
 
@@ -46,6 +49,7 @@ import io.harness.category.element.UnitTests;
 import io.harness.concurent.HTimeLimiterMocker;
 import io.harness.container.ContainerInfo;
 import io.harness.exception.InvalidRequestException;
+import io.harness.k8s.model.GcpAccessTokenSupplier;
 import io.harness.k8s.model.KubernetesConfig;
 import io.harness.k8s.model.OidcGrantType;
 import io.harness.k8s.oidc.OidcTokenRetriever;
@@ -138,6 +142,8 @@ import io.kubernetes.client.openapi.models.VersionInfo;
 import io.kubernetes.client.openapi.models.VersionInfoBuilder;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -634,7 +640,7 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
 
     assertThatThrownBy(() -> kubernetesContainerService.getService(KUBERNETES_CONFIG, "service"))
         .hasMessageContaining(
-            "Unable to get default/Service/service. Code: 403, message: {error: \"unable to get service\"}");
+            "Unable to get default/Service/service. Code: 403, message:  Response body: {error: \"unable to get service\"}");
   }
 
   @Test
@@ -821,6 +827,51 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
   }
 
   @Test
+  @Owner(developers = BOGDAN)
+  @Category(UnitTests.class)
+  public void testGetGcpKubeConfigContent() {
+    // given
+    String masterUrl = "myMasterUrl";
+    String caData = "myCaData";
+    String namespace = "myNamespace";
+    KubernetesConfig kubernetesConfig = KubernetesConfig.builder()
+                                            .masterUrl(masterUrl)
+                                            .caCert(caData.toCharArray())
+                                            .namespace(namespace)
+                                            .authType(GCP_OAUTH)
+                                            .build();
+
+    String expectedConfigPattern = "apiVersion: v1\n"
+        + "clusters:\n"
+        + "- cluster:\n"
+        + "    server: %s\n"
+        + "    \n"
+        + "    certificate-authority-data: %s\n"
+        + "  name: CLUSTER_NAME\n"
+        + "contexts:\n"
+        + "- context:\n"
+        + "    cluster: CLUSTER_NAME\n"
+        + "    user: HARNESS_USER\n"
+        + "    namespace: %s\n"
+        + "  name: CURRENT_CONTEXT\n"
+        + "current-context: CURRENT_CONTEXT\n"
+        + "kind: Config\n"
+        + "preferences: {}\n"
+        + "users:\n"
+        + "- name: HARNESS_USER\n"
+        + "  user:\n"
+        + "    auth-provider:\n"
+        + "      name: gcp\n";
+    String expectedConfig = String.format(expectedConfigPattern, masterUrl, caData, namespace);
+
+    // when
+    String configFileContent = kubernetesContainerService.getConfigFileContent(kubernetesConfig);
+
+    // then
+    assertThat(configFileContent).isEqualTo(expectedConfig);
+  }
+
+  @Test
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void testGetConfigFileContentForBasicAuth() {
@@ -894,7 +945,7 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
                                       .namespace("namespace")
                                       .masterUrl("masterUrl")
                                       .caCert("caCert".toCharArray())
-                                      .serviceAccountToken("serviceAccountToken".toCharArray())
+                                      .serviceAccountTokenSupplier(() -> "serviceAccountToken")
                                       .build();
     String configFileContent = kubernetesContainerService.getConfigFileContent(kubeConfig);
     assertThat(expected).isEqualTo(configFileContent);
@@ -981,7 +1032,8 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
         .thenThrow(new ApiException(401, emptyMap(), "{\"error\": \"unauthorized\"}"));
 
     assertThatThrownBy(() -> kubernetesContainerService.getRunningPodsWithLabels(KUBERNETES_CONFIG, "default", labels))
-        .hasMessageContaining("Unable to get running pods. Code: 401, message: {\"error\": \"unauthorized\"}");
+        .hasMessageContaining(
+            "Unable to get running pods. Code: 401, message:  Response body: {\"error\": \"unauthorized\"}");
   }
 
   @Test
@@ -1017,7 +1069,46 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
 
     assertThatThrownBy(() -> kubernetesContainerService.getConfigMap(KUBERNETES_CONFIG, "configmap"))
         .hasMessageContaining(
-            "Failed to get default/ConfigMap/configmap. Code: 403, message: {error: \"cluster not found\"}");
+            "Failed to get default/ConfigMap/configmap. Code: 403, message:  Response body: {error: \"cluster not found\"}");
+  }
+
+  @Test
+  @Owner(developers = ACHYUTH)
+  @Category(UnitTests.class)
+  public void testGetConfigMapNestedException() throws Exception {
+    when(k8sApiClient.execute(k8sApiCall, TypeToken.get(V1ConfigMap.class).getType()))
+        .thenThrow(new ApiException(
+            null, new IOException("Unexpected response code for CONNECT: 403"), 403, emptyMap(), null));
+
+    assertThatThrownBy(() -> kubernetesContainerService.getConfigMap(KUBERNETES_CONFIG, "configmap"))
+        .hasMessageContaining(
+            "Failed to get default/ConfigMap/configmap. Code: 403, message: Unexpected response code for CONNECT: 403");
+  }
+
+  @Test
+  @Owner(developers = ACHYUTH)
+  @Category(UnitTests.class)
+  public void testGetConfigMapNestedExceptionWithRespnseBody() throws Exception {
+    when(k8sApiClient.execute(k8sApiCall, TypeToken.get(V1ConfigMap.class).getType()))
+        .thenThrow(new ApiException(
+            null, new IOException("Unexpected response code for CONNECT: 403"), 403, emptyMap(), "connection issue"));
+
+    assertThatThrownBy(() -> kubernetesContainerService.getConfigMap(KUBERNETES_CONFIG, "configmap"))
+        .hasMessageContaining(
+            "Failed to get default/ConfigMap/configmap. Code: 403, message: Unexpected response code for CONNECT: 403 Response body: connection issue");
+  }
+
+  @Test
+  @Owner(developers = ACHYUTH)
+  @Category(UnitTests.class)
+  public void testGetConfigMapNestedExceptionHasEmptyMessage() throws Exception {
+    when(k8sApiClient.execute(k8sApiCall, TypeToken.get(V1ConfigMap.class).getType()))
+        .thenThrow(
+            new ApiException("Unexpected response code for CONNECT: 403", new IOException(), 403, emptyMap(), null));
+
+    assertThatThrownBy(() -> kubernetesContainerService.getConfigMap(KUBERNETES_CONFIG, "configmap"))
+        .hasMessageContaining(
+            "Failed to get default/ConfigMap/configmap. Code: 403, message: Unexpected response code for CONNECT: 403");
   }
 
   @Test
@@ -1055,7 +1146,7 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
 
     assertThatThrownBy(() -> kubernetesContainerService.getSecret(KUBERNETES_CONFIG, "secret"))
         .hasMessageContaining(
-            "Failed to get default/Secret/secret. Code: 403, message: {error: \"cluster not found\"}");
+            "Failed to get default/Secret/secret. Code: 403, message:  Response body: {error: \"cluster not found\"}");
   }
 
   @Test
@@ -1455,4 +1546,83 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
         .thenThrow(new ApiException(404, "Service not found"));
     kubernetesContainerService.replaceService(KUBERNETES_CONFIG, service);
   }
+
+  @Test
+  @Owner(developers = BOGDAN)
+  @Category(UnitTests.class)
+  public void shouldPersistK8sConfig() throws IOException {
+    // given
+    Path workingDir = Files.createTempDirectory("testWorkingDir");
+    KubernetesConfig config = KubernetesConfig.builder().masterUrl("masterUrl").build();
+
+    // when
+    kubernetesContainerService.persistKubernetesConfig(config, workingDir.toString());
+
+    // then
+    byte[] configFile = Files.readAllBytes(workingDir.resolve(K8sConstants.KUBECONFIG_FILENAME));
+    assertThat(configFile).isNotEmpty();
+  }
+
+  @Test
+  @Owner(developers = BOGDAN)
+  @Category(UnitTests.class)
+  public void shouldPersistKubeGcpKubeConfig() throws IOException {
+    // given
+    Path workingDir = Files.createTempDirectory("testWorkingDir");
+    KubernetesConfig config = KubernetesConfig.builder()
+                                  .masterUrl("myMasterUrl")
+                                  .caCert("myCaCert".toCharArray())
+                                  .namespace("myNamespace")
+                                  .authType(GCP_OAUTH)
+                                  .build();
+
+    // when
+    kubernetesContainerService.persistKubernetesConfig(config, workingDir.toString());
+
+    // then
+    byte[] configFile = Files.readAllBytes(workingDir.resolve(K8sConstants.KUBECONFIG_FILENAME));
+    assertThat(configFile).isNotEmpty();
+  }
+
+  @Test
+  @Owner(developers = BOGDAN)
+  @Category(UnitTests.class)
+  public void shouldPersistGoogleAccountKeyInWorkingDir() throws IOException {
+    // given
+    GcpAccessTokenSupplier tokenSupplier = mock(GcpAccessTokenSupplier.class);
+    String expectedGcpKeyJson = "dummy gcp json key file data";
+    when(tokenSupplier.getServiceAccountJsonKey()).thenReturn(Optional.of(expectedGcpKeyJson));
+    KubernetesConfig config =
+        KubernetesConfig.builder().authType(GCP_OAUTH).serviceAccountTokenSupplier(tokenSupplier).build();
+
+    // when
+    Path workingDir = Files.createTempDirectory("testWorkingDir");
+    kubernetesContainerService.persistKubernetesConfig(config, workingDir.toString());
+
+    // then
+    List<String> lines = Files.readAllLines(workingDir.resolve(K8sConstants.GCP_JSON_KEY_FILE_NAME));
+    assertThat(lines.size()).isEqualTo(1);
+    assertThat(lines.get(0)).isEqualTo(expectedGcpKeyJson);
+  }
+
+  private static final String EXPECTED_KUBECONFIG = "apiVersion: v1\n"
+      + "clusters:\n"
+      + "- cluster:\n"
+      + "    server: myMasterUrl\n"
+      + "    certificate-authority-data: myCaCert\n"
+      + "  name: CLUSTER_NAME\n"
+      + "contexts:\n"
+      + "- context:\n"
+      + "    cluster: CLUSTER_NAME\n"
+      + "    user: HARNESS_USER\n"
+      + "    namespace: myNamespace\n"
+      + "  name: CURRENT_CONTEXT\n"
+      + "current-context: CURRENT_CONTEXT\n"
+      + "kind: Config\n"
+      + "preferences: {}\n"
+      + "users:\n"
+      + "- name: HARNESS_USER\n"
+      + "  user:\n"
+      + "    auth-provider:\n"
+      + "      name: gcp\n";
 }

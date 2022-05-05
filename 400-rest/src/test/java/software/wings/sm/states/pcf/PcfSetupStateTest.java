@@ -91,6 +91,7 @@ import static org.mockito.Mockito.when;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.beans.ArtifactMetadata;
 import io.harness.beans.DelegateTask;
 import io.harness.beans.EmbeddedUser;
 import io.harness.beans.ExecutionStatus;
@@ -139,7 +140,7 @@ import software.wings.beans.WorkflowExecution;
 import software.wings.beans.appmanifest.AppManifestKind;
 import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.artifact.Artifact;
-import software.wings.beans.artifact.Artifact.ArtifactMetadataKeys;
+import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.artifact.DockerArtifactStream;
@@ -268,9 +269,9 @@ public class PcfSetupStateTest extends WingsBaseTest {
                                 .build();
   private Artifact artifact = anArtifact()
                                   .withArtifactSourceName("source")
-                                  .withMetadata(new HashMap<String, String>() {
+                                  .withMetadata(new ArtifactMetadata(new HashMap<String, String>() {
                                     { put(ArtifactMetadataKeys.buildNo, "bn"); }
-                                  })
+                                  }))
                                   .withArtifactStreamId(ARTIFACT_STREAM_ID)
                                   .build();
   private ArtifactStream artifactStream =
@@ -457,7 +458,7 @@ public class PcfSetupStateTest extends WingsBaseTest {
     // With workflowV2 flag = true
     doReturn(PcfManifestsPackage.builder().manifestYml(MANIFEST_YAML_CONTENT).build())
         .when(pcfStateHelper)
-        .generateManifestMap(any(), anyMap(), any(), anyString());
+        .generateManifestMap(any(), anyMap(), any(), anyString(), anyString());
 
     ExecutionResponse executionResponse = pcfSetupState.execute(context);
     assertThat(executionResponse.getExecutionStatus()).isEqualTo(ExecutionStatus.SUCCESS);
@@ -490,7 +491,7 @@ public class PcfSetupStateTest extends WingsBaseTest {
 
     doReturn(PcfManifestsPackage.builder().manifestYml(MANIFEST_YAML_CONTENT).build())
         .when(pcfStateHelper)
-        .generateManifestMap(any(), anyMap(), any(), anyString());
+        .generateManifestMap(any(), anyMap(), any(), anyString(), anyString());
 
     doReturn(DockerArtifactStream.builder().build()).when(artifactStreamService).get(any());
 
@@ -513,7 +514,7 @@ public class PcfSetupStateTest extends WingsBaseTest {
 
     doReturn(PcfManifestsPackage.builder().manifestYml(MANIFEST_YAML_CONTENT).build())
         .when(pcfStateHelper)
-        .generateManifestMap(any(), anyMap(), any(), anyString());
+        .generateManifestMap(any(), anyMap(), any(), anyString(), anyString());
 
     ExecutionResponse executionResponse = pcfSetupState.execute(context);
 
@@ -633,7 +634,7 @@ public class PcfSetupStateTest extends WingsBaseTest {
 
     doReturn(PcfManifestsPackage.builder().manifestYml(MANIFEST_YAML_CONTENT).build())
         .when(pcfStateHelper)
-        .generateManifestMap(any(), any(), any(), anyString());
+        .generateManifestMap(any(), any(), any(), anyString(), anyString());
 
     pcfSetupState.handleAsyncInternal(context, response);
     verify(activityService, times(0)).updateStatus("activityId", APP_ID, FAILED);
@@ -672,7 +673,7 @@ public class PcfSetupStateTest extends WingsBaseTest {
 
     doReturn(PcfManifestsPackage.builder().manifestYml(MANIFEST_YAML_CONTENT).build())
         .when(pcfStateHelper)
-        .generateManifestMap(any(), any(), any(), anyString());
+        .generateManifestMap(any(), any(), any(), anyString(), anyString());
 
     Map<K8sValuesLocation, Collection<String>> valuesFiles = new HashMap<>();
     valuesFiles.put(K8sValuesLocation.Service, Arrays.asList("Content"));

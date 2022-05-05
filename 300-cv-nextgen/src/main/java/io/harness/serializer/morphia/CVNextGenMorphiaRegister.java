@@ -40,7 +40,8 @@ import io.harness.cvng.cdng.entities.CVNGStepTask;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.CVNGLog;
-import io.harness.cvng.core.entities.CustomHealthCVConfig;
+import io.harness.cvng.core.entities.CustomHealthLogCVConfig;
+import io.harness.cvng.core.entities.CustomHealthMetricCVConfig;
 import io.harness.cvng.core.entities.DataCollectionTask;
 import io.harness.cvng.core.entities.DatadogLogCVConfig;
 import io.harness.cvng.core.entities.DatadogMetricCVConfig;
@@ -81,6 +82,8 @@ import io.harness.cvng.core.entities.demo.CVNGDemoPerpetualTask;
 import io.harness.cvng.dashboard.entities.HealthVerificationHeatMap;
 import io.harness.cvng.dashboard.entities.HeatMap;
 import io.harness.cvng.migration.beans.CVNGSchema;
+import io.harness.cvng.notification.entities.NotificationRule;
+import io.harness.cvng.notification.entities.SLONotificationRule;
 import io.harness.cvng.servicelevelobjective.entities.RatioServiceLevelIndicator;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord;
 import io.harness.cvng.servicelevelobjective.entities.SLOErrorBudgetReset;
@@ -175,7 +178,8 @@ public class CVNextGenMorphiaRegister implements MorphiaRegistrar {
     set.add(CVNGStepTask.class);
     set.add(Comparable.class);
     set.add(PrometheusCVConfig.class);
-    set.add(CustomHealthCVConfig.class);
+    set.add(CustomHealthMetricCVConfig.class);
+    set.add(CustomHealthLogCVConfig.class);
     set.add(StackdriverLogCVConfig.class);
     set.add(DatadogMetricCVConfig.class);
     set.add(DatadogLogCVConfig.class);
@@ -206,6 +210,8 @@ public class CVNextGenMorphiaRegister implements MorphiaRegistrar {
     set.add(SLOErrorBudgetReset.class);
     set.add(VerificationTaskExecutionInstance.class);
     set.add(VerificationTaskIdAware.class);
+    set.add(NotificationRule.class);
+    set.add(SLONotificationRule.class);
   }
 
   @Override

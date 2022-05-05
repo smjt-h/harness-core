@@ -13,11 +13,11 @@ import static io.harness.cdng.manifest.ManifestStoreType.isInStorageRepository;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.manifest.ManifestType;
-import io.harness.cdng.service.beans.ServiceSpecType;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ng.core.k8s.ServiceSpecType;
 import io.harness.pms.contracts.plan.YamlProperties;
-import io.harness.pms.sdk.core.pipeline.variables.VariableCreatorHelper;
+import io.harness.pms.sdk.core.variables.VariableCreatorHelper;
 import io.harness.pms.sdk.core.variables.beans.VariableCreationResponse;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.pms.yaml.YamlField;
@@ -85,12 +85,14 @@ public class ServiceVariableCreator {
       switch (typeField.getNode().getCurrJsonNode().textValue()) {
         case ServiceSpecType.KUBERNETES:
         case ServiceSpecType.NATIVE_HELM:
+        case ServiceSpecType.SERVERLESS_AWS_LAMBDA:
           YamlField specNode = serviceDefNode.getNode().getField(YamlTypes.SERVICE_SPEC);
           if (specNode != null) {
-            addVariablesForKubernetesHelmServiceSpec(specNode, yamlPropertiesMap);
+            addVariablesForKubernetesHelmServerlessServiceSpec(specNode, yamlPropertiesMap);
           }
           break;
         case ServiceSpecType.SSH:
+        case ServiceSpecType.WINRM:
           YamlField sshSpecNode = serviceDefNode.getNode().getField(YamlTypes.SERVICE_SPEC);
           if (sshSpecNode != null) {
             addVariablesForSshServiceSpec(sshSpecNode, yamlPropertiesMap);
@@ -102,7 +104,7 @@ public class ServiceVariableCreator {
     }
   }
 
-  private void addVariablesForKubernetesHelmServiceSpec(
+  private void addVariablesForKubernetesHelmServerlessServiceSpec(
       YamlField serviceSpecNode, Map<String, YamlProperties> yamlPropertiesMap) {
     YamlField artifactsNode = serviceSpecNode.getNode().getField(YamlTypes.ARTIFACT_LIST_CONFIG);
     if (VariableCreatorHelper.isNotYamlFieldEmpty(artifactsNode)) {
@@ -194,6 +196,9 @@ public class ServiceVariableCreator {
       case ManifestType.HelmChart:
         addVariablesForHelmChartManifest(specNode, yamlPropertiesMap);
         break;
+      case ManifestType.ServerlessAwsLambda:
+        addVariablesForServerlessAwsStoreConfigYaml(specNode, yamlPropertiesMap);
+        break;
       default:
         throw new InvalidRequestException("Invalid manifest type");
     }
@@ -225,7 +230,7 @@ public class ServiceVariableCreator {
   }
 
   private void addVariablesFork8sManifest(YamlField manifestSpecNode, Map<String, YamlProperties> yamlPropertiesMap) {
-    addVariablesForK8sAndValueStoreConfigYaml(manifestSpecNode, yamlPropertiesMap);
+    addVariablesForStoreConfigYaml(manifestSpecNode, yamlPropertiesMap);
 
     List<YamlField> fields = manifestSpecNode.getNode().fields();
     fields.forEach(field -> {
@@ -237,10 +242,10 @@ public class ServiceVariableCreator {
 
   private void addVariablesForValuesManifest(
       YamlField manifestSpecNode, Map<String, YamlProperties> yamlPropertiesMap) {
-    addVariablesForK8sAndValueStoreConfigYaml(manifestSpecNode, yamlPropertiesMap);
+    addVariablesForStoreConfigYaml(manifestSpecNode, yamlPropertiesMap);
   }
 
-  private void addVariablesForK8sAndValueStoreConfigYaml(
+  private void addVariablesForStoreConfigYaml(
       YamlField manifestSpecNode, Map<String, YamlProperties> yamlPropertiesMap) {
     YamlField storeNode = manifestSpecNode.getNode().getField(YamlTypes.STORE_CONFIG_WRAPPER);
     if (storeNode != null) {
@@ -254,6 +259,17 @@ public class ServiceVariableCreator {
         throw new InvalidRequestException("Invalid store type");
       }
     }
+  }
+
+  private void addVariablesForServerlessAwsStoreConfigYaml(
+      YamlField manifestSpecNode, Map<String, YamlProperties> yamlPropertiesMap) {
+    addVariablesForStoreConfigYaml(manifestSpecNode, yamlPropertiesMap);
+    List<YamlField> fields = manifestSpecNode.getNode().fields();
+    fields.forEach(field -> {
+      if (!field.getName().equals(YamlTypes.UUID) && !field.getName().equals(YamlTypes.STORE_CONFIG_WRAPPER)) {
+        VariableCreatorHelper.addFieldToPropertiesMap(field, yamlPropertiesMap, YamlTypes.SERVICE_CONFIG);
+      }
+    });
   }
 
   private void addVariablesForGitOrStorage(YamlField gitNode, Map<String, YamlProperties> yamlPropertiesMap) {

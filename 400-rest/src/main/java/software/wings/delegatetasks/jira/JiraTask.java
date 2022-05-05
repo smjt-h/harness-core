@@ -202,6 +202,10 @@ public class JiraTask extends AbstractDelegateRunnableTask {
         queryParams.put("expand", "projects.issuetypes.fields");
       }
 
+      if (EmptyPredicate.isNotEmpty(parameters.getIssueType())) {
+        queryParams.put("issuetypeNames", parameters.getIssueType());
+      }
+
       if (EmptyPredicate.isNotEmpty(parameters.getProject())) {
         queryParams.put("projectKeys", parameters.getProject());
       }
@@ -225,7 +229,13 @@ public class JiraTask extends AbstractDelegateRunnableTask {
           .createMetadata(jiraCreateMetaResponse)
           .build();
     } catch (URISyntaxException | RestException | IOException | JiraException | RuntimeException e) {
-      String errorMessage = "Failed to fetch issue metadata from Jira server.";
+      String uriString = Resource.getBaseUri() == null ? "" : Resource.getBaseUri();
+      if (uri == null) {
+        uriString = uriString + "issue/createmeta";
+      }
+      String errorMessage =
+          String.format("Failed to fetch issue metadata from Jira server, Uri for GET_CREATE_METADATA - %s ",
+              uri == null ? uriString : uri);
       log.error(errorMessage, e);
       return JiraExecutionData.builder().errorMessage(errorMessage).executionStatus(ExecutionStatus.FAILED).build();
     }
@@ -303,14 +313,20 @@ public class JiraTask extends AbstractDelegateRunnableTask {
 
   @VisibleForTesting
   protected DelegateResponseData getProjects(JiraTaskParameters parameters) {
+    URI uri = null;
     try {
       JiraClient jira = getJiraClient(parameters);
-      URI uri = jira.getRestClient().buildURI(Resource.getBaseUri() + "project");
+      uri = jira.getRestClient().buildURI(Resource.getBaseUri() + "project");
       JSON response = jira.getRestClient().get(uri);
       JSONArray projectsArray = JSONArray.fromObject(response);
       return JiraExecutionData.builder().projects(projectsArray).executionStatus(ExecutionStatus.SUCCESS).build();
     } catch (URISyntaxException | IOException | RestException | JiraException | RuntimeException e) {
-      String errorMessage = "Failed to fetch projects from Jira server.";
+      String uriString = Resource.getBaseUri() == null ? "" : Resource.getBaseUri();
+      if (uri == null) {
+        uriString = uriString + "project";
+      }
+      String errorMessage = String.format(
+          "Failed to fetch projects from Jira server, Uri for GET PROJECTS - %s ", uri == null ? uriString : uri);
       if (e instanceof RestException && ((RestException) e).getHttpStatusCode() == 407) {
         // Proxy Authentication required
         errorMessage += " Reason: "
@@ -479,25 +495,24 @@ public class JiraTask extends AbstractDelegateRunnableTask {
    * @return
    */
   private String extractResponseMessage(Exception e) {
-    if (e.getCause() != null) {
-      String messageJson = "{" + e.getCause().getMessage() + "}";
-      org.json.JSONObject jsonObject = null;
+    if (e.getCause() != null && e.getCause() instanceof RestException) {
+      org.json.JSONObject jsonObject;
+
       try {
-        jsonObject = new org.json.JSONObject(messageJson);
-        Object[] keyArray = jsonObject.keySet().toArray();
-        org.json.JSONObject innerJsonObject = jsonObject.getJSONObject((String) keyArray[0]);
-        org.json.JSONArray jsonArray = (org.json.JSONArray) innerJsonObject.get("errorMessages");
+        jsonObject = new org.json.JSONObject(((RestException) e.getCause()).getHttpResult());
+        org.json.JSONArray jsonArray = (org.json.JSONArray) jsonObject.get("errorMessages");
         if (jsonArray.length() > 0) {
           return (String) jsonArray.get(0);
         }
 
-        org.json.JSONObject errors = (org.json.JSONObject) innerJsonObject.get("errors");
+        org.json.JSONObject errors = (org.json.JSONObject) jsonObject.get("errors");
         Object[] errorsKeys = errors.keySet().toArray();
 
         String errorsKey = (String) errorsKeys[0];
         return errorsKey + " : " + (String) errors.get((String) errorsKey);
       } catch (Exception ex) {
         log.error("Failed to parse json response from Jira", ex);
+        return "Failed to parse json response from Jira: " + ExceptionUtils.getMessage(e.getCause());
       }
     }
 
@@ -674,10 +689,9 @@ public class JiraTask extends AbstractDelegateRunnableTask {
     try {
       URL issueUrl =
           new URL(jiraConfig.getBaseUrl() + (jiraConfig.getBaseUrl().endsWith("/") ? "" : "/") + "browse/" + issueKey);
-
       return issueUrl.toString();
     } catch (MalformedURLException e) {
-      log.info("Incorrect url: " + e.getMessage());
+      log.error("Incorrect url: " + e.getMessage(), e);
     }
 
     return null;
@@ -690,6 +704,7 @@ public class JiraTask extends AbstractDelegateRunnableTask {
     BasicCredentials creds = new BasicCredentials(jiraConfig.getUsername(), new String(jiraConfig.getPassword()));
     String baseUrl =
         jiraConfig.getBaseUrl().endsWith("/") ? jiraConfig.getBaseUrl() : jiraConfig.getBaseUrl().concat("/");
+    log.info(" Getting Jira Client from:  " + baseUrl);
     if (Http.getProxyHostName() != null && !Http.shouldUseNonProxy(baseUrl)) {
       log.info("Get Proxy enabled jira client", baseUrl);
       return new JiraClient(getProxyEnabledHttpClientForJira(), baseUrl, creds);

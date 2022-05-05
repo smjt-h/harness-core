@@ -39,6 +39,7 @@ public class NGCommonEntityConstants {
   public static final String MONGODB_ID = "_id";
   public static final String CONNECTOR_IDENTIFIER_KEY = "connectorIdentifier";
   public static final String REPO_URL = "repoURL";
+  public static final String REPO_NAME = "repoName";
   public static final String PLAN_KEY = "planExecutionId";
   public static final String TYPE_KEY = "type";
   public static final String TOKEN_KEY = "tokenId";
@@ -56,7 +57,9 @@ public class NGCommonEntityConstants {
   public static final String PERPETUAL_TASK_ID = "perpetualTaskId";
   public static final String RETRY_STAGES = "retryStages";
   public static final String RUN_ALL_STAGES = "runAllStages";
+  public static final String FILE_IDENTIFIER_KEY = "fileIdentifier";
   public static final Integer MAX_PAGE_SIZE = 10000;
+  public static final String EXPIRY_TIME = "expiryTime";
 
   // TODO(UTSAV): Move to 340-ce-nextgen
   public static final String IS_EVENTS_ENABLED = "eventsEnabled";
@@ -70,11 +73,19 @@ public class NGCommonEntityConstants {
   public static final String IDENTIFIER_PARAM_MESSAGE = "Identifier for the Entity.";
   public static final String TAGS = "Tags";
   public static final String DESCRIPTION = "Description of the entity";
+  public static final String CREATED_AT_MESSAGE = "Time at which the entity was created";
+  public static final String UPDATED_AT_MESSAGE = "Time at which the entity was last updated";
+  public static final String NAME_PARAM_MESSAGE = "Name of the Entity";
+  public static final String COLOR_PARAM_MESSAGE = "Color Code for the Entity";
+  public static final String DELETED_PARAM_MESSAGE = "Deletion status for Entity";
+  public static final String VERSION_PARAM_MESSAGE = "Version of Entity";
+  public static final String FILE_PARAM_MESSAGE = "The file identifier";
 
   public static final String GCP_CONNECTOR_IDENTIFIER = "GCP Connector Identifier";
 
-  public static final String PAGE_PARAM_MESSAGE = "Number of pages.";
-  public static final String SIZE_PARAM_MESSAGE = "Number of Elements to fetch.";
+  public static final String PAGE_PARAM_MESSAGE = "Page Index of the results to fetch."
+      + "Default Value: 0";
+  public static final String SIZE_PARAM_MESSAGE = "Results per page";
   public static final String SORT_PARAM_MESSAGE = "Sort criteria for the elements.";
   public static final String BAD_REQUEST_PARAM_MESSAGE = "Bad Request";
   public static final String INTERNAL_SERVER_ERROR_MESSAGE = "Internal Server Error";
@@ -82,4 +93,7 @@ public class NGCommonEntityConstants {
   public static final String INTERNAL_SERVER_ERROR_CODE = "500";
   public static final String APPLICATION_JSON_MEDIA_TYPE = "application/json";
   public static final String APPLICATION_YAML_MEDIA_TYPE = "application/yaml";
+
+  // Environment Group
+  public static final String ENVIRONMENT_GROUP_KEY = "envGroupIdentifier";
 }

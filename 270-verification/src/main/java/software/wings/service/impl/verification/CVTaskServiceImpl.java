@@ -10,10 +10,10 @@ package software.wings.service.impl.verification;
 import static io.harness.persistence.HQuery.excludeAuthority;
 
 import static software.wings.common.VerificationConstants.CANARY_DAYS_TO_COLLECT;
+import static software.wings.delegatetasks.cv.CVConstants.CONTROL_HOST_NAME;
+import static software.wings.delegatetasks.cv.CVConstants.TEST_HOST_NAME;
 import static software.wings.service.impl.analysis.AnalysisComparisonStrategy.COMPARE_WITH_CURRENT;
 import static software.wings.service.impl.analysis.AnalysisComparisonStrategy.PREDICTIVE;
-import static software.wings.sm.states.DynatraceState.CONTROL_HOST_NAME;
-import static software.wings.sm.states.DynatraceState.TEST_HOST_NAME;
 
 import io.harness.beans.ExecutionStatus;
 import io.harness.entities.CVTask;
@@ -27,7 +27,7 @@ import software.wings.service.impl.analysis.DataCollectionInfoV2;
 import software.wings.service.impl.analysis.DataCollectionTaskResult;
 import software.wings.service.impl.analysis.DataCollectionTaskResult.DataCollectionTaskStatus;
 import software.wings.service.intfc.verification.CVActivityLogService;
-import software.wings.service.intfc.verification.CVActivityLogService.Logger;
+import software.wings.service.intfc.verification.CVActivityLogger;
 import software.wings.service.intfc.verification.CVTaskService;
 import software.wings.verification.VerificationDataAnalysisResponse;
 import software.wings.verification.VerificationStateAnalysisExecutionData;
@@ -227,7 +227,7 @@ public class CVTaskServiceImpl implements CVTaskService {
   }
 
   private void logActivity(DataCollectionTaskResult result, CVTask cvTask) {
-    Logger activityLogger = getActivityLogger(cvTask);
+    CVActivityLogger activityLogger = getActivityLogger(cvTask);
     // plus one in the endtime to represent the minute boundary properly in the UI
     if (result.getStatus() == DataCollectionTaskStatus.SUCCESS) {
       activityLogger.info("Data collection successful for time range %t to %t",
@@ -309,7 +309,7 @@ public class CVTaskServiceImpl implements CVTaskService {
     }
   }
 
-  private Logger getActivityLogger(CVTask cvTask) {
+  private CVActivityLogger getActivityLogger(CVTask cvTask) {
     return activityLogService.getLogger(cvTask.getAccountId(), cvTask.getCvConfigId(),
         cvTask.getDataCollectionInfo().getEndTime().toEpochMilli(), cvTask.getStateExecutionId());
   }

@@ -64,6 +64,7 @@ message S3HelmPayload {
 enum HelmVersion {
   V2 = 0;
   V3 = 1;
+  V380 = 2;
 }
 
 message DockerHubPayload {
@@ -83,4 +84,7 @@ message Nexus3RegistryPayload {
 
 message ArtifactoryRegistryPayload {
   string artifactPath = 1;
+  string repository = 2;
+  string artifactDirectory = 3;
+  string repositoryFormat = 4;
 }

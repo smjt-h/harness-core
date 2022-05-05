@@ -24,7 +24,7 @@ import io.harness.beans.dependencies.DependencyElement;
 import io.harness.beans.environment.pod.container.ContainerDefinitionInfo;
 import io.harness.beans.environment.pod.container.ContainerImageDetails;
 import io.harness.beans.quantity.unit.DecimalQuantityUnit;
-import io.harness.beans.quantity.unit.MemoryQuantityUnit;
+import io.harness.beans.quantity.unit.StorageQuantityUnit;
 import io.harness.beans.serializer.RunTimeInputHandler;
 import io.harness.beans.stages.IntegrationStageConfig;
 import io.harness.ci.config.CIExecutionServiceConfig;
@@ -38,7 +38,7 @@ import io.harness.util.PortFinder;
 import io.harness.yaml.extended.ci.container.ContainerResource;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,7 +125,7 @@ public class CIServiceBuilder {
                                    .build())
         .containerResourceParams(
             getServiceContainerResource(service.getResources(), ciExecutionServiceConfig, service.getIdentifier()))
-        .ports(Collections.singletonList(port))
+        .ports(Arrays.asList(port))
         .containerType(CIContainerType.SERVICE)
         .stepIdentifier(service.getIdentifier())
         .stepName(service.getName())
@@ -151,7 +151,7 @@ public class CIServiceBuilder {
         String memoryQuantity = RunTimeInputHandler.resolveStringParameter(
             "memory", "Service", identifier, resource.getLimits().getMemory(), false);
         if (isNotEmpty(memoryQuantity) && !UNRESOLVED_PARAMETER.equals(memoryQuantity)) {
-          memory = QuantityUtils.getMemoryQuantityValueInUnit(memoryQuantity, MemoryQuantityUnit.Mi);
+          memory = QuantityUtils.getStorageQuantityValueInUnit(memoryQuantity, StorageQuantityUnit.Mi);
         }
       }
     }

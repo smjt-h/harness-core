@@ -11,10 +11,10 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.delegate.task.helm.CustomManifestFetchTaskHelper.unzipManifestFiles;
-import static io.harness.delegate.task.helm.HelmTaskHelperBase.RESOURCE_DIR_BASE;
 import static io.harness.delegate.task.helm.HelmTaskHelperBase.getChartDirectory;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.filesystem.FileIo.createDirectoryIfDoesNotExist;
+import static io.harness.filesystem.FileIo.deleteDirectoryAndItsContentIfExists;
 import static io.harness.filesystem.FileIo.waitForDirectoryToBeAccessibleOutOfProcess;
 import static io.harness.helm.HelmConstants.CHARTS_YAML_KEY;
 import static io.harness.helm.HelmConstants.CHART_VERSION;
@@ -44,6 +44,7 @@ import io.harness.delegate.task.helm.HelmChartInfo;
 import io.harness.delegate.task.helm.HelmCommandFlag;
 import io.harness.delegate.task.helm.HelmTaskHelperBase;
 import io.harness.exception.HelmClientException;
+import io.harness.exception.HelmClientRuntimeException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.helm.HelmCliCommandType;
@@ -63,6 +64,7 @@ import software.wings.helpers.ext.helm.request.HelmChartCollectionParams;
 import software.wings.helpers.ext.helm.request.HelmChartConfigParams;
 import software.wings.helpers.ext.helm.request.HelmCommandRequest;
 import software.wings.helpers.ext.helm.request.HelmInstallCommandRequest;
+import software.wings.helpers.ext.k8s.request.K8sDelegateManifestConfig;
 import software.wings.helpers.ext.k8s.request.K8sValuesLocation;
 import software.wings.service.intfc.security.EncryptionService;
 import software.wings.settings.SettingValue;
@@ -83,6 +85,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
@@ -93,6 +96,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
@@ -104,11 +108,30 @@ import org.zeroturnaround.exec.stream.LogOutputStream;
 @OwnedBy(CDP)
 public class HelmTaskHelper {
   private static final long DEFAULT_TIMEOUT_IN_MILLIS = Duration.ofMinutes(DEFAULT_STEADY_STATE_TIMEOUT).toMillis();
+  public static final String RESOURCE_DIR_BASE = "./repository/helm/resources/";
 
   @Inject private EncryptionService encryptionService;
   @Inject private ChartMuseumClient chartMuseumClient;
   @Inject private HelmTaskHelperBase helmTaskHelperBase;
   @Inject private DelegateFileManagerBase delegateFileManagerBase;
+
+  public static void copyManifestFilesToWorkingDir(File src, File dest) throws IOException {
+    FileUtils.copyDirectory(src, dest);
+    deleteDirectoryAndItsContentIfExists(src.getAbsolutePath());
+    waitForDirectoryToBeAccessibleOutOfProcess(dest.getPath(), 10);
+  }
+
+  public static void handleIncorrectConfiguration(K8sDelegateManifestConfig sourceRepoConfig) {
+    if (sourceRepoConfig == null) {
+      throw new InvalidRequestException("Source Config can not be null", USER);
+    }
+    if (!sourceRepoConfig.isCustomManifestEnabled()) {
+      throw new InvalidRequestException("Can not use store type: CUSTOM, with feature flag off", USER);
+    }
+    if (sourceRepoConfig.getCustomManifestSource() == null) {
+      throw new InvalidRequestException("Custom Manifest Source can not be null", USER);
+    }
+  }
 
   private void fetchChartFiles(HelmChartConfigParams helmChartConfigParams, String destinationDirectory,
       long timeoutInMillis, HelmCommandFlag helmCommandFlag) throws Exception {
@@ -184,10 +207,13 @@ public class HelmTaskHelper {
       throws Exception {
     String workingDirectory = createNewDirectoryAtPath(Paths.get(WORKING_DIR_BASE).toString());
     Map<String, List<String>> mapK8sValuesLocationToContents = new HashMap<>();
-
     try {
       fetchChartFiles(helmChartConfigParams, workingDirectory, timeoutInMillis, helmCommandFlag);
+    } catch (HelmClientException ex) {
+      throw new HelmClientRuntimeException((HelmClientException) ExceptionMessageSanitizer.sanitizeException(ex));
+    }
 
+    try {
       // Fetch chart version in case it is not specified in service to display in execution logs
       if (isBlank(helmChartConfigParams.getChartVersion())) {
         try {
@@ -252,6 +278,26 @@ public class HelmTaskHelper {
     ChartMuseumServer chartMuseumServer = null;
     String resourceDirectory = null;
     boolean useRepoFlags = false;
+    /*
+     repoName will be a combination of the connectorId and bucket name;
+     this way, parallel deployments with charts in different buckets will work fine
+     */
+    final String modifiedRepoName =
+        helmChartConfigParams.getRepoName() + "-" + helmChartConfigParams.getHelmRepoConfig().getBucketName();
+
+    String cacheDir = "";
+    if (helmChartConfigParams.isUseRepoFlags()) {
+      if (helmChartConfigParams.isDeleteRepoCacheDir()) {
+        cacheDir = Paths
+                       .get(RESOURCE_DIR_BASE, modifiedRepoName,
+                           RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT), "cache")
+                       .toAbsolutePath()
+                       .normalize()
+                       .toString();
+      } else {
+        cacheDir = Paths.get(RESOURCE_DIR_BASE, modifiedRepoName, "cache").toAbsolutePath().normalize().toString();
+      }
+    }
 
     try {
       resourceDirectory = createNewDirectoryAtPath(RESOURCE_DIR_BASE);
@@ -259,19 +305,26 @@ public class HelmTaskHelper {
           connectorConfig, resourceDirectory, helmChartConfigParams.getBasePath(),
           helmChartConfigParams.isUseLatestChartMuseumVersion());
 
-      helmTaskHelperBase.addChartMuseumRepo(helmChartConfigParams.getRepoName(),
-          helmChartConfigParams.getRepoDisplayName(), chartMuseumServer.getPort(), chartDirectory,
-          helmChartConfigParams.getHelmVersion(), timeoutInMillis);
-      helmTaskHelperBase.fetchChartFromRepo(helmChartConfigParams.getRepoName(),
-          helmChartConfigParams.getRepoDisplayName(), helmChartConfigParams.getChartName(),
-          helmChartConfigParams.getChartVersion(), chartDirectory, helmChartConfigParams.getHelmVersion(),
-          helmCommandFlag, timeoutInMillis, false, false, false);
+      helmTaskHelperBase.addChartMuseumRepo(modifiedRepoName, helmChartConfigParams.getRepoDisplayName(),
+          chartMuseumServer.getPort(), chartDirectory, helmChartConfigParams.getHelmVersion(), timeoutInMillis,
+          cacheDir);
+      helmTaskHelperBase.fetchChartFromRepo(modifiedRepoName, helmChartConfigParams.getRepoDisplayName(),
+          helmChartConfigParams.getChartName(), helmChartConfigParams.getChartVersion(), chartDirectory,
+          helmChartConfigParams.getHelmVersion(), helmCommandFlag, timeoutInMillis, false, cacheDir);
     } finally {
       if (chartMuseumServer != null) {
         chartMuseumClient.stopChartMuseumServer(chartMuseumServer.getStartedProcess());
       }
-      removeRepo(helmChartConfigParams.getRepoName(), chartDirectory, helmChartConfigParams.getHelmVersion(),
-          timeoutInMillis, useRepoFlags, EMPTY);
+      removeRepo(modifiedRepoName, chartDirectory, helmChartConfigParams.getHelmVersion(), timeoutInMillis,
+          useRepoFlags, EMPTY);
+      if (helmChartConfigParams.isUseRepoFlags() && helmChartConfigParams.isDeleteRepoCacheDir()) {
+        try {
+          FileUtils.forceDelete(new File(cacheDir));
+        } catch (IOException ie) {
+          log.error("Deletion of charts folder failed due to : {}",
+              ExceptionMessageSanitizer.sanitizeException(ie).getMessage());
+        }
+      }
       cleanup(resourceDirectory);
     }
   }
@@ -353,29 +406,54 @@ public class HelmTaskHelper {
 
   public void addRepo(String repoName, String repoDisplayName, String chartRepoUrl, String username, char[] password,
       String chartDirectory, HelmVersion helmVersion, long timeoutInMillis, String tempDir) {
-    helmTaskHelperBase.addRepo(repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory, helmVersion,
-        timeoutInMillis, tempDir);
+    helmTaskHelperBase.addRepoInternal(repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory,
+        helmVersion, timeoutInMillis, tempDir);
   }
 
   public void addRepo(String repoName, String repoDisplayName, String chartRepoUrl, String username, char[] password,
       String chartDirectory, HelmVersion helmVersion, long timeoutInMillis) {
-    helmTaskHelperBase.addRepo(repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory, helmVersion,
-        timeoutInMillis, false, false);
+    helmTaskHelperBase.addRepo(
+        repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory, helmVersion, timeoutInMillis, "");
   }
 
   private void fetchChartFromHttpServer(HelmChartConfigParams helmChartConfigParams, String chartDirectory,
       long timeoutInMillis, HelmCommandFlag helmCommandFlag) {
     HttpHelmRepoConfig httpHelmRepoConfig = (HttpHelmRepoConfig) helmChartConfigParams.getHelmRepoConfig();
 
-    helmTaskHelperBase.addRepo(helmChartConfigParams.getRepoName(), helmChartConfigParams.getRepoDisplayName(),
-        httpHelmRepoConfig.getChartRepoUrl(), httpHelmRepoConfig.getUsername(), httpHelmRepoConfig.getPassword(),
-        chartDirectory, helmChartConfigParams.getHelmVersion(), timeoutInMillis, helmChartConfigParams.isUseRepoFlags(),
-        helmChartConfigParams.isDeleteRepoCacheDir());
-    helmTaskHelperBase.fetchChartFromRepo(helmChartConfigParams.getRepoName(),
-        helmChartConfigParams.getRepoDisplayName(), helmChartConfigParams.getChartName(),
-        helmChartConfigParams.getChartVersion(), chartDirectory, helmChartConfigParams.getHelmVersion(),
-        helmCommandFlag, timeoutInMillis, helmChartConfigParams.isUseRepoFlags(),
-        helmChartConfigParams.isCheckIncorrectChartVersion(), helmChartConfigParams.isDeleteRepoCacheDir());
+    String cacheDir = "";
+    if (helmChartConfigParams.isUseRepoFlags()) {
+      if (helmChartConfigParams.isDeleteRepoCacheDir()) {
+        cacheDir = Paths
+                       .get(RESOURCE_DIR_BASE, helmChartConfigParams.getRepoName(),
+                           RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT), "cache")
+                       .toAbsolutePath()
+                       .normalize()
+                       .toString();
+      } else {
+        cacheDir = Paths.get(RESOURCE_DIR_BASE, helmChartConfigParams.getRepoName(), "cache")
+                       .toAbsolutePath()
+                       .normalize()
+                       .toString();
+      }
+    }
+    try {
+      helmTaskHelperBase.addRepo(helmChartConfigParams.getRepoName(), helmChartConfigParams.getRepoDisplayName(),
+          httpHelmRepoConfig.getChartRepoUrl(), httpHelmRepoConfig.getUsername(), httpHelmRepoConfig.getPassword(),
+          chartDirectory, helmChartConfigParams.getHelmVersion(), timeoutInMillis, cacheDir);
+      helmTaskHelperBase.fetchChartFromRepo(helmChartConfigParams.getRepoName(),
+          helmChartConfigParams.getRepoDisplayName(), helmChartConfigParams.getChartName(),
+          helmChartConfigParams.getChartVersion(), chartDirectory, helmChartConfigParams.getHelmVersion(),
+          helmCommandFlag, timeoutInMillis, helmChartConfigParams.isCheckIncorrectChartVersion(), cacheDir);
+    } finally {
+      if (helmChartConfigParams.isUseRepoFlags() && helmChartConfigParams.isDeleteRepoCacheDir()) {
+        try {
+          FileUtils.forceDelete(new File(cacheDir));
+        } catch (IOException ie) {
+          log.error("Deletion of charts folder failed due to : {}",
+              ExceptionMessageSanitizer.sanitizeException(ie).getMessage());
+        }
+      }
+    }
   }
 
   public void addHelmRepo(HelmRepoConfig helmRepoConfig, SettingValue connectorConfig, String repoName,
@@ -389,7 +467,7 @@ public class HelmTaskHelper {
           helmRepoConfig, connectorConfig, resourceDirectory, basePath, useLatestChartMuseumVersion);
 
       helmTaskHelperBase.addChartMuseumRepo(repoName, repoDisplayName, chartMuseumServer.getPort(), workingDirectory,
-          helmVersion, DEFAULT_TIMEOUT_IN_MILLIS);
+          helmVersion, DEFAULT_TIMEOUT_IN_MILLIS, "");
     } finally {
       if (chartMuseumServer != null) {
         chartMuseumClient.stopChartMuseumServer(chartMuseumServer.getStartedProcess());
@@ -586,7 +664,7 @@ public class HelmTaskHelper {
     try {
       helmTaskHelperBase.addChartMuseumRepo(helmChartConfigParams.getRepoName(),
           helmChartConfigParams.getRepoDisplayName(), chartMuseumServer.getPort(), chartDirectory,
-          helmChartConfigParams.getHelmVersion(), timeoutInMillis);
+          helmChartConfigParams.getHelmVersion(), timeoutInMillis, "");
 
       String command = fetchHelmChartVersionsCommand(helmChartConfigParams.getHelmVersion(),
           helmChartConfigParams.getChartName(), helmChartConfigParams.getRepoName(), chartDirectory);

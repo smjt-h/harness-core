@@ -19,6 +19,7 @@ import static java.lang.Boolean.FALSE;
 import static org.mindrot.jbcrypt.BCrypt.hashpw;
 
 import io.harness.ModuleType;
+import io.harness.TelemetryConstants;
 import io.harness.accesscontrol.acl.api.Resource;
 import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
@@ -107,6 +108,8 @@ public class SignupServiceImpl implements SignupService {
   private static final int SIGNUP_TOKEN_VALIDITY_IN_DAYS = 30;
   private static final String UNDEFINED_ACCOUNT_ID = "undefined";
   private static final String NG_AUTH_UI_PATH_PREFIX = "auth/";
+  private static final String VERIFY_URL_GENERATION_FAILED = "Failed to generate verify url";
+  private static final String EMAIL = "email";
 
   private static String deployVersion = System.getenv().get(DEPLOY_VERSION);
 
@@ -142,8 +145,8 @@ public class SignupServiceImpl implements SignupService {
 
     AccountDTO account = createAccount(dto);
     UserInfo user = createUser(dto, account);
-    sendSucceedTelemetryEvent(
-        dto.getEmail(), dto.getUtmInfo(), account.getIdentifier(), user, SignupType.SIGNUP_FORM_FLOW);
+    sendSucceedTelemetryEvent(dto.getEmail(), dto.getUtmInfo(), account.getIdentifier(), user,
+        SignupType.SIGNUP_FORM_FLOW, account.getName());
     executorService.submit(() -> {
       SignupVerificationToken verificationToken = generateNewToken(user.getEmail());
       try {
@@ -151,7 +154,7 @@ public class SignupServiceImpl implements SignupService {
         signupNotificationHelper.sendSignupNotification(
             user, EmailType.VERIFY, PredefinedTemplate.EMAIL_VERIFY.getIdentifier(), url);
       } catch (URISyntaxException e) {
-        log.error("Failed to generate verify url", e);
+        log.error(VERIFY_URL_GENERATION_FAILED, e);
       }
     });
     return user;
@@ -248,7 +251,7 @@ public class SignupServiceImpl implements SignupService {
             UserInfo.builder().email(dto.getEmail()).defaultAccountId(UNDEFINED_ACCOUNT_ID).build(), EmailType.VERIFY,
             PredefinedTemplate.EMAIL_VERIFY.getIdentifier(), url);
       } catch (URISyntaxException e) {
-        log.error("Failed to generate verify url", e);
+        log.error(VERIFY_URL_GENERATION_FAILED, e);
       }
     });
     log.info("Created NG signup invite for {}", dto.getEmail());
@@ -284,9 +287,9 @@ public class SignupServiceImpl implements SignupService {
     try {
       userInfo = getResponse(userClient.completeSignupInvite(verificationToken.getEmail()));
       verificationTokenRepository.delete(verificationToken);
-
       sendSucceedTelemetryEvent(userInfo.getEmail(), userInfo.getUtmInfo(), userInfo.getDefaultAccountId(), userInfo,
-          SignupType.SIGNUP_FORM_FLOW);
+          SignupType.SIGNUP_FORM_FLOW, userInfo.getAccounts().get(0).getAccountName());
+
       UserInfo finalUserInfo = userInfo;
       executorService.submit(() -> {
         try {
@@ -421,7 +424,7 @@ public class SignupServiceImpl implements SignupService {
     UserInfo oAuthUser = createOAuthUser(dto, account);
 
     sendSucceedTelemetryEvent(
-        dto.getEmail(), dto.getUtmInfo(), account.getIdentifier(), oAuthUser, SignupType.OAUTH_FLOW);
+        dto.getEmail(), dto.getUtmInfo(), account.getIdentifier(), oAuthUser, SignupType.OAUTH_FLOW, account.getName());
 
     executorService.submit(() -> {
       try {
@@ -495,7 +498,7 @@ public class SignupServiceImpl implements SignupService {
           UserInfo.builder().email(email).defaultAccountId(UNDEFINED_ACCOUNT_ID).build(), EmailType.VERIFY,
           PredefinedTemplate.EMAIL_VERIFY.getIdentifier(), url);
     } catch (URISyntaxException e) {
-      throw new InvalidRequestException("Failed to generate verify url", e);
+      throw new InvalidRequestException(VERIFY_URL_GENERATION_FAILED, e);
     }
     log.info("Resend verification email for {}", email);
   }
@@ -532,29 +535,54 @@ public class SignupServiceImpl implements SignupService {
     properties.put("failedAt", failedAt);
     addUtmInfoToProperties(utmInfo, properties);
 
+    String accountIdentifier = accountDTO == null ? UNDEFINED_ACCOUNT_ID : accountDTO.getIdentifier();
     if (accountDTO != null) {
       properties.put("company", accountDTO.getCompanyName());
-      telemetryReporter.sendTrackEvent(FAILED_EVENT_NAME, email, accountDTO.getIdentifier(), properties,
-          ImmutableMap.<Destination, Boolean>builder().put(Destination.SALESFORCE, true).build(), Category.SIGN_UP);
-    } else {
-      telemetryReporter.sendTrackEvent(FAILED_EVENT_NAME, email, null, properties,
-          ImmutableMap.<Destination, Boolean>builder().put(Destination.SALESFORCE, true).build(), Category.SIGN_UP);
     }
+    telemetryReporter.sendTrackEvent(FAILED_EVENT_NAME, email, accountIdentifier, properties,
+        ImmutableMap.<Destination, Boolean>builder().put(Destination.SALESFORCE, true).build(), Category.SIGN_UP);
+    telemetryReporter.sendTrackEvent(FAILED_EVENT_NAME, email, accountIdentifier, properties,
+        ImmutableMap.<Destination, Boolean>builder().put(Destination.MARKETO, true).build(), Category.SIGN_UP);
   }
 
   private void sendSucceedTelemetryEvent(
-      String email, UtmInfo utmInfo, String accountId, UserInfo userInfo, String source) {
+      String email, UtmInfo utmInfo, String accountId, UserInfo userInfo, String source, String accountName) {
     HashMap<String, Object> properties = new HashMap<>();
-    properties.put("email", userInfo.getEmail());
+    properties.put(EMAIL, email);
     properties.put("name", userInfo.getName());
     properties.put("id", userInfo.getUuid());
     properties.put("startTime", String.valueOf(Instant.now().toEpochMilli()));
     properties.put("accountId", accountId);
+    properties.put("accountName", accountName);
     properties.put("source", source);
 
     addUtmInfoToProperties(utmInfo, properties);
-    telemetryReporter.sendIdentifyEvent(userInfo.getEmail(), properties,
-        ImmutableMap.<Destination, Boolean>builder().put(Destination.MARKETO, true).build());
+    // identify event to register new signed-up user and send user info to marketing
+    telemetryReporter.sendIdentifyEvent(
+        email, properties, ImmutableMap.<Destination, Boolean>builder().put(Destination.MARKETO, true).build());
+
+    HashMap<String, Object> groupProperties = new HashMap<>();
+    groupProperties.put("group_id", accountId);
+    groupProperties.put("group_type", "Account");
+    groupProperties.put("group_name", accountName);
+
+    // group event to register new signed-up user with new account
+    telemetryReporter.sendGroupEvent(
+        accountId, email, groupProperties, ImmutableMap.<Destination, Boolean>builder().build());
+
+    HashMap<String, Object> analyticsUserProperties = new HashMap<>();
+    analyticsUserProperties.put("accountId", accountId);
+    analyticsUserProperties.put("accountName", accountName);
+
+    // identify event to register a dummy user account to represent account for analytics purposes
+    telemetryReporter.sendIdentifyEvent(TelemetryConstants.SEGMENT_DUMMY_ACCOUNT_PREFIX + accountId,
+        analyticsUserProperties, ImmutableMap.<Destination, Boolean>builder().put(Destination.AMPLITUDE, true).build());
+
+    // group event to register dummy user account with new account
+    telemetryReporter.sendGroupEvent(accountId, TelemetryConstants.SEGMENT_DUMMY_ACCOUNT_PREFIX + accountId,
+        groupProperties, ImmutableMap.<Destination, Boolean>builder().build());
+
+    // flush all events so that event queue is empty
     telemetryReporter.flush();
 
     // Wait 20 seconds, to ensure identify is sent before track
@@ -569,7 +597,7 @@ public class SignupServiceImpl implements SignupService {
 
   private void sendCommunitySucceedTelemetry(String email, String accountId, UserInfo userInfo, String source) {
     HashMap<String, Object> properties = new HashMap<>();
-    properties.put("email", userInfo.getEmail());
+    properties.put(EMAIL, userInfo.getEmail());
     properties.put("name", userInfo.getName());
     properties.put("id", userInfo.getUuid());
     properties.put("firstInstallTime", String.valueOf(Instant.now().toEpochMilli()));

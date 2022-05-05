@@ -25,6 +25,7 @@ import software.wings.utils.ArtifactType;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.validation.Valid;
 import org.hibernate.validator.constraints.NotEmpty;
 import ru.vyarus.guice.validator.group.annotation.ValidationGroups;
@@ -72,6 +73,8 @@ public interface ArtifactStreamService extends OwnedByService {
 
   List<ArtifactStream> getArtifactStreamsForService(String appId, String serviceId);
 
+  List<ArtifactStream> getArtifactStreamsForService(String appId, String serviceId, List<String> projections);
+
   Map<String, String> fetchArtifactSourceProperties(String accountId, String artifactStreamId);
 
   List<ArtifactStream> fetchArtifactStreamsForService(String appId, String serviceId);
@@ -118,4 +121,6 @@ public interface ArtifactStreamService extends OwnedByService {
   ArtifactStream resetStoppedArtifactCollection(String appId, String artifactStreamId);
 
   void updateCollectionEnabled(ArtifactStream artifactStream, boolean collectionEnabled);
+
+  Map<String, String> getArtifactStreamNames(@NotEmpty String appId, Set<String> artifactStreamIds);
 }

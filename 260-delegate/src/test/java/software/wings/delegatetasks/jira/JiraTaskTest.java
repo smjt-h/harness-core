@@ -8,7 +8,9 @@
 package software.wings.delegatetasks.jira;
 
 import static io.harness.rule.OwnerRule.AGORODETKI;
+import static io.harness.rule.OwnerRule.LUCAS_SALES;
 import static io.harness.rule.OwnerRule.ROHITKARELIA;
+import static io.harness.rule.OwnerRule.UTKARSH_CHOUBEY;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
@@ -69,6 +71,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.http.Header;
+import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -282,7 +285,7 @@ public class JiraTaskTest extends CategoryTest {
   }
 
   @Test
-  @Owner(developers = ROHITKARELIA)
+  @Owner(developers = {ROHITKARELIA, UTKARSH_CHOUBEY})
   @Category({UnitTests.class})
   public void shouldThrowProxyAuthErrorOnGetProjects() {
     JiraTaskParameters jiraTaskParameters = getJiraTaskParametersForAUTH();
@@ -300,7 +303,8 @@ public class JiraTaskTest extends CategoryTest {
     JiraExecutionData jiraExecutionData = (JiraExecutionData) jiraTask.getProjects(jiraTaskParameters);
     assertThat(jiraExecutionData.getExecutionStatus()).isEqualTo(ExecutionStatus.FAILED);
     assertThat(jiraExecutionData.getErrorMessage())
-        .isEqualTo("Failed to fetch projects from Jira server. Reason: Proxy Authentication Required. Error Code: 407");
+        .isEqualTo(
+            "Failed to fetch projects from Jira server, Uri for GET PROJECTS - /rest/api/latest/project  Reason: Proxy Authentication Required. Error Code: 407");
   }
 
   @Test
@@ -455,6 +459,27 @@ public class JiraTaskTest extends CategoryTest {
     JiraExecutionData jiraExecutionData =
         JiraExecutionData.builder().executionStatus(ExecutionStatus.FAILED).errorMessage("INVALID_REQUEST").build();
 
+    runTaskAndAssertResponse(taskParameters, jiraExecutionData);
+  }
+
+  @Test
+  @Owner(developers = LUCAS_SALES)
+  @Category(UnitTests.class)
+  public void shouldParseEmptyBodyFromJiraIssueWhenFailing() throws JiraException {
+    JiraException exception =
+        new JiraException("error", new RestException("error", HttpStatus.SC_METHOD_NOT_ALLOWED, "{}", new Header['a']));
+    JiraTaskParameters taskParameters = getTaskParams(JiraAction.FETCH_ISSUE);
+    when(encryptionService.decrypt(taskParameters.getJiraConfig(), taskParameters.getEncryptionDetails(), false))
+        .thenReturn(null);
+    Mockito.doReturn(jiraClient).when(spyJiraTask).getJiraClient(taskParameters);
+    when(jiraClient.getIssue(JIRA_ISSUE_ID)).thenThrow(exception);
+
+    JiraExecutionData jiraExecutionData =
+        JiraExecutionData.builder()
+            .executionStatus(ExecutionStatus.FAILED)
+            .errorMessage(
+                "Unable to fetch Jira Issue for Id: JIRA_ISSUE_ID  Failed to parse json response from Jira: RestException: 405 error: {}")
+            .build();
     runTaskAndAssertResponse(taskParameters, jiraExecutionData);
   }
 
@@ -615,10 +640,12 @@ public class JiraTaskTest extends CategoryTest {
   public void shouldFailExecutionOnJiraExceptionForGetCreateMetadata() throws JiraException {
     JiraTaskParameters taskParameters = getTaskParams(JiraAction.GET_CREATE_METADATA);
     Mockito.doThrow(new JiraException("")).when(spyJiraTask).getJiraClient(taskParameters);
-    JiraExecutionData jiraExecutionData = JiraExecutionData.builder()
-                                              .errorMessage("Failed to fetch issue metadata from Jira server.")
-                                              .executionStatus(ExecutionStatus.FAILED)
-                                              .build();
+    JiraExecutionData jiraExecutionData =
+        JiraExecutionData.builder()
+            .errorMessage(
+                "Failed to fetch issue metadata from Jira server, Uri for GET_CREATE_METADATA - /rest/api/latest/issue/createmeta ")
+            .executionStatus(ExecutionStatus.FAILED)
+            .build();
     runTaskAndAssertResponse(taskParameters, jiraExecutionData);
   }
 
@@ -633,6 +660,7 @@ public class JiraTaskTest extends CategoryTest {
     Map<String, String> queryParams = new HashMap<>();
     queryParams.put("expand", "projects.issuetypes.fields");
     queryParams.put("projectKeys", PROJECT_KEY);
+    queryParams.put("issuetypeNames", STORY);
     Mockito.doReturn(jiraClient).when(spyJiraTask).getJiraClient(taskParameters);
     when(jiraClient.getRestClient()).thenReturn(restClient);
     when(restClient.buildURI(Resource.getBaseUri() + "issue/createmeta", queryParams)).thenReturn(uri);

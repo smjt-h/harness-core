@@ -45,6 +45,9 @@ import io.harness.cvng.analysis.services.api.TimeSeriesAnomalousPatternsService;
 import io.harness.cvng.core.beans.TimeRange;
 import io.harness.cvng.core.beans.TimeSeriesMetricDefinition;
 import io.harness.cvng.core.entities.CVConfig;
+import io.harness.cvng.core.entities.MetricCVConfig;
+import io.harness.cvng.core.entities.VerificationTask;
+import io.harness.cvng.core.entities.VerificationTask.TaskType;
 import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.TimeSeriesRecordService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
@@ -483,12 +486,24 @@ public class TimeSeriesAnalysisServiceImpl implements TimeSeriesAnalysisService 
 
   @Override
   public List<TimeSeriesMetricDefinition> getMetricTemplate(String verificationTaskId) {
-    Optional<String> cvConfig = verificationTaskService.maybeGetCVConfigId(verificationTaskId);
-    List<TimeSeriesMetricDefinition> timeSeriesMetricDefinitions =
-        cvConfig.map(s -> timeSeriesRecordService.getTimeSeriesMetricDefinitions(s)).orElse(new ArrayList<>());
+    VerificationTask verificationTask = verificationTaskService.get(verificationTaskId);
+    MetricCVConfig cvConfig = null;
+    if (verificationTask.getTaskInfo().getTaskType() == TaskType.DEPLOYMENT) {
+      cvConfig = (MetricCVConfig) verificationJobInstanceService.getEmbeddedCVConfig(
+          ((VerificationTask.DeploymentInfo) verificationTask.getTaskInfo()).getCvConfigId(),
+          ((VerificationTask.DeploymentInfo) verificationTask.getTaskInfo()).getVerificationJobInstanceId());
+    } else if (verificationTask.getTaskInfo().getTaskType() == TaskType.LIVE_MONITORING) {
+      cvConfig = (MetricCVConfig) cvConfigService.get(
+          ((VerificationTask.LiveMonitoringInfo) verificationTask.getTaskInfo()).getCvConfigId());
+    }
+    List<TimeSeriesMetricDefinition> timeSeriesMetricDefinitions = new ArrayList<>();
+    if (cvConfig != null) {
+      timeSeriesMetricDefinitions = timeSeriesRecordService.getTimeSeriesMetricDefinitions(cvConfig);
+    }
     // in LE we pass metric identifier as the metric_name, as metric_name is the identifier for LE
+    // TODO: remove toLowerCase after the migration.
     timeSeriesMetricDefinitions.forEach(timeSeriesMetricDefinition
-        -> timeSeriesMetricDefinition.setMetricName(timeSeriesMetricDefinition.getMetricIdentifier()));
+        -> timeSeriesMetricDefinition.setMetricName(timeSeriesMetricDefinition.getMetricIdentifier().toLowerCase()));
     return timeSeriesMetricDefinitions;
   }
 
@@ -497,9 +512,10 @@ public class TimeSeriesAnalysisServiceImpl implements TimeSeriesAnalysisService 
       String verificationTaskId, Instant startTime, Instant endTime) {
     List<TimeSeriesRecordDTO> timeSeriesRecordDTOS =
         timeSeriesRecordService.getTimeSeriesRecordDTOs(verificationTaskId, startTime, endTime);
-    // in LE we pass metric identifier as the metric_name, as metric_name is the identifier for LE
-    timeSeriesRecordDTOS.forEach(
-        timeSeriesRecordDTO -> timeSeriesRecordDTO.setMetricName(timeSeriesRecordDTO.getMetricIdentifier()));
+    // in LE we pass metric identifier as the metric_name, as metric_name is the identifier for LE.
+    // TODO: remove toLowerCase after migration is successful
+    timeSeriesRecordDTOS.forEach(timeSeriesRecordDTO
+        -> timeSeriesRecordDTO.setMetricName(timeSeriesRecordDTO.getMetricIdentifier().toLowerCase()));
     return timeSeriesRecordDTOS;
   }
 

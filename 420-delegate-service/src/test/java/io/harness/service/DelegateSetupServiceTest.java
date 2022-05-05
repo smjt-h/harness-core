@@ -9,9 +9,9 @@ package io.harness.service;
 
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.delegate.beans.DelegateType.KUBERNETES;
+import static io.harness.rule.OwnerRule.ARPIT;
 import static io.harness.rule.OwnerRule.BOJAN;
 import static io.harness.rule.OwnerRule.MARKO;
-import static io.harness.rule.OwnerRule.MARKOM;
 import static io.harness.rule.OwnerRule.NICOLAS;
 import static io.harness.rule.OwnerRule.VLAD;
 import static io.harness.rule.OwnerRule.VUK;
@@ -32,15 +32,19 @@ import io.harness.delegate.beans.Delegate;
 import io.harness.delegate.beans.Delegate.DelegateBuilder;
 import io.harness.delegate.beans.DelegateEntityOwner;
 import io.harness.delegate.beans.DelegateGroup;
+import io.harness.delegate.beans.DelegateGroupDTO;
 import io.harness.delegate.beans.DelegateGroupDetails;
 import io.harness.delegate.beans.DelegateGroupListing;
 import io.harness.delegate.beans.DelegateGroupStatus;
+import io.harness.delegate.beans.DelegateGroupTags;
 import io.harness.delegate.beans.DelegateInsightsBarDetails;
 import io.harness.delegate.beans.DelegateInsightsDetails;
 import io.harness.delegate.beans.DelegateInstanceStatus;
 import io.harness.delegate.beans.DelegateProfile;
 import io.harness.delegate.beans.DelegateSize;
 import io.harness.delegate.beans.DelegateSizeDetails;
+import io.harness.delegate.beans.DelegateToken;
+import io.harness.delegate.beans.DelegateTokenStatus;
 import io.harness.delegate.filter.DelegateFilterPropertiesDTO;
 import io.harness.delegate.utils.DelegateEntityOwnerHelper;
 import io.harness.exception.InvalidRequestException;
@@ -62,6 +66,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import jersey.repackaged.com.google.common.collect.Sets;
 import org.apache.groovy.util.Maps;
@@ -236,6 +241,7 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
                           .activelyConnected(delegate3.getLastHeartBeat()
                               > System.currentTimeMillis() - HEARTBEAT_EXPIRY_TIME.toMillis())
                           .hostName(delegate3.getHostName())
+                          .tokenActive(true)
                           .build());
       }
     }
@@ -355,16 +361,22 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
     String orgId = generateUuid();
     String projectId = generateUuid();
 
-    DelegateGroup acctGroup =
-        DelegateGroup.builder().accountId(accountId).ng(true).tags(ImmutableSet.of("custom-grp-tag")).build();
+    DelegateGroup acctGroup = DelegateGroup.builder()
+                                  .accountId(accountId)
+                                  .name("acctGroup")
+                                  .ng(true)
+                                  .tags(ImmutableSet.of("custom-grp-tag"))
+                                  .build();
     DelegateGroup orgGroup = DelegateGroup.builder()
                                  .accountId(accountId)
+                                 .name("orgGroup")
                                  .ng(true)
                                  .owner(DelegateEntityOwnerHelper.buildOwner(orgId, null))
                                  .build();
     DelegateGroup projectGroup = DelegateGroup.builder()
                                      .accountId(accountId)
                                      .ng(true)
+                                     .name("projectGroup")
                                      .owner(DelegateEntityOwnerHelper.buildOwner(orgId, projectId))
                                      .build();
     persistence.save(Arrays.asList(acctGroup, orgGroup, projectGroup));
@@ -542,11 +554,14 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
     DelegateSizeDetails grp1SizeDetails =
         DelegateSizeDetails.builder().size(DelegateSize.LARGE).cpu(2.5d).label("size").ram(2048).replicas(2).build();
 
+    DelegateEntityOwner owner = DelegateEntityOwner.builder().identifier("orgId/projectId").build();
+
     DelegateGroup delegateGroup1 = DelegateGroup.builder()
                                        .name("grp1")
                                        .identifier("identifier1")
                                        .accountId(accountId)
                                        .ng(true)
+                                       .owner(owner)
                                        .delegateType(KUBERNETES)
                                        .description("description")
                                        .sizeDetails(grp1SizeDetails)
@@ -554,10 +569,6 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
                                        .tags(ImmutableSet.of("custom-grp-tag"))
                                        .build();
     persistence.save(delegateGroup1);
-
-    DelegateEntityOwner owner = DelegateEntityOwner.builder().identifier("orgId/projectId").build();
-    when(delegateCache.getDelegateGroupByAccountAndOwnerAndIdentifier(accountId, owner, delegateGroup1.getIdentifier()))
-        .thenReturn(delegateGroup1);
 
     // Insights
     DelegateInsightsDetails delegateInsightsDetails =
@@ -806,7 +817,7 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
                             .build();
     persistence.save(delegate);
 
-    Set<String> tags = delegateSetupService.retrieveDelegateImplicitSelectors(delegate).keySet();
+    Set<String> tags = delegateSetupService.retrieveDelegateImplicitSelectors(delegate, false).keySet();
     assertThat(tags.size()).isEqualTo(5);
     assertThat(tags).containsExactlyInAnyOrder(delegateProfile.getName().toLowerCase(), "test", "jkl", "fgh", "host");
   }
@@ -836,7 +847,7 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
                             .build();
     persistence.save(delegate);
 
-    Set<String> selectors = delegateSetupService.retrieveDelegateImplicitSelectors(delegate).keySet();
+    Set<String> selectors = delegateSetupService.retrieveDelegateImplicitSelectors(delegate, false).keySet();
     assertThat(selectors.size()).isEqualTo(2);
     assertThat(selectors).containsExactly("fgh", "jkl");
   }
@@ -857,7 +868,7 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
                             .build();
     persistence.save(delegate);
 
-    Set<String> tags = delegateSetupService.retrieveDelegateImplicitSelectors(delegate).keySet();
+    Set<String> tags = delegateSetupService.retrieveDelegateImplicitSelectors(delegate, false).keySet();
     assertThat(tags.size()).isEqualTo(1);
   }
 
@@ -873,7 +884,8 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
                                       .name("group")
                                       .tags(ImmutableSet.of("custom-tag"))
                                       .build();
-    when(delegateCache.getDelegateGroup(accountId, delegateGroup.getUuid())).thenReturn(delegateGroup);
+
+    persistence.save(delegateGroup);
 
     Delegate delegate = Delegate.builder()
                             .accountId(accountId)
@@ -885,7 +897,7 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
                             .build();
     persistence.save(delegate);
 
-    Set<String> tags = delegateSetupService.retrieveDelegateImplicitSelectors(delegate).keySet();
+    Set<String> tags = delegateSetupService.retrieveDelegateImplicitSelectors(delegate, false).keySet();
     assertThat(tags.size()).isEqualTo(2);
     assertThat(tags).containsExactlyInAnyOrder("group", "custom-tag");
   }
@@ -1053,7 +1065,7 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void whenRetrieveDelegateGroupImplicitSelectorsAndNullGroupThenEmptyTags() {
     final Map<String, SelectorType> actual = delegateSetupService.retrieveDelegateGroupImplicitSelectors(null);
@@ -1061,7 +1073,7 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void whenRetrieveDelegateGroupImplicitSelectorsThenExpectedTags() {
     final String accountId = "accId";
@@ -1079,7 +1091,7 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void whenRetrieveDelegateGroupImplicitSelectorsAndNoProfileThenExpectedTags() {
     final String accountId = "accId";
@@ -1158,11 +1170,89 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
                             .delegateTokenName("test")
                             .build();
     persistence.save(delegate);
+    persistence.save(
+        DelegateToken.builder().accountId(TEST_ACCOUNT_ID).name("test").status(DelegateTokenStatus.ACTIVE).build());
 
     DelegateGroupListing delegateGroupListing =
         delegateSetupService.listDelegateGroupDetails(TEST_ACCOUNT_ID, null, null, "test");
 
     assertThat(delegateGroupListing.getDelegateGroupDetails()).hasSize(1);
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldListDelegateGroupTags() {
+    DelegateGroup delegateGroup = DelegateGroup.builder()
+                                      .uuid(TEST_DELEGATE_GROUP_ID_1)
+                                      .name("grp1")
+                                      .identifier("identifier1")
+                                      .accountId(TEST_ACCOUNT_ID)
+                                      .ng(true)
+                                      .delegateType(KUBERNETES)
+                                      .description("description")
+                                      .sizeDetails(DelegateSizeDetails.builder().size(DelegateSize.LARGE).build())
+                                      .tags(Sets.newHashSet("tag123", "tag456", "taggroup1"))
+                                      .build();
+    persistence.save(delegateGroup);
+
+    Optional<DelegateGroupDTO> delegateGroupFromDB =
+        delegateSetupService.listDelegateGroupTags(TEST_ACCOUNT_ID, null, null, "identifier1");
+
+    assertThat(delegateGroupFromDB).isPresent();
+    assertThat(delegateGroupFromDB.get().getIdentifier()).isEqualTo("identifier1");
+    assertThat(delegateGroupFromDB.get().getTags()).containsExactlyInAnyOrder("tag123", "tag456", "taggroup1");
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldAddDelegateGroupTags() {
+    DelegateGroup delegateGroup = DelegateGroup.builder()
+                                      .uuid(TEST_DELEGATE_GROUP_ID_1)
+                                      .name("grp1")
+                                      .identifier("identifier1")
+                                      .accountId(TEST_ACCOUNT_ID)
+                                      .ng(true)
+                                      .delegateType(KUBERNETES)
+                                      .description("description")
+                                      .sizeDetails(DelegateSizeDetails.builder().size(DelegateSize.LARGE).build())
+                                      .tags(Sets.newHashSet("tag123", "tag456"))
+                                      .build();
+    persistence.save(delegateGroup);
+    DelegateGroupTags delegateGroupTags = new DelegateGroupTags(Sets.newHashSet("  tag1  ", "tag2"));
+
+    Optional<DelegateGroupDTO> updatedDelegateGroup =
+        delegateSetupService.addDelegateGroupTags(TEST_ACCOUNT_ID, null, null, "identifier1", delegateGroupTags);
+
+    assertThat(updatedDelegateGroup).isPresent();
+    assertThat(updatedDelegateGroup.get().getIdentifier()).isEqualTo("identifier1");
+    assertThat(updatedDelegateGroup.get().getTags()).containsExactlyInAnyOrder("tag123", "tag456", "tag1", "tag2");
+  }
+
+  @Test
+  @Owner(developers = ARPIT)
+  @Category(UnitTests.class)
+  public void shouldUpdateDelegateGroupTags() {
+    DelegateGroup delegateGroup = DelegateGroup.builder()
+                                      .uuid(TEST_DELEGATE_GROUP_ID_1)
+                                      .name("grp1")
+                                      .identifier("identifier1")
+                                      .accountId(TEST_ACCOUNT_ID)
+                                      .ng(true)
+                                      .delegateType(KUBERNETES)
+                                      .description("description")
+                                      .sizeDetails(DelegateSizeDetails.builder().size(DelegateSize.LARGE).build())
+                                      .tags(Sets.newHashSet("tag123", "tag456", "taggroup1"))
+                                      .build();
+    persistence.save(delegateGroup);
+    DelegateGroupTags delegateGroupTags = new DelegateGroupTags(Sets.newHashSet("  tag123  ", "tag123", "  tag456"));
+    Optional<DelegateGroupDTO> updatedDelegateGroup =
+        delegateSetupService.updateDelegateGroupTags(TEST_ACCOUNT_ID, null, null, "identifier1", delegateGroupTags);
+
+    assertThat(updatedDelegateGroup).isPresent();
+    assertThat(updatedDelegateGroup.get().getIdentifier()).isEqualTo("identifier1");
+    assertThat(updatedDelegateGroup.get().getTags()).containsExactlyInAnyOrder("tag123", "tag456");
   }
 
   private void prepareInitialData() {
@@ -1171,11 +1261,6 @@ public class DelegateSetupServiceTest extends DelegateServiceTestBase {
 
     persistence.saveBatch(delegateGroups);
     persistence.saveBatch(delegates);
-
-    when(delegateCache.getDelegateGroup(TEST_ACCOUNT_ID, TEST_DELEGATE_GROUP_ID_1)).thenReturn(delegateGroups.get(0));
-    when(delegateCache.getDelegateGroup(TEST_ACCOUNT_ID, TEST_DELEGATE_GROUP_ID_2)).thenReturn(delegateGroups.get(1));
-    when(delegateCache.getDelegateGroup(TEST_ACCOUNT_ID, TEST_DELEGATE_GROUP_ID_3)).thenReturn(delegateGroups.get(2));
-    when(delegateCache.getDelegateGroup(TEST_ACCOUNT_ID, TEST_DELEGATE_GROUP_ID_4)).thenReturn(delegateGroups.get(3));
   }
 
   private List<Delegate> prepareDelegates() {

@@ -17,8 +17,8 @@ import io.harness.gitsync.interceptor.GitEntityFindInfoDTO;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
-import io.harness.servicenow.ServiceNowFieldAllowedValueNG;
 import io.harness.servicenow.ServiceNowFieldNG;
+import io.harness.servicenow.ServiceNowTemplate;
 import io.harness.servicenow.ServiceNowTicketTypeDTO;
 import io.harness.servicenow.ServiceNowTicketTypeNG;
 import io.harness.utils.IdentifierRefHelper;
@@ -28,11 +28,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
@@ -89,9 +86,9 @@ public class ServiceNowResource {
   }
 
   @GET
-  @Path("issueFields")
-  @ApiOperation(value = "Get fields for an issue type", nickname = "getServiceNowIssueFields")
-  public ResponseDTO<Map<String, List<ServiceNowFieldAllowedValueNG>>> getFieldsForIssueType(
+  @Path("metadata")
+  @ApiOperation(value = "Get ServiceNow metadata for ticketType", nickname = "getServiceNowIssueMetadata")
+  public ResponseDTO<List<ServiceNowFieldNG>> getMetadata(
       @NotNull @QueryParam("connectorRef") String serviceNowConnectorRef,
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgId,
@@ -99,10 +96,41 @@ public class ServiceNowResource {
       @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
     IdentifierRef connectorRef =
         IdentifierRefHelper.getIdentifierRef(serviceNowConnectorRef, accountId, orgId, projectId);
-    Map<String, List<ServiceNowFieldAllowedValueNG>> issueTypeFieldsMetadata = new HashMap<>();
-    issueTypeFieldsMetadata.put("impact",
-        new ArrayList<>(Arrays.asList(ServiceNowFieldAllowedValueNG.builder().id("1").name("1 - High").build())));
+    List<ServiceNowFieldNG> metadataResponse =
+        serviceNowResourceService.getMetadata(connectorRef, orgId, projectId, ticketType);
+    return ResponseDTO.newResponse(metadataResponse);
+  }
 
-    return ResponseDTO.newResponse(issueTypeFieldsMetadata);
+  @GET
+  @Path("applicationStatus")
+  @ApiOperation(value = "Check if harness application is added to ServiceNow instance",
+      nickname = "getServiceNowApplicationStatus")
+  public ResponseDTO<Boolean>
+  getApplicationStatus(@NotNull @QueryParam("connectorRef") String serviceNowConnectorRef,
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
+      @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgId,
+      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectId,
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+    IdentifierRef connectorRef =
+        IdentifierRefHelper.getIdentifierRef(serviceNowConnectorRef, accountId, orgId, projectId);
+    // mock response to disable template section
+    return ResponseDTO.newResponse(false);
+  }
+
+  @GET
+  @Path("getTemplate")
+  @ApiOperation(value = "Get ServiceNow template metadata", nickname = "getServiceNowTemplateMetadata")
+  public ResponseDTO<List<ServiceNowTemplate>> getTemplateMetadata(
+      @NotNull @QueryParam("connectorRef") String serviceNowConnectorRef,
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
+      @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgId,
+      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectId, @QueryParam("ticketType") String ticketType,
+      @QueryParam("templateName") String templateName, @QueryParam("limit") int limit, @QueryParam("offset") int offset,
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+    IdentifierRef connectorRef =
+        IdentifierRefHelper.getIdentifierRef(serviceNowConnectorRef, accountId, orgId, projectId);
+    List<ServiceNowTemplate> metadataResponse = serviceNowResourceService.getTemplateList(
+        connectorRef, orgId, projectId, limit, offset, templateName, ticketType);
+    return ResponseDTO.newResponse(metadataResponse);
   }
 }

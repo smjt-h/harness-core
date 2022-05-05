@@ -7,8 +7,11 @@
 
 package io.harness.cvng.analysis.services.impl;
 
+import static io.harness.cvng.CVConstants.BULK_OPERATION_THRESHOLD;
 import static io.harness.cvng.beans.DataSourceType.APP_DYNAMICS;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
+import static io.harness.persistence.HQuery.excludeAuthority;
+import static io.harness.rule.OwnerRule.DEEPAK_CHHIKARA;
 import static io.harness.rule.OwnerRule.KAMAL;
 import static io.harness.rule.OwnerRule.KANHAIYA;
 import static io.harness.rule.OwnerRule.PRAVEEN;
@@ -45,18 +48,15 @@ import io.harness.cvng.analysis.entities.TestLogAnalysisLearningEngineTask;
 import io.harness.cvng.analysis.services.api.DeploymentLogAnalysisService;
 import io.harness.cvng.analysis.services.api.LearningEngineTaskService;
 import io.harness.cvng.analysis.services.api.LogAnalysisService;
-import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.job.Sensitivity;
 import io.harness.cvng.beans.job.TestVerificationJobDTO;
 import io.harness.cvng.client.NextGenService;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.LogCVConfig;
-import io.harness.cvng.core.entities.SplunkCVConfig;
 import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.dashboard.entities.HeatMap;
-import io.harness.cvng.models.VerificationType;
 import io.harness.cvng.statemachine.beans.AnalysisInput;
 import io.harness.cvng.verificationjob.entities.TestVerificationJob;
 import io.harness.cvng.verificationjob.entities.VerificationJob;
@@ -70,6 +70,9 @@ import io.harness.rule.Owner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
+import com.mongodb.BasicDBObject;
+import com.mongodb.BulkWriteOperation;
+import com.mongodb.DBCollection;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -78,6 +81,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -112,7 +119,6 @@ public class LogAnalysisServiceImplTest extends CvNextGenTestBase {
     accountId = generateUuid();
     instant = Instant.parse("2020-07-27T10:44:11.000Z");
     verificationTaskId = verificationTaskService.getServiceGuardVerificationTaskId(cvConfig.getAccountId(), cvConfigId);
-    FieldUtils.writeField(cvConfigService, "nextGenService", nextGenService, true);
   }
 
   @Test
@@ -201,6 +207,91 @@ public class LogAnalysisServiceImplTest extends CvNextGenTestBase {
     assertThat(patterns).isNotNull();
     assertThat(patterns.size()).isEqualTo(1);
     assertThat(patterns.get(0).getText()).isEqualTo("exception message");
+  }
+
+  @Test
+  @Owner(developers = DEEPAK_CHHIKARA)
+  @Category(UnitTests.class)
+  public void stressTestLogAnalysisCluster() {
+    Instant start = Instant.now();
+    Instant end = start.plus(5000, ChronoUnit.SECONDS);
+    List<LogAnalysisCluster> analysisClusters = buildStressAnalysisClusters(start, end);
+    hPersistence.saveBatch(analysisClusters);
+    List<LogAnalysisCluster> logAnalysisClusterList =
+        hPersistence.createQuery(LogAnalysisCluster.class, excludeAuthority).asList();
+    updateLogAnalysisCluster(logAnalysisClusterList, 10);
+    long startTime1 = System.nanoTime();
+    hPersistence.save(logAnalysisClusterList);
+    long endTime1 = System.nanoTime();
+    List<LogAnalysisCluster> updatedLogAnalysisClusterList =
+        hPersistence.createQuery(LogAnalysisCluster.class, excludeAuthority).asList();
+    Map<String, LogAnalysisCluster> logAnalysisClusterMap =
+        logAnalysisClusterList.stream().collect(Collectors.toMap(LogAnalysisCluster::getUuid, Function.identity()));
+    updatedLogAnalysisClusterList = hPersistence.createQuery(LogAnalysisCluster.class, excludeAuthority).asList();
+    for (LogAnalysisCluster logAnalysisCluster : updatedLogAnalysisClusterList) {
+      assertThat(logAnalysisCluster).isEqualTo(logAnalysisClusterMap.get(logAnalysisCluster.getUuid()));
+    }
+    updateLogAnalysisCluster(logAnalysisClusterList, 10.0);
+    final DBCollection collection = hPersistence.getCollection(LogAnalysisCluster.class);
+    BulkWriteOperation bulkWriteOperation = collection.initializeUnorderedBulkOperation();
+    int numberOfBulkOperations = 0;
+    long startTime2 = System.nanoTime();
+    for (LogAnalysisCluster logAnalysisCluster : logAnalysisClusterList) {
+      bulkWriteOperation
+          .find(hPersistence.createQuery(LogAnalysisCluster.class)
+                    .filter(LogAnalysisCluster.UUID_KEY, logAnalysisCluster.getUuid())
+                    .getQueryObject())
+          .updateOne(new BasicDBObject(CVConstants.SET_KEY,
+              new BasicDBObject(LogAnalysisClusterKeys.frequencyTrend, logAnalysisCluster.getFrequencyTrend())));
+      numberOfBulkOperations++;
+      if (numberOfBulkOperations > BULK_OPERATION_THRESHOLD) {
+        bulkWriteOperation.execute();
+        numberOfBulkOperations = 0;
+        bulkWriteOperation = collection.initializeUnorderedBulkOperation();
+      }
+    }
+    if (numberOfBulkOperations > 0) {
+      bulkWriteOperation.execute();
+    }
+    long endTime2 = System.nanoTime();
+    logAnalysisClusterMap =
+        logAnalysisClusterList.stream().collect(Collectors.toMap(LogAnalysisCluster::getUuid, Function.identity()));
+    updatedLogAnalysisClusterList = hPersistence.createQuery(LogAnalysisCluster.class, excludeAuthority).asList();
+    for (LogAnalysisCluster logAnalysisCluster : updatedLogAnalysisClusterList) {
+      assertThat(logAnalysisCluster).isEqualTo(logAnalysisClusterMap.get(logAnalysisCluster.getUuid()));
+    }
+    assertThat(endTime1 - startTime1).isGreaterThan(endTime2 - startTime2);
+  }
+
+  private void updateLogAnalysisCluster(List<LogAnalysisCluster> analysisClusters, double riskScore) {
+    for (LogAnalysisCluster logAnalysisCluster : analysisClusters) {
+      for (Frequency frequency : logAnalysisCluster.getFrequencyTrend()) {
+        frequency.setRiskScore(riskScore);
+      }
+    }
+  }
+
+  private List<LogAnalysisCluster> buildStressAnalysisClusters(Instant start, Instant end) {
+    List<LogAnalysisCluster> clusters = new ArrayList<>();
+    long label = 12345L;
+    Random r = new Random();
+    for (long time = start.getEpochSecond(); time < end.getEpochSecond(); time++) {
+      List<Frequency> frequencyList = new ArrayList<>();
+      for (int i = 0; i < 100; i++) {
+        frequencyList.add(Frequency.builder().count(i).timestamp(12353453L).riskScore(r.nextDouble()).build());
+      }
+      LogAnalysisCluster cluster = LogAnalysisCluster.builder()
+                                       .label(label)
+                                       .isEvicted(false)
+                                       .verificationTaskId(verificationTaskId)
+                                       .analysisStartTime(start)
+                                       .analysisEndTime(end)
+                                       .text("exception message")
+                                       .frequencyTrend(frequencyList)
+                                       .build();
+      clusters.add(cluster);
+    }
+    return clusters;
   }
 
   @Test
@@ -544,25 +635,7 @@ public class LogAnalysisServiceImplTest extends CvNextGenTestBase {
   }
 
   private CVConfig createCVConfig() {
-    SplunkCVConfig cvConfig = new SplunkCVConfig();
-    fillCommon(cvConfig);
-    cvConfig.setQuery("exception");
-    cvConfig.setServiceInstanceIdentifier(generateUuid());
-    return cvConfig;
-  }
-
-  private void fillCommon(CVConfig cvConfig) {
-    cvConfig.setVerificationType(VerificationType.LOG);
-    cvConfig.setAccountId(generateUuid());
-    cvConfig.setConnectorIdentifier(generateUuid());
-    cvConfig.setServiceIdentifier(generateUuid());
-    cvConfig.setEnvIdentifier("prod" + generateUuid());
-    cvConfig.setProjectIdentifier(generateUuid());
-    cvConfig.setOrgIdentifier(generateUuid());
-    cvConfig.setIdentifier(generateUuid());
-    cvConfig.setMonitoringSourceName(generateUuid());
-    cvConfig.setCategory(CVMonitoringCategory.PERFORMANCE);
-    cvConfig.setProductName(generateUuid());
+    return builderFactory.splunkCVConfigBuilder().build();
   }
 
   private void fillCommon(LearningEngineTask learningEngineTask, LearningEngineTaskType analysisType) {
@@ -572,6 +645,7 @@ public class LogAnalysisServiceImplTest extends CvNextGenTestBase {
     learningEngineTask.setFailureUrl("failure-url");
     learningEngineTask.setAnalysisStartTime(instant.minus(Duration.ofMinutes(10)));
     learningEngineTask.setAnalysisEndTime(instant);
+    learningEngineTask.setPickedAt(instant.plus(Duration.ofMinutes(2)));
   }
 
   private VerificationJob newTestVerificationJob() {

@@ -70,6 +70,7 @@ clusterName: ""
 deploymentClusterName: ""
 bugsnagApiKey: ""
 numberOfRemindersBeforeAccountDeletion: 3
+delegateMtlsSubdomain: "delegate.local.harness.io"
 
 jobsFrequencyConfig:
   accountLicenseCheckJobFrequencyInMinutes: 60
@@ -295,6 +296,9 @@ mongo:
     mongoSSLEnabled: false
     mongoTrustStorePath:
     mongoTrustStorePassword:
+  analyticNodeConfig:
+    mongoTagKey: none
+    mongoTagValue: none
 
 events-mongo:
   uri: mongodb://localhost:27017/events
@@ -322,7 +326,7 @@ deployMode: KUBERNETES
 deployVariant: SAAS
 envPath: ""
 
-scmVersion: e2904e7
+scmVersion: 98fc345b
 
 ngAuthUIEnabled: false
 
@@ -685,9 +689,9 @@ iteratorsConfig:
   perpetualTaskAssignmentIteratorConfig:
     threadPoolSize: ${PERPETUAL_TASK_ASSIGNMENT_ITERATOR_THREAD_COUNT:-5}
   delegateTaskRebroadcastIteratorConfig:
-    threadPoolSize: ${DELEGATE_TASK_REBROADCAST_ITERATOR_THREAD_COUNT:-5}
+    threadPoolSize: ${DELEGATE_TASK_REBROADCAST_ITERATOR_THREAD_COUNT:-2}
   failDelegateTaskIteratorConfig:
-      threadPoolSize: ${FAIL_DELEGATE_TASK_ITERATOR_THREAD_COUNT:-5}
+      threadPoolSize: ${FAIL_DELEGATE_TASK_ITERATOR_THREAD_COUNT:-2}
 
 disableDelegateMgmtInManager: false
 

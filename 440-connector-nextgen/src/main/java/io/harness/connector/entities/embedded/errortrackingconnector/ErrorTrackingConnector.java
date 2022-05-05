@@ -29,7 +29,6 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("io.harness.connector.entities.embedded.errortrackingconnector.ErrorTrackingConnector")
 @OwnedBy(CV)
 public class ErrorTrackingConnector extends Connector {
-  private String url;
-  private String sid;
-  private String apiKeyRef;
+  String url;
+  String apiKeyRef;
 }

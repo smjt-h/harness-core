@@ -88,7 +88,6 @@ import io.github.resilience4j.retry.RetryConfig;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -96,7 +95,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -150,7 +148,7 @@ public class ProjectServiceImpl implements ProjectService {
     validateCreateProjectRequest(accountIdentifier, orgIdentifier, projectDTO);
     Project project = toProject(projectDTO);
 
-    project.setModules(Arrays.asList(ModuleType.values()));
+    project.setModules(ModuleType.getModules());
     project.setOrgIdentifier(orgIdentifier);
     project.setAccountIdentifier(accountIdentifier);
     try {
@@ -164,7 +162,7 @@ public class ProjectServiceImpl implements ProjectService {
       setupProject(Scope.of(accountIdentifier, orgIdentifier, projectDTO.getIdentifier()));
       log.info(String.format("Project with identifier %s and orgIdentifier %s was successfully created",
           project.getIdentifier(), projectDTO.getOrgIdentifier()));
-      CompletableFuture.runAsync(() -> instrumentationHelper.sendProjectCreateEvent(createdProject, accountIdentifier));
+      instrumentationHelper.sendProjectCreateEvent(createdProject, accountIdentifier);
       return createdProject;
     } catch (DuplicateKeyException ex) {
       throw new DuplicateFieldException(
@@ -551,9 +549,7 @@ public class ProjectServiceImpl implements ProjectService {
             projectIdentifier, orgIdentifier));
         outboxService.save(
             new ProjectDeleteEvent(deletedProject.getAccountIdentifier(), ProjectMapper.writeDTO(deletedProject)));
-
-        CompletableFuture.runAsync(
-            () -> instrumentationHelper.sendProjectDeleteEvent(deletedProject, accountIdentifier));
+        instrumentationHelper.sendProjectDeleteEvent(deletedProject, accountIdentifier);
       } else {
         log.error(String.format(
             "Project with identifier %s and orgIdentifier %s could not be deleted", projectIdentifier, orgIdentifier));

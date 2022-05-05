@@ -13,6 +13,7 @@ import static io.harness.rule.OwnerRule.UTSAV;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
@@ -59,12 +60,13 @@ public class CEAwsConnectorValidatorTest extends CategoryTest {
   @Mock CEConnectorsHelper ceConnectorsHelper;
   @Spy @InjectMocks private CEAWSConnectorValidator connectorValidator;
 
-  private static final String REASON = "implicitDeny";
   private static final String ACTION = "s3:PutObject";
+  private static final String REASON = "Action: s3:PutObject not allowed on Resource: *";
   private static final String RESOURCE = "*";
   private static final String MESSAGE = "message";
   private static final String CUSTOMER_BILLING_DATA_DEV = "customer-billing-data-dev";
   private static final EvaluationResult DENY_EVALUATION_RESULT = new EvaluationResult();
+  private static final String MESSAGE_SUGGESTION = "Review AWS access permissions as per the documentation.";
 
   private CEAwsConnectorDTO ceAwsConnectorDTO;
   private ConnectorResponseDTO ceawsConnectorResponseDTO;
@@ -82,8 +84,8 @@ public class CEAwsConnectorValidatorTest extends CategoryTest {
     ceawsConnectorResponseDTO = AWSConnectorTestHelper.getCEAwsConnectorResponseDTO(ceAwsConnectorDTO);
     doReturn(awsConfig).when(ceNextGenConfiguration).getAwsConfig();
     doReturn(null).when(connectorValidator).getCredentialProvider(any());
+    doNothing().when(connectorValidator).validateIfBucketAndFilesPresent(any(), any(), any(), any());
     when(ceConnectorsHelper.isDataSyncCheck(any(), any(), any(), any())).thenReturn(true);
-    doReturn(Collections.emptyList()).when(connectorValidator).validateIfBucketIsPresent(any(), any(), any());
     doReturn(Collections.singletonList(new EvaluationResult().withEvalDecision("allowed")))
         .when(awsClient)
         .simulatePrincipalPolicy(any(), any(), any(), any());
@@ -139,7 +141,7 @@ public class CEAwsConnectorValidatorTest extends CategoryTest {
     assertThat(result.getTestedAt()).isLessThanOrEqualTo(Instant.now().toEpochMilli());
 
     assertThat(result.getErrors().get(0).getReason()).isEqualTo(REASON);
-    assertThat(result.getErrors().get(0).getMessage()).contains(ACTION).contains(RESOURCE);
+    assertThat(result.getErrors().get(0).getMessage()).isEqualTo(MESSAGE_SUGGESTION);
     assertThat(result.getErrors().get(0).getCode()).isEqualTo(403);
   }
 
@@ -175,7 +177,8 @@ public class CEAwsConnectorValidatorTest extends CategoryTest {
 
     assertThat(result.getStatus()).isEqualTo(ConnectivityStatus.FAILURE);
     assertThat(result.getErrors()).hasSize(1);
-    assertThat(result.getErrors().get(0).getReason()).isEqualTo("Report Not Present");
+    assertThat(result.getErrors().get(0).getReason())
+        .isEqualTo("Can't access cost and usage report: report_name_utsav");
     assertThat(result.getTestedAt()).isLessThanOrEqualTo(Instant.now().toEpochMilli());
   }
 
@@ -217,10 +220,11 @@ public class CEAwsConnectorValidatorTest extends CategoryTest {
     assertThat(result.getStatus()).isEqualTo(ConnectivityStatus.FAILURE);
     assertThat(result.getErrors()).isNotEmpty();
     assertThat(result.getTestedAt()).isLessThanOrEqualTo(Instant.now().toEpochMilli());
+    assertThat(result.getErrors().get(0).getMessage()).isEqualTo(MESSAGE_SUGGESTION);
+
+    assertThat(result.getErrors().get(0).getCode()).isEqualTo(403);
 
     assertThat(result.getErrors().get(0).getReason()).isEqualTo(REASON);
-    assertThat(result.getErrors().get(0).getMessage()).contains(ACTION).contains(RESOURCE);
-    assertThat(result.getErrors().get(0).getCode()).isEqualTo(403);
   }
 
   @Test
@@ -252,7 +256,7 @@ public class CEAwsConnectorValidatorTest extends CategoryTest {
 
     assertThat(result.getErrors()).hasSize(1);
     assertThat(result.getErrors().get(0).getReason()).isEqualTo(REASON);
-    assertThat(result.getErrors().get(0).getMessage()).contains(ACTION).contains(RESOURCE);
+    assertThat(result.getErrors().get(0).getMessage()).isEqualTo(MESSAGE_SUGGESTION);
     assertThat(result.getErrors().get(0).getCode()).isEqualTo(403);
   }
 
@@ -264,10 +268,13 @@ public class CEAwsConnectorValidatorTest extends CategoryTest {
         .when(awsClient)
         .simulatePrincipalPolicy(any(), any(), any(), any());
     ConnectorValidationResult result = connectorValidator.validate(ceawsConnectorResponseDTO, null);
-
+    System.out.println(result.getErrorSummary());
     assertThat(result.getStatus()).isEqualTo(ConnectivityStatus.FAILURE);
-    assertThat(result.getErrorSummary()).contains("iam:SimulatePrincipalPolicy");
+    assertThat(result.getErrors().get(0).getMessage())
+        .contains(
+            "Review the Cost and Usage report settings in your AWS account. For more information, refer to the documentation.");
     assertThat(result.getErrors()).hasSize(1);
-    assertThat(result.getErrors().get(0).getReason()).isEqualTo(MESSAGE);
+    assertThat(result.getErrors().get(0).getReason())
+        .isEqualTo("Can't access cost and usage report: report_name_utsav");
   }
 }

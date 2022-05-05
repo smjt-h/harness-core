@@ -17,7 +17,9 @@ import io.harness.cvng.migration.list.AddMonitoredServiceToActivityMigration;
 import io.harness.cvng.migration.list.AddMonitoredServiceToCVConfigMigration;
 import io.harness.cvng.migration.list.AddMonitoredServiceToChangeSourceMigration;
 import io.harness.cvng.migration.list.AddMonitoredServiceToHeatMapMigration;
+import io.harness.cvng.migration.list.AddMonitoredServiceToWebhookMigration;
 import io.harness.cvng.migration.list.AddMonitoringSourcesToVerificationJobMigration;
+import io.harness.cvng.migration.list.AddTaskInfoToVerificationTask;
 import io.harness.cvng.migration.list.AppDCustomMetricForExistingProjects;
 import io.harness.cvng.migration.list.CVNGBaseMigration;
 import io.harness.cvng.migration.list.CleanUpMonitoringSourcePerpetualTask;
@@ -26,6 +28,7 @@ import io.harness.cvng.migration.list.CleanupDeprecatedDocuments;
 import io.harness.cvng.migration.list.CreateDefaultVerificationJobsMigration;
 import io.harness.cvng.migration.list.CustomHealthCustomPackForExistingProjects;
 import io.harness.cvng.migration.list.DeleteInvalidOrchestratorsMigration;
+import io.harness.cvng.migration.list.DeleteOldAnalysisOrchestratorMigration;
 import io.harness.cvng.migration.list.DeleteOrchestratorWithInvalidVerificationTaskId;
 import io.harness.cvng.migration.list.DeleteSLISLOMigration;
 import io.harness.cvng.migration.list.EnableExistingCVConfigs;
@@ -99,7 +102,11 @@ public class CVNGBackgroundMigrationList {
         .add(Pair.of(39, AddMonitoredServiceToActivityMigration.class))
         .add(Pair.of(40, AddMetricIdentifierInCVConfigsAndMetricPacks.class))
         .add(Pair.of(41, AddMetricIdentifierToTimeSeriesThreshold.class))
-
+        .add(Pair.of(42, AddMonitoredServiceToWebhookMigration.class))
+        .add(Pair.of(43, AddTaskInfoToVerificationTask.class))
+        .add(Pair.of(44, DeleteOldAnalysisOrchestratorMigration.class))
+        .add(Pair.of(45, AddMetricIdentifierInCVConfigsAndMetricPacks.class))
+        .add(Pair.of(46, AddMetricIdentifierToTimeSeriesThreshold.class))
         .build();
   }
 }

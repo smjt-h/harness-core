@@ -14,6 +14,8 @@ import static io.harness.context.ContextElementType.CLOUD_FORMATION_ROLLBACK;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.delegate.beans.TaskData.DEFAULT_ASYNC_CALL_TIMEOUT;
+import static io.harness.delegate.task.cloudformation.CloudformationBaseHelperImpl.CLOUDFORMATION_STACK_CREATE_BODY;
+import static io.harness.delegate.task.cloudformation.CloudformationBaseHelperImpl.CLOUDFORMATION_STACK_CREATE_URL;
 import static io.harness.validation.Validator.notNullCheck;
 
 import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
@@ -28,6 +30,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.Cd1SetupFields;
 import io.harness.beans.DelegateTask;
+import io.harness.beans.FeatureName;
 import io.harness.delegate.beans.TaskData;
 import io.harness.exception.InvalidRequestException;
 import io.harness.persistence.HIterator;
@@ -62,6 +65,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.Sort;
 
 @Slf4j
@@ -172,12 +176,15 @@ public class CloudFormationRollbackStackState extends CloudFormationState {
     ExecutionContextImpl executionContext = (ExecutionContextImpl) context;
     String entityId = getStackNameSuffix(executionContext, provisionerId);
 
-    try (HIterator<CloudFormationRollbackConfig> configIterator =
-             new HIterator(wingsPersistence.createQuery(CloudFormationRollbackConfig.class)
-                               .filter(CloudFormationRollbackConfigKeys.appId, context.getAppId())
-                               .filter(CloudFormationRollbackConfigKeys.entityId, entityId)
-                               .order(Sort.descending(CloudFormationRollbackConfigKeys.createdAt))
-                               .fetch())) {
+    Query<CloudFormationRollbackConfig> getRollbackConfig =
+        wingsPersistence.createQuery(CloudFormationRollbackConfig.class)
+            .filter(CloudFormationRollbackConfigKeys.appId, context.getAppId())
+            .filter(CloudFormationRollbackConfigKeys.entityId, entityId);
+    if (featureFlagService.isEnabled(FeatureName.CF_ROLLBACK_CONFIG_FILTER, context.getAccountId())) {
+      getRollbackConfig.filter(CloudFormationRollbackConfigKeys.awsConfigId, fetchResolvedAwsConfigId(context));
+    }
+    getRollbackConfig.order(Sort.descending(CloudFormationRollbackConfigKeys.createdAt)).fetch();
+    try (HIterator<CloudFormationRollbackConfig> configIterator = new HIterator(getRollbackConfig.fetch())) {
       if (!configIterator.hasNext()) {
         /**
          * No config found.
@@ -228,12 +235,12 @@ public class CloudFormationRollbackStackState extends CloudFormationState {
       setAmazonClientSDKDefaultBackoffStrategyIfExists(context, awsConfig);
       String roleArnRendered = executionContext.renderExpression(configParameter.getCloudFormationRoleArn());
       CloudFormationCreateStackRequestBuilder builder = CloudFormationCreateStackRequest.builder().awsConfig(awsConfig);
-      if (CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_URL.equals(configParameter.getCreateType())) {
-        builder.createType(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_URL);
+      if (CLOUDFORMATION_STACK_CREATE_URL.equals(configParameter.getCreateType())) {
+        builder.createType(CLOUDFORMATION_STACK_CREATE_URL);
         builder.data(configParameter.getUrl());
       } else {
         // This handles both the Git case and template body. We don't need to checkout again.
-        builder.createType(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_BODY);
+        builder.createType(CLOUDFORMATION_STACK_CREATE_BODY);
         builder.data(configParameter.getBody());
       }
 
@@ -352,8 +359,7 @@ public class CloudFormationRollbackStackState extends CloudFormationState {
               .build();
     } else {
       CloudFormationCreateStackRequestBuilder builder = CloudFormationCreateStackRequest.builder();
-      builder.createType(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_BODY)
-          .data(stackElement.getOldStackBody());
+      builder.createType(CLOUDFORMATION_STACK_CREATE_BODY).data(stackElement.getOldStackBody());
       builder.stackNameSuffix(stackElement.getStackNameSuffix())
           .customStackName(stackElement.getCustomStackName())
           .region(stackElement.getRegion())

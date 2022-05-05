@@ -14,7 +14,7 @@
 accountId: ${accountId}
 
 # Secret identifier associated with the account
-accountSecret: ${accountSecret}
+delegateToken: ${delegateToken}
 
 # Short 6 character identifier of the account
 accountIdShort: ${kubernetesAccountLabel}
@@ -33,10 +33,12 @@ managerHostAndPort: ${managerHostAndPort}
 <#if isImmutable == "false">
 watcherStorageUrl: ${watcherStorageUrl}
 watcherCheckLocation: ${watcherCheckLocation}
-remoteWatcherUrlCdn: ${remoteWatcherUrlCdn}
 delegateStorageUrl: ${delegateStorageUrl}
 delegateCheckLocation: ${delegateCheckLocation}
 useCdn: ${useCdn}
-cdnUrl: ${cdnUrl}
 jreVersion: ${jreVersion}
+<#if useCdn == "true">
+cdnUrl: ${cdnUrl}
+remoteWatcherUrlCdn: ${remoteWatcherUrlCdn}
+</#if>
 </#if>

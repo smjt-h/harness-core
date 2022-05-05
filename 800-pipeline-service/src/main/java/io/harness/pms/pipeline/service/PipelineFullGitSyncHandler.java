@@ -40,6 +40,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 public class PipelineFullGitSyncHandler {
   @Inject private PMSPipelineService pipelineService;
   @Inject private EntityDetailRestToProtoMapper entityDetailRestToProtoMapper;
+  @Inject private PMSPipelineServiceHelper pipelineServiceHelper;
 
   public List<FileChange> getFileChangesForFullSync(ScopeDetails scopeDetails) {
     List<FileChange> fileChanges = new LinkedList<>();
@@ -48,7 +49,7 @@ public class PipelineFullGitSyncHandler {
     String accountId = scope.getAccountId();
     String orgId = StringValueUtils.getStringFromStringValue(scope.getOrgId());
     String projectId = StringValueUtils.getStringFromStringValue(scope.getProjectId());
-    Criteria criteria = pipelineService.formCriteria(accountId, orgId, projectId, null, null, false, null, null);
+    Criteria criteria = getCriteriaForFullSync(accountId, orgId, projectId);
 
     Page<PipelineEntity> currentPage = null;
     do {
@@ -69,6 +70,11 @@ public class PipelineFullGitSyncHandler {
 
     } while (currentPage.hasNext());
     return fileChanges;
+  }
+
+  private Criteria getCriteriaForFullSync(String accountId, String orgId, String projectId) {
+    Criteria criteria = pipelineServiceHelper.formCriteria(accountId, orgId, projectId, null, null, false, null, null);
+    return criteria.and(PipelineEntityKeys.yamlGitConfigRef).is(null);
   }
 
   private String getFilePath(String identifier) {

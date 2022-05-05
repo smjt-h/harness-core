@@ -23,11 +23,14 @@ import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
+import io.harness.pms.yaml.YamlNode;
 import io.harness.yaml.YamlSchemaTypes;
+import io.harness.yaml.core.VariableExpression;
 import io.harness.yaml.extended.ci.container.ContainerResource;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModelProperty;
 import java.beans.ConstructorProperties;
@@ -49,7 +52,12 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(CI)
 @RecasterAlias("io.harness.beans.steps.stepinfo.UploadToS3StepInfo")
 public class UploadToS3StepInfo implements PluginCompatibleStep, WithConnectorRef {
-  public static final int DEFAULT_RETRY = 1;
+  @JsonProperty(YamlNode.UUID_FIELD_NAME)
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
+  @ApiModelProperty(hidden = true)
+  private String uuid;
+
+  @VariableExpression(skipVariableExpression = true) public static final int DEFAULT_RETRY = 1;
 
   @JsonIgnore public static final TypeInfo typeInfo = TypeInfo.builder().stepInfoType(CIStepInfoType.UPLOAD_S3).build();
   @JsonIgnore
@@ -60,7 +68,7 @@ public class UploadToS3StepInfo implements PluginCompatibleStep, WithConnectorRe
 
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) private String identifier;
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) private String name;
-  @Min(MIN_RETRY) @Max(MAX_RETRY) private int retry;
+  @VariableExpression(skipVariableExpression = true) @Min(MIN_RETRY) @Max(MAX_RETRY) private int retry;
 
   @NotNull @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> connectorRef;
   private ContainerResource resources;
@@ -68,18 +76,19 @@ public class UploadToS3StepInfo implements PluginCompatibleStep, WithConnectorRe
 
   // plugin settings
   @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> endpoint;
-  @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> region;
+  @NotNull @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> region;
   @NotNull @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> bucket;
   @NotNull @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> sourcePath;
   @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> target;
+  @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> stripPrefix;
 
   @Builder
   @ConstructorProperties({"identifier", "name", "retry", "connectorRef", "resources", "endpoint", "region", "bucket",
-      "sourcePath", "target", "runAsUser"})
+      "sourcePath", "target", "runAsUser", "stripPrefix"})
   public UploadToS3StepInfo(String identifier, String name, Integer retry, ParameterField<String> connectorRef,
       ContainerResource resources, ParameterField<String> endpoint, ParameterField<String> region,
       ParameterField<String> bucket, ParameterField<String> sourcePath, ParameterField<String> target,
-      ParameterField<Integer> runAsUser) {
+      ParameterField<Integer> runAsUser, ParameterField<String> stripPrefix) {
     this.identifier = identifier;
     this.name = name;
     this.retry = Optional.ofNullable(retry).orElse(DEFAULT_RETRY);
@@ -92,6 +101,7 @@ public class UploadToS3StepInfo implements PluginCompatibleStep, WithConnectorRe
     this.sourcePath = sourcePath;
     this.target = target;
     this.runAsUser = runAsUser;
+    this.stripPrefix = stripPrefix;
   }
 
   @Override

@@ -12,11 +12,18 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.KeyValuePair;
 import io.harness.encryption.Scope;
 import io.harness.exception.ArtifactServerException;
+import io.harness.exception.ArtifactoryRegistryException;
 import io.harness.exception.ArtifactoryServerException;
 import io.harness.exception.AuthenticationException;
 import io.harness.exception.AuthorizationException;
+import io.harness.exception.AzureAKSException;
+import io.harness.exception.AzureAuthenticationException;
+import io.harness.exception.AzureConfigException;
+import io.harness.exception.AzureContainerRegistryException;
+import io.harness.exception.AzureServerException;
 import io.harness.exception.ConnectException;
 import io.harness.exception.ContextException;
+import io.harness.exception.DataProcessingException;
 import io.harness.exception.DelegateErrorHandlerException;
 import io.harness.exception.DelegateNotAvailableException;
 import io.harness.exception.EngineExpressionEvaluationException;
@@ -39,12 +46,16 @@ import io.harness.exception.KubernetesApiTaskException;
 import io.harness.exception.KubernetesCliTaskRuntimeException;
 import io.harness.exception.KubernetesTaskException;
 import io.harness.exception.KubernetesYamlException;
+import io.harness.exception.NexusRegistryException;
+import io.harness.exception.NexusServerException;
 import io.harness.exception.SecretNotFoundException;
 import io.harness.exception.ServiceNowException;
 import io.harness.exception.ShellExecutionException;
 import io.harness.exception.TerraformCommandExecutionException;
 import io.harness.exception.UnresolvedExpressionsException;
 import io.harness.exception.VerificationOperationException;
+import io.harness.exception.runtime.serverless.ServerlessAwsLambdaRuntimeException;
+import io.harness.exception.runtime.serverless.ServerlessCommandExecutionException;
 import io.harness.logging.LogLevel;
 import io.harness.security.PrincipalContextData;
 import io.harness.security.SimpleEncryption;
@@ -56,6 +67,7 @@ import io.harness.serializer.KryoRegistrar;
 import io.harness.tasks.BinaryResponseData;
 import io.harness.tasks.FailureResponseData;
 
+import software.wings.beans.NameValuePair;
 import software.wings.beans.appmanifest.StoreType;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -77,6 +89,9 @@ public class CommonsKryoRegistrar implements KryoRegistrar {
 
     // Promoted Classes
     kryo.register(ArtifactoryServerException.class, 7214);
+    kryo.register(ArtifactoryRegistryException.class, 7217);
+    kryo.register(NexusServerException.class, 7218);
+    kryo.register(NexusRegistryException.class, 7246);
     kryo.register(ArtifactServerException.class, 7244);
     kryo.register(InvalidArtifactServerException.class, 7250);
     kryo.register(ShellExecutionException.class, 7473);
@@ -118,5 +133,15 @@ public class CommonsKryoRegistrar implements KryoRegistrar {
     kryo.register(TerraformCommandExecutionException.class, 980018);
     kryo.register(SimpleEncryption.class, 980019);
     kryo.register(KubernetesCliTaskRuntimeException.class, 980020);
+
+    kryo.register(AzureServerException.class, 980021);
+    kryo.register(AzureAuthenticationException.class, 980022);
+    kryo.register(AzureConfigException.class, 980023);
+    kryo.register(AzureContainerRegistryException.class, 980024);
+    kryo.register(DataProcessingException.class, 980025);
+    kryo.register(NameValuePair.class, 5226);
+    kryo.register(ServerlessAwsLambdaRuntimeException.class, 980026);
+    kryo.register(ServerlessCommandExecutionException.class, 980027);
+    kryo.register(AzureAKSException.class, 980028);
   }
 }

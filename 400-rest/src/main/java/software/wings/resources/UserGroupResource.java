@@ -131,6 +131,21 @@ public class UserGroupResource {
   }
 
   /**
+   * Gets the count of user groups associated with an account ID
+   *
+   * @param accountId   the account id
+   * @return the rest response
+   */
+  @GET
+  @Path("count")
+  @Timed
+  @AuthRule(permissionType = USER_PERMISSION_READ)
+  @ExceptionMetered
+  public RestResponse<Long> getCountOfUserGroups(@QueryParam("accountId") String accountId) {
+    return new RestResponse<>(userGroupService.getCountOfUserGroups(accountId));
+  }
+
+  /**
    * Clone the user group with the given id and a new name
    * @param accountId The account it
    * @param userGroupId The user group id to clone
@@ -303,7 +318,7 @@ public class UserGroupResource {
       throw new InvalidRequestException("Cannot Delete Group Imported From SCIM", WingsException.GROUP);
     } else if (!(userGroup.getParents().isEmpty())) {
       throw new InvalidRequestException(
-          "This userGroup is being referenced in approval step in PIPELINE(s). Please make sure to remove the references to delete this userGroup.");
+          "This userGroup is being referenced in either approval step/stage or notification strategy. Please make sure to remove the references to delete this userGroup.");
     }
     return new RestResponse<>(userGroupService.delete(accountId, userGroupId, false));
   }
@@ -337,6 +352,7 @@ public class UserGroupResource {
   @AuthRule(permissionType = LOGGED_IN)
   public RestResponse<PageResponse<UserGroup>> listForApprovals(@QueryParam("accountId") @NotEmpty String accountId) {
     PageRequest<UserGroup> pageRequest = PageRequestBuilder.aPageRequest()
+                                             .withLimit(Long.toString(userGroupService.getCountOfUserGroups(accountId)))
                                              .addFilter("accountId", Operator.EQ, accountId)
                                              .addFieldsIncluded("_id", "name", "notificationSettings")
                                              .build();

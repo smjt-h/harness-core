@@ -10,18 +10,22 @@ package io.harness.delegate.configuration;
 import static io.harness.annotations.dev.HarnessTeam.DEL;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.event.client.impl.EventPublisherConstants;
 
+import java.util.Optional;
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 
 @Data
 @Builder
+@ToString
 @OwnedBy(DEL)
 public class DelegateConfiguration {
   private String accountId;
-  private String accountSecret;
-  private String delegateToken;
+  @ToString.Exclude private String accountSecret;
+  @ToString.Exclude private String delegateToken;
   private String managerUrl;
   private String verificationServiceUrl;
   private String cvNextGenUrl;
@@ -66,5 +70,9 @@ public class DelegateConfiguration {
       return accountSecret;
     }
     return delegateToken;
+  }
+
+  public String getQueueFilePath() {
+    return Optional.ofNullable(queueFilePath).orElse(EventPublisherConstants.DEFAULT_QUEUE_FILE_PATH);
   }
 }

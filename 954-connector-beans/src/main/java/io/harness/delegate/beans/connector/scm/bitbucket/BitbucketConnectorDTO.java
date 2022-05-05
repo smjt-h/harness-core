@@ -16,6 +16,9 @@ import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.scm.GitAuthType;
 import io.harness.delegate.beans.connector.scm.GitConnectionType;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
+import io.harness.git.GitClientHelper;
+import io.harness.gitsync.beans.GitRepositoryDTO;
+import io.harness.utils.FilePathUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -87,5 +90,24 @@ public class BitbucketConnectorDTO extends ConnectorConfigDTO implements ScmConn
   @JsonIgnore
   public ConnectorType getConnectorType() {
     return ConnectorType.BITBUCKET;
+  }
+
+  @Override
+  public String getGitConnectionUrl(String repoName) {
+    if (connectionType == GitConnectionType.REPO) {
+      return getUrl();
+    }
+    return FilePathUtils.addEndingSlashIfMissing(getUrl()) + repoName;
+  }
+
+  @Override
+  public GitRepositoryDTO getGitRepositoryDetails() {
+    if (GitConnectionType.REPO.equals(connectionType)) {
+      return GitRepositoryDTO.builder()
+          .name(GitClientHelper.getGitRepo(url))
+          .org(GitClientHelper.getGitOwner(url, false))
+          .build();
+    }
+    return GitRepositoryDTO.builder().org(GitClientHelper.getGitOwner(url, true)).build();
   }
 }

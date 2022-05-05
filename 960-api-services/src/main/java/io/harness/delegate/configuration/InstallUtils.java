@@ -66,10 +66,6 @@ public class InstallUtils {
   // to enable IRSA for chartmuseum
   private static final List<String> chartMuseumVersions = Arrays.asList(chartMuseumVersionOld, chartMuseumVersionNew);
   private static final Map<String, String> chartMuseumPaths = new HashMap<>();
-  static {
-    chartMuseumPaths.put(chartMuseumVersionOld, "chartMuseum");
-    chartMuseumPaths.put(chartMuseumVersionNew, "chartMuseum");
-  }
 
   private static final String chartMuseumBaseDir = "./client-tools/chartmuseum/";
 
@@ -87,22 +83,38 @@ public class InstallUtils {
 
   private static final List<String> kustomizeVersions = Arrays.asList(kustomizeVersionOld, kustomizeVersionNew);
 
-  private static String goTemplateToolPath = "go-template";
-  private static String harnessPywinrmToolPath = "harness-pywinrm";
-  private static Map<String, String> helmPaths = new HashMap<>();
+  private static String goTemplateToolPath = Paths.get(goTemplateClientBaseDir, goTemplateClientVersion, "go-template")
+                                                 .toAbsolutePath()
+                                                 .normalize()
+                                                 .toString();
+  private static String harnessPywinrmToolPath =
+      Paths.get(harnessPywinrmBaseDir, harnessPywinrmVersion, "harness-pywinrm")
+          .toAbsolutePath()
+          .normalize()
+          .toString();
+
+  private static final Map<String, String> helmPaths = new HashMap<>();
 
   static {
-    helmPaths.put(helm2Version, "helm");
-    helmPaths.put(helm3Version, "helm");
-    helmPaths.put(helm3VersionNew, "helm");
-    kubectlPaths.put(defaultKubectlVersion, "kubectl");
-    kubectlPaths.put(newKubectlVersion, "kubectl");
-    kustomizePaths.put(kustomizeVersionOld, "kustomize");
-    kustomizePaths.put(kustomizeVersionNew, "kustomize");
+    chartMuseumPaths.put(chartMuseumVersionOld,
+        Paths.get(chartMuseumBaseDir, chartMuseumVersionOld, "chartmuseum").toAbsolutePath().normalize().toString());
+    chartMuseumPaths.put(chartMuseumVersionNew,
+        Paths.get(chartMuseumBaseDir, chartMuseumVersionNew, "chartmuseum").toAbsolutePath().normalize().toString());
+    helmPaths.put(helm2Version, Paths.get(helmBaseDir, helm2Version, "helm").toAbsolutePath().normalize().toString());
+    helmPaths.put(helm3Version, Paths.get(helmBaseDir, helm3Version, "helm").toAbsolutePath().normalize().toString());
+    helmPaths.put(
+        helm3VersionNew, Paths.get(helmBaseDir, helm3VersionNew, "helm").toAbsolutePath().normalize().toString());
+    kubectlPaths.put(defaultKubectlVersion,
+        Paths.get(kubectlBaseDir, defaultKubectlVersion, "kubectl").toAbsolutePath().normalize().toString());
+    kubectlPaths.put(newKubectlVersion,
+        Paths.get(kubectlBaseDir, newKubectlVersion, "kubectl").toAbsolutePath().normalize().toString());
+    kustomizePaths.put(kustomizeVersionOld,
+        Paths.get(kustomizeBaseDir, kustomizeVersionOld, "kustomize").toAbsolutePath().normalize().toString());
+    kustomizePaths.put(kustomizeVersionNew,
+        Paths.get(kustomizeBaseDir, kustomizeVersionNew, "kustomize").toAbsolutePath().normalize().toString());
   }
 
-  private static String chartMuseumPath = "chartmuseum";
-  private static String ocPath = "oc";
+  private static String ocPath = Paths.get(ocBaseDir, ocVersion, "oc").toAbsolutePath().normalize().toString();
 
   private static final String terraformConfigInspectBaseDir = "./client-tools/tf-config"
       + "-inspect";
@@ -115,7 +127,7 @@ public class InstallUtils {
 
   private static final String scmBaseDir = "./client-tools/scm/";
   private static final String scmBinary = "scm";
-  private static final String defaultScmVersion = "e2904e7";
+  private static final String defaultScmVersion = "98fc345b";
 
   private static final String KUBECTL_CDN_PATH = "public/shared/tools/kubectl/release/%s/bin/%s/amd64/kubectl";
   private static final String CHART_MUSEUM_CDN_PATH =
@@ -132,21 +144,27 @@ public class InstallUtils {
   private static final String CF_VERSION_COMMAND = "cf --version";
   private static final String SCM_CDN_PATH = "public/shared/tools/scm/release/%s/bin/%s/amd64/scm";
 
-  public static String getTerraformConfigInspectPath(String version) {
-    return join("/", terraformConfigInspectBaseDir, version, getOsPath(), "amd64", terraformConfigInspectBinary);
+  private static String getTerraformConfigInspectPath(String version) {
+    return Paths.get(terraformConfigInspectBaseDir, version, getOsPath(), "amd64", terraformConfigInspectBinary)
+        .toAbsolutePath()
+        .normalize()
+        .toString();
   }
+
   public static String getTerraformConfigInspectPath(boolean useLatestVersion) {
-    if (useLatestVersion) {
-      return join("/", terraformConfigInspectBaseDir, terraformConfigInspectLatestVersion, getOsPath(), "amd64",
-          terraformConfigInspectBinary);
-    } else {
-      return join("/", terraformConfigInspectBaseDir, terraformConfigInspectCurrentVersion, getOsPath(), "amd64",
-          terraformConfigInspectBinary);
-    }
+    final String version =
+        useLatestVersion ? terraformConfigInspectLatestVersion : terraformConfigInspectCurrentVersion;
+    return Paths.get(terraformConfigInspectBaseDir, version, getOsPath(), "amd64", terraformConfigInspectBinary)
+        .toAbsolutePath()
+        .normalize()
+        .toString();
   }
 
   public static String getScmPath() {
-    return join("/", getScmFolderPath(), getScmBinary());
+    return Paths.get(scmBaseDir, getScmVersion(), getOsPath(), "amd64", scmBinary)
+        .toAbsolutePath()
+        .normalize()
+        .toString();
   }
 
   public static String getScmBinary() {
@@ -182,7 +200,7 @@ public class InstallUtils {
     return helmPaths.get(helm3Version);
   }
 
-  public static String getNewHelm3Path() {
+  public static String getHelm380Path() {
     return helmPaths.get(helm3VersionNew);
   }
 
@@ -728,6 +746,7 @@ public class InstallUtils {
       }
 
       String chartMuseumDirectory = chartMuseumBaseDir + version;
+      String chartMuseumPath = "chartmuseum";
       if (validateChartMuseumExists(chartMuseumDirectory)) {
         chartMuseumPath = Paths.get(chartMuseumDirectory + "/chartmuseum").toAbsolutePath().normalize().toString();
         chartMuseumPaths.put(version, chartMuseumPath);

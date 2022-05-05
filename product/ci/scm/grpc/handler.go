@@ -149,6 +149,11 @@ func (h *handler) ListBranches(ctx context.Context, in *pb.ListBranchesRequest) 
 	return git.ListBranches(ctx, in, h.log)
 }
 
+// ListBranches is used to return a list of branches, along with the default branch
+func (h *handler) ListBranchesWithDefault(ctx context.Context, in *pb.ListBranchesWithDefaultRequest) (*pb.ListBranchesWithDefaultResponse, error) {
+	return git.ListBranchesWithDefault(ctx, in, h.log)
+}
+
 // ListCommits is used to return a list of commit ids given a ref or branch.
 func (h *handler) ListCommits(ctx context.Context, in *pb.ListCommitsRequest) (*pb.ListCommitsResponse, error) {
 	return git.ListCommits(ctx, in, h.log)
@@ -191,6 +196,10 @@ func (h *handler) GetAuthenticatedUser(ctx context.Context, in *pb.GetAuthentica
 
 func (h *handler) GetUserRepos(ctx context.Context, in *pb.GetUserReposRequest) (*pb.GetUserReposResponse, error) {
 	return git.GetUserRepos(ctx, in, h.log)
+}
+
+func (h *handler) GetUserRepo(ctx context.Context, in *pb.GetUserRepoRequest) (*pb.GetUserRepoResponse, error) {
+	return git.GetUserRepo(ctx, in, h.log)
 }
 
 func (h *handler) FindPR(ctx context.Context, in *pb.FindPRRequest) (*pb.FindPRResponse, error) {

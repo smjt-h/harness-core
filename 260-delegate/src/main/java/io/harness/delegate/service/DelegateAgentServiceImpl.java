@@ -106,6 +106,7 @@ import io.harness.concurrent.HTimeLimiter;
 import io.harness.configuration.DeployMode;
 import io.harness.data.structure.NullSafeImmutableMap;
 import io.harness.data.structure.UUIDGenerator;
+import io.harness.delegate.DelegateAgentCommonVariables;
 import io.harness.delegate.beans.Delegate;
 import io.harness.delegate.beans.DelegateConnectionHeartbeat;
 import io.harness.delegate.beans.DelegateInstanceStatus;
@@ -181,6 +182,7 @@ import software.wings.delegatetasks.LogSanitizer;
 import software.wings.delegatetasks.delegatecapability.CapabilityCheckController;
 import software.wings.delegatetasks.validation.DelegateConnectionResult;
 import software.wings.delegatetasks.validation.DelegateValidateTask;
+import software.wings.misc.MemoryHelper;
 import software.wings.service.intfc.security.EncryptionService;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -192,7 +194,6 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.ning.http.client.AsyncHttpClient;
 import com.sun.management.OperatingSystemMXBean;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -249,6 +250,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.math3.util.Precision;
 import org.apache.http.client.utils.URIBuilder;
+import org.asynchttpclient.AsyncHttpClient;
 import org.atmosphere.wasync.Client;
 import org.atmosphere.wasync.Encoder;
 import org.atmosphere.wasync.Event;
@@ -310,6 +312,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private static final String DELEGATE_NAME =
       isNotBlank(System.getenv().get("DELEGATE_NAME")) ? System.getenv().get("DELEGATE_NAME") : "";
   private static final String DELEGATE_TYPE = System.getenv().get("DELEGATE_TYPE");
+  private static final boolean IsEcsDelegate = "ECS".equals(DELEGATE_TYPE);
   private static final String DELEGATE_GROUP_NAME = System.getenv().get("DELEGATE_GROUP_NAME");
   private final String delegateGroupId = System.getenv().get("DELEGATE_GROUP_ID");
 
@@ -338,10 +341,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   @Inject @Named("healthMonitorExecutor") private ScheduledExecutorService healthMonitorExecutor;
   @Inject @Named("watcherMonitorExecutor") private ScheduledExecutorService watcherMonitorExecutor;
-  @Inject @Named("upgradeExecutor") private ScheduledExecutorService upgradeExecutor;
   @Inject @Named("inputExecutor") private ScheduledExecutorService inputExecutor;
-  @Inject @Named("profileExecutor") private ScheduledExecutorService profileExecutor;
-  @Inject @Named("watcherUpgradeExecutor") private ExecutorService watcherUpgradeExecutor;
   @Inject @Named("backgroundExecutor") private ExecutorService backgroundExecutor;
   @Inject @Named("taskPollExecutor") private ScheduledExecutorService taskPollExecutor;
   @Inject @Named("taskExecutor") private ExecutorService taskExecutor;
@@ -355,7 +355,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   @Inject private TokenGenerator tokenGenerator;
   @Inject private AsyncHttpClient asyncHttpClient;
   @Inject private Clock clock;
-  @Inject private TimeLimiter timeLimiter;
   @Inject private VersionInfoManager versionInfoManager;
   @Inject private DelegateDecryptionService delegateDecryptionService;
   @Inject private DelegateLogService delegateLogService;
@@ -406,6 +405,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private String accountId;
   private long watcherVersionMatchedAt = System.currentTimeMillis();
   private long delegateJreVersionChangedAt;
+  private TimeLimiter delegateHealthTimeLimiter;
+  private TimeLimiter delegateTaskTimeLimiter;
 
   private final String delegateConnectionId = generateTimeBasedUuid();
   private volatile boolean switchStorageMsgSent;
@@ -415,9 +416,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   private final boolean multiVersion = DeployMode.KUBERNETES.name().equals(System.getenv().get(DeployMode.DEPLOY_MODE))
       || TRUE.toString().equals(System.getenv().get("MULTI_VERSION"));
-  private boolean isServer;
+  private boolean isImmutableDelegate;
 
-  private long maxRSS;
+  private double maxRSSThresholdMB;
   private final AtomicBoolean rejectRequest = new AtomicBoolean(false);
 
   public static Optional<String> getDelegateId() {
@@ -452,8 +453,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   @Override
   @SuppressWarnings("unchecked")
-  public void run(final boolean watched, final boolean isServer) {
-    this.isServer = isServer;
+  public void run(final boolean watched, final boolean isImmutableDelegate) {
+    this.isImmutableDelegate = isImmutableDelegate;
     try {
       accountId = delegateConfiguration.getAccountId();
       if (perpetualTaskWorker != null) {
@@ -464,7 +465,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       log.info("Delegate will start running on JRE {}", System.getProperty(JAVA_VERSION));
       log.info("The deploy mode for delegate is [{}]", System.getenv().get("DEPLOY_MODE"));
       startTime = clock.millis();
-      DelegateStackdriverLogAppender.setTimeLimiter(timeLimiter);
+      delegateHealthTimeLimiter = HTimeLimiter.create(healthMonitorExecutor);
+      delegateTaskTimeLimiter = HTimeLimiter.create(taskExecutor);
+      DelegateStackdriverLogAppender.setTimeLimiter(delegateHealthTimeLimiter);
       DelegateStackdriverLogAppender.setManagerClient(delegateAgentManagerClient);
 
       logProxyConfiguration();
@@ -578,9 +581,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
               .ceEnabled(Boolean.parseBoolean(System.getenv("ENABLE_CE")));
 
       delegateId = registerDelegate(builder);
+      DelegateAgentCommonVariables.setDelegateId(delegateId);
       log.info("[New] Delegate registered in {} ms", clock.millis() - start);
       DelegateStackdriverLogAppender.setDelegateId(delegateId);
-
       if (delegateConfiguration.isDynamicHandlingOfRequestEnabled()) {
         startDynamicHandlingOfTasks();
       }
@@ -595,7 +598,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
         RequestBuilder requestBuilder = prepareRequestBuilder();
 
-        Options clientOptions = client.newOptionsBuilder().runtime(asyncHttpClient, true).reconnect(false).build();
+        Options clientOptions = client.newOptionsBuilder().runtime(asyncHttpClient, true).reconnect(true).build();
         socket = client.create(clientOptions);
         socket
             .on(Event.MESSAGE,
@@ -619,10 +622,17 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
                     handleOpen(o);
                   }
                 })
-            .on(Event.CLOSE, new Function<Object>() { // Do not change this, wasync doesn't like lambdas
+            .on(Event.CLOSE,
+                new Function<Object>() { // Do not change this, wasync doesn't like lambdas
+                  @Override
+                  public void on(Object o) {
+                    handleClose(o);
+                  }
+                })
+            .on(new Function<IOException>() {
               @Override
-              public void on(Object o) {
-                handleClose(o);
+              public void on(IOException ioe) {
+                log.error("Error occured while starting Delegate", ioe);
               }
             });
 
@@ -637,7 +647,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         }
       }
 
-      startChroniqleQueueMonitor();
+      if (this.isImmutableDelegate) {
+        startChroniqleQueueMonitor();
+      }
 
       startMonitoringWatcher();
 
@@ -645,11 +657,11 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         startUpgradeCheck(getVersion());
       }
 
-      log.info("Delegate started");
+      log.info("Delegate started with config {} ", getDelegateConfig());
       log.info("Manager Authority:{}, Manager Target:{}", delegateConfiguration.getManagerAuthority(),
           delegateConfiguration.getManagerTarget());
 
-      if (!delegateNg || isNotBlank(delegateProfile)) {
+      if (!isImmutableDelegate || !delegateNg || isNotBlank(delegateProfile)) {
         startProfileCheck();
       }
       if (delegateConfiguration.isClientToolsDownloadDisabled()) {
@@ -727,7 +739,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         }
       }
 
-      if (!this.isServer) {
+      if (!this.isImmutableDelegate) {
         synchronized (waiter) {
           while (waiter.get()) {
             waiter.wait();
@@ -745,28 +757,28 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
   }
 
+  private String getDelegateConfig() {
+    String delegateConfig = delegateConfiguration.toString();
+    delegateConfig += ", Multiversion: " + multiVersion;
+    return delegateConfig;
+  }
+
   private void maybeUpdateTaskRejectionStatus() {
-    MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
-    double currentRSS = memoryMXBean.getHeapMemoryUsage().getUsed();
-
-    OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
-    double currentCPU = osBean.getSystemCpuLoad();
-
-    if (currentRSS >= RESOURCE_USAGE_THRESHOLD * maxRSS || currentCPU >= RESOURCE_USAGE_THRESHOLD) {
-      log.warn(
-          "Reached resource threshold, temporarily reject incoming task request. CurrentCPU {} CurrentRSSMB {} ThresholdMB {}",
-          currentCPU, currentRSS, RESOURCE_USAGE_THRESHOLD * maxRSS);
+    final long currentRSSMB = MemoryHelper.getProcessMemoryMB();
+    if (currentRSSMB >= maxRSSThresholdMB) {
+      log.warn("Reached resource threshold, temporarily reject incoming task request. CurrentRSSMB {} ThresholdMB {}",
+          currentRSSMB, maxRSSThresholdMB);
       rejectRequest.compareAndSet(false, true);
       return;
     }
 
     if (rejectRequest.compareAndSet(true, false)) {
-      log.info("Accepting incoming task request. CurrentCPU {} CurrentRSSMB {} ThresholdMB {}", currentCPU, currentRSS,
-          RESOURCE_USAGE_THRESHOLD * maxRSS);
+      log.info("Accepting incoming task request. CurrentRSSMB {} ThresholdMB {}", currentRSSMB, maxRSSThresholdMB);
     }
   }
 
   private void clearData() {
+    log.info("Clearing data for delegate process {}, Upgrade Pending {}", getProcessId(), upgradePending.get());
     messageService.closeData(DELEGATE_DASH + getProcessId());
     messageService.closeChannel(DELEGATE, getProcessId());
 
@@ -922,7 +934,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     try {
       FibonacciBackOff.executeForEver(() -> {
         RequestBuilder requestBuilder = prepareRequestBuilder();
-        return socket.open(requestBuilder.build());
+        Socket skt = socket.open(requestBuilder.build());
+        log.info("Socket status: {}", socket.status().toString());
+        return skt;
       });
     } catch (IOException ex) {
       log.error("Unable to open socket", ex);
@@ -956,29 +970,20 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     if (log.isDebugEnabled()) {
       log.debug("^^MSG: " + message);
     }
+
+    // Handle Heartbeat message in Health-monitor thread-pool.
+    if (StringUtils.startsWith(message, "[X]")) {
+      healthMonitorExecutor.submit(() -> processHeartbeat(message));
+      return;
+    }
+
+    // Handle other messages in task executor thread-pool.
     taskExecutor.submit(() -> handleMessage(message));
   }
 
   @SuppressWarnings("PMD")
   private void handleMessage(String message) {
-    if (StringUtils.startsWith(message, "[X]")) {
-      String receivedId;
-      if (isEcsDelegate()) {
-        int indexForToken = message.lastIndexOf(TOKEN);
-        receivedId = message.substring(3, indexForToken); // Remove the "[X]
-      } else {
-        receivedId = message.substring(3);
-      }
-      if (delegateId.equals(receivedId)) {
-        long now = clock.millis();
-        log.info("Delegate {} received heartbeat response {} after sending. {} since last response.", receivedId,
-            getDurationString(lastHeartbeatSentAt.get(), now), getDurationString(lastHeartbeatReceivedAt.get(), now));
-        handleEcsDelegateSpecificMessage(message);
-        lastHeartbeatReceivedAt.set(now);
-      } else {
-        log.info("Heartbeat response for another delegate received: {}", receivedId);
-      }
-    } else if (StringUtils.equals(message, SELF_DESTRUCT)) {
+    if (StringUtils.equals(message, SELF_DESTRUCT)) {
       initiateSelfDestruct();
     } else if (StringUtils.equals(message, SELF_DESTRUCT + delegateId)) {
       initiateSelfDestruct();
@@ -1160,8 +1165,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private void unregisterDelegate() {
-    final DelegateUnregisterRequest request =
-        new DelegateUnregisterRequest(delegateId, HOST_NAME, delegateNg, DELEGATE_TYPE, getLocalHostAddress());
+    final DelegateUnregisterRequest request = new DelegateUnregisterRequest(delegateId, HOST_NAME, delegateNg,
+        DELEGATE_TYPE, getLocalHostAddress(), delegateOrgIdentifier, delegateProjectIdentifier);
     try {
       log.info("Unregistering delegate {}", delegateId);
       executeRestCall(delegateAgentManagerClient.unregisterDelegate(accountId, request));
@@ -1171,7 +1176,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private void startProfileCheck() {
-    profileExecutor.scheduleWithFixedDelay(() -> {
+    healthMonitorExecutor.scheduleWithFixedDelay(() -> {
       boolean forCodeFormattingOnly; // This line is here for clang-format
       synchronized (this) {
         checkForProfile();
@@ -1188,7 +1193,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         String profileId = profileParams == null ? "" : profileParams.getProfileId();
         long updated = profileParams == null || !resultExists ? 0L : profileParams.getProfileLastUpdatedAt();
         RestResponse<DelegateProfileParams> response =
-            HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofSeconds(15),
+            HTimeLimiter.callInterruptible21(delegateHealthTimeLimiter, Duration.ofSeconds(15),
                 ()
                     -> executeRestCall(
                         delegateAgentManagerClient.checkForProfile(delegateId, accountId, profileId, updated)));
@@ -1309,7 +1314,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
     // MultipartBody.Part is used to send also the actual file name
     Part part = Part.createFormData("file", profileResult.getName(), requestFile);
-    HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofSeconds(15),
+    HTimeLimiter.callInterruptible21(delegateHealthTimeLimiter, Duration.ofSeconds(15),
         ()
             -> executeRestCall(delegateAgentManagerClient.saveProfileResult(
                 delegateId, accountId, exitCode != 0, FileBucket.PROFILE_RESULTS, part)));
@@ -1356,6 +1361,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     if (perpetualTaskWorker != null) {
       log.info("Stopping perpetual task workers");
       perpetualTaskWorker.stop();
+      log.info("Stopped perpetual task workers");
     }
 
     if (restartableServiceManager != null) {
@@ -1363,7 +1369,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
 
     if (chronicleEventTailer != null) {
+      log.info("Stopping chronicle event trailer");
       chronicleEventTailer.stopAsync().awaitTerminated();
+      log.info("Stopped chronicle event trailer");
     }
   }
 
@@ -1406,16 +1414,15 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
 
     log.info("Starting upgrade check at interval {} ms", delegateConfiguration.getHeartbeatIntervalMs());
-    upgradeExecutor.scheduleWithFixedDelay(() -> {
+    healthMonitorExecutor.scheduleWithFixedDelay(() -> {
       if (upgradePending.get()) {
         log.info("[Old] Upgrade is pending...");
       } else {
         log.info("Checking for upgrade");
-        String delegateName = System.getenv().get("DELEGATE_NAME");
         try {
-          RestResponse<DelegateScripts> restResponse = HTimeLimiter.callInterruptible21(timeLimiter,
+          RestResponse<DelegateScripts> restResponse = HTimeLimiter.callInterruptible21(delegateHealthTimeLimiter,
               Duration.ofMinutes(1),
-              () -> executeRestCall(delegateAgentManagerClient.getDelegateScripts(accountId, version, delegateName)));
+              () -> executeRestCall(delegateAgentManagerClient.getDelegateScripts(accountId, version, DELEGATE_NAME)));
           DelegateScripts delegateScripts = restResponse.getResource();
           if (delegateScripts.isDoUpgrade()) {
             upgradePending.set(true);
@@ -1461,7 +1468,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     if (shouldContactManager()) {
       try {
         DelegateTaskEventsResponse taskEventsResponse =
-            HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofSeconds(15),
+            HTimeLimiter.callInterruptible21(delegateTaskTimeLimiter, Duration.ofSeconds(15),
                 () -> executeRestCall(delegateAgentManagerClient.pollTaskEvents(delegateId, accountId)));
         if (shouldProcessDelegateTaskEvents(taskEventsResponse)) {
           List<DelegateTaskEvent> taskEvents = taskEventsResponse.getDelegateTaskEvents();
@@ -1498,15 +1505,18 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   private void startDynamicHandlingOfTasks() {
     log.info("Starting dynamic handling of tasks tp {} ms", 1000);
-    MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
-    maxRSS = memoryMXBean.getHeapMemoryUsage().getMax();
-    healthMonitorExecutor.scheduleAtFixedRate(() -> {
-      try {
-        maybeUpdateTaskRejectionStatus();
-      } catch (Exception ex) {
-        log.error("Exception while determining delegate behaviour", ex);
-      }
-    }, 0, 1, TimeUnit.SECONDS);
+    try {
+      maxRSSThresholdMB = MemoryHelper.getProcessMaxMemoryMB() * RESOURCE_USAGE_THRESHOLD;
+      healthMonitorExecutor.scheduleAtFixedRate(() -> {
+        try {
+          maybeUpdateTaskRejectionStatus();
+        } catch (Exception ex) {
+          log.error("Exception while determining delegate behaviour", ex);
+        }
+      }, 0, 1, TimeUnit.SECONDS);
+    } catch (Exception ex) {
+      log.error("Error while fetching maxRSS, will not enable dynamic handling of tasks");
+    }
   }
 
   private void startHeartbeat(DelegateParamsBuilder builder, Socket socket) {
@@ -1593,6 +1603,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         statusData.put(DELEGATE_UPGRADE_STARTED, upgradeStartedAt);
       }
       if (!acquireTasks.get()) {
+        if (stoppedAcquiringAt == 0) {
+          stoppedAcquiringAt = clock.millis();
+        }
         statusData.put(DELEGATE_SHUTDOWN_STARTED, stoppedAcquiringAt);
       }
       if (isNotBlank(migrateTo)) {
@@ -1637,7 +1650,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         || (multiVersionRestartNeeded && multiVersionWatcherStarted.compareAndSet(false, true))) {
       String watcherProcess = messageService.getData(WATCHER_DATA, WATCHER_PROCESS, String.class);
       log.warn("Watcher process {} needs restart", watcherProcess);
-      watcherUpgradeExecutor.submit(() -> { performWatcherUpgrade(watcherProcess, multiVersionRestartNeeded); });
+      healthMonitorExecutor.submit(() -> { performWatcherUpgrade(watcherProcess, multiVersionRestartNeeded); });
     }
   }
 
@@ -1699,6 +1712,25 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     return doRestart;
   }
 
+  private void processHeartbeat(String message) {
+    String receivedId;
+    if (isEcsDelegate()) {
+      int indexForToken = message.lastIndexOf(TOKEN);
+      receivedId = message.substring(3, indexForToken); // Remove the "[X]
+    } else {
+      receivedId = message.substring(3);
+    }
+    if (delegateId.equals(receivedId)) {
+      long now = clock.millis();
+      log.info("Delegate {} received heartbeat response {} after sending. {} since last response.", receivedId,
+          getDurationString(lastHeartbeatSentAt.get(), now), getDurationString(lastHeartbeatReceivedAt.get(), now));
+      handleEcsDelegateSpecificMessage(message);
+      lastHeartbeatReceivedAt.set(now);
+    } else {
+      log.info("Heartbeat response for another delegate received: {}", receivedId);
+    }
+  }
+
   private void sendHeartbeat(DelegateParamsBuilder builder, Socket socket) {
     if (!shouldContactManager() || !acquireTasks.get() || frozen.get()) {
       return;
@@ -1723,7 +1755,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
       try {
         HTimeLimiter.callInterruptible21(
-            timeLimiter, Duration.ofSeconds(15), () -> socket.fire(JsonUtils.asJson(delegateParams)));
+            delegateHealthTimeLimiter, Duration.ofSeconds(15), () -> socket.fire(JsonUtils.asJson(delegateParams)));
         lastHeartbeatSentAt.set(clock.millis());
         sentFirstHeartbeat.set(true);
       } catch (UncheckedTimeoutException ex) {
@@ -1732,7 +1764,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         log.error("Error sending heartbeat", e);
       }
     } else {
-      log.warn("Socket is not open");
+      log.warn("Socket is not open, status: {}", socket.status().toString());
     }
   }
 
@@ -1745,7 +1777,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       log.info("Sending keepAlive packet...");
       updateBuilderIfEcsDelegate(builder);
       try {
-        HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofSeconds(15), () -> {
+        HTimeLimiter.callInterruptible21(delegateHealthTimeLimiter, Duration.ofSeconds(15), () -> {
           DelegateParams delegateParams = builder.build().toBuilder().keepAlivePacket(true).build();
           return socket.fire(JsonUtils.asJson(delegateParams));
         });
@@ -1755,7 +1787,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         log.error("Error sending heartbeat", e);
       }
     } else {
-      log.warn("Socket is not open");
+      log.warn("Socket is not open, status: {}", socket.status().toString());
     }
   }
 
@@ -1804,7 +1836,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       setSwitchStorage(receivedDelegateResponse.isUseCdn());
       updateJreVersion(receivedDelegateResponse.getJreVersion());
 
-      HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofSeconds(15),
+      HTimeLimiter.callInterruptible21(delegateHealthTimeLimiter, Duration.ofSeconds(15),
           ()
               -> executeRestCall(
                   delegateAgentManagerClient.doConnectionHeartbeat(delegateId, accountId, connectionHeartbeat)));
@@ -1820,7 +1852,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private void setSwitchStorage(boolean useCdn) {
     boolean usingCdn = delegateConfiguration.isUseCdn();
     if (usingCdn != useCdn) {
-      log.info("Switch storage - usingCdn: [{}], useCdn: [{}]", usingCdn, useCdn);
+      log.debug("Switch storage - usingCdn: [{}], useCdn: [{}]", usingCdn, useCdn);
       switchStorage.set(true);
     }
   }
@@ -1980,7 +2012,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         return;
       }
 
-      if (isEmpty(delegateTaskPackage.getDelegateId())) {
+      if (isEmpty(delegateTaskPackage.getDelegateInstanceId())) {
         // Not whitelisted. Perform validation.
         // TODO: Remove this once TaskValidation does not use secrets
 
@@ -1990,7 +2022,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         currentlyValidatingTasks.put(delegateTaskPackage.getDelegateTaskId(), delegateTaskPackage);
         updateCounterIfLessThanCurrent(maxValidatingTasksCount, currentlyValidatingTasks.size());
         delegateValidateTask.validationResults();
-      } else if (delegateId.equals(delegateTaskPackage.getDelegateId())) {
+      } else if (delegateInstanceId.equals(delegateTaskPackage.getDelegateInstanceId())) {
         applyDelegateSecretFunctor(delegateTaskPackage);
         // Whitelisted. Proceed immediately.
         log.info("Delegate {} whitelisted for task and accountId: {}", delegateId, accountId);
@@ -2030,7 +2062,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
                   accountId, delegateInstanceId, getDelegateConnectionResultDetails(results)));
 
           if (delegateTaskPackage != null && delegateTaskPackage.getData() != null
-              && delegateId.equals(delegateTaskPackage.getDelegateId())) {
+              && delegateInstanceId.equals(delegateTaskPackage.getDelegateInstanceId())) {
             applyDelegateSecretFunctor(delegateTaskPackage);
             executeTask(delegateTaskPackage);
           } else {
@@ -2093,7 +2125,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     timeoutEnforcement.submit(() -> enforceDelegateTaskTimeout(delegateTaskPackage.getDelegateTaskId(), taskData));
 
     // Start task execution in same thread and measure duration.
-    if (isServer) {
+    if (isImmutableDelegate) {
       metricRegistry.recordGaugeDuration(
           TASK_EXECUTION_TIME, new String[] {DELEGATE_NAME, taskData.getTaskType()}, delegateRunnableTask);
     } else {
@@ -2372,7 +2404,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
     if (taskFuture != null) {
       try {
-        HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofSeconds(5), taskFuture::get);
+        HTimeLimiter.callInterruptible21(delegateTaskTimeLimiter, Duration.ofSeconds(5), taskFuture::get);
       } catch (UncheckedTimeoutException e) {
         ignoredOnPurpose(e);
         log.error("Timed out getting task future");
@@ -2506,8 +2538,6 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       return;
     }
 
-    builder.delegateGroupName(DELEGATE_GROUP_NAME);
-
     try {
       if (!FileIo.checkIfFileExist(DELEGATE_SEQUENCE_CONFIG_FILE)) {
         generateEcsDelegateSequenceConfigFile();
@@ -2590,7 +2620,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private boolean isEcsDelegate() {
-    return "ECS".equals(DELEGATE_TYPE);
+    return IsEcsDelegate;
   }
 
   private void generateEcsDelegateSequenceConfigFile() {

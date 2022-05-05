@@ -13,10 +13,10 @@ import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 import static io.harness.persistence.HQuery.excludeAuthority;
 
 import static software.wings.common.VerificationConstants.LAMBDA_HOST_NAME;
+import static software.wings.delegatetasks.cv.CVConstants.CONTROL_HOST_NAME;
+import static software.wings.delegatetasks.cv.CVConstants.TEST_HOST_NAME;
 import static software.wings.service.impl.analysis.AnalysisComparisonStrategy.COMPARE_WITH_PREVIOUS;
 import static software.wings.service.impl.newrelic.NewRelicMetricDataRecord.DEFAULT_GROUP_NAME;
-import static software.wings.sm.states.DynatraceState.CONTROL_HOST_NAME;
-import static software.wings.sm.states.DynatraceState.TEST_HOST_NAME;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -49,7 +49,7 @@ import software.wings.service.impl.newrelic.NewRelicMetricAnalysisRecord;
 import software.wings.service.impl.newrelic.NewRelicMetricAnalysisRecord.NewRelicMetricAnalysis;
 import software.wings.service.impl.stackdriver.StackDriverDataCollectionInfo;
 import software.wings.service.intfc.MetricDataAnalysisService;
-import software.wings.service.intfc.verification.CVActivityLogService.Logger;
+import software.wings.service.intfc.verification.CVActivityLogger;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.StateType;
@@ -134,7 +134,7 @@ public abstract class AbstractMetricAnalysisState extends AbstractAnalysisState 
     try (VerificationLogContext ignored = new VerificationLogContext(context.getAccountId(), null,
              context.getStateExecutionInstanceId(), DelegateStateType.valueOf(getStateType()), OVERRIDE_ERROR)) {
       getLogger().info("Executing state {}", context.getStateExecutionInstanceId());
-      Logger activityLogger = cvActivityLogService.getLoggerByStateExecutionId(
+      CVActivityLogger activityLogger = cvActivityLogService.getLoggerByStateExecutionId(
           context.getAccountId(), context.getStateExecutionInstanceId());
       if (context.isRetry()) {
         activityLogger.info(RETRYING_VERIFICATION_STATE_MSG);
@@ -386,6 +386,7 @@ public abstract class AbstractMetricAnalysisState extends AbstractAnalysisState 
         (VerificationDataAnalysisResponse) response.values().iterator().next();
 
     if (ExecutionStatus.isBrokeStatus(executionResponse.getExecutionStatus())) {
+      updateSweepingOutputWithCVResult(executionContext, executionResponse.getExecutionStatus().name());
       return getErrorExecutionResponse(executionContext, executionResponse);
     }
 
@@ -402,6 +403,7 @@ public abstract class AbstractMetricAnalysisState extends AbstractAnalysisState 
       NewRelicMetricAnalysisRecord manualActionRecord =
           metricAnalysisService.getLatestLocalAnalysisRecord(context.getStateExecutionId());
       Preconditions.checkNotNull(manualActionRecord);
+      updateSweepingOutputWithCVResult(executionContext, cvMetaData.getExecutionStatus().name());
       return createExecutionResponse(context, cvMetaData.getExecutionStatus(), manualActionRecord.getMessage(), false);
     }
 
@@ -413,6 +415,7 @@ public abstract class AbstractMetricAnalysisState extends AbstractAnalysisState 
                                                                                          : ExecutionStatus.SUCCESS;
       continuousVerificationService.setMetaDataExecutionStatus(
           context.getStateExecutionId(), executionStatus, true, false);
+      updateSweepingOutputWithCVResult(executionContext, executionStatus.name());
       return generateAnalysisResponse(
           context, executionStatus, false, "No Analysis result found. This is not a failure.");
     }
@@ -440,6 +443,8 @@ public abstract class AbstractMetricAnalysisState extends AbstractAnalysisState 
         context.getStateExecutionId(), executionStatus, false, false);
 
     updateExecutionStatus(context.getStateExecutionId(), true, executionStatus, "Analysis completed");
+    updateSweepingOutputWithCVResult(executionContext, executionStatus.name());
+
     return ExecutionResponse.builder()
         .executionStatus(executionStatus)
         .stateExecutionData(executionResponse.getStateExecutionData())

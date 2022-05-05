@@ -27,6 +27,7 @@ import software.wings.service.intfc.ownership.OwnedByArtifactStream;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.NotEmpty;
@@ -56,6 +57,10 @@ public interface ArtifactService extends OwnedByArtifactStream {
   PageResponse<Artifact> listArtifactsForService(
       @NotEmpty String appId, String serviceId, @NotNull PageRequest<Artifact> pageRequest);
 
+  // List artifacts for artifact streams having collection enabled, sorted by build no.
+  PageResponse<Artifact> listArtifactsForServiceWithCollectionEnabled(
+      @NotEmpty String appId, String serviceId, @NotNull PageRequest<Artifact> pageRequest);
+
   /***
    * List artifacts sorted by build no.
    * @param serviceId
@@ -83,6 +88,8 @@ public interface ArtifactService extends OwnedByArtifactStream {
    * @return the artifact
    */
   Artifact update(@Valid Artifact artifact);
+
+  void updateMetadataAndRevision(String artifactId, String accountId, Map<String, String> newMetadata, String revision);
 
   /**
    * Update status.
@@ -241,4 +248,6 @@ public interface ArtifactService extends OwnedByArtifactStream {
   List<Artifact> listByAppId(String appId);
 
   List<ArtifactFile> fetchArtifactFiles(String artifactId);
+
+  List<Artifact> listArtifactsByArtifactStreamId(String appId, String artifactStreamId);
 }

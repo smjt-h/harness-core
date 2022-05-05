@@ -51,16 +51,10 @@ public class HarnessServiceAccountServiceImpl implements HarnessServiceAccountSe
     HarnessScopeParams scopeParams = ScopeMapper.toParams(scope);
     List<String> resourceIds = new ArrayList<>();
     resourceIds.add(identifier);
-    List<ServiceAccountDTO> serviceAccountDTOs = new ArrayList<>();
 
-    serviceAccountDTOs.addAll(getResponse(
-        serviceAccountClient.listServiceAccounts(scopeParams.getAccountIdentifier(), null, null, resourceIds)));
-
-    serviceAccountDTOs.addAll(getResponse(serviceAccountClient.listServiceAccounts(
-        scopeParams.getAccountIdentifier(), scopeParams.getOrgIdentifier(), null, resourceIds)));
-
-    serviceAccountDTOs.addAll(getResponse(serviceAccountClient.listServiceAccounts(scopeParams.getAccountIdentifier(),
-        scopeParams.getOrgIdentifier(), scopeParams.getProjectIdentifier(), resourceIds)));
+    List<ServiceAccountDTO> serviceAccountDTOs =
+        getResponse(serviceAccountClient.listServiceAccounts(scopeParams.getAccountIdentifier(),
+            scopeParams.getOrgIdentifier(), scopeParams.getProjectIdentifier(), resourceIds));
 
     if (!serviceAccountDTOs.isEmpty()) {
       ServiceAccount serviceAccount =

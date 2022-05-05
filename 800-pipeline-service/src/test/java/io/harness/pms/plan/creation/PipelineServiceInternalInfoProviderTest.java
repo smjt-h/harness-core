@@ -30,9 +30,10 @@ import io.harness.plancreator.execution.ExecutionPmsPlanCreator;
 import io.harness.plancreator.pipeline.NGPipelinePlanCreator;
 import io.harness.plancreator.stages.StagesPlanCreator;
 import io.harness.plancreator.stages.parallel.ParallelPlanCreator;
-import io.harness.plancreator.steps.PipelineStepsPlanCreator;
+import io.harness.plancreator.steps.NGStageStepsPlanCreator;
 import io.harness.plancreator.steps.StepGroupPMSPlanCreator;
 import io.harness.plancreator.steps.barrier.BarrierStepPlanCreator;
+import io.harness.plancreator.steps.http.HTTPStepVariableCreator;
 import io.harness.plancreator.steps.internal.FlagConfigurationStepPlanCreator;
 import io.harness.plancreator.steps.internal.PMSStepPlanCreator;
 import io.harness.plancreator.steps.internal.PmsStepFilterJsonCreator;
@@ -46,17 +47,21 @@ import io.harness.pms.sdk.core.pipeline.variables.StepGroupVariableCreator;
 import io.harness.pms.sdk.core.plan.creation.creators.PartialPlanCreator;
 import io.harness.pms.sdk.core.variables.VariableCreator;
 import io.harness.pms.utils.InjectorUtils;
-import io.harness.pms.variables.HTTPStepVariableCreator;
 import io.harness.rule.Owner;
 import io.harness.steps.approval.ApprovalStepVariableCreator;
 import io.harness.steps.approval.step.harness.HarnessApprovalStepPlanCreator;
 import io.harness.steps.approval.step.jira.JiraApprovalStepPlanCreator;
+import io.harness.steps.approval.step.jira.JiraApprovalStepVariableCreator;
 import io.harness.steps.approval.step.servicenow.ServiceNowApprovalStepPlanCreator;
 import io.harness.steps.approval.step.servicenow.ServiceNowApprovalStepVariableCreator;
 import io.harness.steps.jira.JiraStepVariableCreator;
+import io.harness.steps.jira.JiraUpdateStepVariableCreator;
 import io.harness.steps.jira.create.JiraCreateStepPlanCreator;
 import io.harness.steps.jira.update.JiraUpdateStepPlanCreator;
 import io.harness.steps.policy.step.PolicyStepPlanCreator;
+import io.harness.steps.policy.variables.PolicyStepVariableCreator;
+import io.harness.steps.servicenow.ServiceNowCreateStepVariableCreator;
+import io.harness.steps.servicenow.ServiceNowUpdateStepVariableCreator;
 import io.harness.steps.servicenow.create.ServiceNowCreateStepPlanCreator;
 import io.harness.steps.servicenow.update.ServiceNowUpdateStepPlanCreator;
 import io.harness.steps.shellscript.ShellScriptStepVariableCreator;
@@ -109,7 +114,7 @@ public class PipelineServiceInternalInfoProviderTest extends CategoryTest {
     assertThat(planCreatorClasses.contains(HarnessApprovalStepPlanCreator.class)).isTrue();
     assertThat(planCreatorClasses.contains(BarrierStepPlanCreator.class)).isTrue();
     assertThat(planCreatorClasses.contains(FlagConfigurationStepPlanCreator.class)).isTrue();
-    assertThat(planCreatorClasses.contains(PipelineStepsPlanCreator.class)).isTrue();
+    assertThat(planCreatorClasses.contains(NGStageStepsPlanCreator.class)).isTrue();
     assertThat(planCreatorClasses.contains(PolicyStepPlanCreator.class)).isTrue();
     assertThat(planCreatorClasses.contains(ServiceNowCreateStepPlanCreator.class)).isTrue();
     assertThat(planCreatorClasses.contains(ServiceNowUpdateStepPlanCreator.class)).isTrue();
@@ -145,7 +150,7 @@ public class PipelineServiceInternalInfoProviderTest extends CategoryTest {
             .stream()
             .map(e -> e.getClass())
             .collect(Collectors.toSet());
-    assertThat(variableCreatorClasses).hasSize(9);
+    assertThat(variableCreatorClasses).hasSize(14);
     assertThat(variableCreatorClasses.contains(PipelineVariableCreator.class)).isTrue();
     assertThat(variableCreatorClasses.contains(HTTPStepVariableCreator.class)).isTrue();
     assertThat(variableCreatorClasses.contains(StepGroupVariableCreator.class)).isTrue();
@@ -155,6 +160,11 @@ public class PipelineServiceInternalInfoProviderTest extends CategoryTest {
     assertThat(variableCreatorClasses.contains(ApprovalStageVariableCreator.class)).isTrue();
     assertThat(variableCreatorClasses.contains(ExecutionVariableCreator.class)).isTrue();
     assertThat(variableCreatorClasses.contains(ServiceNowApprovalStepVariableCreator.class)).isTrue();
+    assertThat(variableCreatorClasses.contains(PolicyStepVariableCreator.class)).isTrue();
+    assertThat(variableCreatorClasses.contains(JiraApprovalStepVariableCreator.class)).isTrue();
+    assertThat(variableCreatorClasses.contains(JiraUpdateStepVariableCreator.class)).isTrue();
+    assertThat(variableCreatorClasses.contains(ServiceNowCreateStepVariableCreator.class)).isTrue();
+    assertThat(variableCreatorClasses.contains(ServiceNowUpdateStepVariableCreator.class)).isTrue();
   }
 
   @Test
