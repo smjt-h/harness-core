@@ -2,7 +2,6 @@ package software.wings.service.impl;
 
 import static io.harness.annotations.dev.HarnessModule._950_NG_AUTHENTICATION_SERVICE;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.encryption.EncryptionReflectUtils.getEncryptedRefField;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -18,7 +17,6 @@ import software.wings.service.intfc.security.SecretManager;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -57,37 +55,6 @@ public class SSOServiceHelper {
           }
         }
       }
-    }
-  }
-
-  /**
-   * copyToEncryptedRefFields copies the value of encrypted fields to encrypted ref fields. This method is needed
-   * because UI passes the ID in the encrypted field and not the ref field.
-   *
-   * It does the following type of conversion:
-   * { "password": "val1", "encryptedPassword": "..." }
-   * ->
-   * { "password": null, "encryptedPassword": "val1" }
-   *
-   * @param object the encryptable setting to mutate
-   */
-  public void copyToEncryptedRefFields(EncryptableSetting object) {
-    List<Field> encryptedFields = object.getEncryptedFields();
-    try {
-      for (Field f : encryptedFields) {
-        f.setAccessible(true);
-        char[] fieldValue = (char[]) f.get(object);
-        if (fieldValue == null) {
-          // Ignore if encrypted field value is null. This is required for yaml.
-          continue;
-        }
-        Field encryptedRefField = getEncryptedRefField(f, object);
-        encryptedRefField.setAccessible(true);
-        encryptedRefField.set(object, String.valueOf(fieldValue));
-        f.set(object, null);
-      }
-    } catch (Exception e) {
-      throw new InvalidRequestException("Error in secretId to Ref Conversion", e);
     }
   }
 }
