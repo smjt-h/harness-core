@@ -72,7 +72,7 @@ public class DelegateCacheImpl implements DelegateCache {
   private LoadingCache<ImmutablePair<String, String>, DelegateProfile> delegateProfilesCache =
       CacheBuilder.newBuilder()
           .maximumSize(10000)
-          .expireAfterWrite(5, TimeUnit.SECONDS)
+          .expireAfterWrite(30, TimeUnit.SECONDS)
           .build(new CacheLoader<ImmutablePair<String, String>, DelegateProfile>() {
             @Override
             public DelegateProfile load(ImmutablePair<String, String> delegateProfileKey) {
@@ -131,8 +131,4 @@ public class DelegateCacheImpl implements DelegateCache {
     }
   }
 
-  @Override
-  public void invalidateDelegateProfileCache(String accountId, String delegateProfileId) {
-    delegateProfilesCache.invalidate(ImmutablePair.of(accountId, delegateProfileId));
-  }
 }

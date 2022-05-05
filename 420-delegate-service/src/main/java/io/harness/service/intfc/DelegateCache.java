@@ -21,5 +21,4 @@ public interface DelegateCache {
 
   DelegateProfile getDelegateProfile(String accountId, String delegateProfileId);
 
-  void invalidateDelegateProfileCache(String accountId, String delegateProfileId);
 }
