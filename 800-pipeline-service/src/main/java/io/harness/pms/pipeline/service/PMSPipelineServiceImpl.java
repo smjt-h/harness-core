@@ -239,39 +239,6 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
   }
 
   @Override
-  public int incrementRunSequence(
-      String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier, boolean deleted) {
-    return pipelineMetadataService.incrementExecutionCounter(
-        accountId, orgIdentifier, projectIdentifier, pipelineIdentifier);
-  }
-
-  @Override
-  public int incrementRunSequence(PipelineEntity pipelineEntity) {
-    String accountId = pipelineEntity.getAccountId();
-    String orgIdentifier = pipelineEntity.getOrgIdentifier();
-    String projectIdentifier = pipelineEntity.getProjectIdentifier();
-    int count = pipelineMetadataService.incrementExecutionCounter(
-        accountId, orgIdentifier, projectIdentifier, pipelineEntity.getIdentifier());
-    if (count == -1) {
-      try {
-        PipelineMetadataV2 metadata = PipelineMetadataV2.builder()
-                                          .accountIdentifier(pipelineEntity.getAccountIdentifier())
-                                          .orgIdentifier(orgIdentifier)
-                                          .projectIdentifier(projectIdentifier)
-                                          .runSequence(pipelineEntity.getRunSequence() + 1)
-                                          .identifier(pipelineEntity.getIdentifier())
-                                          .build();
-        return pipelineMetadataService.save(metadata).getRunSequence();
-      } catch (DuplicateKeyException exception) {
-        // retry insert if above fails
-        return pipelineMetadataService.incrementExecutionCounter(
-            accountId, orgIdentifier, projectIdentifier, pipelineEntity.getIdentifier());
-      }
-    }
-    return count;
-  }
-
-  @Override
   public boolean markEntityInvalid(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier, String invalidYaml) {
     Optional<PipelineEntity> optionalPipelineEntity =
