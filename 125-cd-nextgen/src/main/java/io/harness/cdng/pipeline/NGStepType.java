@@ -76,13 +76,13 @@ public enum NGStepType {
   TERRAFORM_ROLLBACK("Terraform Rollback", Arrays.asList(ServiceDefinitionType.values()),
       "Infrastructure Provisioners/Terraform", StepSpecTypeConstants.TERRAFORM_ROLLBACK),
   @JsonProperty(CLOUDFORMATION_CREATE_STACK)
-  CREATE_STACK("Create Stack", Arrays.asList(ServiceDefinitionType.values()),
+  CF_CREATE_STACK("Create Stack", Arrays.asList(ServiceDefinitionType.values()),
       "Infrastructure Provisioners/Cloudformation", CLOUDFORMATION_CREATE_STACK),
   @JsonProperty(CLOUDFORMATION_DELETE_STACK)
-  DELETE_STACK("Delete Stack", Arrays.asList(ServiceDefinitionType.values()),
+  CF_DELETE_STACK("Delete Stack", Arrays.asList(ServiceDefinitionType.values()),
       "Infrastructure Provisioners/Cloudformation", CLOUDFORMATION_DELETE_STACK),
   @JsonProperty(CLOUDFORMATION_ROLLBACK_STACK)
-  ROLLBACK_STACK("Rollback Stack", Arrays.asList(ServiceDefinitionType.values()),
+  CF_ROLLBACK_STACK("Rollback Stack", Arrays.asList(ServiceDefinitionType.values()),
       "Infrastructure Provisioners/Cloudformation", CLOUDFORMATION_ROLLBACK_STACK),
   @JsonProperty("SHELL_SCRIPT_PROVISIONER")
   SHELL_SCRIPT_PROVISIONER("Shell Script Provisioner", Arrays.asList(ServiceDefinitionType.values()),

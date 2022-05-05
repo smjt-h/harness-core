@@ -13,13 +13,13 @@ import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import java.util.List;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.experimental.SuperBuilder;
 
 @Data
 @EqualsAndHashCode
-@SuperBuilder
+@Builder
 @OwnedBy(HarnessTeam.CDP)
 public class AwsS3FetchFileDelegateConfig {
   String identifier;
