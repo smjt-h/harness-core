@@ -103,6 +103,8 @@ public class VmInitializeTaskUtilsTest extends CIExecutionTestBase {
     when(logServiceUtils.getLogServiceToken(any())).thenReturn("test");
     when(tiServiceUtils.getTiServiceConfig()).thenReturn(TIServiceConfig.builder().baseUrl("1.1.1.2").build());
     when(tiServiceUtils.getTIServiceToken(any())).thenReturn("test");
+    when(stoServiceUtils.getStoServiceConfig()).thenReturn(STOServiceConfig.builder().baseUrl("1.1.1.3").build());
+    when(stoServiceUtils.getSTOServiceToken(any())).thenReturn("test");
     when(featureFlagService.isEnabled(any(), any())).thenReturn(false);
     CIVmInitializeTaskParams response = vmInitializeTaskUtils.getInitializeTaskParams(initializeStepInfo, ambiance, "");
     assertThat(response.getStageRuntimeId()).isEqualTo(stageRuntimeId);
@@ -144,7 +146,7 @@ public class VmInitializeTaskUtilsTest extends CIExecutionTestBase {
     when(logServiceUtils.getLogServiceToken(any())).thenReturn("test");
     when(tiServiceUtils.getTiServiceConfig()).thenReturn(TIServiceConfig.builder().baseUrl("1.1.1.2").build());
     when(tiServiceUtils.getTIServiceToken(any())).thenReturn("test");
-    when(stoServiceUtils.getStoServiceConfig()).thenReturn(STOServiceConfig.builder().baseUrl("1.1.1.2").build());
+    when(stoServiceUtils.getStoServiceConfig()).thenReturn(STOServiceConfig.builder().baseUrl("1.1.1.3").build());
     when(stoServiceUtils.getSTOServiceToken(any())).thenReturn("test");
     when(featureFlagService.isEnabled(any(), any())).thenReturn(false);
     CIVmInitializeTaskParams response = vmInitializeTaskUtils.getInitializeTaskParams(initializeStepInfo, ambiance, "");

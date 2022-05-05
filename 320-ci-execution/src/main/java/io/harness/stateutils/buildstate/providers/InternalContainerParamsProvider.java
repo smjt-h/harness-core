@@ -107,7 +107,7 @@ public class InternalContainerParamsProvider {
         .containerType(CIContainerType.LITE_ENGINE)
         .containerSecrets(ContainerSecrets.builder()
                               .connectorDetailsMap(publishArtifactConnectors)
-                              .plainTextSecretsByName(getLiteEngineSecretVars(logEnvVars, tiEnvVars))
+                              .plainTextSecretsByName(getLiteEngineSecretVars(logEnvVars, tiEnvVars, stoEnvVars))
                               .build())
         .imageDetailsWithConnector(ImageDetailsWithConnector.builder()
                                        .imageDetails(IntegrationStageUtils.getImageInfo(fullyQualifiedImage))
@@ -153,10 +153,11 @@ public class InternalContainerParamsProvider {
   }
 
   private Map<String, SecretParams> getLiteEngineSecretVars(
-      Map<String, String> logEnvVars, Map<String, String> tiEnvVars) {
+      Map<String, String> logEnvVars, Map<String, String> tiEnvVars, Map<String, String> stoEnvVars) {
     Map<String, String> vars = new HashMap<>();
     vars.putAll(logEnvVars);
     vars.putAll(tiEnvVars);
+    vars.putAll(stoEnvVars);
 
     Map<String, SecretParams> secretVars = new HashMap<>();
     for (Map.Entry<String, String> entry : vars.entrySet()) {
