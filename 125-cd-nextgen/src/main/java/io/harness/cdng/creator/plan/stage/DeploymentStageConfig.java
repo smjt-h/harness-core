@@ -57,22 +57,9 @@ public class DeploymentStageConfig implements StageInfoConfig, Visitable {
   String uuid;
 
   ServiceConfig serviceConfig;
-  /*
-  Have added Getter Annotation for service and deployment type since we do not want current users to get these fields as
-  suggestion from schema.
-  TODO: Need to remove this getter method along with hidden=true once we completely get rid of serviceConfig
 
-  Yaml for these fields
-
-       spec:
-         deploymentType: Kubernetes
-         service:
-            serviceConfigRef: ref
-   */
-  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) ServiceYamlV2 service;
-
-  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
-  @ApiModelProperty(hidden = true)
+  // For new service yaml
+  ServiceYamlV2 service;
   ServiceDefinitionType deploymentType;
 
   @NotNull PipelineInfrastructure infrastructure;

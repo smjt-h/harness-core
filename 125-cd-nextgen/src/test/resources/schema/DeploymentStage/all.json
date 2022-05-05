@@ -1000,11 +1000,24 @@
             "service"
           ],
           "properties": {
+            "deploymentType": {
+              "type": "string",
+              "enum": [
+                "Kubernetes",
+                "NativeHelm",
+                "Ssh",
+                "WinRm",
+                "ServerlessAwsLambda"
+              ]
+            },
             "execution": {
               "$ref": "#/definitions/ExecutionElementConfig"
             },
             "infrastructure": {
               "$ref": "#/definitions/PipelineInfrastructure"
+            },
+            "service": {
+              "$ref": "#/definitions/ServiceYamlV2"
             }
           },
           "additionalProperties": false
@@ -5093,6 +5106,21 @@
           "additionalProperties": {
             "type": "string"
           }
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "ServiceYamlV2": {
+      "type": "object",
+      "required": [
+        "serviceConfigRef"
+      ],
+      "properties": {
+        "metadata": {
+          "type": "string"
+        },
+        "serviceConfigRef": {
+          "type": "string"
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
