@@ -2146,6 +2146,7 @@
 543502:io.harness.delegate.beans.azure.response.AzureClustersResponse
 543503:io.harness.delegate.beans.connector.pdcconnector.HostConnectivityTaskParams
 543504:io.harness.delegate.beans.connector.pdcconnector.HostConnectivityTaskResponse
+543505:io.harness.delegate.task.helm.InheritFromManifestFetchFileConfig
 543526:io.harness.delegate.beans.WinRmTaskParams
 549966:io.harness.secretmanagerclient.dto.EncryptedDataMigrationDTO
 553286:io.harness.delegate.task.scm.ScmPushTaskParams
