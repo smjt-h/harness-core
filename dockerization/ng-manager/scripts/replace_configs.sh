@@ -73,6 +73,7 @@ if [[ "" != "$ALLOWED_ORIGINS" ]]; then
   yq write -i $CONFIG_FILE allowedOrigins "$ALLOWED_ORIGINS"
 fi
 
+echo $MONGO_URI
 if [[ "" != "$MONGO_URI" ]]; then
   yq write -i $CONFIG_FILE mongo.uri "${MONGO_URI//\\&/&}"
 fi
@@ -460,3 +461,5 @@ replace_key_value scopeAccessCheckEnabled "${SCOPE_ACCESS_CHECK:-true}"
 replace_key_value enforcementClientConfiguration.enforcementCheckEnabled "$ENFORCEMENT_CHECK_ENABLED"
 replace_key_value secretsConfiguration.gcpSecretManagerProject "$GCP_SECRET_MANAGER_PROJECT"
 replace_key_value secretsConfiguration.secretResolutionEnabled "$RESOLVE_SECRETS"
+
+echo $CONFIG_FILE
