@@ -7,6 +7,8 @@
 
 package io.harness.serializer.morphia;
 
+import static io.harness.annotations.dev.HarnessTeam.PL;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ccm.cluster.entities.AzureKubernetesCluster;
 import io.harness.ccm.cluster.entities.ClusterRecord;
@@ -27,6 +29,7 @@ import io.harness.marketplace.gcp.procurement.pubsub.ProcurementPubsubMessage;
 import io.harness.mongo.index.migrator.AggregateResult;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.morphia.MorphiaRegistrarHelperPut;
+
 import software.wings.api.ARMStateExecutionData;
 import software.wings.api.AmiServiceDeployElement;
 import software.wings.api.AmiServiceSetupElement;
@@ -732,8 +735,6 @@ import software.wings.yaml.gitSync.YamlChangeSet;
 
 import java.security.Principal;
 import java.util.Set;
-
-import static io.harness.annotations.dev.HarnessTeam.PL;
 
 @OwnedBy(PL)
 public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
