@@ -7,7 +7,6 @@
 
 package io.harness.beans.yaml.extended.infrastrucutre.k8;
 
-
 import static io.harness.beans.SwaggerConstants.INTEGER_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.STRING_CLASSPATH;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
