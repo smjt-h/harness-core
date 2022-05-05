@@ -146,7 +146,6 @@ public enum NGStepType {
     return ngStepType.category;
   }
 
-  @JsonValue
   public String getYamlName(NGStepType ngStepType) {
     return ngStepType.yamlName;
   }
