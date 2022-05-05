@@ -7,14 +7,13 @@
 
 package io.harness.exception;
 
-import static io.harness.annotations.dev.HarnessTeam.PL;
-
+import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.eraro.ErrorCode;
 
-@OwnedBy(PL)
-public class ScmUnauthorizedException extends ScmException {
-  public ScmUnauthorizedException(String errorMessage) {
-    super(errorMessage, null, ErrorCode.SCM_UNAUTHORIZED);
+@OwnedBy(HarnessTeam.PL)
+public class ScmUnprocessableEntityException extends ScmException {
+  public ScmUnprocessableEntityException(String errorMessage) {
+    super(errorMessage, ErrorCode.SCM_UNPROCESSABLE_ENTITY);
   }
 }

@@ -5,7 +5,7 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.gitsync.common.scmerrorhandling.handlers.github;
+package io.harness.gitsync.common.scmerrorhandling.handlers.bitbucket;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.eraro.ErrorCode.UNEXPECTED;
@@ -19,20 +19,17 @@ import io.harness.exception.ScmUnauthorizedException;
 import io.harness.exception.WingsException;
 import io.harness.gitsync.common.scmerrorhandling.handlers.ScmApiErrorHandler;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @OwnedBy(PL)
-public class GithubListRepoScmApiErrorHandler implements ScmApiErrorHandler {
+public class BitbucketUpdateFileScmApiErrorHandler implements ScmApiErrorHandler {
   @Override
   public void handleError(int statusCode, String errorMessage) throws WingsException {
     switch (statusCode) {
       case 401:
       case 403:
-        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.GITHUB_INVALID_CREDENTIALS,
-            SCMExceptionExplanations.LIST_REPO_WITH_INVALID_CREDS, new ScmUnauthorizedException(errorMessage));
+        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.BITBUCKET_INVALID_CREDENTIALS,
+            SCMExceptionExplanations.CREATE_PULL_REQUEST_WITH_INVALID_CREDS,
+            new ScmUnauthorizedException(errorMessage));
       default:
-        log.error(String.format("Error while listing bitbucket repos: [%s: %s]", statusCode, errorMessage));
         throw new ScmException(UNEXPECTED);
     }
   }

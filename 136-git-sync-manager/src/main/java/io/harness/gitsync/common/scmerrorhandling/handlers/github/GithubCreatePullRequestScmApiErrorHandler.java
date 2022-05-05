@@ -12,27 +12,35 @@ import static io.harness.eraro.ErrorCode.UNEXPECTED;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.NestedExceptionUtils;
+import io.harness.exception.SCMExceptionErrorMessages;
 import io.harness.exception.SCMExceptionExplanations;
 import io.harness.exception.SCMExceptionHints;
 import io.harness.exception.ScmException;
+import io.harness.exception.ScmResourceNotFoundException;
 import io.harness.exception.ScmUnauthorizedException;
+import io.harness.exception.ScmUnprocessableEntityException;
 import io.harness.exception.WingsException;
 import io.harness.gitsync.common.scmerrorhandling.handlers.ScmApiErrorHandler;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @OwnedBy(PL)
-public class GithubListRepoScmApiErrorHandler implements ScmApiErrorHandler {
+public class GithubCreatePullRequestScmApiErrorHandler implements ScmApiErrorHandler {
   @Override
   public void handleError(int statusCode, String errorMessage) throws WingsException {
     switch (statusCode) {
       case 401:
       case 403:
         throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.GITHUB_INVALID_CREDENTIALS,
-            SCMExceptionExplanations.LIST_REPO_WITH_INVALID_CREDS, new ScmUnauthorizedException(errorMessage));
+            SCMExceptionExplanations.CREATE_PULL_REQUEST_WITH_INVALID_CREDS,
+            new ScmUnauthorizedException(errorMessage));
+      case 404:
+        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.REPOSITORY_NOT_FOUND_ERROR,
+            SCMExceptionExplanations.REPOSITORY_NOT_FOUND_ERROR,
+            new ScmResourceNotFoundException(SCMExceptionErrorMessages.REPOSITORY_NOT_FOUND_ERROR));
+      case 422:
+        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.CREATE_PULL_REQUEST_VALIDATION_FAILED,
+            SCMExceptionExplanations.CREATE_PULL_REQUEST_VALIDATION_FAILED,
+            new ScmUnprocessableEntityException(SCMExceptionErrorMessages.CREATE_PULL_REQUEST_VALIDATION_FAILED));
       default:
-        log.error(String.format("Error while listing bitbucket repos: [%s: %s]", statusCode, errorMessage));
         throw new ScmException(UNEXPECTED);
     }
   }

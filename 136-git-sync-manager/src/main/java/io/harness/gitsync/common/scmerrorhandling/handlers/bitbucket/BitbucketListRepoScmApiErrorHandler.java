@@ -30,7 +30,7 @@ public class BitbucketListRepoScmApiErrorHandler implements ScmApiErrorHandler {
       case 401:
       case 403:
         throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.BITBUCKET_INVALID_CREDENTIALS,
-            SCMExceptionExplanations.LIST_REPO_WITH_INVALID_CRED, new ScmUnauthorizedException(errorMessage));
+            SCMExceptionExplanations.LIST_REPO_WITH_INVALID_CREDS, new ScmUnauthorizedException(errorMessage));
       default:
         log.error(String.format("Error while listing github repos: [%s: %s]", statusCode, errorMessage));
         throw new ScmException(UNEXPECTED);
