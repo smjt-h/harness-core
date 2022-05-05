@@ -1073,6 +1073,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     try {
       response = call.execute();
       return response.body();
+    } catch (Exception e) {
+      log.error("error executing rest call", e);
     } finally {
       if (response != null && !response.isSuccessful()) {
         String errorResponse = response.errorBody().string();
