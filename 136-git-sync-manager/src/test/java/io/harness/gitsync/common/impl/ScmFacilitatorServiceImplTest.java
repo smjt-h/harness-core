@@ -95,7 +95,7 @@ public class ScmFacilitatorServiceImplTest extends GitSyncTestBase {
                                                                           .setDefaultBranch(defaultBranch)
                                                                           .addAllBranches(Arrays.asList(branch))
                                                                           .build();
-    when(scmOrchestratorService.processScmRequestUsingConnectorSettings(any(), any(), any(), any(), any()))
+    when(scmOrchestratorService.processScmRequestUsingConnector(any(), any()))
         .thenReturn(listBranchesWithDefaultResponse);
     GitBranchesResponseDTO gitBranchesResponseDTO = scmFacilitatorService.listBranchesV2(
         accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName, pageRequest, "");

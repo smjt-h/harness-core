@@ -18,8 +18,8 @@ import org.junit.experimental.categories.Category;
 import org.mockito.MockitoAnnotations;
 
 @OwnedBy(PL)
-public class BitbucketListRepoScmApiErrorHandlerTest extends GitSyncTestBase {
-  @Inject BitbucketListRepoScmApiErrorHandler bitbucketListRepoScmApiErrorHandler;
+public class BitbucketListBranchesScmApiErrorHandlerTest extends GitSyncTestBase {
+  @Inject BitbucketListBranchesScmApiErrorHandler bitbucketListBranchesScmApiErrorHandler;
 
   @Before
   public void setup() {
@@ -30,7 +30,7 @@ public class BitbucketListRepoScmApiErrorHandlerTest extends GitSyncTestBase {
   @Owner(developers = BHAVYA)
   @Category(UnitTests.class)
   public void testHandleError() {
-    assertThatThrownBy(() -> bitbucketListRepoScmApiErrorHandler.handleError(401, "Not Authorised"))
+    assertThatThrownBy(() -> bitbucketListBranchesScmApiErrorHandler.handleError(401, "Not Authorised"))
         .isInstanceOf(HintException.class);
   }
 }

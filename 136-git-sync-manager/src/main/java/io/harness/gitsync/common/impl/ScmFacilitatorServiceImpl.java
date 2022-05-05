@@ -69,15 +69,22 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
   @Override
   public GitBranchesResponseDTO listBranchesV2(String accountIdentifier, String orgIdentifier, String projectIdentifier,
       String connectorRef, String repoName, PageRequest pageRequest, String searchTerm) {
+    final ScmConnector scmConnector = gitSyncConnectorHelper.getScmConnectorForGivenRepo(
+        accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName);
     ListBranchesWithDefaultResponse listBranchesWithDefaultResponse =
-        scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
+        scmOrchestratorService.processScmRequestUsingConnector(scmClientFacilitatorService
             -> scmClientFacilitatorService.listBranches(accountIdentifier, orgIdentifier, projectIdentifier,
-                connectorRef, repoName,
+                scmConnector,
                 PageRequestDTO.builder()
                     .pageIndex(pageRequest.getPageIndex())
                     .pageSize(pageRequest.getPageSize())
                     .build()),
-            projectIdentifier, orgIdentifier, accountIdentifier, connectorRef);
+            scmConnector);
+
+    if (isFailureResponse(listBranchesWithDefaultResponse.getStatus())) {
+      ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.LIST_BRANCHES, scmConnector.getConnectorType(),
+          listBranchesWithDefaultResponse.getStatus(), listBranchesWithDefaultResponse.getError());
+    }
 
     List<GitBranchDetailsDTO> gitBranches =
         emptyIfNull(listBranchesWithDefaultResponse.getBranchesList())

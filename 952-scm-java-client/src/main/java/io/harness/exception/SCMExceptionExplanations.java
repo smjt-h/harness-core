@@ -18,4 +18,8 @@ public class SCMExceptionExplanations {
       + "3. Credentials are invalid or have expired";
   public static final String LIST_REPO_WITH_INVALID_CRED =
       "We couldn't list repositories as the credentials provided in connector are invalid or have expired.";
+  public static final String LIST_BRANCH_WITH_INVALID_CRED =
+      "We couldn't list branches as the credentials provided in connector are invalid or have expired.";
+  public static final String LIST_BRANCH_WHEN_REPO_NOT_EXIST =
+      "We couldn't list branches as the provided repo does not exist or has been deleted.";
 }
