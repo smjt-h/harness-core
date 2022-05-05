@@ -31,6 +31,8 @@ import lombok.Data;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -40,9 +42,9 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 public class PmsOutcomeMapperTest extends PmsSdkCoreTestBase {
   @Before
   public void initialize() {
-    Mockito.mockStatic(RecastOrchestrationUtils.class);
-    PowerMockito.when(RecastOrchestrationUtils.toJson(any(Outcome.class))).thenReturn("test");
-    PowerMockito.when(RecastOrchestrationUtils.fromJson(any(String.class), eq(Outcome.class)))
+    MockedStatic<RecastOrchestrationUtils> aStatic = Mockito.mockStatic(RecastOrchestrationUtils.class);
+    aStatic.when(() -> RecastOrchestrationUtils.toJson(any(Outcome.class))).thenReturn("test");
+    aStatic.when(() -> RecastOrchestrationUtils.fromJson(any(String.class), eq(Outcome.class)))
         .thenReturn(DummyOutcome.builder().name("dummyOutcome").build());
   }
 

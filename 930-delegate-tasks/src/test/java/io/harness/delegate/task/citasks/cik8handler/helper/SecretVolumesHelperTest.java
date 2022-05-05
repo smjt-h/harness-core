@@ -15,6 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import io.harness.CategoryTest;
+import io.harness.SystemWrapper;
 import io.harness.category.element.UnitTests;
 import io.harness.rule.Owner;
 
@@ -30,6 +31,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
@@ -67,7 +69,8 @@ public class SecretVolumesHelperTest extends CategoryTest {
   @Owner(developers = VISTAAR)
   @Category(UnitTests.class)
   public void testGetSecretVolumeMappingsNotConfigured() {
-    PowerMockito.when(System.getenv(Mockito.eq(CI_MOUNT_VOLUMES))).thenReturn("");
+    MockedStatic<SystemWrapper> mockStatic = Mockito.mockStatic(SystemWrapper.class);
+    mockStatic.when(() -> SystemWrapper.getenv(Mockito.eq(CI_MOUNT_VOLUMES))).thenReturn("");
     Map<String, List<String>> ret = secretVolumesHelper.getSecretVolumeMappings();
     assertThat(isEmpty(ret));
   }

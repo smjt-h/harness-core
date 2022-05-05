@@ -70,6 +70,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -374,8 +375,8 @@ public class ExecutionHelperTest extends CategoryTest {
   }
 
   private void buildExecutionArgsMocks() {
-    Mockito.mockStatic(UUIDGenerator.class);
-    when(UUIDGenerator.generateUuid()).thenReturn(generatedExecutionId);
+    MockedStatic<UUIDGenerator> aStatic = Mockito.mockStatic(UUIDGenerator.class);
+    aStatic.when(UUIDGenerator::generateUuid).thenReturn(generatedExecutionId);
 
     doReturn(executionPrincipalInfo).when(principalInfoHelper).getPrincipalInfoFromSecurityContext();
     doReturn(394).when(pmsPipelineService).incrementRunSequence(any());
@@ -440,8 +441,8 @@ public class ExecutionHelperTest extends CategoryTest {
 
     PlanExecution planExecution = PlanExecution.builder().build();
     Plan plan = PlanExecutionUtils.extractPlan(planCreationBlobResponse);
-    Mockito.mockStatic(PlanExecutionUtils.class);
-    when(PlanExecutionUtils.extractPlan(planCreationBlobResponse)).thenReturn(plan);
+    MockedStatic<PlanExecutionUtils> aStatic = Mockito.mockStatic(PlanExecutionUtils.class);
+    aStatic.when(() -> PlanExecutionUtils.extractPlan(planCreationBlobResponse)).thenReturn(plan);
     ImmutableMap<String, String> abstractions = ImmutableMap.<String, String>builder()
                                                     .put(SetupAbstractionKeys.accountId, accountId)
                                                     .put(SetupAbstractionKeys.orgIdentifier, orgId)

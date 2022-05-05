@@ -50,7 +50,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import retrofit2.Call;
 
 @OwnedBy(PIPELINE)
-@PrepareForTest({SafeHttpCall.class, PolicyStepOutcomeMapper.class})
 public class PolicyStepTest extends CategoryTest {
   @InjectMocks PolicyStep policyStep;
   @Mock OpaServiceClient opaServiceClient;
@@ -65,7 +64,7 @@ public class PolicyStepTest extends CategoryTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
     Mockito.mockStatic(SafeHttpCall.class);
     Mockito.mockStatic(PolicyStepOutcomeMapper.class);
     ambiance = Ambiance.newBuilder()

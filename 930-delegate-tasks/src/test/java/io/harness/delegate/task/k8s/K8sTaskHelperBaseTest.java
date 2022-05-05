@@ -56,6 +56,7 @@ import static io.harness.rule.OwnerRule.VAIBHAV_SI;
 import static io.harness.rule.OwnerRule.YOGESH;
 import static io.harness.state.StateConstants.DEFAULT_STEADY_STATE_TIMEOUT;
 
+import static org.mockito.ArgumentMatchers.nullable;
 import static software.wings.beans.LogColor.Yellow;
 import static software.wings.beans.LogHelper.color;
 import static software.wings.beans.LogWeight.Bold;
@@ -553,7 +554,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
     ProcessResult processResult = new ProcessResult(0, new ProcessOutput(output.getBytes()));
     doReturn(processResult)
         .when(spyK8sTaskHelperBase)
-        .executeCommandUsingUtils(anyString(), any(), any(), anyString(), any());
+        .executeCommandUsingUtils(nullable(K8sDelegateTaskParams.class), any(), any(), anyString(), any());
 
     String latestRevision =
         spyK8sTaskHelperBase.getLatestRevision(client, resource.getResourceId(), k8sDelegateTaskParams);
@@ -562,7 +563,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
     processResult = new ProcessResult(1, new ProcessOutput("".getBytes()));
     doReturn(processResult)
         .when(spyK8sTaskHelperBase)
-        .executeCommandUsingUtils(anyString(), any(), any(), anyString(), any());
+        .executeCommandUsingUtils(nullable(K8sDelegateTaskParams.class), any(), any(), anyString(), any());
 
     latestRevision = spyK8sTaskHelperBase.getLatestRevision(client, resource.getResourceId(), k8sDelegateTaskParams);
     assertThat(latestRevision).isEqualTo("");
@@ -1572,8 +1573,8 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testShouldGetReleaseHistoryConfigMapIfNotFoundInSecretK8sClient() throws IOException {
     KubernetesConfig kubernetesConfig = KubernetesConfig.builder().build();
-    Mockito.when(mockKubernetesContainerService.fetchReleaseHistoryFromSecrets(any(), any())).thenReturn(null);
-    Mockito.when(mockKubernetesContainerService.fetchReleaseHistoryFromConfigMap(any(), any())).thenReturn("configmap");
+    when(mockKubernetesContainerService.fetchReleaseHistoryFromSecrets(any(), any())).thenReturn(null);
+    when(mockKubernetesContainerService.fetchReleaseHistoryFromConfigMap(any(), any())).thenReturn("configmap");
     String releaseHistory = spyK8sTaskHelperBase.getReleaseHistoryData(kubernetesConfig, "release");
     ArgumentCaptor<String> releaseArgumentCaptor = ArgumentCaptor.forClass(String.class);
     verify(mockKubernetesContainerService, times(1)).fetchReleaseHistoryFromSecrets(any(), anyString());
@@ -1589,9 +1590,9 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testShouldGetReleaseHistoryConfigMapIfInvalidRequestExceptionThrown() throws IOException {
     KubernetesConfig kubernetesConfig = KubernetesConfig.builder().build();
-    Mockito.when(mockKubernetesContainerService.fetchReleaseHistoryFromSecrets(any(), any()))
+    when(mockKubernetesContainerService.fetchReleaseHistoryFromSecrets(any(), any()))
         .thenThrow(new InvalidRequestException(""));
-    Mockito.when(mockKubernetesContainerService.fetchReleaseHistoryFromConfigMap(any(), any())).thenReturn("configmap");
+    when(mockKubernetesContainerService.fetchReleaseHistoryFromConfigMap(any(), any())).thenReturn("configmap");
     String releaseHistory = spyK8sTaskHelperBase.getReleaseHistoryData(kubernetesConfig, "release");
     ArgumentCaptor<String> releaseArgumentCaptor = ArgumentCaptor.forClass(String.class);
     verify(mockKubernetesContainerService, times(1)).fetchReleaseHistoryFromSecrets(any(), anyString());
@@ -3221,8 +3222,8 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
     doReturn(KUBERNETES_CONFIG)
         .when(mockK8sYamlToDelegateDTOMapper)
         .createKubernetesConfigFromClusterConfig(any(KubernetesClusterConfigDTO.class));
-    doReturn(ErrorDetail.builder().message(DEFAULT).build()).when(ngErrorHelper).createErrorDetail(anyString());
-    doReturn(DEFAULT).when(ngErrorHelper).getErrorSummary(anyString());
+    doReturn(ErrorDetail.builder().message(DEFAULT).build()).when(ngErrorHelper).createErrorDetail(nullable(String.class));
+    doReturn(DEFAULT).when(ngErrorHelper).getErrorSummary(nullable(String.class));
     doAnswer(invocation -> { throw new ApiException(); })
         .when(mockKubernetesContainerService)
         .validateMetricsServer(any(KubernetesConfig.class));

@@ -9,6 +9,7 @@ package io.harness.monitoring;
 
 import static io.harness.pms.events.PmsEventFrameworkConstants.PIPELINE_MONITORING_ENABLED;
 
+import io.harness.SystemWrapper;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.metrics.service.api.MetricService;
