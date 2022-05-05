@@ -35,8 +35,7 @@ public enum ResourceType {
   TOKEN(ResourceTypeConstants.TOKEN),
   DELEGATE_TOKEN(ResourceTypeConstants.DELEGATE_TOKEN),
   GOVERNANCE_POLICY(ResourceTypeConstants.GOVERNANCE_POLICY),
-  GOVERNANCE_POLICY_SET(ResourceTypeConstants.GOVERNANCE_POLICY_SET),
-  CHAOS_HUB(ResourceTypeConstants.CHAOS_HUB);
+  GOVERNANCE_POLICY_SET(ResourceTypeConstants.GOVERNANCE_POLICY_SET);
 
   ResourceType(String resourceType) {
     if (!this.name().equals(resourceType)) {
