@@ -146,9 +146,8 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
     pipelineToSave.setRepo(gitEntityInfo.getRepoName());
     pipelineToSave.setFilePath(gitEntityInfo.getFilePath());
 
-    PipelineEntity savedEntity = mongoTemplate.save(pipelineToSave);
     gitAwareEntityHelper.createEntityOnGit(pipelineToSave, yamlToPush, scope);
-    return savedEntity;
+    return mongoTemplate.save(pipelineToSave);
   }
 
   private void checkForMetadataAndSaveIfAbsent(PipelineEntity savedEntity) {
