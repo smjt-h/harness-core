@@ -19,14 +19,19 @@ import io.harness.cdng.variables.beans.NGVariableOverrideSetWrapper;
 import io.harness.cdng.visitor.helpers.serviceconfig.ServerlessAwsLambdaServiceSpecVisitorHelper;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.ng.core.k8s.ServiceSpecType;
+import io.harness.pms.yaml.YamlNode;
 import io.harness.walktree.beans.VisitableChildren;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
+import io.harness.yaml.core.VariableExpression;
 import io.harness.yaml.core.variables.NGVariable;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import io.swagger.annotations.ApiModelProperty;
 import java.util.List;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.Value;
 import org.springframework.data.annotation.TypeAlias;
 
@@ -38,16 +43,20 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("serverlessAwsLambdaServiceSpec")
 @RecasterAlias("io.harness.cdng.service.beans.ServerlessAwsLambdaServiceSpec")
 public class ServerlessAwsLambdaServiceSpec implements ServiceSpec, Visitable {
+  @JsonProperty(YamlNode.UUID_FIELD_NAME)
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
+  @ApiModelProperty(hidden = true)
+  String uuid;
   List<NGVariable> variables;
   ArtifactListConfig artifacts;
   List<ManifestConfigWrapper> manifests;
 
-  List<NGVariableOverrideSetWrapper> variableOverrideSets;
-  List<ArtifactOverrideSetWrapper> artifactOverrideSets;
-  List<ManifestOverrideSetWrapper> manifestOverrideSets;
+  @VariableExpression(skipVariableExpression = true) List<NGVariableOverrideSetWrapper> variableOverrideSets;
+  @VariableExpression(skipVariableExpression = true) List<ArtifactOverrideSetWrapper> artifactOverrideSets;
+  @VariableExpression(skipVariableExpression = true) List<ManifestOverrideSetWrapper> manifestOverrideSets;
 
   // For Visitor Framework Impl
-  String metadata;
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
 
   @Override
   public String getType() {

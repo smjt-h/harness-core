@@ -129,9 +129,6 @@
             "connectorRef": {
               "type": "string"
             },
-            "metadata": {
-              "type": "string"
-            },
             "registry": {
               "type": "string"
             },
@@ -386,9 +383,6 @@
     "ArtifactListConfig": {
       "type": "object",
       "properties": {
-        "metadata": {
-          "type": "string"
-        },
         "primary": {
           "$ref": "#/definitions/PrimaryArtifact"
         },
@@ -445,9 +439,6 @@
               "type": "string"
             },
             "connectorRef": {
-              "type": "string"
-            },
-            "metadata": {
               "type": "string"
             },
             "repository": {
@@ -1150,9 +1141,6 @@
             "imagePath": {
               "type": "string"
             },
-            "metadata": {
-              "type": "string"
-            },
             "tag": {
               "type": "string"
             },
@@ -1404,9 +1392,6 @@
               "type": "string"
             },
             "imagePath": {
-              "type": "string"
-            },
-            "metadata": {
               "type": "string"
             },
             "registryHostname": {
@@ -2062,6 +2047,7 @@
           "enum": [
             "KubernetesDirect",
             "KubernetesGcp",
+            "KubernetesAzure",
             "Pdc",
             "ServerlessAwsLambda"
           ]
@@ -2069,6 +2055,22 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#",
       "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "KubernetesAzure"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/K8sAzureInfrastructure"
+              }
+            }
+          }
+        },
         {
           "if": {
             "properties": {
@@ -2503,6 +2505,51 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "K8sAzureInfrastructure": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Infrastructure"
+        },
+        {
+          "type": "object",
+          "required": [
+            "cluster",
+            "connectorRef",
+            "namespace",
+            "releaseName",
+            "resourceGroup",
+            "subscriptionId"
+          ],
+          "properties": {
+            "cluster": {
+              "type": "string",
+              "minLength": 1
+            },
+            "connectorRef": {
+              "type": "string",
+              "minLength": 1
+            },
+            "namespace": {
+              "type": "string",
+              "minLength": 1
+            },
+            "releaseName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "resourceGroup": {
+              "type": "string",
+              "minLength": 1
+            },
+            "subscriptionId": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "K8sBGSwapServicesStepInfo": {
       "allOf": [
         {
@@ -2926,11 +2973,7 @@
         },
         {
           "type": "object",
-          "properties": {
-            "metadata": {
-              "type": "string"
-            }
-          }
+          "properties": { }
         }
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -3249,6 +3292,28 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "ModuleSource": {
+      "type": "object",
+      "required": [
+        "useConnectorCredentials"
+      ],
+      "properties": {
+        "useConnectorCredentials": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/ParameterFieldBoolean"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "NGVariable": {
       "type": "object",
       "discriminator": "type",
@@ -3317,11 +3382,7 @@
         },
         {
           "type": "object",
-          "properties": {
-            "metadata": {
-              "type": "string"
-            }
-          }
+          "properties": { }
         }
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -4606,11 +4667,7 @@
         },
         {
           "type": "object",
-          "properties": {
-            "metadata": {
-              "type": "string"
-            }
-          }
+          "properties": { }
         }
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -4831,7 +4888,8 @@
           "type": "object",
           "required": [
             "connectorRef",
-            "ticketType"
+            "ticketType",
+            "useServiceNowTemplate"
           ],
           "properties": {
             "connectorRef": {
@@ -4898,7 +4956,8 @@
           "required": [
             "connectorRef",
             "ticketNumber",
-            "ticketType"
+            "ticketType",
+            "useServiceNowTemplate"
           ],
           "properties": {
             "connectorRef": {
@@ -5513,11 +5572,7 @@
         },
         {
           "type": "object",
-          "properties": {
-            "metadata": {
-              "type": "string"
-            }
-          }
+          "properties": { }
         }
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -6486,6 +6541,9 @@
         "store"
       ],
       "properties": {
+        "moduleSource": {
+          "$ref": "#/definitions/ModuleSource"
+        },
         "store": {
           "$ref": "#/definitions/StoreConfigWrapper"
         }
@@ -6946,11 +7004,7 @@
         },
         {
           "type": "object",
-          "properties": {
-            "metadata": {
-              "type": "string"
-            }
-          }
+          "properties": { }
         }
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"

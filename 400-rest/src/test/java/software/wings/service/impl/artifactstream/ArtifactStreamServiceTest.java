@@ -13,6 +13,7 @@ import static io.harness.beans.PageRequest.PageRequestBuilder.aPageRequest;
 import static io.harness.beans.SearchFilter.Operator.EQ;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.delegate.beans.azure.AzureMachineImageArtifactDTO.ImageType.IMAGE_GALLERY;
 import static io.harness.rule.OwnerRule.AADITI;
 import static io.harness.rule.OwnerRule.ALEXEI;
 import static io.harness.rule.OwnerRule.ANIL;
@@ -3680,7 +3681,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
     ArtifactStream existingArtifactStream =
         AzureMachineImageArtifactStream.builder()
             .osType(AzureMachineImageArtifactStream.OSType.LINUX)
-            .imageType(AzureMachineImageArtifactStream.ImageType.IMAGE_GALLERY)
+            .imageType(IMAGE_GALLERY)
             .subscriptionId("subId")
             .imageDefinition(AzureMachineImageArtifactStream.ImageDefinition.builder()
                                  .resourceGroup("resourceGroup")
@@ -3699,7 +3700,7 @@ public class ArtifactStreamServiceTest extends WingsBaseTest {
     // Incoming artifact stream
     ArtifactStream artifactStream = AzureMachineImageArtifactStream.builder()
                                         .osType(AzureMachineImageArtifactStream.OSType.LINUX)
-                                        .imageType(AzureMachineImageArtifactStream.ImageType.IMAGE_GALLERY)
+                                        .imageType(IMAGE_GALLERY)
                                         .subscriptionId("subId")
                                         .imageDefinition(AzureMachineImageArtifactStream.ImageDefinition.builder()
                                                              .resourceGroup("resourceGroup")

@@ -77,7 +77,7 @@
       "then": {
         "properties": {
           "spec": {
-            "$ref": "#/definitions/IntegrationStageConfig"
+            "$ref": "#/definitions/IntegrationStageConfigImpl"
           }
         }
       }
@@ -1922,6 +1922,27 @@
     },
     "IntegrationStageConfig": {
       "type": "object",
+      "properties": {
+        "cloneCodebase": {
+          "$ref": "#/definitions/ParameterFieldBoolean"
+        },
+        "execution": {
+          "$ref": "#/definitions/ExecutionElementConfig"
+        },
+        "infrastructure": {
+          "$ref": "#/definitions/Infrastructure"
+        },
+        "serviceDependencies": {
+          "$ref": "#/definitions/ParameterFieldListDependencyElement"
+        },
+        "sharedPaths": {
+          "$ref": "#/definitions/ParameterFieldListString"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "IntegrationStageConfigImpl": {
+      "type": "object",
       "required": [
         "infrastructure"
       ],
@@ -2067,7 +2088,7 @@
           "then": {
             "properties": {
               "spec": {
-                "$ref": "#/definitions/IntegrationStageConfig"
+                "$ref": "#/definitions/IntegrationStageConfigImpl"
               }
             }
           }
@@ -3081,6 +3102,33 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "ParameterFieldBoolean": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "type": "boolean"
+        },
+        "expressionValue": {
+          "type": "string"
+        },
+        "inputSetValidator": {
+          "$ref": "#/definitions/InputSetValidator"
+        },
+        "jsonResponseField": {
+          "type": "boolean"
+        },
+        "responseField": {
+          "type": "string"
+        },
+        "typeString": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": "boolean"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "ParameterFieldInteger": {
       "type": "object",
       "properties": {
@@ -3105,6 +3153,66 @@
         "value": {
           "type": "integer",
           "format": "int32"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "ParameterFieldListDependencyElement": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "type": "boolean"
+        },
+        "expressionValue": {
+          "type": "string"
+        },
+        "inputSetValidator": {
+          "$ref": "#/definitions/InputSetValidator"
+        },
+        "jsonResponseField": {
+          "type": "boolean"
+        },
+        "responseField": {
+          "type": "string"
+        },
+        "typeString": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DependencyElement"
+          }
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "ParameterFieldListString": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "type": "boolean"
+        },
+        "expressionValue": {
+          "type": "string"
+        },
+        "inputSetValidator": {
+          "$ref": "#/definitions/InputSetValidator"
+        },
+        "jsonResponseField": {
+          "type": "boolean"
+        },
+        "responseField": {
+          "type": "string"
+        },
+        "typeString": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -4465,10 +4573,19 @@
               ]
             },
             "outputVariables": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/OutputNGVariable"
-              }
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/OutputNGVariable"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
             },
             "privileged": {
               "oneOf": [
@@ -4581,7 +4698,8 @@
           "type": "object",
           "required": [
             "connectorRef",
-            "ticketType"
+            "ticketType",
+            "useServiceNowTemplate"
           ],
           "properties": {
             "connectorRef": {
@@ -4648,7 +4766,8 @@
           "required": [
             "connectorRef",
             "ticketNumber",
-            "ticketType"
+            "ticketType",
+            "useServiceNowTemplate"
           ],
           "properties": {
             "connectorRef": {
@@ -6076,11 +6195,28 @@
     },
     "VmPoolYamlSpec": {
       "type": "object",
-      "required": [
-        "identifier"
-      ],
       "properties": {
         "identifier": {
+          "type": "string"
+        },
+        "os": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "Linux",
+                "Osx",
+                "Windows"
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
+        "poolName": {
           "type": "string"
         }
       },

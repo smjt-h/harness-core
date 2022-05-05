@@ -114,6 +114,9 @@ import io.harness.cvng.notification.beans.NotificationRuleType;
 import io.harness.cvng.notification.beans.SLONotificationRuleCondition;
 import io.harness.cvng.notification.beans.SLONotificationRuleCondition.SLONotificationRuleConditionSpec;
 import io.harness.cvng.notification.beans.SLONotificationRuleCondition.SLONotificationRuleConditionType;
+import io.harness.cvng.notification.channelDetails.CVNGEmailChannelSpec;
+import io.harness.cvng.notification.channelDetails.CVNGNotificationChannel;
+import io.harness.cvng.notification.channelDetails.CVNGNotificationChannelType;
 import io.harness.cvng.servicelevelobjective.beans.ErrorBudgetRisk;
 import io.harness.cvng.servicelevelobjective.beans.SLIMetricType;
 import io.harness.cvng.servicelevelobjective.beans.SLIMissingDataType;
@@ -156,7 +159,6 @@ import io.harness.ng.core.environment.dto.EnvironmentResponseDTO;
 import io.harness.ng.core.environment.dto.EnvironmentResponseDTO.EnvironmentResponseDTOBuilder;
 import io.harness.ng.core.service.dto.ServiceResponseDTO;
 import io.harness.ng.core.service.dto.ServiceResponseDTO.ServiceResponseDTOBuilder;
-import io.harness.notification.channelDetails.PmsEmailChannel;
 import io.harness.pms.yaml.ParameterField;
 
 import com.google.common.collect.Sets;
@@ -341,7 +343,7 @@ public class BuilderFactory {
         .serviceIdentifier(context.getServiceIdentifier())
         .envIdentifier(context.getEnvIdentifier())
         .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
-        .identifier(generateUuid())
+        .identifier(context.getMonitoredServiceIdentifier() + "/" + generateUuid())
         .monitoringSourceName(generateUuid())
         .metricPack(
             MetricPack.builder().identifier(CVNextGenConstants.CUSTOM_PACK_IDENTIFIER).dataCollectionDsl("dsl").build())
@@ -351,6 +353,7 @@ public class BuilderFactory {
         .tierName(generateUuid())
         .connectorIdentifier("AppDynamics Connector")
         .category(CVMonitoringCategory.PERFORMANCE)
+        .enabled(true)
         .productName(generateUuid());
   }
 
@@ -398,17 +401,20 @@ public class BuilderFactory {
         .projectIdentifier(context.getProjectIdentifier())
         .serviceIdentifier(context.getServiceIdentifier())
         .envIdentifier(context.getEnvIdentifier())
+        .identifier(context.getMonitoredServiceIdentifier() + "/" + generateUuid())
         .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier());
   }
 
   public DynatraceCVConfigBuilder dynatraceCVConfigBuilder() {
     return DynatraceCVConfig.builder()
+        .groupName("group")
         .accountId(context.getAccountId())
         .orgIdentifier(context.getOrgIdentifier())
         .projectIdentifier(context.getProjectIdentifier())
         .serviceIdentifier(context.getServiceIdentifier())
         .connectorIdentifier("DynatraceConnector")
         .envIdentifier(context.getEnvIdentifier())
+        .identifier(context.getMonitoredServiceIdentifier() + "/healthSourceIdentifier")
         .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier());
   }
 
@@ -420,6 +426,7 @@ public class BuilderFactory {
         .serviceIdentifier(context.getServiceIdentifier())
         .envIdentifier(context.getEnvIdentifier())
         .connectorIdentifier("connectorRef")
+        .identifier(context.getMonitoredServiceIdentifier() + "/" + generateUuid())
         .category(CVMonitoringCategory.PERFORMANCE);
   }
 
@@ -437,6 +444,7 @@ public class BuilderFactory {
         .monitoringSourceName(generateUuid())
         .connectorIdentifier("Error Tracking Connector")
         .category(CVMonitoringCategory.ERRORS)
+        .identifier(context.getMonitoredServiceIdentifier() + "/" + generateUuid())
         .productName(generateUuid());
   }
 
@@ -450,6 +458,7 @@ public class BuilderFactory {
         .envIdentifier(context.getEnvIdentifier())
         .connectorIdentifier("connectorRef")
         .dashboardName("dashboardName")
+        .identifier(context.getMonitoredServiceIdentifier() + "/" + generateUuid())
         .category(CVMonitoringCategory.PERFORMANCE);
   }
 
@@ -464,6 +473,7 @@ public class BuilderFactory {
         .connectorIdentifier("connectorRef")
         .dashboardId("dashboardId")
         .dashboardName("dashboardName")
+        .identifier(context.getMonitoredServiceIdentifier() + "/" + generateUuid())
         .category(CVMonitoringCategory.PERFORMANCE);
   }
 
@@ -475,14 +485,16 @@ public class BuilderFactory {
         .serviceIdentifier(context.getServiceIdentifier())
         .serviceInstanceIdentifier(randomAlphabetic(10))
         .envIdentifier(context.getEnvIdentifier())
+        .createdAt(clock.millis())
         .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
         .queryName(randomAlphabetic(10))
         .query(randomAlphabetic(10))
         .serviceInstanceIdentifier(randomAlphabetic(10))
-        .identifier(generateUuid())
+        .identifier(context.getMonitoredServiceIdentifier() + "/healthSourceIdentifier")
         .monitoringSourceName(generateUuid())
         .connectorIdentifier("Splunk Connector")
         .category(CVMonitoringCategory.ERRORS)
+        .enabled(true)
         .productName(generateUuid());
   }
 
@@ -977,7 +989,6 @@ public class BuilderFactory {
     testVerificationJob.setAccountId(context.getAccountId());
     testVerificationJob.setIdentifier("identifier");
     testVerificationJob.setJobName(generateUuid());
-    testVerificationJob.setMonitoringSources(Arrays.asList("monitoringIdentifier"));
     testVerificationJob.setSensitivity(Sensitivity.MEDIUM);
     testVerificationJob.setServiceIdentifier(context.getServiceIdentifier(), false);
     testVerificationJob.setEnvIdentifier(context.getEnvIdentifier(), false);
@@ -1100,9 +1111,12 @@ public class BuilderFactory {
                                       .conditionType(SLONotificationRuleConditionType.ERROR_BUDGET_REMAINING_PERCENTAGE)
                                       .spec(SLONotificationRuleConditionSpec.builder().threshold(10.0).build())
                                       .build()))
-        .notificationMethod(PmsEmailChannel.builder()
-                                .recipients(Arrays.asList("test@harness.io"))
-                                .userGroups(Arrays.asList("testUserGroup"))
+        .notificationMethod(CVNGNotificationChannel.builder()
+                                .type(CVNGNotificationChannelType.EMAIL)
+                                .spec(CVNGEmailChannelSpec.builder()
+                                          .recipients(Arrays.asList("test@harness.io"))
+                                          .userGroups(Arrays.asList("testUserGroup"))
+                                          .build())
                                 .build());
   }
 }
