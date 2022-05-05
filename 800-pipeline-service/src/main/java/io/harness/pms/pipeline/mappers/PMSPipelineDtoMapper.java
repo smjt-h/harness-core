@@ -19,6 +19,7 @@ import io.harness.encryption.ScopeHelper;
 import io.harness.exception.InvalidRequestException;
 import io.harness.gitaware.helper.GitAwareContextHelper;
 import io.harness.gitsync.beans.StoreType;
+import io.harness.gitsync.sdk.EntityGitDetails;
 import io.harness.gitsync.sdk.EntityGitDetailsMapper;
 import io.harness.gitsync.sdk.EntityValidityDetails;
 import io.harness.ng.core.EntityDetail;
@@ -81,6 +82,15 @@ public class PMSPipelineDtoMapper {
   }
 
   public PMSPipelineSummaryResponseDTO preparePipelineSummary(PipelineEntity pipelineEntity) {
+    EntityGitDetails entityGitDetails = pipelineEntity.getStoreType() == null
+        ? EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity)
+        : pipelineEntity.getStoreType() == StoreType.REMOTE
+        ? GitAwareContextHelper.getEntityGitDetailsFromScmGitMetadata()
+        : EntityGitDetails.builder().build();
+    if (pipelineEntity.getStoreType() != null) {
+      entityGitDetails.setStoreType(pipelineEntity.getStoreType());
+      entityGitDetails.setConnectorRef(pipelineEntity.getConnectorRef());
+    }
     return PMSPipelineSummaryResponseDTO.builder()
         .identifier(pipelineEntity.getIdentifier())
         .description(pipelineEntity.getDescription())
@@ -95,10 +105,7 @@ public class PMSPipelineDtoMapper {
         .filters(ModuleInfoMapper.getModuleInfo(pipelineEntity.getFilters()))
         .stageNames(pipelineEntity.getStageNames())
         .storeType(pipelineEntity.getStoreType())
-        .gitDetails(pipelineEntity.getStoreType() == null ? EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity)
-                : pipelineEntity.getStoreType() == StoreType.REMOTE
-                ? GitAwareContextHelper.getEntityGitDetailsFromScmGitMetadata()
-                : null)
+        .gitDetails(entityGitDetails)
         .entityValidityDetails(pipelineEntity.isEntityInvalid()
                 ? EntityValidityDetails.builder().valid(false).invalidYaml(pipelineEntity.getYaml()).build()
                 : EntityValidityDetails.builder().valid(true).build())
@@ -106,6 +113,15 @@ public class PMSPipelineDtoMapper {
   }
 
   public PMSPipelineSummaryResponseDTO preparePipelineSummaryForListView(PipelineEntity pipelineEntity) {
+    EntityGitDetails entityGitDetails = pipelineEntity.getStoreType() == null
+        ? EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity)
+        : pipelineEntity.getStoreType() == StoreType.REMOTE
+        ? GitAwareContextHelper.getEntityGitDetailsFromScmGitMetadata()
+        : EntityGitDetails.builder().build();
+    if (pipelineEntity.getStoreType() != null) {
+      entityGitDetails.setStoreType(pipelineEntity.getStoreType());
+      entityGitDetails.setConnectorRef(pipelineEntity.getConnectorRef());
+    }
     return PMSPipelineSummaryResponseDTO.builder()
         .identifier(pipelineEntity.getIdentifier())
         .description(pipelineEntity.getDescription())
@@ -120,10 +136,7 @@ public class PMSPipelineDtoMapper {
         .filters(ModuleInfoMapper.getModuleInfo(pipelineEntity.getFilters()))
         .stageNames(pipelineEntity.getStageNames())
         .storeType(pipelineEntity.getStoreType())
-        .gitDetails(pipelineEntity.getStoreType() == null ? EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity)
-                : pipelineEntity.getStoreType() == StoreType.REMOTE
-                ? GitAwareContextHelper.getEntityGitDetails(pipelineEntity)
-                : null)
+        .gitDetails(entityGitDetails)
         .entityValidityDetails(pipelineEntity.isEntityInvalid()
                 ? EntityValidityDetails.builder().valid(false).invalidYaml(pipelineEntity.getYaml()).build()
                 : EntityValidityDetails.builder().valid(true).build())
