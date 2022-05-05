@@ -7,6 +7,7 @@
 
 package io.harness.ng.core.variable.resources;
 
+import static io.harness.rule.OwnerRule.MEENAKSHI;
 import static io.harness.rule.OwnerRule.NISHANT;
 
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
@@ -19,6 +20,8 @@ import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
+import io.harness.ng.beans.PageResponse;
+import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.variable.dto.VariableDTO;
 import io.harness.ng.core.variable.dto.VariableRequestDTO;
 import io.harness.ng.core.variable.dto.VariableResponseDTO;
@@ -28,9 +31,13 @@ import io.harness.ng.core.variable.mappers.VariableMapper;
 import io.harness.ng.core.variable.services.VariableService;
 import io.harness.rule.Owner;
 
+import java.util.Optional;
+import javax.ws.rs.NotFoundException;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -44,6 +51,7 @@ public class VariableResourceTest extends CategoryTest {
   @Captor ArgumentCaptor<String> stringArgumentCaptor;
   @Captor ArgumentCaptor<VariableDTO> variableDTOArgumentCaptor;
   @Captor ArgumentCaptor<Variable> variableArgumentCaptor;
+  @Rule public ExpectedException expectedExceptionRule = ExpectedException.none();
 
   @Before
   public void setup() {
@@ -69,5 +77,53 @@ public class VariableResourceTest extends CategoryTest {
 
     verify(variableMapper, times(1)).toResponseWrapper(variableArgumentCaptor.capture());
     assertThat(variableArgumentCaptor.getValue()).isEqualTo(variable);
+  }
+
+  @Test
+  @Owner(developers = NISHANT)
+  @Category(UnitTests.class)
+  public void testGet() {
+    String accountIdentifier = randomAlphabetic(10);
+    String orgIdentifier = randomAlphabetic(10);
+    String projectIdentifier = randomAlphabetic(10);
+    String identifier = randomAlphabetic(10);
+    when(variableService.get(anyString(), anyString(), anyString(), anyString()))
+        .thenReturn(Optional.ofNullable(VariableResponseDTO.builder().build()));
+    ResponseDTO<VariableResponseDTO> returnVal =
+        variableResource.get(identifier, accountIdentifier, orgIdentifier, projectIdentifier);
+    assertThat(returnVal).isNotNull();
+    verify(variableService, times(1)).get(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
+  }
+
+  @Test
+  @Owner(developers = NISHANT)
+  @Category(UnitTests.class)
+  public void testGet_notFoundException() {
+    String accountIdentifier = randomAlphabetic(10);
+    String orgIdentifier = randomAlphabetic(10);
+    String projectIdentifier = randomAlphabetic(10);
+    String identifier = randomAlphabetic(10);
+    when(variableService.get(anyString(), anyString(), anyString(), anyString())).thenReturn(Optional.empty());
+    expectedExceptionRule.expect(NotFoundException.class);
+    expectedExceptionRule.expectMessage(
+        String.format("Variable with identifier [%s] in project [%s] and org [%s] not found", identifier,
+            projectIdentifier, orgIdentifier));
+    variableResource.get(identifier, accountIdentifier, orgIdentifier, projectIdentifier);
+    verify(variableService, times(1)).get(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
+  }
+
+  @Test
+  @Owner(developers = MEENAKSHI)
+  @Category(UnitTests.class)
+  public void testList() {
+    String accountIdentifier = randomAlphabetic(10);
+    String orgIdentifier = randomAlphabetic(10);
+    String projectIdentifier = randomAlphabetic(10);
+    when(variableService.list(accountIdentifier, orgIdentifier, projectIdentifier, 0, 10, null, false))
+        .thenReturn(PageResponse.<VariableResponseDTO>builder().build());
+    ResponseDTO<PageResponse<VariableResponseDTO>> list =
+        variableResource.list(accountIdentifier, orgIdentifier, projectIdentifier, 0, 10, null, false);
+    assertThat(list).isNotNull();
+    verify(variableService, times(1)).list(accountIdentifier, orgIdentifier, projectIdentifier, 0, 10, null, false);
   }
 }

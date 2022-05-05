@@ -7,9 +7,25 @@
 
 package io.harness.serializer.kryo;
 
-import static io.harness.annotations.dev.HarnessModule._360_CG_MANAGER;
-import static io.harness.annotations.dev.HarnessTeam.PL;
-
+import com.amazonaws.services.cloudformation.model.StackStatus;
+import com.amazonaws.services.cloudwatch.model.Datapoint;
+import com.amazonaws.services.cloudwatch.model.Dimension;
+import com.amazonaws.services.cloudwatch.model.StandardUnit;
+import com.amazonaws.services.ecs.model.Deployment;
+import com.amazonaws.services.ecs.model.DeploymentConfiguration;
+import com.amazonaws.services.ecs.model.Service;
+import com.amazonaws.services.ecs.model.ServiceEvent;
+import com.esotericsoftware.kryo.Kryo;
+import com.google.api.services.logging.v2.model.LogEntry;
+import com.google.api.services.logging.v2.model.LogEntryOperation;
+import com.google.api.services.logging.v2.model.LogEntrySourceLocation;
+import com.google.api.services.logging.v2.model.MonitoredResource;
+import com.google.api.services.logging.v2.model.MonitoredResourceMetadata;
+import com.google.gson.internal.LinkedTreeMap;
+import com.google.protobuf.Duration;
+import com.splunk.HttpException;
+import com.sumologic.client.SumoClientException;
+import com.sumologic.client.SumoException;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.ccm.cluster.entities.ClusterRecord;
@@ -21,7 +37,7 @@ import io.harness.cvng.state.CVNGVerificationTask;
 import io.harness.perpetualtask.PerpetualTaskSchedule;
 import io.harness.perpetualtask.internal.AssignmentTaskResponse;
 import io.harness.serializer.KryoRegistrar;
-
+import io.kubernetes.client.openapi.ApiException;
 import software.wings.api.ARMStateExecutionData;
 import software.wings.api.AmiServiceDeployElement;
 import software.wings.api.AmiServiceSetupElement;
@@ -242,7 +258,6 @@ import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.ArtifactoryArtifactStream;
 import software.wings.beans.artifact.AzureArtifactsArtifactStream;
 import software.wings.beans.artifact.AzureMachineImageArtifactStream;
-import software.wings.beans.artifact.AzureMachineImageArtifactStream.ImageType;
 import software.wings.beans.artifact.AzureMachineImageArtifactStream.OSType;
 import software.wings.beans.artifact.BambooArtifactStream;
 import software.wings.beans.artifact.CustomArtifactStream;
@@ -382,9 +397,6 @@ import software.wings.helpers.ext.ecs.response.EcsDeployRollbackDataFetchRespons
 import software.wings.helpers.ext.ecs.response.EcsListenerUpdateCommandResponse;
 import software.wings.helpers.ext.ecs.response.EcsRunTaskDeployResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceSetupResponse;
-import software.wings.helpers.ext.external.comm.CollaborationProviderRequest;
-import software.wings.helpers.ext.external.comm.CollaborationProviderResponse;
-import software.wings.helpers.ext.external.comm.EmailRequest;
 import software.wings.helpers.ext.helm.HelmCommandExecutionResponse;
 import software.wings.helpers.ext.helm.request.HelmCommandRequest;
 import software.wings.helpers.ext.helm.request.HelmInstallCommandRequest;
@@ -419,7 +431,6 @@ import software.wings.helpers.ext.k8s.response.K8sTaskResponse;
 import software.wings.helpers.ext.k8s.response.K8sTrafficSplitResponse;
 import software.wings.helpers.ext.k8s.response.PodStatus;
 import software.wings.helpers.ext.ldap.LdapResponse;
-import software.wings.helpers.ext.mail.EmailData;
 import software.wings.helpers.ext.trigger.request.TriggerDeploymentNeededRequest;
 import software.wings.helpers.ext.trigger.request.TriggerRequest;
 import software.wings.helpers.ext.trigger.response.TriggerDeploymentNeededResponse;
@@ -599,27 +610,10 @@ import software.wings.utils.ContainerFamily;
 import software.wings.verification.VerificationDataAnalysisResponse;
 import software.wings.verification.VerificationStateAnalysisExecutionData;
 
-import com.amazonaws.services.cloudformation.model.StackStatus;
-import com.amazonaws.services.cloudwatch.model.Datapoint;
-import com.amazonaws.services.cloudwatch.model.Dimension;
-import com.amazonaws.services.cloudwatch.model.StandardUnit;
-import com.amazonaws.services.ecs.model.Deployment;
-import com.amazonaws.services.ecs.model.DeploymentConfiguration;
-import com.amazonaws.services.ecs.model.Service;
-import com.amazonaws.services.ecs.model.ServiceEvent;
-import com.esotericsoftware.kryo.Kryo;
-import com.google.api.services.logging.v2.model.LogEntry;
-import com.google.api.services.logging.v2.model.LogEntryOperation;
-import com.google.api.services.logging.v2.model.LogEntrySourceLocation;
-import com.google.api.services.logging.v2.model.MonitoredResource;
-import com.google.api.services.logging.v2.model.MonitoredResourceMetadata;
-import com.google.gson.internal.LinkedTreeMap;
-import com.google.protobuf.Duration;
-import com.splunk.HttpException;
-import com.sumologic.client.SumoClientException;
-import com.sumologic.client.SumoException;
-import io.kubernetes.client.openapi.ApiException;
 import java.time.Instant;
+
+import static io.harness.annotations.dev.HarnessModule._360_CG_MANAGER;
+import static io.harness.annotations.dev.HarnessTeam.PL;
 
 @OwnedBy(PL)
 @TargetModule(_360_CG_MANAGER)
@@ -826,10 +820,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(EcsBGListenerUpdateRequest.class, 5605);
     kryo.register(EcsListenerUpdateRequestConfigData.class, 5610);
     kryo.register(EcsListenerUpdateCommandResponse.class, 5613);
-    kryo.register(CollaborationProviderRequest.CommunicationType.class, 5307);
-    kryo.register(CollaborationProviderRequest.class, 5306);
-    kryo.register(CollaborationProviderResponse.class, 5308);
-    kryo.register(EmailRequest.class, 5309);
     kryo.register(HelmCommandExecutionResponse.class, 5260);
     kryo.register(HelmCommandRequest.HelmCommandType.class, 5262);
     kryo.register(HelmInstallCommandRequest.class, 5259);
@@ -838,7 +828,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(HelmReleaseHistoryCommandResponse.class, 5266);
     kryo.register(LdapResponse.Status.class, 5505);
     kryo.register(LdapResponse.class, 5504);
-    kryo.register(EmailData.class, 5303);
     kryo.register(TriggerDeploymentNeededRequest.class, 5553);
     kryo.register(TriggerRequest.class, 5557);
     kryo.register(TriggerDeploymentNeededResponse.class, 5554);
@@ -1026,6 +1015,7 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(SpotInstSetupStateExecutionData.class, 7241);
     kryo.register(SpotinstDeployExecutionSummary.class, 7242);
     kryo.register(SpotinstAllPhaseRollbackData.class, 7245);
+    kryo.register(NewRelicDataCollectionInfoV2.class, 7247);
     kryo.register(Dimension.class, 7251);
     kryo.register(Datapoint.class, 7252);
     kryo.register(AwsCloudWatchStatisticsResponse.class, 7253);
@@ -1279,7 +1269,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(CodeDeployInfrastructureMapping.class, 400121);
     kryo.register(StateStatusUpdateInfo.class, 400122);
     kryo.register(ManifestCollectionStatus.class, 400123);
-    kryo.register(ImageType.class, 400128);
     kryo.register(CommandUnitDetails.CommandUnitType.class, 400129);
     kryo.register(SetupStatus.class, 400130);
     kryo.register(Type.class, 400131);

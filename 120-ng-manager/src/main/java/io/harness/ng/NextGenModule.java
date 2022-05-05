@@ -12,6 +12,7 @@ import static io.harness.audit.ResourceTypeConstants.API_KEY;
 import static io.harness.audit.ResourceTypeConstants.CONNECTOR;
 import static io.harness.audit.ResourceTypeConstants.DELEGATE_CONFIGURATION;
 import static io.harness.audit.ResourceTypeConstants.ENVIRONMENT;
+import static io.harness.audit.ResourceTypeConstants.FILE;
 import static io.harness.audit.ResourceTypeConstants.ORGANIZATION;
 import static io.harness.audit.ResourceTypeConstants.PROJECT;
 import static io.harness.audit.ResourceTypeConstants.SECRET;
@@ -19,6 +20,7 @@ import static io.harness.audit.ResourceTypeConstants.SERVICE;
 import static io.harness.audit.ResourceTypeConstants.SERVICE_ACCOUNT;
 import static io.harness.audit.ResourceTypeConstants.TOKEN;
 import static io.harness.audit.ResourceTypeConstants.USER;
+import static io.harness.audit.ResourceTypeConstants.VARIABLE;
 import static io.harness.eventsframework.EventsFrameworkConstants.ENTITY_CRUD;
 import static io.harness.eventsframework.EventsFrameworkConstants.INSTANCE_STATS;
 import static io.harness.eventsframework.EventsFrameworkConstants.SETUP_USAGE;
@@ -151,6 +153,7 @@ import io.harness.ng.core.impl.ProjectServiceImpl;
 import io.harness.ng.core.outbox.ApiKeyEventHandler;
 import io.harness.ng.core.outbox.DelegateProfileEventHandler;
 import io.harness.ng.core.outbox.EnvironmentEventHandler;
+import io.harness.ng.core.outbox.FileEventHandler;
 import io.harness.ng.core.outbox.NextGenOutboxEventHandler;
 import io.harness.ng.core.outbox.OrganizationEventHandler;
 import io.harness.ng.core.outbox.ProjectEventHandler;
@@ -160,6 +163,7 @@ import io.harness.ng.core.outbox.ServiceOutBoxEventHandler;
 import io.harness.ng.core.outbox.TokenEventHandler;
 import io.harness.ng.core.outbox.UserEventHandler;
 import io.harness.ng.core.outbox.UserGroupEventHandler;
+import io.harness.ng.core.outbox.VariableEventHandler;
 import io.harness.ng.core.schema.YamlBaseUrlService;
 import io.harness.ng.core.services.OrganizationService;
 import io.harness.ng.core.services.ProjectService;
@@ -760,8 +764,10 @@ public class NextGenModule extends AbstractModule {
     outboxEventHandlerMapBinder.addBinding(CONNECTOR).to(ConnectorEventHandler.class);
     outboxEventHandlerMapBinder.addBinding(SERVICE).to(ServiceOutBoxEventHandler.class);
     outboxEventHandlerMapBinder.addBinding(ENVIRONMENT).to(EnvironmentEventHandler.class);
+    outboxEventHandlerMapBinder.addBinding(FILE).to(FileEventHandler.class);
     outboxEventHandlerMapBinder.addBinding(API_KEY).to(ApiKeyEventHandler.class);
     outboxEventHandlerMapBinder.addBinding(TOKEN).to(TokenEventHandler.class);
+    outboxEventHandlerMapBinder.addBinding(VARIABLE).to(VariableEventHandler.class);
   }
 
   private void registerEventsFrameworkMessageListeners() {

@@ -7,8 +7,6 @@
 
 package io.harness.serializer.morphia;
 
-import static io.harness.annotations.dev.HarnessTeam.PL;
-
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ccm.cluster.entities.AzureKubernetesCluster;
 import io.harness.ccm.cluster.entities.ClusterRecord;
@@ -29,7 +27,6 @@ import io.harness.marketplace.gcp.procurement.pubsub.ProcurementPubsubMessage;
 import io.harness.mongo.index.migrator.AggregateResult;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.morphia.MorphiaRegistrarHelperPut;
-
 import software.wings.api.ARMStateExecutionData;
 import software.wings.api.AmiServiceDeployElement;
 import software.wings.api.AmiServiceSetupElement;
@@ -431,7 +428,6 @@ import software.wings.helpers.ext.ecs.response.EcsBGRoute53ServiceSetupResponse;
 import software.wings.helpers.ext.ecs.response.EcsListenerUpdateCommandResponse;
 import software.wings.helpers.ext.ecs.response.EcsRunTaskDeployResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceSetupResponse;
-import software.wings.helpers.ext.external.comm.CollaborationProviderResponse;
 import software.wings.helpers.ext.helm.HelmCommandExecutionResponse;
 import software.wings.helpers.ext.helm.response.HelmValuesFetchTaskResponse;
 import software.wings.helpers.ext.k8s.response.K8sApplyResponse;
@@ -443,7 +439,6 @@ import software.wings.helpers.ext.k8s.response.K8sRollingDeployRollbackResponse;
 import software.wings.helpers.ext.k8s.response.K8sScaleResponse;
 import software.wings.helpers.ext.k8s.response.K8sTaskExecutionResponse;
 import software.wings.helpers.ext.k8s.response.K8sTrafficSplitResponse;
-import software.wings.helpers.ext.mail.EmailData;
 import software.wings.infra.AwsAmiInfrastructure;
 import software.wings.infra.AwsEcsInfrastructure;
 import software.wings.infra.AwsInstanceInfrastructure;
@@ -511,6 +506,7 @@ import software.wings.service.impl.newrelic.MLExperiments;
 import software.wings.service.impl.newrelic.NewRelicMarkerExecutionData;
 import software.wings.service.impl.newrelic.NewRelicMetricAnalysisRecord;
 import software.wings.service.impl.splunk.SplunkAnalysisCluster;
+import software.wings.service.impl.splunk.SplunkDataCollectionInfoV2;
 import software.wings.service.impl.trigger.TriggerCallback;
 import software.wings.service.impl.trigger.TriggerServiceImpl.TriggerIdempotentResult;
 import software.wings.service.impl.yaml.GitCommandCallback;
@@ -737,6 +733,8 @@ import software.wings.yaml.gitSync.YamlChangeSet;
 import java.security.Principal;
 import java.util.Set;
 
+import static io.harness.annotations.dev.HarnessTeam.PL;
+
 @OwnedBy(PL)
 public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
   private String cf = "helpers.ext.cloudformation.";
@@ -828,7 +826,6 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     set.add(EcsServiceSpecification.class);
     set.add(ElasticsearchBulkMigrationJob.class);
     set.add(ElkCVConfiguration.class);
-    set.add(EmailData.class);
     set.add(EmailVerificationToken.class);
     set.add(EntityVersion.class);
     set.add(EntityVersionCollection.class);
@@ -1231,7 +1228,6 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     w.put("helpers.ext.ecs.response.EcsRunTaskDeployResponse", EcsRunTaskDeployResponse.class);
     w.put("helpers.ext.ecs.response.EcsRunTaskDeployRequest", EcsRunTaskDeployRequest.class);
     w.put("helpers.ext.ecs.response.EcsServiceSetupResponse", EcsServiceSetupResponse.class);
-    w.put("helpers.ext.external.comm.CollaborationProviderResponse", CollaborationProviderResponse.class);
     w.put("helpers.ext.helm.HelmCommandExecutionResponse", HelmCommandExecutionResponse.class);
     w.put("helpers.ext.helm.response.HelmValuesFetchTaskResponse", HelmValuesFetchTaskResponse.class);
     w.put("helpers.ext.k8s.response.K8sApplyResponse", K8sApplyResponse.class);
@@ -1275,6 +1271,7 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     w.put("service.impl.newrelic.MetricAnalysisExecutionData", NotFoundClass.class);
     w.put("service.impl.newrelic.NewRelicMarkerExecutionData", NewRelicMarkerExecutionData.class);
     w.put("service.impl.splunk.SplunkAnalysisCluster", SplunkAnalysisCluster.class);
+    w.put("service.impl.splunk.SplunkDataCollectionInfoV2", SplunkDataCollectionInfoV2.class);
     w.put("service.impl.trigger.TriggerCallback", TriggerCallback.class);
     w.put("service.impl.trigger.TriggerServiceImpl$TriggerIdempotentResult", TriggerIdempotentResult.class);
     w.put("service.impl.WorkflowExecutionUpdate", WorkflowExecutionUpdate.class);
