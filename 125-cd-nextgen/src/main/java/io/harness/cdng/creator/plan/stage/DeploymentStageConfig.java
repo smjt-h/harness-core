@@ -7,8 +7,12 @@
 
 package io.harness.cdng.creator.plan.stage;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.environment.yaml.EnvironmentYamlV2;
 import io.harness.cdng.pipeline.PipelineInfrastructure;
 import io.harness.cdng.service.beans.ServiceConfig;
 import io.harness.cdng.service.beans.ServiceDefinitionType;
@@ -17,19 +21,13 @@ import io.harness.cdng.visitor.helpers.deploymentstage.DeploymentStageVisitorHel
 import io.harness.plancreator.execution.ExecutionElementConfig;
 import io.harness.plancreator.stages.stage.StageInfoConfig;
 import io.harness.pms.yaml.YamlNode;
+import io.harness.validation.OneOfField;
 import io.harness.walktree.beans.VisitableChild;
 import io.harness.walktree.beans.VisitableChildren;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
 import io.harness.yaml.core.VariableExpression;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.ArrayList;
-import java.util.List;
-import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,6 +36,10 @@ import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.annotation.TypeAlias;
 
+import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.List;
+
 @OwnedBy(HarnessTeam.CDC)
 @Data
 @Builder
@@ -45,6 +47,7 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonTypeName("Deployment")
+@OneOfField(fields = {"environment", "infrastructure"})
 @TypeAlias("deploymentStageConfig")
 @SimpleVisitorHelper(helperClass = DeploymentStageVisitorHelper.class)
 public class DeploymentStageConfig implements StageInfoConfig, Visitable {
@@ -72,7 +75,13 @@ public class DeploymentStageConfig implements StageInfoConfig, Visitable {
   @ApiModelProperty(hidden = true)
   ServiceDefinitionType deploymentType;
 
-  @NotNull PipelineInfrastructure infrastructure;
+  // TODO: need to remove infraStructure from here after multi-infra feature rollout. Need to keep environment instead
+  // of infraStructure
+  //  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
+  //  @ApiModelProperty(hidden = true)
+  EnvironmentYamlV2 environment;
+
+  PipelineInfrastructure infrastructure;
   @NotNull @VariableExpression(skipVariableExpression = true) ExecutionElementConfig execution;
 
   // For Visitor Framework Impl
