@@ -169,26 +169,6 @@ public class NativeHelmStepHelper extends CDStepHelper {
     return paths;
   }
 
-  private List<String> getValuesPathsBasedOnManifest(GitStoreConfig gitstoreConfig, ManifestOutcome manifestOutcome) {
-    List<String> paths = new ArrayList<>();
-    switch (manifestOutcome.getType()) {
-      case ManifestType.HelmChart:
-        String folderPath = getParameterFieldValue(gitstoreConfig.getFolderPath());
-        HelmChartManifestOutcome helmChartManifestOutcome = (HelmChartManifestOutcome) manifestOutcome;
-        List<String> valuesPaths = getParameterFieldValue(helmChartManifestOutcome.getValuesPaths());
-        if (isNotEmpty(valuesPaths)) {
-          for (String path : valuesPaths) {
-            paths.add(getValuesYamlGitFilePath(folderPath, path));
-          }
-        }
-        break;
-      default:
-        throw new UnsupportedOperationException(format("Unsupported Manifest type: [%s]", manifestOutcome.getType()));
-    }
-
-    return paths;
-  }
-
   public TaskChainResponse queueNativeHelmTask(StepElementParameters stepElementParameters,
       HelmCommandRequestNG helmCommandRequest, Ambiance ambiance,
       NativeHelmExecutionPassThroughData executionPassThroughData) {

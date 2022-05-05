@@ -53,7 +53,6 @@ import io.harness.cdng.manifest.yaml.OpenshiftManifestOutcome;
 import io.harness.cdng.manifest.yaml.OpenshiftManifestOutcome.OpenshiftManifestOutcomeKeys;
 import io.harness.cdng.manifest.yaml.OpenshiftParamManifestOutcome;
 import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
-import io.harness.cdng.manifest.yaml.kinds.KustomizePatchesManifest;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.connector.ConnectorInfoDTO;

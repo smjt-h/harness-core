@@ -471,7 +471,7 @@ public class ManifestHelper {
       return filePath;
     } else if (filePath.endsWith(yaml_file_extension) || filePath.endsWith(yml_file_extension)
         || filePath.endsWith(json_file_extension)) {
-      return filePath.startsWith("/") ? filePath.substring(1) : filePath;
+      return filePath.charAt(0) == '/' ? filePath.substring(1) : filePath;
     } else {
       throw new WingsException(format("File extension not supported %s", filePath));
     }
@@ -481,7 +481,7 @@ public class ManifestHelper {
     if (isBlank(filePath)) {
       return filePath;
     }
-    if (filePath.startsWith("/")) {
+    if (filePath.charAt(0) == '/') {
       filePath = filePath.substring(1);
     }
     Stack<String> stack = new Stack<>();
@@ -512,10 +512,11 @@ public class ManifestHelper {
   }
 
   public static int findLastIndex(String filePath, Character delimiter) {
-    for (int i = filePath.length() - 1; i >= 0; i--)
-      if (delimiter.equals(filePath.charAt(i)))
+    for (int i = filePath.length() - 1; i >= 0; i--) {
+      if (delimiter.equals(filePath.charAt(i))) {
         return i + 1;
-
+      }
+    }
     return -1;
   }
 }
