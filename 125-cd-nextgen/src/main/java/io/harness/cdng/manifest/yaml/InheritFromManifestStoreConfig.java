@@ -31,24 +31,23 @@ import org.springframework.data.annotation.TypeAlias;
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = false)
-@JsonTypeName(ManifestStoreType.HELMCHARTVALUES)
-//@SimpleVisitorHelper(helperClass = ConnectorRefExtractorHelper.class)
-@TypeAlias("HelmChartValuesStoreConfig")
-@RecasterAlias("io.harness.cdng.manifest.yaml.HelmChartValuesStoreConfig")
-public class HelmChartValuesStoreConfig implements StoreConfig {
-  @YamlSchemaTypes(value = {runtime})
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
+@JsonTypeName(ManifestStoreType.INHERITFROMMANIFEST)
+@TypeAlias("InheritFromManifestStoreConfig")
+@RecasterAlias("io.harness.cdng.manifest.yaml.InheritFromManifestStoreConfig")
+public class InheritFromManifestStoreConfig implements StoreConfig {
   @Wither
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
+  @YamlSchemaTypes(value = {runtime})
   private ParameterField<List<String>> paths;
 
   @Override
   public String getKind() {
-    return ManifestStoreType.HELMCHARTVALUES;
+    return ManifestStoreType.INHERITFROMMANIFEST;
   }
 
   @Override
   public StoreConfig cloneInternal() {
-    return HelmChartValuesStoreConfig.builder().paths(paths).build();
+    return InheritFromManifestStoreConfig.builder().paths(paths).build();
   }
 
   @Override
@@ -61,13 +60,13 @@ public class HelmChartValuesStoreConfig implements StoreConfig {
   }
 
   public StoreConfig applyOverrides(StoreConfig overrideConfig) {
-    HelmChartValuesStoreConfig helmChartValuesStoreConfig = (HelmChartValuesStoreConfig) overrideConfig;
-    HelmChartValuesStoreConfig resultantHelmChartValuesStoreConfig = this;
-    if (!ParameterField.isNull(resultantHelmChartValuesStoreConfig.getPaths())) {
-      resultantHelmChartValuesStoreConfig =
-          resultantHelmChartValuesStoreConfig.withPaths(helmChartValuesStoreConfig.getPaths());
+    InheritFromManifestStoreConfig inheritFromManifestStoreConfig = (InheritFromManifestStoreConfig) overrideConfig;
+    InheritFromManifestStoreConfig resultantInheritFromManifestStoreConfig = this;
+    if (!ParameterField.isNull(resultantInheritFromManifestStoreConfig.getPaths())) {
+      resultantInheritFromManifestStoreConfig =
+          resultantInheritFromManifestStoreConfig.withPaths(inheritFromManifestStoreConfig.getPaths());
     }
 
-    return resultantHelmChartValuesStoreConfig;
+    return resultantInheritFromManifestStoreConfig;
   }
 }

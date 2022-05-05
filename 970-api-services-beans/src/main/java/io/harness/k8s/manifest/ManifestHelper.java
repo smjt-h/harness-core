@@ -8,6 +8,7 @@
 package io.harness.k8s.manifest;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.k8s.manifest.ObjectYamlUtils.YAML_DOCUMENT_DELIMITER;
 import static io.harness.k8s.manifest.ObjectYamlUtils.newLineRegex;
@@ -37,11 +38,13 @@ import com.esotericsoftware.yamlbeans.tokenizer.Tokenizer.TokenizerException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Stack;
 import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
@@ -55,11 +58,13 @@ public class ManifestHelper {
   public static final String values_filename = "values.yaml";
   public static final String yaml_file_extension = ".yaml";
   public static final String yml_file_extension = ".yml";
+  public static final String json_file_extension = ".json";
   public static final String currentReleaseWorkloadExpression = "${k8s.currentReleaseWorkload}";
   public static final String previousReleaseWorkloadExpression = "${k8s.previousReleaseWorkload}";
 
   private static final String VALUES_EXPRESSION = ".Values";
   public static final int MAX_VALUES_EXPRESSION_RECURSION_DEPTH = 10;
+  public static final Integer MAX_DIRECTORY_HEIGHT = 2;
 
   public static KubernetesResource getKubernetesResourceFromSpec(String spec) {
     Map map = readKubernetesSpecAsMap(spec);
@@ -446,16 +451,71 @@ public class ManifestHelper {
     if (isBlank(folderPath)) {
       return filePath;
     }
-
-    return normalizeFolderPathForValuesYaml(folderPath) + filePath;
+    String completeFilePath = normalizeFolderPathForValuesYaml(folderPath) + normalizeFilePath(filePath);
+    return simplifyPath(completeFilePath);
   }
 
   public static String normalizeFolderPathForValuesYaml(String folderPath) {
-    if (isBlank(folderPath)) {
+    if (isBlank(folderPath) || folderPath.endsWith("/")) {
       return folderPath;
+    } else if (folderPath.endsWith(yaml_file_extension) || folderPath.endsWith(yml_file_extension)
+        || folderPath.endsWith(json_file_extension)) {
+      return folderPath.substring(0, findLastIndex(folderPath, '/'));
+    } else {
+      return folderPath + "/";
     }
-    String valuesYamlFolderPath =
-        folderPath.endsWith("/") ? folderPath.substring(0, folderPath.length() - 1) : folderPath;
-    return valuesYamlFolderPath.substring(0, valuesYamlFolderPath.lastIndexOf("/") + 1);
+  }
+
+  public static String normalizeFilePath(String filePath) {
+    if (isBlank(filePath)) {
+      return filePath;
+    } else if (filePath.endsWith(yaml_file_extension) || filePath.endsWith(yml_file_extension)
+        || filePath.endsWith(json_file_extension)) {
+      return filePath.startsWith("/") ? filePath.substring(1) : filePath;
+    } else {
+      throw new WingsException(format("File extension not supported %s", filePath));
+    }
+  }
+
+  public static String simplifyPath(String filePath) {
+    if (isBlank(filePath)) {
+      return filePath;
+    }
+    if (filePath.startsWith("/")) {
+      filePath = filePath.substring(1);
+    }
+    Stack<String> stack = new Stack<>();
+    List<String> fileDirectories = Arrays.asList(filePath.split("/"));
+    Integer level = 0;
+    for (int index = 0; index < fileDirectories.size(); index++) {
+      if (isBlank(fileDirectories.get(index))) {
+        throw new WingsException("Invalid files path");
+      }
+      while (fileDirectories.get(index).equals("..")) {
+        if (isEmpty(stack)) {
+          throw new WingsException("Invalid files path");
+        } else if (level.equals(MAX_DIRECTORY_HEIGHT)) {
+          String errorMessage = format(
+              "We do not support moving more than %s levels up from the present working directory. Kindly move the required files or configure another values manifest to fetch the files",
+              MAX_DIRECTORY_HEIGHT);
+          throw new WingsException(errorMessage);
+        } else {
+          level++;
+          stack.pop();
+          index++;
+        }
+      }
+      level = 0;
+      stack.push(fileDirectories.get(index));
+    }
+    return String.join("/", stack);
+  }
+
+  public static int findLastIndex(String filePath, Character delimiter) {
+    for (int i = filePath.length() - 1; i >= 0; i--)
+      if (delimiter.equals(filePath.charAt(i)))
+        return i + 1;
+
+    return -1;
   }
 }

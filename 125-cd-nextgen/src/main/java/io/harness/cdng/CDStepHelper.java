@@ -19,6 +19,8 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
 import static io.harness.data.structure.ListUtils.trimStrings;
 import static io.harness.eraro.ErrorCode.GENERAL_ERROR;
+import static io.harness.k8s.manifest.ManifestHelper.getValuesYamlGitFilePath;
+import static io.harness.k8s.manifest.ManifestHelper.normalizeAndExtractValuesYamlGitFilePath;
 import static io.harness.k8s.manifest.ManifestHelper.normalizeFolderPathForValuesYaml;
 import static io.harness.logging.CommandExecutionStatus.FAILURE;
 import static io.harness.logging.UnitStatus.RUNNING;
@@ -46,8 +48,8 @@ import io.harness.cdng.manifest.mappers.ManifestOutcomeValidator;
 import io.harness.cdng.manifest.steps.ManifestsOutcome;
 import io.harness.cdng.manifest.yaml.GcsStoreConfig;
 import io.harness.cdng.manifest.yaml.GitStoreConfig;
-import io.harness.cdng.manifest.yaml.HelmChartValuesStoreConfig;
 import io.harness.cdng.manifest.yaml.HttpStoreConfig;
+import io.harness.cdng.manifest.yaml.InheritFromManifestStoreConfig;
 import io.harness.cdng.manifest.yaml.ManifestOutcome;
 import io.harness.cdng.manifest.yaml.S3StoreConfig;
 import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
@@ -87,7 +89,7 @@ import io.harness.delegate.beans.storeconfig.HttpHelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.S3HelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.StoreDelegateConfig;
 import io.harness.delegate.task.git.GitFetchFilesConfig;
-import io.harness.delegate.task.helm.HelmChartValuesFetchFileConfig;
+import io.harness.delegate.task.helm.InheritFromManifestFetchFileConfig;
 import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
 import io.harness.encryption.SecretRefData;
 import io.harness.eraro.Level;
@@ -310,51 +312,49 @@ public class CDStepHelper {
     GitStoreDelegateConfig gitStoreDelegateConfig =
         getGitStoreDelegateConfig(gitStoreConfig, connectorDTO, manifestOutcome, gitFilePaths, ambiance);
 
+    return getGitFetchFilesConfigFromBuilder(
+        manifestOutcome.getIdentifier(), manifestOutcome.getType(), false, gitStoreDelegateConfig);
+  }
+
+  public GitFetchFilesConfig getGitFetchFilesConfigFromBuilder(String identifier, String manifestType,
+      boolean succeedIfFileNotFound, GitStoreDelegateConfig gitStoreDelegateConfig) {
     return GitFetchFilesConfig.builder()
-        .identifier(manifestOutcome.getIdentifier())
-        .manifestType(manifestOutcome.getType())
-        .succeedIfFileNotFound(false)
+        .identifier(identifier)
+        .manifestType(manifestType)
+        .succeedIfFileNotFound(succeedIfFileNotFound)
         .gitStoreDelegateConfig(gitStoreDelegateConfig)
         .build();
   }
 
-  public GitFetchFilesConfig getHelmChartValuesForGitFetchFileConfig(Ambiance ambiance, String validationMessage,
-      ManifestOutcome valuesManifestOutcome, ManifestOutcome manifestOutcome) {
-    HelmChartValuesStoreConfig helmChartValuesStoreConfig =
-        (HelmChartValuesStoreConfig) valuesManifestOutcome.getStore();
+  public GitFetchFilesConfig getOverridePathForGitFetchFileConfig(Ambiance ambiance, String validationMessage,
+      ManifestOutcome overridesManifestOutcome, ManifestOutcome manifestOutcome) {
+    InheritFromManifestStoreConfig inheritFromManifestStoreConfig =
+        (InheritFromManifestStoreConfig) overridesManifestOutcome.getStore();
     StoreConfig store = manifestOutcome.getStore();
     GitStoreConfig gitStoreConfig = (GitStoreConfig) store;
     String connectorId = gitStoreConfig.getConnectorRef().getValue();
     ConnectorInfoDTO connectorDTO = getConnector(connectorId, ambiance);
     validateManifest(store.getKind(), connectorDTO, validationMessage);
     String folderPath = getValuesFolderPathsBasedOnManifest(gitStoreConfig, manifestOutcome.getType());
-    List<String> filePaths = new ArrayList<>(getParameterFieldValue(helmChartValuesStoreConfig.getPaths()));
-    List<String> gitFilePaths = new ArrayList<>();
-    if (isNotEmpty(filePaths)) {
-      if (folderPath.endsWith("/")) {
-        for (String path : filePaths) {
-          gitFilePaths.add(folderPath + path);
-        }
-      } else {
-        for (String path : filePaths) {
-          gitFilePaths.add(folderPath + "/" + path);
-        }
-      }
-    }
+    List<String> filePaths = new ArrayList<>(getParameterFieldValue(inheritFromManifestStoreConfig.getPaths()));
+    List<String> gitFilePaths = fetchGitFilePathsBasedOnManifest(manifestOutcome.getType(), filePaths, folderPath);
+
     GitStoreDelegateConfig gitStoreDelegateConfig =
-        getGitStoreDelegateConfig(gitStoreConfig, connectorDTO, valuesManifestOutcome, gitFilePaths, ambiance);
+        getGitStoreDelegateConfig(gitStoreConfig, connectorDTO, overridesManifestOutcome, gitFilePaths, ambiance);
     return GitFetchFilesConfig.builder()
-        .identifier(valuesManifestOutcome.getIdentifier())
-        .manifestType(valuesManifestOutcome.getType())
+        .identifier(overridesManifestOutcome.getIdentifier())
+        .manifestType(overridesManifestOutcome.getType())
         .gitStoreDelegateConfig(gitStoreDelegateConfig)
         .build();
   }
 
-  public static HelmChartValuesFetchFileConfig getHelmChartValuesFetchFileConfig(ManifestOutcome manifestOutcome) {
-    HelmChartValuesStoreConfig helmChartValuesStoreConfig = (HelmChartValuesStoreConfig) manifestOutcome.getStore();
-    List<String> filePaths = new ArrayList<>(getParameterFieldValue(helmChartValuesStoreConfig.getPaths()));
+  public static InheritFromManifestFetchFileConfig getInheritFromManifestFetchFileConfig(
+      ManifestOutcome manifestOutcome) {
+    InheritFromManifestStoreConfig inheritFromManifestStoreConfig =
+        (InheritFromManifestStoreConfig) manifestOutcome.getStore();
+    List<String> filePaths = new ArrayList<>(getParameterFieldValue(inheritFromManifestStoreConfig.getPaths()));
 
-    return HelmChartValuesFetchFileConfig.builder()
+    return InheritFromManifestFetchFileConfig.builder()
         .identifier(manifestOutcome.getIdentifier())
         .manifestType(manifestOutcome.getType())
         .filePaths(filePaths)
@@ -464,15 +464,15 @@ public class CDStepHelper {
     return aggregateValuesManifests;
   }
 
-  public static List<HelmChartValuesFetchFileConfig> mapValuesManifestsToHelmChartValuesFetchFileConfig(
+  public static List<InheritFromManifestFetchFileConfig> mapValuesManifestsToInheritFromManifestFetchFileConfig(
       List<ValuesManifestOutcome> aggregatedValuesManifests) {
     if (isEmpty(aggregatedValuesManifests)) {
       return emptyList();
     }
     return aggregatedValuesManifests.stream()
         .filter(valuesManifestOutcome
-            -> ManifestStoreType.HELMCHARTVALUES.equals(valuesManifestOutcome.getStore().getKind()))
-        .map(valuesManifestOutcome -> getHelmChartValuesFetchFileConfig(valuesManifestOutcome))
+            -> ManifestStoreType.INHERITFROMMANIFEST.equals(valuesManifestOutcome.getStore().getKind()))
+        .map(valuesManifestOutcome -> getInheritFromManifestFetchFileConfig(valuesManifestOutcome))
         .collect(Collectors.toList());
   }
 
@@ -726,17 +726,34 @@ public class CDStepHelper {
 
   public String getValuesFolderPathsBasedOnManifest(GitStoreConfig gitStoreConfig, String manifestType) {
     String folderPath;
-    switch (manifestType) {
-      case ManifestType.HelmChart:
-        folderPath = getParameterFieldValue(gitStoreConfig.getFolderPath());
-        break;
-      case ManifestType.K8Manifest:
-        List<String> filePaths = getParameterFieldValue(gitStoreConfig.getPaths());
-        folderPath = normalizeFolderPathForValuesYaml(filePaths.get(0));
-        break;
-      default:
-        throw new UnsupportedOperationException(format("Unsupported Manifest type: [%s]", manifestType));
+    List<String> filePaths;
+    if (ManifestType.K8Manifest.equals(manifestType) || ManifestType.OpenshiftTemplate.equals(manifestType)) {
+      filePaths = getParameterFieldValue(gitStoreConfig.getPaths());
+      folderPath = normalizeFolderPathForValuesYaml(filePaths.get(0));
+    } else if (ManifestType.HelmChart.equals(manifestType) || ManifestType.Kustomize.equals(manifestType)) {
+      folderPath = getParameterFieldValue(gitStoreConfig.getFolderPath());
+    } else {
+      throw new UnsupportedOperationException(format("Unsupported Manifest type: [%s]", manifestType));
     }
     return folderPath;
+  }
+
+  public List<String> fetchGitFilePathsBasedOnManifest(String manifestType, List<String> filePaths, String folderPath) {
+    List<String> gitFilePaths = new ArrayList<>();
+    if (isNotEmpty(filePaths)) {
+      if (ManifestType.HelmChart.equals(manifestType)) {
+        for (String filePath : filePaths) {
+          gitFilePaths.add(getValuesYamlGitFilePath(folderPath, filePath));
+        }
+      } else if (ManifestType.K8Manifest.equals(manifestType) || ManifestType.OpenshiftTemplate.equals(manifestType)
+          || ManifestType.Kustomize.equals(manifestType)) {
+        for (String filePath : filePaths) {
+          gitFilePaths.add(normalizeAndExtractValuesYamlGitFilePath(folderPath, filePath));
+        }
+      } else {
+        throw new UnsupportedOperationException(format("Unknown manifest type: [%s]", manifestType));
+      }
+    }
+    return gitFilePaths;
   }
 }

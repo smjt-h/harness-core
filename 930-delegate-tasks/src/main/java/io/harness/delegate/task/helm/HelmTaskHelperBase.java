@@ -748,7 +748,7 @@ public class HelmTaskHelperBase {
 
   public Map<String, List<String>> fetchValuesYamlFromChart(
       HelmChartManifestDelegateConfig helmChartManifestDelegateConfig, long timeoutInMillis, LogCallback logCallback,
-      List<HelmChartValuesFetchFileConfig> helmChartValuesFetchFileConfigList) throws Exception {
+      List<InheritFromManifestFetchFileConfig> inheritFromManifestFetchFileConfigList) throws Exception {
     logCallback.saveExecutionLog(color("\nStarting fetching Helm values", LogColor.White, LogWeight.Bold));
     String workingDirectory = createNewDirectoryAtPath(Paths.get(WORKING_DIR_BASE).toString());
     logCallback.saveExecutionLog(color("\nFetching values.yaml from helm chart repo", White, Bold));
@@ -759,23 +759,24 @@ public class HelmTaskHelperBase {
 
       Map<String, List<String>> helmValueFetchFilesResultMap = new HashMap<>();
       String chartDirectory = getChartDirectory(workingDirectory, helmChartManifestDelegateConfig.getChartName());
-      helmValueFetchFilesResultMap.put(helmChartValuesFetchFileConfigList.get(0).getIdentifier(),
-          readValuesYamlFromChartFiles(chartDirectory, logCallback));
-      if (isNotEmpty(helmChartValuesFetchFileConfigList)) {
-        for (HelmChartValuesFetchFileConfig helmChartValuesFetchFileConfig : helmChartValuesFetchFileConfigList) {
-          List<String> valuesFilePaths = helmChartValuesFetchFileConfig.getFilePaths();
+      if (isNotEmpty(inheritFromManifestFetchFileConfigList)) {
+        helmValueFetchFilesResultMap.put(inheritFromManifestFetchFileConfigList.get(0).getIdentifier(),
+            readValuesYamlFromChartFiles(chartDirectory, logCallback));
+        for (InheritFromManifestFetchFileConfig inheritFromManifestFetchFileConfig :
+            inheritFromManifestFetchFileConfigList) {
+          List<String> valuesFilePaths = inheritFromManifestFetchFileConfig.getFilePaths();
           if (isNotEmpty(valuesFilePaths)) {
             try {
               List<String> valuesFileContentList = readValuesYamlFromChartFiles(chartDirectory, valuesFilePaths);
-              String identifier = helmChartValuesFetchFileConfig.getIdentifier();
+              String identifier = inheritFromManifestFetchFileConfig.getIdentifier();
               if (helmValueFetchFilesResultMap.containsKey(identifier)) {
                 helmValueFetchFilesResultMap.get(identifier).addAll(valuesFileContentList);
               } else {
                 helmValueFetchFilesResultMap.put(identifier, valuesFileContentList);
               }
             } catch (Exception ex) {
-              String errorMsg =
-                  format("Failed to fetch yaml file from %s manifest", helmChartValuesFetchFileConfig.getIdentifier());
+              String errorMsg = format(
+                  "Failed to fetch yaml file from %s manifest", inheritFromManifestFetchFileConfig.getIdentifier());
               logCallback.saveExecutionLog(errorMsg + ExceptionUtils.getMessage(ex), WARN);
               throw ex;
             }

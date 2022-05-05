@@ -1063,8 +1063,8 @@ public class K8sStepHelperTest extends CategoryTest {
 
     String manifestIdentifier = "manifest-identifier";
     List<String> valuesYamlList = new ArrayList<>(Arrays.asList("values yaml payload"));
-    Map<String, List<String>> helmChartValuesFileMapContent = new HashMap<>();
-    helmChartValuesFileMapContent.put(manifestIdentifier, valuesYamlList);
+    Map<String, List<String>> inheritFromManifestFileMapContent = new HashMap<>();
+    inheritFromManifestFileMapContent.put(manifestIdentifier, valuesYamlList);
     K8sStepPassThroughData passThroughData =
         K8sStepPassThroughData.builder()
             .k8sManifestOutcome(K8sManifestOutcome.builder().identifier(manifestIdentifier).build())
@@ -1072,11 +1072,12 @@ public class K8sStepHelperTest extends CategoryTest {
             .build();
 
     UnitProgressData unitProgressData = UnitProgressData.builder().build();
-    HelmValuesFetchResponse helmValuesFetchResponse = HelmValuesFetchResponse.builder()
-                                                          .helmChartValuesFileMapContent(helmChartValuesFileMapContent)
-                                                          .commandExecutionStatus(SUCCESS)
-                                                          .unitProgressData(unitProgressData)
-                                                          .build();
+    HelmValuesFetchResponse helmValuesFetchResponse =
+        HelmValuesFetchResponse.builder()
+            .InheritFromManifestFileMapContent(inheritFromManifestFileMapContent)
+            .commandExecutionStatus(SUCCESS)
+            .unitProgressData(unitProgressData)
+            .build();
     Map<String, ResponseData> responseDataMap = ImmutableMap.of("helm-value-fetch-response", helmValuesFetchResponse);
     ThrowingSupplier responseDataSuplier = StrategyHelper.buildResponseDataSupplier(responseDataMap);
 

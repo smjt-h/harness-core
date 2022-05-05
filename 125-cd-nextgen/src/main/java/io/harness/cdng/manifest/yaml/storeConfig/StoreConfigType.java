@@ -26,7 +26,7 @@ public enum StoreConfigType {
   @JsonProperty(ManifestStoreType.S3) S3(ManifestStoreType.S3),
   @JsonProperty(ManifestStoreType.GCS) GCS(ManifestStoreType.GCS),
   @JsonProperty(ManifestStoreType.ARTIFACTORY) ARTIFACTORY(ManifestStoreType.ARTIFACTORY),
-  @JsonProperty(ManifestStoreType.HELMCHARTVALUES) HELMCHARTVALUES(ManifestStoreType.HELMCHARTVALUES);
+  @JsonProperty(ManifestStoreType.INHERITFROMMANIFEST) INHERITFROMMANIFEST(ManifestStoreType.INHERITFROMMANIFEST);
   private final String displayName;
 
   StoreConfigType(String displayName) {

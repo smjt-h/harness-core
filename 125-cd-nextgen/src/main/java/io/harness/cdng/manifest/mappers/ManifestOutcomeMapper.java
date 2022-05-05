@@ -126,6 +126,7 @@ public class ManifestOutcomeMapper {
         .store(kustomizeManifest.getStoreConfig())
         .skipResourceVersioning(kustomizeManifest.getSkipResourceVersioning())
         .pluginPath(kustomizeManifest.getPluginPath())
+        .patchesPaths(kustomizeManifest.getPatchesPaths())
         .build();
   }
 
@@ -146,6 +147,7 @@ public class ManifestOutcomeMapper {
         .identifier(openshiftManifest.getIdentifier())
         .store(openshiftManifest.getStoreConfig())
         .skipResourceVersioning(openshiftManifest.getSkipResourceVersioning())
+        .paramsPaths(openshiftManifest.getParamsPaths())
         .build();
   }
 

@@ -18,7 +18,7 @@ import lombok.Value;
 @Value
 @Builder
 @OwnedBy(CDP)
-public class HelmChartValuesFetchFileConfig {
+public class InheritFromManifestFetchFileConfig {
   String identifier;
   String manifestType;
   List<String> filePaths;

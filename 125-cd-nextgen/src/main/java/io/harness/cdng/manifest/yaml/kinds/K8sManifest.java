@@ -69,10 +69,11 @@ public class K8sManifest implements ManifestAttributes, Visitable {
   @SkipAutoEvaluation
   ParameterField<StoreConfigWrapper> store;
 
-  @YamlSchemaTypes(value = {runtime})
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
   @Wither
-  private ParameterField<List<String>> valuesPaths;
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
+  @YamlSchemaTypes({runtime})
+  @SkipAutoEvaluation
+  ParameterField<List<String>> valuesPaths;
 
   @Wither @YamlSchemaTypes({string, bool}) @SkipAutoEvaluation ParameterField<Boolean> skipResourceVersioning;
   // For Visitor Framework Impl

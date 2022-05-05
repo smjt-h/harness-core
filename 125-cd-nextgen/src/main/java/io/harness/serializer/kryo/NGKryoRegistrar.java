@@ -68,8 +68,8 @@ import io.harness.cdng.manifest.yaml.GcsStoreConfig;
 import io.harness.cdng.manifest.yaml.GitLabStore;
 import io.harness.cdng.manifest.yaml.GitStore;
 import io.harness.cdng.manifest.yaml.GithubStore;
-import io.harness.cdng.manifest.yaml.HelmChartValuesStoreConfig;
 import io.harness.cdng.manifest.yaml.HttpStoreConfig;
+import io.harness.cdng.manifest.yaml.InheritFromManifestStoreConfig;
 import io.harness.cdng.manifest.yaml.ManifestConfig;
 import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
 import io.harness.cdng.manifest.yaml.ManifestOverrideSetWrapper;
@@ -240,7 +240,7 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(CustomArtifactConfig.class, 12563);
 
     kryo.register(AcrArtifactConfig.class, 12564);
-    kryo.register(HelmChartValuesStoreConfig.class, 12565);
+    kryo.register(InheritFromManifestStoreConfig.class, 12565);
 
     kryo.register(ServerlessAwsLambdaDeployStepInfo.class, 12571);
     kryo.register(ServerlessAwsLambdaDeployStepParameters.class, 12572);

@@ -76,11 +76,11 @@ public class HelmValuesFetchTaskNG extends AbstractDelegateRunnableTask {
         helmValuesFetchRequest.getHelmChartManifestDelegateConfig();
     try {
       helmTaskHelperBase.decryptEncryptedDetails(helmChartManifestDelegateConfig);
-      List<HelmChartValuesFetchFileConfig> helmChartValuesFetchFileConfigList =
-          helmValuesFetchRequest.getHelmChartValuesFetchFileConfigList();
-      Map<String, List<String>> helmChartValuesFileMapContents =
+      List<InheritFromManifestFetchFileConfig> inheritFromManifestFetchFileConfigList =
+          helmValuesFetchRequest.getInheritFromManifestFetchFileConfigList();
+      Map<String, List<String>> inheritFromManifestFileMapContents =
           helmTaskHelperBase.fetchValuesYamlFromChart(helmChartManifestDelegateConfig,
-              helmValuesFetchRequest.getTimeout(), logCallback, helmChartValuesFetchFileConfigList);
+              helmValuesFetchRequest.getTimeout(), logCallback, inheritFromManifestFetchFileConfigList);
 
       logCallback.saveExecutionLog("\nFetching helm values completed successfully.", INFO);
       if (helmValuesFetchRequest.isCloseLogStream()) {
@@ -89,7 +89,7 @@ public class HelmValuesFetchTaskNG extends AbstractDelegateRunnableTask {
       return HelmValuesFetchResponse.builder()
           .commandExecutionStatus(SUCCESS)
           .unitProgressData(UnitProgressDataMapper.toUnitProgressData(commandUnitsProgress))
-          .helmChartValuesFileMapContent(helmChartValuesFileMapContents)
+          .InheritFromManifestFileMapContent(inheritFromManifestFileMapContents)
           .build();
     } catch (Exception e) {
       String exceptionMsg = e.getMessage() == null ? ExceptionUtils.getMessage(e) : e.getMessage();
