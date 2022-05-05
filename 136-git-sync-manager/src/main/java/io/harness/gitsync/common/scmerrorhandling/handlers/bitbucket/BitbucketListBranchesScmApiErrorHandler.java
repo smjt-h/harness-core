@@ -17,10 +17,12 @@ public class BitbucketListBranchesScmApiErrorHandler implements ScmApiErrorHandl
     switch (statusCode) {
       case 401:
       case 403:
-        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.BITBUCKET_INVALID_CREDENTIALS,
+        throw NestedExceptionUtils.hintWithExplanationException(
+            String.format(SCMExceptionHints.HINT_INVALID_CREDENTIALS, BITBUCKET),
             SCMExceptionExplanations.LIST_BRANCH_WITH_INVALID_CRED, new ScmUnauthorizedException(errorMessage));
       case 404:
-        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.BITBUCKET_REPO_NOT_FOUND,
+        throw NestedExceptionUtils.hintWithExplanationException(
+            String.format(SCMExceptionHints.REPO_NOT_FOUND, BITBUCKET),
             SCMExceptionExplanations.LIST_BRANCH_WHEN_REPO_NOT_EXIST, new ScmResourceNotFoundException(errorMessage));
       default:
         log.error(String.format("Error while listing bitbucket branches: [%s: %s]", statusCode, errorMessage));

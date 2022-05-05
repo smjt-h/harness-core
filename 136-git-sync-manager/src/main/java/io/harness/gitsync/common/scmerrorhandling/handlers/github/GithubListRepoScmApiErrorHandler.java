@@ -22,7 +22,8 @@ public class GithubListRepoScmApiErrorHandler implements ScmApiErrorHandler {
     switch (statusCode) {
       case 401:
       case 403:
-        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.GITHUB_INVALID_CREDENTIALS,
+        throw NestedExceptionUtils.hintWithExplanationException(
+            String.format(SCMExceptionHints.HINT_INVALID_CREDENTIALS, GITHUB),
             SCMExceptionExplanations.LIST_REPO_WITH_INVALID_CRED, new ScmUnauthorizedException(errorMessage));
       default:
         log.error(String.format("Error while listing github repos: [%s: %s]", statusCode, errorMessage));

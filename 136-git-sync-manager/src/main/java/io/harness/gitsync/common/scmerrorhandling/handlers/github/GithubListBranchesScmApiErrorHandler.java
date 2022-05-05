@@ -17,10 +17,11 @@ public class GithubListBranchesScmApiErrorHandler implements ScmApiErrorHandler 
     switch (statusCode) {
       case 401:
       case 403:
-        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.GITHUB_INVALID_CREDENTIALS,
+        throw NestedExceptionUtils.hintWithExplanationException(
+            String.format(SCMExceptionHints.HINT_INVALID_CREDENTIALS, GITHUB),
             SCMExceptionExplanations.LIST_BRANCH_WITH_INVALID_CRED, new ScmUnauthorizedException(errorMessage));
       case 404:
-        throw NestedExceptionUtils.hintWithExplanationException(SCMExceptionHints.GITHUB_REPO_NOT_FOUND,
+        throw NestedExceptionUtils.hintWithExplanationException(String.format(SCMExceptionHints.REPO_NOT_FOUND, GITHUB),
             SCMExceptionExplanations.LIST_BRANCH_WHEN_REPO_NOT_EXIST, new ScmResourceNotFoundException(errorMessage));
       default:
         log.error(String.format("Error while listing github branches: [%s: %s]", statusCode, errorMessage));

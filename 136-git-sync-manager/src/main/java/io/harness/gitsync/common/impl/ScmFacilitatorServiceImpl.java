@@ -54,7 +54,8 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
       String projectIdentifier, String connectorRef, PageRequest pageRequest, String searchTerm) {
     ScmConnector scmConnector =
         gitSyncConnectorHelper.getScmConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
-    GetUserReposResponse response = scmOrchestratorService.processScmRequestUsingConnector(scmClientFacilitatorService
+    GetUserReposResponse response = scmOrchestratorService.processScmRequestUsingConnectorSettings(
+        scmClientFacilitatorService
         -> scmClientFacilitatorService.listUserRepos(accountIdentifier, orgIdentifier, projectIdentifier, scmConnector,
             PageRequestDTO.builder().pageIndex(pageRequest.getPageIndex()).pageSize(pageRequest.getPageSize()).build()),
         scmConnector);
@@ -72,7 +73,7 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
     final ScmConnector scmConnector = gitSyncConnectorHelper.getScmConnectorForGivenRepo(
         accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName);
     ListBranchesWithDefaultResponse listBranchesWithDefaultResponse =
-        scmOrchestratorService.processScmRequestUsingConnector(scmClientFacilitatorService
+        scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
             -> scmClientFacilitatorService.listBranches(accountIdentifier, orgIdentifier, projectIdentifier,
                 scmConnector,
                 PageRequestDTO.builder()
