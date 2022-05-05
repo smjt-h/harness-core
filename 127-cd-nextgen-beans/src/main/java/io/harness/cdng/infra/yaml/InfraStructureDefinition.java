@@ -29,7 +29,7 @@ import org.springframework.data.annotation.TypeAlias;
 @Data
 @Builder
 @SimpleVisitorHelper(helperClass = InfraStructureDefinitionVisitorHelper.class)
-@TypeAlias("environmentYaml")
+@TypeAlias("infraStructureDefinition")
 @OwnedBy(CDC)
 @RecasterAlias("io.harness.cdng.environment.yaml.InfraStructureDefinition")
 public class InfraStructureDefinition implements Visitable {

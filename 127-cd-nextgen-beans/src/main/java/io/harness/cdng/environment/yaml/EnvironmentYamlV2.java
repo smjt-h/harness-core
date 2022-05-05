@@ -31,7 +31,7 @@ import org.springframework.data.annotation.TypeAlias;
 @Data
 @Builder
 @SimpleVisitorHelper(helperClass = EnvironmentYamlV2VisitorHelper.class)
-@TypeAlias("environmentYaml")
+@TypeAlias("environmentYamlV2")
 @OwnedBy(CDC)
 @RecasterAlias("io.harness.cdng.environment.yaml.EnvironmentYamlV2")
 public class EnvironmentYamlV2 implements Visitable {
