@@ -10,7 +10,6 @@ package io.harness.beans;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureFlag.Scope;
-
 import lombok.Getter;
 
 /**
@@ -264,6 +263,7 @@ public enum FeatureName {
   CHI_CUSTOM_HEALTH_LOGS,
   AZURE_SAML_150_GROUPS_SUPPORT,
   CLOUDFORMATION_SKIP_WAIT_FOR_RESOURCES,
+  CLOUDFORMATION_CHANGE_SET,
   FAIL_WORKFLOW_IF_SECRET_DECRYPTION_FAILS,
   ERROR_TRACKING_ENABLED,
   DEPLOY_TO_INLINE_HOSTS,
