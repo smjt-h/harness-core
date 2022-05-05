@@ -86,11 +86,7 @@ public class PMSPipelineDtoMapper {
         ? EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity)
         : pipelineEntity.getStoreType() == StoreType.REMOTE
         ? GitAwareContextHelper.getEntityGitDetailsFromScmGitMetadata()
-        : EntityGitDetails.builder().build();
-    if (pipelineEntity.getStoreType() != null) {
-      entityGitDetails.setStoreType(pipelineEntity.getStoreType());
-      entityGitDetails.setConnectorRef(pipelineEntity.getConnectorRef());
-    }
+        : null;
     return PMSPipelineSummaryResponseDTO.builder()
         .identifier(pipelineEntity.getIdentifier())
         .description(pipelineEntity.getDescription())
@@ -117,11 +113,7 @@ public class PMSPipelineDtoMapper {
         ? EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity)
         : pipelineEntity.getStoreType() == StoreType.REMOTE
         ? GitAwareContextHelper.getEntityGitDetailsFromScmGitMetadata()
-        : EntityGitDetails.builder().build();
-    if (pipelineEntity.getStoreType() != null) {
-      entityGitDetails.setStoreType(pipelineEntity.getStoreType());
-      entityGitDetails.setConnectorRef(pipelineEntity.getConnectorRef());
-    }
+        : null;
     return PMSPipelineSummaryResponseDTO.builder()
         .identifier(pipelineEntity.getIdentifier())
         .description(pipelineEntity.getDescription())

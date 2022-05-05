@@ -10,7 +10,6 @@ package io.harness.gitsync.sdk;
 import static io.harness.annotations.dev.HarnessTeam.DX;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.gitsync.beans.StoreType;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
 
@@ -35,8 +34,6 @@ public class EntityGitDetails {
   @Schema(description = "File Path of the Entity") String filePath;
   @Schema(description = "Name of the repo") String repoName;
   @Schema(description = "Latest Commit ID") String commitId;
-  String connectorRef;
-  StoreType storeType;
 
   public GitSyncBranchContext toGitSyncBranchContext() {
     GitEntityInfo gitEntityInfo = GitEntityInfo.builder()
