@@ -32,15 +32,12 @@ import java.io.IOException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-@RunWith(PowerMockRunner.class)
 @OwnedBy(HarnessTeam.PIPELINE)
 @PrepareForTest({SafeHttpCall.class})
 public class AccountFunctorTest extends CategoryTest {
@@ -58,7 +55,7 @@ public class AccountFunctorTest extends CategoryTest {
   @Owner(developers = BRIJESH)
   @Category(UnitTests.class)
   public void testBind() throws IOException {
-    PowerMockito.mockStatic(SafeHttpCall.class);
+    Mockito.mockStatic(SafeHttpCall.class);
 
     String resourceObject = "resource";
     RestResponse<String> restRequest = new RestResponse<>();
