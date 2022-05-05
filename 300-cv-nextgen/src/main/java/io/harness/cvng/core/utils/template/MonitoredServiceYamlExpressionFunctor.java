@@ -38,7 +38,7 @@ public class MonitoredServiceYamlExpressionFunctor {
     return null;
   }
 
-  public Map<String, Object> getYamlMap(
+  private Map<String, Object> getYamlMap(
       YamlField yamlField, Map<String, Map<String, Object>> fqnToValueMap, List<String> fqnList) {
     Map<String, Object> contextMap = new HashMap<>();
     Map<String, Object> valueMap = new HashMap<>();
