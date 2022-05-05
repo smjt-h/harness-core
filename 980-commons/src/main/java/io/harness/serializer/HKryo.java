@@ -25,6 +25,7 @@ import io.harness.exception.FunctorException;
 import io.harness.exception.HintException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.QueueTaskException;
 import io.harness.exception.UnauthorizedException;
 import io.harness.exception.UnexpectedException;
 import io.harness.exception.WingsException;
@@ -205,6 +206,7 @@ public class HKryo extends Kryo {
     register(UnexpectedException.class, 5330);
     register(WingsException.ReportTarget.class, 5348);
     register(WingsException.class, 5174);
+    register(QueueTaskException.class, 9800);
 
     register(JSONArray.class, 5583);
     register(JSONObject.class, 5584);

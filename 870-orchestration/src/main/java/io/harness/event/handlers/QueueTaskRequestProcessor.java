@@ -18,6 +18,7 @@ import io.harness.engine.pms.resume.EngineResumeCallback;
 import io.harness.engine.pms.tasks.TaskExecutor;
 import io.harness.engine.progress.EngineProgressCallback;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.QueueTaskException;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ExecutableResponse;
 import io.harness.pms.contracts.execution.Status;
@@ -104,7 +105,8 @@ public class QueueTaskRequestProcessor implements SdkResponseProcessor {
       return taskId;
     } catch (Exception ex) {
       log.error("Error while queuing delegate task for node execution {}", nodeExecutionId, ex);
-      orchestrationEngine.handleError(ambiance, ex);
+      orchestrationEngine.handleError(
+          ambiance, new QueueTaskException("Unable to queue delegate task: " + ex.getMessage()));
       return null;
     }
   }
