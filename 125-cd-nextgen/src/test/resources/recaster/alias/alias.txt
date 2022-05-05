@@ -192,6 +192,7 @@ io.harness.cdng.provision.terraform.TerraformRollbackStepNode
 io.harness.cdng.helm.HelmDeployStepNode
 io.harness.cdng.helm.HelmRollbackStepNode
 io.harness.steps.template.TemplateStepNode
+io.harness.steps.template.stage.TemplateStageNode
 io.harness.cdng.manifest.yaml.GcsStoreConfig
 io.harness.ngpipeline.artifact.bean.EcrArtifactOutcome
 io.harness.steps.jira.JiraIssueOutcome
@@ -313,3 +314,4 @@ io.harness.cdng.infra.beans.ServerlessAwsLambdaInfrastructureOutcome
 io.harness.cdng.serverless.beans.ServerlessStepExceptionPassThroughData
 io.harness.cdng.serverless.beans.ServerlessGitFetchExceptionPassThroughData
 io.harness.steps.servicenow.ServiceNowTicketOutcome
+io.harness.cdng.service.beans.ServiceYamlV2
