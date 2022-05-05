@@ -477,7 +477,7 @@ if [[ "" != "$DELEGATE_DOCKER_IMAGE" ]]; then
 fi
 
 if [[ "" != "$OPTIONAL_DELEGATE_TASK_REJECT_AT_LIMIT" ]]; then
-  yq write -i $CONFIG_FILE cg.portal.optionalDelegateTaskRejectAtLimit "$OPTIONAL_DELEGATE_TASK_REJECT_AT_LIMIT"
+  yq write -i $CONFIG_FILE portal.optionalDelegateTaskRejectAtLimit "$OPTIONAL_DELEGATE_TASK_REJECT_AT_LIMIT"
 fi
 
 if [[ "" != "$EXECUTION_LOG_DATA_STORE" ]]; then
