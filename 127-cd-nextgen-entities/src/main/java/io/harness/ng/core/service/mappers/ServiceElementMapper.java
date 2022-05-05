@@ -19,6 +19,7 @@ import io.harness.ng.core.service.entity.ServiceBasicInfo;
 import io.harness.ng.core.service.entity.ServiceEntity;
 import io.harness.ng.core.service.yaml.NGServiceConfig;
 
+import java.io.IOException;
 import lombok.experimental.UtilityClass;
 
 @OwnedBy(PIPELINE)
