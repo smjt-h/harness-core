@@ -5,10 +5,13 @@ load("//:tools/bazel/GenTestRules.bzl", "run_tests")
 java_library(
     name = "module",
     srcs = glob(["src/main/java/**/*.java"]),
+    resources = [
+        "//127-cd-nextgen-entities/src/main/resources:resource",
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//:lombok",
-        "//127-cd-nextgen-beans:module",
+        "//400-rest:module",
         "//860-orchestration-steps:module",  # This should be removed from here
         "//878-ng-common-utilities:module",
         "//879-pms-sdk:module",

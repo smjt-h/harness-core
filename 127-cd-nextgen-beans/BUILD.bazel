@@ -5,7 +5,7 @@ java_library(
     name = "module",
     srcs = glob(["src/main/java/**/*.java"]),
     resources = [
-        "//127-cd-nextgen-beans/src/main/resources:resource",
+        "//127-cd-nextgen-entities/src/main/resources:resource",
     ],
     visibility = ["//visibility:public"],
     deps = [
