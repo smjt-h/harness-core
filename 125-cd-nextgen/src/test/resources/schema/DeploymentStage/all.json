@@ -969,24 +969,47 @@
       ]
     },
     "DeploymentStageConfig": {
-      "type": "object",
-      "required": [
-        "execution",
-        "infrastructure",
-        "serviceConfig"
-      ],
-      "properties": {
-        "execution": {
-          "$ref": "#/definitions/ExecutionElementConfig"
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "execution",
+            "infrastructure",
+            "serviceConfig"
+          ],
+          "properties": {
+            "execution": {
+              "$ref": "#/definitions/ExecutionElementConfig"
+            },
+            "infrastructure": {
+              "$ref": "#/definitions/PipelineInfrastructure"
+            },
+            "serviceConfig": {
+              "$ref": "#/definitions/ServiceConfig"
+            }
+          },
+          "additionalProperties": false
         },
-        "infrastructure": {
-          "$ref": "#/definitions/PipelineInfrastructure"
-        },
-        "serviceConfig": {
-          "$ref": "#/definitions/ServiceConfig"
+        {
+          "type": "object",
+          "required": [
+            "execution",
+            "infrastructure",
+            "deploymentType",
+            "service"
+          ],
+          "properties": {
+            "execution": {
+              "$ref": "#/definitions/ExecutionElementConfig"
+            },
+            "infrastructure": {
+              "$ref": "#/definitions/PipelineInfrastructure"
+            }
+          },
+          "additionalProperties": false
         }
-      },
-      "$schema": "http://json-schema.org/draft-07/schema#"
+      ]
     },
     "DeploymentStageNode": {
       "type": "object",
