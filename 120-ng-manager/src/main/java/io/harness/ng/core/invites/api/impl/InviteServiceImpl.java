@@ -46,6 +46,7 @@ import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.AccountOrgProjectHelper;
 import io.harness.ng.core.account.AuthenticationMechanism;
 import io.harness.ng.core.dto.AccountDTO;
+import io.harness.ng.core.dto.GatewayAccountRequestDTO;
 import io.harness.ng.core.dto.UserInviteDTO;
 import io.harness.ng.core.events.UserInviteCreateEvent;
 import io.harness.ng.core.events.UserInviteDeleteEvent;
@@ -71,6 +72,8 @@ import io.harness.remote.client.RestClientUtils;
 import io.harness.repositories.invites.spring.InviteRepository;
 import io.harness.security.SecurityContextBuilder;
 import io.harness.security.dto.Principal;
+import io.harness.telemetry.Destination;
+import io.harness.telemetry.TelemetryReporter;
 import io.harness.user.remote.UserClient;
 import io.harness.user.remote.UserFilterNG;
 import io.harness.utils.PageUtils;
@@ -89,6 +92,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -98,6 +102,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -128,6 +134,7 @@ public class InviteServiceImpl implements InviteService {
   private static final String NG_ACCOUNT_CREATION_FRAGMENT =
       "accountIdentifier=%s&email=%s&token=%s&returnUrl=%s&generation=NG";
   private static final String ACCEPT_INVITE_PATH = "ng/api/invites/verify";
+  private static final String USER_INVITE = "user_invite";
   private final String jwtPasswordSecret;
   private final JWTGeneratorUtils jwtGeneratorUtils;
   private final NgUserService ngUserService;
@@ -141,6 +148,7 @@ public class InviteServiceImpl implements InviteService {
   private final boolean isNgAuthUIEnabled;
   private final UserClient userClient;
   private final AccountOrgProjectHelper accountOrgProjectHelper;
+  private final TelemetryReporter telemetryReporter;
 
   private final RetryPolicy<Object> transactionRetryPolicy =
       RetryUtils.getRetryPolicy("[Retrying]: Failed to mark previous invites as stale; attempt: {}",
@@ -152,7 +160,8 @@ public class InviteServiceImpl implements InviteService {
       JWTGeneratorUtils jwtGeneratorUtils, NgUserService ngUserService, TransactionTemplate transactionTemplate,
       InviteRepository inviteRepository, NotificationClient notificationClient, AccountClient accountClient,
       OutboxService outboxService, AccessControlClient accessControlClient, UserClient userClient,
-      AccountOrgProjectHelper accountOrgProjectHelper, @Named("isNgAuthUIEnabled") boolean isNgAuthUIEnabled) {
+      AccountOrgProjectHelper accountOrgProjectHelper, @Named("isNgAuthUIEnabled") boolean isNgAuthUIEnabled,
+      TelemetryReporter telemetryReporter) {
     this.jwtPasswordSecret = jwtPasswordSecret;
     this.jwtGeneratorUtils = jwtGeneratorUtils;
     this.ngUserService = ngUserService;
@@ -165,6 +174,7 @@ public class InviteServiceImpl implements InviteService {
     this.isNgAuthUIEnabled = isNgAuthUIEnabled;
     this.accessControlClient = accessControlClient;
     this.accountOrgProjectHelper = accountOrgProjectHelper;
+    this.telemetryReporter = telemetryReporter;
     MongoClientURI uri = new MongoClientURI(mongoConfig.getUri());
     useMongoTransactions = uri.getHosts().size() > 2;
   }
@@ -597,7 +607,61 @@ public class InviteServiceImpl implements InviteService {
     // Adding user to the account for sign in flow to work
     ngUserService.addUserToCG(user.getUuid(), scope);
     markInviteApprovedAndDeleted(invite);
+    // telemetry for adding user to an account
+    sendInviteAcceptTelemetryEvents(user, invite);
     return true;
+  }
+
+  private void sendInviteAcceptTelemetryEvents(UserMetadataDTO user, Invite invite) {
+    String userEmail = user.getEmail();
+    String accountId = invite.getAccountIdentifier();
+
+    String accountName = "";
+    // get the name of the account
+    AccountDTO account = RestClientUtils.getResponse(accountClient.getAccountDTO(accountId));
+    if (account != null) {
+      accountName = account.getName();
+    }
+
+    HashMap<String, Object> properties = new HashMap<>();
+    properties.put("email", userEmail);
+    properties.put("name", user.getName());
+    properties.put("id", user.getUuid());
+    properties.put("startTime", String.valueOf(Instant.now().toEpochMilli()));
+    properties.put("accountId", accountId);
+    properties.put("accountName", accountName);
+    properties.put("source", USER_INVITE);
+
+    // identify event to register new user
+    telemetryReporter.sendIdentifyEvent(userEmail, properties,
+        ImmutableMap.<Destination, Boolean>builder()
+            .put(Destination.MARKETO, true)
+            .put(Destination.AMPLITUDE, true)
+            .build());
+
+    HashMap<String, Object> groupProperties = new HashMap<>();
+    groupProperties.put("group_id", accountId);
+    groupProperties.put("group_type", "Account");
+    groupProperties.put("group_name", accountName);
+
+    // group event to register new signed-up user with new account
+    telemetryReporter.sendGroupEvent(
+        accountId, userEmail, groupProperties, ImmutableMap.<Destination, Boolean>builder().build());
+
+    // flush all events so that event queue is empty
+    telemetryReporter.flush();
+
+    // Wait 20 seconds, to ensure identify is sent before track
+    ScheduledExecutorService tempExecutor = Executors.newSingleThreadScheduledExecutor();
+    tempExecutor.schedule(()
+                              -> telemetryReporter.sendTrackEvent("Invited Accepted", userEmail, accountId, properties,
+                                  ImmutableMap.<Destination, Boolean>builder()
+                                      .put(Destination.MARKETO, true)
+                                      .put(Destination.AMPLITUDE, true)
+                                      .build(),
+                                  null),
+        20, TimeUnit.SECONDS);
+    log.info("User Invite telemetry sent");
   }
 
   private void markInviteApproved(Invite invite) {
