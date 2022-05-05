@@ -277,17 +277,11 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
     String errorMsg;
     Stack stack = null;
     while (System.currentTimeMillis() < endTime) {
-      DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest().withStackName(result.getStackId());
-      List<Stack> stacks = awsHelperService.getAllStacks(createRequest.getRegion(), describeStacksRequest,
-          AwsConfigToInternalMapper.toAwsInternalConfig(createRequest.getAwsConfig()));
-      if (stacks.size() < 1) {
-        String errorMessage = "# Error: received empty stack list from AWS";
-        executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
-        builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
+      stack = getStack(createRequest, builder, result.getStackId(), executionLogCallback);
+      if (stack == null) {
         return;
       }
 
-      stack = stacks.get(0);
       stackEventsTs = printStackEvents(createRequest, stackEventsTs, stack, executionLogCallback);
 
       switch (stack.getStackStatus()) {
@@ -406,7 +400,7 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
     long endTime = System.currentTimeMillis() + timeOutMs;
 
     while (System.currentTimeMillis() < endTime) {
-      Stack stack = getStack(request, builder, originalStack, executionLogCallback);
+      Stack stack = getStack(request, builder, originalStack.getStackId(), executionLogCallback);
       if (stack == null) {
         return;
       }
@@ -483,7 +477,7 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
     String errorMessage = format("# Timing out while Updating stack: %s", originalStack.getStackName());
     executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
 
-    Stack stack = getStack(request, builder, originalStack, executionLogCallback);
+    Stack stack = getStack(request, builder, originalStack.getStackId(), executionLogCallback);
     if (null == stack) {
       return;
     }
@@ -497,7 +491,7 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
   private void handleNoStackUpdate(CloudFormationCreateStackRequest request,
       CloudFormationCommandExecutionResponseBuilder builder, Stack originalStack,
       ExecutionLogCallback executionLogCallback, ExistingStackInfo existingStackInfo) {
-    Stack stack = getStack(request, builder, originalStack, executionLogCallback);
+    Stack stack = getStack(request, builder, originalStack.getStackId(), executionLogCallback);
     if (stack == null) {
       return;
     }
@@ -539,9 +533,9 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
 
   @Nullable
   private Stack getStack(CloudFormationCreateStackRequest request,
-      CloudFormationCommandExecutionResponseBuilder builder, Stack originalStack,
+      CloudFormationCommandExecutionResponseBuilder builder, String stackId,
       ExecutionLogCallback executionLogCallback) {
-    DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest().withStackName(originalStack.getStackId());
+    DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest().withStackName(stackId);
     Optional<Stack> stackOptional = awsHelperService.getStack(request.getRegion(), describeStacksRequest,
         AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()));
     if (!stackOptional.isPresent()) {
@@ -550,8 +544,7 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
       builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
       return null;
     }
-    Stack stack = stackOptional.get();
-    return stack;
+    return stackOptional.get();
   }
 
   private boolean updateStack(CloudFormationCreateStackRequest request, UpdateStackRequest updateStackRequest,
