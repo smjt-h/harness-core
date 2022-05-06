@@ -29,6 +29,8 @@ import io.harness.servicenow.ServiceNowFieldTypeNG;
 import io.harness.servicenow.ServiceNowFieldValueNG;
 import io.harness.servicenow.ServiceNowTemplate;
 import io.harness.servicenow.ServiceNowTicketNG;
+import io.harness.servicenow.ServiceNowTicketTypeDTO;
+import io.harness.servicenow.ServiceNowTicketTypeNG;
 import io.harness.servicenow.ServiceNowUtils;
 import io.harness.utils.FieldWithPlainTextOrSecretValueHelper;
 
@@ -39,10 +41,12 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
@@ -90,7 +94,18 @@ public class ServiceNowTaskNgHelper {
     }
   }
 
+  private void validateServiceNowTaskInputs(ServiceNowTaskNGParameters serviceNowTaskNGParameters) {
+    String ticketType = serviceNowTaskNGParameters.getTicketType();
+    List<String> validTicketTypes = Arrays.stream(ServiceNowTicketTypeNG.values())
+                                        .map(entry -> entry.toString().toLowerCase())
+                                        .collect(Collectors.toList());
+    if (EmptyPredicate.isEmpty(ticketType) || !validTicketTypes.contains(ticketType.toLowerCase())) {
+      throw new InvalidRequestException(String.format("Invalid ticketType for ServiceNow: %s", ticketType));
+    }
+  }
+
   private ServiceNowTaskNGResponse createTicket(ServiceNowTaskNGParameters serviceNowTaskNGParameters) {
+    validateServiceNowTaskInputs(serviceNowTaskNGParameters);
     if (!serviceNowTaskNGParameters.isUseServiceNowTemplate()) {
       return createTicketWithoutTemplate(serviceNowTaskNGParameters);
     } else {
@@ -175,6 +190,7 @@ public class ServiceNowTaskNgHelper {
   }
 
   private ServiceNowTaskNGResponse updateTicket(ServiceNowTaskNGParameters serviceNowTaskNGParameters) {
+    validateServiceNowTaskInputs(serviceNowTaskNGParameters);
     if (!serviceNowTaskNGParameters.isUseServiceNowTemplate()) {
       return updateTicketWithoutTemplate(serviceNowTaskNGParameters);
     } else {
@@ -289,7 +305,7 @@ public class ServiceNowTaskNgHelper {
       JsonNode responseObj = response.body().get("result");
       String ticketNumber = responseObj.get("number").get("display_value").asText();
       String ticketSysId = responseObj.get("sys_id").get("display_value").asText();
-      log.info("sys_id of created ticket: {}", ticketSysId);
+      log.info("sys_id of updated ticket: {}", ticketSysId);
       String ticketUrlFromTicketId = ServiceNowUtils.prepareTicketUrlFromTicketNumber(
           serviceNowConnectorDTO.getServiceNowUrl(), ticketNumber, serviceNowTaskNGParameters.getTicketType());
       // todo: add field details from ticket?
@@ -314,6 +330,7 @@ public class ServiceNowTaskNgHelper {
     Response<JsonNode> response = null;
     try {
       response = request.execute();
+      log.info("Response received from serviceNow: {}", response);
       handleResponse(response, "Failed to get ServiceNow templates");
       JsonNode responseObj = response.body().get("result");
       if (responseObj != null && responseObj.get("queryResponse") != null) {
@@ -438,6 +455,7 @@ public class ServiceNowTaskNgHelper {
     Response<JsonNode> response = null;
     try {
       response = request.execute();
+      log.info("Response received from serviceNow for GET_METADATA: {}", response);
       handleResponse(response, "Failed to get serviceNow fields");
       JsonNode responseObj = response.body().get("result");
       if (responseObj != null && responseObj.get("columns") != null) {
@@ -445,8 +463,6 @@ public class ServiceNowTaskNgHelper {
         List<ServiceNowFieldNG> fields = new ArrayList<>();
         for (JsonNode fieldObj : columns) {
           List<ServiceNowFieldAllowedValueNG> allowedValues = buildAllowedValues(fieldObj.get("choices"));
-          // todo support different field types
-          JsonNode fieldType = fieldObj.get("type");
 
           ServiceNowFieldNGBuilder fieldBuilder = ServiceNowFieldNG.builder()
                                                       .name(fieldObj.get("label").textValue())
