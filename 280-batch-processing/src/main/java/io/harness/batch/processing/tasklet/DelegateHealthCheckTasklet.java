@@ -14,7 +14,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.batch.processing.ccm.CCMJobConstants;
 import io.harness.ccm.commons.beans.JobConstants;
 import io.harness.ccm.health.LastReceivedPublishedMessageDao;
-import io.harness.perpetualtask.PerpetualTaskService;
+import io.harness.perpetualtask.PerpetualTaskServiceImpl;
 import io.harness.perpetualtask.internal.PerpetualTaskRecord;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
@@ -33,7 +33,7 @@ import java.util.Map;
 @Slf4j
 @Singleton
 public class DelegateHealthCheckTasklet implements Tasklet {
-  @Autowired private PerpetualTaskService perpetualTaskService;
+  @Autowired private PerpetualTaskServiceImpl perpetualTaskService;
   @Autowired private LastReceivedPublishedMessageDao lastReceivedPublishedMessageDao;
 
   private static final int BATCH_SIZE = 20;
@@ -41,6 +41,7 @@ public class DelegateHealthCheckTasklet implements Tasklet {
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) {
+    log.info("HELLLOOOO");
     final JobConstants jobConstants = CCMJobConstants.fromContext(chunkContext);
     String accountId = jobConstants.getAccountId();
     Instant startTime = Instant.ofEpochMilli(jobConstants.getJobStartTime());
