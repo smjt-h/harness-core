@@ -10,6 +10,7 @@ package io.harness.rule;
 import io.harness.beans.EmbeddedUser;
 import io.harness.persistence.UserProvider;
 
+import java.util.Optional;
 import lombok.Setter;
 
 public class TestUserProvider implements UserProvider {
@@ -20,5 +21,10 @@ public class TestUserProvider implements UserProvider {
   @Override
   public EmbeddedUser activeUser() {
     return activeUser;
+  }
+
+  @Override
+  public Optional<EmbeddedUser> getCurrentAuditor() {
+    return Optional.of(activeUser);
   }
 }

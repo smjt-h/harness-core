@@ -16,8 +16,10 @@ import static com.google.inject.name.Names.named;
 import io.harness.annotation.HarnessRepo;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.EmbeddedUser;
 import io.harness.mongo.MongoConfig;
 import io.harness.persistence.Store;
+import io.harness.persistence.UserProvider;
 import io.harness.reflection.HarnessReflections;
 
 import com.google.inject.Injector;
@@ -34,6 +36,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.convert.CustomConversions;
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.config.AbstractMongoConfiguration;
@@ -101,6 +104,11 @@ public class SpringPersistenceConfig extends AbstractMongoConfiguration {
   public CustomConversions customConversions() {
     List<?> converterInstances = springConverters.stream().map(injector::getInstance).collect(Collectors.toList());
     return new MongoCustomConversions(converterInstances);
+  }
+
+  @Bean
+  public AuditorAware<EmbeddedUser> auditorAware() {
+    return injector.getInstance(UserProvider.class);
   }
 
   @Override

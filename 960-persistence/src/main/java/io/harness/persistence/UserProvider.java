@@ -9,6 +9,8 @@ package io.harness.persistence;
 
 import io.harness.beans.EmbeddedUser;
 
-public interface UserProvider {
+import org.springframework.data.domain.AuditorAware;
+
+public interface UserProvider extends AuditorAware<EmbeddedUser> {
   EmbeddedUser activeUser();
 }

@@ -12,12 +12,17 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EmbeddedUser;
 import io.harness.persistence.UserProvider;
+import io.harness.security.SecurityContextBuilder;
+import io.harness.security.dto.UserPrincipal;
 
 import software.wings.beans.User;
 
+import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 @OwnedBy(PL)
+@Slf4j
 public class ThreadLocalUserProvider implements UserProvider {
   public static EmbeddedUser populateEmbeddedUser(User user) {
     EmbeddedUser embeddedUser = EmbeddedUser.builder()
@@ -42,5 +47,21 @@ public class ThreadLocalUserProvider implements UserProvider {
   @Override
   public EmbeddedUser activeUser() {
     return threadLocalUser();
+  }
+
+  @Override
+  public Optional<EmbeddedUser> getCurrentAuditor() {
+    try {
+      UserPrincipal principal = (UserPrincipal) SecurityContextBuilder.getPrincipal();
+      EmbeddedUser embeddedUser = EmbeddedUser.builder()
+                                      .email(principal.getEmail())
+                                      .name(principal.getUsername())
+                                      .uuid(principal.getName())
+                                      .build();
+      return Optional.of(embeddedUser);
+    } catch (Exception e) {
+      log.warn("Something went wrong while trying to read current auditor.");
+      return Optional.empty();
+    }
   }
 }

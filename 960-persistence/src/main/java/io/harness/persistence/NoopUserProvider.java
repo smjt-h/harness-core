@@ -9,9 +9,16 @@ package io.harness.persistence;
 
 import io.harness.beans.EmbeddedUser;
 
+import java.util.Optional;
+
 public class NoopUserProvider implements UserProvider {
   @Override
   public EmbeddedUser activeUser() {
     return null;
+  }
+
+  @Override
+  public Optional<EmbeddedUser> getCurrentAuditor() {
+    return Optional.empty();
   }
 }

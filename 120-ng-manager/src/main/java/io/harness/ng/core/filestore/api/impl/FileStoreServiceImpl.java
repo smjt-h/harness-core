@@ -26,6 +26,7 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.sort
 import io.harness.EntityType;
 import io.harness.FileStoreConstants;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.EmbeddedUser;
 import io.harness.beans.Scope;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidArgumentsException;
@@ -34,7 +35,7 @@ import io.harness.file.beans.NGBaseFile;
 import io.harness.filter.dto.FilterDTO;
 import io.harness.filter.service.FilterService;
 import io.harness.ng.core.beans.SearchPageParams;
-import io.harness.ng.core.dto.filestore.CreatedBy;
+import io.harness.ng.core.dto.NGEmbeddedUserDTO;
 import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
 import io.harness.ng.core.dto.filestore.node.FileStoreNodeDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
@@ -164,7 +165,7 @@ public class FileStoreServiceImpl implements FileStoreService {
     }
 
     NGFile file = fetchFileOrThrow(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
-    fileReferenceService.validateIsReferencedBy(file);
+    fileReferenceService.validateReferenceByAndThrow(file);
 
     return deleteFileOrFolder(file);
   }
@@ -225,7 +226,8 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   @Override
-  public Set<String> getCreatedByList(String accountIdentifier, String orgIdentifier, String projectIdentifier) {
+  public Set<NGEmbeddedUserDTO> getCreatedByList(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier) {
     Scope scope = Scope.of(accountIdentifier, orgIdentifier, projectIdentifier);
     Criteria criteria = createScopeCriteria(scope);
     criteria.and(NGFiles.type).is(NGFileType.FILE);
@@ -233,9 +235,9 @@ public class FileStoreServiceImpl implements FileStoreService {
     Aggregation aggregation = Aggregation.newAggregation(
         match(criteria), group(NGFiles.createdBy), sort(Sort.Direction.ASC, NGFiles.createdBy));
 
-    AggregationResults<CreatedBy> aggregate = fileStoreRepository.aggregate(aggregation, CreatedBy.class);
+    AggregationResults<EmbeddedUser> aggregate = fileStoreRepository.aggregate(aggregation, EmbeddedUser.class);
 
-    return aggregate.getMappedResults().stream().map(CreatedBy::getCreatedBy).collect(Collectors.toSet());
+    return aggregate.getMappedResults().stream().map(NGEmbeddedUserDTO::fromEmbeddedUser).collect(Collectors.toSet());
   }
 
   private boolean isFileExistsByIdentifier(FileDTO fileDto) {
