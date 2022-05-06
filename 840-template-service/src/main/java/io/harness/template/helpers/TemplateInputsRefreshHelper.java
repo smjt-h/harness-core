@@ -43,8 +43,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 public class TemplateInputsRefreshHelper {
   @Inject NGTemplateService templateService;
-
-  private TemplateMergeServiceHelper templateMergeServiceHelper;
+  @Inject private TemplateMergeServiceHelper templateMergeServiceHelper;
 
   // Returns the refreshed YAML when a YAML String is passed.
   public String refreshTemplates(String accountId, String orgId, String projectId, String yaml) {

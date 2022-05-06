@@ -24,12 +24,13 @@ import io.harness.gitsync.interceptor.GitEntityFindInfoDTO;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
-import io.harness.ng.core.template.RefreshRequestDTO;
-import io.harness.ng.core.template.RefreshResponseDTO;
 import io.harness.security.annotations.NextGenManagerAuth;
 import io.harness.template.beans.PermissionTypes;
-import io.harness.template.beans.ValidateTemplateInputsResponseDTO;
-import io.harness.template.beans.YamlDiffResponseDTO;
+import io.harness.template.beans.refresh.RefreshRequestDTO;
+import io.harness.template.beans.refresh.RefreshRequestType;
+import io.harness.template.beans.refresh.TemplateRefreshRequestDTO;
+import io.harness.template.beans.refresh.ValidateTemplateInputsResponseDTO;
+import io.harness.template.beans.refresh.YamlDiffResponseDTO;
 import io.harness.template.services.TemplateRefreshService;
 
 import com.google.inject.Inject;
@@ -103,40 +104,19 @@ public class NGTemplateRefreshResource {
           NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgId,
       @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectId,
-      @Parameter(description = TEMPLATE_PARAM_MESSAGE) @QueryParam(
-          "templateIdentifier") @ResourceIdentifier String templateIdentifier,
-      @Parameter(description = "Version Label") @QueryParam(
-          NGCommonEntityConstants.VERSION_LABEL_KEY) String versionLabel,
-      @Parameter(description = "Pipeline Identifier") @QueryParam(NGCommonEntityConstants.VERSION_LABEL_KEY)
-      String pipelineIdentifier, @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
-    if (EmptyPredicate.isNotEmpty(templateIdentifier) && EmptyPredicate.isNotEmpty(versionLabel)) {
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo, @NotNull RefreshRequestDTO refreshRequestDTO) {
+    if (RefreshRequestType.TEMPLATE.equals(refreshRequestDTO.getType())) {
+      TemplateRefreshRequestDTO templateRefreshRequest = (TemplateRefreshRequestDTO) refreshRequestDTO;
       accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgId, projectId),
-          Resource.of(TEMPLATE, templateIdentifier), PermissionTypes.TEMPLATE_EDIT_PERMISSION);
-      return ResponseDTO.newResponse(templateRefreshService.refreshAndUpdateTemplate(
-          accountId, orgId, projectId, templateIdentifier, versionLabel));
+          Resource.of(TEMPLATE, templateRefreshRequest.getTemplateIdentifier()),
+          PermissionTypes.TEMPLATE_EDIT_PERMISSION);
+      return ResponseDTO.newResponse(templateRefreshService.refreshAndUpdateTemplate(accountId, orgId, projectId,
+          templateRefreshRequest.getTemplateIdentifier(), templateRefreshRequest.getVersionLabel()));
     }
-    if (EmptyPredicate.isNotEmpty(pipelineIdentifier)) {
+    if (RefreshRequestType.PIPELINE.equals(refreshRequestDTO.getType())) {
       // TODO: refresh pipeline
     }
     return ResponseDTO.newResponse(true);
-  }
-
-  @POST
-  @Path("with-yaml")
-  @ApiOperation(value = "This returns yaml with refreshed template inputs", nickname = "refreshTemplateInputs")
-  @Hidden
-  public ResponseDTO<RefreshResponseDTO> refreshTemplateInputs(
-      @Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
-          NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountId,
-      @Parameter(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) @QueryParam(
-          NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgId,
-      @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @QueryParam(
-          NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectId,
-      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo,
-      @Parameter(description = "Payload for RefreshTemplatesInputs API") RefreshRequestDTO refreshRequest) {
-    String refreshedYaml =
-        templateRefreshService.refreshLinkedTemplateInputs(accountId, orgId, projectId, refreshRequest.getYaml());
-    return ResponseDTO.newResponse(RefreshResponseDTO.builder().refreshedYaml(refreshedYaml).build());
   }
 
   @POST
@@ -151,12 +131,7 @@ public class NGTemplateRefreshResource {
           NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgId,
       @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectId,
-      @Parameter(description = TEMPLATE_PARAM_MESSAGE) @QueryParam(
-          "templateIdentifier") @ResourceIdentifier String templateIdentifier,
-      @Parameter(description = "Version Label") @QueryParam(
-          NGCommonEntityConstants.VERSION_LABEL_KEY) String versionLabel,
-      @Parameter(description = "Pipeline Identifier") @QueryParam(NGCommonEntityConstants.VERSION_LABEL_KEY)
-      String pipelineIdentifier, @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo, @NotNull RefreshRequestDTO refreshRequestDTO) {
     return null;
   }
 
@@ -171,12 +146,7 @@ public class NGTemplateRefreshResource {
           NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgId,
       @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectId,
-      @Parameter(description = TEMPLATE_PARAM_MESSAGE) @QueryParam(
-          "templateIdentifier") @ResourceIdentifier String templateIdentifier,
-      @Parameter(description = "Version Label") @QueryParam(
-          NGCommonEntityConstants.VERSION_LABEL_KEY) String versionLabel,
-      @Parameter(description = "Pipeline Identifier") @QueryParam(NGCommonEntityConstants.VERSION_LABEL_KEY)
-      String pipelineIdentifier, @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo, @NotNull RefreshRequestDTO refreshRequestDTO) {
     return null;
   }
 
@@ -192,12 +162,7 @@ public class NGTemplateRefreshResource {
           NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgId,
       @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectId,
-      @Parameter(description = TEMPLATE_PARAM_MESSAGE) @QueryParam(
-          "templateIdentifier") @ResourceIdentifier String templateIdentifier,
-      @Parameter(description = "Version Label") @QueryParam(
-          NGCommonEntityConstants.VERSION_LABEL_KEY) String versionLabel,
-      @Parameter(description = "Pipeline Identifier") @QueryParam(NGCommonEntityConstants.VERSION_LABEL_KEY)
-      String pipelineIdentifier, @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo, @NotNull RefreshRequestDTO refreshRequestDTO) {
     return null;
   }
 }

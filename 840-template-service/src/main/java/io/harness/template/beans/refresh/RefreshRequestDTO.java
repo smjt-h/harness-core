@@ -5,13 +5,12 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.template.beans;
+package io.harness.template.beans.refresh;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
 @OwnedBy(HarnessTeam.CDC)
-public class YamlDiffResponseDTO {
-  String originalYaml;
-  String refreshedYaml;
+public interface RefreshRequestDTO {
+  RefreshRequestType getType();
 }

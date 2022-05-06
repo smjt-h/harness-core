@@ -5,15 +5,14 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.template.beans;
+package io.harness.template.beans.refresh;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.ng.core.template.TemplateEntityType;
 
 @OwnedBy(HarnessTeam.CDC)
-public class TemplateInfo {
-  String templateIdentifier;
-  String versionLabel;
-  TemplateEntityType templateEntityType;
+public class NodeInfo {
+  String identifier;
+  String name;
+  String localFqn;
 }
