@@ -157,20 +157,10 @@ public class ValidateAndMergeHelper {
       if (EmptyPredicate.isEmpty(stageIdentifiers)) {
         template = createTemplateFromPipeline(pipelineYaml);
       } else {
-        if (featureFlagService.isEnabled(accountId, NG_PIPELINE_TEMPLATE)
-            && Boolean.TRUE.equals(optionalPipelineEntity.get().getTemplateReference())) {
-          String resolvedYaml =
-              pipelineTemplateHelper
-                  .resolveTemplateRefsInPipeline(accountId, orgIdentifier, projectIdentifier, pipelineYaml)
-                  .getMergedPipelineYaml();
-          StagesExecutionHelper.throwErrorIfAllStagesAreDeleted(resolvedYaml, stageIdentifiers);
-          replacedExpressions =
-              new ArrayList<>(StagesExpressionExtractor.getNonLocalExpressions(resolvedYaml, stageIdentifiers));
-        } else {
-          StagesExecutionHelper.throwErrorIfAllStagesAreDeleted(pipelineYaml, stageIdentifiers);
-          replacedExpressions =
-              new ArrayList<>(StagesExpressionExtractor.getNonLocalExpressions(pipelineYaml, stageIdentifiers));
-        }
+        // Depending on NG_PIPELINE_TEMPLATE FF we are using either using resolved yaml or pipeline yaml
+        String yaml = getYaml(accountId, orgIdentifier, projectIdentifier, pipelineYaml, optionalPipelineEntity);
+        StagesExecutionHelper.throwErrorIfAllStagesAreDeleted(yaml, stageIdentifiers);
+        replacedExpressions = new ArrayList<>(StagesExpressionExtractor.getNonLocalExpressions(yaml, stageIdentifiers));
         template = createTemplateFromPipelineForGivenStages(pipelineYaml, stageIdentifiers);
       }
 
@@ -187,6 +177,18 @@ public class ValidateAndMergeHelper {
       throw new InvalidRequestException(PipelineCRUDErrorResponse.errorMessageForPipelineNotFound(
           orgIdentifier, projectIdentifier, pipelineIdentifier));
     }
+  }
+
+  private String getYaml(String accountId, String orgIdentifier, String projectIdentifier, String pipelineYaml,
+      Optional<PipelineEntity> optionalPipelineEntity) {
+    if (featureFlagService.isEnabled(accountId, NG_PIPELINE_TEMPLATE) && optionalPipelineEntity.isPresent()
+        && Boolean.TRUE.equals(optionalPipelineEntity.get().getTemplateReference())) {
+      // returning resolved yaml
+      return pipelineTemplateHelper
+          .resolveTemplateRefsInPipeline(accountId, orgIdentifier, projectIdentifier, pipelineYaml)
+          .getMergedPipelineYaml();
+    }
+    return pipelineYaml;
   }
 
   public String getPipelineTemplate(String accountId, String orgIdentifier, String projectIdentifier,

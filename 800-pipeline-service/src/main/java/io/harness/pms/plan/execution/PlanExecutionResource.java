@@ -620,7 +620,7 @@ public class PlanExecutionResource {
         BasicPipeline basicPipeline = YamlUtils.read(yaml, BasicPipeline.class);
         shouldAllowStageExecutions = basicPipeline.isAllowStageExecutions();
       } catch (IOException e) {
-        throw new InvalidRequestException("Cannot create pipeline entity due to " + e.getMessage());
+        throw new InvalidRequestException("Cannot create pipeline entity due to " + e.getMessage(), e);
       }
     }
 
