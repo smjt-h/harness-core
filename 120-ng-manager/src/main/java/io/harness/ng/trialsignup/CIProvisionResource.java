@@ -14,6 +14,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.product.ci.scm.proto.GetUserReposResponse;
 
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
@@ -58,5 +59,14 @@ public class CIProvisionResource {
   public ResponseDTO<ProvisionResponse.DelegateStatus> getDelegateInstallStatus(
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId) {
     return ResponseDTO.newResponse(provisionService.getDelegateInstallStatus(accountId));
+  }
+
+  @GET
+  @Path("fetch-all-repos")
+  @ApiOperation(value = "Get all repositories of the user from scm", nickname = "getAllUserRepos")
+  public ResponseDTO<GetUserReposResponse> getDelegateInstallStatuss(
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
+      @NotNull @QueryParam("repoRef") String repoRef) {
+    return ResponseDTO.newResponse(provisionService.getAllUserRepos(accountId, repoRef));
   }
 }
