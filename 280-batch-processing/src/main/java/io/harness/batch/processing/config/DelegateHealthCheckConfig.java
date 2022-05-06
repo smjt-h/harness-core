@@ -8,7 +8,6 @@
 package io.harness.batch.processing.config;
 
 import io.harness.batch.processing.ccm.BatchJobType;
-import io.harness.batch.processing.cloudevents.aws.ecs.service.tasklet.AwsECSServiceRecommendationTasklet;
 import io.harness.batch.processing.svcmetrics.BatchJobExecutionListener;
 import io.harness.batch.processing.tasklet.DelegateHealthCheckTasklet;
 import lombok.extern.slf4j.Slf4j;
