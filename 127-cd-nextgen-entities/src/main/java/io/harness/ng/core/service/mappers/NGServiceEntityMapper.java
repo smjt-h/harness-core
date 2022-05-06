@@ -34,10 +34,9 @@ public class NGServiceEntityMapper {
   }
 
   public NGServiceConfig toNGServiceConfig(ServiceEntity serviceEntity) {
-    ServiceDefinition serviceDefinition = null;
     if (isNotEmpty(serviceEntity.getYaml())) {
       try {
-        serviceDefinition = YamlPipelineUtils.read(serviceEntity.getYaml(), ServiceDefinition.class);
+        return YamlPipelineUtils.read(serviceEntity.getYaml(), NGServiceConfig.class);
       } catch (IOException e) {
         throw new InvalidRequestException("Cannot create service ng service config due to " + e.getMessage());
       }
@@ -50,7 +49,6 @@ public class NGServiceEntityMapper {
                                    .projectIdentifier(serviceEntity.getProjectIdentifier())
                                    .description(serviceEntity.getDescription())
                                    .tags(convertToMap(serviceEntity.getTags()))
-                                   .serviceDefinition(serviceDefinition)
                                    .build())
         .build();
   }
