@@ -7,8 +7,9 @@
 
 package io.harness.resourcegroup.resourceclient.variable;
 
-import static io.harness.resourcegroup.beans.ValidatorType.*;
+import static io.harness.resourcegroup.beans.ValidatorType.BY_RESOURCE_IDENTIFIER;
 import static io.harness.resourcegroup.beans.ValidatorType.BY_RESOURCE_TYPE;
+import static io.harness.resourcegroup.beans.ValidatorType.BY_RESOURCE_TYPE_INCLUDING_CHILD_SCOPES;
 
 import io.harness.beans.Scope;
 import io.harness.beans.ScopeLevel;
@@ -18,7 +19,12 @@ import io.harness.resourcegroup.framework.v1.service.Resource;
 import io.harness.resourcegroup.framework.v1.service.ResourceInfo;
 
 import com.google.common.collect.ImmutableMap;
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 public class VariableResourceImpl implements Resource {
   @Override
