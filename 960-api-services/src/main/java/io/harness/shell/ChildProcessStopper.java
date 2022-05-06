@@ -58,7 +58,7 @@ public class ChildProcessStopper implements ProcessStopper {
             + "    list_descendants ${children[c]}\n"
             + "  done\n"
             + "\n"
-            + "  kill -9 ${children2[0]}\n"
+            + "  kill -9 ${children[0]}\n"
             + "}\n"
             + "\n"
             + "list_descendants " + ppid;
