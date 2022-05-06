@@ -97,7 +97,7 @@ public class ScmGitProviderMapper {
     } else {
       project = GitClientHelper.getAzureRepoProject(orgAndProject);
     }
-    String azureRepoApiURL = GitClientHelper.getAzureRepoApiURL();
+    String azureRepoApiURL = GitClientHelper.getAzureRepoApiURL(azureRepoConnector.getUrl());
     AzureRepoApiAccessDTO apiAccess = azureRepoConnector.getApiAccess();
     AzureRepoTokenSpecDTO azureRepoUsernameTokenApiAccessDTO = (AzureRepoTokenSpecDTO) apiAccess.getSpec();
     String personalAccessToken = String.valueOf(azureRepoUsernameTokenApiAccessDTO.getTokenRef().getDecryptedValue());
