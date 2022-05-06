@@ -2561,7 +2561,7 @@
             "namespace",
             "releaseName",
             "resourceGroup",
-            "subscription"
+            "subscriptionId"
           ],
           "properties": {
             "cluster": {
@@ -2584,7 +2584,7 @@
               "type": "string",
               "minLength": 1
             },
-            "subscription": {
+            "subscriptionId": {
               "type": "string",
               "minLength": 1
             }
@@ -3363,6 +3363,28 @@
           }
         }
       ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "ModuleSource": {
+      "type": "object",
+      "required": [
+        "useConnectorCredentials"
+      ],
+      "properties": {
+        "useConnectorCredentials": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/ParameterFieldBoolean"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        }
+      },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
     "NGVariable": {
@@ -6624,6 +6646,9 @@
         "store"
       ],
       "properties": {
+        "moduleSource": {
+          "$ref": "#/definitions/ModuleSource"
+        },
         "store": {
           "$ref": "#/definitions/StoreConfigWrapper"
         }
