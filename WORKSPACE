@@ -39,6 +39,7 @@ http_archive(
     ],
 )
 
+
 http_archive(
     name = "bazel_gazelle",
     sha256 = "222e49f034ca7a1d1231422cdb67066b885819885c356673cb1f72f748a3c9d4",

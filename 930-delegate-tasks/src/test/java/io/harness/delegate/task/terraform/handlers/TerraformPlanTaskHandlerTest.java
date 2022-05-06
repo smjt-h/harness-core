@@ -93,10 +93,10 @@ public class TerraformPlanTaskHandlerTest extends CategoryTest {
   public void testPlan() throws IOException, TimeoutException, InterruptedException {
     when(secretDecryptionService.decrypt(any(), any())).thenReturn(null);
     when(terraformBaseHelper.getGitBaseRequestForConfigFile(
-             anyString(), any(GitStoreDelegateConfig.class), any(GitConfigDTO.class)))
-        .thenReturn(any(GitBaseRequest.class));
+             any(), any(), any()))
+        .thenReturn(mock(GitBaseRequest.class));
     when(terraformBaseHelper.fetchConfigFileAndPrepareScriptDir(
-             any(), anyString(), anyString(), anyString(), any(), logCallback, anyString(), anyString()))
+             any(), any(), any(), any(), any(), eq(logCallback), any(), any()))
         .thenReturn("sourceDir");
     doNothing().when(terraformBaseHelper).downloadTfStateFile(null, "accountId", null, "scriptDir");
     when(gitClientHelper.getRepoDirectory(any())).thenReturn("sourceDir");
@@ -122,7 +122,7 @@ public class TerraformPlanTaskHandlerTest extends CategoryTest {
   public void testPlanWithArtifactoryConfigAndVarFiles() throws IOException, TimeoutException, InterruptedException {
     when(secretDecryptionService.decrypt(any(), any())).thenReturn(null);
     when(terraformBaseHelper.fetchConfigFileAndPrepareScriptDir(
-             any(), anyString(), anyString(), anyString(), eq(logCallback), anyString()))
+             any(), any(), any(), any(), eq(logCallback), any()))
         .thenReturn("sourceDir");
     doNothing().when(terraformBaseHelper).downloadTfStateFile(null, "accountId", null, "scriptDir");
     when(gitClientHelper.getRepoDirectory(any())).thenReturn("sourceDir");

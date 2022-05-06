@@ -117,7 +117,7 @@ public class ServiceNowApprovalHelperServiceImplTest extends CategoryTest {
 
     ArgumentCaptor<TaskDetails> taskDetailsArgumentCaptor = ArgumentCaptor.forClass(TaskDetails.class);
     when(StepUtils.prepareTaskRequest(
-             any(), taskDetailsArgumentCaptor.capture(), anyList(), anyList(), anyString(), anyBoolean()))
+             any(), taskDetailsArgumentCaptor.capture(), anyList(), anyList(), any(), anyBoolean()))
         .thenReturn(null);
 
     serviceNowApprovalHelperService.handlePollingEvent(instance);

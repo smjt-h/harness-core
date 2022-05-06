@@ -21,6 +21,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -106,7 +107,7 @@ public class KubernetesContainerServiceTest extends CategoryTest {
   @Owner(developers = UTSAV)
   @Category(UnitTests.class)
   public void shouldValidateWithCEMetricsServerPresent() throws ApiException {
-    doReturn(true).when(k8sResourceValidator).validateMetricsServer(any(ApiClient.class));
+    doReturn(true).when(k8sResourceValidator).validateMetricsServer(any());
     doNothing().when(kubernetesContainerService).validateCEResourcePermission(any());
 
     assertThatCode(() -> kubernetesContainerService.validateCEPermissions(KUBERNETES_CONFIG))
@@ -132,7 +133,7 @@ public class KubernetesContainerServiceTest extends CategoryTest {
     doReturn(true).when(k8sResourceValidator).validateMetricsServer(any(ApiClient.class));
     doReturn(RESULT).when(k8sResourceValidator).validateCEPermissions(any(ApiClient.class));
 
-    assertThatThrownBy(() -> kubernetesContainerService.validateCEResourcePermission(any(ApiClient.class)))
+    assertThatThrownBy(() -> kubernetesContainerService.validateCEResourcePermission(mock(ApiClient.class)))
         .hasMessageContaining(RESULT);
 
     verify(k8sResourceValidator, times(1)).validateCEPermissions(any(ApiClient.class));
