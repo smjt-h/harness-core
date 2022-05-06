@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
@@ -448,6 +449,7 @@ public class CfSdkClientImplWithOperationsWrapperMockedTest extends CategoryTest
   public void testCreateRouteFromPath() throws Exception {
     doNothing().when(logCallback).saveExecutionLog(anyString());
 
+    String space = "space";
     CfRequestConfig cfRequestConfig = CfRequestConfig.builder().build();
     Set<String> domains = new HashSet<>();
     domains.add("apps.io");
@@ -462,10 +464,11 @@ public class CfSdkClientImplWithOperationsWrapperMockedTest extends CategoryTest
       assertThat(e.getMessage().contains("used domain not present in this space")).isTrue();
     }
 
+    CfRequestConfig cfRequestConfig1 = CfRequestConfig.builder().spaceName(space).build();
     doNothing()
         .when(cfSdkClient)
-        .createRouteMap(any(), anyString(), anyString(), anyString(), anyBoolean(), anyBoolean(), anyInt());
-    cfSdkClient.createRouteFromPath("app1.apps.io", cfRequestConfig, domains);
+        .createRouteMap(eq(cfRequestConfig1), anyString(), anyString(), any(), anyBoolean(), anyBoolean(), anyInt());
+    cfSdkClient.createRouteFromPath("app1.apps.io", cfRequestConfig1, domains);
     ArgumentCaptor<String> hostCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<String> domainCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);

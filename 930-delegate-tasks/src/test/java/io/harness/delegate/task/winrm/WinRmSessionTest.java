@@ -17,8 +17,7 @@ import static io.harness.rule.OwnerRule.SAHIL;
 import static io.harness.rule.OwnerRule.TMACARI;
 
 import static java.lang.String.format;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.*;
 import static org.joor.Reflect.on;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -102,28 +101,25 @@ public class WinRmSessionTest extends CategoryTest {
   public void testExecuteCommandString() throws JSchException {
     try (MockedStatic<SshHelperUtils> mockStatic = Mockito.mockStatic(SshHelperUtils.class)) {
       winRmSessionConfig = io.harness.delegate.task.winrm.WinRmSessionConfig.builder()
-              .domain("KRB.LOCAL")
-              .skipCertChecks(true)
-              .username("TestUser")
-              .environment(new HashMap<>())
-              .hostname("localhost")
-              .authenticationScheme(AuthenticationScheme.KERBEROS)
-              .build();
-      mockStatic
-              .when(() -> SshHelperUtils.executeLocalCommand(
-                      anyString(), any(LogCallback.class), any(Writer.class), anyBoolean(), anyMapOf(String.class, String.class)))
-              .thenReturn(true);
+                               .domain("KRB.LOCAL")
+                               .skipCertChecks(true)
+                               .username("TestUser")
+                               .environment(new HashMap<>())
+                               .hostname("localhost")
+                               .authenticationScheme(AuthenticationScheme.KERBEROS)
+                               .build();
+      mockStatic.when(() -> SshHelperUtils.executeLocalCommand(anyString(), any(), any(), anyBoolean(), any()))
+          .thenReturn(true);
       winRmSession = new WinRmSession(winRmSessionConfig, logCallback);
 
       int status = winRmSession.executeCommandString("ls", writer, error, false);
 
       PowerMockito.verifyStatic(io.harness.ssh.SshHelperUtils.class);
       ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-      SshHelperUtils.generateTGT(
-              captor.capture(), anyString(), anyString(), eq(logCallback), anyMapOf(String.class, String.class));
+      SshHelperUtils.generateTGT(captor.capture(), any(), any(), any(), any());
       assertThat(captor.getValue()).isEqualTo("TestUser@KRB.LOCAL");
       SshHelperUtils.executeLocalCommand(
-              anyString(), eq(logCallback), eq(writer), eq(false), anyMapOf(String.class, String.class));
+          anyString(), eq(logCallback), eq(writer), eq(false), anyMapOf(String.class, String.class));
     }
   }
 
@@ -133,20 +129,22 @@ public class WinRmSessionTest extends CategoryTest {
   public void testRemoteHost() throws JSchException {
     try (MockedStatic<SshHelperUtils> mockStatic = Mockito.mockStatic(SshHelperUtils.class)) {
       winRmSessionConfig = io.harness.delegate.task.winrm.WinRmSessionConfig.builder()
-              .domain("KRB.LOCAL")
-              .skipCertChecks(true)
-              .username("TestUser")
-              .environment(new HashMap<>())
-              .hostname("localhost")
-              .authenticationScheme(AuthenticationScheme.KERBEROS)
-              .build();
+                               .domain("KRB.LOCAL")
+                               .skipCertChecks(true)
+                               .username("TestUser")
+                               .environment(new HashMap<>())
+                               .hostname("localhost")
+                               .authenticationScheme(AuthenticationScheme.KERBEROS)
+                               .build();
       mockStatic
-              .when(() -> SshHelperUtils.executeLocalCommand(
-                      anyString(), any(LogCallback.class), nullable(Writer.class), anyBoolean(), anyMapOf(String.class, String.class)))
-              .thenReturn(true);
+          .when(()
+                    -> SshHelperUtils.executeLocalCommand(anyString(), any(LogCallback.class), nullable(Writer.class),
+                        anyBoolean(), anyMapOf(String.class, String.class)))
+          .thenReturn(true);
       winRmSession = new WinRmSession(winRmSessionConfig, logCallback);
-      mockStatic.verify(() -> SshHelperUtils.executeLocalCommand(
-              anyString(), any(LogCallback.class), nullable(Writer.class), anyBoolean(), anyMapOf(String.class, String.class)));
+      mockStatic.verify(()
+                            -> SshHelperUtils.executeLocalCommand(anyString(), any(LogCallback.class),
+                                nullable(Writer.class), anyBoolean(), anyMapOf(String.class, String.class)));
     }
   }
 
@@ -156,17 +154,18 @@ public class WinRmSessionTest extends CategoryTest {
   public void testRemoteHostCheckNegativeCase() throws JSchException {
     try (MockedStatic<SshHelperUtils> mockStatic = Mockito.mockStatic(SshHelperUtils.class)) {
       winRmSessionConfig = WinRmSessionConfig.builder()
-              .domain("KRB.LOCAL")
-              .skipCertChecks(true)
-              .username("TestUser")
-              .environment(new HashMap<>())
-              .hostname("localhost")
-              .authenticationScheme(AuthenticationScheme.KERBEROS)
-              .build();
+                               .domain("KRB.LOCAL")
+                               .skipCertChecks(true)
+                               .username("TestUser")
+                               .environment(new HashMap<>())
+                               .hostname("localhost")
+                               .authenticationScheme(AuthenticationScheme.KERBEROS)
+                               .build();
       mockStatic
-              .when(() -> SshHelperUtils.executeLocalCommand(
-                      anyString(), any(LogCallback.class), any(Writer.class), anyBoolean(), anyMapOf(String.class, String.class)))
-              .thenReturn(false);
+          .when(()
+                    -> SshHelperUtils.executeLocalCommand(anyString(), any(LogCallback.class), any(Writer.class),
+                        anyBoolean(), anyMapOf(String.class, String.class)))
+          .thenReturn(false);
       try {
         winRmSession = new WinRmSession(winRmSessionConfig, logCallback);
       } catch (InvalidRequestException invalidRequestException) {
@@ -181,17 +180,18 @@ public class WinRmSessionTest extends CategoryTest {
   public void testGetUserPrincipal() throws JSchException {
     try (MockedStatic<SshHelperUtils> mockStatic = Mockito.mockStatic(SshHelperUtils.class)) {
       winRmSessionConfig = io.harness.delegate.task.winrm.WinRmSessionConfig.builder()
-              .domain("KRB.LOCAL")
-              .skipCertChecks(true)
-              .username("TestUser")
-              .environment(new HashMap<>())
-              .hostname("localhost")
-              .authenticationScheme(AuthenticationScheme.KERBEROS)
-              .build();
+                               .domain("KRB.LOCAL")
+                               .skipCertChecks(true)
+                               .username("TestUser")
+                               .environment(new HashMap<>())
+                               .hostname("localhost")
+                               .authenticationScheme(AuthenticationScheme.KERBEROS)
+                               .build();
       mockStatic
-              .when(() -> SshHelperUtils.executeLocalCommand(
-                      anyString(), any(LogCallback.class), nullable(Writer.class), anyBoolean(), anyMapOf(String.class, String.class)))
-              .thenReturn(true);
+          .when(()
+                    -> SshHelperUtils.executeLocalCommand(anyString(), any(LogCallback.class), nullable(Writer.class),
+                        anyBoolean(), anyMapOf(String.class, String.class)))
+          .thenReturn(true);
       winRmSession = new WinRmSession(winRmSessionConfig, logCallback);
 
       String userPrincipal = winRmSession.getUserPrincipal("test", "domain");
@@ -206,17 +206,18 @@ public class WinRmSessionTest extends CategoryTest {
   public void testGetUserPrincipalWithDomainInUsername() throws JSchException {
     try (MockedStatic<SshHelperUtils> mockStatic = Mockito.mockStatic(SshHelperUtils.class)) {
       winRmSessionConfig = io.harness.delegate.task.winrm.WinRmSessionConfig.builder()
-              .domain("KRB.LOCAL")
-              .skipCertChecks(true)
-              .username("TestUser")
-              .environment(new HashMap<>())
-              .hostname("localhost")
-              .authenticationScheme(AuthenticationScheme.KERBEROS)
-              .build();
+                               .domain("KRB.LOCAL")
+                               .skipCertChecks(true)
+                               .username("TestUser")
+                               .environment(new HashMap<>())
+                               .hostname("localhost")
+                               .authenticationScheme(AuthenticationScheme.KERBEROS)
+                               .build();
       mockStatic
-              .when(() -> SshHelperUtils.executeLocalCommand(
-                      anyString(), any(LogCallback.class), nullable(Writer.class), anyBoolean(), anyMapOf(String.class, String.class)))
-              .thenReturn(true);
+          .when(()
+                    -> SshHelperUtils.executeLocalCommand(anyString(), any(LogCallback.class), nullable(Writer.class),
+                        anyBoolean(), anyMapOf(String.class, String.class)))
+          .thenReturn(true);
       winRmSession = new WinRmSession(winRmSessionConfig, logCallback);
 
       String userPrincipal = winRmSession.getUserPrincipal("test@oldDomain", "domain");
@@ -231,20 +232,21 @@ public class WinRmSessionTest extends CategoryTest {
   public void testGetUserPrincipalWithUsernameNull() throws JSchException {
     try (MockedStatic<SshHelperUtils> mockStatic = Mockito.mockStatic(SshHelperUtils.class)) {
       mockStatic
-              .when(() -> SshHelperUtils.executeLocalCommand(
-                      anyString(), any(LogCallback.class), any(Writer.class), anyBoolean(), anyMapOf(String.class, String.class)))
-              .thenReturn(true);
+          .when(()
+                    -> SshHelperUtils.executeLocalCommand(anyString(), any(LogCallback.class), any(Writer.class),
+                        anyBoolean(), anyMapOf(String.class, String.class)))
+          .thenReturn(true);
       winRmSessionConfig = io.harness.delegate.task.winrm.WinRmSessionConfig.builder()
-              .domain("KRB.LOCAL")
-              .skipCertChecks(true)
-              .environment(new HashMap<>())
-              .hostname("localhost")
-              .authenticationScheme(AuthenticationScheme.KERBEROS)
-              .build();
+                               .domain("KRB.LOCAL")
+                               .skipCertChecks(true)
+                               .environment(new HashMap<>())
+                               .hostname("localhost")
+                               .authenticationScheme(AuthenticationScheme.KERBEROS)
+                               .build();
 
       assertThatExceptionOfType(InvalidRequestException.class)
-              .isThrownBy(() -> new WinRmSession(winRmSessionConfig, logCallback))
-              .withMessageContaining("Username or domain cannot be null");
+          .isThrownBy(() -> new WinRmSession(winRmSessionConfig, logCallback))
+          .withMessageContaining("Username or domain cannot be null");
     }
   }
 
@@ -254,20 +256,21 @@ public class WinRmSessionTest extends CategoryTest {
   public void testGetUserPrincipalWithDomainNull() throws JSchException {
     try (MockedStatic<SshHelperUtils> mockStatic = Mockito.mockStatic(SshHelperUtils.class)) {
       mockStatic
-              .when(() -> SshHelperUtils.executeLocalCommand(
-                      anyString(), any(LogCallback.class), any(Writer.class), anyBoolean(), anyMapOf(String.class, String.class)))
-              .thenReturn(true);
+          .when(()
+                    -> SshHelperUtils.executeLocalCommand(anyString(), any(LogCallback.class), any(Writer.class),
+                        anyBoolean(), anyMapOf(String.class, String.class)))
+          .thenReturn(true);
       winRmSessionConfig = io.harness.delegate.task.winrm.WinRmSessionConfig.builder()
-              .skipCertChecks(true)
-              .username("TestUser")
-              .environment(new HashMap<>())
-              .hostname("localhost")
-              .authenticationScheme(AuthenticationScheme.KERBEROS)
-              .build();
+                               .skipCertChecks(true)
+                               .username("TestUser")
+                               .environment(new HashMap<>())
+                               .hostname("localhost")
+                               .authenticationScheme(AuthenticationScheme.KERBEROS)
+                               .build();
 
       assertThatExceptionOfType(InvalidRequestException.class)
-              .isThrownBy(() -> new WinRmSession(winRmSessionConfig, logCallback))
-              .withMessageContaining("Username or domain cannot be null");
+          .isThrownBy(() -> new WinRmSession(winRmSessionConfig, logCallback))
+          .withMessageContaining("Username or domain cannot be null");
     }
   }
 
@@ -277,17 +280,18 @@ public class WinRmSessionTest extends CategoryTest {
   public void testAutoClosable() throws JSchException {
     try (MockedStatic<SshHelperUtils> mockStatic = Mockito.mockStatic(SshHelperUtils.class)) {
       mockStatic
-              .when(() -> SshHelperUtils.executeLocalCommand(
-                      anyString(), any(LogCallback.class), nullable(Writer.class), anyBoolean(), anyMap()))
-              .thenReturn(true);
+          .when(()
+                    -> SshHelperUtils.executeLocalCommand(
+                        anyString(), any(LogCallback.class), nullable(Writer.class), anyBoolean(), anyMap()))
+          .thenReturn(true);
       winRmSessionConfig = io.harness.delegate.task.winrm.WinRmSessionConfig.builder()
-              .domain("KRB.LOCAL")
-              .skipCertChecks(true)
-              .username("TestUser")
-              .environment(new HashMap<>())
-              .hostname("localhost")
-              .authenticationScheme(AuthenticationScheme.KERBEROS)
-              .build();
+                               .domain("KRB.LOCAL")
+                               .skipCertChecks(true)
+                               .username("TestUser")
+                               .environment(new HashMap<>())
+                               .hostname("localhost")
+                               .authenticationScheme(AuthenticationScheme.KERBEROS)
+                               .build();
       io.harness.delegate.task.winrm.WinRmSession session = new WinRmSession(winRmSessionConfig, logCallback);
       WinRmClientContext context = Mockito.mock(WinRmClientContext.class);
       WinRmClient client = Mockito.mock(WinRmClient.class);
@@ -356,8 +360,9 @@ public class WinRmSessionTest extends CategoryTest {
   public void testCreateWinRMSessionWithUniqueCacheFile() throws Exception {
     MockedStatic<SshHelperUtils> mockStatic = Mockito.mockStatic(SshHelperUtils.class);
     mockStatic
-        .when(() -> SshHelperUtils.executeLocalCommand(
-            anyString(), any(LogCallback.class), nullable(Writer.class), anyBoolean(), anyMapOf(String.class, String.class)))
+        .when(()
+                  -> SshHelperUtils.executeLocalCommand(
+                      anyString(), any(LogCallback.class), nullable(Writer.class), anyBoolean(), any()))
         .thenReturn(true);
 
     WinRmSessionConfig sessionConfig = WinRmSessionConfig.builder()
@@ -387,10 +392,10 @@ public class WinRmSessionTest extends CategoryTest {
     // session cache file should be deleted after session close
     assertThat(sessionCacheFile).doesNotExist();
 
-//    PowerMockito.verifyStatic(SshHelperUtils.class);
+    //    PowerMockito.verifyStatic(SshHelperUtils.class);
     ArgumentCaptor<Map> captor = ArgumentCaptor.forClass(Map.class);
-    mockStatic.when(() ->
-    SshHelperUtils.generateTGT(anyString(), anyString(), anyString(), eq(logCallback), captor.capture()));
+    mockStatic.when(
+        () -> SshHelperUtils.generateTGT(anyString(), anyString(), anyString(), eq(logCallback), captor.capture()));
     Map<String, String> passedEnvVariables = captor.getValue();
     assertThat(passedEnvVariables)
         .containsExactlyInAnyOrderEntriesOf(ImmutableMap.of(
@@ -404,7 +409,7 @@ public class WinRmSessionTest extends CategoryTest {
     PowerMockito.mockStatic(WinRmClient.class);
     WinRmClient winRmClient = mock(WinRmClient.class);
 
-    when(WinRmClient.builder(anyString())).thenReturn(winRmClientBuilder);
+    when(WinRmClient.builder(anyString())).thenAnswer(invocationOnMock -> winRmClientBuilder);
     doReturn(winRmClient).when(winRmClientBuilder).build();
     when(winRmClient.createShell()).thenReturn(shell);
     winRmSessionConfig = io.harness.delegate.task.winrm.WinRmSessionConfig.builder()

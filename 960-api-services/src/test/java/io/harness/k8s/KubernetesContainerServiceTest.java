@@ -224,9 +224,7 @@ public class KubernetesContainerServiceTest extends CategoryTest {
     doReturn(mockGetCommand).when(mockClient).get();
     List<String> executeCommands = new ArrayList<>();
     setupGetCommand(mockGetCommand, executeCommands, Kind.ReplicaSet);
-    doReturn(new ProcessResult(0, null))
-        .when(mockGetCommand)
-        .execute(anyString(), any(OutputStream.class), any(OutputStream.class), anyBoolean());
+    doReturn(new ProcessResult(0, null)).when(mockGetCommand).execute(anyString(), any(), any(), anyBoolean());
     KubernetesConfig kubernetesConfig = KubernetesConfig.builder().namespace("harness").build();
 
     kubernetesContainerService.validate(kubernetesConfig, true);
@@ -245,6 +243,6 @@ public class KubernetesContainerServiceTest extends CategoryTest {
       return new ProcessResult(1, null);
     })
         .when(mockGetCommand)
-        .execute(anyString(), any(OutputStream.class), any(OutputStream.class), anyBoolean());
+        .execute(any(), any(), any(), anyBoolean());
   }
 }
