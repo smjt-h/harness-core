@@ -92,7 +92,7 @@ public class MonitoredServiceResource {
   @Path("/yaml")
   @Timed
   @ExceptionMetered
-  @ApiOperation(value = "saves monitored service from template", nickname = "Edit Configurations...")
+  @ApiOperation(value = "saves monitored service from yaml or template", nickname = "saveMonitoredServiceFromYaml")
   @NGAccessControlClientCheck
   public RestResponse<MonitoredServiceResponse> saveMonitoredServiceFromYaml(
       @ApiParam(required = true) @NotNull @BeanParam ProjectParams projectParam, @NotNull @Valid @Body String yaml) {
