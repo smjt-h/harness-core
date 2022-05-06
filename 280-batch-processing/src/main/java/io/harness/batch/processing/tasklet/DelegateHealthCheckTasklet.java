@@ -14,8 +14,8 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.batch.processing.ccm.CCMJobConstants;
 import io.harness.ccm.commons.beans.JobConstants;
 import io.harness.ccm.health.LastReceivedPublishedMessageDao;
-import io.harness.perpetualtask.PerpetualTaskServiceImpl;
 import io.harness.perpetualtask.internal.PerpetualTaskRecord;
+import io.harness.perpetualtask.internal.PerpetualTaskRecordDao;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -33,7 +33,7 @@ import java.util.Map;
 @Slf4j
 @Singleton
 public class DelegateHealthCheckTasklet implements Tasklet {
-  @Autowired private PerpetualTaskServiceImpl perpetualTaskService;
+  @Autowired private PerpetualTaskRecordDao perpetualTaskRecordDao;
   @Autowired private LastReceivedPublishedMessageDao lastReceivedPublishedMessageDao;
 
   private static final int BATCH_SIZE = 20;
@@ -41,11 +41,10 @@ public class DelegateHealthCheckTasklet implements Tasklet {
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) {
-    log.info("HELLLOOOO");
     final JobConstants jobConstants = CCMJobConstants.fromContext(chunkContext);
     String accountId = jobConstants.getAccountId();
     Instant startTime = Instant.ofEpochMilli(jobConstants.getJobStartTime());
-    List<PerpetualTaskRecord> perpetualTasks = perpetualTaskService.listValidK8sWatchTasksForAccount(accountId);
+    List<PerpetualTaskRecord> perpetualTasks = perpetualTaskRecordDao.listValidK8sWatchPerpetualTasksForAccount(accountId);
     List<String> clusterIds = new ArrayList<>();
     for (PerpetualTaskRecord perpetualTask: perpetualTasks) {
       if (perpetualTask.getTaskDescription().equals("NG")) {

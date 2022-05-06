@@ -31,8 +31,6 @@ public interface PerpetualTaskService {
 
   List<PerpetualTaskRecord> listAllTasksForAccount(String accountId);
 
-  List<PerpetualTaskRecord> listValidK8sWatchTasksForAccount(String accountId);
-
   PerpetualTaskRecord getTaskRecord(String taskId);
 
   String getPerpetualTaskType(String taskId);

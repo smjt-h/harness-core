@@ -259,11 +259,6 @@ public class PerpetualTaskServiceImpl implements PerpetualTaskService, DelegateO
   }
 
   @Override
-  public List<PerpetualTaskRecord> listValidK8sWatchTasksForAccount(String accountId) {
-    return perpetualTaskRecordDao.listValidK8sWatchPerpetualTasksForAccount(accountId);
-  }
-
-  @Override
   public PerpetualTaskRecord getTaskRecord(String taskId) {
     return perpetualTaskRecordDao.getTask(taskId);
   }
