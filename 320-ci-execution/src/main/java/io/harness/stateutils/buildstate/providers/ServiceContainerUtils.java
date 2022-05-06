@@ -25,7 +25,7 @@ import java.util.List;
 public class ServiceContainerUtils {
   public static List<String> getCommand(OSType os) {
     String cmd = UNIX_STEP_COMMAND;
-    if (os.equals(OSType.WINDOWS)) {
+    if (os == OSType.WINDOWS) {
       cmd = WIN_STEP_COMMAND;
     }
 

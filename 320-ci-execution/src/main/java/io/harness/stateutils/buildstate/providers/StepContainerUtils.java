@@ -7,24 +7,22 @@
 
 package io.harness.stateutils.buildstate.providers;
 
-import static io.harness.common.CIExecutionConstants.PORT_PREFIX;
-import static io.harness.common.CIExecutionConstants.UNIX_STEP_COMMAND;
-import static io.harness.common.CIExecutionConstants.WIN_STEP_COMMAND;
-import static java.lang.String.format;
-
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.yaml.extended.infrastrucutre.OSType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+
+import static io.harness.common.CIExecutionConstants.PORT_PREFIX;
+import static io.harness.common.CIExecutionConstants.UNIX_STEP_COMMAND;
+import static io.harness.common.CIExecutionConstants.WIN_STEP_COMMAND;
 
 @OwnedBy(HarnessTeam.CI)
 public class StepContainerUtils {
   public static List<String> getCommand(OSType os) {
     String cmd = UNIX_STEP_COMMAND;
-    if (os.equals(OSType.WINDOWS)) {
+    if (os == OSType.WINDOWS) {
       cmd = WIN_STEP_COMMAND;
     }
 

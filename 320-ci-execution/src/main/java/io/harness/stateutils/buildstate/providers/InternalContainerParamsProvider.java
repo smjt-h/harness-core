@@ -80,7 +80,7 @@ public class InternalContainerParamsProvider {
         IntegrationStageUtils.getFullyQualifiedImageName(imageName, harnessInternalImageConnector);
     List<String> commands = SH_COMMAND;
     List<String> args = Arrays.asList(UNIX_SETUP_ADDON_ARGS);
-    if (os.equals(OSType.WINDOWS)) {
+    if (os == OSType.WINDOWS) {
       commands = PWSH_COMMAND;
       args = Arrays.asList(WIN_SETUP_ADDON_ARGS);
     }
