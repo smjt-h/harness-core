@@ -27,6 +27,7 @@ import static io.harness.common.CIExecutionConstants.PWSH_COMMAND;
 import static io.harness.common.CIExecutionConstants.SETUP_ADDON_CONTAINER_NAME;
 import static io.harness.common.CIExecutionConstants.SH_COMMAND;
 import static io.harness.common.CIExecutionConstants.UNIX_SETUP_ADDON_ARGS;
+import static io.harness.common.CIExecutionConstants.WIN_SETUP_ADDON_ARGS;
 import static io.harness.data.encoding.EncodingUtils.encodeBase64;
 import static io.harness.delegate.beans.ci.pod.SecretParams.Type.TEXT;
 
@@ -71,7 +72,7 @@ public class InternalContainerParamsProvider {
   public CIK8ContainerParams getSetupAddonContainerParams(ConnectorDetails harnessInternalImageConnector,
       Map<String, String> volumeToMountPath, String workDir, ContainerSecurityContext ctrSecurityContext,
       String accountIdentifier, OSType os) {
-    List<String> args = Arrays.asList(UNIX_SETUP_ADDON_ARGS);
+
     Map<String, String> envVars = new HashMap<>();
     envVars.put(HARNESS_WORKSPACE, workDir);
 
@@ -79,8 +80,10 @@ public class InternalContainerParamsProvider {
     String fullyQualifiedImage =
         IntegrationStageUtils.getFullyQualifiedImageName(imageName, harnessInternalImageConnector);
     List<String> commands = SH_COMMAND;
+    List<String> args = Arrays.asList(UNIX_SETUP_ADDON_ARGS);
     if (os.equals(OSType.WINDOWS)) {
       commands = PWSH_COMMAND;
+      args = Arrays.asList(WIN_SETUP_ADDON_ARGS);
     }
     return CIK8ContainerParams.builder()
         .name(SETUP_ADDON_CONTAINER_NAME)
