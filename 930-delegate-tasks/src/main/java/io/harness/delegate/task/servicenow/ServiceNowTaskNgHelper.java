@@ -29,7 +29,6 @@ import io.harness.servicenow.ServiceNowFieldTypeNG;
 import io.harness.servicenow.ServiceNowFieldValueNG;
 import io.harness.servicenow.ServiceNowTemplate;
 import io.harness.servicenow.ServiceNowTicketNG;
-import io.harness.servicenow.ServiceNowTicketTypeDTO;
 import io.harness.servicenow.ServiceNowTicketTypeNG;
 import io.harness.servicenow.ServiceNowUtils;
 import io.harness.utils.FieldWithPlainTextOrSecretValueHelper;
