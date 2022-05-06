@@ -83,6 +83,7 @@ public class CloudformationRollbackStep extends TaskExecutableWithRollbackAndRba
                                                .setType(ExecutionNodeType.CLOUDFORMATION_ROLLBACK_STACK.getYamlType())
                                                .setStepCategory(StepCategory.STEP)
                                                .build();
+
   @Override
   public void validateResources(Ambiance ambiance, StepElementParameters stepParameters) {
     if (!cdFeatureFlagHelper.isEnabled(AmbianceUtils.getAccountId(ambiance), FeatureName.CLOUDFORMATION_NG)) {
@@ -197,7 +198,10 @@ public class CloudformationRollbackStep extends TaskExecutableWithRollbackAndRba
         (s, strings)
             -> strings.forEach(fileContent
                 -> parameters.putAll(cloudformationStepHelper.getParametersFromJson(ambiance, fileContent))));
-    parameters.putAll(cloudformationConfig.getParameterOverrides());
+
+    if (cloudformationConfig.getParameterOverrides() != null) {
+      parameters.putAll(cloudformationConfig.getParameterOverrides());
+    }
 
     CloudformationTaskNGParameters cloudformationTaskNGParameters =
         CloudformationTaskNGParameters.builder()

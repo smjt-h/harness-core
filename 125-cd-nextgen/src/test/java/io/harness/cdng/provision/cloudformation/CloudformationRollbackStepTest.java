@@ -311,6 +311,13 @@ public class CloudformationRollbackStepTest extends CategoryTest {
     assertThat(cloudformationTaskNGParameters.getTags()).isEqualTo("tags");
     assertThat(cloudformationTaskNGParameters.getStackStatusesToMarkAsSuccess().get(0)).isEqualTo(CREATE_COMPLETE);
     assertThat(cloudformationTaskNGParameters.getTimeoutInMs()).isEqualTo(600000);
+
+    cloudformationConfig.setParameterOverrides(null);
+    CloudformationTaskNGParameters cloudformationTaskNGParametersWithoutOverideParams =
+        cloudformationRollbackStep.getCreateStackCloudformationTaskNGParameters(
+            getAmbiance(), stepElementParameters, cloudformationConfig);
+
+    assertThat(cloudformationTaskNGParametersWithoutOverideParams.getParameters().isEmpty());
   }
 
   @Test
