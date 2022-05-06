@@ -194,6 +194,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
   @Inject BusinessMappingService businessMappingService;
   @Inject AwsAccountFieldHelper awsAccountFieldHelper;
 
+  public static final String OTHERS = "Others";
   private static final String COST_DESCRIPTION = "of %s - %s";
   private static final String OTHER_COST_DESCRIPTION = "%s of total";
   private static final String COST_VALUE = "$%s";
@@ -1283,7 +1284,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
     if (value != null) {
       return value.toString();
     }
-    return null;
+    return OTHERS;
   }
 
   private String fetchStringValue(FieldValueList row, QLCEViewFieldInput field) {
