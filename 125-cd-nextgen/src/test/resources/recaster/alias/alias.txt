@@ -316,4 +316,4 @@ io.harness.cdng.serverless.beans.ServerlessGitFetchExceptionPassThroughData
 io.harness.steps.servicenow.ServiceNowTicketOutcome
 io.harness.cdng.service.beans.ServiceYamlV2
 io.harness.cdng.environment.yaml.EnvironmentYamlV2
-io.harness.cdng.environment.yaml.InfraStructureDefinition
+io.harness.cdng.infra.yaml.InfraStructureDefinition

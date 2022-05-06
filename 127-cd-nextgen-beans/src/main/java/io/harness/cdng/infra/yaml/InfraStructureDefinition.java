@@ -31,7 +31,7 @@ import org.springframework.data.annotation.TypeAlias;
 @SimpleVisitorHelper(helperClass = InfraStructureDefinitionVisitorHelper.class)
 @TypeAlias("infraStructureDefinition")
 @OwnedBy(CDC)
-@RecasterAlias("io.harness.cdng.environment.yaml.InfraStructureDefinition")
+@RecasterAlias("io.harness.cdng.infra.yaml.InfraStructureDefinition")
 public class InfraStructureDefinition implements Visitable {
   @JsonProperty(YamlNode.UUID_FIELD_NAME)
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
