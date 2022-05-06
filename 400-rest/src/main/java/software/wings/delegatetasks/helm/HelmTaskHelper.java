@@ -451,7 +451,6 @@ public class HelmTaskHelper {
     }
     OciHelmRepoConfig repoConfig = (OciHelmRepoConfig) helmChartConfigParams.getHelmRepoConfig();
     try {
-      // TODO: 14/04/22 update repo name to be of type: "oci://<url>
       String repoName = String.format("oci://%s", repoConfig.getChartRepoUrl());
       helmTaskHelperBase.fetchChartFromRepo(repoName, helmChartConfigParams.getRepoDisplayName(),
           helmChartConfigParams.getChartName(), helmChartConfigParams.getChartVersion(), chartDirectory,
