@@ -13,6 +13,8 @@ import static io.harness.utils.FieldWithPlainTextOrSecretValueHelper.getSecretAs
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cistatus.service.GithubAppConfig;
 import io.harness.cistatus.service.GithubService;
+import io.harness.delegate.beans.connector.scm.GitAuthType;
+import io.harness.delegate.beans.connector.scm.GitConnectionType;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoApiAccessDTO;
 import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoConnectorDTO;
@@ -82,11 +84,20 @@ public class ScmGitProviderMapper {
 
   private Provider mapToAzureRepoProvider(AzureRepoConnectorDTO azureRepoConnector, boolean debug) {
     boolean skipVerify = checkScmSkipVerify();
-    String orgAndProject = GitClientHelper.getAzureRepoOrgAndProject(azureRepoConnector.getUrl());
-    String org = GitClientHelper.getAzureRepoOrg(orgAndProject);
-    String project = GitClientHelper.getAzureRepoProject(orgAndProject);
-
-    String azureRepoApiURL = GitClientHelper.getAzureRepoApiURL(azureRepoConnector.getUrl());
+    String org, project, orgAndProject;
+    if(azureRepoConnector.getAuthentication().getAuthType() == GitAuthType.HTTP) {
+      orgAndProject = GitClientHelper.getAzureRepoOrgAndProjectHTTP(azureRepoConnector.getUrl());
+    }
+    else{
+      orgAndProject = GitClientHelper.getAzureRepoOrgAndProjectSSH(azureRepoConnector.getUrl());
+    }
+    org = GitClientHelper.getAzureRepoOrg(orgAndProject);
+    if (azureRepoConnector.getConnectionType() == GitConnectionType.ACCOUNT) {
+      project = azureRepoConnector.getValidationProject(); // for testing
+    } else {
+      project = GitClientHelper.getAzureRepoProject(orgAndProject);
+    }
+    String azureRepoApiURL = GitClientHelper.getAzureRepoApiURL();
     AzureRepoApiAccessDTO apiAccess = azureRepoConnector.getApiAccess();
     AzureRepoTokenSpecDTO azureRepoUsernameTokenApiAccessDTO = (AzureRepoTokenSpecDTO) apiAccess.getSpec();
     String personalAccessToken = String.valueOf(azureRepoUsernameTokenApiAccessDTO.getTokenRef().getDecryptedValue());

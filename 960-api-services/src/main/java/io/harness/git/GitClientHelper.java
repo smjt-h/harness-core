@@ -189,13 +189,18 @@ public class GitClientHelper {
     }
   }
 
-  public static String getAzureRepoApiURL(String url) {
+  public static String getAzureRepoApiURL() {
     return "https://dev.azure.com/";
   }
 
-  public static String getAzureRepoOrgAndProject(String url) {
-    String temp = StringUtils.substringBeforeLast(url, "/_git/");
-    return StringUtils.substringAfter(temp, "dev.azure.com/");
+  public static String getAzureRepoOrgAndProjectHTTP(String url) {
+     String temp = StringUtils.substringBeforeLast(url, "/_git/");
+      return StringUtils.substringAfter(temp, "dev.azure.com/");
+  }
+
+  public static String getAzureRepoOrgAndProjectSSH(String url) {
+      String temp = StringUtils.substringBeforeLast(url, "/");
+      return StringUtils.substringAfter(temp, "/");
   }
 
   public static String getAzureRepoOrg(String orgAndProject) {
