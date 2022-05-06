@@ -87,17 +87,18 @@ public class SecretVolumesHelperTest extends CategoryTest {
     String path2 = tempFile2.getAbsolutePath();
     String secretVolumes =
         String.format("%s:%s,%s:%s,%s:%s,%s:%s", path1, dest1, path1, dest2, path2, dest3, path2, dest4);
-    PowerMockito.when(System.getenv(Mockito.eq(CI_MOUNT_VOLUMES))).thenReturn(secretVolumes);
+    try (MockedStatic<SystemWrapper> mockStatic = Mockito.mockStatic(SystemWrapper.class)) {
+      mockStatic.when(() -> SystemWrapper.getenv(CI_MOUNT_VOLUMES)).thenReturn(secretVolumes);
+      Map<String, List<String>> ret = secretVolumesHelper.getSecretVolumeMappings();
 
-    Map<String, List<String>> ret = secretVolumesHelper.getSecretVolumeMappings();
-
-    // Mappings should look like: [path1 -> [dest1, dest2], path2 -> [dest3, dest4]]
-    assertThat(ret.size()).isEqualTo(2);
-    assertThat(ret.containsKey(path1));
-    assertThat(ret.containsKey(path2));
-    assertThat(ret.get(path1).contains(dest1));
-    assertThat(ret.get(path1).contains(dest2));
-    assertThat(ret.get(path2).contains(dest3));
-    assertThat(ret.get(path2).contains(dest4));
+      // Mappings should look like: [path1 -> [dest1, dest2], path2 -> [dest3, dest4]]
+      assertThat(ret.size()).isEqualTo(2);
+      assertThat(ret.containsKey(path1));
+      assertThat(ret.containsKey(path2));
+      assertThat(ret.get(path1).contains(dest1));
+      assertThat(ret.get(path1).contains(dest2));
+      assertThat(ret.get(path2).contains(dest3));
+      assertThat(ret.get(path2).contains(dest4));
+    }
   }
 }

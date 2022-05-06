@@ -71,7 +71,7 @@ public class SecretVolumesHelper {
 
   public boolean checkSecretVolumesConfigured() {
     try {
-      String mountVolumes = System.getenv(CI_MOUNT_VOLUMES);
+      String mountVolumes = SystemWrapper.getenv(CI_MOUNT_VOLUMES);
       if (isEmpty(mountVolumes)) {
         return false;
       }
