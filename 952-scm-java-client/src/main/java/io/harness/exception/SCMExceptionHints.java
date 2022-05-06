@@ -12,6 +12,4 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class SCMExceptionHints {
   public static final String INVALID_CREDENTIALS = "Please check your credentials.";
-  public static final String HINT_INVALID_CREDENTIALS = "Please check your %s credentials.";
-  public static final String REPO_NOT_FOUND = "Please check your %s repository.";
 }
