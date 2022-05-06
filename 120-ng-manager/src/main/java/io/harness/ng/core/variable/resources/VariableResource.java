@@ -14,6 +14,7 @@ import static io.harness.NGCommonEntityConstants.PROJECT_KEY;
 import static io.harness.NGResourceFilterConstants.PAGE_KEY;
 import static io.harness.NGResourceFilterConstants.SEARCH_TERM_KEY;
 import static io.harness.NGResourceFilterConstants.SIZE_KEY;
+import static io.harness.ng.core.variable.VariablePermissions.VARIABLE_DELETE_PERMISSION;
 import static io.harness.ng.core.variable.VariablePermissions.VARIABLE_EDIT_PERMISSION;
 import static io.harness.ng.core.variable.VariablePermissions.VARIABLE_RESOURCE_TYPE;
 import static io.harness.ng.core.variable.VariablePermissions.VARIABLE_VIEW_PERMISSION;
@@ -104,8 +105,10 @@ public class VariableResource {
   @ApiOperation(value = "Gets Variable list", nickname = "getVariablesList")
   @Hidden
   @NGAccessControlCheck(resourceType = VARIABLE_RESOURCE_TYPE, permission = VARIABLE_VIEW_PERMISSION)
-  public ResponseDTO<PageResponse<VariableResponseDTO>> list(@NotNull @QueryParam(ACCOUNT_KEY) String accountIdentifier,
-      @QueryParam(ORG_KEY) String orgIdentifier, @QueryParam(PROJECT_KEY) String projectIdentifier,
+  public ResponseDTO<PageResponse<VariableResponseDTO>> list(
+      @NotNull @QueryParam(ACCOUNT_KEY) @AccountIdentifier String accountIdentifier,
+      @QueryParam(ORG_KEY) @OrgIdentifier String orgIdentifier,
+      @QueryParam(PROJECT_KEY) @ProjectIdentifier String projectIdentifier,
       @QueryParam(PAGE_KEY) @DefaultValue("0") int page, @QueryParam(SIZE_KEY) @DefaultValue("100") int size,
       @QueryParam(SEARCH_TERM_KEY) String searchTerm,
       @QueryParam(INCLUDE_VARIABLES_FROM_EVERY_SUB_SCOPE) @DefaultValue(
@@ -119,7 +122,10 @@ public class VariableResource {
   @Hidden
   public ResponseDTO<VariableResponseDTO> update(@QueryParam(ACCOUNT_KEY) @NotNull String accountIdentifier,
       @NotNull @Valid VariableRequestDTO variableRequestDTO) {
-    // TODO: access control check
+    accessControlClient.checkForAccessOrThrow(
+        ResourceScope.of(accountIdentifier, variableRequestDTO.getVariable().getOrgIdentifier(),
+            variableRequestDTO.getVariable().getProjectIdentifier()),
+        Resource.of(VARIABLE_RESOURCE_TYPE, null), VARIABLE_EDIT_PERMISSION);
     Variable updatedVariable = variableService.update(accountIdentifier, variableRequestDTO.getVariable());
     return ResponseDTO.newResponse(variableMapper.toResponseWrapper(updatedVariable));
   }
@@ -128,7 +134,8 @@ public class VariableResource {
   @Path("{identifier}")
   @ApiOperation(value = "Delete a Variable", nickname = "deleteVariable")
   @Hidden
-  public ResponseDTO<Boolean> delete(@QueryParam(ACCOUNT_KEY) @NotNull String accountIdentifier,
+  @NGAccessControlCheck(resourceType = VARIABLE_RESOURCE_TYPE, permission = VARIABLE_DELETE_PERMISSION)
+  public ResponseDTO<Boolean> delete(@QueryParam(ACCOUNT_KEY) @NotNull @AccountIdentifier String accountIdentifier,
       @QueryParam(ORG_KEY) @OrgIdentifier String orgIdentifier,
       @QueryParam(PROJECT_KEY) @ProjectIdentifier String projectIdentifier,
       @PathParam(IDENTIFIER_KEY) @NotBlank String variableIdentifier) {
