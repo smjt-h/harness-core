@@ -102,7 +102,6 @@ public class NGEntitiesKryoRegistrar implements KryoRegistrar {
     kryo.register(DockerHubArtifactConfig.class, 8011);
     kryo.register(GcrArtifactConfig.class, 8012);
     kryo.register(KubernetesServiceSpec.class, 8015);
-    kryo.register(SidecarArtifact.class, 8016);
     kryo.register(K8sManifest.class, 8021);
     kryo.register(StageOverridesConfig.class, 8024);
     kryo.register(ServiceUseFromStage.class, 8036);

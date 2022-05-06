@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.advisers.RollbackCustomStepParameters;
 import io.harness.cdng.artifact.bean.artifactsource.DockerArtifactSource;
+import io.harness.cdng.artifact.bean.yaml.SidecarArtifact;
 import io.harness.cdng.artifact.steps.ArtifactStepParameters;
 import io.harness.cdng.environment.yaml.EnvironmentYaml;
 import io.harness.cdng.helm.HelmDeployStepInfo;
@@ -56,7 +57,6 @@ import io.harness.cdng.manifest.yaml.GithubStore;
 import io.harness.cdng.manifest.yaml.HttpStoreConfig;
 import io.harness.cdng.manifest.yaml.ManifestsOutcome;
 import io.harness.cdng.manifest.yaml.S3StoreConfig;
-import io.harness.cdng.manifest.yaml.kinds.KustomizePatchesManifest;
 import io.harness.cdng.pipeline.PipelineInfrastructure;
 import io.harness.cdng.pipeline.beans.DeploymentStageStepParameters;
 import io.harness.cdng.pipeline.beans.RollbackNode;
@@ -64,7 +64,6 @@ import io.harness.cdng.pipeline.beans.RollbackOptionalChildChainStepParameters;
 import io.harness.cdng.pipeline.executions.CDAccountExecutionMetadata;
 import io.harness.cdng.provision.terraform.TerraformApplyStepInfo;
 import io.harness.cdng.provision.terraform.TerraformPlanStepInfo;
-import io.harness.cdng.service.beans.NativeHelmServiceSpec;
 import io.harness.cdng.service.steps.ServiceStepParameters;
 import io.harness.cdng.tasks.manifestFetch.step.ManifestFetchOutcome;
 import io.harness.cdng.tasks.manifestFetch.step.ManifestFetchParameters;
@@ -78,6 +77,7 @@ public class NGKryoRegistrar implements KryoRegistrar {
   public void register(Kryo kryo) {
     kryo.register(ArtifactStepParameters.class, 8001);
     kryo.register(ServiceStepParameters.class, 8008);
+    kryo.register(SidecarArtifact.class, 8016);
     kryo.register(DockerArtifactSource.class, 8017);
     kryo.register(GitStore.class, 8023);
     kryo.register(ManifestFetchOutcome.class, 8027);
@@ -88,7 +88,6 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(InfraUseFromStage.class, 8039);
     kryo.register(InfraUseFromStage.Overrides.class, 8040);
     kryo.register(InfraStepParameters.class, 8042);
-
 
     kryo.register(DeploymentStageStepParameters.class, 8047);
     kryo.register(K8sRollingRollbackStepInfo.class, 8049);
