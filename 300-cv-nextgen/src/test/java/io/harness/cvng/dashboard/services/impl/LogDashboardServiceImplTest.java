@@ -9,8 +9,7 @@ package io.harness.cvng.dashboard.services.impl;
 
 import static io.harness.cvng.core.utils.DateTimeUtils.roundDownTo5MinBoundary;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
-import static io.harness.rule.OwnerRule.KANHAIYA;
-import static io.harness.rule.OwnerRule.PRAVEEN;
+import static io.harness.rule.OwnerRule.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -35,6 +34,7 @@ import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.TimeRangeParams;
 import io.harness.cvng.core.beans.params.filterParams.LiveMonitoringLogAnalysisFilter;
+import io.harness.cvng.core.beans.params.filterParams.MonitoredServiceLogAnalysisFilter;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.ErrorTrackingCVConfig;
 import io.harness.cvng.core.entities.SplunkCVConfig;
@@ -42,6 +42,7 @@ import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.dashboard.beans.AnalyzedLogDataDTO;
+import io.harness.cvng.dashboard.beans.AnalyzedRadarChartLogDataDTO;
 import io.harness.cvng.dashboard.services.api.LogDashboardService;
 import io.harness.ng.beans.PageResponse;
 import io.harness.persistence.HPersistence;
@@ -158,6 +159,59 @@ public class LogDashboardServiceImplTest extends CvNextGenTestBase {
   }
 
   @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testGetAllRadarChartLogsData_anomalousLogs() {
+    String cvConfigId = generateUuid();
+    String errorTrackingCvConfigId = generateUuid();
+    Instant startTime = Instant.now().minus(10, ChronoUnit.MINUTES);
+    Instant endTime = Instant.now().minus(5, ChronoUnit.MINUTES);
+
+    TimeRangeParams timeRangeParams = TimeRangeParams.builder().startTime(startTime).endTime(endTime).build();
+    PageParams pageParams = PageParams.builder().page(0).size(10).build();
+
+    List<Long> labelList = Arrays.asList(1234l, 12345l, 123455l, 12334l);
+    List<LogAnalysisResult> resultList = buildLogAnalysisResults(cvConfigId, true, startTime, endTime, labelList);
+    when(mockCvConfigService.list(builderFactory.getContext().getMonitoredServiceParams()))
+        .thenReturn(Arrays.asList(createCvConfig(cvConfigId, serviceIdentifier),
+            createErrorTrackingCvConfig(errorTrackingCvConfigId, serviceIdentifier)));
+    when(mockLogAnalysisService.getAnalysisResults(anyString(), any(), any())).thenReturn(resultList);
+    when(mockLogAnalysisService.getAnalysisClusters(cvConfigId, new HashSet<>(labelList)))
+        .thenReturn(buildLogAnalysisClusters(labelList));
+
+    MonitoredServiceLogAnalysisFilter monitoredServiceLogAnalysisFilter =
+        MonitoredServiceLogAnalysisFilter.builder()
+            .clusterTypes(LogAnalysisTag.getAnomalousTags().stream().collect(Collectors.toList()))
+            .startTimeMillis(startTime.toEpochMilli())
+            .endTimeMillis(endTime.toEpochMilli())
+            .build();
+
+    PageResponse<AnalyzedRadarChartLogDataDTO> pageResponse = logDashboardService.getAllRadarChartLogsData(
+        builderFactory.getContext().getMonitoredServiceParams(), monitoredServiceLogAnalysisFilter, pageParams);
+
+    ArgumentCaptor<String> cvConfigIdCapture = ArgumentCaptor.forClass(String.class);
+    verify(mockLogAnalysisService, times(1)).getAnalysisResults(cvConfigIdCapture.capture(), any(), any());
+    assertThat(cvConfigIdCapture.getValue()).isNotEqualTo(errorTrackingCvConfigId);
+
+    verify(mockCvConfigService).list(builderFactory.getContext().getMonitoredServiceParams());
+    assertThat(pageResponse).isNotNull();
+    assertThat(pageResponse.getContent()).isNotEmpty();
+    pageResponse.getContent().forEach(analyzedLogDataDTO -> {
+      assertThat(Arrays.asList(LogAnalysisTag.UNKNOWN, LogAnalysisTag.UNEXPECTED)
+                     .contains(analyzedLogDataDTO.getLogData().getClusterType()));
+    });
+
+    boolean containsKnown = false;
+    for (AnalyzedRadarChartLogDataDTO analyzedRadarChartLogDataDTO : pageResponse.getContent()) {
+      if (analyzedRadarChartLogDataDTO.getLogData().getClusterType().equals(LogAnalysisTag.KNOWN)) {
+        containsKnown = true;
+        break;
+      }
+    }
+    assertThat(containsKnown).isFalse();
+  }
+
+  @Test
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testGetAllLogsData_anomalousLogsValidatePagination() {
@@ -194,6 +248,48 @@ public class LogDashboardServiceImplTest extends CvNextGenTestBase {
     pageResponse.getContent().forEach(analyzedLogDataDTO -> {
       assertThat(Arrays.asList(LogAnalysisTag.UNKNOWN, LogAnalysisTag.UNEXPECTED)
                      .contains(analyzedLogDataDTO.getLogData().getTag()));
+    });
+  }
+
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testGetAllRadarChartLogsData_anomalousLogsValidatePagination() {
+    String cvConfigId = generateUuid();
+    String errorTrackingCvConfigId = generateUuid();
+    Instant startTime = Instant.now().minus(10, ChronoUnit.MINUTES);
+    Instant endTime = Instant.now().minus(5, ChronoUnit.MINUTES);
+
+    TimeRangeParams timeRangeParams = TimeRangeParams.builder().startTime(startTime).endTime(endTime).build();
+    PageParams pageParams = PageParams.builder().page(0).size(1).build();
+
+    List<Long> labelList = Arrays.asList(1234l, 12345l, 123455l, 12334l);
+    List<LogAnalysisResult> resultList = buildLogAnalysisResults(cvConfigId, true, startTime, endTime, labelList);
+    when(mockCvConfigService.list(builderFactory.getContext().getMonitoredServiceParams()))
+        .thenReturn(Arrays.asList(createCvConfig(cvConfigId, serviceIdentifier),
+            createErrorTrackingCvConfig(errorTrackingCvConfigId, serviceIdentifier)));
+    when(mockLogAnalysisService.getAnalysisResults(anyString(), any(), any())).thenReturn(resultList);
+    when(mockLogAnalysisService.getAnalysisClusters(cvConfigId, new HashSet<>(labelList)))
+        .thenReturn(buildLogAnalysisClusters(labelList));
+
+    MonitoredServiceLogAnalysisFilter monitoredServiceLogAnalysisFilter =
+        MonitoredServiceLogAnalysisFilter.builder()
+            .clusterTypes(LogAnalysisTag.getAnomalousTags().stream().collect(Collectors.toList()))
+            .startTimeMillis(startTime.toEpochMilli())
+            .endTimeMillis(endTime.toEpochMilli())
+            .build();
+
+    PageResponse<AnalyzedRadarChartLogDataDTO> pageResponse = logDashboardService.getAllRadarChartLogsData(
+        builderFactory.getContext().getMonitoredServiceParams(), monitoredServiceLogAnalysisFilter, pageParams);
+    verify(mockCvConfigService).list(builderFactory.getContext().getMonitoredServiceParams());
+    assertThat(pageResponse).isNotNull();
+    assertThat(pageResponse.getContent()).isNotEmpty();
+    assertThat(pageResponse.getTotalItems()).isEqualTo(4);
+    assertThat(pageResponse.getPageSize()).isEqualTo(1);
+    assertThat(pageResponse.getTotalPages()).isGreaterThan(1);
+    pageResponse.getContent().forEach(analyzedLogDataDTO -> {
+      assertThat(Arrays.asList(LogAnalysisTag.UNKNOWN, LogAnalysisTag.UNEXPECTED)
+                     .contains(analyzedLogDataDTO.getLogData().getClusterType()));
     });
   }
 

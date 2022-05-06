@@ -20,12 +20,12 @@ public class LiveMonitoringLogAnalysisRadarChartClusterDTO {
   Risk risk;
   Double angle;
   Double radius;
-  LogAnalysisTag tag;
+  LogAnalysisTag clusterType;
 
   public static class LiveMonitoringLogAnalysisRadarChartClusterDTOBuilder {
-    public LiveMonitoringLogAnalysisRadarChartClusterDTOBuilder tag(LogAnalysisTag logAnalysisTag) {
-      this.tag = logAnalysisTag;
-      if (LogAnalysisTag.getAnomalousTags().contains(logAnalysisTag)) {
+    public LiveMonitoringLogAnalysisRadarChartClusterDTOBuilder tag(LogAnalysisTag clusterType) {
+      this.clusterType = clusterType;
+      if (LogAnalysisTag.getAnomalousTags().contains(clusterType)) {
         this.risk(Risk.UNHEALTHY);
       } else {
         this.risk(Risk.HEALTHY);

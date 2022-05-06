@@ -206,13 +206,10 @@ public class LogDashboardServiceImpl implements LogDashboardService {
       });
     });
 
-    // sorting to make it consistent
     List<LiveMonitoringLogAnalysisRadarChartClusterDTO> sortedList =
         liveMonitoringLogAnalysisRadarChartClusterDTOS.stream()
             .sorted(Comparator.comparing(LiveMonitoringLogAnalysisRadarChartClusterDTO::getClusterId))
             .collect(Collectors.toList());
-
-    // do I need to assign it back check this. (for both the filtering).
 
     if (monitoredServiceLogAnalysisFilter.hasClusterIdFilter()) {
       sortedList = sortedList.stream()
@@ -225,7 +222,7 @@ public class LogDashboardServiceImpl implements LogDashboardService {
     }
 
     setAngleAndRadiusForRadarChartCluster(
-        sortedList.stream().filter(cluster -> tags.contains(cluster.getTag())).collect(Collectors.toList()));
+        sortedList.stream().filter(cluster -> tags.contains(cluster.getClusterType())).collect(Collectors.toList()));
 
     return filterClusterByAngle(sortedList, monitoredServiceLogAnalysisFilter);
   }
@@ -243,7 +240,7 @@ public class LogDashboardServiceImpl implements LogDashboardService {
           liveMonitoringLogAnalysisRadarChartClusterDTOS.get(i);
       liveMonitoringLogAnalysisRadarChartClusterDTO.setAngle(angle);
       liveMonitoringLogAnalysisRadarChartClusterDTO.setRadius(
-          getRandomRadiusInExpectedRange(liveMonitoringLogAnalysisRadarChartClusterDTO.getTag(), random));
+          getRandomRadiusInExpectedRange(liveMonitoringLogAnalysisRadarChartClusterDTO.getClusterType(), random));
       angle += angleDifference;
       angle = Math.min(angle, 360);
     }
@@ -385,7 +382,7 @@ public class LogDashboardServiceImpl implements LogDashboardService {
     List<AnalyzedRadarChartLogDataDTO> sortedList = new ArrayList<>();
     // create the sorted set first. Then form the page response.
     logDataToBeReturned.stream()
-        .filter(logData -> tags.contains(logData.getTag()))
+        .filter(logData -> tags.contains(logData.getClusterType()))
         .forEach(logData
             -> sortedList.add(AnalyzedRadarChartLogDataDTO.builder()
                                   .projectIdentifier(projectIdentifier)
@@ -412,7 +409,8 @@ public class LogDashboardServiceImpl implements LogDashboardService {
 
     setAngleAndRadiusForRadarChartData(
         sortedAnalyzedRadarChartLogDataDTOS.stream()
-            .filter(analyzedRadarChartLogDataDTO -> tags.contains(analyzedRadarChartLogDataDTO.getLogData().getTag()))
+            .filter(analyzedRadarChartLogDataDTO
+                -> tags.contains(analyzedRadarChartLogDataDTO.getLogData().getClusterType()))
             .collect(Collectors.toList()));
 
     sortedAnalyzedRadarChartLogDataDTOS =
@@ -431,7 +429,7 @@ public class LogDashboardServiceImpl implements LogDashboardService {
       AnalyzedRadarChartLogDataDTO analyzedRadarChartLogDataDTO = analyzedRadarChartLogDataDTOList.get(i);
       analyzedRadarChartLogDataDTO.getLogData().setAngle(angle);
       analyzedRadarChartLogDataDTO.getLogData().setRadius(
-          getRandomRadiusInExpectedRange(analyzedRadarChartLogDataDTO.getLogData().getTag(), random));
+          getRandomRadiusInExpectedRange(analyzedRadarChartLogDataDTO.getLogData().getClusterType(), random));
       angle += angleDifference;
       angle = Math.min(angle, 360);
     }
@@ -499,7 +497,7 @@ public class LogDashboardServiceImpl implements LogDashboardService {
                              .toString())
               .count(trendMap.values().stream().collect(Collectors.summingInt(Integer::intValue)))
               .trend(frequencies)
-              .tag(analysisResult.getTag())
+              .clusterType(analysisResult.getTag())
               .riskScore(analysisResult.getRiskScore())
               .riskStatus(analysisResult.getRisk())
               .build();

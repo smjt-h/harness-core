@@ -39,7 +39,7 @@ public class AnalyzedRadarChartLogDataDTO implements Comparable<AnalyzedRadarCha
     double riskScore;
     Risk riskStatus;
     List<AnalyzedLogDataDTO.FrequencyDTO> trend;
-    LogAnalysisResult.LogAnalysisTag tag;
+    LogAnalysisResult.LogAnalysisTag clusterType;
   }
 
   @Data
@@ -51,9 +51,9 @@ public class AnalyzedRadarChartLogDataDTO implements Comparable<AnalyzedRadarCha
 
   @Override
   public int compareTo(@NotNull AnalyzedRadarChartLogDataDTO o) {
-    int result = o.getLogData().getTag().compareTo(logData.getTag());
+    int result = o.getLogData().getClusterType().compareTo(logData.getClusterType());
     if (result == 0) {
-      result = Integer.valueOf(o.getLogData().getCount()).compareTo(Integer.valueOf(logData.getCount()));
+      result = Integer.compare(o.logData.getCount(), logData.getCount());
     }
     return result;
   }
