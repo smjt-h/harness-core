@@ -45,6 +45,7 @@ import io.harness.utils.IdentifierRefHelper;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -53,6 +54,7 @@ public class ServiceNowStepHelperServiceImpl implements ServiceNowStepHelperServ
   private final ConnectorResourceClient connectorResourceClient;
   private final SecretManagerClientService secretManagerClientService;
   private final KryoSerializer kryoSerializer;
+  private static final String NULL_VALUE = "null";
 
   @Inject
   public ServiceNowStepHelperServiceImpl(ConnectorResourceClient connectorResourceClient,
@@ -68,6 +70,12 @@ public class ServiceNowStepHelperServiceImpl implements ServiceNowStepHelperServ
     NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
     IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRef(
         connectorRef, ngAccess.getAccountIdentifier(), ngAccess.getOrgIdentifier(), ngAccess.getProjectIdentifier());
+    if (NULL_VALUE.equals(identifierRef.getIdentifier())) {
+      throw new InvalidRequestException(
+          String.format(
+              "Invalid identifier for Connector: [%s]. Please check the expression/value for the field", connectorRef),
+          WingsException.USER);
+    }
     Optional<ConnectorDTO> connectorDTOOptional = NGRestUtils.getResponse(
         connectorResourceClient.get(identifierRef.getIdentifier(), identifierRef.getAccountIdentifier(),
             identifierRef.getOrgIdentifier(), identifierRef.getProjectIdentifier()));

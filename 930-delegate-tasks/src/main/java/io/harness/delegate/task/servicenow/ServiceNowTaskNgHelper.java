@@ -445,7 +445,7 @@ public class ServiceNowTaskNgHelper {
         List<ServiceNowFieldNG> fields = new ArrayList<>();
         for (JsonNode fieldObj : columns) {
           List<ServiceNowFieldAllowedValueNG> allowedValues = buildAllowedValues(fieldObj.get("choices"));
-
+          // todo support different field types
           JsonNode fieldType = fieldObj.get("type");
 
           ServiceNowFieldNGBuilder fieldBuilder = ServiceNowFieldNG.builder()
