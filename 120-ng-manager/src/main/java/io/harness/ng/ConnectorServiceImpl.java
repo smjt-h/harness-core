@@ -171,7 +171,7 @@ public class ConnectorServiceImpl implements ConnectorService {
           connectorDTO.getConnectorInfo().getProjectIdentifier(), OpaConstants.OPA_EVALUATION_ACTION_CONNECTOR_SAVE,
           connectorDTO.getConnectorInfo().getIdentifier());
       connectorResponse.setGovernanceMetadata(governanceMetadata);
-      if (governanceMetadata != null && "error".equals(governanceMetadata.getStatus())) {
+      if (governanceMetadata != null && OpaConstants.OPA_STATUS_ERROR.equals(governanceMetadata.getStatus())) {
         return connectorResponse;
       }
 
@@ -269,7 +269,7 @@ public class ConnectorServiceImpl implements ConnectorService {
           connectorDTO.getConnectorInfo().getProjectIdentifier(), OpaConstants.OPA_EVALUATION_ACTION_CONNECTOR_SAVE,
           connectorDTO.getConnectorInfo().getIdentifier());
       connectorResponse.setGovernanceMetadata(governanceMetadata);
-      if (governanceMetadata != null && "error".equals(governanceMetadata.getStatus())) {
+      if (governanceMetadata != null && OpaConstants.OPA_STATUS_ERROR.equals(governanceMetadata.getStatus())) {
         return connectorResponse;
       }
       boolean isDefaultBranchConnector = gitSyncSdkService.isDefaultBranch(accountIdentifier,
