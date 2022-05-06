@@ -42,6 +42,7 @@ import io.harness.CategoryTest;
 import io.harness.beans.EncryptedData;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ff.FeatureFlagService;
 import io.harness.rule.Owner;
 import io.harness.utils.RequestField;
 
@@ -94,6 +95,7 @@ public class CreateConnectorDataFetcherTest extends CategoryTest {
   @Mock private software.wings.graphql.datafetcher.connector.ConnectorsController connectorsController;
   @Mock private SecretManager secretManager;
   @Mock private UsageScopeController usageScopeController;
+  @Mock private FeatureFlagService featureFlagService;
 
   @InjectMocks
   private software.wings.graphql.datafetcher.connector.CreateConnectorDataFetcher dataFetcher =
@@ -525,6 +527,7 @@ public class CreateConnectorDataFetcherTest extends CategoryTest {
                                                     .httpServerPlatformDetails(RequestField.absent())
                                                     .gcsPlatformDetails(RequestField.absent())
                                                     .amazonS3PlatformDetails(RequestField.absent())
+                                                    .ociPlatformDetails(RequestField.absent())
                                                     .build())
                                  .build();
     MutationContext mutationContext = MutationContext.builder().accountId(ACCOUNT_ID).build();
@@ -548,6 +551,7 @@ public class CreateConnectorDataFetcherTest extends CategoryTest {
                     .httpServerPlatformDetails(RequestField.ofNullable(getQlHttpServerPlatformInputBuilder().build()))
                     .gcsPlatformDetails(RequestField.ofNullable(getQlGCSPlatformInputBuilder().build()))
                     .amazonS3PlatformDetails(RequestField.absent())
+                    .ociPlatformDetails(RequestField.absent())
                     .build())
             .build();
     MutationContext mutationContext = MutationContext.builder().accountId(ACCOUNT_ID).build();
@@ -570,6 +574,7 @@ public class CreateConnectorDataFetcherTest extends CategoryTest {
                                .httpServerPlatformDetails(RequestField.absent())
                                .gcsPlatformDetails(RequestField.ofNullable(getQlGCSPlatformInputBuilder().build()))
                                .amazonS3PlatformDetails(RequestField.absent())
+                               .ociPlatformDetails(RequestField.absent())
                                .build())
             .build();
     MutationContext mutationContext = MutationContext.builder().accountId(ACCOUNT_ID).build();

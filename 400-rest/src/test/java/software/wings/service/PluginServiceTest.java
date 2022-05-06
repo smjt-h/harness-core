@@ -109,7 +109,7 @@ public class PluginServiceTest extends CategoryTest {
   @Category(UnitTests.class)
   public void shouldGetInstalledPlugins() throws Exception {
     assertThat(pluginService.getInstalledPlugins(accountId))
-        .hasSize(37)
+        .hasSize(38)
         .containsExactly(anAccountPlugin()
                              .withSettingClass(JenkinsConfig.class)
                              .withAccountId(accountId)
@@ -416,7 +416,7 @@ public class PluginServiceTest extends CategoryTest {
                 .build());
 
     assertThat(pluginService.getInstalledPlugins(multiArtifactEnabledAccountId))
-        .hasSize(38)
+        .hasSize(39)
         .contains(anAccountPlugin()
                       .withSettingClass(CustomArtifactServerConfig.class)
                       .withAccountId(multiArtifactEnabledAccountId)
@@ -432,18 +432,18 @@ public class PluginServiceTest extends CategoryTest {
   @Category(UnitTests.class)
   public void shouldGetPluginSettingSchema() throws Exception {
     assertThat(pluginService.getPluginSettingSchema(accountId))
-        .hasSize(37)
+        .hasSize(38)
         .containsOnlyKeys("APP_DYNAMICS", "NEW_RELIC", "DYNA_TRACE", "PROMETHEUS", "APM_VERIFICATION", "DATA_DOG",
             "INSTANA", "SCALYR", "JENKINS", "BAMBOO", "SMTP", "BUG_SNAG", "SPLUNK", "ELK", "LOGZ", "SUMO", "AWS", "GCP",
             "AZURE", "PHYSICAL_DATA_CENTER", "KUBERNETES_CLUSTER", "DOCKER", "HOST_CONNECTION_ATTRIBUTES", "ELB",
-            "NEXUS", "ARTIFACTORY", "PCF", "GIT", "JIRA", "SMB", "SFTP", "HTTP_HELM_REPO", "AMAZON_S3_HELM_REPO",
-            "GCS_HELM_REPO", "SERVICENOW", "SPOT_INST", "AZURE_ARTIFACTS_PAT");
+            "NEXUS", "ARTIFACTORY", "PCF", "GIT", "JIRA", "SMB", "SFTP", "HTTP_HELM_REPO", "OCI_HELM_REPO",
+            "AMAZON_S3_HELM_REPO", "GCS_HELM_REPO", "SERVICENOW", "SPOT_INST", "AZURE_ARTIFACTS_PAT");
     assertThat(pluginService.getPluginSettingSchema(multiArtifactEnabledAccountId))
-        .hasSize(38)
+        .hasSize(39)
         .containsOnlyKeys("APP_DYNAMICS", "NEW_RELIC", "DYNA_TRACE", "PROMETHEUS", "APM_VERIFICATION", "DATA_DOG",
             "JENKINS", "BAMBOO", "SMTP", "BUG_SNAG", "SPLUNK", "ELK", "LOGZ", "SUMO", "INSTANA", "SCALYR", "AWS", "GCP",
             "AZURE", "PHYSICAL_DATA_CENTER", "KUBERNETES_CLUSTER", "DOCKER", "HOST_CONNECTION_ATTRIBUTES", "ELB",
-            "NEXUS", "ARTIFACTORY", "PCF", "GIT", "JIRA", "SMB", "SFTP", "HTTP_HELM_REPO", "AMAZON_S3_HELM_REPO",
-            "GCS_HELM_REPO", "SERVICENOW", "CUSTOM", "SPOT_INST", "AZURE_ARTIFACTS_PAT");
+            "NEXUS", "ARTIFACTORY", "PCF", "GIT", "JIRA", "SMB", "SFTP", "HTTP_HELM_REPO", "OCI_HELM_REPO",
+            "AMAZON_S3_HELM_REPO", "GCS_HELM_REPO", "SERVICENOW", "CUSTOM", "SPOT_INST", "AZURE_ARTIFACTS_PAT");
   }
 }
