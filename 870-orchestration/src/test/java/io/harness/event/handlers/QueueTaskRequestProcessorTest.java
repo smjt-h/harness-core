@@ -12,6 +12,7 @@ import static io.harness.pms.contracts.execution.Status.TASK_WAITING;
 import static io.harness.rule.OwnerRule.SAHIL;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -27,6 +28,7 @@ import io.harness.engine.pms.resume.EngineResumeCallback;
 import io.harness.engine.pms.tasks.NgDelegate2TaskExecutor;
 import io.harness.engine.pms.tasks.TaskExecutor;
 import io.harness.engine.progress.EngineProgressCallback;
+import io.harness.exception.QueueTaskException;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.ExecutableResponse;
@@ -129,5 +131,40 @@ public class QueueTaskRequestProcessorTest extends OrchestrationTestBase {
     verify(waitNotifyEngine)
         .waitForAllOn(null, EngineResumeCallback.builder().ambiance(ambiance).build(),
             EngineProgressCallback.builder().ambiance(ambiance).build(), taskId);
+  }
+
+  @Test
+  @Owner(developers = SAHIL)
+  @Category(UnitTests.class)
+  public void testHandleEvent() {
+    when(ngDelegate2TaskExecutor.queueTask(any(), any(TaskRequest.class), any(Duration.class)))
+        .thenThrow(new NullPointerException());
+    Map<TaskCategory, TaskExecutor> spy = spy(taskExecutorMap);
+    Reflect.on(queueTaskResponseHandler).set("taskExecutorMap", spy);
+    String nodeExecutionId = generateUuid();
+
+    Builder taskBuilder = TaskExecutableResponse.newBuilder()
+                              .setTaskCategory(TaskCategory.DELEGATE_TASK_V2)
+                              .addAllLogKeys(CollectionUtils.emptyCollection())
+                              .addAllUnits(CollectionUtils.emptyCollection())
+                              .setTaskName("DUMMY_TASK_NAME");
+
+    QueueTaskRequest queueTaskRequest =
+        QueueTaskRequest.newBuilder()
+            .setTaskRequest(TaskRequest.newBuilder().setTaskCategory(TaskCategory.DELEGATE_TASK_V2).build())
+            .setStatus(TASK_WAITING)
+            .setExecutableResponse(ExecutableResponse.newBuilder().setTask(taskBuilder.build()).build())
+            .build();
+
+    Ambiance ambiance =
+        Ambiance.newBuilder().addLevels(Level.newBuilder().setRuntimeId(nodeExecutionId).build()).build();
+    assertThatThrownBy(
+        ()
+            -> queueTaskResponseHandler.handleEvent(SdkResponseEventProto.newBuilder()
+                                                        .setSdkResponseEventType(SdkResponseEventType.QUEUE_TASK)
+                                                        .setQueueTaskRequest(queueTaskRequest)
+                                                        .setAmbiance(ambiance)
+                                                        .build()))
+        .isInstanceOf(QueueTaskException.class);
   }
 }
