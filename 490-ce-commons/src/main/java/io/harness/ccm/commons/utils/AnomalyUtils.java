@@ -18,8 +18,7 @@ import java.util.ArrayList;
 
 public class AnomalyUtils {
   private static final String SEPARATOR = "/";
-  private static final String ANOMALY_RELATIVE_TIME_TEMPLATE = "since %s %s";
-  private static final String STATUS_RELATIVE_TIME_TEMPLATE = "%s %s ago";
+  private static final String RELATIVE_TIME_TEMPLATE = "%s %s ago";
   public static final Integer DEFAULT_LIMIT = 1000;
   public static final Integer DEFAULT_OFFSET = 0;
 
@@ -167,7 +166,7 @@ public class AnomalyUtils {
     return AnomalyData.builder()
         .id(anomaly.getId())
         .time(anomalyTime)
-        .anomalyRelativeTime(AnomalyUtils.getRelativeTime(anomalyTime, ANOMALY_RELATIVE_TIME_TEMPLATE))
+        .anomalyRelativeTime(AnomalyUtils.getRelativeTime(anomalyTime, RELATIVE_TIME_TEMPLATE))
         .actualAmount(AnomalyUtils.getRoundedOffCost(anomaly.getActualcost()))
         .expectedAmount(AnomalyUtils.getRoundedOffCost(anomaly.getExpectedcost()))
         .anomalousSpend(AnomalyUtils.getRoundedOffCost(anomaly.getActualcost() - anomaly.getExpectedcost()))
@@ -177,7 +176,7 @@ public class AnomalyUtils {
         .resourceInfo(AnomalyUtils.getResourceInfo(anomaly))
         // Todo : Remove default assignment when status column is added to anomaly table
         .status("Open")
-        .statusRelativeTime(AnomalyUtils.getRelativeTime(anomalyTime, STATUS_RELATIVE_TIME_TEMPLATE))
+        .statusRelativeTime(AnomalyUtils.getRelativeTime(anomalyTime, RELATIVE_TIME_TEMPLATE))
         .cloudProvider(AnomalyUtils.getCloudProvider(anomaly))
         .build();
   }
