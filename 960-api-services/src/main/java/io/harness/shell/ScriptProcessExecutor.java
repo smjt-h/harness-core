@@ -51,6 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.output.NullOutputStream;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
+import org.zeroturnaround.exec.stop.ProcessStopper;
 import org.zeroturnaround.exec.stream.LogOutputStream;
 
 /**
@@ -253,7 +254,7 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
     Map<String, String> envVariablesMap = new HashMap<>();
     final String[] pidParent = new String[1];
     try (FileOutputStream outputStream = new FileOutputStream(scriptFile)) {
-      command = "ps -ef| grep -m1 "+ scriptFilename + "\n" + command;
+      command = "ps -ef| grep -m1 " + scriptFilename + "\n" + command;
       outputStream.write(command.getBytes(Charset.forName("UTF-8")));
       Files.setPosixFilePermissions(scriptFile.toPath(),
           newHashSet(
@@ -261,15 +262,17 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
       log.info("Done setting file permissions for script {}", scriptFile);
 
       String[] commandList = new String[] {"/bin/bash", scriptFilename};
+      ProcessStopper processStopper = new ChildProcessStopper(scriptFilename, workingDirectory, environment);
       ProcessExecutor processExecutor = new ProcessExecutor()
                                             .command(commandList)
                                             .directory(workingDirectory)
                                             .environment(environment)
                                             .readOutput(true)
+                                            .stopper(processStopper)
                                             .redirectOutput(new LogOutputStream() {
                                               @Override
                                               protected void processLine(String line) {
-                                                if(line.endsWith(scriptFilename)){
+                                                if (line.endsWith(scriptFilename)) {
                                                   pidParent[0] = line.split(" ")[3];
                                                 } else {
                                                   saveExecutionLog(line, INFO);
@@ -301,13 +304,15 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
       saveExecutionLog(
           format("Command completed with ExitCode (%d)", processResult.getExitValue()), INFO, commandExecutionStatus);
     } catch (InterruptedException e) {
-      killScriptProcesses(executionDataBuilder, commandExecutionStatus, workingDirectory, scriptFilename, environment,
-           envVariablesMap, pidParent[0]);
+      // killScriptProcesses(executionDataBuilder, commandExecutionStatus, workingDirectory, scriptFilename,
+      // environment,
+      //     envVariablesMap, pidParent[0]);
       // Thread.currentThread().interrupt();
       handleException(executionDataBuilder, envVariablesMap, commandExecutionStatus, e, "Script execution interrupted");
     } catch (TimeoutException e) {
-      killScriptProcesses(executionDataBuilder, commandExecutionStatus, workingDirectory, scriptFilename, environment,
-              envVariablesMap, pidParent[0]);
+      // killScriptProcesses(executionDataBuilder, commandExecutionStatus, workingDirectory, scriptFilename,
+      // environment,
+      //        envVariablesMap, pidParent[0]);
       executionDataBuilder.expired(true);
       handleException(executionDataBuilder, envVariablesMap, commandExecutionStatus, e, "Script execution timed out");
     } catch (RuntimeException e) {
@@ -330,13 +335,14 @@ public class ScriptProcessExecutor extends AbstractScriptExecutor {
   }
 
   private CommandExecutionStatus killScriptProcesses(ShellExecutionDataBuilder executionDataBuilder,
-                                                     CommandExecutionStatus oldCommandExecutionStatus, File workingDirectory, String scriptFilename,
-                                                     Map<String, String> environment, Map<String, String> envVariablesMap, String ppid) {
-    ProcessExecutor processExecutor = new ProcessExecutor()
-                                          .command("/bin/bash", "-c", "ps -ef | grep -m1 " + scriptFilename + " | awk '{print $2}'")
-                                          .directory(workingDirectory)
-                                          .environment(environment)
-                                          .readOutput(true);
+      CommandExecutionStatus oldCommandExecutionStatus, File workingDirectory, String scriptFilename,
+      Map<String, String> environment, Map<String, String> envVariablesMap, String ppid) {
+    ProcessExecutor processExecutor =
+        new ProcessExecutor()
+            .command("/bin/bash", "-c", "ps -ef | grep -m1 " + scriptFilename + " | awk '{print $2}'")
+            .directory(workingDirectory)
+            .environment(environment)
+            .readOutput(true);
     File scriptFile = new File(workingDirectory, "kill-" + scriptFilename);
     try (FileOutputStream outputStream = new FileOutputStream(scriptFile)) {
       ProcessResult processResult = processExecutor.execute();
