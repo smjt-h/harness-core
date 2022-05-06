@@ -27,8 +27,7 @@ public class BitbucketListBranchesScmApiErrorHandler implements ScmApiErrorHandl
             BitbucketScmExceptionExplanations.LIST_BRANCH_WITH_INVALID_CRED,
             new ScmUnauthorizedException(errorMessage));
       case 404:
-        throw NestedExceptionUtils.hintWithExplanationException(
-            String.format(BitbucketScmExceptionHints.REPO_NOT_FOUND, BITBUCKET),
+        throw NestedExceptionUtils.hintWithExplanationException(BitbucketScmExceptionHints.REPO_NOT_FOUND,
             BitbucketScmExceptionExplanations.LIST_BRANCH_WHEN_REPO_NOT_EXIST,
             new ScmResourceNotFoundException(errorMessage));
       default:
