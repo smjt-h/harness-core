@@ -335,7 +335,7 @@ public class CDStepHelper {
     String connectorId = gitStoreConfig.getConnectorRef().getValue();
     ConnectorInfoDTO connectorDTO = getConnector(connectorId, ambiance);
     validateManifest(store.getKind(), connectorDTO, validationMessage);
-    String folderPath = getValuesFolderPathsBasedOnManifest(gitStoreConfig, manifestOutcome.getType());
+    String folderPath = getFolderPathBasedOnManifest(gitStoreConfig, manifestOutcome.getType());
     List<String> filePaths = new ArrayList<>(getParameterFieldValue(inheritFromManifestStoreConfig.getPaths()));
     List<String> gitFilePaths = fetchGitFilePathsBasedOnManifest(manifestOutcome.getType(), filePaths, folderPath);
 
@@ -724,7 +724,7 @@ public class CDStepHelper {
     pipelineRbacHelper.checkRuntimePermissions(ambiance, entityDetails);
   }
 
-  public String getValuesFolderPathsBasedOnManifest(GitStoreConfig gitStoreConfig, String manifestType) {
+  public String getFolderPathBasedOnManifest(GitStoreConfig gitStoreConfig, String manifestType) {
     String folderPath;
     List<String> filePaths;
     if (ManifestType.K8Manifest.equals(manifestType) || ManifestType.OpenshiftTemplate.equals(manifestType)) {

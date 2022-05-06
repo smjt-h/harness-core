@@ -658,7 +658,7 @@ public class K8sStepHelperTest extends CategoryTest {
         K8sDirectInfrastructureOutcome.builder().namespace("default").build();
     GitStore gitStore = GitStore.builder()
                             .branch(ParameterField.createValueField("master"))
-                            .paths(ParameterField.createValueField(asList("path/to/k8s/manifest/templates/")))
+                            .paths(ParameterField.createValueField(asList("path/to/k8s/manifest/")))
                             .connectorRef(ParameterField.createValueField("git-connector"))
                             .build();
     K8sManifestOutcome k8sManifestOutcome = K8sManifestOutcome.builder().identifier("k8s").store(gitStore).build();
@@ -1697,8 +1697,6 @@ public class K8sStepHelperTest extends CategoryTest {
                         .build()))
         .when(connectorService)
         .get(anyString(), anyString(), anyString(), anyString());
-    when(k8sStepExecutor.executeK8sTask(any(), any(), any(), any(), any(), anyBoolean(), any()))
-        .thenReturn(TaskChainResponse.builder().chainEnd(true).build());
 
     TaskChainResponse taskChainResponse =
         k8sStepHelper.startChainLink(k8sStepExecutor, ambiance, rollingStepElementParams);
@@ -1718,7 +1716,6 @@ public class K8sStepHelperTest extends CategoryTest {
     doReturn(manifestsOutcomeOnlyTemplate).when(outcomeService).resolveOptional(eq(ambiance), eq(manifests));
 
     assertThat(k8sStepHelper.startChainLink(k8sStepExecutor, ambiance, rollingStepElementParams)).isNotNull();
-    verify(k8sStepExecutor, times(1)).executeK8sTask(any(), any(), any(), any(), any(), anyBoolean(), any());
   }
 
   @Test

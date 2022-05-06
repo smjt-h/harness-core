@@ -15,6 +15,7 @@ import static io.harness.rule.OwnerRule.ACASIAN;
 import static io.harness.rule.OwnerRule.ACHYUTH;
 import static io.harness.rule.OwnerRule.ANSHUL;
 import static io.harness.rule.OwnerRule.NAMAN_TALAYCHA;
+import static io.harness.rule.OwnerRule.PRATYUSH;
 import static io.harness.rule.OwnerRule.TMACARI;
 import static io.harness.rule.OwnerRule.VAIBHAV_SI;
 import static io.harness.rule.OwnerRule.VIKAS_S;
@@ -38,10 +39,17 @@ import io.harness.cdng.infra.beans.K8sGcpInfrastructureOutcome;
 import io.harness.cdng.k8s.K8sEntityHelper;
 import io.harness.cdng.k8s.beans.StepExceptionPassThroughData;
 import io.harness.cdng.manifest.ManifestStoreType;
+import io.harness.cdng.manifest.ManifestType;
 import io.harness.cdng.manifest.yaml.GitStoreConfig;
 import io.harness.cdng.manifest.yaml.GithubStore;
+import io.harness.cdng.manifest.yaml.HelmChartManifestOutcome;
+import io.harness.cdng.manifest.yaml.InheritFromManifestStoreConfig;
 import io.harness.cdng.manifest.yaml.K8sManifestOutcome;
 import io.harness.cdng.manifest.yaml.KustomizeManifestOutcome;
+import io.harness.cdng.manifest.yaml.KustomizePatchesManifestOutcome;
+import io.harness.cdng.manifest.yaml.ManifestOutcome;
+import io.harness.cdng.manifest.yaml.OpenshiftParamManifestOutcome;
+import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.services.ConnectorService;
@@ -59,7 +67,10 @@ import io.harness.delegate.beans.connector.scm.github.GithubUsernamePasswordDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubUsernameTokenDTO;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
+import io.harness.delegate.task.git.GitFetchFilesConfig;
+import io.harness.delegate.task.helm.InheritFromManifestFetchFileConfig;
 import io.harness.encryption.SecretRefData;
+import io.harness.exception.GeneralException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.logging.UnitProgress;
@@ -100,6 +111,10 @@ public class CDStepHelperTest extends CategoryTest {
   @Spy @InjectMocks private K8sEntityHelper k8sEntityHelper;
   @Spy @InjectMocks private CDStepHelper CDStepHelper;
   private final Ambiance ambiance = Ambiance.newBuilder().putSetupAbstractions("accountId", "test-account").build();
+
+  private String id = "identifier";
+  private ParameterField folderPath = ParameterField.createValueField("folderPath/");
+  private List<String> paths = asList("test/path1.yaml", "test/path2.yaml");
 
   @Test
   @Owner(developers = TMACARI)
@@ -644,5 +659,115 @@ public class CDStepHelperTest extends CategoryTest {
       assertThat(ex.getParams().get("args"))
           .isEqualTo("Namespace: [ namespace test ] contains leading or trailing whitespaces");
     }
+  }
+
+  @Test
+  @Owner(developers = PRATYUSH)
+  @Category(UnitTests.class)
+  public void testGetGitFetchFilesConfig() {
+    Ambiance ambiance = getAmbiance();
+    GithubConnectorDTO githubConnectorDTO = GithubConnectorDTO.builder().build();
+    ConnectorInfoDTO connectorDTO =
+        ConnectorInfoDTO.builder().connectorConfig(githubConnectorDTO).connectorType(GITHUB).build();
+    GitStoreConfig githubStore = GithubStore.builder()
+                                     .paths(ParameterField.createValueField(paths))
+                                     .connectorRef(ParameterField.createValueField("connectorId"))
+                                     .build();
+    GitStoreDelegateConfig gitStoreDelegateConfig = GitStoreDelegateConfig.builder().paths(paths).build();
+    doReturn(connectorDTO).when(k8sEntityHelper).getConnectorInfoDTO(any(), any());
+    doReturn(gitStoreDelegateConfig).when(CDStepHelper).getGitStoreDelegateConfig(any(), any(), any(), any(), any());
+    ManifestOutcome valuesManifestOutcome = ValuesManifestOutcome.builder().identifier(id).store(githubStore).build();
+    GitFetchFilesConfig valuesGitFetchFilesConfig =
+        CDStepHelper.getGitFetchFilesConfig(ambiance, githubStore, "passed", valuesManifestOutcome);
+    assertThat(valuesGitFetchFilesConfig.getIdentifier().equals(id));
+    assertThat(valuesGitFetchFilesConfig.getManifestType().equals(ManifestType.VALUES));
+    assertThat(valuesGitFetchFilesConfig.getGitStoreDelegateConfig().getPaths().equals(paths));
+  }
+
+  @Test
+  @Owner(developers = PRATYUSH)
+  @Category(UnitTests.class)
+  public void testGetOverridePathForGitFetchFileConfig() {
+    Ambiance ambiance = getAmbiance();
+    GithubConnectorDTO githubConnectorDTO = GithubConnectorDTO.builder().build();
+    ConnectorInfoDTO connectorDTO =
+        ConnectorInfoDTO.builder().connectorConfig(githubConnectorDTO).connectorType(GITHUB).build();
+    GitStoreConfig githubStore = GithubStore.builder()
+                                     .folderPath(folderPath)
+                                     .connectorRef(ParameterField.createValueField("connectorId"))
+                                     .build();
+    GitStoreDelegateConfig gitStoreDelegateConfig = GitStoreDelegateConfig.builder().paths(paths).build();
+    doReturn(connectorDTO).when(k8sEntityHelper).getConnectorInfoDTO(any(), any());
+    doReturn(gitStoreDelegateConfig).when(CDStepHelper).getGitStoreDelegateConfig(any(), any(), any(), any(), any());
+    InheritFromManifestStoreConfig inheritFromManifestStoreConfig =
+        InheritFromManifestStoreConfig.builder().paths(ParameterField.createValueField(paths)).build();
+    ManifestOutcome kustomizeManifestOutcome = KustomizeManifestOutcome.builder().store(githubStore).build();
+    ManifestOutcome patchesManifestOutcome =
+        KustomizePatchesManifestOutcome.builder().identifier(id).store(inheritFromManifestStoreConfig).build();
+    GitFetchFilesConfig patchesGitFetchFilesConfig = CDStepHelper.getOverridePathForGitFetchFileConfig(
+        ambiance, "passed", patchesManifestOutcome, kustomizeManifestOutcome);
+    List<String> finalPaths = new ArrayList<>();
+    for (String path : paths) {
+      finalPaths.add(folderPath.getValue() + path);
+    }
+    assertThat(patchesGitFetchFilesConfig.getIdentifier().equals(id));
+    assertThat(patchesGitFetchFilesConfig.getManifestType().equals(ManifestType.KustomizePatches));
+    assertThat(patchesGitFetchFilesConfig.getGitStoreDelegateConfig().getPaths().equals(finalPaths));
+  }
+
+  @Test
+  @Owner(developers = PRATYUSH)
+  @Category(UnitTests.class)
+  public void testMapValuesManifestsToInheritFromManifestFetchFileConfig() {
+    InheritFromManifestStoreConfig inheritFromManifestStoreConfig =
+        InheritFromManifestStoreConfig.builder().paths(ParameterField.createValueField(paths)).build();
+    List<ValuesManifestOutcome> valuesManifestOutcome = new ArrayList<>(
+        asList(ValuesManifestOutcome.builder().identifier(id).store(inheritFromManifestStoreConfig).build()));
+    List<InheritFromManifestFetchFileConfig> inheritFromManifestFetchFileConfigList =
+        CDStepHelper.mapValuesManifestsToInheritFromManifestFetchFileConfig(valuesManifestOutcome);
+    assertThat(inheritFromManifestFetchFileConfigList.get(0).getIdentifier().equals(id));
+    assertThat(inheritFromManifestFetchFileConfigList.get(0).getManifestType().equals(ManifestType.VALUES));
+    assertThat(inheritFromManifestFetchFileConfigList.get(0).getFilePaths().equals(paths));
+  }
+
+  @Test
+  @Owner(developers = PRATYUSH)
+  @Category(UnitTests.class)
+  public void testGetFolderPathBasedOnManifest() {
+    GitStoreConfig githubStore =
+        GithubStore.builder()
+            .folderPath(folderPath)
+            .paths((ParameterField.createValueField(asList(folderPath.getValue() + "path1.yaml"))))
+            .build();
+    String folderPathValue = (String) folderPath.getValue();
+    assertThat(CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.K8Manifest).equals(folderPathValue));
+    assertThat(CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.HelmChart).equals(folderPathValue));
+    assertThat(
+        CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.OpenshiftTemplate).equals(folderPathValue));
+    assertThat(CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.Kustomize).equals(folderPathValue));
+    assertThatThrownBy(() -> CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.VALUES))
+        .isInstanceOf(UnsupportedOperationException.class);
+  }
+
+  @Test
+  @Owner(developers = PRATYUSH)
+  @Category(UnitTests.class)
+  public void testFetchGitFilePathsBasedOnManifest() {
+    String folderPathValue = (String) folderPath.getValue();
+    List<String> filePathValues = new ArrayList<>();
+    for (String path : paths) {
+      filePathValues.add(folderPathValue + path);
+    }
+    assertThat(CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.K8Manifest, paths, folderPathValue)
+                   .equals(filePathValues));
+    assertThat(CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.HelmChart, paths, folderPathValue)
+                   .equals(filePathValues));
+    assertThat(CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.OpenshiftTemplate, paths, folderPathValue)
+                   .equals(filePathValues));
+    assertThat(CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.Kustomize, paths, folderPathValue)
+                   .equals(filePathValues));
+    assertThatThrownBy(
+        () -> CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.OpenshiftParam, paths, folderPathValue))
+        .isInstanceOf(UnsupportedOperationException.class);
   }
 }
