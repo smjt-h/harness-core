@@ -26,7 +26,7 @@ http_archive(
 
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
-protobuf_deps()
+protobuf_deps() 
 
 # Download the Go rules
 http_archive(
