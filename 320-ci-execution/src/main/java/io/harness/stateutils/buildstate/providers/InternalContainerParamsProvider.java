@@ -72,7 +72,6 @@ public class InternalContainerParamsProvider {
   public CIK8ContainerParams getSetupAddonContainerParams(ConnectorDetails harnessInternalImageConnector,
       Map<String, String> volumeToMountPath, String workDir, ContainerSecurityContext ctrSecurityContext,
       String accountIdentifier, OSType os) {
-
     Map<String, String> envVars = new HashMap<>();
     envVars.put(HARNESS_WORKSPACE, workDir);
 

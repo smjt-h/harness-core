@@ -49,7 +49,7 @@ public class CIExecutionConstants {
 
   // Constant for
   public static final String UNIX_STEP_COMMAND = "/addon/bin/ci-addon";
-  public static final String WIN_STEP_COMMAND = " C:\\addon\\bin\\addon.exe";
+  public static final String WIN_STEP_COMMAND = "C:\\addon\\bin\\addon.exe";
   public static final Integer STEP_REQUEST_MEMORY_MIB = 10;
   public static final Integer STEP_REQUEST_MILLI_CPU = 10;
   public static final Integer PORT_STARTING_RANGE = 20002;
