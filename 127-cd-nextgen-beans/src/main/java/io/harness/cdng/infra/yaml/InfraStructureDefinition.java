@@ -38,6 +38,5 @@ public class InfraStructureDefinition implements Visitable {
   @ApiModelProperty(hidden = true)
   private String uuid;
 
-  // For New Service Yaml
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) private ParameterField<String> ref;
 }
