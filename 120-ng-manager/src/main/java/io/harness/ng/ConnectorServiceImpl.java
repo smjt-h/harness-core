@@ -174,6 +174,7 @@ public class ConnectorServiceImpl implements ConnectorService {
       if (governanceMetadata != null && "error".equals(governanceMetadata.getStatus())) {
         return connectorResponse;
       }
+
       ConnectorInfoDTO connectorInfo = connectorDTO.getConnectorInfo();
       connectorInfo.getConnectorConfig().validate();
       final boolean executeOnDelegate = defaultConnectorService.checkConnectorExecutableOnDelegate(connectorInfo);
