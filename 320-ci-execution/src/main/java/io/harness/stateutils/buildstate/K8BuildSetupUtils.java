@@ -348,6 +348,13 @@ public class K8BuildSetupUtils {
       buildLabels.putAll(labels);
     }
 
+    if (isNotEmpty(namespace)) {
+      namespace = namespace.replaceAll("\\s+", "");
+    }
+    if (isNotEmpty(serviceAccountName)) {
+      serviceAccountName = serviceAccountName.replaceAll("\\s+", "");
+    }
+
     return CIK8PodParams.<CIK8ContainerParams>builder()
         .name(podSetupInfo.getName())
         .namespace(namespace)

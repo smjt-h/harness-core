@@ -124,17 +124,6 @@ public class CIK8InitializeTaskHandler implements CIInitializeTaskHandler {
     PodParams podParams = cik8InitializeTaskParams.getCik8PodParams();
     String namespace = podParams.getNamespace();
     String podName = podParams.getName();
-    String serviceAccountName = podParams.getServiceAccountName();
-
-    if (namespace != null) {
-      namespace = namespace.replaceAll("\\s+", "");
-      podParams.setNamespace(namespace);
-    }
-
-    if (serviceAccountName != null) {
-      serviceAccountName = serviceAccountName.replaceAll("\\s+", "");
-      podParams.setServiceAccountName(serviceAccountName);
-    }
 
     K8sTaskExecutionResponse result;
     CiK8sTaskResponse k8sTaskResponse = null;
