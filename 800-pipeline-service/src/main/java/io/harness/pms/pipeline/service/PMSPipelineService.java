@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
 import io.harness.git.model.ChangeType;
+import io.harness.pms.pipeline.ClonePipelineDTO;
 import io.harness.pms.pipeline.ExecutionSummaryInfo;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.StepCategory;
@@ -26,6 +27,8 @@ import org.springframework.data.mongodb.core.query.Update;
 @OwnedBy(PIPELINE)
 public interface PMSPipelineService {
   PipelineEntity create(PipelineEntity pipelineEntity);
+
+  PipelineEntity clone(PipelineEntity destPipelineEntity);
 
   Optional<PipelineEntity> get(
       String accountId, String orgIdentifier, String projectIdentifier, String identifier, boolean deleted);
@@ -61,4 +64,7 @@ public interface PMSPipelineService {
       String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier);
 
   PipelineEntity updateGitFilePath(PipelineEntity pipelineEntity, String newFilePath);
+
+  String getDestYamlfromSource(
+      ClonePipelineDTO clonePipelineDTO, PipelineEntity sourcePipelineEntity, String accountId);
 }

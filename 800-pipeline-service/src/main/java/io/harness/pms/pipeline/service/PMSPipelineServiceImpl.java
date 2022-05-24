@@ -31,8 +31,10 @@ import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.scm.EntityObjectIdUtils;
 import io.harness.grpc.utils.StringValueUtils;
+import io.harness.jackson.JsonNodeUtils;
 import io.harness.pms.contracts.steps.StepInfo;
 import io.harness.pms.gitsync.PmsGitSyncBranchContextGuard;
+import io.harness.pms.pipeline.ClonePipelineDTO;
 import io.harness.pms.pipeline.CommonStepInfo;
 import io.harness.pms.pipeline.ExecutionSummaryInfo;
 import io.harness.pms.pipeline.PipelineEntity;
@@ -46,6 +48,11 @@ import io.harness.pms.sdk.PmsSdkInstanceService;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.repositories.pipeline.PMSPipelineRepository;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.IOException;
@@ -108,6 +115,11 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
       throw new InvalidRequestException(String.format(
           "Error while saving pipeline [%s]: %s", pipelineEntity.getIdentifier(), ExceptionUtils.getMessage(e)));
     }
+  }
+
+  @Override
+  public PipelineEntity clone(PipelineEntity destPipelineEntity) {
+    return create(destPipelineEntity);
   }
 
   @Override
@@ -378,5 +390,53 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
                         .set(PipelineEntityKeys.rootFolder, gitEntityFilePath.getRootFolder());
     return updatePipelineMetadata(pipelineEntity.getAccountId(), pipelineEntity.getOrgIdentifier(),
         pipelineEntity.getProjectIdentifier(), criteria, update);
+  }
+  @Override
+  public String getDestYamlfromSource(
+      ClonePipelineDTO clonePipelineDTO, PipelineEntity sourcePipelineEntity, String accountId) {
+    String sourcePipelineEntityYaml = sourcePipelineEntity.getYaml();
+    String destOrgId = clonePipelineDTO.getDestination().getOrgIdentifier();
+    String destProjectId = clonePipelineDTO.getDestination().getProjectIdentifier();
+    ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+
+    JsonNode jsonNode;
+    try {
+      jsonNode = objectMapper.readTree(sourcePipelineEntityYaml);
+    } catch (JsonProcessingException e) {
+      log.error(
+          String.format("Error while processing source yaml for pipeline [%s]", sourcePipelineEntity.getIdentifier()),
+          e);
+      throw new InvalidRequestException(
+          String.format("Unable to process source Yaml for pipeline [%s] org [%s] project [%s]",
+              clonePipelineDTO.getSource().getPipelineIdentifier(), clonePipelineDTO.getSource().getOrgIdentifier(),
+              clonePipelineDTO.getSource().getProjectIdentifier()),
+          e);
+    }
+
+    // Resolve source yaml Params
+    if (destProjectId != null && !destProjectId.equals(clonePipelineDTO.getSource().getProjectIdentifier())) {
+      JsonNodeUtils.updatePropertyInObjectNode(jsonNode.get("pipeline"), "projectIdentifier", destProjectId);
+    }
+    if (destOrgId != null && !destOrgId.equals(clonePipelineDTO.getSource().getOrgIdentifier())) {
+      JsonNodeUtils.updatePropertyInObjectNode(jsonNode.get("pipeline"), "orgIdentifier", destOrgId);
+    }
+    if (clonePipelineDTO.getDestination().getPipelineIdentifier() != null
+        && !clonePipelineDTO.getDestination().getPipelineIdentifier().equals(
+            clonePipelineDTO.getSource().getPipelineIdentifier())) {
+      JsonNodeUtils.updatePropertyInObjectNode(
+          jsonNode.get("pipeline"), "identifier", clonePipelineDTO.getDestination().getPipelineIdentifier());
+    }
+
+    String modifiedSourceYaml;
+    try {
+      modifiedSourceYaml = new YAMLMapper().writeValueAsString(jsonNode);
+    } catch (IOException e) {
+      throw new InvalidRequestException(
+          String.format("Cannot convert json to yaml for pipeline [%s] org [%s] project [%s]",
+              clonePipelineDTO.getSource().getPipelineIdentifier(), clonePipelineDTO.getSource().getOrgIdentifier(),
+              clonePipelineDTO.getSource().getProjectIdentifier()),
+          e);
+    }
+    return modifiedSourceYaml;
   }
 }

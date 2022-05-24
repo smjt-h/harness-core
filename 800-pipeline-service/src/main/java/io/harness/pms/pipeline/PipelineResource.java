@@ -20,6 +20,9 @@ import io.harness.accesscontrol.NGAccessControlCheck;
 import io.harness.accesscontrol.OrgIdentifier;
 import io.harness.accesscontrol.ProjectIdentifier;
 import io.harness.accesscontrol.ResourceIdentifier;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
+import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.ExecutionNode;
 import io.harness.engine.executions.node.NodeExecutionService;
@@ -133,6 +136,7 @@ public class PipelineResource implements YamlSchemaResource {
   private final PMSPipelineTemplateHelper pipelineTemplateHelper;
   private final PmsFeatureFlagHelper pmsFeatureFlagHelper;
   private final VariableCreatorMergeService variableCreatorMergeService;
+  private final AccessControlClient accessControlClient;
 
   @POST
   @ApiOperation(value = "Create a Pipeline", nickname = "createPipeline")
@@ -206,6 +210,64 @@ public class PipelineResource implements YamlSchemaResource {
         PipelineSaveResponse.builder()
             .governanceMetadata(governanceMetadata)
             .identifier(createdEntity.getIdentifier())
+            .build());
+  }
+
+  @POST
+  @Path("/clone")
+  @ApiOperation(value = "Clone a Pipeline", nickname = "clonePipeline")
+  @Operation(operationId = "clonePipeline", summary = "Clone a Pipeline API With Governance Checks",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(responseCode = "default", description = "Returns cloned pipeline with metadata")
+      })
+  @NGAccessControlCheck(resourceType = "PIPELINE", permission = PipelineRbacPermissions.PIPELINE_CREATE_AND_EDIT)
+  @Hidden
+  public ResponseDTO<PipelineSaveResponse>
+  clonePipeline(@Parameter(description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE, required = true) @NotNull
+                @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountId,
+      @BeanParam GitEntityCreateInfoDTO gitEntityCreateInfo,
+      @RequestBody(required = true,
+          description = "Request Body for Cloning a pipeline") @NotNull ClonePipelineDTO clonePipelineDTO) {
+    CloneIdentifierConfig destIdentifierConfig = clonePipelineDTO.getDestination();
+    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, destIdentifierConfig.getOrgIdentifier(),
+                                                  destIdentifierConfig.getProjectIdentifier()),
+        Resource.of("PIPELINE", destIdentifierConfig.getPipelineIdentifier()),
+        PipelineRbacPermissions.PIPELINE_CREATE_AND_EDIT);
+
+    Optional<PipelineEntity> sourcePipelineEntity = pmsPipelineService.get(accountId,
+        clonePipelineDTO.getSource().getOrgIdentifier(), clonePipelineDTO.getSource().getProjectIdentifier(),
+        clonePipelineDTO.getSource().getPipelineIdentifier(), false);
+
+    if (!sourcePipelineEntity.isPresent()) {
+      throw new InvalidRequestException(
+          String.format("Pipeline with id [%s] in org [%s] in project [%s] is not present or deleted",
+              clonePipelineDTO.getSource().getPipelineIdentifier(), clonePipelineDTO.getSource().getOrgIdentifier(),
+              clonePipelineDTO.getSource().getProjectIdentifier()));
+    }
+
+    String destYaml = pmsPipelineService.getDestYamlfromSource(clonePipelineDTO, sourcePipelineEntity.get(), accountId);
+    PipelineEntity destPipelineEntity = PMSPipelineDtoMapper.toPipelineEntity(
+        accountId, destIdentifierConfig.getOrgIdentifier(), destIdentifierConfig.getProjectIdentifier(), destYaml);
+
+    GovernanceMetadata governanceMetadata =
+        pipelineServiceHelper.validatePipelineYamlAndSetTemplateRefIfAny(sourcePipelineEntity.get(), true);
+    if (governanceMetadata.getDeny()) {
+      return ResponseDTO.newResponse(PipelineSaveResponse.builder().governanceMetadata(governanceMetadata).build());
+    }
+
+    GovernanceMetadata destGovernanceMetadata =
+        pipelineServiceHelper.validatePipelineYamlAndSetTemplateRefIfAny(destPipelineEntity, true);
+    if (governanceMetadata.getDeny()) {
+      return ResponseDTO.newResponse(PipelineSaveResponse.builder().governanceMetadata(destGovernanceMetadata).build());
+    }
+
+    PipelineEntity createdClonedEntity = pmsPipelineService.clone(destPipelineEntity);
+    return ResponseDTO.newResponse(createdClonedEntity.getVersion().toString(),
+        PipelineSaveResponse.builder()
+            .governanceMetadata(governanceMetadata)
+            .identifier(createdClonedEntity.getIdentifier())
             .build());
   }
 
